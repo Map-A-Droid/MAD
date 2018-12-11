@@ -30,6 +30,10 @@ RGC and Pogodroid both require an Origin header field that's configured in mappi
 These Origins need to be unique per running python instance.
 Furthermore, RGC takes the websocket port as destination, Pogodroid the `mitmreceiver_port`.
 
+## First Starting MAD
+Copy config.ini.example to config.ini and edit database and other settings.
+Start `python3.6 configmode.py` and open MADmin in your Browser. Setting up 'Mapping Editor'.
+
 # Starting MAD
 Simply run `python3.6 start.py`
 
