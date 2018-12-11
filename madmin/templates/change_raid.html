@@ -1,0 +1,62 @@
+<html
+<head>
+ <meta charset="utf-8">
+ <title>MADMIN - change Raid</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+  <link rel="stylesheet" href=" https://cdn.datatables.net/fixedheader/3.1.5/css/fixedHeader.bootstrap.min.css">
+  <link rel="stylesheet" href=" https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css">
+  <link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+  <link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+ </head>
+<body>
+<center><h1>Modify existing Raid</h1>
+<h4><a href=/raids>Back to Raids</a></h4></center>
+<div id="show-data"></div>
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
+
+<script>
+
+
+		  
+		  
+		  $(document).ready(function () {
+
+		   var displayResources = $('#show-data');
+
+		   displayResources.text('Loading data ...');
+
+		   $.ajax({
+		   type: "GET",
+		   url: "/near_gym?lat={{ lat }}&lon={{ lon }}",
+		   success: function(result)
+		   {
+		   console.log(result);
+		   var output="<table><thead><tr><th>Name</th><th>Hashpic</th><th>Distance</th><th>Match</th></thead><tbody>";
+		   for (var i in result)
+		   {
+		   output+="<tr><td>" + result[i].name + "<br><br>Gym-ID: " + result[i].id + "</td><td><img src='" + result[i].filename + "' width=100></td><td>" + result[i].dist + "</td><td><a href='modify_raid_gym?hash={{ hash }}&id=" + result[i].id + "&mon={{ mon }}&lvl={{ lvl }}'>Match to this Gym</a> </td></tr>";
+		   }
+		   output+="</tbody></table>";
+
+		   displayResources.html(output);
+		   $("table").addClass("table");
+		   $('table').DataTable( {
+			       responsive: {{ responsive }},
+			   "order": [[ 2, "asc" ]],
+			       "autoWidth": true
+		       } );
+		   }
+		   });
+
+		  });
+</script>
+</body>
+</html>

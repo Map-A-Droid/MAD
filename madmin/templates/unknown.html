@@ -1,0 +1,75 @@
+<html
+<head>
+ <meta charset="utf-8">
+ <title>MADMIN - show unknown Gym</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+  <link rel="stylesheet" href=" https://cdn.datatables.net/fixedheader/3.1.5/css/fixedHeader.bootstrap.min.css">
+  <link rel="stylesheet" href=" https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css">
+  <link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+  <link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+ </head>
+<body>
+<center><h1>Check unknown Gyms</h1>
+<h4><a href=/>Back to Menu</a></h4></center>
+<div id="show-data"></div>
+<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
+<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
+<script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
+<script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+
+<script>
+
+
+
+
+		  $(document).ready(function () {
+
+		   var displayResources = $('#show-data');
+
+		   displayResources.text('Loading data ...');
+
+		   $.ajax({
+		   type: "GET",
+		   url: "/get_unknows",
+		   success: function(result)
+		   {
+
+		   var output="<table><thead><tr><th>Hash</th><th>Hashpic</th><th>Lat</th><th>Lon</th><th>Creation Date</th></thead><tbody>";
+		   for (var i in result)
+		   {
+			   if (result[i].lat === "9999") {
+				   vlat = 'MADBot'
+				   vlon = 'MADBot'
+			   } else {
+			   	   vlat = result[i].lat
+				   vlon = result[i].lon
+			   }
+		   output+="<tr><td>" + result[i].hashvalue + "<br><br><a href='/match_unknows?hash=" + result[i].hashvalue + "&lat=" + result[i].lat+"&lon=" + result[i].lon + "'>Match Gym</a><br><a href='/delete_file?hash=" + result[i].hashvalue + "&type=gym&redirect=unknown'>Delete</a></td><td><img class='lazy' data-original='../" + result[i].filename + "' width=100></td><td>" + vlat  + "</td><td>" + vlon + "</td><td>" + result[i].creation + "</td></tr>";
+		   }
+		   output+="</tbody></table>";
+
+		   displayResources.html(output);
+		   $("table").addClass("table");
+		   $('table').DataTable( {
+                   drawCallback: function(){
+                      $("img.lazy").lazyload();
+                   },
+		           "order": [[ 4, "desc" ]],
+			       responsive: {{ responsive }},
+			       columnDefs: [{ targets: [4], type: 'date'}]
+		       } );
+		   }
+		   });
+
+		  });
+</script>
+
+
+</body>
+</html>

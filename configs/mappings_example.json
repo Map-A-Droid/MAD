@@ -1,0 +1,69 @@
+{
+    "areas": [
+                {
+                    "name": "test123",
+                    "mode": "mon_mitm",
+                    "init": false,
+                    "geofence_included": "configs/geofences/ND_mon.txt",
+                    "geofence_excluded": null,
+                    "routecalc": "test123",
+					"coords_spawns_known": true,
+					"settings": {
+						"speed": 70,
+						"max_distance": 200
+					}
+                },
+                {
+                    "name": "huehuedurr",
+                    "mode": "raids_mitm",
+                    "init": false,
+                    "geofence_included": "configs/geofences/ND_raid.txt",
+                    "geofence_excluded": null,
+                    "routecalc": "nd_raid",
+					"settings": {
+						"speed": 70,
+						"max_distance": 200
+					}
+                }
+    ],
+    "devices": [
+        {
+            "origin": "redmi",
+            "daytime_area": "test123",
+            "nighttime_area": "huehuedurr",
+			"settings": {
+				"post_walk_delay": 0,
+				"post_teleport_delay": 7,
+				"walk_after_teleport_distance": 0,
+				"cool_down_sleep": false,
+				"post_turn_screen_on_delay": 10,
+				"post_pogo_start_delay": 60,
+				"restart_pogo": 100
+			}
+        },
+        {
+              "origin": "samsung",
+              "daytime_area": "test123",
+              "nighttime_area": "test123",
+              "settings": {
+                  "post_walk_delay": 0,
+                  "post_teleport_delay": 7,
+                  "walk_after_teleport_distance": 1,
+                  "cool_down_sleep": false,
+                  "post_turn_screen_on_delay": 10,
+                  "post_pogo_start_delay": 60,
+                  "restart_pogo": 0
+              }
+          }
+    ],
+    "auth": [
+        {
+            "username": "grennith",
+            "password": "12345"
+        },
+        {
+            "username": "cec",
+            "password": "test123"
+        }
+    ]
+}

@@ -1,0 +1,22 @@
+gym_info.json
+ocr/screenshots/*
+ocr/gym_img/*
+ocr/mon_img/*
+ocr/www_hash/*
+temp/*
+ocr/weather/*
+*.pyc
+*.log
+configs/config.ini
+*.calc
+configs/geofences/*
+configs/mappings.json
+.idea/*
+.idea
+configs/coords/*
+.DS_Store
+*.position
+
+# in case you create a virtual env called "env"
+env
+env/*

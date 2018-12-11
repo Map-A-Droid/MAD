@@ -1,0 +1,189 @@
+<html
+<head>
+	<meta charset="utf-8">
+	<title>MADMIN - Map</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+	<link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+	<link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+	<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin=""/>
+	<style>
+		#mapouter {
+			padding: 0px 30px;
+			width: auto;
+			height: 800px;
+			max-height: 800px;
+		}
+
+		#map {
+			width: 100%;
+			height: 100%;
+			border: 1px solid #333;
+		}
+	</style>
+</head>
+<body>
+	<center><h1>MAD Map</h1>
+	<h4><a href=/>Back to Menu</a></h4></center>
+	<div id="mapouter">
+		<div id="map"></div>
+	</div>
+	<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet-src.js"></script>
+	<script>
+	function convertToLonLat(coords) {
+		lonlat = []
+		$.each(coords, function(k, v) {
+			lonlat.push([v[1], v[0]]);
+		})
+		return lonlat;
+	}
+
+	$(document).ready(function () {
+		var prevLoc = [0, 0];
+		var poslay = L.layerGroup();
+		var walklay = L.layerGroup();
+		var marker = {};
+		var spawn = L.circle;
+		var icon = L.icon({
+		        iconUrl: 'static/stop.png',
+		        iconSize: [32, 32]
+		})
+		var markericon = L.icon({
+		        iconUrl: 'static/bot.png',
+		        iconSize: [20, 20]
+		})
+
+		var title = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
+		});
+		
+		var map = L.map('map', {layers: [title]}).setView([0, 0], 13);
+		var baseLayers = {
+			"Map": title
+		};
+		var baseControl = L.control.layers(baseLayers).addTo(map);
+		
+		spawns = L.layerGroup();
+		gyms = L.layerGroup();
+		var overlays = {
+			"Spawnpoints": spawns,
+			"Gyms": gyms
+		};
+		map.addLayer(spawns);
+		map.addLayer(gyms);
+		map.removeControl(baseControl);
+		mapControl = L.control.layers(baseLayers, overlays).addTo(map);
+		
+
+
+		$.getJSON({
+			url: "/get_route",
+			success: function(result) {
+				$.each(result, function(pos, data) {
+					walklay[pos] = L.layerGroup()
+					mapControl.addOverlay(walklay[pos] , 'Route: ' + pos);
+					map.addLayer(walklay[pos]);
+				    $.each(data, function(k, v) {
+					    L.circle(v, {
+						    radius: 15,
+    						color: "#9C3744",
+	    					fillColor: "#F4556A",
+		    				fillOpacity: 0.5,
+			    			weight: 1,
+				    		opacity: 0.2,
+					    	fillOpacity: 0.1
+					    }).addTo(walklay[pos]);
+						
+						map.setView(v, map.getZoom());
+						
+					});
+
+				    var geojson = {
+					    "type": "LineString",
+					    "coordinates": convertToLonLat(data)
+				    }
+				    
+					L.geoJSON(geojson, {style: {"color": getRandomColor(), "weight": 2, "opacity": 0.5 }}).addTo(walklay[pos]).bindPopup(pos);
+					
+				});
+			
+		}});
+		
+		function getRandomColor() {
+		  var letters = '0123456789ABCDEF';
+		  var color = '#';
+		  for (var i = 0; i < 6; i++) {
+		    color += letters[Math.floor(Math.random() * 16)];
+		  }
+		  return color;
+		}
+		
+		(function work() {
+			$.getJSON({
+			url: "/get_spawns",
+			success: function(result) {
+
+				$.each(result, function(k, v) {
+					if(typeof(spawn[k]) != 'undefined') {
+						map.removeLayer(spawn[k]);
+					}
+					if(v['endtime']==='True'){ 
+						var markertext = "Known Endtime"
+						var color = "blue"
+					} else { 
+						var markertext = "Unknown Endtime"
+						var color = "red"
+					}
+					spawn[k]=L.circle([v['lat'], v['lon']], {
+						radius: 2,
+						color: color,
+						fillColor: color,
+						weight: 1,
+						opacity: 0.7,
+						fillOpacity: 0.5
+					}).addTo(spawns).bindPopup(markertext);
+				})
+				    setTimeout(work, 60000);
+			    }
+			});
+		})();
+		
+		$.getJSON({
+			url: "/get_gymcoords",
+			success: function(result) {
+				$.each(result, function(k, v) {
+					L.marker([v['lat'], v['lon']], {icon: icon}).addTo(gyms).bindPopup(v['name']);
+				});
+			}
+		});
+		
+		var t = 0;
+
+		(function work() {
+			$.getJSON({
+				url: "/get_position",
+				success: function(result) {
+					var t = 0;
+					$.each(result, function(pos, data) {
+
+						
+						if(!marker.hasOwnProperty(pos)) {
+							poslay[pos] = L.layerGroup()
+							mapControl.addOverlay(poslay[pos] , 'Worker: ' + pos);
+							map.addLayer(poslay[pos]);
+							marker[pos] = L.marker([0,0], { icon: markericon, title: "Bot position"}).addTo(poslay[pos]).bindPopup(pos);
+							
+						}
+						marker[pos].setLatLng(data[t])
+						t = t +1;
+					    
+				})
+					setTimeout(work, 5000);
+				}
+			});
+		})();
+	});
+	</script>
+</body>
+</html>

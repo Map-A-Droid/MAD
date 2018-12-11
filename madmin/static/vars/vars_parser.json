@@ -1,0 +1,342 @@
+{
+	"areas": [
+	{
+	"name": "mon_mitm",
+	"description": "Overlay scanner (MITM) for detecting spawnpoints. Raids will also get detected",
+	"fields": [
+		{
+			"name": "init",
+    		"settings": {
+    	    	"type": "option",
+	    		"require": "true",
+		    	"values": "true|false",
+				"description": "Scan the area for gyms / spawnpoints"
+			}
+		},
+		{
+			"name": "geofence_included",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+			    "empty": "null",
+				"description": "Path to including geofence for scanarea"
+			}
+		},
+		{
+			"name": "geofence_excluded",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+			    "empty": "null",
+				"description": "Path to excluding geofence for scanarea"
+		    }
+	    },
+		{
+			"name": "routecalc",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of routefile"
+		    }
+	    },
+		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    },
+		{
+			"name": "coords_spawns_known",
+    		"settings": {
+	        	"type": "option",
+		    	"require": "true",
+			    "values": "true|false",
+				"description": "Scan all spawnpoints or just ones with unknwon endtimes"
+		    }
+	    }
+	],
+	"settings": [
+		{
+		"name": "speed",
+		"settings": {
+	    	"type": "text",
+			"require": "true",
+			"description": "Speed of player",
+			"output": "int"
+	    }
+	},
+	{
+		"name": "max_distance",
+		"settings": {
+			 "type": "text",
+			 "require": "true",
+			 "description": "Max. distance of walking - otherwise teleport",
+			 "output": "int"
+	    }
+	}
+    ]
+	},
+	{
+	"name": "raids_mitm",
+	"description": "Overlay scanner (MITM) for detecting raids",
+	"fields": [
+		{
+			"name": "init",
+    		"settings": {
+    	    	"type": "option",
+	    		"require": "true",
+		    	"values": "true|false",
+				"description": "Scan the area for gyms / spawnpoints"
+			}
+		},
+		{
+			"name": "geofence_included",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+			    "empty": "null",
+				"description": "Path to including geofence for scanarea"
+			}
+		},
+		{
+			"name": "geofence_excluded",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+			    "empty": "null",
+				"description": "Path to excluding geofence for scanarea"
+		    }
+	    },
+		{
+			"name": "routecalc",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of routefile"
+		    }
+	    },
+		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    }
+	],
+	"settings": [
+		{
+		"name": "speed",
+		"settings": {
+	    	"type": "text",
+			"require": "true",
+			"description": "Speed of player"
+	    }
+	},
+	{
+		"name": "max_distance",
+		"settings": {
+			 "type": "text",
+			 "require": "true",
+			 "description": "Max. distance of walking - otherwise teleport"
+	    }
+	}
+    ]
+	},
+	{
+	"name": "raid_ocr",
+	"description": "OCR scanner for detecting raids.",
+	"fields": [
+		{
+			"name": "geofence_included",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+			    "empty": "null",
+				"description": "Path to including geofence for scanarea"
+			}
+		},
+		{
+			"name": "geofence_excluded",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+			    "empty": "null",
+				"description": "Path to excluding geofence for scanarea"
+		    }
+	    },
+		{
+			"name": "routecalc",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of routefile"
+		    }
+	    },
+		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    }
+	],
+	"settings": [
+		{
+		"name": "speed",
+		"settings": {
+	    	"type": "text",
+			"require": "true",
+			"description": "Speed of player"
+	    }
+	},
+	{
+		"name": "max_distance",
+		"settings": {
+			 "type": "text",
+			 "require": "true",
+			 "description": "Max. distance of walking - otherwise teleport"
+	    }
+	}
+    ]
+	}
+	],
+	"devices": [
+	{
+	"name": "devices",
+	"fields": [
+		{
+			"name": "origin",
+    		"settings": {
+    	    	"type": "text",
+	    		"require": "true",
+				"empty": "null",
+				"description": "Name of device (from RGC settings)",
+				"lockonedit": "true"
+			}
+		},
+		{
+			"name": "daytime_area",
+    		"settings": {
+	        	"type": "areaselect",
+		    	"require": "true",
+			    "empty": null,
+				"description": "Area of daytime_area"
+			}
+		},
+		{
+			"name": "nighttime_area",
+    		"settings": {
+	        	"type": "areaselect",
+		    	"require": "true",
+			    "empty": null,
+				"description": "Area of nighttime_area"
+		    }
+	    }
+	],
+	"settings": [
+		{
+		"name": "post_walk_delay",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
+	    }
+	},
+	{
+		"name": "post_teleport_delay",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Delay in seconds after a teleport. (Default: 4.0. Do mind the '.0'. 500ms = 0.5s)"
+	    }
+	},
+	{
+		"name": "walk_after_teleport_distance",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Walk n seconds after teleport for getting data"
+	    }
+	},
+	{
+		"name": "cool_down_sleep",
+		"settings": {
+	    	"type": "option",
+			"require": "false",
+			"values": "false|true",
+			"description": "More coolsdown after teleport"
+	    }
+	},
+	{
+		"name": "post_turn_screen_on_delay",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Delay in seconds after a screenshot has been taken and about to be saved.( Default: 0.2)"
+	    }
+	},
+	{
+		"name": "post_pogo_start_delay",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
+	    }
+	},
+	{
+		"name": "restart_pogo",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+	    }
+	},
+	{
+		"name": "delay_after_hatch",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
+	    }
+	}
+    ]
+}
+],
+	"auth": [
+	{
+	"name": "auth",
+	"fields": [
+		{
+			"name": "username",
+    		"settings": {
+    	    	"type": "text",
+	    		"require": "true",
+				"empty": "null",
+				"description": "Username of device",
+				"lockonedit": "true"
+			}
+		},
+		{
+			"name": "password",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+			    "empty": "null",
+				"description": "Password of devic"
+			}
+		}
+	],
+	"settings": [
+    ]
+}
+]
+}
+	
+	

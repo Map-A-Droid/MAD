@@ -1,0 +1,72 @@
+<html
+<head>
+ <meta charset="utf-8">
+ <title>MADMIN - edit settings</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
+  <link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+  <link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
+  <style>
+  input[type=text], select {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  input[type=submit] {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }
+
+  div {
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 20px;
+	width: 80%;
+  }
+  hr {
+      border-style: solid;
+      border-color: lightgray;
+  }
+  </style>
+ </head>
+<body>
+<center><h1>{{header | safe }}</h1>
+	
+<h4><a href=/showsettings>Back to editor</a></h4>
+<div>
+{% for item in editform %}
+        {{item | safe }}
+{% endfor %}
+</div></center>
+<script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
+<script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/additional-methods.min.js"></script>
+<script>
+// just for the demos, avoids form submit
+jQuery.validator.setDefaults({
+  debug: true,
+  success: "valid"
+});
+var form = $( "#settings" );
+form.validate();
+$( "button" ).click(function() {
+  alert( "Valid: " + form.valid() );
+});
+</script>
+</body>
+</html>

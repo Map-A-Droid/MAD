@@ -1,0 +1,20 @@
+{
+	"areas": {
+		"has_settings": "true",
+		"could_edit": "true",
+		"field": "name",
+		"description": "Setting up scannertypes with geofence and other options."
+    },
+	"devices": {
+		"has_settings": "true",
+		"could_edit": "true",
+		"field": "origin",
+		"description": "Assign devices to areas"
+    },
+	"auth": {
+		"has_settings": "false",
+		"could_edit": "false",
+		"field": "username",
+		"description": "Add Username and Password for authentication with RGC"
+    }	
+}

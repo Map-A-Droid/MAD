@@ -1,0 +1,102 @@
+# DO NOT USE NOTEPAD TO EDIT CONFIG FILES! USE NOTEPAD++ INSTEAD!
+# Uncomment a line when you want to change its default value (Remove # at the beginning)
+# Please ensure to leave a space after the colon if a value is needed ("example-setting" "example-setting-with: value")
+# When your configuration is done, rename this file by removing the ".example" extension
+# A different config-files can be included directly in processes by "--config-file" or "-cf" and path
+# Value without # are needed for this script
+
+# MySql Settings
+######################
+
+# if you intend to use the priority queue functionality these settings are required
+#db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
+
+#dbip:                       # IP adress or hostname of the mysql server (needed for ocr mode)
+#dbusername:                 # Username of database (needed for ocr mode)
+#dbpassword:                 # Password of database (needed for ocr mode)
+#dbname:                     # Name of the database (needed for ocr mode)
+#dbport:                     # Port of the database (Default: 3306)
+
+# Websocket Settings (RGC receiver)
+######################
+
+#ws_ip:                     # IP for websockt to listen on (for RGC). Default: 0.0.0.0'
+#ws_port:                   # Port of the websocket to listen on. Default: 8080
+
+# MITM Receiver (Pogodroid data)
+######################
+
+#mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
+#mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
+#websocket_command_timeout:         # The max time to wait for a command to return (in seconds). Default: 30 seconds.
+
+# Walk Settings
+######################
+
+#initial_restart:            # Initial Pogo restart when scanner starts. (Default: true)
+#delay_after_hatch:          # Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)
+
+# Runtype settings
+######################
+
+#only_scan                   # running this instance in scanning mode without OCR tracing
+#only_ocr                    # running this instance in ocr mode without Scanning
+#ocr_multitask               # running OCR as multiprocessing task
+#ocr_thread_count:           # amount of processes/threads to run analysis with
+
+# path settings
+######################
+
+pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
+#temp_path:                  # Path for generated files while detecting raids (Default: temp/)
+#raidscreen_path:            # Path for taken screenshots (Default: screenshots/)
+#unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
+#successsave_path:           # Path for successful submitted crops (Default: success/)
+
+# other settings
+######################
+
+#cleanup_age:                # Delete Screenshots older than X minutes (Default: 1440. 0 to disable)
+#save_success                # Save successful submitted crops to successsave_path
+#last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
+#npValue:                    # Matching Zoom - Max Value (Default: 0.5 [for width = 720px]. 1.5 for width = 1080px)
+#npFrom:                     # Matching Zoom - Start Value (Default: 0.2 [for width = 720px]. 0.5 for width = 1080px)
+#gym_scan_distance:          # Distance of scanned Gyms (Default: 6) - reduce if you scan an area with many gyms at one place
+#weather                     # Detect weather from captured Image and post to database - if your frontend support this!
+#route_file:                 # Filename for Route Cache without extension (Default: route)
+#position_file:              # Filename for the bot's current position (Default: current)
+#home_lat:                   # Center Lat of your scan location (Default: 0.0)
+#home_lng:                   # Center Lng of your scan location (Default: 0.0)
+
+# MADmin
+######################
+#with_madmin                 # Start Madmin 
+#madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
+#madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
+#madmin_port:                # MADmin web port (Default: 5000)
+#madmin_time:                # MADmin clock format (12/24) (Default: 24)
+#madmin_noresponsive         # MADmin deactivate responsive tables
+#unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
+
+# timezone settings
+######################
+
+#timezone:                   # Time difference from UTC (f.e "+2" for Berlin/Germany) - Needed for Rocketmap Database
+
+#sleeptimer settings
+######################
+
+#sleeptimer                  # Sleep time for the phone
+#sleepinterval:              # f.e. [21:00, 05:00] to disable pk and device from 21 to 5 o'clock (9 pm to 5 am)
+
+# webhook
+######################
+
+#webhook                     # active support for webhook
+#webhook_url:                # URL endpoint for your webhook - beginning with http://
+#weather_webhook             # active support for weather webhook
+
+# Auto Hatch
+######################
+#auto_hatch                  # Active auto hatch of level 5 eggs
+#auto_hatch_number           # Auto hatch of level 5 Pokemon ID
