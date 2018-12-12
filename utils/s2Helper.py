@@ -55,7 +55,7 @@ class S2Helper:
     @staticmethod    
     def get_s2_cells_from_fence(geofence, cell_size=16):
         _geofence = geofence
-        south,east, north, west= _geofence.get_polygon_from_fence()
+        south, east, north, west= _geofence.get_polygon_from_fence()
         calc_route_data = []
         region = s2sphere.RegionCoverer()
         region.min_level = cell_size
@@ -67,9 +67,8 @@ class S2Helper:
         
         for cell_id in cell_ids:
             split_cell_id = str(cell_id).split(' ')
-            position = S2Helper.get_position_from_cell(int(split_cell_id[1], 16))
-            if _geofence.is_coord_inside_include_geofence([position[0], position[1]]):
-                calc_route_data.append([position[0], position[1]])
+            position = S2Helper.middle_of_cell(int(split_cell_id[1], 16))
+            calc_route_data.append([position[0], position[1]])
         log.debug('Detecting ' + str(len(calc_route_data)) +
                  ' L{} Cells in Area'.format(str(cell_size)))
 

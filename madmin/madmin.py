@@ -204,7 +204,7 @@ def delete_file():
 @app.route("/get_gyms")
 def get_gyms():
     gyms = []
-    data = json.loads(db_wrapper.get_gym_infos())
+    data = db_wrapper.get_gym_infos()
 
     hashdata = json.loads(getAllHash('gym'))
 
@@ -254,7 +254,7 @@ def get_raids():
     raids = []
     eggIdsByLevel = [1, 1, 2, 2, 3]
 
-    data = json.loads(db_wrapper.get_gym_infos())
+    data = db_wrapper.get_gym_infos()
 
     with open('pokemon.json') as f:
         mondata = json.load(f)

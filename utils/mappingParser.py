@@ -54,7 +54,6 @@ class MappingParser(object):
                 sys.exit(1)
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
-            print (geofence_excluded_raw_path)
             if geofence_excluded_raw_path is not None:
                 geofence_excluded = Path(geofence_excluded_raw_path)
                 if not geofence_excluded.is_file():
