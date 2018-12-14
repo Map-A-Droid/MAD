@@ -133,9 +133,9 @@ class WorkerOcr(WorkerBase):
                     or (lastLocation.lat == 0.0 and lastLocation.lng == 0.0)):
                 log.info("main: Teleporting...")
                 self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
-                delayUsed = self._devicesettings["post_teleport_delay"]
+                delayUsed = self._devicesettings.get("post_teleport_delay",7)
                 # Test for cooldown / teleported distance TODO: check this block...
-                if self._devicesettings["cool_down_sleep"]:
+                if self._devicesettings.get("cool_down_sleep",False):
                     if distance > 2500:
                         delayUsed = 30
                     elif distance > 5000:
@@ -144,7 +144,7 @@ class WorkerOcr(WorkerBase):
                         delayUsed = 60
                     log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
 
-                if 0 < self._devicesettings["walk_after_teleport_distance"] < distance:
+                if 0 < self._devicesettings.get("walk_after_teleport_distance",0) < distance:
                     toWalk = getDistanceOfTwoPointsInMeters(float(currentLocation.lat), float(currentLocation.lng),
                                                             float(currentLocation.lat) + 0.0001,
                                                             float(currentLocation.lng) + 0.0001)
@@ -162,7 +162,7 @@ class WorkerOcr(WorkerBase):
                 self._communicator.walkFromTo(lastLocation.lat, lastLocation.lng,
                                               currentLocation.lat, currentLocation.lng,
                                               speed)
-                delayUsed = self._devicesettings["post_walk_delay"]
+                delayUsed = self._devicesettings.get("post_walk_delay",7)
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(delayUsed)
 

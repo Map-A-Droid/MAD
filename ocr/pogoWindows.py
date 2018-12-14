@@ -303,9 +303,9 @@ class PogoWindows:
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-        maxLineLength = width / 3.30 + width * 0.03
+        maxLineLength = width / 6.35 + width * 0.03
         log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
-        minLineLength = width / 3.30 - width * 0.03
+        minLineLength = width / 6.35 - width * 0.03
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
 
@@ -317,7 +317,7 @@ class PogoWindows:
             for x1, y1, x2, y2 in line:
                 if not leftSide:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
-                            x2 - x1 >= minLineLength) and x1 > width / 2 and y1 < (height / 2):
+                            x2 - x1 >= minLineLength) and x1 > width / 2 and x2 > width / 2 and y1 < (height / 2):
                         log.debug("__checkRaidLine: Raid-tab is active - Line lenght: " + str(
                             x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
                         return True
@@ -325,7 +325,7 @@ class PogoWindows:
                     # Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2)) return False
                 else:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
-                            x2 - x1 >= minLineLength) and x1 < width / 2 and y1 < (height / 2):
+                            x2 - x1 >= minLineLength) and ((x1 < width / 2 and x2 < width / 2) or (x1 < width / 2 and x2 > width / 2)) and y1 < (height / 2):
                         log.debug("__checkRaidLine: Nearby is active - but not Raid-Tab")
                         if clickinvers:
                             xRaidTab = int(width - (x2 - x1))
@@ -359,7 +359,7 @@ class PogoWindows:
         image = image[int(height / 2 - (height / 3)):int(height / 2 + (height / 3)), 0:int(width)]
         cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), image)
 
-        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), hash, 18.95) > 0:
+        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), hash, 18) > 0:
             log.info("readAmountOfRaidsCircle: Raidcircle found, assuming raids nearby")
             os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
             return True

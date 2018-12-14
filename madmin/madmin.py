@@ -822,7 +822,7 @@ def showsettings():
         
     for var in vars:
         line = ''
-        header = '<thead><tr><th>' + (var.upper()) + ' <a href=/addnew?area=' + var + '>[Add new]</a></th><th>Basedata</th><th>Settings</th><th></th></tr></thead></td></tr>'
+        header = '<thead><tr><th>' + (var.upper()) + ' <a href=/addnew?area=' + var + '>[Add new]</a></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
         subheader = '<tr><td colspan="4">' + settings[var]['description'] + '</td></tr>'
         edit = '<td></td>'
         editsettings = '<td></td>'

@@ -30,6 +30,7 @@ class GeofenceHelper:
             log.info('Loaded %d geofenced and %d excluded areas.',
                      len(self.geofenced_areas),
                      len(self.excluded_areas))
+                     
 
     def get_polygon_from_fence(self):
         maxLat, minLat, maxLon, minLon = 0, 180, 0, 180
@@ -40,6 +41,7 @@ class GeofenceHelper:
                     minLat = min(fence['lat'], minLat)
                     maxLon = max(fence['lon'], maxLon)
                     minLon = min(fence['lon'], minLon)
+                                    
         return minLat, minLon, maxLat, maxLon
 
     def is_coord_inside_include_geofence(self, coordinate):
