@@ -8,7 +8,7 @@
 
 Install python3.6, pip3 (TODO: detailed description...)
 ```bash
-pip install requirements.txt
+pip install -r requirements.txt
 ```
 in case you want to use OCR to scan raids, run it with `requirements_ocr.txt`
 
