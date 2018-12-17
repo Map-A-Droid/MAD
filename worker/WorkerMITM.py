@@ -295,7 +295,7 @@ class WorkerMITM(WorkerBase):
             time.sleep(0.2)
 
     def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
-        timeout = self._applicationArgs.websocket_command_timeout
+        timeout = self._applicationArgs.mitm_wait_timeout
 
         log.info('Waiting for  data...')
         data_requested = None
