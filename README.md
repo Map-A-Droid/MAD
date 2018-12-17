@@ -15,6 +15,8 @@ Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devic
 - Rooted Android device
 - PogoDroid token, obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
 
+>MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
+
 ## Setup
 ### Ubuntu/Debian
 
@@ -35,9 +37,8 @@ pip3 install -r requirements.txt
 ```
 If you want to use OCR to scan raids, run with `requirements_ocr.txt`  
 
->MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
 
-### MAD concept
+## MAD concept
 ![MAD concept graphic](static/concept.jpg)
 
 
