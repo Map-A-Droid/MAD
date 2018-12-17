@@ -1,6 +1,8 @@
 # Map'A'Droid
 ![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 
+![MAD-Banner](static/banner_small_web.png)
+
 Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devices.
 
 ## Information
@@ -33,7 +35,7 @@ pip3 install -r requirements.txt
 ```
 If you want to use OCR to scan raids, run with `requirements_ocr.txt`  
 
-![MAD concept graphic](https://github.com/Map-A-Droid/MAD/static/concept.jpg)
+![MAD concept graphic](static/concept.jpg)
 
 >MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
 
