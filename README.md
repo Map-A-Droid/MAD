@@ -75,6 +75,9 @@ for controlling devices and receiving data from Pogodroid (if OCR enabled, also 
 
 If you want to run OCR on screenshots, run `-oo` to analyse screenshots
 
+## MADMIN
+MADMIN is a web frontend to configure MAD to your needs, see the current position of your devices, fix OCR failures. You can enable it with `with_madmin` in the config file or `-wm` as a command line argument. The default port is 5000. See the config.ini.example for more options.
+
 ## Security
 RGC and PogoDroid both support wss/HTTPS respectively. Thus you may setup
 reverse proxies for MAD. The Auth headers in RGC and Pogodroid both use Basic auth.
