@@ -35,9 +35,11 @@ pip3 install -r requirements.txt
 ```
 If you want to use OCR to scan raids, run with `requirements_ocr.txt`  
 
+>MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
+
+### MAD concept
 ![MAD concept graphic](static/concept.jpg)
 
->MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
 
 ## Configuration
 Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
