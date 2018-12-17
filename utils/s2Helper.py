@@ -55,6 +55,7 @@ class S2Helper:
     @staticmethod    
     def get_s2_cells_from_fence(geofence, cell_size=16):
         _geofence = geofence
+        log.warning("Calculating corners of fences")
         south, east, north, west= _geofence.get_polygon_from_fence()
         calc_route_data = []
         region = s2sphere.RegionCoverer()
@@ -62,9 +63,11 @@ class S2Helper:
         region.max_level = cell_size
         p1 = s2sphere.LatLng.from_degrees(north, west)
         p2 = s2sphere.LatLng.from_degrees(south, east)
+        log.warning("Calculating coverage of region")
         cell_ids = region.get_covering(
             s2sphere.LatLngRect.from_point_pair(p1, p2))
-        
+
+        log.warning("Iterating cell_ids")
         for cell_id in cell_ids:
             split_cell_id = str(cell_id).split(' ')
             position = S2Helper.middle_of_cell(int(split_cell_id[1], 16))
