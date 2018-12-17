@@ -1,31 +1,17 @@
-<html
-<head>
- <meta charset="utf-8">
- <title>MADmin</title>
- <meta name="viewport" content="width=device-width, initial-scale=1">
- <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
- <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
- <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
- <link rel="stylesheet" href=" https://cdn.datatables.net/fixedheader/3.1.5/css/fixedHeader.bootstrap.min.css">
- <link rel="stylesheet" href=" https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css">
- <link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
- <link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
- <style>
- .responsive {
-     width: 100%;
-     height: auto;
- }
- </style>
- </head>
-<body>
-<img src={{ url_for('static', filename='banner_small_web.png') }} class="responsive">
-<center>
-<h1>MADmin</h1>
-	<h3><a href=/raids>Check Raids</a></h3>
-	<h3><a href=/gyms>Check Gyms</a></h3>
-	<h3><a href=/unknown>Check Unknown Gyms</a></h3>
-	<h3><a href=/screens>Processed Screens</a></h3>
-	<h3><a href=/map>Map</a></h3>
-	<h3><a href=/showsettings>Mapping Editor</a></h3>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
+
+{% block content %}
+    <h2>MADmin</h2>
+    <h3><a href="/raids">Check Raids</a></h3>
+    <h3><a href="/gyms">Check Gyms</a></h3>
+    <h3><a href="/unknown">Check Unknown Gyms</a></h3>
+    <h3><a href="/screens">Processed Screens</a></h3>
+    <h3><a href="/map">Map</a></h3>
+	<h3><a href="/showsettings">Mapping Editor</a></h3>
+{% endblock %}

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    {% if title %}
+    <title>MADmin - {{ title }}</title>
+    {% else %}
+    <title>MADmin</title>
+    {% endif %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css" integrity="sha384-BVYiiSIFeK1dGmJRAkycuHAHRg32OmUcww7on3RYdg4Va+PmSTsz/K68vbdEjh4u" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap-theme.min.css" integrity="sha384-rHyoN1iRsVXV4nD0JutlnGaslCJuC7uwjduW9SVrLvRYooPp2bWYgmgJQIXwl/Sp" crossorigin="anonymous">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs/dt-1.10.18/fh-3.1.4/r-2.2.2/datatables.min.css" />
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    {% block header %}{% endblock %}
+    <style>
+        .responsive {
+            width: 100%;
+            height: auto;
+        }
+        .brandimg {
+            max-height: 20px;
+        }
+    </style>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js" integrity="sha384-Tc5IQib027qvyjSMfHjOMaLkfuWVxZxUPnCJA7l2mCWNIpG9mGCD8wGNIcPD7Txa"
+        crossorigin="anonymous"></script>
+    <script type="text/javascript" src="https://cdn.datatables.net/v/bs/dt-1.10.18/fh-3.1.4/r-2.2.2/datatables.min.js"></script>
+    {% block scripts %}{% endblock %}
+</head>
+
+<body>
+    <nav class="navbar navbar-inverse navbar-fixed">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar"
+                    aria-expanded="false" aria-controls="navbar">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a class="navbar-brand" href="https://github.com/Grennith/Map-A-Droid">
+                    <img src="{{ url_for('static', filename='banner_small_web.png') }}" class="brandimg">
+                </a>
+                <a class="navbar-brand" href="/">MADmin</a>
+            </div>
+            <div id="navbar" class="navbar-collapse collapse">
+                <ul class="nav navbar-nav">
+                    <li id="navraids"><a href="/raids">Check Raids</a></li>
+                    <li id="navgyms"><a href="/gyms">Check Gyms</a></li>
+                    <li id="navunknown"><a href="/unknown">Check Unknown Gyms</a></li>
+                    <li id="navscreens"><a href="/screens">Processed Screens</a></li>
+                    <li id="navmap"><a href="/map">Map</a></li>
+                    <li id="navsetting"><a href="/showsettings">Mapping Editor</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    <div class="container" role="main">
+        {% block content %}{% endblock %}
+    </div>
+
+    {% block bodyendscripts %}{% endblock %}
+</body>
+
+</html>
