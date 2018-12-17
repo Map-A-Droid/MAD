@@ -28,11 +28,11 @@
     background-color: #45a049;
   }
 
-  div {
+  #inputdata {
     border-radius: 5px;
     background-color: #f2f2f2;
     padding: 20px;
-    width: 80%;
+    /*width: 80%;*/
   }
 
   hr {
@@ -47,15 +47,19 @@
 <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
 <script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/additional-methods.min.js"></script>
 <script>
-  // just for the demos, avoids form submit
-  jQuery.validator.setDefaults({
-    debug: true,
-    success: "valid"
-  });
-  var form = $("#settings");
-  form.validate();
-  $("button").click(function () {
-    alert("Valid: " + form.valid());
+  $(document).ready(function () {
+    $("#navsetting").addClass("active");
+
+    // just for the demos, avoids form submit
+    jQuery.validator.setDefaults({
+      debug: true,
+      success: "valid"
+    });
+    var form = $("#settings");
+    form.validate();
+    $("button").click(function () {
+      alert("Valid: " + form.valid());
+    });
   });
 </script>
 
@@ -66,7 +70,7 @@
 <h2>{{header | safe }}</h2>
 
 <h4><a href="/showsettings">Back to editor</a></h4>
-<div>
+<div id="inputdata">
   {% for item in editform %}
   {{item | safe }}
   {% endfor %}
