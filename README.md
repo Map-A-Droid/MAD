@@ -1,49 +1,69 @@
-# Requirements
-- Python3.6
-- MySQL DB holding basic Monocle or RM structure
-- Rooted Android device running RemoteGPSController and Pogodroid
+# Map'A'Droid
+![Python 3.6](https://img.shields.io/badge/python-3.6-blue.svg)
 
-# Setup
-## Debian
+Map'A'Droid is a Raid & Mon scanner for Pokémon GO, based on Android devices.
 
-Install python3.6, pip3 (TODO: detailed description...)
+## Information
+*  [Discord](https://discord.gg/7TT58jU) - For general support
+*  [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
+
+## Requirements
+- Python 3.6
+- MySQL database, with RocketMap or Monocle structure
+- Rooted Android device
+
+## Setup
+### Ubuntu/Debian
+
+Install `python 3.6` & `pip3` according to docs for your platform.  
+
+Once Python is installed, ensure that `pip` and `python` is installed correctly by running:
+* `python3.6 --version` - should return `3.6.X`
+* `pip3 --version` - If it returns a version, it is working.  
+
+Clone this repository:
 ```bash
-pip install -r requirements.txt
+git clone https://github.com/Map-A-Droid/MAD.git
 ```
-in case you want to use OCR to scan raids, run it with `requirements_ocr.txt`
 
+Make sure you're in the directory of MAD and run:
+```bash
+pip3 install -r requirements.txt
+```
+If you want to use OCR to scan raids, run with `requirements_ocr.txt`  
 
-## General config
-Populate configs/config.ini with at least the DB and websocket configurations 
-(examples on the values to be inserted can be found in config.ini.example)
+## Configuration
+Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
 
-In order to map devices to areas, populate configs/mappings.json.
-Refer to mappings_example.json for examples or run `python3.6 start.py -wm` and open the mappings editor.
-Each area *requires* `geofence_included`. A geofence can easily be created with http://geo.jasparke.net/.
+### Multiple Devices
+In order to map devices to areas, do the same with `mappings_example.json` and rename it to `mappings.json`
+Refer to mappings_example.json for examples or run `python3.6 start.py -wm` and open the mappings editor.  
+
+### Geofence
+Each area *requires* `geofence_included`. A geofence can easily be created with [geo.jesparke.net](http://geo.jasparke.net/)
 > A geofence requires a name:
 > `[geofence name]`
-> with `lat, lng` per line, no empty lines at the end of file
+> with `lat, lng` per line, no empty lines at the end of file  
 
 
-## Apps
-RGC and Pogodroid both require an Origin header field that's configured in mappings.json.
+## Applications
+[RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) both require an Origin header field that's configured in mappings.json.
 These Origins need to be unique per running python instance.
 Furthermore, RGC takes the websocket port as destination, Pogodroid the `mitmreceiver_port`.
 
-## First Starting MAD
-Copy config.ini.example to config.ini and edit database and other settings.
-Start `python3.6 configmode.py` and open MADmin in your Browser. Setting up 'Mapping Editor'.
+## Launching MAD
+Make sure you're in the directory of MAD and run:
+```bash
+python3.6 start.py
+```  
 
-# Starting MAD
-Simply run `python3.6 start.py`
-
-Usually you will want to append `-wm` and `-os` 
+Usually you want to append `-wm` and `-os` 
 as arguments to start madmin (browser based monitoring) and the scanner (`-os`) responsible 
 for controlling devices and receiving data from Pogodroid (if OCR enabled, also take screenshots).
 
 If you want to run OCR on screenshots, run `-oo` to analyse screenshots
 
-# Security
-RGC and Pogodroid both support wss/HTTPS respectively. Thus you may setup 
+## Security
+RGC and PogoDroid both support wss/HTTPS respectively. Thus you may setup 
 reverse proxies for MAD. The Auth headers in RGC and Pogodroid both use Basic auth.
 Meaning the password/username is not encrypted per default, that's to be done by SSL/TLS (wss, HTTPS).
