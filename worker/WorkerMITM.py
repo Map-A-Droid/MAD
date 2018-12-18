@@ -234,7 +234,7 @@ class WorkerMITM(WorkerBase):
                 delayUsed = self._devicesettings.get('post_walk_delay',7)
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
-            log.debug("Checking is last_scanned is enabled...")
+
             if self._applicationArgs.last_scanned:
                 log.info('main: Set new scannedlocation in Database')
                 # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
