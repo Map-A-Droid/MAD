@@ -590,16 +590,19 @@ class DbWrapperBase(ABC):
             "WHERE calc_endminsec is NULL"
         )
         list_of_coords = []
+        log.debug("{DbWrapperBase::get_undetected_spawns} executing select query")
         res = self.execute(query)
+        log.debug("{DbWrapperBase::get_undetected_spawns} result of query: %s" % str(res))
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
 
         if geofence_helper is not None:
+            log.debug("{DbWrapperBase::get_undetected_spawns} applying geofence")
             geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
             log.debug(geofenced_coords)
             return geofenced_coords
         else:
-            import numpy as np
+            log.debug("{DbWrapperBase::get_undetected_spawns} converting to numpy")
             to_return = np.zeros(shape=(len(list_of_coords), 2))
             for i in range(len(to_return)):
                 to_return[i][0] = list_of_coords[i][0]
