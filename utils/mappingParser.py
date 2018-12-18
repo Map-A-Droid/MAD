@@ -90,6 +90,8 @@ class MappingParser(object):
                 # calculate all level N cells (mapping back from mapping above linked to mode)
                 coords = S2Helper.get_s2_cells_from_fence(geofence=geofence_helper,
                                                           cell_size=mode_mapping[mode]["s2_cell_level"])
+                # coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
+                #                                       geofence_helper)
 
             # retrieve the range and max count per circle from central mapping...
             route_manager = RouteManager(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],

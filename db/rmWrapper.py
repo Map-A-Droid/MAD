@@ -695,7 +695,7 @@ class RmWrapper(DbWrapperBase):
                              .format(mon_id, lat, lon, despawn_time, spawnid))
 
                 self.webhook_helper.submit_pokemon_webhook(
-                    mon_id, "MON", int(time.time()),
+                    str(abs(wild_mon['encounter_id'])), mon_id, int(time.time()),
                     spawnid, lat, lon, int(despawn_time_unix)
                 )
 

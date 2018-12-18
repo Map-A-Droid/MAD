@@ -33,7 +33,7 @@ class GeofenceHelper:
                      
 
     def get_polygon_from_fence(self):
-        maxLat, minLat, maxLon, minLon = 0, 180, 0, 180
+        maxLat, minLat, maxLon, minLon = -90, 90, -180, 180
         if self.geofenced_areas:
             for va in self.geofenced_areas:
                 for fence in va['polygon']:
