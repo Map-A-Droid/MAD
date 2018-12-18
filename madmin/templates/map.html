@@ -52,14 +52,18 @@
 		var walklay = L.layerGroup();
 		var marker = {};
 		var spawn = L.circle;
-		var icon = L.icon({
-		        iconUrl: 'static/stop.png',
-		        iconSize: [32, 32]
-		})
+
+		var gymicon = function(team) {
+			return L.icon({
+				iconUrl: 'static/gym_'+team+'.png',
+				iconSize: [32, 32]
+			});
+		};
+
 		var markericon = L.icon({
-		        iconUrl: 'static/bot.png',
-		        iconSize: [20, 20]
-		})
+			iconUrl: 'static/bot.png',
+			iconSize: [20, 20]
+		});
 
 		var title = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
@@ -84,8 +88,6 @@
 		map.addLayer(fence);
 		map.removeControl(baseControl);
 		mapControl = L.control.layers(baseLayers, overlays).addTo(map);
-		
-
 
 		$.getJSON({
 			url: "/get_route",
@@ -94,16 +96,16 @@
 					walklay[pos] = L.layerGroup()
 					mapControl.addOverlay(walklay[pos] , 'Route: ' + pos);
 					map.addLayer(walklay[pos]);
-				    $.each(data, function(k, v) {
-					    L.circle(v, {
-						    radius: 15,
-    						color: "#9C3744",
-	    					fillColor: "#F4556A",
-		    				fillOpacity: 0.5,
-			    			weight: 1,
-				    		opacity: 0.2,
-					    	fillOpacity: 0.1
-					    }).addTo(walklay[pos]);
+						$.each(data, function(k, v) {
+							L.circle(v, {
+								radius: 15,
+								color: "#9C3744",
+								fillColor: "#F4556A",
+								fillOpacity: 0.5,
+								weight: 1,
+								opacity: 0.2,
+								fillOpacity: 0.1
+							}).addTo(walklay[pos]);
 						
 						map.setView(v, map.getZoom());
 						
@@ -163,7 +165,7 @@
 			url: "/get_gymcoords",
 			success: function(result) {
 				$.each(result, function(k, v) {
-					L.marker([v['lat'], v['lon']], {icon: icon}).addTo(gyms).bindPopup(v['name']);
+					L.marker([v['lat'], v['lon']], {icon: gymicon(v['team_id'])}).addTo(gyms).bindPopup(v['name']);
 				});
 			}
 		});

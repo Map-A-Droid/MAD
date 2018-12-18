@@ -492,7 +492,8 @@ def get_gymcoords():
             'name': gym['name'],
             'img': gym['url'],
             'lat': gym['latitude'],
-            'lon': gym['longitude']
+            'lon': gym['longitude'],
+            'team_id': gym['team_id']
             })
 
     return jsonify(coords)
