@@ -214,7 +214,7 @@ if __name__ == "__main__":
             try:
                 mapping_parser = MappingParser(db_wrapper)
                 device_mappings = mapping_parser.get_devicemappings()
-                routemanagers = mapping_parser.get_routemanagers()
+                routemanagers = mapping_parser.get_routemanagers(args.delay_after_hatch)
             except KeyError as e:
                 log.fatal("Could not parse mappings. Please check those. Description: %s" % str(e))
                 sys.exit(1)

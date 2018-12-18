@@ -276,4 +276,5 @@ class WebsocketServerBase(ABC):
 
         log.debug("Received response: %s" % str(result))
         self.__removeRequest(messageId)
+        log.debug("Returning response to worker.")
         return result

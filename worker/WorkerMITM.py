@@ -184,7 +184,6 @@ class WorkerMITM(WorkerBase):
                     (settings['max_distance'] and 0 < settings['max_distance'] < distance)
                     or (lastLocation.lat == 0.0 and lastLocation.lng == 0.0)):
                 log.info("main: Teleporting...")
-                # TODO: catch exception...
                 try:
                     self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
                 except WebsocketWorkerRemovedException:
