@@ -13,7 +13,7 @@ Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devic
 - Python 3.6
 - MySQL database, with RocketMap or Monocle structure
 - Rooted Android device
-- PogoDroid token, obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
+- PogoDroid token (only nessesary for MITM Mode), obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
 
 >MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
 
@@ -41,6 +41,9 @@ If you want to use OCR to scan raids, run with `requirements_ocr.txt`
 ## MAD concept
 ![MAD concept graphic](static/concept.jpg)
 
+**RGC (Remote GPS Controller)** is responsible for receiving the GPS commands from your server, taking screenshots (if OCR is enabled) and managing Pokémon Go on the phone (restarting, detecting if POGO is opened, etc)
+
+**PogoDroid** is the MITM (Man in the middle) App for reading the data from Pokémon Go and send it to your server. If you use the OCR method, you don’t need this app. 
 
 ## Configuration
 Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
