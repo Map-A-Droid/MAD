@@ -222,25 +222,26 @@ class WebhookHelper(object):
             image_url = "0"
 
         if self.gyminfo is not None:
-            if str(gymid) in self.gyminfo:
-                name = self.gyminfo[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
-                lat = self.gyminfo[str(gymid)]["latitude"]
-                lng = self.gyminfo[str(gymid)]["longitude"]
-                image_url = self.gyminfo[str(gymid)]["url"]
-                if self.gyminfo[str(gymid)]["description"]:
+            info_of_gym = self.gyminfo.get(gymid, None)
+            if info_of_gym is not None:
+                name = info_of_gym.get("name", "unknown").replace("\\", r"\\").replace('"', '')
+                lat = info_of_gym["latitude"]
+                lng = info_of_gym["longitude"]
+                image_url = info_of_gym["url"]
+                if info_of_gym["description"]:
                     try:
-                        description = self.gyminfo[str(gymid)]["description"]\
+                        description = info_of_gym["description"]\
                             .replace("\\", r"\\").replace('"', '').replace("\n", "")
                     except (ValueError, TypeError) as e:
                         description = ""
                 if 'park' in self.gyminfo[str(gymid)]:
                     try:
-                        park = int(self.gyminfo[str(gymid)].get("park", 0))
+                        park = int(info_of_gym.get("park", 0))
                     except (ValueError, TypeError) as e:
                         park = 0
                 if 'sponsor' in self.gyminfo[str(gymid)]:
                     try:
-                        sponsor = int(self.gyminfo[str(gymid)].get("sponsor", 0))
+                        sponsor = int(info_of_gym.get("sponsor", 0))
                     except (ValueError, TypeError) as e:
                         sponsor = 0
 

@@ -123,12 +123,18 @@ class WorkerMITM(WorkerBase):
         while not self._stop_worker_event.isSet():
             while MadGlobals.sleep and self._route_manager_nighttime is None:
                 time.sleep(1)
-
-            # check if pogo is topmost and start if necessary
-            self._start_pogo()
-
             log.debug("Worker: acquiring lock for restart check")
             self._work_mutex.acquire()
+
+            # check if pogo is topmost and start if necessary
+            try:
+                self._start_pogo()
+            except WebsocketWorkerRemovedException:
+                log.error("Timeout starting pogo on %s" % str(self.id))
+                self._stop_worker_event.set()
+                self._work_mutex.release()
+                return
+
             log.debug("Worker: acquired lock")
             # Restart pogo every now and then...
             if self._devicesettings.get("restart_pogo", 80) > 0:
@@ -179,7 +185,13 @@ class WorkerMITM(WorkerBase):
                     or (lastLocation.lat == 0.0 and lastLocation.lng == 0.0)):
                 log.info("main: Teleporting...")
                 # TODO: catch exception...
-                self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
+                try:
+                    self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
+                except WebsocketWorkerRemovedException:
+                    log.error("Timeout setting location for %s" % str(self.id))
+                    self._stop_worker_event.set()
+                    self._work_mutex.release()
+                    return
                 delayUsed = self._devicesettings.get('post_teleport_delay', 7)
                 # Test for cooldown / teleported distance TODO: check this block...
                 if self._devicesettings.get('cool_down_sleep', False):
@@ -196,18 +208,30 @@ class WorkerMITM(WorkerBase):
                                                             float(currentLocation.lat) + 0.0001,
                                                             float(currentLocation.lng) + 0.0001)
                     log.info("Walking a bit: %s" % str(toWalk))
-                    time.sleep(0.3)
-                    self._communicator.walkFromTo(currentLocation.lat, currentLocation.lng,
-                                                  currentLocation.lat + 0.0001, currentLocation.lng + 0.0001, 11)
-                    log.debug("Walking back")
-                    time.sleep(0.3)
-                    self._communicator.walkFromTo(currentLocation.lat + 0.0001, currentLocation.lng + 0.0001,
-                                                  currentLocation.lat, currentLocation.lng, 11)
+                    try:
+                        time.sleep(0.3)
+                        self._communicator.walkFromTo(currentLocation.lat, currentLocation.lng,
+                                                      currentLocation.lat + 0.0001, currentLocation.lng + 0.0001, 11)
+                        log.debug("Walking back")
+                        time.sleep(0.3)
+                        self._communicator.walkFromTo(currentLocation.lat + 0.0001, currentLocation.lng + 0.0001,
+                                                      currentLocation.lat, currentLocation.lng, 11)
+                    except WebsocketWorkerRemovedException:
+                        log.error("Timeout setting location for %s" % str(self.id))
+                        self._stop_worker_event.set()
+                        self._work_mutex.release()
+                        return
                     log.debug("Done walking")
             else:
                 log.info("main: Walking...")
-                self._communicator.walkFromTo(lastLocation.lat, lastLocation.lng,
-                                              currentLocation.lat, currentLocation.lng, speed)
+                try:
+                    self._communicator.walkFromTo(lastLocation.lat, lastLocation.lng,
+                                                  currentLocation.lat, currentLocation.lng, speed)
+                except WebsocketWorkerRemovedException:
+                    log.error("Timeout setting location for %s" % str(self.id))
+                    self._stop_worker_event.set()
+                    self._work_mutex.release()
+                    return
                 delayUsed = self._devicesettings.get('post_walk_delay',7)
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(delayUsed)
@@ -271,7 +295,7 @@ class WorkerMITM(WorkerBase):
             time.sleep(0.2)
 
     def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
-        timeout = self._applicationArgs.websocket_command_timeout
+        timeout = self._applicationArgs.mitm_wait_timeout
 
         log.info('Waiting for  data...')
         data_requested = None
