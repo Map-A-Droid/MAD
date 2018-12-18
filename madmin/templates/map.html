@@ -20,6 +20,11 @@
 			height: 100%;
 			border: 1px solid #333;
 		}
+
+		.gympopup .leaflet-popup-tip,
+		.gympopup .leaflet-popup-content-wrapper {
+			text-align: center;
+		}
 	</style>
 </head>
 <body>
@@ -154,7 +159,9 @@
 						weight: 1,
 						opacity: 0.7,
 						fillOpacity: 0.5
-					}).addTo(spawns).bindPopup(markertext);
+					}).addTo(spawns)
+						.bindPopup(markertext+'<br><a href="https://maps.google.de/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a>', 
+							{'className': 'gympopup'})
 				})
 				    setTimeout(work, 60000);
 			    }
@@ -165,7 +172,10 @@
 			url: "/get_gymcoords",
 			success: function(result) {
 				$.each(result, function(k, v) {
-					L.marker([v['lat'], v['lon']], {icon: gymicon(v['team_id'])}).addTo(gyms).bindPopup(v['name']);
+					L.marker([v['lat'], v['lon']], {icon: gymicon(v['team_id'])})
+						.bindPopup('<strong>'+v['name']+'</strong><br><br><a href="https://maps.google.de/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a><br>'+v['id'], 
+							{'className': 'gympopup'})
+						.addTo(gyms);
 				});
 			}
 		});
@@ -178,19 +188,18 @@
 				success: function(result) {
 					var t = 0;
 					$.each(result, function(pos, data) {
-
 						
 						if(!marker.hasOwnProperty(pos)) {
 							poslay[pos] = L.layerGroup()
 							mapControl.addOverlay(poslay[pos] , 'Worker: ' + pos);
 							map.addLayer(poslay[pos]);
-							marker[pos] = L.marker([0,0], { icon: markericon, title: "Bot position"}).addTo(poslay[pos]).bindPopup(pos);
-							
+							marker[pos] = L.marker([0,0], { icon: markericon, title: "Bot position"})
+								.bindPopup(pos)
+								.addTo(poslay[pos]);
 						}
 						marker[pos].setLatLng(data[t])
 						t = t +1;
-					    
-				})
+					})
 					setTimeout(work, 5000);
 				}
 			});
