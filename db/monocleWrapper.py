@@ -868,13 +868,12 @@ class MonocleWrapper(DbWrapperBase):
 
     def __encode_hash_json(self, team_id, latitude, longitude, name, url, park, sponsor):
         gym_json = {'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '',
-                    'url': url}
+                    'url': url, 'park': park}
 
-        if park != "unknown":
-            gym_json['park'] = park
-        if sponsor is not 0:
+        if sponsor is not None:
             gym_json['sponsor'] = sponsor
-
+        else:
+            gym_json['sponsor'] = 0
         log.debug(gym_json)
 
         return gym_json
