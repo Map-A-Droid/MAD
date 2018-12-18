@@ -239,12 +239,11 @@ class WorkerMITM(WorkerBase):
                 log.info('main: Set new scannedlocation in Database')
                 # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
                 self.__add_task_to_loop(self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime))
-                
+
             log.debug("Waiting for data to be received...")
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                    timestamp=curTime)
             _data_err_counter = data_error_counter
-
 
         t_mitm_data.join()
         t_asyncio_loop.join()

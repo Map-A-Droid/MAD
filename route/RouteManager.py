@@ -187,6 +187,8 @@ class RouteManager:
             elif self.__currentIndexOfRoute >= len(self.__route):
                 self.__currentIndexOfRoute = 0
             self.__lastRoundEggHatch = False
+        log.info("Done grabbing next coord, releasing lock and returning location: %s, %s"
+                 % (str(nextLat), str(nextLng)))
         self.__managerMutex.release()
         return Location(nextLat, nextLng)
 
