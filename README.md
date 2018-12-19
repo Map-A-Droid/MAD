@@ -13,7 +13,7 @@ Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devic
 - Python 3.6
 - MySQL database, with RocketMap or Monocle structure
 - Rooted Android device
-- PogoDroid token (only nessesary for MITM Mode), obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
+- PogoDroid token (only necessary for MITM Mode), obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
 
 >MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
 
@@ -35,7 +35,7 @@ Make sure you're in the directory of MAD and run:
 ```bash
 pip3 install -r requirements.txt
 ```
-If you want to use OCR to scan raids, run with `requirements_ocr.txt`  
+If you want to use OCR to scan raids, run with `requirements_ocr.txt` and install additional packages: `apt-get install tesseract-ocr python-opencv`
 
 
 ## MAD concept
@@ -54,20 +54,24 @@ Refer to mappings_example.json for examples or run `python3.6 start.py -wm` and 
 
 ### Geofence
 Each area *requires* `geofence_included`. A geofence can easily be created with [geo.jesparke.net](http://geo.jasparke.net/)
-> A geofence requires a name:
-> `[geofence name]`
-> with `lat, lng` per line, no empty lines at the end of file  
+> A geofence requires a name: `[geofence name]` with `lat, lng` per line, no empty lines at the end of file  
 
+## Phone Setup
+#### Rooting
+1. Ensure your phone has an unlocked bootloader and is able to support root. [Lineage OS](https://lineageos.org/) is a good place to start for a custom ROM and they have good installation instruction for each device.  
+2. Install [Magisk](https://www.xda-developers.com/how-to-install-magisk/) to root the phone via recovery. Repackage the MagiskManager App and add Pokémon Go to Magisk Hide. Make sure to delete the folder `/sdcard/MagiskManager` after repackaging.
+>It's necessary to pass the Safetynet check to run Pokémon Go on rooted phones. Check the Safetynet status in the MagiskManager App.
 
-## Applications
-[RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) both require an Origin header field that's configured in mappings.json.
-These Origins need to be unique per running python instance.  
+#### Applications
+Install [RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) (only necessary for MITM mode) on the phone. RGC must be installed as a system app. Best practice is to convert it to a system app with [link2sd](https://play.google.com/store/apps/details?id=com.buak.Link2SD).
+Both apps requires an Origin header field that's configured in mappings.json. These Origins need to be unique per running python instance.  
 The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for PogoDroid is `http://<ip>:<port>`.
 >The port for RGC is 8080 by default and can changed with `ws_port`.  
 >The port for PogoDroid is 4000 by default and can changed with `mitmreceiver_port`.  
 >**The IP address is the IP of your server, not your phone!**  
 
-To login into PogoDroid, you need a token. You can obtain a token with sending the command `!token` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
+
+To login into PogoDroid, you need a token. You can obtain a token by sending the command `!token` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
 
 ## Launching MAD
 Make sure you're in the directory of MAD and run:
