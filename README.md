@@ -76,7 +76,7 @@ To login into PogoDroid, you need a token. You can obtain a token by clicking on
 ## Launching MAD
 Make sure you're in the directory of MAD and run:
 ```bash
-python3.6 start.py
+python3 start.py
 ```  
 
 Usually you want to append `-wm` and `-os`
