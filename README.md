@@ -43,7 +43,7 @@ If you want to use OCR to scan raids, run with `requirements_ocr.txt`
 
 **RGC (Remote GPS Controller)** is responsible for receiving the GPS commands from your server, taking screenshots (if OCR is enabled) and managing Pokémon Go on the phone (restarting, detecting if POGO is opened, etc)
 
-**PogoDroid** is the MITM (Man in the middle) App for reading the data from Pokémon Go and send it to your server. If you use the OCR method, you don’t need this app. 
+**PogoDroid** is the MITM (Man in the middle) App for reading the data from Pokémon Go and send it to your server. If you use the OCR method, you don’t need this app.
 
 ## Configuration
 Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
@@ -61,8 +61,11 @@ Each area *requires* `geofence_included`. A geofence can easily be created with 
 
 ## Applications
 [RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) both require an Origin header field that's configured in mappings.json.
-These Origins need to be unique per running python instance.
-Furthermore, RGC takes the websocket port as destination, Pogodroid the `mitmreceiver_port`.
+These Origins need to be unique per running python instance.  
+The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for PogoDroid is `http://<ip>:<port>`.
+>The port for RGC is 8080 by default and can changed with `ws_port`.  
+>The port for PogoDroid is 4000 by default and can changed with `mitmreceiver_port`.  
+>**The IP address is the IP of your server, not your phone!**  
 
 To login into PogoDroid, you need a token. You can obtain a token with sending the command `!token` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
 
