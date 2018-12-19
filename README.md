@@ -71,7 +71,7 @@ The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for Pog
 >**The IP address is the IP of your server, not your phone!**  
 
 
-To login into PogoDroid, you need a token. You can obtain a token by sending the command `!token` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
+To login into PogoDroid, you need a token. You can obtain a token by clicking on `Get Token` in PogoDroid and sending the command `!settoken <your_token>` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
 
 ## Launching MAD
 Make sure you're in the directory of MAD and run:
