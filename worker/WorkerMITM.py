@@ -175,7 +175,6 @@ class WorkerMITM(WorkerBase):
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
             log.debug("Getting time")
-            curTime = time.time()
             if MadGlobals.sleep:
                 speed = self._route_manager_nighttime.settings.get("speed", 0)
             else:
@@ -232,6 +231,7 @@ class WorkerMITM(WorkerBase):
                     self._work_mutex.release()
                     return
                 delayUsed = self._devicesettings.get('post_walk_delay',7)
+            curTime = time.time() + 1 # the time we will take as a starting point to wait for data...
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
 
