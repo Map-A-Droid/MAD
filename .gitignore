@@ -20,3 +20,4 @@ configs/coords/*
 # in case you create a virtual env called "env"
 env
 env/*
+venv

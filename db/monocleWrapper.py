@@ -439,19 +439,20 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url, "
-            "IFNULL(forts.park, 'unknown'), forts.sponsor "
-            "FROM forts"
+            "IFNULL(forts.park, 'unknown'), forts.sponsor, fort_sightings.team "
+            "FROM forts "
+            "INNERT JOIN fort_sightings ON forts.id = fort_sightings.id"
         )
 
         res = self.execute(query)
 
-        for (id, lat, lon, name, url, park, sponsor) in res:
+        for (id, lat, lon, name, url, park, sponsor, team) in res:
             if url is not None:
                 if not self.application_args.justjson:
                     filename = url_image_path + '_' + str(id) + '_.jpg'
                     log.debug('Downloading', filename)
                     self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encode_hash_json('0', lat, lon, name, url, park, sponsor)
+                gyminfo[id] = self.__encode_hash_json(team, lat, lon, name, url, park, sponsor)
 
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
@@ -462,14 +463,15 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT forts.external_id, forts.lat, forts.lon, forts.name, forts.url, "
-            "IFNULL(forts.park, 'unknown'), forts.sponsor "
-            "FROM forts"
+            "IFNULL(forts.park, 'unknown'), forts.sponsor, fort_sightings.team "
+            "FROM forts "
+            "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id"
         )
 
         res = self.execute(query)
 
-        for (external_id, lat, lon, name, url, park, sponsor) in res:
-            gyminfo[external_id] = self.__encode_hash_json("0", lat, lon, name, url, park, sponsor)
+        for (external_id, lat, lon, name, url, park, sponsor, team) in res:
+            gyminfo[external_id] = self.__encode_hash_json(team, lat, lon, name, url, park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):

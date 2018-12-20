@@ -525,15 +525,16 @@ class RmWrapper(DbWrapperBase):
 
         query = (
             "SELECT gym.gym_id, gym.latitude, gym.longitude, "
-            "gymdetails.name, gymdetails.description, gymdetails.url "
+            "gymdetails.name, gymdetails.description, gymdetails.url, "
+            "gym.team_id "
             "FROM gym INNER JOIN gymdetails "
             "WHERE gym.gym_id = gymdetails.gym_id"
         )
 
         res = self.execute(query)
 
-        for (gym_id, latitude, longitude, name, description, url) in res:
-            gyminfo[gym_id] = self.__encode_hash_json("0", latitude, longitude, name, description, url)
+        for (gym_id, latitude, longitude, name, description, url, team_id) in res:
+            gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, name, description, url)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
