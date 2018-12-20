@@ -137,10 +137,18 @@ def sleeptimer():
         tmFrom = datetime.datetime.now().replace(hour=int(sts1[0]),minute=int(sts1[1]),second=0,microsecond=0)
         tmTil = datetime.datetime.now().replace(hour=int(sts2[0]),minute=int(sts2[1]),second=0,microsecond=0)
         tmNow = datetime.datetime.now()
+
+        # check if current time is past start time
+        # and the day has changed already. thus shift
+        # start time back to the day before
+        if tmFrom > tmTil > tmNow:
+            tmFrom = tmFrom.replace(day=tmFrom.day-1)
+
+        # check if start time is past end time thus
+        # shift start time one day into the future
         if tmTil < tmFrom:
-            tmTil = tmTil + datetime.timedelta(hours=24)
-        else:
-            tmTil = tmTil
+            tmTil = tmTil.replace(day=tmTil.day+1)
+
         log.debug("Time now: %s" % tmNow)
         log.debug("Time From: %s" % tmFrom)
         log.debug("Time Til: %s" % tmTil)

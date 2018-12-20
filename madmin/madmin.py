@@ -4,7 +4,7 @@ import sys
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
 
-sys.path.append("..") # Adds higher directory to python modules path.
+sys.path.append("..")  # Adds higher directory to python modules path.
 
 import threading
 import logging
@@ -21,7 +21,7 @@ from shutil import copyfile
 from math import floor
 
 app = Flask(__name__)
-cache = Cache(app,config={'CACHE_TYPE': 'simple'})
+cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 log = logging.getLogger(__name__)
 
@@ -36,9 +36,9 @@ else:
     sys.exit(1)
 
 
-#@app.before_first_request
-#def init():
-#    task = my_task.apply_async()
+# @app.before_first_request
+# def init():
+#     task = my_task.apply_async()
 def run_job():
     try:
         while True:
@@ -53,34 +53,41 @@ def run_job():
 
 @app.after_request
 def after_request(response):
-  response.headers.add('Access-Control-Allow-Origin', '*')
-  response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-  response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
-  return response
+    response.headers.add('Access-Control-Allow-Origin', '*')
+    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    return response
+
 
 @app.route('/screens', methods=['GET'])
 def screens():
-    return render_template('screens.html', responsive = str(args.madmin_noresponsive).lower())
+    return render_template('screens.html', responsive=str(args.madmin_noresponsive).lower())
+
 
 @app.route('/', methods=['GET'])
 def root():
     return render_template('index.html')
 
+
 @app.route('/raids', methods=['GET'])
 def raids():
-    return render_template('raids.html', sort = str(args.madmin_sort), responsive = str(args.madmin_noresponsive).lower())
-    
+    return render_template('raids.html', sort=str(args.madmin_sort), responsive=str(args.madmin_noresponsive).lower())
+
+
 @app.route('/gyms', methods=['GET'])
 def gyms():
-    return render_template('gyms.html', sort = args.madmin_sort, responsive = str(args.madmin_noresponsive).lower()) 
+    return render_template('gyms.html', sort=args.madmin_sort, responsive=str(args.madmin_noresponsive).lower())
+
 
 @app.route('/unknown', methods=['GET'])
 def unknown():
-    return render_template('unknown.html', responsive = str(args.madmin_noresponsive).lower()) 
+    return render_template('unknown.html', responsive=str(args.madmin_noresponsive).lower())
+
 
 @app.route('/map', methods=['GET'])
 def map():
     return render_template('map.html')
+
 
 @app.route("/submit_hash")
 def submit_hash():
@@ -95,6 +102,7 @@ def submit_hash():
 
         return redirect("/unknown", code=302)
 
+
 @app.route("/modify_raid_gym")
 def modify_raid_gym():
     hash = request.args.get('hash')
@@ -107,6 +115,7 @@ def modify_raid_gym():
     db_wrapper.insert_hash(hash, 'raid', newJsonString, '999', unique_hash="madmin")
 
     return redirect("/raids", code=302)
+
 
 @app.route("/modify_raid_mon")
 def modify_raid_mon():
@@ -121,6 +130,7 @@ def modify_raid_mon():
 
     return redirect("/raids", code=302)
 
+
 @app.route("/modify_gym_hash")
 def modify_gym_hash():
     hash = request.args.get('hash')
@@ -130,6 +140,7 @@ def modify_gym_hash():
     db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin")
 
     return redirect("/gyms", code=302)
+
 
 @app.route("/near_gym")
 def near_gym():
@@ -144,7 +155,7 @@ def near_gym():
         lon = args.home_lng
     else:
         distance = int(args.unknown_gym_distance)
-    
+
     if not lat or not lon:
         return 'Missing Argument...'
     closestGymIds = db_wrapper.get_near_gyms(lat, lon, 123, 1, int(distance), unique_hash="madmin")
@@ -152,7 +163,7 @@ def near_gym():
 
         gymid = str(closegym[0])
         dist = str(closegym[1])
-        gymImage = 'ocr/gym_img/_' + str(gymid)+ '_.jpg'
+        gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
 
         name = 'unknown'
         lat = '0'
@@ -172,6 +183,7 @@ def near_gym():
 
     return jsonify(nearGym)
 
+
 @app.route("/delete_hash")
 def delete_hash():
     nearGym = []
@@ -187,6 +199,7 @@ def delete_hash():
 
     return redirect('/' + str(redi), code=302)
 
+
 @app.route("/delete_file")
 def delete_file():
     nearGym = []
@@ -201,6 +214,7 @@ def delete_file():
 
     return redirect('/' + str(redi), code=302)
 
+
 @app.route("/get_gyms")
 def get_gyms():
     gyms = []
@@ -214,7 +228,7 @@ def get_gyms():
 
         if str(hashvalue) in hashdata:
 
-            gymid =  hashdata[str(hashvalue)]["id"]
+            gymid = hashdata[str(hashvalue)]["id"]
             count = hashdata[hashvalue]["count"]
             modify = hashdata[hashvalue]["modify"]
 
@@ -230,7 +244,7 @@ def get_gyms():
             url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid)+ '_.jpg'
+            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
                 name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
@@ -248,6 +262,7 @@ def get_gyms():
             continue
 
     return jsonify(gyms)
+
 
 @app.route("/get_raids")
 def get_raids():
@@ -267,7 +282,7 @@ def get_raids():
 
         if str(hashvalue) in hashdata:
             monName = 'unknown'
-            raidjson =  hashdata[str(hashvalue)]["id"]
+            raidjson = hashdata[str(hashvalue)]["id"]
             count = hashdata[hashvalue]["count"]
             modify = hashdata[hashvalue]["modify"]
 
@@ -276,8 +291,7 @@ def get_raids():
             lvl = raidHash_[1]
             mon = int(raidHash_[2])
             monid = int(raidHash_[2])
-            mon = "%03d"%mon
-
+            mon = "%03d" % mon
 
             if mon == '000':
                 type = 'egg'
@@ -308,7 +322,7 @@ def get_raids():
             url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid)+ '_.jpg'
+            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
                 name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
@@ -326,40 +340,42 @@ def get_raids():
 
     return jsonify(raids)
 
+
 @app.route("/get_mons")
 def get_mons():
     mons = []
     monList =[]
-    
+
     with open('pokemon.json') as f:
         mondata = json.load(f)
-    
+
     with open('raidmons.json') as f:
         raidmon = json.load(f)
-    
+
     for mons in raidmon:
         for mon in mons['DexID']:
             lvl = mons['Level']
             if str(mon).find("_") > -1:
                 mon_split = str(mon).split("_")
                 mon = mon_split[0]
-                frmadd = mon_split[1] 
+                frmadd = mon_split[1]
             else:
                 frmadd = "00"
 
             mon = '{:03d}'.format(int(mon))
-            
+
             monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
             monName = 'unknown'
             monid = int(mon)
-            
+
             if str(monid) in mondata:
                 monName = mondata[str(monid)]["name"]
-            
-            monJson = ({'filename': monPic, 'mon': monid, 'name': monName, 'lvl': lvl })
+
+            monJson = ({'filename': monPic, 'mon': monid, 'name': monName, 'lvl': lvl})
             monList.append(monJson)
-            
+
     return jsonify(monList)
+
 
 @app.route("/get_screens")
 def get_screens():
@@ -371,11 +387,11 @@ def get_screens():
         if args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
-        screenJson = ({'filename': file, 'creation': creationdate })
+        screenJson = ({'filename': file, 'creation': creationdate})
         screens.append(screenJson)
 
-
     return jsonify(screens)
+
 
 @app.route("/get_unknows")
 def get_unknows():
@@ -390,7 +406,7 @@ def get_unknows():
         if args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
-        hashJson = ({'lat': lat, 'lon': lon,'hashvalue': hashvalue, 'filename': file, 'creation': creationdate})
+        hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'creation': creationdate})
         unk.append(hashJson)
 
     return jsonify(unk)
@@ -401,7 +417,7 @@ def get_position():
     position = []
     positionexport = {}
     fileName = args.position_file+'.position'
-    
+
     for filename in glob.glob('*.position'):
         name = filename.split('.')
         with open(filename, 'r') as f:
@@ -411,7 +427,7 @@ def get_position():
                 getCoordFloat(latlon[1])
             ])
             positionexport[str(name[0])] = position
-            
+
     return jsonify(positionexport)
 
     if not os.path.isfile(fileName):
@@ -424,12 +440,13 @@ def get_position():
         else:
             return jsonify([0, 0])
 
+
 @cache.cached()
 @app.route("/get_route")
 def get_route():
     route = []
     routeexport = {}
-    
+
     for filename in glob.glob('*.calc'):
         name = filename.split('.')
         with open(filename, 'r') as f:
@@ -444,6 +461,7 @@ def get_route():
 
     return jsonify(routeexport)
 
+
 @app.route("/get_spawns")
 def get_spawns():
     coords = []
@@ -454,12 +472,15 @@ def get_spawns():
         coords.append({
             'endtime': spawn['endtime'],
             'lat': spawn['lat'],
-            'lon': spawn['lon']
+            'lon': spawn['lon'],
+            'spawndef': spawn['spawndef'],
+            'lastscan': spawn['lastscan']
             })
 
     return jsonify(coords)
 
-@cache.cached()    
+
+@cache.cached()
 @app.route("/get_gymcoords")
 def get_gymcoords():
     coords = []
@@ -473,29 +494,35 @@ def get_gymcoords():
             'name': gym['name'],
             'img': gym['url'],
             'lat': gym['latitude'],
-            'lon': gym['longitude']
+            'lon': gym['longitude'],
+            'team_id': gym['team_id']
             })
 
     return jsonify(coords)
+
 
 @app.route('/gym_img/<path:path>', methods=['GET'])
 def pushGyms(path):
     return send_from_directory('ocr/gym_img', path)
 
+
 @app.route('/www_hash/<path:path>', methods=['GET'])
 def pushHashes(path):
     return send_from_directory('ocr/www_hash', path)
 
+
 @app.route('/screenshots/<path:path>', methods=['GET'])
 def pushScreens(path):
     return send_from_directory(args.raidscreen_path, path)
+
 
 @app.route('/match_unknows', methods=['GET'])
 def match_unknows():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('match_unknown.html', hash = hash, lat = lat, lon = lon, responsive = str(args.madmin_noresponsive).lower())
+    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(args.madmin_noresponsive).lower())
+
 
 @app.route('/modify_raid', methods=['GET'])
 def modify_raid():
@@ -506,12 +533,14 @@ def modify_raid():
     mon = request.args.get('mon')
     return render_template('change_raid.html', hash = hash, lat = lat, lon = lon, lvl = lvl, mon = mon, responsive = str(args.madmin_noresponsive).lower())
 
+
 @app.route('/modify_gym', methods=['GET'])
 def modify_gym():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
     return render_template('change_gym.html', hash = hash, lat = lat, lon = lon, responsive = str(args.madmin_noresponsive).lower())
+
 
 @app.route('/modify_mon', methods=['GET'])
 def modify_mon():
@@ -520,16 +549,18 @@ def modify_mon():
     lvl = request.args.get('lvl')
     return render_template('change_mon.html', hash = hash, gym = gym, lvl = lvl, responsive = str(args.madmin_noresponsive).lower())
 
+
 @app.route('/asset/<path:path>', methods=['GET'])
 def pushAssets(path):
     return send_from_directory(args.pogoasset, path)
-    
+
+
 @app.route('/config')
 def config():
     fieldwebsite = []
     oldvalues = []
     sel = ''
-    
+
     edit = False
     edit = request.args.get('edit')
     type = request.args.get('type')
@@ -556,10 +587,10 @@ def config():
                     if oldfields['username'] == edit:
                         oldvalues = oldfields
                         _checkfield = 'username'
-            
+
     with open('madmin/static/vars/vars_parser.json') as f:
         vars = json.load(f)
-        
+
     for area in vars[area]:
         if 'name' in area:
             if area['name'] == type:
@@ -574,7 +605,6 @@ def config():
                 _name = area['username']
                 compfields = area
 
-        
     for field in compfields[block]:
             req = ''
             lock = field['settings'].get("lockonedit", False)
@@ -583,7 +613,7 @@ def config():
                 lockvalue = 'readonly'
             if field['settings']['type'] == 'text':
                 req = field['settings'].get('require', 'false')
-                if req in ('true'):                    
+                if req in ('true'):
                     req = "required"
                 if edit:
                     if block == "settings":
@@ -607,7 +637,7 @@ def config():
                     fieldwebsite.append('<b>' + str(field['name']) + '</b><br>' + str(field['settings']['description']) + ' <br><input type=text name=' + str(field['name']) + ' ' + req + '>')
             if field['settings']['type'] == 'option':
                 req = field['settings'].get('require', 'false')
-                if req in ('true'):                    
+                if req in ('true'):
                     req = "required"
                 _temp = '<b>' + str(field['name']) + '</b><br>' + str(field['settings']['description']) + ' <br><select name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 _options = field['settings']['values'].split('|')
@@ -626,13 +656,13 @@ def config():
                 fieldwebsite.append(str(_temp))
             if field['settings']['type'] == 'areaselect':
                 req = field['settings'].get('require', 'false')
-                if req in ('true'):                    
+                if req in ('true'):
                     req = "required"
                 _temp = '<b>' + str(field['name']) + '</b><br>' + str(field['settings']['description']) + ' <br><select name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 with open('configs/mappings.json') as f:
                     mapping = json.load(f)
                 mapping['areas'].append({'name': None})
-                    
+
                 for option in mapping['areas']:
                     if edit:
                         if block == "settings":
@@ -652,16 +682,16 @@ def config():
                     sel = ''
                 _temp = _temp + '</select>'
                 fieldwebsite.append(str(_temp))
-                    
-                    
+
     if edit:
         header = "Edit " + edit + " (" + type + ")"
     else:
-        header = "Add new " + type 
-     
-    fieldwebsite.append('<input type=submit value="Save"></form> ')           
-            
+        header = "Add new " + type
+
+    fieldwebsite.append('<input type=submit value="Save"></form> ')
+
     return render_template('parser.html', editform=fieldwebsite, header=header)
+
 
 @app.route('/delsetting', methods=['GET', 'POST'])
 def delsetting():
@@ -670,11 +700,11 @@ def delsetting():
     type = request.args.get('type')
     block = request.args.get('block')
     area = request.args.get('area')
-    
+
     with open('configs/mappings.json') as f:
         mapping = json.load(f)
-        
-    i=0
+
+    i = 0
     for asd in mapping[area]:
         if 'name' in mapping[area][i]:
                 _checkfield = 'name'
@@ -682,42 +712,41 @@ def delsetting():
                 _checkfield = 'origin'
         if 'username' in mapping[area][i]:
                 _checkfield = 'username'
-        
+
         if str(edit) in str(mapping[area][i][_checkfield]):
             del mapping[area][i]
-            
+
         i += 1
-        
+
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
-                
-    return redirect("/showsettings", code=302)    
-        
-    
+
+    return redirect("/showsettings", code=302)
+
+
 @app.route('/addedit', methods=['GET', 'POST'])
 def addedit():
     data = request.args
     datavalue = {}
-    
+
     for ase, key in data.items():
         datavalue[ase] = key
-    print (datavalue)
-        
+
     edit = datavalue.get("edit", False)
     block = datavalue.get("block", False)
     type = datavalue.get("type", False)
     name = datavalue.get("name", False)
     area = datavalue.get("area", False)
     delete = datavalue.get("del", False)
-    
+
     with open('configs/mappings.json') as f:
         mapping = json.load(f)
-        
+
     with open('madmin/static/vars/settings.json') as f:
         settings = json.load(f)
-        
+
     if edit:
-        i=0
+        i = 0
         for asd in mapping[area]:
             if 'name' in mapping[area][i]:
                     _checkfield = 'name'
@@ -725,7 +754,7 @@ def addedit():
                     _checkfield = 'origin'
             if 'username' in mapping[area][i]:
                     _checkfield = 'username'
-                    
+
             if str(edit) in str(mapping[area][i][_checkfield]):
                 if str(block) == str("settings"):
                     for ase, key in data.items():
@@ -737,7 +766,7 @@ def addedit():
                         else:
                             if key == 'true':
                                 key = bool(True)
-                            elif  key == 'false':
+                            elif key == 'false':
                                 key = bool(False)
                             elif key.isdigit():
                                 key = int(key)
@@ -757,7 +786,7 @@ def addedit():
                             else:
                                 if key in 'true':
                                     key = bool(True)
-                                elif  key in 'false':
+                                elif key in 'false':
                                     key = bool(False)
                                 elif key.isdigit():
                                     key = int(key)
@@ -771,7 +800,7 @@ def addedit():
                             else:
                                 if key == 'true':
                                     key = bool(True)
-                                elif  key == 'false':
+                                elif key == 'false':
                                     key = bool(False)
                                 elif key.isdigit():
                                     key = int(key)
@@ -788,7 +817,7 @@ def addedit():
             if key != '' and key not in area:
                 if key == 'true':
                     key = bool(True)
-                elif  key == 'false':
+                elif key == 'false':
                     key = bool(False)
                 elif key.isdigit():
                     key = int(key)
@@ -796,19 +825,19 @@ def addedit():
                     key = None
                 if str(ase) not in ('block', 'area', 'type', 'edit'):
                     new[ase] = key
-                    
+
         if str(block) == str("settings"):
             mapping[area]['settings'].append(new)
         else:
             if (settings[area]['has_settings']) in ('true'):
                 new['settings'] = {}
             mapping[area].append(new)
-                
+
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
-    
-    
+
     return redirect("/showsettings", code=302)
+
 
 @app.route('/showsettings', methods=['GET', 'POST'])
 def showsettings():
@@ -819,7 +848,7 @@ def showsettings():
         settings = json.load(f)
     with open('madmin/static/vars/vars_parser.json') as f:
         vars = json.load(f)
-        
+
     for var in vars:
         line, quickadd, quickline = '', '', ''
         header = '<thead><tr><th><b>' + (var.upper()) + '</b> <a href=/addnew?area=' + var + '>[Add new]</a></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
@@ -843,7 +872,9 @@ def showsettings():
             else:
                 editsettings = '<td></td>'
             delete = '<td><a href=/delsetting?type=' + str(mode) + '&area=' + str(_typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true>[Delete]</a></td>'
+
             line = line + '<tr><td><b>' + str(output[_field]) + '</b></td>' + str(edit) + str(editsettings) + str(delete) + '</tr>'
+            
             if _quick:
                 for quickfield in _quick.split('|'):
                     if output.get(quickfield, False):
@@ -860,29 +891,27 @@ def showsettings():
             line = line + quickline
 
             
-        table = table +  header + subheader + line
+        table = table + header + subheader + line
 
-        
     return render_template('settings.html', settings='<table>' + table + '</table>')
-        
+
     return jsonify(table)
-    
+
+
 @app.route('/addnew', methods=['GET', 'POST'])
 def addnew():
     area = request.args.get('area')
-    line =''
+    line = ''
     with open('madmin/static/vars/vars_parser.json') as f:
         settings = json.load(f)
     if (len(settings[area])) == 1:
         return redirect('config?type=' + area + '&area=' + area + '&block=fields')
-        
+
     for output in settings[area]:
         line = line + '<h3><a href=config?type=' + str(output['name']) + '&area=' + str(area) + '&block=fields>'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
-        
+
     return render_template('sel_type.html', line=line)
-        
-        
-    
+
 
 def decodeHashJson(hashJson):
     data = json.loads(hashJson)
@@ -892,21 +921,25 @@ def decodeHashJson(hashJson):
 
     return raidGym, raidLvl, raidMon
 
+
 def encodeHashJson(gym, lvl, mon):
-    hashJson = json.dumps({'gym': gym, 'lvl': lvl, 'mon': mon}, separators=(',',':'))
+    hashJson = json.dumps({'gym': gym, 'lvl': lvl, 'mon': mon}, separators=(',', ':'))
     return hashJson
 
+
 def getAllHash(type):
-   rv = db_wrapper.get_all_hash(type)
-   hashRes = {}
-   for result in rv:
-       hashRes[result[1]]  = ({'id': str(result[0]), 'type': result[2], 'count': result[3], 'modify': str(result[4])})
-   #data_json = json.dumps(hashRes, sort_keys=True, indent=4, separators=(',', ': '))
-   data_json = hashRes
-   return json.dumps(hashRes, indent=4, sort_keys=True)
+    rv = db_wrapper.get_all_hash(type)
+    hashRes = {}
+    for result in rv:
+        hashRes[result[1]] = ({'id': str(result[0]), 'type': result[2], 'count': result[3], 'modify': str(result[4])})
+    # data_json = json.dumps(hashRes, sort_keys=True, indent=4, separators=(',', ': '))
+    data_json = hashRes
+    return json.dumps(hashRes, indent=4, sort_keys=True)
+
 
 def getCoordFloat(coordinate):
     return floor(float(coordinate) * (10 ** 5)) / float(10 ** 5)
+
 
 def creation_date(path_to_file):
     """
@@ -925,7 +958,8 @@ def creation_date(path_to_file):
             # so we'll settle for when its content was last modified.
             return stat.st_mtime
 
+
 if __name__ == "__main__":
     app.run()
-    #host='0.0.0.0', port=int(args.madmin_port), threaded=False)
+    # host='0.0.0.0', port=int(args.madmin_port), threaded=False)
 
