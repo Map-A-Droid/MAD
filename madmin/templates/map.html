@@ -25,6 +25,17 @@
 		.gympopup .leaflet-popup-content-wrapper {
 			text-align: center;
 		}
+
+		.spawntooltip {
+			font-weight: bold;
+			color: #FFF;
+			color: white;
+			text-shadow:
+				-1px -1px 0 #000,
+				1px -1px 0 #000,
+				-1px 1px 0 #000,
+				1px 1px 0 #000;
+		}
 	</style>
 </head>
 <body>
@@ -73,7 +84,7 @@
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
 		});
 		
-		var map = L.map('map', {layers: [title]}).setView([0, 0], 13);
+		var map = L.map('map', {layers: [title]}).setView([0, 0], 18);
 		var baseLayers = {
 			"Map": title
 		};
@@ -89,12 +100,18 @@
 			"Gyms": gyms,
 			"Geofence": fence
 		};
-		map.addLayer(spawntimes)
+
 		map.addLayer(spawns);
 		map.addLayer(gyms);
 		map.addLayer(fence);
 		map.removeControl(baseControl);
 		mapControl = L.control.layers(baseLayers, overlays).addTo(map);
+
+		map.on('zoomend', function () {
+			if (map.getZoom() < 16 && map.hasLayer(spawntimes)) {
+				map.removeLayer(spawntimes);
+			}
+		});
 
 		$.getJSON({
 			url: "/get_route",
@@ -181,12 +198,21 @@
 							markertext += "<br><strong>SPAWN ACTIVE</strong>"
 							markertext += "<br>Spawned at: " + spawntime.format(timeformat);
 							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							overlaytext = 'Despawn ' + despawntime.fromNow();
 							var color = "green";
 						} else if (spawntime.isAfter(now)) {
 							markertext += "<br>Spawns at: " + spawntime.format(timeformat);
 							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							overlaytext = 'Spawn ' + spawntime.fromNow();
 							var color = "blue";
 						}
+
+						L.marker([v['lat'], (v['lon'])], { interactive: false, icon: L.divIcon({ 
+							iconAnchor: [-10, 10],
+							iconSize: [300, 20],
+							html: overlaytext,
+							className: 'spawntooltip' })
+						}).addTo(spawntimes);
 
 					} else { 
 						var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
