@@ -1,4 +1,4 @@
-!#/bin/bash
+#!/bin/bash
 ########################################################################################################
 #   This is the MAD spawnpoint importer. If you used to scan before and happen to still have your
 # spawnpoints in your Monocle or Rocketmap database then you can use this script to import them to MAD
