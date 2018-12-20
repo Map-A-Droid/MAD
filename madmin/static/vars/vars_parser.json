@@ -56,6 +56,14 @@
 			    "values": "true|false",
 				"description": "Scan all spawnpoints or just ones with unknwon endtimes"
 		    }
+	    },
+		{
+			"name": "mitm_wait_timeout",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+				"description": "Timeout for waiting for data after setting/reaching a location. Default: 45 seconds"
+		    }
 	    }
 	],
 	"settings": [
@@ -125,6 +133,14 @@
 		    	"require": "true",
 				"description": "Name of area",
 				"lockonedit": "true"
+		    }
+	    },
+		{
+			"name": "mitm_wait_timeout",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+				"description": "Timeout for waiting for data after setting/reaching a location. Default: 45 seconds"
 		    }
 	    }
 	],

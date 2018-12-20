@@ -3,13 +3,17 @@
 		"has_settings": "true",
 		"could_edit": "true",
 		"field": "name",
-		"description": "Setting up scannertypes with geofence and other options."
+		"description": "Setting up scannertypes with geofence and other options.",
+	    "quickview": "geofence_included|mitm_wait_timeout",
+		"quickview_settings": "speed|max_distance"
     },
 	"devices": {
 		"has_settings": "true",
 		"could_edit": "true",
 		"field": "origin",
-		"description": "Assign devices to areas"
+		"description": "Assign devices to areas",
+		"quickview": "daytime_area|nighttime_area",
+		"quickview_settings": "post_walk_delay|post_teleport_delay"
     },
 	"auth": {
 		"has_settings": "false",
