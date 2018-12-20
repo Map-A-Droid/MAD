@@ -5,22 +5,40 @@
  crossorigin="" />
 <style>
 	#mapouter {
-            padding: 0px 30px;
-            width: auto;
-            height: 800px;
-            max-height: 800px;
-        }
-        #map {
-            width: 100%;
-            height: 100%;
-            border: 1px solid #333;
-        }
-    </style>
+		padding: 0px 30px;
+		width: auto;
+		height: 800px;
+		max-height: 800px;
+	}
+
+	#map {
+		width: 100%;
+		height: 100%;
+		border: 1px solid #333;
+	}
+
+	.gympopup .leaflet-popup-tip,
+	.gympopup .leaflet-popup-content-wrapper {
+		text-align: center;
+	}
+
+	.spawntooltip {
+		font-weight: bold;
+		color: #FFF;
+		color: white;
+		text-shadow:
+			-1px -1px 0 #000,
+			1px -1px 0 #000,
+			-1px 1px 0 #000,
+			1px 1px 0 #000;
+	}
+</style>
 {% endblock %}
 
 {% block scripts %}
 <script src="https://code.jquery.com/jquery-3.3.1.js"></script>
 <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet-src.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
 	function convertToLonLat(coords) {
 		lonlat = []
@@ -30,22 +48,24 @@
 		return lonlat;
 	}
 
-
-
 	$(document).ready(function () {
 		var prevLoc = [0, 0];
 		var poslay = L.layerGroup();
 		var walklay = L.layerGroup();
 		var marker = {};
 		var spawn = L.circle;
-		var icon = L.icon({
-			iconUrl: 'static/stop.png',
-			iconSize: [32, 32]
-		})
+
+		var gymicon = function (team) {
+			return L.icon({
+				iconUrl: 'static/gym_' + team + '.png',
+				iconSize: [32, 32]
+			});
+		};
+
 		var markericon = L.icon({
 			iconUrl: 'static/bot.png',
 			iconSize: [20, 20]
-		})
+		});
 
 		var title = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
@@ -57,21 +77,28 @@
 		};
 		var baseControl = L.control.layers(baseLayers).addTo(map);
 
+		spawntimes = L.layerGroup();
 		spawns = L.layerGroup();
 		gyms = L.layerGroup();
 		fence = L.layerGroup();
 		var overlays = {
 			"Spawnpoints": spawns,
+			"Spawnpoint times": spawntimes,
 			"Gyms": gyms,
 			"Geofence": fence
 		};
+
 		map.addLayer(spawns);
 		map.addLayer(gyms);
 		map.addLayer(fence);
 		map.removeControl(baseControl);
 		mapControl = L.control.layers(baseLayers, overlays).addTo(map);
 
-
+		map.on('zoomend', function () {
+			if (map.getZoom() < 16 && map.hasLayer(spawntimes)) {
+				map.removeLayer(spawntimes);
+			}
+		});
 
 		$.getJSON({
 			url: "/get_route",
@@ -122,16 +149,66 @@
 				success: function (result) {
 
 					$.each(result, function (k, v) {
-						if (typeof (spawn[k]) != 'undefined') {
+						if (typeof spawn[k] !== 'undefined') {
 							map.removeLayer(spawn[k]);
 						}
-						if (v['endtime'] === 'True') {
-							var markertext = "Known Endtime"
-							var color = "blue"
+
+						if (v['endtime'] !== null) {
+							var markertext = '<strong class="text-success">Known end time</strong><br>'
+							var endsplit = v['endtime'].split(':');
+							var endMinute = parseInt(endsplit[0]);
+							var endSecond = parseInt(endsplit[1]);
+							var despawntime = moment();
+							var now = moment();
+
+							if (v['spawndef'] == 15) {
+								markertext += '<br>Type: 1h spawn<br>';
+								var timeshift = 60;
+							} else {
+								markertext += '<br>Type: 30m spawn<br>';
+								var timeshift = 30;
+							}
+
+							// setting despawn and spawn time
+							despawntime.minute(endMinute);
+							despawntime.second(endSecond);
+							var spawntime = moment(despawntime);
+							spawntime.subtract(timeshift, 'm');
+
+							if (despawntime.isBefore(now)) {
+								// already despawned. shifting hours
+								spawntime.add(1, 'h');
+								despawntime.add(1, 'h');
+							}
+
+							timeformat = 'YYYY-MM-DD HH:mm:ss';
+							if (now.isBetween(spawntime, despawntime)) {
+								markertext += "<br><strong>SPAWN ACTIVE</strong>"
+								markertext += "<br>Spawned at: " + spawntime.format(timeformat);
+								markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+								overlaytext = 'Despawn ' + despawntime.fromNow();
+								var color = "green";
+							} else if (spawntime.isAfter(now)) {
+								markertext += "<br>Spawns at: " + spawntime.format(timeformat);
+								markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+								overlaytext = 'Spawn ' + spawntime.fromNow();
+								var color = "blue";
+							}
+
+							L.marker([v['lat'], (v['lon'])], {
+								interactive: false, icon: L.divIcon({
+									iconAnchor: [-10, 10],
+									iconSize: [300, 20],
+									html: overlaytext,
+									className: 'spawntooltip'
+								})
+							}).addTo(spawntimes);
+
 						} else {
-							var markertext = "Unknown Endtime"
-							var color = "red"
+							var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
+							var color = "red";
 						}
+
 						spawn[k] = L.circle([v['lat'], v['lon']], {
 							radius: 2,
 							color: color,
@@ -139,7 +216,9 @@
 							weight: 1,
 							opacity: 0.7,
 							fillOpacity: 0.5
-						}).addTo(spawns).bindPopup(markertext);
+						}).addTo(spawns)
+							.bindPopup(markertext + '<br><br><a href="https://maps.google.de/?q=' + v['lat'] + ',' + v['lon'] + '">' + v['lat'] + ', ' + v['lon'] + '</a>',
+								{ 'className': 'gympopup' })
 					})
 					setTimeout(work, 60000);
 				}
@@ -150,7 +229,10 @@
 			url: "/get_gymcoords",
 			success: function (result) {
 				$.each(result, function (k, v) {
-					L.marker([v['lat'], v['lon']], { icon: icon }).addTo(gyms).bindPopup(v['name']);
+					L.marker([v['lat'], v['lon']], { icon: gymicon(v['team_id']) })
+						.bindPopup('<strong>' + v['name'] + '</strong><br><br>' + v['id'] + '<br><a href="https://maps.google.de/?q=' + v['lat'] + ',' + v['lon'] + '">' + v['lat'] + ', ' + v['lon'] + '</a>',
+							{ 'className': 'gympopup' })
+						.addTo(gyms);
 				});
 			}
 		});
@@ -164,17 +246,16 @@
 					var t = 0;
 					$.each(result, function (pos, data) {
 
-
 						if (!marker.hasOwnProperty(pos)) {
 							poslay[pos] = L.layerGroup()
 							mapControl.addOverlay(poslay[pos], 'Worker: ' + pos);
 							map.addLayer(poslay[pos]);
-							marker[pos] = L.marker([0, 0], { icon: markericon, title: "Bot position" }).addTo(poslay[pos]).bindPopup(pos);
-
+							marker[pos] = L.marker([0, 0], { icon: markericon, title: "Bot position" })
+								.bindPopup(pos)
+								.addTo(poslay[pos]);
 						}
 						marker[pos].setLatLng(data[t])
 						t = t + 1;
-
 					})
 					setTimeout(work, 5000);
 				}
@@ -206,6 +287,6 @@
 </div>
 <div>
 	<center>Add Geofence<br> <textarea rows="5" cols="50" name="coordPolygon" id="coordPolygon" /></textarea><br>
-		<input type="button" onclick="drawPolygon()" value="Add" /><br></center>
+	<input type="button" onclick="drawPolygon()" value="Add" /><br></center>
 </div>
 {% endblock %}
