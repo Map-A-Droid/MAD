@@ -5,13 +5,29 @@
 # You must have the trs_spawn table already in your database and you must have filled out the Database
 # portion of the MAD config file
 ########################################################################################################
-###################################HAPPY HUNTING ### KRZTHEHUNTER#######################################
+# This section is for your old database, your new database is already configured in MAD/configs/config.ini
+# Old database IP:
+olddbip=""
+# Old database username:
+olduser=""
+# Old database pass:
+oldpass=""
+# Old database name:
+olddbname=""
+# Old database port:
+oldport="3306"
 ########################################################################################################
 # You can probably leave this var alone. This is the default config file.
 # But if you have a reason that's not the config file you want to use, then go ahead and change
 # path to MAD config
 madconf="../configs/config.ini"
 ########################################################################################################
+###################################HAPPY HUNTING#####KRZTHEHUNTER#######################################
+########################################################################################################
+#                You should not edit below here unless you know what you're doing                      #
+########################################################################################################
+########################################################################################################
+
 
 # Grab db info from MAD's config file
 ! [[ -f "$madconf" ]] && echo "Unable to find your MAD config. You should be running this in the MAD directory" && exit 2
@@ -28,43 +44,37 @@ query(){
 /usr/bin/mysql -N -B -u "$user" -D "$dbname" -p"$pass" -h "$dbip" -P "$port" -e "$1"
 }
 
-import_mon(){
-#import spawnpoints
-while read -r id spawn_id despawn_time lat lon updated duration failures ;do
- (( $(query "select spawnpoint from trs_spawn where spawnpoint=$spawn_id") )) && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
- query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen) values (${spawn_id}, ${lat}, ${lon}, 99999999);" && echo "spawn $spawn_id added to the db" >> addspawns.log
-done< <(query "select * from spawnpoints")
-
-#import endtimes
-while read -r spawnpoint old ;do
- min=$(( old / 60))
- sec=$(( old % 60))
- case "$sec" in
-  [0-9]) sec="0$sec" ;;
- esac
- new="$min:$sec"
- query "update trs_spawn set calc_endminsec='$new' where spawnpoint=$spawnpoint;"
-done < <(query "select spawnpoint, despawn_time from trs_spawn join spawnpoints on trs_spawn.spawnpoint=spawnpoints.spawn_id where calc_endminsec is NULL and despawn_time is not NULL;")
+oldquery(){
+/usr/bin/mysql -N -B -u "$olduser" -D "$olddbname" -p"$oldpass" -h "$olddbip" -P "$oldport" -e "$1"
 }
 
-#RM
-import_rm(){
-#import spawnpoints
-while read -r spawn_id lat lon _ ;do
- (( $(query "select spawnpoint from trs_spawn where spawnpoint=$spawn_id") )) && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
- query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen) values (${spawn_id}, ${lat}, ${lon}, 99999999);" && echo "spawn $spawn_id added to the db" >> addspawns.log
-done< <(query "select * from spawnpoint")
-
-#import endtimes
-while read -r spawnpoint old ;do
+gettime(){
+if [[ "$old" == "NULL" ]] ;then
+ new="NULL"
+else
  min=$(( old / 60))
  sec=$(( old % 60))
  case "$sec" in
   [0-9]) sec="0$sec" ;;
  esac
  new="$min:$sec"
- query "update trs_spawn set calc_endminsec='$new' where spawnpoint=$spawnpoint;"
-done < <(query "select spawnpoint, tth_secs from trs_spawn join spawnpointdetectiondata on trs_spawn.spawnpoint=spawnpointdetectiondata.spawnpoint_id where calc_endminsec is NULL and tth_secs is not NULL;")
+fi
+}
+
+import_mon(){
+while read -r id spawn_id old lat lon updated duration failures _ ;do
+ (( $(query "select spawnpoint from trs_spawn where spawnpoint='$spawn_id'") )) && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
+ gettime
+ query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, '$new');" && echo "spawn $spawn_id added to the db" >> addspawns.log
+done< <(oldquery "select * from spawnpoints")
+}
+
+import_rm(){
+while read -r spawn_id lat lon old _ ;do
+ (( $(query "select spawnpoint from trs_spawn where spawnpoint='$spawn_id'") )) && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
+ gettime
+ query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, '$new');" && echo "spawn $spawn_id added to the db" >> addspawns.log
+done< <(oldquery "select spawnpoint.id, spawnpoint.latitude, spawnpoint.longitude, spawnpointdetectiondata.tth_secs from spawnpoint join spawnpointdetectiondata on spawnpoint.id=spawnpointdetectiondata.spawnpoint_id")
 }
 
 case "$dbtype" in
