@@ -705,14 +705,13 @@ class DbWrapperBase(ABC):
         spawn = {}
 
         query = (
-            "SELECT spawnpoint, latitude, longitude, "
-            "IF (calc_endminsec IS NULL, \"False\", \"True\") "
-            "AS calc_endminsec "
+            "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
+            "spawndef, last_scanned "
             "FROM `trs_spawn`"
         )
 
         res = self.execute(query)
-        for (spawnid, lat, lon, endtime) in res:
-            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime}
+        for (spawnid, lat, lon, endtime, spawndef, last_scanned) in res:
+            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef, 'lastscan': str(last_scanned)}
 
         return str(json.dumps(spawn, indent=4, sort_keys=True))

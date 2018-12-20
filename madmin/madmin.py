@@ -472,7 +472,9 @@ def get_spawns():
         coords.append({
             'endtime': spawn['endtime'],
             'lat': spawn['lat'],
-            'lon': spawn['lon']
+            'lon': spawn['lon'],
+            'spawndef': spawn['spawndef'],
+            'lastscan': spawn['lastscan']
             })
 
     return jsonify(coords)

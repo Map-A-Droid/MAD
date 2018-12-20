@@ -40,6 +40,7 @@
 	</div>
 	<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
 	<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet-src.js"></script>
+	<script src="//cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 	<script>
 	function convertToLonLat(coords) {
 		lonlat = []
@@ -48,8 +49,6 @@
 		})
 		return lonlat;
 	}
-	
-	
 
 	$(document).ready(function () {
 		var prevLoc = [0, 0];
@@ -80,14 +79,17 @@
 		};
 		var baseControl = L.control.layers(baseLayers).addTo(map);
 		
+		spawntimes = L.layerGroup();
 		spawns = L.layerGroup();
 		gyms = L.layerGroup();
 		fence = L.layerGroup();
 		var overlays = {
 			"Spawnpoints": spawns,
+			"Spawnpoint times": spawntimes,
 			"Gyms": gyms,
 			"Geofence": fence
 		};
+		map.addLayer(spawntimes)
 		map.addLayer(spawns);
 		map.addLayer(gyms);
 		map.addLayer(fence);
@@ -142,17 +144,56 @@
 			success: function(result) {
 
 				$.each(result, function(k, v) {
-					if(typeof(spawn[k]) != 'undefined') {
+					if(typeof spawn[k] !== 'undefined') {
 						map.removeLayer(spawn[k]);
 					}
-					if(v['endtime']==='True'){ 
-						var markertext = "Known Endtime"
-						var color = "blue"
+
+					if(v['endtime'] !== null){ 
+						var markertext = '<strong class="text-success">Known end time</strong><br>'
+						var endsplit = v['endtime'].split(':');
+						var endMinute = parseInt(endsplit[0]);
+						var endSecond = parseInt(endsplit[1]);
+						var despawntime = moment();
+						var now = moment();
+
+						if (v['spawndef'] == 15) {
+							markertext += '<br>Type: 1h spawn<br>';
+							var timeshift = 60;
+						} else {
+							markertext += '<br>Type: 30m spawn<br>';
+							var timeshift = 30;
+						}
+
+						// setting despawn and spawn time
+						despawntime.minute(endMinute);
+						despawntime.second(endSecond);
+						var spawntime = moment(despawntime);
+						spawntime.subtract(timeshift, 'm');
+
+						if (despawntime.isBefore(now)) {
+							// already despawned. shifting hours
+							spawntime.add(1, 'h');
+							despawntime.add(1, 'h');
+						}
+
+						timeformat = 'YYYY-MM-DD HH:mm:ss';
+						if (now.isBetween(spawntime, despawntime)) {
+							markertext += "<br><strong>SPAWN ACTIVE</strong>"
+							markertext += "<br>Spawned at: " + spawntime.format(timeformat);
+							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							var color = "green";
+						} else if (spawntime.isAfter(now)) {
+							markertext += "<br>Spawns at: " + spawntime.format(timeformat);
+							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							var color = "blue";
+						}
+
 					} else { 
-						var markertext = "Unknown Endtime"
-						var color = "red"
+						var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
+						var color = "red";
 					}
-					spawn[k]=L.circle([v['lat'], v['lon']], {
+
+					spawn[k] = L.circle([v['lat'], v['lon']], {
 						radius: 2,
 						color: color,
 						fillColor: color,
@@ -160,7 +201,7 @@
 						opacity: 0.7,
 						fillOpacity: 0.5
 					}).addTo(spawns)
-						.bindPopup(markertext+'<br><a href="https://maps.google.de/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a>', 
+						.bindPopup(markertext+'<br><br><a href="https://maps.google.de/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a>', 
 							{'className': 'gympopup'})
 				})
 				    setTimeout(work, 60000);
@@ -173,7 +214,7 @@
 			success: function(result) {
 				$.each(result, function(k, v) {
 					L.marker([v['lat'], v['lon']], {icon: gymicon(v['team_id'])})
-						.bindPopup('<strong>'+v['name']+'</strong><br><br><a href="https://maps.google.de/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a><br>'+v['id'], 
+						.bindPopup('<strong>'+v['name']+'</strong><br><br>'+v['id']+'<br><a href="https://maps.google.de/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a>',
 							{'className': 'gympopup'})
 						.addTo(gyms);
 				});
