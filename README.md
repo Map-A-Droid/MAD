@@ -67,7 +67,7 @@ Install [RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/ma
 Both apps requires an Origin header field that's configured in mappings.json. These Origins need to be unique per running python instance.  
 The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for PogoDroid is `http://<ip>:<port>`.
 >The port for RGC is 8080 by default and can changed with `ws_port`.  
->The port for PogoDroid is 9000 by default and can changed with `mitmreceiver_port`.  
+>The port for PogoDroid is 8000 by default and can changed with `mitmreceiver_port`.  
 >**The IP address is the IP of your server, not your phone!**  
 
 
