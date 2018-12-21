@@ -6,8 +6,10 @@
 # portion of the MAD config file
 ########################################################################################################
 # This section is for your old database, your new database is already configured in MAD/configs/config.ini
+# Old database type (only valid options are "rm" and "monocle"):
+dbtype=""
 # Old database IP:
-olddbip=""
+olddbip="127.0.0.1"
 # Old database username:
 olduser=""
 # Old database pass:
@@ -31,7 +33,6 @@ madconf="../configs/config.ini"
 
 # Grab db info from MAD's config file
 ! [[ -f "$madconf" ]] && echo "Unable to find your MAD config. You should be running this in the MAD directory" && exit 2
-dbtype=$(awk -F: '/^db_method/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 dbip=$(awk -F: '/^dbip/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 user=$(awk -F: '/^dbusername/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 pass=$(awk -F: '/^dbpassword/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
@@ -57,28 +58,28 @@ else
  case "$sec" in
   [0-9]) sec="0$sec" ;;
  esac
- new="$min:$sec"
+ new="'$min:$sec'"
 fi
 }
 
 import_mon(){
 while read -r id spawn_id old lat lon updated duration failures _ ;do
- (( $(query "select spawnpoint from trs_spawn where spawnpoint='$spawn_id'") )) && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
+ [[ $(query "select spawnpoint from trs_spawn where spawnpoint='$spawn_id'") ]] && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
  gettime
- query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, '$new');" && echo "spawn $spawn_id added to the db" >> addspawns.log
+ query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, $new);" && echo "spawn $spawn_id added to the db" >> addspawns.log
 done< <(oldquery "select * from spawnpoints")
 }
 
 import_rm(){
 while read -r spawn_id lat lon old _ ;do
- (( $(query "select spawnpoint from trs_spawn where spawnpoint='$spawn_id'") )) && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
+ [[ $(query "select spawnpoint from trs_spawn where spawnpoint='$spawn_id'") ]] && echo "spawn $spawn_id already exists in the db" >> addspawns.log && continue
  gettime
- query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, '$new');" && echo "spawn $spawn_id added to the db" >> addspawns.log
+ query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, $new);" && echo "spawn $spawn_id added to the db" >> addspawns.log
 done< <(oldquery "select spawnpoint.id, spawnpoint.latitude, spawnpoint.longitude, spawnpointdetectiondata.tth_secs from spawnpoint join spawnpointdetectiondata on spawnpoint.id=spawnpointdetectiondata.spawnpoint_id")
 }
 
 case "$dbtype" in
  monocle) import_mon ;;
       rm) import_rm  ;;
-       *) echo "unknown dbmethod set in MAD config file, suck it" && exit 4;;
+       *) echo "unknown dbtype, only valid options are monocle and rm, suck it" && exit 4;;
 esac
