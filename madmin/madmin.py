@@ -850,15 +850,18 @@ def showsettings():
         vars = json.load(f)
 
     for var in vars:
-        line = ''
-        header = '<thead><tr><th>' + (var.upper()) + ' <a href=/addnew?area=' + var + '>[Add new]</a></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
+        line, quickadd, quickline = '', '', ''
+        header = '<thead><tr><th><b>' + (var.upper()) + '</b> <a href=/addnew?area=' + var + '>[Add new]</a></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
         subheader = '<tr><td colspan="4">' + settings[var]['description'] + '</td></tr>'
         edit = '<td></td>'
         editsettings = '<td></td>'
         _typearea = var
         _field = settings[var]['field']
+        _quick = settings[var].get('quickview', False)
+        _quicksett = settings[var].get('quickview_settings', False)
 
         for output in mapping[var]:
+            quickadd, quickline = '', ''
             mode = output.get('mode', _typearea)
             if settings[var]['could_edit']:
                 edit = '<td><a href=/config?type=' + str(mode) + '&area=' + str(_typearea) + '&block=fields&edit=' + str(output[_field]) + '>[Edit]</a></td>'
@@ -869,8 +872,25 @@ def showsettings():
             else:
                 editsettings = '<td></td>'
             delete = '<td><a href=/delsetting?type=' + str(mode) + '&area=' + str(_typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true>[Delete]</a></td>'
-            line = line + '<tr><td>' + str(output[_field]) + '</td>' + str(edit) + str(editsettings) + str(delete) + '</tr>'
 
+            line = line + '<tr><td><b>' + str(output[_field]) + '</b></td>' + str(edit) + str(editsettings) + str(delete) + '</tr>'
+            
+            if _quick:
+                for quickfield in _quick.split('|'):
+                    if output.get(quickfield, False):
+                        quickadd = quickadd + str(quickfield) + ': ' + str(output.get(quickfield, '')) + '<br>'
+                quickline = quickline + '<tr><td class=quick>' + str(quickadd) + '</td>'
+            quickadd = ''
+            if _quicksett:
+                for quickfield in _quicksett.split('|'):
+                    if output['settings'].get(quickfield, False):
+                        quickadd = quickadd + str(quickfield) + ': ' + str(output['settings'].get(quickfield, '')) + '<br>'
+                quickline = quickline + '<td colspan="3" class=quick>' + str(quickadd) + '</td></tr>'
+
+                
+            line = line + quickline
+
+            
         table = table + header + subheader + line
 
     return render_template('settings.html', settings='<table>' + table + '</table>', title="Mapping Editor")
