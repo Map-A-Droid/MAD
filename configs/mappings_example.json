@@ -10,7 +10,8 @@
 					"coords_spawns_known": true,
 					"settings": {
 						"speed": 70,
-						"max_distance": 200
+						"max_distance": 200,
+                        "delay_after_prio_event": null
 					}
                 },
                 {
@@ -22,7 +23,8 @@
                     "routecalc": "nd_raid",
 					"settings": {
 						"speed": 70,
-						"max_distance": 200
+						"max_distance": 200,
+                        "delay_after_prio_event": 50
 					}
                 }
     ],

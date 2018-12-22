@@ -19,7 +19,8 @@ OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 
 
 class WebsocketServerBase(ABC):
-    def __init__(self, args, listen_address, listen_port, received_mapping, db_wrapper):
+    def __init__(self, args, listen_address, listen_port, received_mapping, db_wrapper, routemanagers, device_mappings,
+                 auths):
         self.__current_users = {}
         self.__listen_adress = listen_address
         self.__listen_port = listen_port
@@ -35,10 +36,9 @@ class WebsocketServerBase(ABC):
         self.__idMutex = Lock()
         self.args = args
         self.db_wrapper = db_wrapper
-        mapping_parser = MappingParser(self.db_wrapper)
-        self.device_mappings = mapping_parser.get_devicemappings()
-        self.routemanagers = mapping_parser.get_routemanagers()
-        self.auths = mapping_parser.get_auths()
+        self.device_mappings = device_mappings
+        self.routemanagers = routemanagers
+        self.auths = auths
         self._received_mapping = received_mapping
 
     def start_server(self):

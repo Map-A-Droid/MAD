@@ -153,10 +153,10 @@ class WorkerMITM(WorkerBase):
             self._last_known_state["last_location"] = lastLocation
 
             if MadGlobals.sleep:
-                currentLocation = self._route_manager_nighttime.getNextLocation()
+                currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
             else:
-                currentLocation = self._route_manager_daytime.getNextLocation()
+                currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
 
             # TODO: set position... needs to be adjust for multidevice

@@ -112,7 +112,7 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT time_battle, lat, lon "
-            "FROM raids LEFT JOIN forts ON raids.fort_id = fords.id "
+            "FROM raids LEFT JOIN forts ON raids.fort_id = forts.id "
             "WHERE raids.time_end > %s AND raids.pokemon_id IS NULL"
         )
 
@@ -131,7 +131,7 @@ class MonocleWrapper(DbWrapperBase):
                           % (str(lat), str(lon)))
                 continue
             # timestamp = self.dbTimeStringToUnixTimestamp(str(start))
-            data.append((time_battle + delay_after_hatch * 60, RaidLocation(lat, lon)))
+            data.append((time_battle + delay_after_hatch, RaidLocation(lat, lon)))
 
         log.debug("Latest Q: %s" % str(data))
         return data

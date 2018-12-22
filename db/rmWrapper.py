@@ -121,7 +121,7 @@ class RmWrapper(DbWrapperBase):
                           % (str(latitude), str(longitude)))
                 continue
             timestamp = self.db_timestring_to_unix_timestamp(str(start))
-            data.append((timestamp + delay_after_hatch * 60, RaidLocation(latitude, longitude)))
+            data.append((timestamp + delay_after_hatch, RaidLocation(latitude, longitude)))
 
         log.debug("Latest Q: %s" % str(data))
         return data

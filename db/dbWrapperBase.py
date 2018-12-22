@@ -1,4 +1,5 @@
 import json
+import math
 import time
 from datetime import datetime, timedelta
 import logging
@@ -10,6 +11,7 @@ from mysql.connector.pooling import MySQLConnectionPool
 from abc import ABC, abstractmethod
 import numpy as np
 
+from utils.collections import Location
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -723,3 +725,50 @@ class DbWrapperBase(ABC):
             spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime}
 
         return str(json.dumps(spawn, indent=4, sort_keys=True))
+
+    def retrieve_next_spawns(self, geofence_helper):
+        """
+        Retrieve the spawnpoints with their respective unixtimestamp that are due in the next 300 seconds
+        :return:
+        """
+        # retrieve 20% of the entire spawnset for now... should narrow it down at some point... TODO
+        current_time_of_day = datetime.now()
+        current_time_of_day = current_time_of_day.replace(microsecond=0)
+        first_char = math.floor(current_time_of_day.minute / 10)
+        following = first_char + 1
+        if following == 6:
+            # adjust for hour changes...
+            following = 0
+        log.debug("DbWrapperBase::retrieve_next_spawns called")
+        query = (
+            "SELECT latitude, longitude, calc_endminsec "
+            "FROM `trs_spawn`"
+            "WHERE calc_endminsec IS NOT NULL AND (calc_endminsec LIKE '%s%' OR calc_endminsec LIKE '%s%') "
+        )
+        vals = (
+            first_char, following
+        )
+        res = self.execute(query, args=vals)
+        next_up = []
+        for(latitude, longitude, calc_endminsec) in res:
+            endminsec_split = calc_endminsec.split(":")
+            minutes = int(endminsec_split[0])
+            seconds = int(endminsec_split[1])
+            if math.floor(minutes / 10) == 0:
+                temp_date = current_time_of_day.replace(hour=current_time_of_day.hour + 1,
+                                                        minute=minutes, second=seconds)
+            else:
+                temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
+            if (temp_date < current_time_of_day
+                    or not geofence_helper.is_coord_inside_include_geofence([latitude, longitude])):
+                # spawn has already happened, we should've added it in the past, let's move on
+                # TODO: consider crosschecking against current mons...
+                continue
+
+            timestamp = time.mktime(temp_date.timetuple())
+            next_up.append(
+                (
+                    timestamp, Location(latitude, longitude)
+                )
+            )
+        return next_up
