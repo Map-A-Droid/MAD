@@ -80,7 +80,7 @@ import_mon(){
 while read -r id spawn_id old lat lon updated duration failures _ ;do
  spawn_exists || continue
  gettime
- query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, $new);" && echo "spawn $spawn_id added to the db" >> addspawns.log
+query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" && echo "spawn $spawn_id added to the db" >> addspawns.log
 done< <(oldquery "select * from spawnpoints")
 }
 
@@ -90,8 +90,8 @@ while read -r spawn_id lat lon _ ;do
  : ${old:="NULL"}
  spawn_exists || continue
  gettime
- query "insert into trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, calc_endminsec) values ('${spawn_id}', ${lat}, ${lon}, 99999999, $new);" && echo "spawn $spawn_id added to the db" >> addspawns.log
-done< <(oldquery "select distinct spawnpoint.id, spawnpoint.latitude, spawnpoint.longitude from spawnpoint")
+query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" && echo "spawn $spawn_id added to the db" >> addspawns.log
+done< <(oldquery "select distinct id, latitude, longitude from spawnpoint" ; oldquery "select distinct id, latitude, longitude from spawnpoint_old")
 }
 
 case "$dbtype" in
