@@ -23,8 +23,8 @@ elif [ "$dbtype" = "RM" ]; then
 	gyms="gym"
 	gymID="gym_id"
 	details="gymdetails"
-	pokestopDB="pokestop"
 	pokestopID="pokestop_id"
+	pokestopDB="pokestop"
 else
 	echo "dbtype is wrong! Aborting..."
 	exit 1
@@ -33,21 +33,21 @@ fi
 gymCount=0
 stopCount=0
 
-cat $1 |{ while IFS=, read name url external_id
+cat $1 |{ while IFS=, read name url portalGuid
 do
-        echo "name: $name, url: $url, external_id: $external_id"
-        if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $gyms where $gymID=\"$external_id\";") -eq 1 ]; then
+        echo "name: $name, url: $url, external_id: $portalGuid"
+        if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $gyms where $gymID=\"$portalGuid\";") -eq 1 ]; then
                 echo "Thats a gym, updating row..."
         ((gymCount ++))
-                mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $details SET name=\"$name\", url=\"$url\" WHERE $gymID=\"$external_id\";"
+                mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $details SET name=\"$name\", url=\"$url\" WHERE $gymID=\"$portalGuid\";"
         else
                 echo "Thats NOT a gym, skipping..."
         fi
 
-        if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $pokestopDB where $pokestopID=\"$external_id\";") -eq 1 ]; then
+        if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $pokestopDB where $pokestopID=\"$portalGuid\";") -eq 1 ]; then
                 echo "Thats a pokestop, updating row..."
         ((stopCount ++))
-                mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $pokestopDB SET name=\"$name\", url=\"$url\" WHERE $pokestopID=\"$external_id\";"
+                mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $pokestopDB SET name=\"$name\", url=\"$url\" WHERE $pokestopID=\"$portalGuid\";"
         else
                 echo "Thats NOT a pokestop, skipping..."
         fi
