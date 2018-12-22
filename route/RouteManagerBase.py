@@ -42,8 +42,10 @@ class RouteManagerBase(ABC):
         self._current_index_of_route = 0
         if settings is not None:
             self.delay_after_timestamp_prio = settings.get("delay_after_prio_event", None)
+            self.starve_route = settings.get("starve_route", False)
         else:
             self.delay_after_timestamp_prio = None
+            self.starve_route = False
         if self.delay_after_timestamp_prio is not None:
             self._prio_queue = []
             self._stop_update_thread = Event()
@@ -170,7 +172,8 @@ class RouteManagerBase(ABC):
         # if that is not the case, simply increase the index in route and return the location on route
 
         # determine whether we move to the next location or the prio queue top's item
-        if (self.delay_after_timestamp_prio is not None and (not self._last_round_prio and len(self._prio_queue) > 0
+        if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
+                                                             and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
             next_stop = heapq.heappop(self._prio_queue)[1]
             next_lat = next_stop.latitude

@@ -11,7 +11,8 @@
 					"settings": {
 						"speed": 70,
 						"max_distance": 200,
-                        "delay_after_prio_event": null
+                        "delay_after_prio_event": null,
+                        "starve_route": false
 					}
                 },
                 {
@@ -24,7 +25,8 @@
 					"settings": {
 						"speed": 70,
 						"max_distance": 200,
-                        "delay_after_prio_event": 50
+                        "delay_after_prio_event": 50,
+                        "starve_route": true
 					}
                 }
     ],
