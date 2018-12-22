@@ -3,6 +3,7 @@
 madconf="../configs/config.ini"
 # Grab db info from MAD's config file
 ! [[ -f "$madconf" ]] && echo "Unable to find your MAD config. You should be running this in the MAD directory" && exit 2
+[[ -z "$1" ]] && echo "No CSV file supplied. Usage: $0 CSVfile" && exit 2
 dbtype=$(awk -F: '/^db_method/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 dbip=$(awk -F: '/^dbip/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 user=$(awk -F: '/^dbusername/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
@@ -32,7 +33,7 @@ fi
 gymCount=0
 stopCount=0
 
-cat Portal_Export.csv |{ while IFS=, read name url external_id
+cat $1 |{ while IFS=, read name url external_id
 do
         echo "name: $name, url: $url, external_id: $external_id"
         if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $gyms where $gymID=\"$external_id\";") -eq 1 ]; then
