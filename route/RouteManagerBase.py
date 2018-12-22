@@ -26,7 +26,7 @@ class RouteManagerBase(ABC):
         self._routefile = routefile
         self._max_radius = max_radius
         self._max_coords_within_radius = max_coords_within_radius
-        self._settings = settings
+        self.settings = settings
 
         self._last_round_prio = False
         self._manager_mutex = Lock()
@@ -176,8 +176,8 @@ class RouteManagerBase(ABC):
                                                              and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
             next_stop = heapq.heappop(self._prio_queue)[1]
-            next_lat = next_stop.latitude
-            next_lng = next_stop.longitude
+            next_lat = next_stop.lat
+            next_lng = next_stop.lng
             self._last_round_prio = True
             log.info("Round of route %s is moving to %s, %s for a priority event"
                      % (str(self.name), str(next_lat), str(next_lng)))

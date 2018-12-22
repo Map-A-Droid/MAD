@@ -8,7 +8,7 @@ from db.dbWrapperBase import DbWrapperBase
 import logging
 from datetime import datetime, timedelta
 
-from utils.collections import RaidLocation
+from utils.collections import Location
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -131,7 +131,7 @@ class MonocleWrapper(DbWrapperBase):
                           % (str(lat), str(lon)))
                 continue
             # timestamp = self.dbTimeStringToUnixTimestamp(str(start))
-            data.append((time_battle + delay_after_hatch, RaidLocation(lat, lon)))
+            data.append((time_battle + delay_after_hatch, Location(lat, lon)))
 
         log.debug("Latest Q: %s" % str(data))
         return data
