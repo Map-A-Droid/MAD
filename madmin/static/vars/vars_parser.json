@@ -148,7 +148,7 @@
     ]
 	},
 	{
-	"name": "raid_ocr",
+	"name": "raids_ocr",
 	"description": "OCR scanner for detecting raids.",
 	"fields": [
 		{

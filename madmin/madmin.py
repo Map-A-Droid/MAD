@@ -879,13 +879,13 @@ def showsettings():
                 for quickfield in _quick.split('|'):
                     if output.get(quickfield, False):
                         quickadd = quickadd + str(quickfield) + ': ' + str(output.get(quickfield, '')) + '<br>'
-                quickline = quickline + '<tr><td class=quick>' + str(quickadd) + '</td>'
+                quickline = quickline + '<tr><td></td><td class=quick>' + str(quickadd) + '</td>'
             quickadd = ''
             if _quicksett:
                 for quickfield in _quicksett.split('|'):
                     if output['settings'].get(quickfield, False):
                         quickadd = quickadd + str(quickfield) + ': ' + str(output['settings'].get(quickfield, '')) + '<br>'
-                quickline = quickline + '<td colspan="3" class=quick>' + str(quickadd) + '</td></tr>'
+                quickline = quickline + '<td colspan="2" class=quick>' + str(quickadd) + '</td></tr>'
 
                 
             line = line + quickline
