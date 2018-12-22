@@ -188,7 +188,7 @@ class WorkerOcr(WorkerBase):
                     return
                 delayUsed = self._devicesettings.get("post_walk_delay",7)
             log.info("Sleeping %s" % str(delayUsed))
-            time.sleep(delayUsed)
+            time.sleep(float(delayUsed))
 
             log.debug("main: Acquiring lock")
 

@@ -29,7 +29,6 @@
 
 #mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
 #mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
-#mitm_wait_timeout:         # Timeout for waiting for data after setting/reaching a location. Default: 45 seconds.
 
 # Walk Settings
 ######################
@@ -50,7 +49,7 @@
 
 pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
-#raidscreen_path:            # Path for taken screenshots (Default: screenshots/)
+#raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
 #successsave_path:           # Path for successful submitted crops (Default: success/)
 
@@ -71,7 +70,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 
 # MADmin
 ######################
-#with_madmin                 # Start Madmin 
+#with_madmin                 # Start Madmin
 #madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
 #madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
 #madmin_port:                # MADmin web port (Default: 5000)

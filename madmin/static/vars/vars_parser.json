@@ -148,7 +148,7 @@
     ]
 	},
 	{
-	"name": "raid_ocr",
+	"name": "raids_ocr",
 	"description": "OCR scanner for detecting raids.",
 	"fields": [
 		{
@@ -305,7 +305,15 @@
 			"require": "false",
 			"description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
 	    }
-	}
+	},
+		{
+			"name": "mitm_wait_timeout",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+				"description": "Timeout for waiting for data after setting/reaching a location. Default: 45 seconds"
+		    }
+	    }
     ]
 }
 ],

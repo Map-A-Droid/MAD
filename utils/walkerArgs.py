@@ -55,8 +55,6 @@ def parseArgs():
                         help='IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).')
     parser.add_argument('-mrport', '--mitmreceiver_port', required=False, default=8000,
                         help='Port to listen on for proto data (MITM data). Default: 8000.')
-    parser.add_argument('-mrwt', '--mitm_wait_timeout', required=False, default=45, type=float,
-                        help='Timeout for waiting for data after setting/reaching a location. Default: 45 seconds.')
 
     # WEBSOCKET
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,

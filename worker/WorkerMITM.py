@@ -183,6 +183,7 @@ class WorkerMITM(WorkerBase):
                     (settings['max_distance'] and 0 < settings['max_distance'] < distance)
                     or (lastLocation.lat == 0.0 and lastLocation.lng == 0.0)):
                 log.info("main: Teleporting...")
+                # TODO: catch exception...
                 try:
                     self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
                 except WebsocketWorkerRemovedException:
@@ -245,6 +246,7 @@ class WorkerMITM(WorkerBase):
                                                                    timestamp=curTime)
             _data_err_counter = data_error_counter
 
+
         t_mitm_data.join()
         t_asyncio_loop.join()
 
@@ -292,7 +294,7 @@ class WorkerMITM(WorkerBase):
             time.sleep(0.2)
 
     def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
-        timeout = float(self._applicationArgs.mitm_wait_timeout)
+        timeout = self._devicesettings.get("mitm_wait_timeout", 45)
 
         log.info('Waiting for  data...')
         data_requested = None
