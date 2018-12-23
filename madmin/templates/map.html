@@ -49,6 +49,9 @@
 	}
 
 	$(document).ready(function () {
+		$("#navmap").addClass("active");
+		$("div[role='main']").removeClass("container");
+
 		var prevLoc = [0, 0];
 		var poslay = L.layerGroup();
 		var walklay = L.layerGroup();
