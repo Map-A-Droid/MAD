@@ -26,9 +26,9 @@ def __midPoint(lat1, lon1, lat2, lon2):
     lon1 = math.radians(lon1)
 
     x = math.cos(lat2) * math.cos(dLon)
-    y = math.cos(lat2) * math.sin(dLon);
-    lat3 = math.atan2(math.sin(lat1) + math.sin(lat2), math.sqrt((math.cos(lat1) + x) * (math.cos(lat1) + x) + y * y));
-    lon3 = lon1 + math.atan2(y, math.cos(lat1) + x);
+    y = math.cos(lat2) * math.sin(dLon)
+    lat3 = math.atan2(math.sin(lat1) + math.sin(lat2), math.sqrt((math.cos(lat1) + x) * (math.cos(lat1) + x) + y * y))
+    lon3 = lon1 + math.atan2(y, math.cos(lat1) + x)
 
     return Location(math.degrees(lat3), math.degrees(lon3))
 

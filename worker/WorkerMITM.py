@@ -6,7 +6,7 @@ from threading import Thread, Lock, Event, current_thread
 
 from utils.collections import Location
 from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
-from utils.geo import getDistanceOfTwoPointsInMeters
+from utils.geo import get_distance_of_two_points_in_meters
 from worker.WorkerBase import WorkerBase
 
 log = logging.getLogger(__name__)
@@ -170,8 +170,8 @@ class WorkerMITM(WorkerBase):
                       (lastLocation.lat, lastLocation.lng,
                        currentLocation.lat, currentLocation.lng))
             # get the distance from our current position (last) to the next gym (cur)
-            distance = getDistanceOfTwoPointsInMeters(float(lastLocation.lat), float(lastLocation.lng),
-                                                      float(currentLocation.lat), float(currentLocation.lng))
+            distance = get_distance_of_two_points_in_meters(float(lastLocation.lat), float(lastLocation.lng),
+                                                            float(currentLocation.lat), float(currentLocation.lng))
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
             log.debug("Getting time")
@@ -203,9 +203,9 @@ class WorkerMITM(WorkerBase):
                     log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
 
                 if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
-                    toWalk = getDistanceOfTwoPointsInMeters(float(currentLocation.lat), float(currentLocation.lng),
-                                                            float(currentLocation.lat) + 0.0001,
-                                                            float(currentLocation.lng) + 0.0001)
+                    toWalk = get_distance_of_two_points_in_meters(float(currentLocation.lat), float(currentLocation.lng),
+                                                                  float(currentLocation.lat) + 0.0001,
+                                                                  float(currentLocation.lng) + 0.0001)
                     log.info("Walking a bit: %s" % str(toWalk))
                     try:
                         time.sleep(0.3)

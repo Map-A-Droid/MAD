@@ -3,7 +3,7 @@ import math
 from utils.collections import Location
 
 
-def getDistanceOfTwoPointsInMeters(startLat, startLng, destLat, destLng):
+def get_distance_of_two_points_in_meters(startLat, startLng, destLat, destLng):
     # approximate radius of earth in km
     R = 6373.0
 

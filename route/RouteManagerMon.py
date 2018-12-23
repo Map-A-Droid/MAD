@@ -21,6 +21,7 @@ class RouteManagerMon(RouteManagerBase):
 # TODO: third override to filter locations. In this case by time and proximity
 
     def _retrieve_latest_priority_queue(self):
+        # todo: filter out stuff that's to end soon - does that even make sense for spawns? it does for raids...
         return self.db_wrapper.retrieve_next_spawns(self.geofence_helper)
 
     def _get_coords_post_init(self):
@@ -31,3 +32,9 @@ class RouteManagerMon(RouteManagerBase):
             log.info("Reading unknown Spawnpoints from DB")
             coords = self.db_wrapper.get_undetected_spawns(self.geofence_helper)
         return coords
+
+    def _cluster_priority_queue_criteria(self):
+        if self.settings is not None:
+            return self.settings.get("priority_queue_clustering_timedelta", 300)
+        else:
+            return 300

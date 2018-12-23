@@ -224,7 +224,11 @@ class WebhookHelper(object):
         if self.gyminfo is not None:
             info_of_gym = self.gyminfo.get(gymid, None)
             if info_of_gym is not None:
-                name = info_of_gym.get("name", "unknown").replace("\\", r"\\").replace('"', '')
+                name = info_of_gym.get("name", "unknown")
+                if name is not None:
+                    name = name.replace("\\", r"\\").replace('"', '')
+                else:
+                    name = "unknown"
                 lat = info_of_gym["latitude"]
                 lng = info_of_gym["longitude"]
                 image_url = info_of_gym["url"]

@@ -12,7 +12,8 @@
 						"speed": 70,
 						"max_distance": 200,
                         "delay_after_prio_event": null,
-                        "starve_route": false
+                        "starve_route": false,
+                        "priority_queue_clustering_timedelta": 300
 					}
                 },
                 {
@@ -26,7 +27,8 @@
 						"speed": 70,
 						"max_distance": 200,
                         "delay_after_prio_event": 50,
-                        "starve_route": true
+                        "starve_route": true,
+                        "priority_queue_clustering_timedelta": 600
 					}
                 }
     ],
