@@ -13,22 +13,23 @@ port=$(awk -F: '/^dbport/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's
 [[ "$user" == "" ]] && echo "You need to setup the database information in your MAD config before this script can work." && exit 3
 [[ "$port" == "" ]] && port=3306
 
-if [ "$dbtype" = "Monocle" ]; then
+case "$dbtype" in
+ monocle) 
 	gyms="forts"
 	gymID="external_id"
 	details="forts"
 	pokestopDB="pokestops"
 	pokestopID="external_id"
-elif [ "$dbtype" = "RM" ]; then
+	;;
+ rm)
 	gyms="gym"
 	gymID="gym_id"
 	details="gymdetails"
 	pokestopID="pokestop_id"
 	pokestopDB="pokestop"
-else
-	echo "dbtype is wrong! Aborting..."
-	exit 1
-fi
+	;;
+ *) echo "unknown dbmethod set in MAD config file." && exit 4;;
+esac
 
 gymCount=0
 stopCount=0
