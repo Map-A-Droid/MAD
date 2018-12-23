@@ -298,7 +298,7 @@ class RouteManagerBase(ABC):
             middle = event[1]
             earliest_timestamp = event[0] - event[2]
             latest_timestamp = event[0]
-            farthest_away = None
+            farthest_away = event
             distance_to_farthest = max_radius
         else:
             farthest_away, distance_to_farthest = self._get_farthest_in_relation(to_be_inspected, max_timedelta)
@@ -361,8 +361,8 @@ class RouteManagerBase(ABC):
         :return:
         """
         timedelta_seconds = self._cluster_priority_queue_criteria()
-        merged = self._merge_queue(latest, self._max_radius, self._max_coords_within_radius, timedelta_seconds)
-
+        merged = self._merge_queue(latest, self._max_radius, 2, timedelta_seconds)
+        # TODO: filter out events that occured too far in the past
         return merged
 
     def get_next_location(self):
