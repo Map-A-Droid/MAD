@@ -87,7 +87,8 @@ class MappingParser(object):
                                                 mode_mapping[area["mode"]]["max_count"],
                                                 area["geofence_included"], area.get("geofence_excluded", None),
                                                 area["routecalc"], mode=area["mode"],
-                                                coords_spawns_known=False, init=area.get("init", False),
+                                                coords_spawns_known=area.get("coords_spawns_known", False),
+                                                init=area.get("init", False),
                                                 name=area.get("name", "unknown"),
                                                 settings=area.get("settings", None)
                                                 )

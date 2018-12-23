@@ -208,7 +208,7 @@ class RouteManagerBase(ABC):
         distance = -1
         farthest = None
         for relation in to_be_inspected:
-            if (len(relation) == 4 and not relation.other_event[3] or len(relation) < 4) and relation.timedelta <= max_timedelta and relation.distance > distance:
+            if (len(relation.other_event) == 4 and not relation.other_event[3] or len(relation) < 4) and relation.timedelta <= max_timedelta and relation.distance > distance:
                 distance = relation.distance
                 farthest = relation
         return farthest.other_event, distance
@@ -221,6 +221,7 @@ class RouteManagerBase(ABC):
         for event_relations in relations:
             # exclude previously clustered events...
             if len(event_relations) == 4 and event_relations[3]:
+                inside_circle.append(event_relations)
                 continue
             distance = get_distance_of_two_points_in_meters(middle.lat, middle.lng,
                                                             event_relations[1].lat,
@@ -294,8 +295,8 @@ class RouteManagerBase(ABC):
             # all we need to do is update timestamps to keep track as to whether we are still inside the max_timedelta
             # constraint
             middle_event = event
-            middle = event[2]
-            earliest_timestamp = event[0] - event[3]
+            middle = event[1]
+            earliest_timestamp = event[0] - event[2]
             latest_timestamp = event[0]
             farthest_away = None
             distance_to_farthest = max_radius

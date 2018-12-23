@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import logging
+import math
 import time
 from threading import Thread, Lock, Event, current_thread
 
@@ -232,7 +233,7 @@ class WorkerMITM(WorkerBase):
                     self._work_mutex.release()
                     return
                 delayUsed = self._devicesettings.get('post_walk_delay',7)
-            curTime = time.time() + 1 # the time we will take as a starting point to wait for data...
+            curTime = math.floor(time.time()) # the time we will take as a starting point to wait for data...
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
 
