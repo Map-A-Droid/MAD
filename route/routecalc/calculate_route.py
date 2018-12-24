@@ -1,275 +1,37 @@
 # coding:utf-8
-import collections
 import logging
 import math
 import multiprocessing
 import os
 import secrets
 
+from route.routecalc.ClusteringHelper import ClusteringHelper
+from utils.collections import Location
 from .util import *
 
 log = logging.getLogger(__name__)
-
-Location = collections.namedtuple('Location', ['lat', 'lng'])
-ShortestDistance = collections.namedtuple('ShortestDistance', ['index', 'distance'])
-GymInfoDistance = collections.namedtuple('GymInfoDistance', ['distance', 'location'])
-
-Relation = collections.namedtuple('Relation', ['otherCoord', 'distance'])
-
-
-def __midPoint(lat1, lon1, lat2, lon2):
-    dLon = math.radians(lon2 - lon1)
-
-    # convert to radians
-    lat1 = math.radians(lat1)
-    lat2 = math.radians(lat2)
-    lon1 = math.radians(lon1)
-
-    x = math.cos(lat2) * math.cos(dLon)
-    y = math.cos(lat2) * math.sin(dLon)
-    lat3 = math.atan2(math.sin(lat1) + math.sin(lat2), math.sqrt((math.cos(lat1) + x) * (math.cos(lat1) + x) + y * y))
-    lon3 = lon1 + math.atan2(y, math.cos(lat1) + x)
-
-    return Location(math.degrees(lat3), math.degrees(lon3))
-
-
-def getDistanceOfTwoPointsInMeters(startLat, startLng, destLat, destLng):
-    # approximate radius of earth in km
-    R = 6373.0
-
-    lat1 = math.radians(startLat)
-    lon1 = math.radians(startLng)
-    lat2 = math.radians(destLat)
-    lon2 = math.radians(destLng)
-
-    dlon = lon2 - lon1
-    dlat = lat2 - lat1
-
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
-    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
-
-    distance = R * c
-
-    distanceInMeters = distance * 1000
-    return distanceInMeters
-
-
-# returns a map of coords and all their closest neighbours based on a given radius * 2 (hence circles...)
-def __getRelationsInRange(coordinates, rangeRadiusMeter):
-    # print "Got " + str(len(coordinates)) + " coordinates and will build relations with radius " + str(rangeRadiusMeter)
-    relations = {}
-    for coord in coordinates:
-        for otherCoord in coordinates:
-            if coord.lat == otherCoord.lat and coord.lng == otherCoord.lng:
-                if coord not in relations:
-                    relations[coord] = []
-            distance = getDistanceOfTwoPointsInMeters(coord.lat, coord.lng, otherCoord.lat, otherCoord.lng)
-            if 0 <= distance <= rangeRadiusMeter * 2:
-                if coord not in relations:
-                    relations[coord] = []
-                # we need to avoid duplicates...
-                alreadyPresent = False
-                for relation in relations[coord]:
-                    if relation.otherCoord.lat == otherCoord.lat and relation.otherCoord.lng == otherCoord.lng:
-                        alreadyPresent = True
-                if not alreadyPresent:
-                    relations[coord].append(Relation(otherCoord, distance))
-    # print "Got " + str(len(relations)) + " relations"
-    # print relations
-    return relations
-
-
-def __countOfGymsInCircle(middle, radius, relations):
-    count = 1  # the origin of our relations is assumed to be in the circle anyway...
-    for relation in relations:
-        distance = getDistanceOfTwoPointsInMeters(middle.lat, middle.lng, relation.otherCoord.lat,
-                                                  relation.otherCoord.lng)
-        if distance <= radius:
-            count += 1
-    return count
-
-
-# adapted from https://stackoverflow.com/questions/6671183/calculate-the-center-point-of-multiple-latitude-longitude-coordinate-pairs
-def __getMiddleOfCoordList(listOfCoords):
-    if len(listOfCoords) == 1:
-        return listOfCoords[0]
-
-    x = 0
-    y = 0
-    z = 0
-
-    for coord in listOfCoords:
-        # transform to radians...
-        latRad = math.radians(coord.lat)
-        lngRad = math.radians(coord.lng)
-
-        x += math.cos(latRad) * math.cos(lngRad)
-        y += math.cos(latRad) * math.sin(lngRad)
-        z += math.sin(latRad)
-
-    amountOfCoords = len(listOfCoords)
-    x = x / amountOfCoords
-    y = y / amountOfCoords
-    z = z / amountOfCoords
-    centralLng = math.atan2(y, x)
-    centralSquareRoot = math.sqrt(x * x + y * y)
-    centralLat = math.atan2(z, centralSquareRoot)
-
-    return Location(math.degrees(centralLat), math.degrees(centralLng))
-
-
-def __getCircle(coord, toBeInspected, relations, maxCount, maxDistance):
-    # print "Next Circle with coord " + str(coord)
-    # print "Relations: \n" + str(relations)
-    # includedInCircle = [coord]
-    includedInCircle = []
-    # toBeInspected = relations[coord]
-    if len(toBeInspected) == 0:
-        # coord is alone at its position...
-        return coord, []
-    elif len(toBeInspected) == 1:
-        # print "Just one coord, returning it as the middle: " + str(coord)
-        return coord, [coord]
-    # elif len(toBeInspected) == 2:
-    #     for relation in toBeInspected:
-    #         includedInCircle.append(relation.otherCoord)
-    #     print "just two coords, returning the middle of " + str(coord) + " and " + str(relation.otherCoord)
-    #     middle = __getMiddleOfCoordList(includedInCircle)
-    #     print "Returning middle: " + str(middle) + " included in the circle: " + str(includedInCircle)
-    #     return middle, includedInCircle
-
-    # check if middle of the two farthest away already holds everything needed
-    farthestAway, distanceToFarthest = __getFarthestInRelation(toBeInspected)
-    allCoordsWithinRange = [coord, farthestAway]
-    # for locationInUnion in unionOfFarthest:
-    #     allCoordsWithinRange.append(locationInUnion)
-    middle = __getMiddleOfCoordList(allCoordsWithinRange)
-    countInside, coordsInCircle = __getCountAndCoordsInCircle(middle, relations, maxDistance)
-    # print "Coords in circle basic middle: " + str(coordsInCircle) + " middle at: " + str(middle)
-    # print "Relation inspected: " + str(toBeInspected)
-    # print (len(coordsInCircle) == len(toBeInspected))
-    # print "Count inside circle: " + str(countInside) + " maxCount: " + str(maxCount)
-    if countInside <= maxCount and len(coordsInCircle) == len(toBeInspected):
-        # print "Returning middle " + str(middle) + " and telling to remove " + str(coordsInCircle)
-        return middle, coordsInCircle
-    elif countInside > maxCount:
-        toBeInspected = [toKeep for toKeep in toBeInspected if
-                         not (toKeep.otherCoord.lat == farthestAway.lat
-                              and toKeep.otherCoord.lng == farthestAway.lng)]
-        return __getCircle(coord, toBeInspected, relations, maxCount, distanceToFarthest)
-    else:
-        return middle, coordsInCircle
-        # TODO: calculate the entire stuff distributed by degrees north/south to coord
-
-
-def __getMostSouthern(coord, relation):
-    mostSouthern = coord
-    for coordInRel in relation:
-        if coordInRel.otherCoord.lat < mostSouthern.lat:
-            mostSouthern = coordInRel.otherCoord
-    return mostSouthern
-
-
-def __listOfCoordsContainsCoord(listOfCoords, coord):
-    # print "List to be searched: " + str(listOfCoords)
-    # print "Coord to be searched for: " + str(coord)
-    for coordOfList in listOfCoords:
-        if coord.lat == coordOfList.lat and coord.lng == coordOfList.lng:
-            return True
-    return False
-
-
-def __getMostNorthernInRelation(coord, relation):
-    mostNorthern = coord
-    for coordInRel in relation:
-        if coordInRel.otherCoord.lat >= mostNorthern.lat:
-            mostNorthern = coordInRel.otherCoord
-    return mostNorthern
-
-
-def __getMostWestAmongstRelations(relations):
-    selected = list(relations.keys())[0]
-    # print selected
-    for relation in relations:
-        if relation.lng < selected.lng:
-            selected = relation
-            # print selected
-        elif relation.lng == selected.lng and relation.lat > selected.lat:
-            selected = relation
-            # print selected
-    return selected
-
-
-def __getFarthestInRelation(relation):
-    distance = -1
-    farthest = None
-    for location in relation:
-        if location.distance > distance:
-            distance = location.distance
-            farthest = location.otherCoord
-    return farthest, distance
-
-
-# only returns the union, not the points of origins of the two relations!
-def __getUnionOfRelations(relationsOne, relationsTwo):
-    listToReturn = []
-    for relation in relationsOne:
-        for otherRelation in relationsTwo:
-            if (otherRelation.otherCoord.lat == relation.otherCoord.lat
-                    and otherRelation.otherCoord.lng == relation.otherCoord.lng):
-                listToReturn.append(otherRelation.otherCoord)
-    return listToReturn
-
-
-def __getCountAndCoordsInCircle(middle, relations, maxRadius):
-    insideCircle = []
-    for locationSource in relations:
-        distance = getDistanceOfTwoPointsInMeters(middle.lat, middle.lng, locationSource.lat, locationSource.lng)
-        if 0 <= distance <= maxRadius:
-            insideCircle.append(locationSource)
-    return len(insideCircle), insideCircle
-
-
-def __sumUpRelations(relations, maxCountPerCircle, maxDistance):
-    finalSet = []
-
-    while len(relations) > 0:
-        # get the most western north point in relations
-        next = __getMostWestAmongstRelations(relations)
-        # get a circle with "next" in it...
-        middle, coordsToBeRemoved = __getCircle(next, relations[next], relations, maxCountPerCircle, maxDistance)
-        # print "Removing: " + str(coordsToBeRemoved) + " Center of circle: " + str(middle)
-        # remove the coords covered by the circle...
-        finalSet.append(middle)
-        relations = __removeCoordsFromRelations(relations, coordsToBeRemoved)
-    return finalSet
-
-
-def __removeCoordsFromRelations(relations, listOfCoords):
-    for sourceLocation, distanceRelations in list(relations.items()):
-        # iterate relations, remove anything matching listOfCoords
-        for coord in listOfCoords:
-            # print "Coord: " + str(coord) + " sourceLocation: " + str(sourceLocation)
-            if coord.lat == sourceLocation.lat and coord.lng == sourceLocation.lng:
-                # entire relation matches the coord, remove it
-                relations.pop(sourceLocation)
-                break
-            # iterate through the entire distance relations...
-            for distRel in distanceRelations:
-                if distRel.otherCoord.lat == coord.lat and distRel.otherCoord.lng == coord.lng:
-                    relations[sourceLocation].remove(distRel)
-    return relations
 
 
 def getLessCoords(npCoordinates, maxRadius, maxCountPerCircle):
     coordinates = []
     for coord in npCoordinates:
-        coordinates.append(Location(coord[0].item(), coord[1].item()))
+        coordinates.append(
+            (0, Location(coord[0].item(), coord[1].item()))
+        )
 
-    relations = __getRelationsInRange(coordinates, maxRadius)
-    summedUp = __sumUpRelations(relations, maxCountPerCircle, maxRadius)
+    clustering_helper = ClusteringHelper(max_radius=maxRadius, max_count_per_circle=maxCountPerCircle,
+                                         max_timedelta_seconds=0)
+    clustered_events = clustering_helper.get_clustered(coordinates)
+    # relations = __getRelationsInRange(coordinates, maxRadius)
+    # summedUp = __sumUpRelations(relations, maxCountPerCircle, maxRadius)
+    coords_cleaned_up = []
+    for event in clustered_events:
+        coords_cleaned_up.append(
+            event[1]
+        )
+
     # print "Done summing up: " + str(summedUp) + " that's just " + str(len(summedUp))
-    return summedUp
+    return coords_cleaned_up
 
 
 def __generate_new_solution(method, markov_steps, distmat, temp_current, cost_current, solution_current):
@@ -497,7 +259,7 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
                 merged_sol = sol_best.copy()
                 length_sols_minus_one = len(solutions_temp) - 1
                 # log.error("Length solutions minus one: %s" % str(length_sols_minus_one))
-                range_to_be_searched = range(length_sols_minus_one)
+                # range_to_be_searched = range(length_sols_minus_one)
                 # log.error("Scanning range: %s" % str(range_to_be_searched))
                 for i in range(len(solutions_temp) - 1):
                     merged_sol = merge_results(merged_sol, solutions_temp[i], solutions_temp[i + 1])
