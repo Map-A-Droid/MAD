@@ -24,12 +24,6 @@
 #ws_port:                   # Port of the websocket to listen on. Default: 8080
 #websocket_command_timeout:         # The max time to wait for a command to return (in seconds). Default: 30 seconds.
 
-# MITM Receiver (Pogodroid data)
-######################
-
-#mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
-#mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
-
 # Walk Settings
 ######################
 
