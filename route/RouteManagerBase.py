@@ -12,10 +12,8 @@ from geofence.geofenceHelper import GeofenceHelper
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from route.routecalc.calculate_route import getJsonRoute
 from utils.collections import Location
-from utils.geo import get_distance_of_two_points_in_meters, get_middle_of_coord_list
 
 log = logging.getLogger(__name__)
-
 Relation = collections.namedtuple('Relation', ['other_event', 'distance', 'timedelta'])
 
 

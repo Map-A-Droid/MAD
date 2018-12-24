@@ -733,23 +733,16 @@ class DbWrapperBase(ABC):
         # retrieve 20% of the entire spawnset for now... should narrow it down at some point... TODO
         current_time_of_day = datetime.now()
         current_time_of_day = current_time_of_day.replace(microsecond=0)
-        first_char = math.floor(current_time_of_day.minute / 10)
-        following = first_char + 1
-        if following == 6:
-            # adjust for hour changes...
-            following = 0
+
         log.debug("DbWrapperBase::retrieve_next_spawns called")
         query = (
-            "SELECT latitude, longitude, calc_endminsec "
+            "SELECT latitude, longitude, spawndef, calc_endminsec "
             "FROM `trs_spawn`"
-            "WHERE calc_endminsec IS NOT NULL AND (calc_endminsec LIKE '%s%' OR calc_endminsec LIKE '%s%') "
+            "WHERE calc_endminsec IS NOT NULL"
         )
-        vals = (
-            first_char, following
-        )
-        res = self.execute(query, args=vals)
+        res = self.execute(query)
         next_up = []
-        for(latitude, longitude, calc_endminsec) in res:
+        for(latitude, longitude, spawndef, calc_endminsec) in res:
             endminsec_split = calc_endminsec.split(":")
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
@@ -764,7 +757,9 @@ class DbWrapperBase(ABC):
                 # TODO: consider crosschecking against current mons...
                 continue
 
-            timestamp = time.mktime(temp_date.timetuple())
+            spawn_duration_minutes = 60 if spawndef == 15 else 30
+
+            timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
             next_up.append(
                 (
                     timestamp, Location(latitude, longitude)
