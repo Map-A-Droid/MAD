@@ -246,12 +246,7 @@ class RouteManagerBase(ABC):
             elif timedelta_end >= 0 and timedelta_start >= 0 and 0 <= distance <= max_radius:
                 # we found an event within our current timedelta and proximity, just append it to the list
                 inside_circle.append(event_relations)
-            #
-            # elif 0 <= timedelta_end <= max_timedelta and 0 <= distance <= max_radius:
-            #     earliest_timestamp_temp = earliest_timestamp
-            #     if highest_timedelta < timedelta_end:
-            #         highest_timedelta = timedelta_end
-            #     inside_circle.append(event_relations)
+
         return len(inside_circle), inside_circle, highest_timedelta, latest_timestamp
 
     def _get_earliest_timestamp_in_queue(self, queue):
@@ -272,21 +267,8 @@ class RouteManagerBase(ABC):
         if len(to_be_inspected) == 0:
             return event, []
         elif len(to_be_inspected) == 1:
-            # TODO: merge event with the relation? this looks fishy, pretty sure we would need to remove the
-            # other coord in the to_be_inspected as well?
-            # TODO: do we not need to return the relation here?
+            # TODO: do relations hold themselves or is there a return missing here?
             return event, [event]
-            # if event[3]:
-            #     # the event has previously been merged with others, if the timedelta meets the criteria,
-            #     # return the event
-            #     # event[2] is the timedelta of the earliest merged to the timestamp of the event (latest in time)
-            #     # if relations only item's timestamp is greater than event, we will have a total timedelta to compare
-            #     # else we will likely have an item that can safely be merged/deleted
-            #     timedelta_event_to_single_relation = event[2] + (to_be_inspected[0][0] - event[0])
-            #     if timedelta_event_to_single_relation <= event[2]:
-            #         # we can safely remove the relation
-            #         return event, [event]
-        # TODO: check if event[3] = true, if so, reduce max_timedelta by the timedelta given in event[2] and do not
         # use the get_farthest... since we have previously moved the middle, we need to check for matching events in
         # such cases and build new circle events in time
         if len(event) == 4 and event[3]:
@@ -361,8 +343,16 @@ class RouteManagerBase(ABC):
         :return:
         """
         timedelta_seconds = self._cluster_priority_queue_criteria()
+        delete_seconds_passed = 0
+        if self.settings is not None:
+            delete_seconds_passed = self.settings.get("remove_from_queue_backlog", 0)
+
+        if delete_seconds_passed is not None:
+            delete_before = time.time() - delete_seconds_passed
+        else:
+            delete_before = 0
+        latest = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
         merged = self._merge_queue(latest, self._max_radius, 2, timedelta_seconds)
-        # TODO: filter out events that occured too far in the past
         return merged
 
     def get_next_location(self):

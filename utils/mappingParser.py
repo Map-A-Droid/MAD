@@ -34,7 +34,7 @@ class MappingParser(object):
         with open('configs/mappings.json') as f:
             self.__raw_json = json.load(f)
 
-    def get_routemanagers(self, delay_after_hatch=None):
+    def get_routemanagers(self):
         from multiprocessing.pool import ThreadPool
         global mode_mapping
 
