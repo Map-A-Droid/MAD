@@ -5,6 +5,10 @@
 # A different config-files can be included directly in processes by "--config-file" or "-cf" and path
 # Value without # are needed for this script
 
+##################################################################
+#           Shared settings - OCR and/or MITM mode               #
+##################################################################
+
 # MySql Settings
 ######################
 
@@ -24,6 +28,34 @@
 #ws_port:                   # Port of the websocket to listen on. Default: 8080
 #websocket_command_timeout:         # The max time to wait for a command to return (in seconds). Default: 30 seconds.
 
+# MADmin
+######################
+
+#with_madmin                 # Start Madmin
+#madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
+#madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
+#madmin_port:                # MADmin web port (Default: 5000)
+#madmin_time:                # MADmin clock format (12/24) (Default: 24)
+#madmin_noresponsive         # MADmin deactivate responsive tables
+#unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
+
+#sleeptimer settings
+######################
+
+#sleeptimer                  # Sleep time for the phone
+#sleepinterval:              # f.e. [21:00, 05:00] to disable pk and device from 21 to 5 o'clock (9 pm to 5 am)
+
+# webhook
+######################
+
+#webhook                     # active support for webhook
+#webhook_url:                # URL endpoint for your webhook - beginning with http://
+#weather_webhook             # active support for weather webhook
+
+##################################################################
+#      MITM-only settings, configure these if you use MITM       #
+##################################################################
+
 # MITM Receiver (Pogodroid data)
 ######################
 
@@ -36,6 +68,10 @@
 #initial_restart:            # Initial Pogo restart when scanner starts. (Default: true)
 #delay_after_hatch:          # Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)
 
+##################################################################
+#       OCR-only settings, configure these if you use OCR        #
+##################################################################
+
 # Runtype settings
 ######################
 
@@ -47,7 +83,7 @@
 # path settings
 ######################
 
-pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
+#pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
@@ -68,33 +104,10 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 
-# MADmin
-######################
-#with_madmin                 # Start Madmin
-#madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
-#madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
-#madmin_port:                # MADmin web port (Default: 5000)
-#madmin_time:                # MADmin clock format (12/24) (Default: 24)
-#madmin_noresponsive         # MADmin deactivate responsive tables
-#unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
-
 # timezone settings
 ######################
 
 #timezone:                   # Time difference from UTC (f.e "+2" for Berlin/Germany) - Needed for Rocketmap Database
-
-#sleeptimer settings
-######################
-
-#sleeptimer                  # Sleep time for the phone
-#sleepinterval:              # f.e. [21:00, 05:00] to disable pk and device from 21 to 5 o'clock (9 pm to 5 am)
-
-# webhook
-######################
-
-#webhook                     # active support for webhook
-#webhook_url:                # URL endpoint for your webhook - beginning with http://
-#weather_webhook             # active support for weather webhook
 
 # Auto Hatch
 ######################
