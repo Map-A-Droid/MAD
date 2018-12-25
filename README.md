@@ -88,6 +88,17 @@ If you want to run OCR on screenshots, run `-oo` to analyse screenshots
 ## MADMIN
 MADMIN is a web frontend to configure MAD to your needs, see the current position of your devices, fix OCR failures. You can enable it with `with_madmin` in the config file or `-wm` as a command line argument. The default port is 5000. See the config.ini.example for more options.
 
+## Tools
+To make your life easier you can use the scripts in `scripts/`.
+
+### Spawnpoint Importer (import_allspawns.sh)
+If you used to scan before and happen to still have your spawnpoints in your Monocle or Rocketmap database then you can use this script to import them to MAD. You must have the trs_spawn table already in your database and you must have filled out the Database portion of the MAD config file!
+
+### Intel Importer (intelimport.sh)
+If you ran the MITM method for the first time, you will probably notice that all gyms are missing namen and pictures. If you want to add this information, you can use this script. First of all, you'll need a CSV Export from the  [Ingress Intel Map](https://intel.ingress.com/intel). Install [IITC](https://iitc.me/) and the `IntelCsvExporterMADedition.js`
+ in the scripts directory. Make sure to scrape all the necessary portals in your area and export the CSV file to your server. The Second step is to run the script with the csv file as the first parameter.  
+Example: `./intelimport.sh export.csv`.
+
 ## Security
 RGC and PogoDroid both support wss/HTTPS respectively. Thus you may setup
 reverse proxies for MAD. The Auth headers in RGC and Pogodroid both use Basic auth.
