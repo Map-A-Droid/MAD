@@ -4,7 +4,7 @@ import os
 import time
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
-from threading import Event
+from threading import Event, Thread
 
 from utils.hamming import hamming_distance as hamming_dist
 from websocket.communicator import Communicator
@@ -17,7 +17,7 @@ log = logging.getLogger(__name__)
 class WorkerBase(ABC):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                  route_manager_nighttime, devicesettings, db_wrapper, NoOcr=False):
-        self.thread_pool = ThreadPool(processes=2)
+        # self.thread_pool = ThreadPool(processes=2)
         self._route_manager_daytime = route_manager_daytime
         self._route_manager_nighttime = route_manager_nighttime
         self._websocket_handler = websocket_handler
@@ -39,14 +39,15 @@ class WorkerBase(ABC):
             self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
 
     def start_worker(self):
-        # asyncio.ensure_future(self._main_work_thread())
-        async_result = self.thread_pool.apply_async(self._main_work_thread, ())  # tuple of args for foo
-        # return_val = async_result.get()  # get the return value from your function.
+        # async_result = self.thread_pool.apply_async(self._main_work_thread, ())
+        t_main_work = Thread(target=self._main_work_thread)
+        t_main_work.daemon = False
+        t_main_work.start()
         # do some other stuff in the main process
         while not self._stop_worker_event.isSet():
             time.sleep(1)
-
-        async_result.get()
+        t_main_work.join()
+        # async_result.get()
         return self._last_known_state
 
     def stop_worker(self):

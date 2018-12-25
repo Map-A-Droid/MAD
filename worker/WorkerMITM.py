@@ -126,9 +126,11 @@ class WorkerMITM(WorkerBase):
                 time.sleep(1)
             log.debug("Worker: acquiring lock for restart check")
             self._work_mutex.acquire()
+            log.debug("Worker: acquired lock")
 
             # check if pogo is topmost and start if necessary
             try:
+                log.debug("Calling _start_pogo routine to check if pogo is topmost")
                 self._start_pogo()
             except WebsocketWorkerRemovedException:
                 log.error("Timeout starting pogo on %s" % str(self.id))
@@ -136,7 +138,7 @@ class WorkerMITM(WorkerBase):
                 self._work_mutex.release()
                 return
 
-            log.debug("Worker: acquired lock")
+            log.debug("Checking if we needto restart pogo")
             # Restart pogo every now and then...
             if self._devicesettings.get("restart_pogo", 80) > 0:
                 # log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
@@ -153,15 +155,20 @@ class WorkerMITM(WorkerBase):
             lastLocation = currentLocation
             self._last_known_state["last_location"] = lastLocation
 
-            if MadGlobals.sleep:
+            log.debug("Requesting next location from routemanager")
+            if MadGlobals.sleep and self._route_manager_nighttime is not None:
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
+            elif MadGlobals.sleep:
+                # skip to top while loop to get to sleep loop
+                continue
             else:
                 currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
 
             # TODO: set position... needs to be adjust for multidevice
-            
+
+            log.debug("Updating .position file")
             posfile = open(self.id + '.position', "w")
             posfile.write(str(currentLocation.lat)+", "+str(currentLocation.lng))
             posfile.close()
