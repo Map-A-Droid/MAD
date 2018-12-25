@@ -730,9 +730,7 @@ class DbWrapperBase(ABC):
         Retrieve the spawnpoints with their respective unixtimestamp that are due in the next 300 seconds
         :return:
         """
-        # retrieve 20% of the entire spawnset for now... should narrow it down at some point... TODO
-        current_time_of_day = datetime.now()
-        current_time_of_day = current_time_of_day.replace(microsecond=0)
+        current_time_of_day = datetime.now().replace(microsecond=0)
 
         log.debug("DbWrapperBase::retrieve_next_spawns called")
         query = (
@@ -742,6 +740,7 @@ class DbWrapperBase(ABC):
         )
         res = self.execute(query)
         next_up = []
+        current_time = time.time()
         for(latitude, longitude, spawndef, calc_endminsec) in res:
             endminsec_split = calc_endminsec.split(":")
             minutes = int(endminsec_split[0])
@@ -760,6 +759,12 @@ class DbWrapperBase(ABC):
             spawn_duration_minutes = 60 if spawndef == 15 else 30
 
             timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
+            # check if we calculated a time in the past, if so, add an hour to it...
+            timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
+            # TODO: consider the following since I am not sure if the prio Q clustering handles stuff properly yet
+            # if timestamp >= current_time + 600:
+            #     # let's skip monspawns that are more than 10minutes in the future
+            #     continue
             next_up.append(
                 (
                     timestamp, Location(latitude, longitude)

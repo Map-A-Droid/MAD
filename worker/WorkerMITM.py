@@ -187,6 +187,7 @@ class WorkerMITM(WorkerBase):
                 # TODO: catch exception...
                 try:
                     self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
+                    curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location for %s" % str(self.id))
                     self._stop_worker_event.set()
@@ -202,6 +203,7 @@ class WorkerMITM(WorkerBase):
                     elif distance > 10000:
                         delayUsed = 15
                     log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
+                    # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
                 if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
                     toWalk = get_distance_of_two_points_in_meters(float(currentLocation.lat), float(currentLocation.lng),
@@ -227,13 +229,13 @@ class WorkerMITM(WorkerBase):
                 try:
                     self._communicator.walkFromTo(lastLocation.lat, lastLocation.lng,
                                                   currentLocation.lat, currentLocation.lng, speed)
+                    curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location for %s" % str(self.id))
                     self._stop_worker_event.set()
                     self._work_mutex.release()
                     return
-                delayUsed = self._devicesettings.get('post_walk_delay',7)
-            curTime = math.floor(time.time()) # the time we will take as a starting point to wait for data...
+                delayUsed = self._devicesettings.get('post_walk_delay', 7)
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
 
@@ -246,7 +248,6 @@ class WorkerMITM(WorkerBase):
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                    timestamp=curTime)
             _data_err_counter = data_error_counter
-
 
         t_mitm_data.join()
         t_asyncio_loop.join()
@@ -271,11 +272,6 @@ class WorkerMITM(WorkerBase):
                     # log.debug("Starting off thread in pool")
                     self.__add_task_to_loop(
                         self.process_data(data, received_timestamp))
-
-                    # self.thread_pool.apply_async(self.process_data, args=(data, received_timestamp,))
-                    # p = multiprocessing.Process(name='ProcessData', target=WorkerMITM.process_data,
-                    #                             args=(self, data, received_timestamp))
-                    # p.start()
                     log.debug("Updating time...")
                     __time_106 = time.time()
             if 102 in latest.keys():
@@ -283,11 +279,6 @@ class WorkerMITM(WorkerBase):
                     log.info('Processing MITM Data')
                     data = latest[102]['data']
                     received_timestamp = latest[102]['timestamp']
-                    # log.debug("Starting off thread in pool")
-                    # self.thread_pool.apply_async(self.process_data, args=(data, received_timestamp,))
-                    # p = multiprocessing.Process(name='ProcessData', target=WorkerMITM.process_data,
-                    #                             args=(self, data, received_timestamp))
-                    # p.start()
                     self.__add_task_to_loop(
                         self.process_data(data, received_timestamp))
                     log.debug("Updating time...")
@@ -304,7 +295,7 @@ class WorkerMITM(WorkerBase):
             # log.info('Requesting latest...')
             latest = self._received_mapping.request_latest(self.id)
             if latest is None:
-                log.debug('latest was None...')
+                log.warning('Nothing received from client since MAD started...')
                 # we did not get anything from that client at all, let's check again in a sec
                 time.sleep(0.5)
                 continue
@@ -318,28 +309,44 @@ class WorkerMITM(WorkerBase):
             else:
                 # log.debug('latest contains data...')
                 data = latest[proto_to_wait_for]['data']
-                if (latest[proto_to_wait_for]['timestamp']) >= timestamp-5:
-                    if (MadGlobals.sleep and self._route_manager_nighttime.mode == 'mon_mitm'
-                            or not MadGlobals.sleep and self._route_manager_daytime.mode == 'mon_mitm'):
+                latest_timestamp = latest[proto_to_wait_for]['timestamp']
+                if self._route_manager_nighttime is not None:
+                    nighttime_mode = self._route_manager_nighttime.mode
+                else:
+                    nighttime_mode = None
+                daytime_mode = self._route_manager_daytime.mode
+
+                current_mode = daytime_mode if not MadGlobals.sleep else nighttime_mode
+
+                if latest_timestamp >= timestamp:
+                    if current_mode == 'mon_mitm':
                         for data_extract in data['payload']['cells']:
                             for WP in data_extract['wild_pokemon']:
                                 if WP['spawnpoint_id']:
                                     data_requested = data
-
-                    elif (MadGlobals.sleep and self._route_manager_nighttime.mode == 'raids_mitm'
-                            or not MadGlobals.sleep and self._route_manager_daytime.mode == 'raids_mitm'):
+                        if data_requested is None:
+                            log.warning("No spawnpoints in data requested")
+                    elif current_mode == 'raids_mitm':
                         for data_extract in data['payload']['cells']:
                             for forts in data_extract['forts']:
                                 if forts['id']:
                                     data_requested = data
+                        if data_requested is None:
+                            log.warning("No forts in data received")
                     else:
+                        log.warning("No mode specified to wait for")
                         data_err_counter += 1
                         time.sleep(0.5)
                 else:
+                    log.debug("latest timestamp of proto %s (%s) is older than %s"
+                              % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
                     data_err_counter += 1
                     time.sleep(0.5)
 
-            if data_err_counter >= int(60):
+            max_data_err_counter = 60
+            if self._devicesettings is not None:
+                max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
+            if data_err_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
                 self._restartPogo(False)
                 return None, 0
