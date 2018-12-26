@@ -21,3 +21,4 @@ configs/coords/*
 env
 env/*
 venv
+.vscode/*
