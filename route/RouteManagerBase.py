@@ -192,17 +192,20 @@ class RouteManagerBase(ABC):
         return merged
 
     def get_next_location(self):
+        log.debug("get_next_location of %s called" % str(self.name))
         next_lat, next_lng = 0, 0
 
         # first check if a location is available, if not, block until we have one...
         got_location = False
         while not got_location:
+            log.debug("%s: Checking if a location is available..." % str(self.name))
             self._manager_mutex.acquire()
             got_location = self._prio_queue is not None and len(self._prio_queue) > 0 or len(self._route) > 0
             self._manager_mutex.release()
             if not got_location:
+                log.debug("%s: No location available yet" % str(self.name))
                 time.sleep(0.5)
-
+        log.debug("%s: Location available, acquiring lock and trying to return location")
         self._manager_mutex.acquire()
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route
@@ -211,6 +214,7 @@ class RouteManagerBase(ABC):
         if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
                                                              and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
+            log.debug("%s: Priority event" % str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]
             next_lat = next_stop.lat
             next_lng = next_stop.lng
@@ -218,6 +222,7 @@ class RouteManagerBase(ABC):
             log.info("Round of route %s is moving to %s, %s for a priority event"
                      % (str(self.name), str(next_lat), str(next_lng)))
         else:
+            log.debug("%s: Moving on with route" % str(self.name))
             if self._current_index_of_route == 0:
                 if self._round_started_time is not None:
                     log.info("Round of route %s reached the first spot again. It took %s"

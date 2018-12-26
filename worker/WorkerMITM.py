@@ -169,9 +169,10 @@ class WorkerMITM(WorkerBase):
             # TODO: set position... needs to be adjust for multidevice
 
             log.debug("Updating .position file")
-            posfile = open(self.id + '.position', "w")
-            posfile.write(str(currentLocation.lat)+", "+str(currentLocation.lng))
-            posfile.close()
+            with open(self.id + '.position', 'w') as outfile:
+            # posfile = open(self.id + '.position', "w")
+                outfile.write(str(currentLocation.lat)+", "+str(currentLocation.lng))
+            # posfile.close()
 
             log.debug("main: next stop: %s" % (str(currentLocation)))
             log.debug('main: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
