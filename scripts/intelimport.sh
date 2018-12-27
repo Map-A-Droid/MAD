@@ -14,7 +14,7 @@ port=$(awk -F: '/^dbport/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's
 [[ "$port" == "" ]] && port=3306
 
 case "$dbtype" in
- monocle) 
+ monocle)
 	gyms="forts"
 	gymID="external_id"
 	details="forts"
@@ -45,12 +45,14 @@ do
                 echo "Thats NOT a gym, skipping..."
         fi
 
-        if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $pokestopDB where $pokestopID=\"$portalGuid\";") -eq 1 ]; then
-                echo "Thats a pokestop, updating row..."
-        ((stopCount ++))
-                mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $pokestopDB SET name=\"$name\", url=\"$url\" WHERE $pokestopID=\"$portalGuid\";"
-        else
-                echo "Thats NOT a pokestop, skipping..."
+        if [ "$dbtype" == "monocle" ]; then
+              if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $pokestopDB where $pokestopID=\"$portalGuid\";") -eq 1 ]; then
+                      echo "Thats a pokestop, updating row..."
+              ((stopCount ++))
+                      mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $pokestopDB SET name=\"$name\", url=\"$url\" WHERE $pokestopID=\"$portalGuid\";"
+              else
+                      echo "Thats NOT a pokestop, skipping..."
+              fi
         fi
 done
 echo "$gymCount Gyms updated"
