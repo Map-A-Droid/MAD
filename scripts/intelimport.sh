@@ -34,7 +34,7 @@ esac
 gymCount=0
 stopCount=0
 
-cat $1 |{ while IFS=, read name url portalGuid
+cat $1 |{ while IFS=\; read name url portalGuid
 do
         echo "name: $name, url: $url, external_id: $portalGuid"
         if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $gyms where $gymID=\"$portalGuid\";") -eq 1 ]; then

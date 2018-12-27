@@ -94,7 +94,7 @@ function wrapper() {
         str = title;
         str = str.replace(/\"/g, "\\\\\"");
         str = str.replace(";", " ");
-        str = str + "," + image + "," + portalGuid;
+        str = str + ";" + image + ";" + portalGuid;
         if (window.plugin.keys && (typeof window.portals[portalGuid] !== "undefined")) {
             var keyCount =window.plugin.keys.keys[portalGuid] || 0;
             str = str + ";" + keyCount;
