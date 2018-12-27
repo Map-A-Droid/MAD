@@ -256,6 +256,7 @@ class WorkerMITM(WorkerBase):
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                    timestamp=curTime)
             _data_err_counter = data_error_counter
+            log.debug("Worker %s done, next iteration" % str(self.id))
 
         t_mitm_data.join()
         t_asyncio_loop.join()
@@ -333,14 +334,14 @@ class WorkerMITM(WorkerBase):
                                 if WP['spawnpoint_id']:
                                     data_requested = data
                         if data_requested is None:
-                            log.warning("No spawnpoints in data requested")
+                            log.debug("No spawnpoints in data requested")
                     elif current_mode == 'raids_mitm':
                         for data_extract in data['payload']['cells']:
                             for forts in data_extract['forts']:
                                 if forts['id']:
                                     data_requested = data
                         if data_requested is None:
-                            log.warning("No forts in data received")
+                            log.debug("No forts in data received")
                     else:
                         log.warning("No mode specified to wait for")
                         data_err_counter += 1

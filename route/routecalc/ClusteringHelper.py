@@ -105,7 +105,7 @@ class ClusteringHelper:
 
     def _get_circle(self, event, to_be_inspected, relations, max_radius):
         if len(to_be_inspected) == 0:
-            return event, []
+            return event, [event]
         elif len(to_be_inspected) == 1:
             # TODO: do relations hold themselves or is there a return missing here?
             return event, [event]
