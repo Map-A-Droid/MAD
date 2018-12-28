@@ -23,7 +23,7 @@ raid_webhook_payload = """[{{
         "raid_end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
-        "gym_url": "{url}",
+        "url": "{url}",
         "sponsor": "{sponsor}",
         "weather": "{weather}",
         "park": "{park}"
@@ -42,7 +42,7 @@ egg_webhook_payload = """[{{
         "raid_end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
-        "gym_url": "{url}",
+        "url": "{url}",
         "sponsor": "{sponsor}",
         "weather": "{weather}",
         "park": "{park}"
@@ -224,7 +224,11 @@ class WebhookHelper(object):
         if self.gyminfo is not None:
             info_of_gym = self.gyminfo.get(gymid, None)
             if info_of_gym is not None:
-                name = info_of_gym.get("name", "unknown").replace("\\", r"\\").replace('"', '')
+                name = info_of_gym.get("name", "unknown")
+                if name is not None:
+                    name = name.replace("\\", r"\\").replace('"', '')
+                else:
+                    name = "unknown"
                 lat = info_of_gym["latitude"]
                 lng = info_of_gym["longitude"]
                 image_url = info_of_gym["url"]
@@ -238,7 +242,7 @@ class WebhookHelper(object):
                     try:
                         park = int(info_of_gym.get("park", 0))
                     except (ValueError, TypeError) as e:
-                        park = 0
+                        park = None
                 if 'sponsor' in self.gyminfo[str(gymid)]:
                     try:
                         sponsor = int(info_of_gym.get("sponsor", 0))

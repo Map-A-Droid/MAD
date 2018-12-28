@@ -3,25 +3,27 @@
 # WS server example
 
 import asyncio
-
 import websockets
 
 
 async def hello(websocket, path):
+    print("Client registered")
     while True:
         command = input("Enter command: ")
-
-        await websocket.send(command)
-
+        print("Sending: %s" % command)
+        await websocket.send("1;" + command)
+        print("Awaiting response")
         response = await websocket.recv()
-        log.debug(f"< {response}")
+        print(f"Response: {response}")
 
     # greeting = f" {response}!"
     #
     # await websocket.send(greeting)
     # log.debug(f"> {greeting}")
 
-start_server = websockets.serve(hello, '', 8080)
+print("Initializing websocket server")
+start_server = websockets.serve(hello, '0.0.0.0', 8080)
 
+print("Starting to serve")
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()

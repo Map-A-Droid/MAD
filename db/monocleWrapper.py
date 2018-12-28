@@ -8,7 +8,7 @@ from db.dbWrapperBase import DbWrapperBase
 import logging
 from datetime import datetime, timedelta
 
-from utils.collections import RaidLocation
+from utils.collections import Location
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -112,7 +112,7 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT time_battle, lat, lon "
-            "FROM raids LEFT JOIN forts ON raids.fort_id = fords.id "
+            "FROM raids LEFT JOIN forts ON raids.fort_id = forts.id "
             "WHERE raids.time_end > %s AND raids.pokemon_id IS NULL"
         )
 
@@ -131,7 +131,7 @@ class MonocleWrapper(DbWrapperBase):
                           % (str(lat), str(lon)))
                 continue
             # timestamp = self.dbTimeStringToUnixTimestamp(str(start))
-            data.append((time_battle + delay_after_hatch * 60, RaidLocation(lat, lon)))
+            data.append((time_battle + delay_after_hatch, Location(lat, lon)))
 
         log.debug("Latest Q: %s" % str(data))
         return data
@@ -870,13 +870,12 @@ class MonocleWrapper(DbWrapperBase):
 
     def __encode_hash_json(self, team_id, latitude, longitude, name, url, park, sponsor):
         gym_json = {'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '',
-                    'url': url}
+                    'url': url, 'park': park}
 
-        if park != "unknown":
-            gym_json['park'] = park
-        if sponsor is not 0:
+        if sponsor is not None:
             gym_json['sponsor'] = sponsor
-
+        else:
+            gym_json['sponsor'] = 0
         log.debug(gym_json)
 
         return gym_json

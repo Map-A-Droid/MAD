@@ -1,12 +1,13 @@
 import asyncio
 import functools
 import logging
+import math
 import time
 from threading import Thread, Lock, Event, current_thread
 
 from utils.collections import Location
 from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
-from utils.geo import getDistanceOfTwoPointsInMeters
+from utils.geo import get_distance_of_two_points_in_meters
 from worker.WorkerBase import WorkerBase
 
 log = logging.getLogger(__name__)
@@ -125,9 +126,11 @@ class WorkerMITM(WorkerBase):
                 time.sleep(1)
             log.debug("Worker: acquiring lock for restart check")
             self._work_mutex.acquire()
+            log.debug("Worker: acquired lock")
 
             # check if pogo is topmost and start if necessary
             try:
+                log.debug("Calling _start_pogo routine to check if pogo is topmost")
                 self._start_pogo()
             except WebsocketWorkerRemovedException:
                 log.error("Timeout starting pogo on %s" % str(self.id))
@@ -135,7 +138,7 @@ class WorkerMITM(WorkerBase):
                 self._work_mutex.release()
                 return
 
-            log.debug("Worker: acquired lock")
+            log.debug("Checking if we needto restart pogo")
             # Restart pogo every now and then...
             if self._devicesettings.get("restart_pogo", 80) > 0:
                 # log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
@@ -152,30 +155,35 @@ class WorkerMITM(WorkerBase):
             lastLocation = currentLocation
             self._last_known_state["last_location"] = lastLocation
 
-            if MadGlobals.sleep:
-                currentLocation = self._route_manager_nighttime.getNextLocation()
+            log.debug("Requesting next location from routemanager")
+            if MadGlobals.sleep and self._route_manager_nighttime is not None:
+                currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
+            elif MadGlobals.sleep:
+                # skip to top while loop to get to sleep loop
+                continue
             else:
-                currentLocation = self._route_manager_daytime.getNextLocation()
+                currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
 
             # TODO: set position... needs to be adjust for multidevice
-            
-            posfile = open(self.id + '.position', "w")
-            posfile.write(str(currentLocation.lat)+", "+str(currentLocation.lng))
-            posfile.close()
+
+            log.debug("Updating .position file")
+            with open(self.id + '.position', 'w') as outfile:
+            # posfile = open(self.id + '.position', "w")
+                outfile.write(str(currentLocation.lat)+", "+str(currentLocation.lng))
+            # posfile.close()
 
             log.debug("main: next stop: %s" % (str(currentLocation)))
             log.debug('main: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
                       (lastLocation.lat, lastLocation.lng,
                        currentLocation.lat, currentLocation.lng))
             # get the distance from our current position (last) to the next gym (cur)
-            distance = getDistanceOfTwoPointsInMeters(float(lastLocation.lat), float(lastLocation.lng),
-                                                      float(currentLocation.lat), float(currentLocation.lng))
+            distance = get_distance_of_two_points_in_meters(float(lastLocation.lat), float(lastLocation.lng),
+                                                            float(currentLocation.lat), float(currentLocation.lng))
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
             log.debug("Getting time")
-            curTime = time.time()
             if MadGlobals.sleep:
                 speed = self._route_manager_nighttime.settings.get("speed", 0)
             else:
@@ -187,6 +195,7 @@ class WorkerMITM(WorkerBase):
                 # TODO: catch exception...
                 try:
                     self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
+                    curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location for %s" % str(self.id))
                     self._stop_worker_event.set()
@@ -202,11 +211,12 @@ class WorkerMITM(WorkerBase):
                     elif distance > 10000:
                         delayUsed = 15
                     log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
+                    # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
                 if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
-                    toWalk = getDistanceOfTwoPointsInMeters(float(currentLocation.lat), float(currentLocation.lng),
-                                                            float(currentLocation.lat) + 0.0001,
-                                                            float(currentLocation.lng) + 0.0001)
+                    toWalk = get_distance_of_two_points_in_meters(float(currentLocation.lat), float(currentLocation.lng),
+                                                                  float(currentLocation.lat) + 0.0001,
+                                                                  float(currentLocation.lng) + 0.0001)
                     log.info("Walking a bit: %s" % str(toWalk))
                     try:
                         time.sleep(0.3)
@@ -227,26 +237,26 @@ class WorkerMITM(WorkerBase):
                 try:
                     self._communicator.walkFromTo(lastLocation.lat, lastLocation.lng,
                                                   currentLocation.lat, currentLocation.lng, speed)
+                    curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location for %s" % str(self.id))
                     self._stop_worker_event.set()
                     self._work_mutex.release()
                     return
-                delayUsed = self._devicesettings.get('post_walk_delay',7)
+                delayUsed = self._devicesettings.get('post_walk_delay', 7)
             log.info("Sleeping %s" % str(delayUsed))
-            time.sleep(delayUsed)
-            log.debug("Checking is last_scanned is enabled...")
+            time.sleep(float(delayUsed))
+
             if self._applicationArgs.last_scanned:
                 log.info('main: Set new scannedlocation in Database')
                 # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
                 self.__add_task_to_loop(self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime))
-                
 
             log.debug("Waiting for data to be received...")
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                    timestamp=curTime)
             _data_err_counter = data_error_counter
-
+            log.debug("Worker %s done, next iteration" % str(self.id))
 
         t_mitm_data.join()
         t_asyncio_loop.join()
@@ -271,11 +281,6 @@ class WorkerMITM(WorkerBase):
                     # log.debug("Starting off thread in pool")
                     self.__add_task_to_loop(
                         self.process_data(data, received_timestamp))
-
-                    # self.thread_pool.apply_async(self.process_data, args=(data, received_timestamp,))
-                    # p = multiprocessing.Process(name='ProcessData', target=WorkerMITM.process_data,
-                    #                             args=(self, data, received_timestamp))
-                    # p.start()
                     log.debug("Updating time...")
                     __time_106 = time.time()
             if 102 in latest.keys():
@@ -283,11 +288,6 @@ class WorkerMITM(WorkerBase):
                     log.info('Processing MITM Data')
                     data = latest[102]['data']
                     received_timestamp = latest[102]['timestamp']
-                    # log.debug("Starting off thread in pool")
-                    # self.thread_pool.apply_async(self.process_data, args=(data, received_timestamp,))
-                    # p = multiprocessing.Process(name='ProcessData', target=WorkerMITM.process_data,
-                    #                             args=(self, data, received_timestamp))
-                    # p.start()
                     self.__add_task_to_loop(
                         self.process_data(data, received_timestamp))
                     log.debug("Updating time...")
@@ -304,7 +304,7 @@ class WorkerMITM(WorkerBase):
             # log.info('Requesting latest...')
             latest = self._received_mapping.request_latest(self.id)
             if latest is None:
-                log.debug('latest was None...')
+                log.warning('Nothing received from client since MAD started...')
                 # we did not get anything from that client at all, let's check again in a sec
                 time.sleep(0.5)
                 continue
@@ -318,28 +318,44 @@ class WorkerMITM(WorkerBase):
             else:
                 # log.debug('latest contains data...')
                 data = latest[proto_to_wait_for]['data']
-                if (latest[proto_to_wait_for]['timestamp']) >= timestamp-5:
-                    if (MadGlobals.sleep and self._route_manager_nighttime.mode == 'mon_mitm'
-                            or not MadGlobals.sleep and self._route_manager_daytime.mode == 'mon_mitm'):
+                latest_timestamp = latest[proto_to_wait_for]['timestamp']
+                if self._route_manager_nighttime is not None:
+                    nighttime_mode = self._route_manager_nighttime.mode
+                else:
+                    nighttime_mode = None
+                daytime_mode = self._route_manager_daytime.mode
+
+                current_mode = daytime_mode if not MadGlobals.sleep else nighttime_mode
+
+                if latest_timestamp >= timestamp:
+                    if current_mode == 'mon_mitm':
                         for data_extract in data['payload']['cells']:
                             for WP in data_extract['wild_pokemon']:
                                 if WP['spawnpoint_id']:
                                     data_requested = data
-
-                    elif (MadGlobals.sleep and self._route_manager_nighttime.mode == 'raids_mitm'
-                            or not MadGlobals.sleep and self._route_manager_daytime.mode == 'raids_mitm'):
+                        if data_requested is None:
+                            log.debug("No spawnpoints in data requested")
+                    elif current_mode == 'raids_mitm':
                         for data_extract in data['payload']['cells']:
                             for forts in data_extract['forts']:
                                 if forts['id']:
                                     data_requested = data
+                        if data_requested is None:
+                            log.debug("No forts in data received")
                     else:
+                        log.warning("No mode specified to wait for")
                         data_err_counter += 1
                         time.sleep(0.5)
                 else:
+                    log.debug("latest timestamp of proto %s (%s) is older than %s"
+                              % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
                     data_err_counter += 1
                     time.sleep(0.5)
 
-            if data_err_counter >= int(60):
+            max_data_err_counter = 60
+            if self._devicesettings is not None:
+                max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
+            if data_err_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
                 self._restartPogo(False)
                 return None, 0
