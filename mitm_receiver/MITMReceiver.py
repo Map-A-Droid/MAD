@@ -1,5 +1,6 @@
 import json
 import logging
+import math
 import time
 
 from flask import (Flask, request, Response)
@@ -69,4 +70,4 @@ class MITMReceiver(object):
         if type is None:
             log.warning("Could not read method ID. Stopping processing of proto")
             return
-        self.__received_mapping.update_retrieved(origin, type, data, time.time())
+        self.__received_mapping.update_retrieved(origin, type, data, int(math.floor(time.time())))

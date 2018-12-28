@@ -4,7 +4,8 @@ import sys
 from pathlib import Path
 
 from geofence.geofenceHelper import GeofenceHelper
-from route.RouteManager import RouteManager
+from route.RouteManagerMon import RouteManagerMon
+from route.RouteManagerRaids import RouteManagerRaids
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -17,7 +18,7 @@ mode_mapping = {
     },
     "mon_mitm": {
         "s2_cell_level": 17,
-        "range": 75,
+        "range": 67,
         "max_count": 100000
     },
     "raids_ocr": {
@@ -33,7 +34,7 @@ class MappingParser(object):
         with open('configs/mappings.json') as f:
             self.__raw_json = json.load(f)
 
-    def get_routemanagers(self, delay_after_hatch=None):
+    def get_routemanagers(self):
         from multiprocessing.pool import ThreadPool
         global mode_mapping
 
@@ -71,8 +72,33 @@ class MappingParser(object):
             # coords = np.loadtxt(area["coords"], delimiter=',')
             geofence_helper = GeofenceHelper(area["geofence_included"], area.get("geofence_excluded", None))
             mode = area["mode"]
+            # build routemanagers
+            if mode == "raids_ocr" or mode == "raids_mitm":
+                route_manager = RouteManagerRaids(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
+                                                  mode_mapping[area["mode"]]["max_count"],
+                                                  area["geofence_included"], area.get("geofence_excluded", None),
+                                                  area["routecalc"],
+                                                  mode=area["mode"], settings=area.get("settings", None),
+                                                  init=area.get("init", False),
+                                                  name=area.get("name", "unknown")
+                                                  )
+            elif mode == "mon_mitm":
+                route_manager = RouteManagerMon(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
+                                                mode_mapping[area["mode"]]["max_count"],
+                                                area["geofence_included"], area.get("geofence_excluded", None),
+                                                area["routecalc"], mode=area["mode"],
+                                                coords_spawns_known=area.get("coords_spawns_known", False),
+                                                init=area.get("init", False),
+                                                name=area.get("name", "unknown"),
+                                                settings=area.get("settings", None)
+                                                )
+            else:
+                log.error("Invalid mode found in mapping parser.")
+                sys.exit(1)
+
             if mode == "raids_ocr" or area.get("init", False) is False:
                 # grab data from DB depending on mode
+                # TODO: move routemanagers to factory
                 if mode == "raids_ocr" or mode == "raids_mitm":
                     coords = self.db_wrapper.gyms_from_db(geofence_helper)
                 elif mode == "mon_mitm":
@@ -94,15 +120,14 @@ class MappingParser(object):
                 #                                       geofence_helper)
 
             # retrieve the range and max count per circle from central mapping...
-            route_manager = RouteManager(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
-                                         mode_mapping[area["mode"]]["max_count"],
-                                         area["geofence_included"], area.get("geofence_excluded", None),
-                                         area["routecalc"],
-                                         coords_spawns_known=area.get("coords_spawns_known", False),
-                                         delayAfterHatch=delay_after_hatch,
-                                         init=area.get("init", False), mode=area["mode"], settings=area["settings"],
-                                         name=area.get("name", "unknwon"))
-
+            # route_manager = RouteManager(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
+            #                              mode_mapping[area["mode"]]["max_count"],
+            #                              area["geofence_included"], area.get("geofence_excluded", None),
+            #                              area["routecalc"],
+            #                              coords_spawns_known=area.get("coords_spawns_known", False),
+            #                              delayAfterHatch=delay_after_hatch,
+            #                              init=area.get("init", False), mode=area["mode"], settings=area["settings"],
+            #                              name=area.get("name", "unknown"))
 
             route_manager.add_coords_list(coords)
             max_radius = mode_mapping[area["mode"]]["range"]

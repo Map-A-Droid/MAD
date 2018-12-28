@@ -6,7 +6,7 @@ import s2sphere
 # import math
 
 # from utils.collections import Location
-# from utils.geo import get_middle_of_coord_list, getDistanceOfTwoPointsInMeters
+# from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
 
 log = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class S2Helper:
     #     # get the farthest to the center...
     #     farthest_dist = 0
     #     for corner in corners:
-    #         dist_temp = getDistanceOfTwoPointsInMeters(center.lat, center.lng, corner.lat, corner.lng)
+    #         dist_temp = get_distance_of_two_points_in_meters(center.lat, center.lng, corner.lat, corner.lng)
     #         if dist_temp > farthest_dist:
     #             farthest_dist = dist_temp
     #

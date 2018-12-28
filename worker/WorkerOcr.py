@@ -7,7 +7,7 @@ from threading import Lock, Event, Thread, current_thread
 from ocr.checkWeather import checkWeather
 from utils.collections import Location
 from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
-from utils.geo import getDistanceOfTwoPointsInMeters
+from utils.geo import get_distance_of_two_points_in_meters
 from utils.s2Helper import S2Helper
 from .WorkerBase import WorkerBase
 
@@ -126,8 +126,8 @@ class WorkerOcr(WorkerBase):
                       (lastLocation.lat, lastLocation.lng,
                        currentLocation.lat, currentLocation.lng))
             # get the distance from our current position (last) to the next gym (cur)
-            distance = getDistanceOfTwoPointsInMeters(float(lastLocation.lat), float(lastLocation.lng),
-                                                      float(currentLocation.lat), float(currentLocation.lng))
+            distance = get_distance_of_two_points_in_meters(float(lastLocation.lat), float(lastLocation.lng),
+                                                            float(currentLocation.lat), float(currentLocation.lng))
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
             if MadGlobals.sleep:
@@ -157,9 +157,9 @@ class WorkerOcr(WorkerBase):
                     log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
 
                 if 0 < self._devicesettings.get("walk_after_teleport_distance",0) < distance:
-                    toWalk = getDistanceOfTwoPointsInMeters(float(currentLocation.lat), float(currentLocation.lng),
-                                                            float(currentLocation.lat) + 0.0001,
-                                                            float(currentLocation.lng) + 0.0001)
+                    toWalk = get_distance_of_two_points_in_meters(float(currentLocation.lat), float(currentLocation.lng),
+                                                                  float(currentLocation.lat) + 0.0001,
+                                                                  float(currentLocation.lng) + 0.0001)
                     log.info("Walking a bit: %s" % str(toWalk))
                     time.sleep(0.3)
                     try:
@@ -188,7 +188,7 @@ class WorkerOcr(WorkerBase):
                     return
                 delayUsed = self._devicesettings.get("post_walk_delay",7)
             log.info("Sleeping %s" % str(delayUsed))
-            time.sleep(delayUsed)
+            time.sleep(float(delayUsed))
 
             log.debug("main: Acquiring lock")
 

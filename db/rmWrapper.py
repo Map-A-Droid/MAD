@@ -8,7 +8,7 @@ from db.dbWrapperBase import DbWrapperBase
 import logging
 from datetime import datetime, timedelta
 
-from utils.collections import RaidLocation
+from utils.collections import Location
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -121,7 +121,7 @@ class RmWrapper(DbWrapperBase):
                           % (str(latitude), str(longitude)))
                 continue
             timestamp = self.db_timestring_to_unix_timestamp(str(start))
-            data.append((timestamp + delay_after_hatch * 60, RaidLocation(latitude, longitude)))
+            data.append((timestamp + delay_after_hatch, Location(latitude, longitude)))
 
         log.debug("Latest Q: %s" % str(data))
         return data
