@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import collections
 import logging
 import math
@@ -10,7 +9,6 @@ from threading import Lock, Event, Thread
 import websockets
 
 from utils.authHelper import check_auth
-from utils.mappingParser import MappingParser
 from utils.madGlobals import WebsocketWorkerRemovedException
 from worker.WorkerMITM import WorkerMITM
 

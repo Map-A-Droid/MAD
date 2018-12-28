@@ -18,7 +18,7 @@ mode_mapping = {
     },
     "mon_mitm": {
         "s2_cell_level": 17,
-        "range": 75,
+        "range": 67,
         "max_count": 100000
     },
     "raids_ocr": {
