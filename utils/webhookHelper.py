@@ -171,7 +171,7 @@ class WebhookHelper(object):
             poke_id = mon
 
         form = 0
-        park = None
+        park = 0
         description = ""
         sponsor = 0
 
@@ -240,7 +240,7 @@ class WebhookHelper(object):
                         description = ""
                 if 'park' in self.gyminfo[str(gymid)]:
                     try:
-                        park = int(info_of_gym.get("park", None))
+                        park = int(info_of_gym.get("park", 0))
                     except (ValueError, TypeError) as e:
                         park = None
                 if 'sponsor' in self.gyminfo[str(gymid)]:
