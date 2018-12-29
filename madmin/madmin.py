@@ -646,12 +646,12 @@ def config():
                     if edit:
                         if block == "settings":
                             if field['name'] in oldvalues['settings']:
-                            #if option in str(oldvalues['settings'][field['name']]:
                                 if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
                                     sel = 'selected'
                         else:
-                            if str(oldvalues[field['name']]).lower() in str(option).lower():
-                                sel = 'selected'
+                            if field['name'] in oldvalues:
+                                if str(oldvalues[field['name']]).lower() in str(option).lower():
+                                    sel = 'selected'
                     _temp = _temp + '<option value=' + str(option) + ' ' + sel + '>' + str(option) + '</option>'
                     sel = ''
                 _temp = _temp + '</select>'
@@ -806,7 +806,6 @@ def addedit():
                                 elif key == "None":
                                     key = None
                                 if str(ase) not in ('block', 'area', 'type', 'edit'):
-                                    print(str(ase))
                                     mapping[area][i][ase] = key
                         else:
                             if key in area:
@@ -823,7 +822,6 @@ def addedit():
                                 elif key == "None":
                                     key = None
                                 if str(ase) not in ('block', 'area', 'type', 'edit'):
-                                    print(str(ase))
                                     new = {}
                                     new[ase] = key
                                     mapping[area][i][ase] = key
