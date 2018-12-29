@@ -645,7 +645,7 @@ def config():
                 for option in _options:
                     if edit:
                         if block == "settings":
-                            print (option, oldvalues['settings'][field['name']])
+                          
                             #if option in str(oldvalues['settings'][field['name']]:
                             if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
                                 if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
