@@ -773,16 +773,7 @@ def addedit():
                         elif key in area:
                             continue
                         else:
-                            if key in 'true':
-                                key = bool(True)
-                            elif key in 'false':
-                                key = bool(False)
-                            elif key.isdigit():
-                                key = int(key)
-                            elif check_float(key):
-                                key = float(key)
-                            elif key == "None":
-                                key = None
+                            key = match_typ(key)
                             if str(ase) not in ('block', 'area', 'type', 'edit', 'mode'):
                                 mapping[area][i]['settings'][ase] = key
 
@@ -795,32 +786,14 @@ def addedit():
                             elif key in area:
                                 continue
                             else:
-                                if key == 'true':
-                                    key = bool(True)
-                                elif key == 'false':
-                                    key = bool(False)
-                                elif key.isdigit():
-                                    key = int(key)
-                                elif check_float(key):
-                                    key = float(key)
-                                elif key == "None":
-                                    key = None
+                                key = match_typ(key)
                                 if str(ase) not in ('block', 'area', 'type', 'edit'):
                                     mapping[area][i][ase] = key
                         else:
                             if key in area:
                                 continue
                             else:
-                                if key in 'true':
-                                    key = bool(True)
-                                elif key in 'false':
-                                    key = bool(False)
-                                elif key.isdigit():
-                                    key = int(key)
-                                elif check_float(key):
-                                    key = float(key)
-                                elif key == "None":
-                                    key = None
+                                key = match_typ(key)
                                 if str(ase) not in ('block', 'area', 'type', 'edit'):
                                     new = {}
                                     new[ase] = key
@@ -830,16 +803,7 @@ def addedit():
         new = {}
         for ase, key in data.items():
             if key != '' and key not in area:
-                if key in 'true':
-                    key = bool(True)
-                elif key in 'false':
-                    key = bool(False)
-                elif key.isdigit():
-                    key = int(key)
-                elif check_float(key):
-                    key = float(key)
-                elif key == "None":
-                    key = None
+                key = match_typ(key)
                 if str(ase) not in ('block', 'area', 'type', 'edit'):
                     new[ase] = key
 
@@ -855,6 +819,20 @@ def addedit():
 
     return redirect("/showsettings", code=302)
 
+def match_typ(key):
+    if key in 'true':
+        key = bool(True)
+    elif key in 'false':
+        key = bool(False)
+    elif key.isdigit():
+        key = int(key)
+    elif check_float(key):
+        key = float(key)
+    elif key == "None":
+        key = None
+    else:
+        key = key.replace(' ','_')
+    return key
 
 @app.route('/showsettings', methods=['GET', 'POST'])
 def showsettings():
