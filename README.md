@@ -61,7 +61,7 @@ Refer to mappings_example.json for examples or run `python3 start.py -wm` and op
 | post_walk_delay | Delay in seconds to wait after a walk. |
 | post_teleport_delay | Delay in seconds to wait after a teleport. |
 | walk_after_teleport_distance | Meters to walk after a teleport. |
-| cool_down_sleep | |
+| cool_down_sleep | Delay in seconds after a screenshot has been taken and about to be saved. (only necessary for OCR mode) |
 | post_turn_screen_on_delay | Delay in seconds after sending the turn screen on command. |
 | post_pogo_start_delay | Times without data before restating Pogo.|
 | restart_pogo | Restart Pogo after N locations.|
@@ -86,6 +86,15 @@ The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for Pog
 
 
 To login into PogoDroid, you need a token. You can obtain a token by clicking on `Get Token` in PogoDroid and sending the command `!settoken <your_token>` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
+
+### Rubberbanding
+If you experiencing weird and quick GPS jumps to the actual location from the phone, you can try these steps to fix it.
+ - Enable GMS reset
+ - Disable Google Play Services background data
+ - Set the device to GPS only
+ - Disable Wi-Fi location (same settings tab as GPS)
+ - Try flightmode with only Wi-Fi enabled
+ - Disable FusedLocation inside Google Play Services via [Service Disabler](https://play.google.com/store/apps/details?id=com.kunkunsoft.rootservicedisabler)
 
 ## Launching MAD
 Make sure you're in the directory of MAD and run:
