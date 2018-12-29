@@ -303,7 +303,7 @@ class PogoWindows:
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         log.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
-        maxLineLength = width / 6.35 + width * 0.03
+        maxLineLength = width / 3.30 + width * 0.03
         log.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
         minLineLength = width / 6.35 - width * 0.03
         log.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
