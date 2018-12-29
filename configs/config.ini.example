@@ -29,7 +29,6 @@
 
 #mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
 #mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
-#mitm_wait_timeout:         # Timeout for waiting for data after setting/reaching a location. Default: 45 seconds.
 
 # Walk Settings
 ######################

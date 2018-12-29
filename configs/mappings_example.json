@@ -10,7 +10,11 @@
 					"coords_spawns_known": true,
 					"settings": {
 						"speed": 70,
-						"max_distance": 200
+						"max_distance": 200,
+                        "delay_after_prio_event": null,
+                        "starve_route": false,
+                        "priority_queue_clustering_timedelta": 300,
+                        "remove_from_queue_backlog" : 500
 					}
                 },
                 {
@@ -22,7 +26,11 @@
                     "routecalc": "nd_raid",
 					"settings": {
 						"speed": 70,
-						"max_distance": 200
+						"max_distance": 200,
+                        "delay_after_prio_event": 50,
+                        "starve_route": true,
+                        "priority_queue_clustering_timedelta": 600,
+                        "remove_from_queue_backlog" : 1200
 					}
                 }
     ],
@@ -38,7 +46,8 @@
 				"cool_down_sleep": false,
 				"post_turn_screen_on_delay": 10,
 				"post_pogo_start_delay": 60,
-				"restart_pogo": 100
+				"restart_pogo": 100,
+                "max_data_err_counter": 90
 			}
         },
         {
@@ -52,7 +61,8 @@
                   "cool_down_sleep": false,
                   "post_turn_screen_on_delay": 10,
                   "post_pogo_start_delay": 60,
-                  "restart_pogo": 0
+                  "restart_pogo": 0,
+                  "max_data_err_counter": 60
               }
           }
     ],

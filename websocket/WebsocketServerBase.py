@@ -1,5 +1,4 @@
 import asyncio
-import base64
 import collections
 import logging
 import math
@@ -10,7 +9,6 @@ from threading import Lock, Event, Thread
 import websockets
 
 from utils.authHelper import check_auth
-from utils.mappingParser import MappingParser
 from utils.madGlobals import WebsocketWorkerRemovedException
 from worker.WorkerMITM import WorkerMITM
 
@@ -19,7 +17,8 @@ OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 
 
 class WebsocketServerBase(ABC):
-    def __init__(self, args, listen_address, listen_port, received_mapping, db_wrapper):
+    def __init__(self, args, listen_address, listen_port, received_mapping, db_wrapper, routemanagers, device_mappings,
+                 auths):
         self.__current_users = {}
         self.__listen_adress = listen_address
         self.__listen_port = listen_port
@@ -35,10 +34,9 @@ class WebsocketServerBase(ABC):
         self.__idMutex = Lock()
         self.args = args
         self.db_wrapper = db_wrapper
-        mapping_parser = MappingParser(self.db_wrapper)
-        self.device_mappings = mapping_parser.get_devicemappings()
-        self.routemanagers = mapping_parser.get_routemanagers()
-        self.auths = mapping_parser.get_auths()
+        self.device_mappings = device_mappings
+        self.routemanagers = routemanagers
+        self.auths = auths
         self._received_mapping = received_mapping
 
     def start_server(self):
@@ -103,10 +101,12 @@ class WebsocketServerBase(ABC):
             Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                devicesettings, db_wrapper=self.db_wrapper)
             # start off new thread, pass our instance in
+            
         newWorkerThread = Thread(name='worker_%s' % id, target=Worker.start_worker)
+        self.__current_users[id] = [newWorkerThread, Worker, websocket]
         newWorkerThread.daemon = False
         newWorkerThread.start()
-        self.__current_users[id] = [newWorkerThread, Worker, websocket]
+        
 
         return True
 
@@ -276,4 +276,5 @@ class WebsocketServerBase(ABC):
 
         log.debug("Received response: %s" % str(result))
         self.__removeRequest(messageId)
+        log.debug("Returning response to worker.")
         return result

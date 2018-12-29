@@ -8,7 +8,7 @@ from db.dbWrapperBase import DbWrapperBase
 import logging
 from datetime import datetime, timedelta
 
-from utils.collections import RaidLocation
+from utils.collections import Location
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -121,7 +121,7 @@ class RmWrapper(DbWrapperBase):
                           % (str(latitude), str(longitude)))
                 continue
             timestamp = self.db_timestring_to_unix_timestamp(str(start))
-            data.append((timestamp + delay_after_hatch * 60, RaidLocation(latitude, longitude)))
+            data.append((timestamp + delay_after_hatch, Location(latitude, longitude)))
 
         log.debug("Latest Q: %s" % str(data))
         return data
@@ -525,15 +525,16 @@ class RmWrapper(DbWrapperBase):
 
         query = (
             "SELECT gym.gym_id, gym.latitude, gym.longitude, "
-            "gymdetails.name, gymdetails.description, gymdetails.url "
+            "gymdetails.name, gymdetails.description, gymdetails.url, "
+            "gym.team_id "
             "FROM gym INNER JOIN gymdetails "
             "WHERE gym.gym_id = gymdetails.gym_id"
         )
 
         res = self.execute(query)
 
-        for (gym_id, latitude, longitude, name, description, url) in res:
-            gyminfo[gym_id] = self.__encode_hash_json("0", latitude, longitude, name, description, url)
+        for (gym_id, latitude, longitude, name, description, url, team_id) in res:
+            gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, name, description, url)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):

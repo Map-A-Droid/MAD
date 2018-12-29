@@ -10,7 +10,7 @@ Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devic
 *  [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
 
 ## Requirements
-- Python 3.6
+- Python **3.6**
 - MySQL database, with RocketMap or Monocle structure
 - Rooted Android device
 - PogoDroid token (only necessary for MITM Mode), obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
@@ -20,11 +20,11 @@ Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devic
 ## Setup
 ### Ubuntu/Debian
 
-Install `python 3.6` & `pip3` according to docs for your platform.  
+Install `python 3.6` & `pip3` according to docs for your platform. Make sure you carefully check the command, since even if python3.6 is installed, the `python3` command could still point to `python3.5` or below!
 
 Once Python is installed, ensure that `pip` and `python` is installed correctly by running:
-* `python3.6 --version` - should return `3.6.X`
-* `pip3 --version` - If it returns a version, it is working.  
+* `python3 --version` - should return `3.6.x`
+* `pip3 --version` - If it returns a version, it is working.
 
 Clone this repository:
 ```bash
@@ -50,7 +50,7 @@ Inside the `config` folder, duplicate the `config.ini.example` and rename it to 
 
 ### Multiple Devices
 In order to map devices to areas, do the same with `mappings_example.json` and rename it to `mappings.json`
-Refer to mappings_example.json for examples or run `python3.6 start.py -wm` and open the MADMIN mappings editor (http://localhost:5000).  
+Refer to mappings_example.json for examples or run `python3 start.py -wm` and open the MADMIN mappings editor (http://localhost:5000).
 
 ### Geofence
 Each area *requires* `geofence_included`. A geofence can easily be created with [geo.jesparke.net](http://geo.jasparke.net/)
@@ -64,11 +64,11 @@ Each area *requires* `geofence_included`. A geofence can easily be created with 
 
 #### Applications
 Install [RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) (only necessary for MITM mode) on the phone. RGC must be installed as a system app. Best practice is to convert it to a system app with [link2sd](https://play.google.com/store/apps/details?id=com.buak.Link2SD).
-Both apps requires an Origin header field that's configured in mappings.json. These Origins need to be unique per running python instance.  
+Both apps requires an Origin header field that's configured in mappings.json. These Origins need to be unique per running python instance.
 The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for PogoDroid is `http://<ip>:<port>`.
->The port for RGC is 8080 by default and can changed with `ws_port`.  
->The port for PogoDroid is 9000 by default and can changed with `mitmreceiver_port`.  
->**The IP address is the IP of your server, not your phone!**  
+>The port for RGC is 8080 by default and can changed with `ws_port`.
+>The port for PogoDroid is 8000 by default and can changed with `mitmreceiver_port`.
+>**The IP address is the IP of your server, not your phone!**
 
 
 To login into PogoDroid, you need a token. You can obtain a token by clicking on `Get Token` in PogoDroid and sending the command `!settoken <your_token>` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
@@ -77,7 +77,7 @@ To login into PogoDroid, you need a token. You can obtain a token by clicking on
 Make sure you're in the directory of MAD and run:
 ```bash
 python3 start.py
-```  
+```
 
 Usually you want to append `-wm` and `-os`
 as arguments to start madmin (browser based monitoring) and the scanner (`-os`) responsible

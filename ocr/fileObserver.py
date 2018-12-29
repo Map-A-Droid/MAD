@@ -15,12 +15,13 @@ Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
 log = logging.getLogger()
 
+
 class RaidScan:
     @staticmethod
     def process(filename, args, db_wrapper, hash, raidno, captureTime, captureLat, captureLng, src_path, radius):
-        log.warning("Cropscanning started")
+        log.debug("Cropscanning started")
         scanner = Scanner(args, db_wrapper, hash)
-        log.warning("Initialized scanned, starting analysis")
+        log.info("Initialized scanned, starting analysis of " % str(filename))
         checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius)
         return checkcrop
 
@@ -32,11 +33,11 @@ class checkScreenshot(PatternMatchingEventHandler):
         self.db_wrapper = db_wrapper
         log.debug("Starting fileobserver...")
         if args.ocr_multitask:
-            log.error("Using proccesses")
+            log.info("Using proccesses")
             from multiprocessing import Pool
             self.thread_pool = Pool(processes=args.ocr_thread_count)
         else:
-            log.error("Using threads")
+            log.info("Using threads")
             from multiprocessing.pool import ThreadPool
             self.thread_pool = ThreadPool(processes=args.ocr_thread_count)
         log.info("Starting pogo window manager in OCR thread")

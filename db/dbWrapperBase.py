@@ -1,4 +1,5 @@
 import json
+import math
 import time
 from datetime import datetime, timedelta
 import logging
@@ -10,6 +11,7 @@ from mysql.connector.pooling import MySQLConnectionPool
 from abc import ABC, abstractmethod
 import numpy as np
 
+from utils.collections import Location
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -562,15 +564,19 @@ class DbWrapperBase(ABC):
             "FROM trs_spawn"
         )
         list_of_coords = []
+        log.debug("{DbWrapperBase::get_detected_spawns} executing select query")
         res = self.execute(query)
+        log.debug("{DbWrapperBase::get_detected_spawns} result of query: %s" % str(res))
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
 
         if geofence_helper is not None:
+            log.debug("{DbWrapperBase::get_detected_spawns} applying geofence")
             geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
             log.debug(geofenced_coords)
             return geofenced_coords
         else:
+            log.debug("{DbWrapperBase::get_detected_spawns} converting to numpy")
             to_return = np.zeros(shape=(len(list_of_coords), 2))
             for i in range(len(to_return)):
                 to_return[i][0] = list_of_coords[i][0]
@@ -586,16 +592,19 @@ class DbWrapperBase(ABC):
             "WHERE calc_endminsec is NULL"
         )
         list_of_coords = []
+        log.debug("{DbWrapperBase::get_undetected_spawns} executing select query")
         res = self.execute(query)
+        log.debug("{DbWrapperBase::get_undetected_spawns} result of query: %s" % str(res))
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
 
         if geofence_helper is not None:
+            log.debug("{DbWrapperBase::get_undetected_spawns} applying geofence")
             geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
             log.debug(geofenced_coords)
             return geofenced_coords
         else:
-            import numpy as np
+            log.debug("{DbWrapperBase::get_undetected_spawns} converting to numpy")
             to_return = np.zeros(shape=(len(list_of_coords), 2))
             for i in range(len(to_return)):
                 to_return[i][0] = list_of_coords[i][0]
@@ -705,14 +714,60 @@ class DbWrapperBase(ABC):
         spawn = {}
 
         query = (
-            "SELECT spawnpoint, latitude, longitude, "
-            "IF (calc_endminsec IS NULL, \"False\", \"True\") "
-            "AS calc_endminsec "
+            "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
+            "spawndef, last_scanned "
             "FROM `trs_spawn`"
         )
 
         res = self.execute(query)
-        for (spawnid, lat, lon, endtime) in res:
-            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime}
+        for (spawnid, lat, lon, endtime, spawndef, last_scanned) in res:
+            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef, 'lastscan': str(last_scanned)}
 
         return str(json.dumps(spawn, indent=4, sort_keys=True))
+
+    def retrieve_next_spawns(self, geofence_helper):
+        """
+        Retrieve the spawnpoints with their respective unixtimestamp that are due in the next 300 seconds
+        :return:
+        """
+        current_time_of_day = datetime.now().replace(microsecond=0)
+
+        log.debug("DbWrapperBase::retrieve_next_spawns called")
+        query = (
+            "SELECT latitude, longitude, spawndef, calc_endminsec "
+            "FROM `trs_spawn`"
+            "WHERE calc_endminsec IS NOT NULL"
+        )
+        res = self.execute(query)
+        next_up = []
+        current_time = time.time()
+        for(latitude, longitude, spawndef, calc_endminsec) in res:
+            endminsec_split = calc_endminsec.split(":")
+            minutes = int(endminsec_split[0])
+            seconds = int(endminsec_split[1])
+            if math.floor(minutes / 10) == 0:
+                temp_date = current_time_of_day.replace(hour=current_time_of_day.hour + 1,
+                                                        minute=minutes, second=seconds)
+            else:
+                temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
+            if (temp_date < current_time_of_day
+                    or not geofence_helper.is_coord_inside_include_geofence([latitude, longitude])):
+                # spawn has already happened, we should've added it in the past, let's move on
+                # TODO: consider crosschecking against current mons...
+                continue
+
+            spawn_duration_minutes = 60 if spawndef == 15 else 30
+
+            timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
+            # check if we calculated a time in the past, if so, add an hour to it...
+            timestamp = timestamp + 60 * 60 if timestamp < current_time else timestamp
+            # TODO: consider the following since I am not sure if the prio Q clustering handles stuff properly yet
+            # if timestamp >= current_time + 600:
+            #     # let's skip monspawns that are more than 10minutes in the future
+            #     continue
+            next_up.append(
+                (
+                    timestamp, Location(latitude, longitude)
+                )
+            )
+        return next_up

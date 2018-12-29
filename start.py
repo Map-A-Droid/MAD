@@ -93,8 +93,9 @@ def set_log_and_verbosity(log):
         log.setLevel(logging.INFO)
 
 
-def start_scan(received_mapped, db_wrapper):
-    wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), received_mapped, db_wrapper)
+def start_scan(received_mapped, db_wrapper, routemanagers, device_mappings, auths):
+    wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), received_mapped, db_wrapper, routemanagers,
+                                    device_mappings, auths)
     wsRunning.start_server()
 
 
@@ -137,10 +138,18 @@ def sleeptimer():
         tmFrom = datetime.datetime.now().replace(hour=int(sts1[0]),minute=int(sts1[1]),second=0,microsecond=0)
         tmTil = datetime.datetime.now().replace(hour=int(sts2[0]),minute=int(sts2[1]),second=0,microsecond=0)
         tmNow = datetime.datetime.now()
+
+        # check if current time is past start time
+        # and the day has changed already. thus shift
+        # start time back to the day before
+        if tmFrom > tmTil > tmNow:
+            tmFrom = tmFrom.replace(day=tmFrom.day-1)
+
+        # check if start time is past end time thus
+        # shift start time one day into the future
         if tmTil < tmFrom:
-            tmTil = tmTil + datetime.timedelta(hours=24)
-        else:
-            tmTil = tmTil
+            tmTil = tmTil.replace(day=tmTil.day+1)
+
         log.debug("Time now: %s" % tmNow)
         log.debug("Time From: %s" % tmFrom)
         log.debug("Time Til: %s" % tmTil)
@@ -180,6 +189,10 @@ if __name__ == "__main__":
     db_wrapper.check_and_create_spawn_tables()
     webhook_helper.set_gyminfo(db_wrapper)
 
+    if not db_wrapper.ensure_last_updated_column():
+        log.fatal("Missing raids.last_updated column and couldn't create it")
+        sys.exit(1)
+
     if args.clean_hash_database:
         log.info('Cleanup Hash Database and www_hash folder')
         db_wrapper.delete_hash_table('999', '')
@@ -215,6 +228,7 @@ if __name__ == "__main__":
                 mapping_parser = MappingParser(db_wrapper)
                 device_mappings = mapping_parser.get_devicemappings()
                 routemanagers = mapping_parser.get_routemanagers()
+                auths = mapping_parser.get_auths()
             except KeyError as e:
                 log.fatal("Could not parse mappings. Please check those. Description: %s" % str(e))
                 sys.exit(1)
@@ -232,20 +246,17 @@ if __name__ == "__main__":
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
             t_flask = Thread(name='mitm_receiver', target=start_mitm_receiver,
-                             args=(received_mapped, mapping_parser.get_auths(),))
+                             args=(received_mapped, auths,))
             t_flask.daemon = False
             t_flask.start()
 
             log.info('Starting scanner....')
-            t = Thread(target=start_scan, name='scanner', args=(received_mapped, db_wrapper))
+            t = Thread(target=start_scan, name='scanner', args=(received_mapped, db_wrapper, routemanagers,
+                                                                device_mappings, auths,))
             t.daemon = True
             t.start()
 
     if args.only_ocr:
-        if not db_wrapper.ensure_last_updated_column():
-            log.fatal("Missing raids.last_updated column and couldn't create it")
-            sys.exit(1)
-
         from ocr.copyMons import MonRaidImages
 
         MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)

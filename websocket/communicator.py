@@ -98,24 +98,31 @@ class Communicator:
         response = self.websocketHandler.sendAndWait(self.id, "geo fix %s %s %s\r\n" % (lat, lng, alt), self.__commandTimeout)
         self.__sendMutex.release()
         return response
+
     # coords need to be float values
     # speed integer with km/h
     #######
     # This blocks!
     #######
     def walkFromTo(self, startLat, startLng, destLat, destLng, speed):
-        startLat = float(startLat)
-        startLng = float(startLng)
-        destLat = float(destLat)
-        destLng = float(destLng)
-        start = gpxdata.TrackPoint(startLat, startLng, 1.0, datetime.datetime(2010, 1, 1, 0, 0, 0))
-        dest = gpxdata.TrackPoint(destLat, destLng, 1.0, datetime.datetime(2010, 1, 1, 0, 0, 15))
-
-        t_speed = None
-        if speed:
-            t_speed = speed / 3.6
-        log.debug("walkFromTo: calling __walkTrackSpeed")
-        self.__walkTrackSpeed(start, t_speed, dest)
+        self.__sendMutex.acquire()
+        response = self.websocketHandler.sendAndWait(self.id, "geo walk %s %s %s %s %s\r\n"
+                                                     % (startLat, startLng, destLat, destLng, speed),
+                                                     self.__commandTimeout)
+        self.__sendMutex.release()
+        return response
+        # startLat = float(startLat)
+        # startLng = float(startLng)
+        # destLat = float(destLat)
+        # destLng = float(destLng)
+        # start = gpxdata.TrackPoint(startLat, startLng, 1.0, datetime.datetime(2010, 1, 1, 0, 0, 0))
+        # dest = gpxdata.TrackPoint(destLat, destLng, 1.0, datetime.datetime(2010, 1, 1, 0, 0, 15))
+        #
+        # t_speed = None
+        # if speed:
+        #     t_speed = speed / 3.6
+        # log.debug("walkFromTo: calling __walkTrackSpeed")
+        # self.__walkTrackSpeed(start, t_speed, dest)
 
     # TODO: errorhandling, return value
     def __walkTrackSpeed(self, start, speed, dest):
