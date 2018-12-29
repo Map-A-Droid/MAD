@@ -39,7 +39,7 @@ def weather_image_matching(weather_icon_name, screenshot_name):
     
     fort_img = imutils.resize(screenshot_img, width = int(screenshot_img.shape[1] * 2))
     height_f, width_f,_ = screenshot_img.shape
-    screenshot_img = screenshot_img[0:height_f/7,0:width_f]
+    screenshot_img = screenshot_img[0:int(height_f/7),0:width_f]
 
     resized = imutils.resize(weather_icon, width = int(weather_icon.shape[1] * 1))
     
