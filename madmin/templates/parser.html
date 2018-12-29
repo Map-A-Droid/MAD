@@ -66,10 +66,10 @@
         }
       },
       highlight: function (element, errorClass, validClass) {
-        $(element).addClass("has-error").removeClass("has-success");
+        $(element).parents().addClass("has-error").removeClass("has-success");
       },
       unhighlight: function (element, errorClass, validClass) {
-        $(element).addClass("has-success").removeClass("has-error");
+        $(element).parents().addClass("has-success").removeClass("has-error");
       }
     });
   });
