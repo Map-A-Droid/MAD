@@ -518,6 +518,8 @@ class RmWrapper(DbWrapperBase):
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
         log.debug('Finished downloading gym images...')
+        
+        return True
 
     def get_gym_infos(self, id=False):
         log.debug("{RmWrapper::get_gym_infos} called")
@@ -598,9 +600,9 @@ class RmWrapper(DbWrapperBase):
         # TODO: put severity and warn_weather properly
         query = 'INSERT INTO weather (s2_cell_id, latitude, longitude, cloud_level, rain_level, wind_level, ' \
                 'snow_level, fog_level, wind_direction, gameplay_weather, severity, warn_weather, world_time, ' \
-                'last_updated) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, \'%s\') ' \
+                'last_updated) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ' \
                 'ON DUPLICATE KEY UPDATE fog_level=%s, cloud_level=%s, snow_level=%s, wind_direction=%s, ' \
-                'world_time=%s, latitude=%s, longitude=%s, gameplay_weather=%s, last_updated=\'%s\''
+                'world_time=%s, latitude=%s, longitude=%s, gameplay_weather=%s, last_updated=%s'
         data = (cell_id, real_lat, real_lng, cloud_level, rain_level, wind_level, snow_level, fog_level,
                 wind_direction, gameplay_weather, None, None, weather_daytime, str(now),
                 fog_level, cloud_level, snow_level, wind_direction, weather_daytime, real_lat, real_lng,
