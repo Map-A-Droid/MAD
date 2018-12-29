@@ -19,6 +19,7 @@ import re
 import datetime
 from shutil import copyfile
 from math import floor
+import numbers
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -644,11 +645,12 @@ def config():
                 for option in _options:
                     if edit:
                         if block == "settings":
-                            if option in oldvalues['settings']:
-                                if str(oldvalues[field['settings']['name']]).lower() == str(option).lower():
+                            if field['name'] in oldvalues['settings']:
+                            #if option in str(oldvalues['settings'][field['name']]:
+                                if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
                                     sel = 'selected'
                         else:
-                            if str(oldvalues[field['name']]).lower() == str(option).lower():
+                            if str(oldvalues[field['name']]).lower() in str(option).lower():
                                 sel = 'selected'
                     _temp = _temp + '<option value=' + str(option) + ' ' + sel + '>' + str(option) + '</option>'
                     sel = ''
@@ -723,6 +725,13 @@ def delsetting():
 
     return redirect("/showsettings", code=302)
 
+def check_float(number):
+    try:
+        float(number)
+        return True
+    except ValueError:
+        return False
+
 
 @app.route('/addedit', methods=['GET', 'POST'])
 def addedit():
@@ -734,7 +743,7 @@ def addedit():
 
     edit = datavalue.get("edit", False)
     block = datavalue.get("block", False)
-    type = datavalue.get("type", False)
+    type_ = datavalue.get("type", False)
     name = datavalue.get("name", False)
     area = datavalue.get("area", False)
     delete = datavalue.get("del", False)
@@ -764,15 +773,17 @@ def addedit():
                         elif key in area:
                             continue
                         else:
-                            if key == 'true':
+                            if key in 'true':
                                 key = bool(True)
-                            elif key == 'false':
+                            elif key in 'false':
                                 key = bool(False)
                             elif key.isdigit():
                                 key = int(key)
+                            elif check_float(key):
+                                key = float(key)
                             elif key == "None":
                                 key = None
-                            if str(ase) not in ('block', 'area', 'type', 'edit'):
+                            if str(ase) not in ('block', 'area', 'type', 'edit', 'mode'):
                                 mapping[area][i]['settings'][ase] = key
 
                 else:
@@ -784,29 +795,35 @@ def addedit():
                             elif key in area:
                                 continue
                             else:
-                                if key in 'true':
-                                    key = bool(True)
-                                elif key in 'false':
-                                    key = bool(False)
-                                elif key.isdigit():
-                                    key = int(key)
-                                elif key == "None":
-                                    key = None
-                                if str(ase) not in ('block', 'area', 'type', 'edit'):
-                                    mapping[area][i][ase] = key
-                        else:
-                            if key in area:
-                                continue
-                            else:
                                 if key == 'true':
                                     key = bool(True)
                                 elif key == 'false':
                                     key = bool(False)
                                 elif key.isdigit():
                                     key = int(key)
+                                elif check_float(key):
+                                    key = float(key)
                                 elif key == "None":
                                     key = None
                                 if str(ase) not in ('block', 'area', 'type', 'edit'):
+                                    print(str(ase))
+                                    mapping[area][i][ase] = key
+                        else:
+                            if key in area:
+                                continue
+                            else:
+                                if key in 'true':
+                                    key = bool(True)
+                                elif key in 'false':
+                                    key = bool(False)
+                                elif key.isdigit():
+                                    key = int(key)
+                                elif check_float(key):
+                                    key = float(key)
+                                elif key == "None":
+                                    key = None
+                                if str(ase) not in ('block', 'area', 'type', 'edit'):
+                                    print(str(ase))
                                     new = {}
                                     new[ase] = key
                                     mapping[area][i][ase] = key
@@ -815,12 +832,14 @@ def addedit():
         new = {}
         for ase, key in data.items():
             if key != '' and key not in area:
-                if key == 'true':
+                if key in 'true':
                     key = bool(True)
-                elif key == 'false':
+                elif key in 'false':
                     key = bool(False)
                 elif key.isdigit():
                     key = int(key)
+                elif check_float(key):
+                    key = float(key)
                 elif key == "None":
                     key = None
                 if str(ase) not in ('block', 'area', 'type', 'edit'):

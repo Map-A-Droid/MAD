@@ -64,7 +64,7 @@
 		"settings": {
 	    	"type": "text",
 			"require": "true",
-			"description": "Speed of player",
+			"description": "Speed of player in kmh",
 			"output": "int"
 	    }
 	},
@@ -73,7 +73,44 @@
 		"settings": {
 			 "type": "text",
 			 "require": "true",
-			 "description": "Max. distance of walking - otherwise teleport",
+			 "description": "Max. distance of walking - otherwise teleport to new location",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "delay_after_prio_event",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "priority_queue_clustering_timedelta",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "remove_from_queue_backlog",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "starve_route",
+		"settings": {
+	    	 "type": "option",
+    		 "require": "false",
+	    	 "values": "false|true",
+			 "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
 			 "output": "int"
 	    }
 	}
@@ -134,7 +171,7 @@
 		"settings": {
 	    	"type": "text",
 			"require": "true",
-			"description": "Speed of player"
+			"description": "Speed of player in kmh"
 	    }
 	},
 	{
@@ -142,7 +179,44 @@
 		"settings": {
 			 "type": "text",
 			 "require": "true",
-			 "description": "Max. distance of walking - otherwise teleport"
+			 "description": "Max. distance of walking - otherwise teleport to new location"
+	    }
+	},
+	{
+		"name": "delay_after_prio_event",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "priority_queue_clustering_timedelta",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "remove_from_queue_backlog",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "starve_route",
+		"settings": {
+	      "type": "option",
+    	  "require": "false",
+	    	"values": "false|true",
+			  "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+			  "output": "int"
 	    }
 	}
     ]
@@ -193,7 +267,7 @@
 		"settings": {
 	    	"type": "text",
 			"require": "true",
-			"description": "Speed of player"
+			"description": "Speed of player in kmh"
 	    }
 	},
 	{
@@ -201,7 +275,44 @@
 		"settings": {
 			 "type": "text",
 			 "require": "true",
-			 "description": "Max. distance of walking - otherwise teleport"
+			 "description": "Max. distance of walking - otherwise teleport to new location"
+	    }
+	},
+	{
+		"name": "delay_after_prio_event",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "priority_queue_clustering_timedelta",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "remove_from_queue_backlog",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "starve_route",
+		"settings": {
+	    	 "type": "option",
+    		 "require": "false",
+	    	 "values": "false|true",
+			 "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+			 "output": "int"
 	    }
 	}
     ]
@@ -254,7 +365,7 @@
 		"settings": {
 	    	"type": "text",
 			"require": "false",
-			"description": "Delay in seconds after a teleport. (Default: 4.0. Do mind the '.0'. 500ms = 0.5s)"
+			"description": "Delay in seconds after a teleport. (Default: 4.0)"
 	    }
 	},
 	{
@@ -271,7 +382,7 @@
 	    	"type": "option",
 			"require": "false",
 			"values": "false|true",
-			"description": "More coolsdown after teleport"
+			"description": "More cooldown after teleport"
 	    }
 	},
 	{
@@ -279,7 +390,7 @@
 		"settings": {
 	    	"type": "text",
 			"require": "false",
-			"description": "Delay in seconds after a screenshot has been taken and about to be saved.( Default: 0.2)"
+			"description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
 	    }
 	},
 	{
@@ -306,14 +417,22 @@
 			"description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
 	    }
 	},
-		{
-			"name": "mitm_wait_timeout",
-    		"settings": {
-	        	"type": "text",
-		    	"require": "false",
-				"description": "Timeout for waiting for data after setting/reaching a location. Default: 45 seconds"
-		    }
-	    }
+	{
+		"name": "mitm_wait_timeout",
+    	"settings": {
+	        "type": "text",
+		    "require": "false",
+			"description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
+		}
+	},
+	{
+		"name": "max_data_err_counter",
+    	"settings": {
+	        "type": "text",
+		    "require": "false",
+			"description": "Reaching wait-for-data timout n times for restart Pogo. (Default: 60)"
+		}
+	}
     ]
 }
 ],
