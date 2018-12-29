@@ -101,10 +101,12 @@ class WebsocketServerBase(ABC):
             Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                devicesettings, db_wrapper=self.db_wrapper)
             # start off new thread, pass our instance in
+            
         newWorkerThread = Thread(name='worker_%s' % id, target=Worker.start_worker)
+        self.__current_users[id] = [newWorkerThread, Worker, websocket]
         newWorkerThread.daemon = False
         newWorkerThread.start()
-        self.__current_users[id] = [newWorkerThread, Worker, websocket]
+        
 
         return True
 
