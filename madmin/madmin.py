@@ -796,9 +796,9 @@ def addedit():
                             elif key in area:
                                 continue
                             else:
-                                if key in 'true':
+                                if key == 'true':
                                     key = bool(True)
-                                elif key in 'false':
+                                elif key == 'false':
                                     key = bool(False)
                                 elif key.isdigit():
                                     key = int(key)

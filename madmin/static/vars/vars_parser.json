@@ -212,11 +212,11 @@
 	{
 		"name": "starve_route",
 		"settings": {
-	    	 "type": "option",
-    		 "require": "false",
-	    	 "values": "true|false",
-			 "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-			 "output": "int"
+	      "type": "option",
+    	  "require": "false",
+	    	"values": "false|true",
+			  "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+			  "output": "int"
 	    }
 	}
     ]

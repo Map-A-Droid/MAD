@@ -42,11 +42,11 @@ port=$(awk -F: '/^dbport/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's
 [[ "$port" == "" ]] && port=3306
 
 query(){
-/usr/bin/mysql -N -B -u "$user" -D "$dbname" -p"$pass" -h "$dbip" -P "$port" -e "$1"
+mysql -N -B -u "$user" -D "$dbname" -p"$pass" -h "$dbip" -P "$port" -e "$1"
 }
 
 oldquery(){
-/usr/bin/mysql -N -B -u "$olduser" -D "$olddbname" -p"$oldpass" -h "$olddbip" -P "$oldport" -e "$1"
+mysql -N -B -u "$olduser" -D "$olddbname" -p"$oldpass" -h "$olddbip" -P "$oldport" -e "$1"
 }
 
 gettime(){
@@ -58,19 +58,64 @@ else
  case "$sec" in
   [0-9]) sec="0$sec" ;;
  esac
- new="'$min:$sec'"
+ (( "$weirdsql" )) && new="$min:$sec" || new="'$min:$sec'"
 fi
 }
 
 update_endtime(){
-query "update trs_spawn set calc_endminsec='$new' where spawnpoint=$spawnpoint;"
+query "update trs_spawn set calc_endminsec=$new where spawnpoint=$spawnpoint;"
 echo "spawn $spawn_id endtime updated in the db" >> addspawns.log
+}
+
+testweirdsqlupdate(){
+ # this function tells me if im dealing with a weird mysql version that doesnt like quoting '12:34' calc_endminsec
+if ! [[ "$weirdsql" ]] ;then
+ if query "update trs_spawn set calc_endminsec=$new where spawnpoint=$spawnpoint;" 2>/dev/null ;then
+  echo "spawn $spawn_id endtime updated in the db" >> addspawns.log
+  weirdsql=0
+ else
+  weirdsql=1
+ fi
+ if (( "$weirdsql" )) ;then
+ # If the above entry failed we have weird sql... now lets run the query again so we dont miss adding this spawnpoint. and if that doesnt work lets quit and get a beer instead
+  if query "update trs_spawn set calc_endminsec=${new:1:-1} where spawnpoint=$spawnpoint;" 2>/dev/null ;then
+   echo "spawn $spawn_id endtime updated in the db" >> addspawns.log
+  else
+   echo "neither query style seems to be working, screw this lets get a beer"
+   exit 88
+  fi
+ fi
+ return 1 # this will help me skip running the query a second time when im checking for weird sql
+fi
+return 0  # if weirdsql is already set i can run the query in the import function
+}
+
+testweirdsql(){
+# same as above but using insert
+if ! [[ "$weirdsql" ]] ;then
+ if query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" 2>/dev/null ;then
+  echo "spawn $spawn_id added to the db" >> addspawns.log
+  weirdsql=0
+ else
+  weirdsql=1
+ fi
+ if (( "$weirdsql" )) ;then
+  if query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=${new:1:-1};" 2>/dev/null ;then
+   echo "spawn $spawn_id added to the db" >> addspawns.log
+  else
+   echo "neither query style seems to be working, screw this lets get a beer"
+   exit 88
+  fi
+ fi
+ return 1
+fi
+return 0
 }
 
 spawn_exists(){
 read -r spawnpoint endtime _ < <(query "select spawnpoint, calc_endminsec from trs_spawn where spawnpoint='$spawn_id'")
 if [[ $spawnpoint ]] ;then
-   [[ "$endtime" == "NULL" ]] && [[ "$old" != "NULL" ]] && gettime && update_endtime && return 69
+   [[ "$endtime" == "NULL" ]] && [[ "$old" != "NULL" ]] && gettime && testweirdsqlupdate && update_endtime && return 69
    echo "spawn $spawn_id already exists in the db" >> addspawns.log && return 69
 fi
 return 0
@@ -80,7 +125,7 @@ import_mon(){
 while read -r id spawn_id old lat lon updated duration failures _ ;do
  spawn_exists || continue
  gettime
-query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" && echo "spawn $spawn_id added to the db" >> addspawns.log
+ testweirdsql && query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" && echo "spawn $spawn_id added to the db" >> addspawns.log
 done< <(oldquery "select * from spawnpoints")
 }
 
@@ -90,8 +135,8 @@ while read -r spawn_id lat lon _ ;do
  : ${old:="NULL"}
  spawn_exists || continue
  gettime
-query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" && echo "spawn $spawn_id added to the db" >> addspawns.log
-done< <(oldquery "select distinct id, latitude, longitude from spawnpoint" ; oldquery "select distinct id, latitude, longitude from spawnpoint_old")
+ testweirdsql && query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" && echo "spawn $spawn_id added to the db" >> addspawns.log
+done< <(oldquery "select distinct id, latitude, longitude from spawnpoint" ; oldquery "select distinct id, latitude, longitude from spawnpoint_old" 2>/dev/null)
 }
 
 case "$dbtype" in
