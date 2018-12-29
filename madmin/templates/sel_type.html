@@ -1,17 +1,9 @@
-<html
-<head>
- <meta charset="utf-8">
- <title>MADMIN - Type selector</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
-  <link rel="stylesheet" href=" https://cdn.datatables.net/fixedheader/3.1.5/css/fixedHeader.bootstrap.min.css">
-  <link rel="stylesheet" href=" https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css">
-  <link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
-  <link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
-  <style>
-  input[type=text], select {
+{% extends "base.html" %}
+
+{% block header %}
+<style>
+  input[type=text],
+  select {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -37,31 +29,18 @@
   }
 
   hr {
-      border-style: solid;
-      border-color: lightgray;
+    border-style: solid;
+    border-color: lightgray;
   }
-  </style>
- </head>
-<body>
-<center><h1>Select Type</h1><br>
-	
-<h4><a href=/showsettings>Back to settings</a></h4>
+</style>
+{% endblock %}
 
+{% block scripts %}
+
+{% endblock %}
+
+{% block content %}
+<h2>Select Type</h2>
 
 {{line | safe }}
-
-</center>
-<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
-<script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
-
-	
-
-
-
-</body>
-</html>
+{% endblock %}

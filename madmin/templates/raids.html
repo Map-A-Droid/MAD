@@ -1,82 +1,98 @@
-<html
-<head>
- <meta charset="utf-8">
- <title>MADMIN - show Gym Matching</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
-  <link rel="stylesheet" href=" https://cdn.datatables.net/fixedheader/3.1.5/css/fixedHeader.bootstrap.min.css">
-  <link rel="stylesheet" href=" https://cdn.datatables.net/responsive/2.2.3/css/responsive.bootstrap.min.css">
-  <link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
-  <link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
- </head>
-<body>
-<center><h1>Check saved Raids</h1>
-<h4><a href=/>Back to Menu</a></h4></center>
-<div id="show-data"></div>
-<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/jquery.dataTables.min.js"></script>
-<script src="https://cdn.datatables.net/1.10.19/js/dataTables.bootstrap.min.js"></script>
-<script src="https://cdn.datatables.net/fixedheader/3.1.5/js/dataTables.fixedHeader.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js"></script>
-<script src="https://cdn.datatables.net/responsive/2.2.3/js/responsive.bootstrap.min.js"></script>
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
 
 <script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'name', title: 'Name' },
+                { data: 'filename', title: 'Hashpic' },
+                { data: 'gymimage', title: 'Gympic' },
+                { data: 'type', title: 'Egg/Mon' },
+                { data: 'level', title: 'Level' },
+                { data: 'modify', title: 'Last Modify', type: 'date' },
+                { data: 'creation', title: 'Creation Date', type: 'date' },
+                { data: '', title: 'Actions' }
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return data + "<br />Hashvalue: " + row.hashvalue + "<br />Matchcount: " + row.count;
+                    },
+                },
+                {
+                    "targets": [1, 2],
+                    "render": function (data, type, row) {
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        var monegg = "";
+                        var monName = "";
+                        if (row.type === "egg") {
+                            monegg = "<img class='lazy' data-original='" + row.eggPic + "' width=50>"
+                            monName = ''
+                        } else {
+                            monegg = "<img class='lazy' data-original='" + row.monPic + "' width=100>"
+                            monName = row.monname
+                        }
+                        return monName + "<br />" + monegg;
+                    }
+                },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+                        var lvl = "";
+                        if (row.type === "egg") {
+                            lvl = 'Egg'
+                        } else {
+                            lvl = 'Level: ' + row.level
+                        }
+                        return lvl;
+                    }
+                },
+                {
+                    "targets": [7],
+                    "render": function (data, type, row) {
+                        var modifyRaid = "<a href='/modify_raid?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Gym</a>";
+                        var modifyMon = "<a href='/modify_mon?hash=" + row.hashvalue + "&lvl=" + row.level + "&gym=" + row.id + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Mon</a>";
+                        var deleteHash = "<a href='/delete_hash?hash=" + row.hashvalue + "&type=raid&redirect=raids'>Delete</a>";
+                        return modifyRaid + "<br />" + modifyMon + "<br />" + deleteHash;
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "order": [[{{ sort }}, "desc" ]],
+            "responsive": {{ responsive }},
+            "autoWidth": true
+        });
+	}
+	
+    $(document).ready(function () {
+        $("#navraids").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "/get_raids",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+</script>
+{% endblock %}
 
-
-
-
-		  $(document).ready(function () {
-
-		   var displayResources = $('#show-data');
-
-		   displayResources.text('Loading data ...');
-
-		   $.ajax({
-		   type: "GET",
-		   url: "/get_raids",
-		   success: function(result)
-		   {
-		   console.log(result);
-		   var output="<table><thead><tr><th>Name</th><th>Hashpic</th><th>Gympic</th><th>Egg/Mon</th><th>Level</th><th>Last Modify</th><th>Creation Date</th><th>Actions</th></thead><tbody>";
-		   for (var i in result)
-		   {
-			   if (result[i].type === "egg") {
-			   	monegg = "<img class='lazy' data-original='" + result[i].eggPic + "' width=50>"
-				lvl = 'Egg'
-				monName = ''
-			   } else {
-			   	monegg = "<img class='lazy' data-original='" + result[i].monPic + "' width=100>"
-				lvl = 'Level: ' + result[i].level
-				monName = result[i].monname
-			   }
-		   output+="<tr><td>" + result[i].name + "<br><br>Hashvalue: " + result[i].hashvalue + "<br><br>Matchcount: " + result[i].count + "</td><td><img class='lazy' data-original='" + result[i].filename + "' width=100></td><td><img class='lazy' data-original='" + result[i].gymimage + "' width=100></td><td>" + monName + "<br>" + monegg + "</td><td>" + lvl + "</td><td>" + result[i].modify + "</td><td>" + result[i].creation + "</td><td><a href='/modify_raid?hash=" + result[i].hashvalue + "&lat=" + result[i].lat +"&lon=" + result[i].lon + "&mon=" + result[i].mon + "&lvl=" + result[i].level + "'>Change Gym</a><br><br><a href='/modify_mon?hash=" + result[i].hashvalue + "&lvl=" + result[i].level +"&gym=" + result[i].id + "&mon=" + result[i].mon + "&lvl=" + result[i].level + "'>Change Mon</a><br><br><a href='/delete_hash?hash=" + result[i].hashvalue + "&type=raid&redirect=raids'>Delete</a> </td></tr>";
-		   }
-		   output+="</tbody></table>";
-
-		   displayResources.html(output);
-		   $("table").addClass("table");
-
-
-		   $('table').DataTable( {
-                   drawCallback: function(){
-                       $("img.lazy").lazyload();
-                   },
-		           "order": [[ {{ sort }}, "desc" ]],
-			       responsive: {{ responsive }},
-			       "autoWidth": true,
-			       columnDefs: [{ targets: [5, 6], type: 'date'}]
-
-		       } );
-
-
-		   }
-		   });
-
-		  });
-		  </script>
-
-</body>
-</html>
+{% block content %}
+<h2>Check saved Raids</h2>
+<table id="show-data" class="table"></table>
+{% endblock %}

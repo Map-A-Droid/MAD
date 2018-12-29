@@ -62,7 +62,7 @@ def after_request(response):
 
 @app.route('/screens', methods=['GET'])
 def screens():
-    return render_template('screens.html', responsive=str(args.madmin_noresponsive).lower())
+    return render_template('screens.html', responsive=str(args.madmin_noresponsive).lower(), title="show success Screens")
 
 
 @app.route('/', methods=['GET'])
@@ -72,17 +72,17 @@ def root():
 
 @app.route('/raids', methods=['GET'])
 def raids():
-    return render_template('raids.html', sort=str(args.madmin_sort), responsive=str(args.madmin_noresponsive).lower())
+    return render_template('raids.html', sort=str(args.madmin_sort), responsive=str(args.madmin_noresponsive).lower(), title="show Raid Matching")
 
 
 @app.route('/gyms', methods=['GET'])
 def gyms():
-    return render_template('gyms.html', sort=args.madmin_sort, responsive=str(args.madmin_noresponsive).lower())
+    return render_template('gyms.html', sort=args.madmin_sort, responsive=str(args.madmin_noresponsive).lower(), title="show Gym Matching")
 
 
 @app.route('/unknown', methods=['GET'])
 def unknown():
-    return render_template('unknown.html', responsive=str(args.madmin_noresponsive).lower())
+    return render_template('unknown.html', responsive=str(args.madmin_noresponsive).lower(), title="show unkown Gym")
 
 
 @app.route('/map', methods=['GET'])
@@ -522,7 +522,7 @@ def match_unknows():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(args.madmin_noresponsive).lower())
+    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(args.madmin_noresponsive).lower(), title="match Unkown")
 
 
 @app.route('/modify_raid', methods=['GET'])
@@ -532,7 +532,7 @@ def modify_raid():
     lon = request.args.get('lon')
     lvl = request.args.get('lvl')
     mon = request.args.get('mon')
-    return render_template('change_raid.html', hash = hash, lat = lat, lon = lon, lvl = lvl, mon = mon, responsive = str(args.madmin_noresponsive).lower())
+    return render_template('change_raid.html', hash = hash, lat = lat, lon = lon, lvl = lvl, mon = mon, responsive = str(args.madmin_noresponsive).lower(), title = "change Raid")
 
 
 @app.route('/modify_gym', methods=['GET'])
@@ -540,7 +540,7 @@ def modify_gym():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('change_gym.html', hash = hash, lat = lat, lon = lon, responsive = str(args.madmin_noresponsive).lower())
+    return render_template('change_gym.html', hash = hash, lat = lat, lon = lon, responsive = str(args.madmin_noresponsive).lower(), title = "change Gym")
 
 
 @app.route('/modify_mon', methods=['GET'])
@@ -548,7 +548,7 @@ def modify_mon():
     hash = request.args.get('hash')
     gym = request.args.get('gym')
     lvl = request.args.get('lvl')
-    return render_template('change_mon.html', hash = hash, gym = gym, lvl = lvl, responsive = str(args.madmin_noresponsive).lower())
+    return render_template('change_mon.html', hash = hash, gym = gym, lvl = lvl, responsive = str(args.madmin_noresponsive).lower(), title = "change Mon")
 
 
 @app.route('/asset/<path:path>', methods=['GET'])
@@ -567,12 +567,12 @@ def config():
     type = request.args.get('type')
     block = request.args.get('block')
     area = request.args.get('area')
-    fieldwebsite.append('<form action=/addedit id=settings>')
-    fieldwebsite.append('<input type=hidden name=block value=' + block + '>')
-    fieldwebsite.append('<input type=hidden name=mode value=' + type + '>')
-    fieldwebsite.append('<input type=hidden name=area value=' + area + '>')
+    fieldwebsite.append('<form action="/addedit" id="settings">')
+    fieldwebsite.append('<input type="hidden" name="block" value="' + block + '">')
+    fieldwebsite.append('<input type="hidden" name="mode" value="' + type + '">')
+    fieldwebsite.append('<input type="hidden" name="area" value="' + area + '">')
     if edit:
-        fieldwebsite.append('<input type=hidden name=edit value=' + edit + '>')
+        fieldwebsite.append('<input type="hidden" name="edit" value="' + edit + '">')
         with open('configs/mappings.json') as f:
             mapping = json.load(f)
             for oldfields in mapping[area]:
@@ -633,14 +633,14 @@ def config():
                                 val = ''
                         else:
                             val = ''
-                    fieldwebsite.append('<b>' + str(field['name']) + '</b><br>' + str(field['settings']['description']) + ' <br><input type=text name=' + str(field['name']) + ' value="' + val + '" ' + lockvalue + ' ' + req + '>')
+                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" value="' + val + '" ' + lockvalue + ' ' + req + '></div>')
                 else:
-                    fieldwebsite.append('<b>' + str(field['name']) + '</b><br>' + str(field['settings']['description']) + ' <br><input type=text name=' + str(field['name']) + ' ' + req + '>')
+                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" ' + req + '></div>')
             if field['settings']['type'] == 'option':
                 req = field['settings'].get('require', 'false')
                 if req in ('true'):
                     req = "required"
-                _temp = '<b>' + str(field['name']) + '</b><br>' + str(field['settings']['description']) + ' <br><select name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 _options = field['settings']['values'].split('|')
                 for option in _options:
                     if edit:
@@ -652,15 +652,15 @@ def config():
                             if field['name'] in oldvalues:
                                 if str(oldvalues[field['name']]).lower() in str(option).lower():
                                     sel = 'selected'
-                    _temp = _temp + '<option value=' + str(option) + ' ' + sel + '>' + str(option) + '</option>'
+                    _temp = _temp + '<option value="' + str(option) + '" ' + sel + '>' + str(option) + '</option>'
                     sel = ''
-                _temp = _temp + '</select>'
+                _temp = _temp + '</select></div>'
                 fieldwebsite.append(str(_temp))
             if field['settings']['type'] == 'areaselect':
                 req = field['settings'].get('require', 'false')
                 if req in ('true'):
                     req = "required"
-                _temp = '<b>' + str(field['name']) + '</b><br>' + str(field['settings']['description']) + ' <br><select name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 with open('configs/mappings.json') as f:
                     mapping = json.load(f)
                 mapping['areas'].append({'name': None})
@@ -682,7 +682,7 @@ def config():
                                     sel = 'selected'
                     _temp = _temp + '<option value="' + str(option['name']) + '" ' + sel + '>' + str(option['name']) + '</option>'
                     sel = ''
-                _temp = _temp + '</select>'
+                _temp = _temp + '</select></div>'
                 fieldwebsite.append(str(_temp))
 
     if edit:
@@ -690,9 +690,9 @@ def config():
     else:
         header = "Add new " + type
 
-    fieldwebsite.append('<input type=submit value="Save"></form> ')
+    fieldwebsite.append('<button type="submit" class="btn btn-primary">Save</form>')
 
-    return render_template('parser.html', editform=fieldwebsite, header=header)
+    return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings")
 
 
 @app.route('/delsetting', methods=['GET', 'POST'])
@@ -888,7 +888,7 @@ def showsettings():
             
         table = table + header + subheader + line
 
-    return render_template('settings.html', settings='<table>' + table + '</table>')
+    return render_template('settings.html', settings='<table>' + table + '</table>', title="Mapping Editor")
 
     return jsonify(table)
 
@@ -905,7 +905,7 @@ def addnew():
     for output in settings[area]:
         line = line + '<h3><a href=config?type=' + str(output['name']) + '&area=' + str(area) + '&block=fields>'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
 
-    return render_template('sel_type.html', line=line)
+    return render_template('sel_type.html', line=line, title="Type selector")
 
 
 def decodeHashJson(hashJson):

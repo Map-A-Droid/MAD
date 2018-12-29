@@ -1,14 +1,9 @@
-<html
-<head>
- <meta charset="utf-8">
- <title>MADMIN - edit settings</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/dataTables.bootstrap.min.css">
-  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
-  <link rel="shortcut icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
-  <link rel="icon" href={{ url_for('static', filename='favicon.ico') }} type="image/x-icon">
-  <style>
-  input[type=text], select {
+{% extends "base.html" %}
+
+{% block header %}
+<style>
+  input[type=text],
+  select {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -33,41 +28,64 @@
     background-color: #45a049;
   }
 
-  div {
+  #inputdata {
     border-radius: 5px;
     background-color: #f2f2f2;
     padding: 20px;
-	width: 80%;
+    /*width: 80%;*/
   }
-  hr {
-      border-style: solid;
-      border-color: lightgray;
-  }
-  </style>
- </head>
-<body>
-<center><h1>{{header | safe }}</h1>
-	
-<h4><a href=/showsettings>Back to editor</a></h4>
-<div>
-{% for item in editform %}
-        {{item | safe }}
-{% endfor %}
-</div></center>
 
-<script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/jquery.validate.min.js"></script>
-<script src="https://cdn.jsdelivr.net/jquery.validation/1.16.0/additional-methods.min.js"></script>
+  hr {
+    border-style: solid;
+    border-color: lightgray;
+  }
+</style>
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.min.js" integrity="sha256-bu/BP02YMudBc96kI7yklc639Mu4iKGUNNcam8D2nLc="
+  crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js" integrity="sha256-Z3MmjesRY6rcd+sYj8tTwb/+EV/4msqGW7EZiQc3TK8="
+  crossorigin="anonymous"></script>
+
 <script>
-// just for the demos, avoids form submit
-jQuery.validator.setDefaults({
-  debug: true,
-  success: "valid"
-});
-var form = $( "#settings" );
-form.validate();
-$( "button" ).click(function() {
-  alert( "Valid: " + form.valid() );
-});
+  $(document).ready(function () {
+    $("#navsetting").addClass("active");
+
+    $("#settings").validate({
+      errorElement: "em",
+      errorPlacement: function (error, element) {
+        // Add the `help-block` class to the error element
+        error.addClass("help-block");
+
+        if (element.prop("type") === "checkbox") {
+          error.insertAfter(element.parent("label"));
+        } else {
+          error.insertAfter(element);
+        }
+      },
+      highlight: function (element, errorClass, validClass) {
+        $(element).parents().addClass("has-error").removeClass("has-success");
+      },
+      unhighlight: function (element, errorClass, validClass) {
+        $(element).parents().addClass("has-success").removeClass("has-error");
+      }
+    });
+  });
 </script>
-</body>
-</html>
+
+{% endblock %}
+
+{% block content %}
+
+<h2>{{header | safe }}</h2>
+
+<h4><a href="/showsettings">Back to editor</a></h4>
+<div id="inputdata">
+  {% for item in editform %}
+  {{item | safe }}
+  {% endfor %}
+</div>
+
+{% endblock %}
