@@ -633,14 +633,14 @@ def config():
                                 val = ''
                         else:
                             val = ''
-                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" value="' + val + '" ' + lockvalue + ' ' + req + '></div>')
+                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" value="' + val + '" ' + lockvalue + ' ' + req + '></div>')
                 else:
-                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" ' + req + '></div>')
+                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" ' + req + '></div>')
             if field['settings']['type'] == 'option':
                 req = field['settings'].get('require', 'false')
                 if req in ('true'):
                     req = "required"
-                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 _options = field['settings']['values'].split('|')
                 for option in _options:
                     if edit:
@@ -660,7 +660,7 @@ def config():
                 req = field['settings'].get('require', 'false')
                 if req in ('true'):
                     req = "required"
-                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 with open('configs/mappings.json') as f:
                     mapping = json.load(f)
                 mapping['areas'].append({'name': None})
