@@ -214,7 +214,7 @@
 		"settings": {
 	    	 "type": "option",
     		 "require": "false",
-	    	 "values": "false|true",
+	    	 "values": "true|false",
 			 "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
 			 "output": "int"
 	    }
@@ -278,7 +278,7 @@
 			 "description": "Max. distance of walking - otherwise teleport to new location"
 	    }
 	},
-	{{
+	{
 		"name": "delay_after_prio_event",
 		"settings": {
 			 "type": "text",
