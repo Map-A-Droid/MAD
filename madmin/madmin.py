@@ -633,14 +633,14 @@ def config():
                                 val = ''
                         else:
                             val = ''
-                    fieldwebsite.append('<b>' + str(field['name']) + '</b><br />' + str(field['settings']['description']) + ' <br /><input type="text" name="' + str(field['name']) + '" value="' + val + '" ' + lockvalue + ' ' + req + '>')
+                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" value="' + val + '" ' + lockvalue + ' ' + req + '></div>')
                 else:
-                    fieldwebsite.append('<b>' + str(field['name']) + '</b><br />' + str(field['settings']['description']) + ' <br /><input type="text" name="' + str(field['name']) + '" ' + req + '>')
+                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" ' + req + '></div>')
             if field['settings']['type'] == 'option':
                 req = field['settings'].get('require', 'false')
                 if req in ('true'):
                     req = "required"
-                _temp = '<b>' + str(field['name']) + '</b><br />' + str(field['settings']['description']) + ' <br /><select name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 _options = field['settings']['values'].split('|')
                 for option in _options:
                     if edit:
@@ -654,13 +654,13 @@ def config():
                                     sel = 'selected'
                     _temp = _temp + '<option value="' + str(option) + '" ' + sel + '>' + str(option) + '</option>'
                     sel = ''
-                _temp = _temp + '</select>'
+                _temp = _temp + '</select></div>'
                 fieldwebsite.append(str(_temp))
             if field['settings']['type'] == 'areaselect':
                 req = field['settings'].get('require', 'false')
                 if req in ('true'):
                     req = "required"
-                _temp = '<b>' + str(field['name']) + '</b><br />' + str(field['settings']['description']) + ' <br /><select name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
                 with open('configs/mappings.json') as f:
                     mapping = json.load(f)
                 mapping['areas'].append({'name': None})
@@ -682,7 +682,7 @@ def config():
                                     sel = 'selected'
                     _temp = _temp + '<option value="' + str(option['name']) + '" ' + sel + '>' + str(option['name']) + '</option>'
                     sel = ''
-                _temp = _temp + '</select>'
+                _temp = _temp + '</select></div>'
                 fieldwebsite.append(str(_temp))
 
     if edit:
@@ -690,7 +690,7 @@ def config():
     else:
         header = "Add new " + type
 
-    fieldwebsite.append('<input type="submit" value="Save"></form> ')
+    fieldwebsite.append('<button type="submit" class="btn btn-primary">Save</form>')
 
     return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings")
 
