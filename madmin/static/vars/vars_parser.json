@@ -5,12 +5,21 @@
 	"description": "Overlay scanner (MITM) for detecting spawnpoints. Raids will also get detected",
 	"fields": [
 		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    },
+		{
 			"name": "init",
     		"settings": {
     	    	"type": "option",
 	    		"require": "true",
-		    	"values": "true|false",
-				"description": "Scan the area for gyms / spawnpoints"
+		    	"values": "false|true",
+				"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
 			}
 		},
 		{
@@ -37,15 +46,6 @@
 	        	"type": "text",
 		    	"require": "true",
 				"description": "Name of routefile"
-		    }
-	    },
-		{
-			"name": "name",
-    		"settings": {
-	        	"type": "text",
-		    	"require": "true",
-				"description": "Name of area",
-				"lockonedit": "true"
 		    }
 	    },
 		{
@@ -121,12 +121,21 @@
 	"description": "Overlay scanner (MITM) for detecting raids",
 	"fields": [
 		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    },
+		{
 			"name": "init",
     		"settings": {
     	    	"type": "option",
 	    		"require": "true",
-		    	"values": "true|false",
-				"description": "Scan the area for gyms / spawnpoints"
+		    	"values": "false|true",
+				"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
 			}
 		},
 		{
@@ -153,15 +162,6 @@
 	        	"type": "text",
 		    	"require": "true",
 				"description": "Name of routefile"
-		    }
-	    },
-		{
-			"name": "name",
-    		"settings": {
-	        	"type": "text",
-		    	"require": "true",
-				"description": "Name of area",
-				"lockonedit": "true"
 		    }
 	    }
 	],
@@ -226,6 +226,15 @@
 	"description": "OCR scanner for detecting raids.",
 	"fields": [
 		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    },
+		{
 			"name": "geofence_included",
     		"settings": {
 	        	"type": "text",
@@ -249,15 +258,6 @@
 	        	"type": "text",
 		    	"require": "true",
 				"description": "Name of routefile"
-		    }
-	    },
-		{
-			"name": "name",
-    		"settings": {
-	        	"type": "text",
-		    	"require": "true",
-				"description": "Name of area",
-				"lockonedit": "true"
 		    }
 	    }
 	],
