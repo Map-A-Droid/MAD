@@ -44,22 +44,33 @@
 
 {% block scripts %}
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.min.js" integrity="sha256-bu/BP02YMudBc96kI7yklc639Mu4iKGUNNcam8D2nLc=" crossorigin="anonymous"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js" integrity="sha256-Z3MmjesRY6rcd+sYj8tTwb/+EV/4msqGW7EZiQc3TK8=" crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.min.js" integrity="sha256-bu/BP02YMudBc96kI7yklc639Mu4iKGUNNcam8D2nLc="
+  crossorigin="anonymous"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js" integrity="sha256-Z3MmjesRY6rcd+sYj8tTwb/+EV/4msqGW7EZiQc3TK8="
+  crossorigin="anonymous"></script>
 
 <script>
   $(document).ready(function () {
     $("#navsetting").addClass("active");
 
-    // just for the demos, avoids form submit
-    jQuery.validator.setDefaults({
-      debug: true,
-      success: "valid"
-    });
-    var form = $("#settings");
-    form.validate();
-    $("button").click(function () {
-      alert("Valid: " + form.valid());
+    $("#settings").validate({
+      errorElement: "em",
+      errorPlacement: function (error, element) {
+        // Add the `help-block` class to the error element
+        error.addClass("help-block");
+
+        if (element.prop("type") === "checkbox") {
+          error.insertAfter(element.parent("label"));
+        } else {
+          error.insertAfter(element);
+        }
+      },
+      highlight: function (element, errorClass, validClass) {
+        $(element).parents().addClass("has-error").removeClass("has-success");
+      },
+      unhighlight: function (element, errorClass, validClass) {
+        $(element).parents().addClass("has-success").removeClass("has-error");
+      }
     });
   });
 </script>
