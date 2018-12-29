@@ -645,11 +645,13 @@ def config():
                 for option in _options:
                     if edit:
                         if block == "settings":
-                            if option in oldvalues['settings']:
-                                if str(oldvalues[field['settings']['name']]).lower() == str(option).lower():
+                            print (option, oldvalues['settings'][field['name']])
+                            #if option in str(oldvalues['settings'][field['name']]:
+                            if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
+                                if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
                                     sel = 'selected'
                         else:
-                            if str(oldvalues[field['name']]).lower() == str(option).lower():
+                            if str(oldvalues[field['name']]).lower() in str(option).lower():
                                 sel = 'selected'
                     _temp = _temp + '<option value=' + str(option) + ' ' + sel + '>' + str(option) + '</option>'
                     sel = ''
@@ -772,9 +774,9 @@ def addedit():
                         elif key in area:
                             continue
                         else:
-                            if key == 'true':
+                            if key in 'true':
                                 key = bool(True)
-                            elif key == 'false':
+                            elif key in 'false':
                                 key = bool(False)
                             elif key.isdigit():
                                 key = int(key)
@@ -811,9 +813,9 @@ def addedit():
                             if key in area:
                                 continue
                             else:
-                                if key == 'true':
+                                if key in 'true':
                                     key = bool(True)
-                                elif key == 'false':
+                                elif key in 'false':
                                     key = bool(False)
                                 elif key.isdigit():
                                     key = int(key)
@@ -831,9 +833,9 @@ def addedit():
         new = {}
         for ase, key in data.items():
             if key != '' and key not in area:
-                if key == 'true':
+                if key in 'true':
                     key = bool(True)
-                elif key == 'false':
+                elif key in 'false':
                     key = bool(False)
                 elif key.isdigit():
                     key = int(key)
