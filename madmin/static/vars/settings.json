@@ -5,7 +5,7 @@
 		"field": "name",
 		"description": "Setting up scannertypes with geofence and other options.",
 	    "quickview": "mode|geofence_included|routecalc",
-		"quickview_settings": "speed|max_distance"
+		"quickview_settings": "speed|max_distance|delay_after_prio_event|priority_queue_clustering_timedelta|remove_from_queue_backlog|starve_route"
     },
 	"devices": {
 		"has_settings": "true",
@@ -13,7 +13,7 @@
 		"field": "origin",
 		"description": "Assign devices to areas",
 		"quickview": "daytime_area|nighttime_area",
-		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout"
+		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|max_data_err_counter|restart_pogo|walk_after_teleport_distance"
     },
 	"auth": {
 		"has_settings": "false",
