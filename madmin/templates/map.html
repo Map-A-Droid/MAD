@@ -16,7 +16,7 @@
 		-webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
 		filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
 	}
-		
+
 	#gymName {
 		position: absolute;
 		left: 120px;
@@ -27,7 +27,7 @@
 		white-space: nowrap;
 		text-overflow: ellipsis;
 	}
-	
+
 	#gymID {
 		position: absolute;
 		left: 120px;
@@ -36,7 +36,7 @@
 		overflow: hidden;
 		white-space: nowrap;
 	}
-		
+
 	#gymCoords {
 		position: absolute;
 		left: 120px;
@@ -46,7 +46,7 @@
 		white-space: nowrap;
 		text-overflow: ellipsis;
 	}
-		
+
 	#map {
 		width: 100%;
 		height: 100vh;
@@ -56,12 +56,12 @@
 	.gympopup .leaflet-popup-tip {
 		text-align: center;
 	}
-	
+
 	.gympopup .leaflet-popup-content-wrapper {
 		width: 400px;
 		text-align: center;
 	}
-	
+
 	.spawntooltip {
 		font-weight: bold;
 		color: #FFF;
@@ -80,6 +80,7 @@
 <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet-src.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
+	// helper method to convert lat/lon
 	function convertToLonLat(coords) {
 		lonlat = []
 		$.each(coords, function (k, v) {
@@ -88,11 +89,58 @@
 		return lonlat;
 	}
 
+	// helper method to check whether a layer should be shown or not
+	function shouldShowLayer(name) {
+		var layersRaw = localStorage.getItem('layers');
+		var spawntimesName = 'Spawnpoint times';
+
+		if (layersRaw != null) {
+			var layers = JSON.parse(layersRaw);
+			// use stored settings or default to showing it
+			if (layers.hasOwnProperty(name)) {
+				return layers[name];
+			} else {
+				// except spawntimes
+				if (name != spawntimesName) {
+					return true;
+				}
+			}
+		}
+
+		// no stored layers available. Show
+		// everything except this nicelely
+		// hardcoded spawntimes
+		if (name != spawntimesName) {
+			return true;
+		}
+	};
+
+	// helper method to toggle layer visibility
+	function toggleOverlay(e) {
+		if (e.type == 'overlayadd') {
+			shown = true;
+		} else if (e.type == 'overlayremove') {
+			shown = false;
+		} else {
+			return;
+		}
+
+		var layersRaw = localStorage.getItem('layers');
+
+		if (layersRaw != null) {
+			var layers = JSON.parse(layersRaw);
+		} else {
+			var layers = {};
+		}
+
+		layers[e.name] = shown;
+		localStorage.setItem('layers', JSON.stringify(layers));
+	}
+
 	$(document).ready(function () {
 		$("#navmap").addClass("active");
 		$("div[role='main']").removeClass("container");
 
-		var prevLoc = [0, 0];
 		var marker = {};
 		var spawn = L.circle;
 
@@ -112,7 +160,12 @@
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
 		});
 
-		var map = L.map('map', { layers: [tileLayer], zoomControl: false }).setView([0, 0], 13);
+		// get stored center and zoom level if they exists
+		var storedZoom = localStorage.getItem('zoomlevel') || 13;
+		var storedCenter = localStorage.getItem('center') || '0,0';
+
+		// main map object
+		var map = L.map('map', { layers: [tileLayer], zoomControl: false }).setView(storedCenter.split(','), storedZoom);
 
 		var baseLayers = {
 			"Map": tileLayer
@@ -125,6 +178,7 @@
 		var gyms = L.layerGroup();
 		var fence = L.layerGroup();
 
+		// base overlays
 		var overlays = {
 			"Spawnpoints": spawns,
 			"Spawnpoint times": spawntimes,
@@ -132,17 +186,39 @@
 			"Geofence": fence
 		};
 
-		map.addLayer(spawns);
-		map.addLayer(gyms);
-		map.addLayer(fence);
+		// show or hide overlays if they've been modified before
+		for (var key in overlays) {
+			if (shouldShowLayer(key)) {
+				map.addLayer(overlays[key]);
+			}
+		}
+
+		// add our base layers
 		mapControl = L.control.layers(baseLayers, overlays, {position: 'bottomright'}).addTo(map);
-		
+
+		// handle zoom events
 		map.on('zoomend', function () {
+			// hide spawntimes if being zoomed out too far
 			if (map.getZoom() < 16 && map.hasLayer(spawntimes)) {
 				map.removeLayer(spawntimes);
 			}
+
+			// store zoom level
+			localStorage.setItem('zoomlevel', map.getZoom());
 		});
 
+		// handle drag events
+		map.on('moveend', function() {
+			// store map center
+			var center = map.getCenter();
+			localStorage.setItem('center', center.lat+','+center.lng);
+		})
+
+		// handle overlay show/hide events
+		map.on('overlayremove', toggleOverlay);
+		map.on('overlayadd', toggleOverlay);
+
+		// add new zoom control
 		L.control.zoom({
 			position: 'bottomright'
 		}).addTo(map);
@@ -151,9 +227,15 @@
 			url: "/get_route",
 			success: function (result) {
 				$.each(result, function (pos, data) {
-					walklay[pos] = L.layerGroup()
-					mapControl.addOverlay(walklay[pos], 'Route: ' + pos);
-					map.addLayer(walklay[pos]);
+					walklay[pos] = L.layerGroup();
+					var name = 'Route: ' + pos;
+					var obj = walklay[pos];
+
+					if (shouldShowLayer(name)) {
+						map.addLayer(obj);
+					}
+
+					mapControl.addOverlay(obj, name);
 					$.each(data, function (k, v) {
 						L.circle(v, {
 							radius: 15,
@@ -164,9 +246,6 @@
 							opacity: 0.2,
 							fillOpacity: 0.1
 						}).addTo(walklay[pos]);
-
-						map.setView(v, map.getZoom());
-
 					});
 
 					var geojson = {
@@ -175,9 +254,7 @@
 					}
 
 					L.geoJSON(geojson, { style: { "color": getRandomColor(), "weight": 2, "opacity": 0.5 } }).addTo(walklay[pos]).bindPopup(pos);
-
 				});
-
 			}
 		});
 
@@ -292,28 +369,41 @@
 				success: function (result) {
 					var t = 0;
 					$.each(result, function (pos, data) {
-
 						if (!marker.hasOwnProperty(pos)) {
 							poslay[pos] = L.layerGroup()
-							mapControl.addOverlay(poslay[pos], 'Worker: ' + pos);
-							map.addLayer(poslay[pos]);
+
+							var name = 'Worker: ' + pos;
+							var obj = poslay[pos];
+
+							if (shouldShowLayer(name)) {
+								map.addLayer(obj);
+							}
+
+							mapControl.addOverlay(obj, name);
 							marker[pos] = L.marker([0, 0], { icon: markericon, title: "Bot position" })
 								.bindPopup(pos)
 								.addTo(poslay[pos]);
 						}
 						marker[pos].setLatLng(data[t])
 						t = t + 1;
+
+						// special hack to move view to bot's
+						// current position if it's still at
+						// 0,0. We don't want people to ask
+						// why their screen is just gray
+						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+							map.setView(data[t], map.getZoom());
+						}
 					})
 					setTimeout(work, 5000);
 				}
 			});
 		})();
+
 	});
 </script>
 {% endblock %}
 
 {% block content %}
-<div id="mapouter">
-	<div id="map"></div>
-</div>
+<div id="map"></div>
 {% endblock %}
