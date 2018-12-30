@@ -143,7 +143,6 @@
 		map.addLayer(fence);
 		map.removeControl(baseControl);
 		mapControl = L.control.layers(baseLayers, overlays).addTo(map);
-		map.removeLayer(spawns);
 		
 		map.on('zoomend', function () {
 			if (map.getZoom() < 16 && map.hasLayer(spawntimes)) {
