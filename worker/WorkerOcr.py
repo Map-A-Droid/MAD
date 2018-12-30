@@ -143,7 +143,6 @@ class WorkerOcr(WorkerBase):
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location of %s" % str(self.id))
                     self._stop_worker_event.set()
-                    self._workMutex.release()
                     return
                 delayUsed = self._devicesettings.get("post_teleport_delay",7)
                 # Test for cooldown / teleported distance TODO: check this block...
@@ -172,7 +171,6 @@ class WorkerOcr(WorkerBase):
                     except WebsocketWorkerRemovedException:
                         log.error("Timeout walking a bit on %s" % str(self.id))
                         self._stop_worker_event.set()
-                        self._workMutex.release()
                         return
                     log.debug("Done walking")
             else:
@@ -184,7 +182,6 @@ class WorkerOcr(WorkerBase):
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout while walking with worker %s" % str(self.id))
                     self._stop_worker_event.set()
-                    self._workMutex.release()
                     return
                 delayUsed = self._devicesettings.get("post_walk_delay",7)
             log.info("Sleeping %s" % str(delayUsed))

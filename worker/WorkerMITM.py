@@ -170,9 +170,7 @@ class WorkerMITM(WorkerBase):
 
             log.debug("Updating .position file")
             with open(self.id + '.position', 'w') as outfile:
-            # posfile = open(self.id + '.position', "w")
                 outfile.write(str(currentLocation.lat)+", "+str(currentLocation.lng))
-            # posfile.close()
 
             log.debug("main: next stop: %s" % (str(currentLocation)))
             log.debug('main: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
@@ -199,7 +197,6 @@ class WorkerMITM(WorkerBase):
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location for %s" % str(self.id))
                     self._stop_worker_event.set()
-                    self._work_mutex.release()
                     return
                 delayUsed = self._devicesettings.get('post_teleport_delay', 7)
                 # Test for cooldown / teleported distance TODO: check this block...
@@ -229,7 +226,6 @@ class WorkerMITM(WorkerBase):
                     except WebsocketWorkerRemovedException:
                         log.error("Timeout setting location for %s" % str(self.id))
                         self._stop_worker_event.set()
-                        self._work_mutex.release()
                         return
                     log.debug("Done walking")
             else:
@@ -241,7 +237,6 @@ class WorkerMITM(WorkerBase):
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location for %s" % str(self.id))
                     self._stop_worker_event.set()
-                    self._work_mutex.release()
                     return
                 delayUsed = self._devicesettings.get('post_walk_delay', 7)
             log.info("Sleeping %s" % str(delayUsed))
@@ -252,10 +247,14 @@ class WorkerMITM(WorkerBase):
                 # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
                 self.__add_task_to_loop(self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime))
 
+            log.debug("Acquiring lock")
+            self._work_mutex.acquire()
             log.debug("Waiting for data to be received...")
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                    timestamp=curTime)
             _data_err_counter = data_error_counter
+            log.debug("Releasing lock")
+            self._work_mutex.release()
             log.debug("Worker %s done, next iteration" % str(self.id))
 
         t_mitm_data.join()
