@@ -60,12 +60,15 @@
 		border: 1px solid #333;
 	}
 
-	.gympopup .leaflet-popup-tip,
-	.gympopup .leaflet-popup-content-wrapper {
+	.gympopup .leaflet-popup-tip {
 		text-align: center;
-		width: 400px;
 	}
-
+	
+	.gympopup .leaflet-popup-content-wrapper {
+		width: 400px;
+		text-align: center;
+	}
+	
 	.spawntooltip {
 		font-weight: bold;
 		color: #FFF;
@@ -140,7 +143,8 @@
 		map.addLayer(fence);
 		map.removeControl(baseControl);
 		mapControl = L.control.layers(baseLayers, overlays).addTo(map);
-
+		map.removeLayer(spawns);
+		
 		map.on('zoomend', function () {
 			if (map.getZoom() < 16 && map.hasLayer(spawntimes)) {
 				map.removeLayer(spawntimes);
