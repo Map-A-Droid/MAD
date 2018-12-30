@@ -41,10 +41,9 @@
             },
             "order": [[{{ sort }}, "desc"]],
             "responsive": {{ responsive }},
-            "autoWidth": true
         });
 	}
-	
+
     $(document).ready(function () {
         $("#navgyms").addClass("active");
         $.ajax({
@@ -61,5 +60,5 @@
 
 {% block content %}
 <h2>Check saved Gyms</h2>
-<table id="show-data" class="table"></table>
+<table id="show-data" class="table" style="width:100%;"></table>
 {% endblock %}

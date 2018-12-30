@@ -47,17 +47,10 @@
 		text-overflow: ellipsis;
 	}
 		
-	#mapouter {
-		padding: 0px 30px;
-		width: auto;
-		height: 800px;
-		max-height: 800px;
-	}
-
 	#map {
 		width: 100%;
-		height: 100%;
-		border: 1px solid #333;
+		height: 100vh;
+    margin-top: -60px; /* yeah, don't ask */
 	}
 
 	.gympopup .leaflet-popup-tip {
@@ -100,8 +93,6 @@
 		$("div[role='main']").removeClass("container");
 
 		var prevLoc = [0, 0];
-		var poslay = L.layerGroup();
-		var walklay = L.layerGroup();
 		var marker = {};
 		var spawn = L.circle;
 
@@ -117,20 +108,23 @@
 			iconSize: [20, 20]
 		});
 
-		var title = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
+		var tileLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
 			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
 		});
 
-		var map = L.map('map', { layers: [title] }).setView([0, 0], 13);
-		var baseLayers = {
-			"Map": title
-		};
-		var baseControl = L.control.layers(baseLayers).addTo(map);
+		var map = L.map('map', { layers: [tileLayer], zoomControl: false }).setView([0, 0], 13);
 
-		spawntimes = L.layerGroup();
-		spawns = L.layerGroup();
-		gyms = L.layerGroup();
-		fence = L.layerGroup();
+		var baseLayers = {
+			"Map": tileLayer
+		};
+
+		var poslay = L.layerGroup();
+		var walklay = L.layerGroup();
+		var spawntimes = L.layerGroup();
+		var spawns = L.layerGroup();
+		var gyms = L.layerGroup();
+		var fence = L.layerGroup();
+
 		var overlays = {
 			"Spawnpoints": spawns,
 			"Spawnpoint times": spawntimes,
@@ -141,14 +135,17 @@
 		map.addLayer(spawns);
 		map.addLayer(gyms);
 		map.addLayer(fence);
-		map.removeControl(baseControl);
-		mapControl = L.control.layers(baseLayers, overlays).addTo(map);
+		mapControl = L.control.layers(baseLayers, overlays, {position: 'bottomright'}).addTo(map);
 		
 		map.on('zoomend', function () {
 			if (map.getZoom() < 16 && map.hasLayer(spawntimes)) {
 				map.removeLayer(spawntimes);
 			}
 		});
+
+		L.control.zoom({
+			position: 'bottomright'
+		}).addTo(map);
 
 		$.getJSON({
 			url: "/get_route",
@@ -312,31 +309,11 @@
 			});
 		})();
 	});
-
-	function drawPolygon() {
-		var coords = document.getElementById("coordPolygon").value;
-		var json = '[';
-		var lines = coords.split('\n');
-		for (var i = 0; i < lines.length; i++) {
-			json = json.concat('[', lines[i], '],');
-		}
-		json = json.slice(0, -1);
-		json = json.concat(']');
-		var a = JSON.parse(json);
-		var polygon = L.polygon(a, { color: 'red' });
-		polygon.addTo(fence);
-	}
-
 </script>
 {% endblock %}
 
 {% block content %}
-<h2>MAD Map</h2>
 <div id="mapouter">
 	<div id="map"></div>
-</div>
-<div>
-	<center>Add Geofence<br> <textarea rows="5" cols="50" name="coordPolygon" id="coordPolygon" /></textarea><br>
-	<input type="button" onclick="drawPolygon()" value="Add" /><br></center>
 </div>
 {% endblock %}
