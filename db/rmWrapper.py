@@ -148,6 +148,9 @@ class RmWrapper(DbWrapperBase):
         wh_start = 0
         wh_end = 0
         egg_hatched = False
+        
+        now_timezone = datetime.fromtimestamp(float(capture_time))
+        now_timezone = time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
 
         log.debug("[Crop: %s (%s) ] submit_raid: Submitting something of type %s"
                   % (str(raid_no), str(unique_hash), str(type)))
@@ -163,11 +166,11 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %2, "
+                "move_1 = %s, move_2 = %s"
                 "WHERE gym_id = %s"
             )
             vals = (
-                lvl, capture_time, start, end, pkm, int(time.time()), '999', '1', '1', gym
+                lvl, now_timezone, start, end, pkm, int(time.time()), '999', '1', '1', gym
             )
             # send out a webhook - this case should only occur once...
             wh_send = True
@@ -179,11 +182,11 @@ class RmWrapper(DbWrapperBase):
             query = (
                 "UPDATE raid "
                 "SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %2, "
+                "move_1 = %s, move_2 = %s"
                 "WHERE gym_id = %s"
             )
             vals = (
-                lvl, pkm, int(time.time()), '999', '1', '1'
+                lvl, pkm, int(time.time()), '999', '1', '1', gym
             )
             found_end_time, end_time = self.get_raid_endtime(gym, raid_no, unique_hash=unique_hash)
             if found_end_time:
@@ -199,11 +202,11 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %2, "
+                "move_1 = %s, move_2 = %s"
                 "WHERE gym_id = %s"
             )
             vals = (
-                lvl, capture_time, start, end, pkm, int(time.time()), '999', '1', '1', gym
+                lvl, now_timezone, start, end, pkm, int(time.time()), '999', '1', '1', gym
             )
             wh_send = True
             wh_start = start
@@ -224,7 +227,7 @@ class RmWrapper(DbWrapperBase):
                     "FROM_UNIXTIME(%s), 999, 1, 1"
                 )
                 vals = (
-                    gym, lvl, capture_time, start, end, pkm, int(time.time())
+                    gym, lvl, now_timezone, start, end, pkm, int(time.time())
                 )
             elif end is None or start is None:
                 log.info("Inserting without end or start")
@@ -240,7 +243,7 @@ class RmWrapper(DbWrapperBase):
                     "VALUES (%s, %s, FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), FROM_UNIXTIME(%s), %s, "
                     "FROM_UNIXTIME(%s), 999, 1, 1"
                 )
-                vals = (gym, lvl, capture_time, start, end, pkm, int(time.time()))
+                vals = (gym, lvl, now_timezone, start, end, pkm, int(time.time()))
 
             self.execute(query, vals, commit=True)
 

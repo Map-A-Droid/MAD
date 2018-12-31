@@ -504,17 +504,18 @@ def get_gymcoords():
 
 @app.route('/gym_img/<path:path>', methods=['GET'])
 def pushGyms(path):
-    return send_from_directory('ocr/gym_img', path)
+    return send_from_directory('../ocr/gym_img', path)
 
 
 @app.route('/www_hash/<path:path>', methods=['GET'])
 def pushHashes(path):
-    return send_from_directory('ocr/www_hash', path)
+    return send_from_directory('../ocr/www_hash', path)
 
 
 @app.route('/screenshots/<path:path>', methods=['GET'])
 def pushScreens(path):
-    return send_from_directory(args.raidscreen_path, path)
+    return send_from_directory('../' + args.raidscreen_path, path)
+
 
 
 @app.route('/match_unknows', methods=['GET'])

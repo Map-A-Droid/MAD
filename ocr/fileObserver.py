@@ -21,7 +21,7 @@ class RaidScan:
     def process(filename, args, db_wrapper, hash, raidno, captureTime, captureLat, captureLng, src_path, radius):
         log.debug("Cropscanning started")
         scanner = Scanner(args, db_wrapper, hash)
-        log.info("Initialized scanned, starting analysis of " % str(filename))
+        log.info("Initialized scanned, starting analysis of %s" % str(filename))
         checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius)
         return checkcrop
 

@@ -78,7 +78,7 @@ def weather_image_matching(weather_icon_name, screenshot_name):
 def checkWeather(raidpic):
     foundweather = None
     
-    for file in glob.glob(os.path.join('weather', 'weatherIcon_small_*.png')):
+    for file in glob.glob(os.path.join('ocr', 'weather', 'weatherIcon_small_*.png')):
         filename = os.path.basename(file)
         find_weather= weather_image_matching(file,raidpic)
 
