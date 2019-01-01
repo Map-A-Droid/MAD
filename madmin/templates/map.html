@@ -237,6 +237,10 @@
 
 					mapControl.addOverlay(obj, name);
 					$.each(data, function (k, v) {
+						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+							map.setView(v, map.getZoom());
+						}
+
 						L.circle(v, {
 							radius: 15,
 							color: "#9C3744",
@@ -333,6 +337,10 @@
 							var color = "red";
 						}
 
+						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+							map.setView([v['lat'], v['lon']], map.getZoom());
+						}
+
 						spawn[k] = L.circle([v['lat'], v['lon']], {
 							radius: 2,
 							color: color,
@@ -353,6 +361,9 @@
 			url: "/get_gymcoords",
 			success: function (result) {
 				$.each(result, function (k, v) {
+					if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+						map.setView([v['lat'], v['lon']], map.getZoom());
+					}
 					L.marker([v['lat'], v['lon']], { icon: gymicon(v['team_id']) })
 						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a></div>',
 							{ 'className': 'gympopup' })
@@ -387,10 +398,6 @@
 						marker[pos].setLatLng(data[t])
 						t = t + 1;
 
-						// special hack to move view to bot's
-						// current position if it's still at
-						// 0,0. We don't want people to ask
-						// why their screen is just gray
 						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
 							map.setView(data[t], map.getZoom());
 						}
