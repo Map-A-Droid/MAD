@@ -759,7 +759,8 @@ class RmWrapper(DbWrapperBase):
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE "
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
-            "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned)"
+            "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
+            "last_modified=VALUES(last_modified)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
