@@ -52,20 +52,6 @@ Inside the `config` folder, duplicate the `config.ini.example` and rename it to 
 In order to map devices to areas, do the same with `mappings_example.json` and rename it to `mappings.json`
 Refer to mappings_example.json for examples or run `python3 start.py -wm` and open the MADMIN mappings editor (http://localhost:5000).
 
-| Parameters   | Explanation           |
-|----------|---------------|
-| init | To discover unknown areas. Gyms and spawnpoints.   |
-| speed | The speed of the walker. Set it to 0 for teleporting.   |
-| max_distance | The distance a walker is walking before teleporting. |
-| origin | Name of the device. Must be the exact same as in PogoDroid and RGC! |
-| post_walk_delay | Delay in seconds to wait after a walk. |
-| post_teleport_delay | Delay in seconds to wait after a teleport. |
-| walk_after_teleport_distance | Meters to walk after a teleport. |
-| cool_down_sleep | Delay in seconds after a screenshot has been taken and about to be saved. (only necessary for OCR mode) |
-| post_turn_screen_on_delay | Delay in seconds after sending the turn screen on command. |
-| post_pogo_start_delay | Times without data before restating Pogo.|
-| restart_pogo | Restart Pogo after N locations.|
-
 ### Geofence
 Each area *requires* `geofence_included`. A geofence can easily be created with [geo.jesparke.net](http://geo.jasparke.net/)
 > A geofence requires a name: `[geofence name]` with `lat, lng` per line, no empty lines at the end of file
