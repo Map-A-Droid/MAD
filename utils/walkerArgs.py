@@ -107,10 +107,10 @@ def parseArgs():
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
-    
+
     parser.add_argument('-hlat', '--home_lat', default='0.0', type=float,
                         help=('Set Lat from the center of your scan location.'
-                              'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))      
+                              'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
     parser.add_argument('-hlng', '--home_lng', default='0.0', type=float,
                         help=('Set Lng from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
@@ -132,7 +132,7 @@ def parseArgs():
     parser.add_argument('-gsd', '--gym_scan_distance', type=float, default=6.0,
                         help='Search for nearby Gmy within this radius (in KM!!). '
                         'In areas with many Gyms reduce this argument to 1-2 Default: 6')
-                        
+
     parser.add_argument('-npmf', '--npmFrom', type=float, default=0.8,
                         help='Matching zoom start value for mon! (Based on resolution)')
     parser.add_argument('-npmv', '--npmValue', type=float, default=2.0,
@@ -154,7 +154,7 @@ def parseArgs():
 
     # sleeptimer
     parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
-                        help='Active the Sleeptimer.')
+                        help='Activate the Sleeptimer.')
     parser.add_argument('-si', '--sleepinterval', default=[], action='append',
                         help='Intervals for the sleeptimer. f.e. [[22:00, 5:00]]')
 
@@ -164,11 +164,13 @@ def parseArgs():
 
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
-                        help='Active webhook support')
+                        help='Activate webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
-                        help='URL to receive webhooks')
+                        help='URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*')
+    parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
+                        help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
-                        help='Active weather webhook support')
+                        help='Activate weather webhook support')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
@@ -190,7 +192,7 @@ def parseArgs():
 
     parser.add_argument('-pfile', '--position_file', default='current',
                         help='Filename for bot\'s current position (Default: current)')
-                        
+
     parser.add_argument('-ugd', '--unknown_gym_distance', default='10',
                         help='Show matchable gyms for unknwon with this radius (in km!) (Default: 10)')
 
@@ -219,7 +221,7 @@ def parseArgs():
                               'STATUS_NAME as main worker name.'))
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
-                        help='Active auto hatch of level 5 eggs')
+                        help='Activate auto hatch of level 5 eggs')
 
     parser.add_argument('-ahn', '--auto_hatch_number', type=int, default=0,
                         help='Auto hatch of level 5 Pokemon ID')
