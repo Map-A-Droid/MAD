@@ -97,8 +97,8 @@ def submit_hash():
 
     if db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin"):
 
-        for file in glob.glob("www_hash/unkgym_*" + str(hash) + ".jpg"):
-            copyfile(file, 'www_hash/gym_0_0_' + str(hash) + '.jpg')
+        for file in glob.glob("ocr/www_hash/unkgym_*" + str(hash) + ".jpg"):
+            copyfile(file, 'ocr/www_hash/gym_0_0_' + str(hash) + '.jpg')
             os.remove(file)
 
         return redirect("/unknown", code=302)
@@ -164,7 +164,7 @@ def near_gym():
 
         gymid = str(closegym[0])
         dist = str(closegym[1])
-        gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+        gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
         name = 'unknown'
         lat = '0'
@@ -179,7 +179,7 @@ def near_gym():
             if data[str(gymid)]["description"]:
                 description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
 
-        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon, 'description': description, 'filename': gymImage, 'dist': dist})
+        ngjson = ({'id': gymid, 'name': name, 'lat': lat, 'lon': lon, 'description': description, 'filename': gymImage, 'dist': dist})
         nearGym.append(ngjson)
 
     return jsonify(nearGym)
@@ -195,7 +195,7 @@ def delete_hash():
         return 'Missing Argument...'
 
     db_wrapper.delete_hash_table('"' + str(hash) + '"', type, 'in', 'hash')
-    for file in glob.glob("www_hash/*" + str(hash) + ".jpg"):
+    for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
     return redirect('/' + str(redi), code=302)
@@ -210,7 +210,7 @@ def delete_file():
     if not hash or not type:
         return 'Missing Argument...'
 
-    for file in glob.glob("www_hash/*" + str(hash) + ".jpg"):
+    for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
     return redirect('/' + str(redi), code=302)
@@ -223,7 +223,7 @@ def get_gyms():
 
     hashdata = json.loads(getAllHash('gym'))
 
-    for file in glob.glob("www_hash/gym_*.jpg"):
+    for file in glob.glob("ocr/www_hash/gym_*.jpg"):
         unkfile = re.search('gym_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
         hashvalue = (unkfile.group(3))
 
@@ -245,7 +245,7 @@ def get_gyms():
             url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+            gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
                 name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
@@ -254,7 +254,7 @@ def get_gyms():
                 if data[str(gymid)]["description"]:
                     description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
 
-            gymJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify })
+            gymJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify })
             gyms.append(gymJson)
 
         else:
@@ -277,7 +277,7 @@ def get_raids():
 
     hashdata = json.loads(getAllHash('raid'))
 
-    for file in glob.glob("www_hash/raid_*.jpg"):
+    for file in glob.glob("ocr/www_hash/raid_*.jpg"):
         unkfile = re.search('raid_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
         hashvalue = (unkfile.group(3))
 
@@ -323,7 +323,7 @@ def get_raids():
             url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+            gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
                 name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
@@ -332,7 +332,7 @@ def get_raids():
                 if data[str(gymid)]["description"]:
                     description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
 
-            raidJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify,  'level': lvl, 'mon': mon, 'type': type, 'eggPic': eggPic, 'monPic': monPic, 'monname': monName })
+            raidJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify,  'level': lvl, 'mon': mon, 'type': type, 'eggPic': eggPic, 'monPic': monPic, 'monname': monName })
             raids.append(raidJson)
         else:
             log.debug("File: " + str(file) + " not found in Database")
@@ -397,7 +397,7 @@ def get_screens():
 @app.route("/get_unknows")
 def get_unknows():
     unk = []
-    for file in glob.glob("www_hash/unkgym_*.jpg"):
+    for file in glob.glob("ocr/www_hash/unkgym_*.jpg"):
         unkfile = re.search('unkgym_(-?\d+\.?\d+)_(-?\d+\.?\d+)_((?s).*)\.jpg', file)
         creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
         lat = (unkfile.group(1))
@@ -407,7 +407,7 @@ def get_unknows():
         if args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
-        hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'creation': creationdate})
+        hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'creation': creationdate})
         unk.append(hashJson)
 
     return jsonify(unk)
@@ -554,7 +554,7 @@ def modify_mon():
 
 @app.route('/asset/<path:path>', methods=['GET'])
 def pushAssets(path):
-    return send_from_directory(args.pogoasset, path)
+    return send_from_directory('../' + args.pogoasset, path)
 
 
 @app.route('/config')
