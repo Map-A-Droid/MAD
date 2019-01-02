@@ -1,6 +1,7 @@
 import json
 import logging
 import math
+import sys
 import time
 
 from flask import (Flask, request, Response)
@@ -39,7 +40,8 @@ class EndpointAction(object):
                 abort = True
         if not abort:
             try:
-                self.action(origin, json.loads(request.data))
+                # TODO: use response data
+                response_payload = self.action(origin, json.loads(request.data))
             except Exception as e: # TODO: catch exact exception
                 log.warning("Could not get JSON data from request: %s" % str(e))
                 self.response = Response(status=500, headers={})
@@ -55,13 +57,18 @@ class MITMReceiver(object):
         self.__listen_port = listen_port
         self.__received_mapping = received_mapping
         self.app = Flask("MITMReceiver")
-        self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint)
+        self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
+                          methods_passed=['POST'])
+        self.add_endpoint(endpoint='/get_lastest', endpoint_name='get_latest', handler=self.get_latest,
+                          methods_passed=['GET'])
 
     def run_receiver(self):
         self.app.run(host=self.__listen_ip, port=int(self.__listen_port), threaded=True, use_reloader=False)
 
-    def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None):
-        methods_passed = ['POST']
+    def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
+        if methods_passed is None:
+            log.fatal("Invalid REST method specified")
+            sys.exit(1)
         self.app.add_url_rule(endpoint, endpoint_name, EndpointAction(handler), methods=methods_passed)
 
     def proto_endpoint(self, origin, data):
@@ -69,5 +76,11 @@ class MITMReceiver(object):
         type = data.get("type", None)
         if type is None:
             log.warning("Could not read method ID. Stopping processing of proto")
-            return
+            return None
         self.__received_mapping.update_retrieved(origin, type, data, int(math.floor(time.time())))
+        return None
+
+    def get_latest(self, origin, data):
+        response_payload = dict()
+
+        
