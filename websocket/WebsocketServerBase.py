@@ -52,7 +52,7 @@ class WebsocketServerBase(ABC):
         asyncio.set_event_loop(loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_adress, self.__listen_port, max_size=2 ** 25,
-                             origins=allowed_origins))
+                             origins=allowed_origins, ping_timeout=60, ping_interval=60))
         asyncio.get_event_loop().run_forever()
 
     async def __unregister(self, websocket):

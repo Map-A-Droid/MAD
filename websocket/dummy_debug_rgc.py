@@ -4,12 +4,13 @@
 
 import asyncio
 import websockets
+from aioconsole import ainput
 
 
 async def hello(websocket, path):
     print("Client registered")
     while True:
-        command = input("Enter command: ")
+        command = await ainput("Enter command: ")
         print("Sending: %s" % command)
         await websocket.send("1;" + command)
         print("Awaiting response")
