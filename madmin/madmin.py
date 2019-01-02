@@ -388,7 +388,7 @@ def get_screens():
         if args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
-        screenJson = ({'filename': file, 'creation': creationdate})
+        screenJson = ({'filename': file[4:], 'creation': creationdate})
         screens.append(screenJson)
 
     return jsonify(screens)
