@@ -19,7 +19,7 @@ raid_webhook_payload = """[{{
         "cp": "{cp}",
         "move_1": {move_1},
         "move_2": {move_2},
-        "raid_begin": {hatch_time},      
+        "raid_begin": {hatch_time},
         "raid_end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
@@ -38,7 +38,7 @@ egg_webhook_payload = """[{{
         "longitude": {lon},
         "level": {lvl},
         "team": {team},
-        "raid_begin": {hatch_time},      
+        "raid_begin": {hatch_time},
         "raid_end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
@@ -72,7 +72,7 @@ pokemon_webhook_payload = """[{{
     "latitude": {lat},
     "longitude": {lon},
     "disappear_time": {despawn_time_unix},
-    "time_until_hidden_ms": {tth} 
+    "time_until_hidden_ms": {tth}
   }},
   "type": "pokemon"
 }}]"""
@@ -122,6 +122,27 @@ class WebhookHelper(object):
     def __stop_loop(self):
         self.loop.call_soon_threadsafe(self.loop.stop)
 
+    def __sendToWebhook(self, payload):
+        webhooks = self.__application_args.webhook_url.split(',')
+
+        for webhook in webhooks:
+            url = webhook.strip()
+
+            log.debug("Sending to webhook %s", url)
+            log.debug("Payload: %s" % str(payload))
+            try:
+                response = requests.post(
+                    url, data=json.dumps(payload),
+                    headers={'Content-Type': 'application/json'},
+                    timeout=5
+                )
+                if response.status_code != 200:
+                    log.warning("Got status code other than 200 OK from webhook destination: %s" % str(response.status_code))
+                else:
+                    log.info("Success sending webhook")
+            except Exception as e:
+                log.warning("Exception occured while sending webhook: %s" % str(e))
+
     def get_raid_boss_cp(self, mon_id):
         if self.pokemon_file is not None and int(mon_id) > 0:
             log.debug("Removing leading zero from string where necessary")
@@ -156,7 +177,7 @@ class WebhookHelper(object):
             self.__add_task_to_loop(self._send_weather_webhook(s2_cell_id, weather_id, severe, warn, day, time))
 
     def submit_pokemon_webhook(self, id, pokemon_id, now, spawnid, lat, lon, despawn_time_unix):
-        if self.__application_args.webhook:
+        if self.__application_args.webhook and self.__application_args.pokemon_webhook:
             self.__add_task_to_loop(self._submit_pokemon_webhook(id, pokemon_id, now, spawnid,
                                                                  lat, lon, despawn_time_unix))
 
@@ -164,7 +185,7 @@ class WebhookHelper(object):
                                  team_param=None, cp_param=None, move1_param=None, move2_param=None,
                                  name_param="unknown", lat_param=None, lng_param=None, weather_param=None,
                                  image_url=None):
-        log.info('Start preparing values for web hook')
+        log.info('Start preparing values for webhook')
         if mon is None:
             poke_id = 0
         else:
@@ -252,63 +273,48 @@ class WebhookHelper(object):
         hatch_time = int(start)
         end = int(end)
 
-        if self.__application_args.webhook:
-            if poke_id == 0 or poke_id is None:
-                payload_raw = egg_webhook_payload.format(
-                    ext_id=gymid,
-                    lat=lat,
-                    lon=lng,
-                    name_id=name,
-                    sponsor=sponsor,
-                    lvl=lvl,
-                    end=end,
-                    hatch_time=hatch_time,
-                    team=team,
-                    type=wtype,
-                    url=image_url,
-                    description=description,
-                    park=park,
-                    weather=weather
-                )
-            else:
-                payload_raw = raid_webhook_payload.format(
-                    ext_id=gymid,
-                    lat=lat,
-                    lon=lng,
-                    name_id=name,
-                    sponsor=sponsor,
-                    poke_id=poke_id,
-                    lvl=lvl,
-                    end=end,
-                    hatch_time=hatch_time,
-                    move_1=move_1,
-                    move_2=move_2,
-                    cp=cp,
-                    form=form,
-                    team=team,
-                    type=wtype,
-                    url=image_url,
-                    description=description,
-                    park=park,
-                    weather=weather
-                )
+        if poke_id == 0 or poke_id is None:
+            payload_raw = egg_webhook_payload.format(
+                ext_id=gymid,
+                lat=lat,
+                lon=lng,
+                name_id=name,
+                sponsor=sponsor,
+                lvl=lvl,
+                end=end,
+                hatch_time=hatch_time,
+                team=team,
+                type=wtype,
+                url=image_url,
+                description=description,
+                park=park,
+                weather=weather
+            )
+        else:
+            payload_raw = raid_webhook_payload.format(
+                ext_id=gymid,
+                lat=lat,
+                lon=lng,
+                name_id=name,
+                sponsor=sponsor,
+                poke_id=poke_id,
+                lvl=lvl,
+                end=end,
+                hatch_time=hatch_time,
+                move_1=move_1,
+                move_2=move_2,
+                cp=cp,
+                form=form,
+                team=team,
+                type=wtype,
+                url=image_url,
+                description=description,
+                park=park,
+                weather=weather
+            )
 
-            # log.debug(payload_raw)
-
-            payload = json.loads(payload_raw)
-            log.info("Sending raid webhook: %s" % str(payload))
-            try:
-                response = requests.post(
-                    self.__application_args.webhook_url, data=json.dumps(payload),
-                    headers={'Content-Type': 'application/json'},
-                    timeout=5
-                )
-                if response.status_code != 200:
-                    log.warning("Go status code other than 200 OK from webhook destination: %s" % str(response.status_code))
-                else:
-                    log.info("Success sending webhook")
-            except Exception as e:
-                log.warning("Exception occured while sending webhook: %s" % str(e))
+        payload = json.loads(payload_raw)
+        self.__sendToWebhook(payload)
 
     async def _send_weather_webhook(self, s2cellId, weatherId, severe, warn, day, time):
         if self.__application_args.weather_webhook:
@@ -324,19 +330,7 @@ class WebhookHelper(object):
 
             log.debug(data)
             payload = json.loads(data)
-            log.info("Sending weather webhook: %s" % str(payload))
-            try:
-                response = requests.post(
-                    self.__application_args.webhook_url, data=json.dumps(payload),
-                    headers={'Content-Type': 'application/json'},
-                    timeout=5
-                )
-                if response.status_code != 200:
-                    log.warning("Go status code other than 200 OK from webhook destination: %s" % str(response.status_code))
-                else:
-                    log.info("Success sending webhook")
-            except Exception as e:
-                log.warning("Exception occured while sending webhook: %s" % str(e))
+            self.__sendToWebhook(payload)
         else:
             log.debug("Weather Webhook Disabled")
 
@@ -357,16 +351,4 @@ class WebhookHelper(object):
 
         log.debug(data)
         payload = json.loads(data)
-        log.info("Sending pokemon webhook: %s" % str(payload))
-        try:
-            response = requests.post(
-                self.__application_args.webhook_url, data=json.dumps(payload),
-                headers={'Content-Type': 'application/json'},
-                timeout=5
-            )
-            if response.status_code != 200:
-                log.warning("Go status code other than 200 OK from webhook destination: %s" % str(response.status_code))
-            else:
-                log.info("Success sending webhook")
-        except Exception as e:
-            log.warning("Exception occured while sending webhook: %s" % str(e))
+        self.__sendToWebhook(payload)
