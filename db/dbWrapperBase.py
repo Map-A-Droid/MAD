@@ -645,15 +645,15 @@ class DbWrapperBase(ABC):
         return time.mktime(despawn.timetuple())
 
     def _get_min_pos_in_array(self):
-        min = datetime.now().strftime("%M")
+        min = datetime.now().strftime("%M"))
 
-        if int(min) >= 0:
+        if 0 <= int(min) < 15:
             pos = 4
-        elif int(min) >= 15:
+        elif 15 <= int(min) < 30:
             pos = 5
-        elif int(min) >= 30:
+        elif 30 <= int(min) < 45:
             pos = 6
-        elif int(min) >= 45:
+        elif 45 <= int(min) < 60:
             pos = 7
         else:
             pos = None
