@@ -473,6 +473,25 @@ class DbWrapperBase(ABC):
         dt = datetime.now()
 
         for cell in cells:
+            for spawnpoint in cell["spawnpoints"]:
+                tmpLat = spawnpoint['latitude']
+                tmpLng = spawnpoint['longitude']
+                spawnid = int(S2Helper.get_cellid_from_latlng(tmpLat, tmpLng), 16)
+                lat, lng, alt = S2Helper.get_position_from_cell(spawnid)
+
+                earliest_unseen = 99999999
+                last_non_scanned = now
+                calcendtime = None
+
+                # TODO calculate newspawndef or check if spawnpoint ID already exists
+                # TODO check whether we don't accidentally overwrite a spawn from wild_pokemon
+
+                spawnpoint_args_unseen.append(
+                    (
+                        spawnid, lat, lng, earliest_unseen, last_non_scanned, newspawndef
+                    )
+                )
+
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon['spawnpoint_id']), 16)
                 lat, lng, alt = S2Helper.get_position_from_cell(int(str(wild_mon['spawnpoint_id']) + '00000', 16))
