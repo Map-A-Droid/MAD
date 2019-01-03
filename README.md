@@ -76,6 +76,10 @@ To login into PogoDroid, you need a token. You can obtain a token by clicking on
 
 ### Rubberbanding
 If you are experiencing weird and quick GPS jumps to the actual location from the phone, you can try these steps to fix it.
+
+**Keep in mind that any of these possible fixes can cause boot loops or crashes. Please create a backup of your phone, if you don't want to start over.**
+
+ - Use tinfoil around your phone (seriously)
  - Enable GMS reset
  - Disable Google Play Services background data
  - Set the device to GPS only
