@@ -6,7 +6,8 @@
 Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devices.
 
 ## Information
-*  [Discord](https://discord.gg/7TT58jU) - For general support
+* [Website](https://www.maddev.de/) - For general information
+* [Discord](https://discord.gg/7TT58jU) - For general support
 *  [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
 
 ## Requirements
@@ -74,7 +75,7 @@ The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for Pog
 
 To login into PogoDroid, you need a token. You can obtain a token by clicking on `Get Token` in PogoDroid and sending the command `!settoken <your_token>` to the MAD Discord Bot. This will only work if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
 
-### Rubberbanding
+#### Rubberbanding
 If you are experiencing weird and quick GPS jumps to the actual location from the phone, you can try these steps to fix it.
  - Enable GMS reset
  - Disable Google Play Services background data
@@ -103,8 +104,8 @@ To make your life easier you can use the scripts in `scripts/`.
 If you used to scan before and happen to still have your spawnpoints in your Monocle or Rocketmap database then you can use this script to import them to MAD. You must have the trs_spawn table already in your database and you must have filled out the Database portion of the MAD config file!
 
 ### Intel Importer (intelimport.sh)
-If you ran the MITM method for the first time, you will probably notice that all gyms are missing namen and pictures. If you want to add this information, you can use this script. First of all, you'll need a CSV Export from the  [Ingress Intel Map](https://intel.ingress.com/intel). Install [IITC](https://iitc.me/) and the `IntelCsvExporterMADedition.js`
- in the scripts directory. Make sure to scrape all the necessary portals in your area and export the CSV file to your server. The Second step is to run the script with the csv file as the first parameter.  
+If you ran the MITM method for the first time, you will probably notice that all gyms are missing names and pictures. If you want to add this information, you can use this script. First of all, you'll need a CSV Export from the  [Ingress Intel Map](https://intel.ingress.com/intel). Install [IITC](https://iitc.me/) and the `IntelCsvExporterMADedition.js`
+ in the scripts directory. Make sure to scrape all the necessary portals in your area and export the CSV file to your server. The second step is to run the script with the csv file as the first parameter.  
 Example: `./intelimport.sh export.csv`.
 
 ## Security
