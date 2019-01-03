@@ -48,7 +48,7 @@ If you want to use OCR to scan raids, run with `requirements_ocr.txt` and instal
 ## Configuration
 Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
 
-### Multiple Devices
+### Mappings.json
 In order to map devices to areas, do the same with `mappings_example.json` and rename it to `mappings.json`
 Refer to mappings_example.json for examples or run `python3 start.py -wm` and open the MADMIN mappings editor (http://localhost:5000).
 
@@ -64,14 +64,24 @@ Each area *requires* `geofence_included`. A geofence can easily be created with 
 
 #### Applications
 Install [RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) (only necessary for MITM mode) on the phone. RGC must be installed as a system app. Best practice is to convert it to a system app with [link2sd](https://play.google.com/store/apps/details?id=com.buak.Link2SD).
-Both apps requires an Origin header field that's configured in mappings.json. These Origins need to be unique per running python instance.
+Both apps require an Origin header field that's configured in mappings.json. These Origins need to be unique per running python instance.
 The websocket URI for RGC is `ws://<ip>:<port>` and the POST destination for PogoDroid is `http://<ip>:<port>`.
->The port for RGC is 8080 by default and can changed with `ws_port`.
->The port for PogoDroid is 8000 by default and can changed with `mitmreceiver_port`.
+>The port for RGC is 8080 by default and can be changed with `ws_port`.
+>The port for PogoDroid is 8000 by default and can be changed with `mitmreceiver_port`.
+
 >**The IP address is the IP of your server, not your phone!**
 
 
-To login into PogoDroid, you need a token. You can obtain a token by clicking on `Get Token` in PogoDroid and sending the command `!settoken <your_token>` to the MAD Discord Bot. This will only work, if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
+To login into PogoDroid, you need a token. You can obtain a token by clicking on `Get Token` in PogoDroid and sending the command `!settoken <your_token>` to the MAD Discord Bot. This will only work if you're a [Patreon supporter](https://www.patreon.com/user?u=14159560) and linked your account to Discord.
+
+### Rubberbanding
+If you are experiencing weird and quick GPS jumps to the actual location from the phone, you can try these steps to fix it.
+ - Enable GMS reset
+ - Disable Google Play Services background data
+ - Set the device to GPS only
+ - Disable Wi-Fi location (same settings tab as GPS)
+ - Try flightmode with only Wi-Fi enabled
+ - Disable FusedLocation inside Google Play Services via [Service Disabler](https://play.google.com/store/apps/details?id=com.kunkunsoft.rootservicedisabler)
 
 ## Launching MAD
 Make sure you're in the directory of MAD and run:
@@ -79,9 +89,7 @@ Make sure you're in the directory of MAD and run:
 python3 start.py
 ```
 
-Usually you want to append `-wm` and `-os`
-as arguments to start madmin (browser based monitoring) and the scanner (`-os`) responsible
-for controlling devices and receiving data from Pogodroid (if OCR enabled, also take screenshots).
+Usually, you want to append `-wm` and `-os` as arguments to start madmin (browser-based monitoring) and the scanner (`-os`) responsible for controlling devices and receiving data from Pogodroid (if OCR enabled, also take screenshots).
 
 If you want to run OCR on screenshots, run `-oo` to analyse screenshots
 
@@ -89,6 +97,4 @@ If you want to run OCR on screenshots, run `-oo` to analyse screenshots
 MADMIN is a web frontend to configure MAD to your needs, see the current position of your devices, fix OCR failures. You can enable it with `with_madmin` in the config file or `-wm` as a command line argument. The default port is 5000. See the config.ini.example for more options.
 
 ## Security
-RGC and PogoDroid both support wss/HTTPS respectively. Thus you may setup
-reverse proxies for MAD. The Auth headers in RGC and Pogodroid both use Basic auth.
-Meaning the password/username is not encrypted per default, that's to be done by SSL/TLS (wss, HTTPS).
+RGC and PogoDroid both support wss/HTTPS respectively. Thus you can setup reverse proxies for MAD. The Auth headers in RGC and Pogodroid both use Basic auth. This means the password/username is not encrypted per default, that's to be done by SSL/TLS (wss, HTTPS).
