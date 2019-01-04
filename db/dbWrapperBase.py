@@ -19,7 +19,6 @@ log = logging.getLogger(__name__)
 
 class DbWrapperBase(ABC):
     def_spawn = 240
-    spawnpoint = {}
 
     def __init__(self, args, webhook_helper):
         self.application_args = args
