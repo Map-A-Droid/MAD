@@ -330,7 +330,7 @@ class WorkerMITM(WorkerBase):
                     if current_mode == 'mon_mitm':
                         for data_extract in data['payload']['cells']:
                             for WP in data_extract['wild_pokemon']:
-                                if WP['latitude']:
+                                if WP['spawnpoint_id']:
                                     data_requested = data
                         if data_requested is None:
                             log.debug("No spawnpoints in data requested")
