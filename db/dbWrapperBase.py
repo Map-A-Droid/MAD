@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 
 class DbWrapperBase(ABC):
     def_spawn = 240
+   
 
     def __init__(self, args, webhook_helper):
         self.application_args = args
@@ -33,6 +34,8 @@ class DbWrapperBase(ABC):
         self._init_pool()
         self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
         self.webhook_helper = webhook_helper
+        self.__spawndefi = dict()
+        self.__globaldef = 99
 
     def _init_pool(self):
         log.info("Connecting pool to DB")
@@ -432,18 +435,31 @@ class DbWrapperBase(ABC):
             self.execute(query, commit=True)
         log.info('clearHashGyms: Deleted Raidhashes with unknown mons')
 
-    def getspawndef(self, spawn_id):
+    def getspawndef(self, spawn_id, pos):
         log.debug("{DbWrapperBase::getspawndef} called")
+        if str(spawn_id) in self.__spawndefi and self.__globaldef == pos:
+            log.debug("{DbWrapperBase::getspawndef} found spawndef (%s) in storage for spawnpoint %s" % (str(self.__spawndefi.get(str(spawn_id))), str(spawn_id)))
+            return self.__spawndefi.get(str(spawn_id))
+        
+        log.debug("{DbWrapperBase::getspawndef} build local storage")
+        
         query = (
-            "SELECT spawndef "
-            "FROM trs_spawn "
-            "WHERE spawnpoint=%s"
+            "SELECT spawnpoint, spawndef "
+            "FROM trs_spawn"
         )
-        vals = (spawn_id,)
 
-        res = self.execute(query, vals)
-        ret = [row[0] for row in res]
-        return ret
+        res = self.execute(query)
+        for row in res:
+            self.__spawndefi[row[0]] = row[1]
+            
+        spawndef = self.__spawndefi.get(str(spawn_id))
+        if spawndef:
+            log.debug("{DbWrapperBase::getspawndef} found spawndef (%s) in storage for spawnpoint %s" % (str(spawndef), str(spawn_id)))
+            return spawndef
+        else:
+            log.debug("{DbWrapperBase::getspawndef} found no spawndef in storage for spawnpoint %s" % (str(spawn_id)))
+
+        return 
         
     def submit_spawnpoints_proto(self,map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
@@ -454,12 +470,9 @@ class DbWrapperBase(ABC):
 
         query_spawnpoints = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
-            "last_scanned, spawndef, calc_endminsec) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
-            "earliest_unseen=LEAST(earliest_unseen, VALUES(earliest_unseen)), "
-            "spawndef=VALUES(spawndef), calc_endminsec=VALUES(calc_endminsec)"
-            ""
+            "last_scanned, spawndef) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned) "
         )
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -471,25 +484,7 @@ class DbWrapperBase(ABC):
                 tmpLng = spawnpoint['longitude']
                 spawnid = S2Helper.get_cellid_from_latlng(tmpLat, tmpLng)
                 spawnid_nohex = int(str(spawnid), 16)
-                if spawnid_nohex in spawnpoint:
-                    return True
                 lat, lng, alt = S2Helper.get_position_from_cell(int(str(spawnid) + '00000', 16))
-                
-                
-                minpos = self._get_min_pos_in_array()
-                # TODO: retrieve the spawndefs by a single executemany and pass that...
-                
-                print (spawnid_nohex)
-
-                spawndef = self.getspawndef(spawnid_nohex)
-                spawndef_ = False
-                for t in spawndef:
-                    spawndef_ = t
-
-                if spawndef_:
-                    newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
-                else:
-                    newspawndef = self._set_spawn_see_minutesgroup(DbWrapperBase.def_spawn, minpos)
 
                 earliest_unseen = 99999999
                 last_non_scanned = now
@@ -501,11 +496,11 @@ class DbWrapperBase(ABC):
 
                 spawnpoint_args_unseen.append(
                     (
-                        spawnid_nohex, lat, lng, earliest_unseen, last_non_scanned, newspawndef
+                        spawnid_nohex, lat, lng, earliest_unseen, last_non_scanned, DbWrapperBase.def_spawn
                     )
                 )
 
-        self.executemany(query_spawnpoints, spawnpoint_args, commit=True)
+        self.executemany(query_spawnpoints, spawnpoint_args_unseen, commit=True)
 
 
     def submit_spawnpoints_map_proto(self, map_proto):
@@ -544,13 +539,9 @@ class DbWrapperBase(ABC):
                 minpos = self._get_min_pos_in_array()
                 # TODO: retrieve the spawndefs by a single executemany and pass that...
 
-                spawndef = self.getspawndef(spawnid)
-                spawndef_ = False
-                for t in spawndef:
-                    spawndef_ = t
-
-                if spawndef_:
-                    newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
+                spawndef = self.getspawndef(spawnid, minpos)
+                if spawndef:
+                    newspawndef = self._set_spawn_see_minutesgroup(spawndef, minpos)
                 else:
                     newspawndef = self._set_spawn_see_minutesgroup(DbWrapperBase.def_spawn, minpos)
 
@@ -720,6 +711,8 @@ class DbWrapperBase(ABC):
             pos = 7
         else:
             pos = None
+            
+        self.__globaldef = pos
 
         return pos
 
