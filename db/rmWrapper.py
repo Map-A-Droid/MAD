@@ -166,7 +166,7 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -182,7 +182,7 @@ class RmWrapper(DbWrapperBase):
             query = (
                 "UPDATE raid "
                 "SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -202,7 +202,7 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -467,7 +467,7 @@ class RmWrapper(DbWrapperBase):
         data = []
         res = self.execute(query, vals)
         for (gym_id, distance) in res:
-            data.append(gym_id)
+            data.append([gym_id, distance])
         log.debug("{RmWrapper::get_near_gyms} done")
         return data
 
