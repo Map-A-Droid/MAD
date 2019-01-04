@@ -849,6 +849,46 @@ class MonocleWrapper(DbWrapperBase):
 
         return int(self.execute(query, vals)[0][0])
 
+    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
+        if min_time_left_seconds is None or eligible_mon_ids is None:
+            log.warning("MonocleWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
+                        "eligible mon IDs specified")
+            return []
+        log.debug("Getting mons to be encountered")
+        query = (
+            "SELECT lat, lon, encounter_id, expire_timestamp, pokemon_id "
+            "FROM sightings "
+            "WHERE atk_iv IS NULL AND def_iv IS NULL AND sta_iv IS NULL AND encounter_id != 0 "
+            "AND expire_timestamp - %s > %s "
+            "ORDER BY sightings.expire_timestamp ASC"
+        )
+        vals = (
+            int(min_time_left_seconds), int(time.time())
+        )
+
+        results = self.execute(query, vals, commit=False)
+
+        next_to_encounter = []
+        i = 0
+        for lat, lon, encounter_id, expire_timestamp, pokemon_id in results:
+            if pokemon_id not in eligible_mon_ids:
+                continue
+            elif lat is None or lon is None:
+                log.warning("lat or lng is none")
+                continue
+            elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence([lat, lon]):
+                log.debug("Excluded encounter at %s, %s since the coordinate is not inside the given include fences"
+                          % (str(lat), str(lon)))
+                continue
+
+            next_to_encounter.append(
+                (
+                    i, Location(lat, lon)
+                )
+            )
+            i += 1
+        return next_to_encounter
+
     def __download_img(self, url, file_name):
         retry = 1
         while retry <= 5:

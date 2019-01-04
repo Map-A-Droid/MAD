@@ -41,7 +41,14 @@ class EndpointAction(object):
         if not abort:
             try:
                 # TODO: use response data
-                response_payload = self.action(origin, json.loads(request.data))
+                if len(request.data) > 0:
+                    request_data = json.loads(request.data)
+                else:
+                    request_data = {}
+                response_payload = self.action(origin, request_data)
+                if response_payload is None:
+                    response_payload = ""
+                self.response.data = response_payload
             except Exception as e: # TODO: catch exact exception
                 log.warning("Could not get JSON data from request: %s" % str(e))
                 self.response = Response(status=500, headers={})
@@ -49,17 +56,17 @@ class EndpointAction(object):
 
 
 class MITMReceiver(object):
-    def __init__(self, listen_ip, listen_port, received_mapping, args_passed, auths_passed):
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
         global application_args, auths
         application_args = args_passed
         auths = auths_passed
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
-        self.__received_mapping = received_mapping
+        self.__mitm_mapper = mitm_mapper
         self.app = Flask("MITMReceiver")
         self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                           methods_passed=['POST'])
-        self.add_endpoint(endpoint='/get_lastest', endpoint_name='get_latest', handler=self.get_latest,
+        self.add_endpoint(endpoint='/get_latest_mitm', endpoint_name='get_latest_mitm', handler=self.get_latest,
                           methods_passed=['GET'])
 
     def run_receiver(self):
@@ -77,10 +84,14 @@ class MITMReceiver(object):
         if type is None:
             log.warning("Could not read method ID. Stopping processing of proto")
             return None
-        self.__received_mapping.update_retrieved(origin, type, data, int(math.floor(time.time())))
+        self.__mitm_mapper.update_latest(origin, timestamp=int(math.floor(time.time())), key=type, values_dict=data)
         return None
 
     def get_latest(self, origin, data):
-        response_payload = dict()
-
-        
+        injected_settings = self.__mitm_mapper.request_latest(origin, "injected_settings")
+        # TODO: replace with encounter IDs at some point...
+        mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
+        if mon_ids_iv is not None:
+            mon_ids_iv = mon_ids_iv.get("values", None)
+        response = {"mon_ids_iv": mon_ids_iv, "injected_settings": injected_settings}
+        return json.dumps(response)

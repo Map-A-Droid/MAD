@@ -17,7 +17,7 @@ OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 
 
 class WebsocketServerBase(ABC):
-    def __init__(self, args, listen_address, listen_port, received_mapping, db_wrapper, routemanagers, device_mappings,
+    def __init__(self, args, listen_address, listen_port, mitm_mapper, db_wrapper, routemanagers, device_mappings,
                  auths):
         self.__current_users = {}
         self.__listen_adress = listen_address
@@ -37,7 +37,7 @@ class WebsocketServerBase(ABC):
         self.device_mappings = device_mappings
         self.routemanagers = routemanagers
         self.auths = auths
-        self._received_mapping = received_mapping
+        self._mitm_mapper = mitm_mapper
 
     def start_server(self):
         log.info("Starting websocket server...")
@@ -93,9 +93,10 @@ class WebsocketServerBase(ABC):
             nightime_routemanager = None
         devicesettings = client_mapping["settings"]
 
-        if daytime_routemanager.mode == "raids_mitm" or daytime_routemanager.mode == "mon_mitm":
+        if (daytime_routemanager.mode == "raids_mitm" or daytime_routemanager.mode == "mon_mitm"
+                or daytime_routemanager.mode == "iv_mitm"):
             Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                self._received_mapping, devicesettings, db_wrapper=self.db_wrapper)
+                                self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
         else:
             from worker.WorkerOcr import WorkerOcr
             Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
@@ -106,7 +107,6 @@ class WebsocketServerBase(ABC):
         self.__current_users[id] = [newWorkerThread, Worker, websocket]
         newWorkerThread.daemon = False
         newWorkerThread.start()
-        
 
         return True
 

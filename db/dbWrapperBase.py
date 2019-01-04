@@ -277,6 +277,10 @@ class DbWrapperBase(ABC):
     def download_gym_images(self):
         pass
 
+    @abstractmethod
+    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
+        pass
+
     def download_gym_infos(self):
         """
         Download gym images (populated in DB) and store the images in /ocr/gym_img/

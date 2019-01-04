@@ -4,6 +4,7 @@ import sys
 from pathlib import Path
 
 from geofence.geofenceHelper import GeofenceHelper
+from route.RouteManagerIV import RouteManagerIV
 from route.RouteManagerMon import RouteManagerMon
 from route.RouteManagerRaids import RouteManagerRaids
 from utils.s2Helper import S2Helper
@@ -92,50 +93,58 @@ class MappingParser(object):
                                                 name=area.get("name", "unknown"),
                                                 settings=area.get("settings", None)
                                                 )
+            elif mode == "iv_mitm":
+                route_manager = RouteManagerIV(self.db_wrapper, None, 0, 999999,
+                                               area["geofence_included"], area.get("geofence_excluded", None),
+                                               area["routecalc"], name=area.get("name", "unknown"),
+                                               settings=area.get("settings", None),
+                                               mode=mode
+                                               )
             else:
                 log.error("Invalid mode found in mapping parser.")
                 sys.exit(1)
 
-            if mode == "raids_ocr" or area.get("init", False) is False:
-                # grab data from DB depending on mode
-                # TODO: move routemanagers to factory
-                if mode == "raids_ocr" or mode == "raids_mitm":
-                    coords = self.db_wrapper.gyms_from_db(geofence_helper)
-                elif mode == "mon_mitm":
-                    spawn_known = area.get("coords_spawns_known", False)
-                    if spawn_known:
-                        log.info("Reading known Spawnpoints from DB")
-                        coords = self.db_wrapper.get_detected_spawns(geofence_helper)
+            if not mode == "iv_mitm":
+                if mode == "raids_ocr" or area.get("init", False) is False:
+                    # grab data from DB depending on mode
+                    # TODO: move routemanagers to factory
+                    if mode == "raids_ocr" or mode == "raids_mitm":
+                        coords = self.db_wrapper.gyms_from_db(geofence_helper)
+                    elif mode == "mon_mitm":
+                        spawn_known = area.get("coords_spawns_known", False)
+                        if spawn_known:
+                            log.info("Reading known Spawnpoints from DB")
+                            coords = self.db_wrapper.get_detected_spawns(geofence_helper)
+                        else:
+                            log.info("Reading unknown Spawnpoints from DB")
+                            coords = self.db_wrapper.get_undetected_spawns(geofence_helper)
                     else:
-                        log.info("Reading unknown Spawnpoints from DB")
-                        coords = self.db_wrapper.get_undetected_spawns(geofence_helper)
+                        log.fatal("Mode not implemented yet: %s" % str(mode))
+                        exit(1)
                 else:
-                    log.fatal("Mode not implemented yet: %s" % str(mode))
-                    exit(1)
-            else:
-                # calculate all level N cells (mapping back from mapping above linked to mode)
-                coords = S2Helper.get_s2_cells_from_fence(geofence=geofence_helper,
-                                                          cell_size=mode_mapping[mode]["s2_cell_level"])
-                # coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
-                #                                       geofence_helper)
+                    # calculate all level N cells (mapping back from mapping above linked to mode)
+                    coords = S2Helper.get_s2_cells_from_fence(geofence=geofence_helper,
+                                                              cell_size=mode_mapping[mode]["s2_cell_level"])
+                    # coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
+                    #                                       geofence_helper)
 
-            # retrieve the range and max count per circle from central mapping...
-            # route_manager = RouteManager(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
-            #                              mode_mapping[area["mode"]]["max_count"],
-            #                              area["geofence_included"], area.get("geofence_excluded", None),
-            #                              area["routecalc"],
-            #                              coords_spawns_known=area.get("coords_spawns_known", False),
-            #                              delayAfterHatch=delay_after_hatch,
-            #                              init=area.get("init", False), mode=area["mode"], settings=area["settings"],
-            #                              name=area.get("name", "unknown"))
+                # retrieve the range and max count per circle from central mapping...
+                # route_manager = RouteManager(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
+                #                              mode_mapping[area["mode"]]["max_count"],
+                #                              area["geofence_included"], area.get("geofence_excluded", None),
+                #                              area["routecalc"],
+                #                              coords_spawns_known=area.get("coords_spawns_known", False),
+                #                              delayAfterHatch=delay_after_hatch,
+                #                              init=area.get("init", False), mode=area["mode"], settings=area["settings"],
+                #                              name=area.get("name", "unknown"))
 
-            route_manager.add_coords_list(coords)
-            max_radius = mode_mapping[area["mode"]]["range"]
-            max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
-            proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
-                                                                             0, False))
+                route_manager.add_coords_list(coords)
+                max_radius = mode_mapping[area["mode"]]["range"]
+                max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
+                proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
+                                                                                 0, False))
 
-            areas_procs[area["name"]] = proc
+                areas_procs[area["name"]] = proc
             # log.error("Calculated route, appending another coord and recalculating")
 
             area_dict["routemanager"] = route_manager

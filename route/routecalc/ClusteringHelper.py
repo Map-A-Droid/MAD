@@ -136,7 +136,7 @@ class ClusteringHelper:
         count_inside, events_in_circle, highest_timedelta, latest_timestamp = \
             self._get_count_and_coords_in_circle_within_timedelta(middle, relations,
                                                                   earliest_timestamp, latest_timestamp,
-                                                                  distance_to_farthest)
+                                                                  max_radius)
         middle_event = (latest_timestamp, middle_event[1],
                         highest_timedelta, middle_event[3])
         if count_inside <= self.max_count_per_circle and count_inside == len(to_be_inspected):

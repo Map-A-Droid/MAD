@@ -13,14 +13,16 @@ class MitmMapper(object):
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}
 
-    def request_latest(self, origin, key):
+    def request_latest(self, origin, key=None):
         self.__mapping_mutex.acquire()
         result = None
         retrieved = self.__mapping.get(origin, None).copy()
-        if retrieved is not None:
+        if key is None:
+            result = retrieved
+        elif retrieved is not None:
             result = retrieved.get(key, None)
         self.__mapping_mutex.release()
-        return retrieved
+        return result
 
     # origin, method, data, timestamp
     def update_latest(self, origin, timestamp, key, values_dict):

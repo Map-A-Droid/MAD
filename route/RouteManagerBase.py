@@ -19,7 +19,7 @@ Relation = collections.namedtuple('Relation', ['other_event', 'distance', 'timed
 
 class RouteManagerBase(ABC):
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, init=False,
+                 path_to_exclude_geofence, routefile, mode=None, init=False,
                  name="unknown", settings=None):
         self.db_wrapper = db_wrapper
         self.init = init
@@ -30,6 +30,7 @@ class RouteManagerBase(ABC):
         self._max_radius = max_radius
         self._max_coords_within_radius = max_coords_within_radius
         self.settings = settings
+        self.mode = mode
 
         self._last_round_prio = False
         self._manager_mutex = Lock()
@@ -114,16 +115,18 @@ class RouteManagerBase(ABC):
             # newQueue = self._db_wrapper.get_next_raid_hatches(self._delayAfterHatch, self._geofenceHelper)
             new_queue = self._retrieve_latest_priority_queue()
             self._merge_priority_queue(new_queue)
-            time.sleep(300)
+            time.sleep(self._priority_queue_update_interval())
 
     def _merge_priority_queue(self, new_queue):
-        self._manager_mutex.acquire()
-        merged = list(set(new_queue + self._prio_queue))
-        merged = self._filter_priority_queue_internal(merged)
-        heapq.heapify(merged)
-        self._prio_queue = merged
-        self._manager_mutex.release()
-        log.info("New priorityqueue: %s" % merged)
+        if new_queue is not None:
+            self._manager_mutex.acquire()
+            merged = set(new_queue + self._prio_queue)
+            merged = list(merged)
+            merged = self._filter_priority_queue_internal(merged)
+            heapq.heapify(merged)
+            self._prio_queue = merged
+            self._manager_mutex.release()
+            log.info("New priorityqueue: %s" % merged)
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
@@ -170,6 +173,13 @@ class RouteManagerBase(ABC):
         :return:
         """
 
+    @abstractmethod
+    def _priority_queue_update_interval(self):
+        """
+        The time to sleep in between consecutive updates of the priority queue
+        :return:
+        """
+
     def _filter_priority_queue_internal(self, latest):
         """
         Filter through the internal priority queue and cluster events within the timedelta and distance returned by
@@ -177,6 +187,8 @@ class RouteManagerBase(ABC):
         :return:
         """
         # timedelta_seconds = self._cluster_priority_queue_criteria()
+        if self.mode == "iv_mitm":
+            return latest
         delete_seconds_passed = 0
         if self.settings is not None:
             delete_seconds_passed = self.settings.get("remove_from_queue_backlog", 0)
@@ -200,7 +212,8 @@ class RouteManagerBase(ABC):
         while not got_location:
             log.debug("%s: Checking if a location is available..." % str(self.name))
             self._manager_mutex.acquire()
-            got_location = self._prio_queue is not None and len(self._prio_queue) > 0 or len(self._route) > 0
+            got_location = (self._prio_queue is not None and len(self._prio_queue) > 0
+                            or (self._route is not None and len(self._route) > 0))
             self._manager_mutex.release()
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))

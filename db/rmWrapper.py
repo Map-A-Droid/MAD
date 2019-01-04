@@ -887,6 +887,46 @@ class RmWrapper(DbWrapperBase):
         self.executemany(query_weather, list_of_weather_args, commit=True)
         return True
 
+    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
+        if min_time_left_seconds is None or eligible_mon_ids is None:
+            log.warning("MonocleWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
+                        "eligible mon IDs specified")
+            return []
+        log.debug("Getting mons to be encountered")
+        query = (
+            "SELECT latitude, longitude, encounter_id, "
+            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire, pokemon_id "
+            "FROM pokemon "
+            "WHERE individual_attack IS NULL AND individual_defense IS NULL AND individual_stamina IS NULL "
+            "AND encounter_id != 0 "
+            "AND TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) >= %s "
+            "ORDER BY expire ASC"
+        )
+        vals = (
+            int(min_time_left_seconds),
+        )
+
+        results = self.execute(query, vals, commit=False)
+
+        next_to_encounter = []
+        i = 0
+        for latitude, longitude, encounter_id, expire, pokemon_id in results:
+            if pokemon_id not in eligible_mon_ids:
+                continue
+            elif latitude is None or longitude is None:
+                log.warning("lat or lng is none")
+                continue
+            elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
+                log.debug("Excluded encounter at %s, %s since the coordinate is not inside the given include fences"
+                          % (str(latitude), str(longitude)))
+                continue
+
+            next_to_encounter.append(
+                (i, Location(latitude, longitude))
+            )
+            i += 1
+        return next_to_encounter
+
     def __encode_hash_json(self, team_id, latitude, longitude, name, description, url):
         return (
             {'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '',

@@ -12,8 +12,8 @@ from watchdog.observers import Observer
 
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
+from mitm_receiver.MitmMapper import MitmMapper
 from utils.mappingParser import MappingParser
-from mitm_receiver.ReceivedMapper import ReceivedMapper
 from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
 from utils.madGlobals import MadGlobals
@@ -93,8 +93,8 @@ def set_log_and_verbosity(log):
         log.setLevel(logging.INFO)
 
 
-def start_scan(received_mapped, db_wrapper, routemanagers, device_mappings, auths):
-    wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), received_mapped, db_wrapper, routemanagers,
+def start_scan(mitm_mapper, db_wrapper, routemanagers, device_mappings, auths):
+    wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), mitm_mapper, db_wrapper, routemanagers,
                                     device_mappings, auths)
     wsRunning.start_server()
 
@@ -113,10 +113,9 @@ def start_madmin():
 
 
 # TODO: IP and port for receiver from args...
-def start_mitm_receiver(received_mapped, auths):
+def start_mitm_receiver(mitm_mapper, auths):
     from mitm_receiver.MITMReceiver import MITMReceiver
-    mapping = {}
-    mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port), received_mapped, args, auths)
+    mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port), mitm_mapper, args, auths)
     mitm_receiver.run_receiver()
 
 
@@ -233,7 +232,7 @@ if __name__ == "__main__":
                 log.fatal("Could not parse mappings. Please check those. Description: %s" % str(e))
                 sys.exit(1)
 
-            received_mapped = ReceivedMapper(device_mappings)
+            mitm_mapper = MitmMapper(device_mappings)
             ocr_enabled = False
             for routemanager in routemanagers.keys():
                 area = routemanagers.get(routemanager, None)
@@ -246,12 +245,12 @@ if __name__ == "__main__":
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
             t_flask = Thread(name='mitm_receiver', target=start_mitm_receiver,
-                             args=(received_mapped, auths,))
+                             args=(mitm_mapper, auths,))
             t_flask.daemon = False
             t_flask.start()
 
             log.info('Starting scanner....')
-            t = Thread(target=start_scan, name='scanner', args=(received_mapped, db_wrapper, routemanagers,
+            t = Thread(target=start_scan, name='scanner', args=(mitm_mapper, db_wrapper, routemanagers,
                                                                 device_mappings, auths,))
             t.daemon = True
             t.start()
