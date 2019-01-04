@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 
 class DbWrapperBase(ABC):
     def_spawn = 240
+    spawnpoint = {}
 
     def __init__(self, args, webhook_helper):
         self.application_args = args
@@ -444,6 +445,69 @@ class DbWrapperBase(ABC):
         res = self.execute(query, vals)
         ret = [row[0] for row in res]
         return ret
+        
+    def submit_spawnpoints_proto(self,map_proto):
+        log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
+        cells = map_proto.get("cells", None)
+        if cells is None:
+            return False
+        spawnpoint_args, spawnpoint_args_unseen = [], []
+
+        query_spawnpoints = (
+            "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
+            "last_scanned, spawndef, calc_endminsec) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
+            "earliest_unseen=LEAST(earliest_unseen, VALUES(earliest_unseen)), "
+            "spawndef=VALUES(spawndef), calc_endminsec=VALUES(calc_endminsec)"
+            ""
+        )
+
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        dt = datetime.now()
+
+        for cell in cells:
+            for spawnpoint in cell["spawnpoints"]:
+                tmpLat = spawnpoint['latitude']
+                tmpLng = spawnpoint['longitude']
+                spawnid = S2Helper.get_cellid_from_latlng(tmpLat, tmpLng)
+                spawnid_nohex = int(str(spawnid), 16)
+                if spawnid_nohex in spawnpoint:
+                    return True
+                lat, lng, alt = S2Helper.get_position_from_cell(int(str(spawnid) + '00000', 16))
+                
+                
+                minpos = self._get_min_pos_in_array()
+                # TODO: retrieve the spawndefs by a single executemany and pass that...
+                
+                print (spawnid_nohex)
+
+                spawndef = self.getspawndef(spawnid_nohex)
+                spawndef_ = False
+                for t in spawndef:
+                    spawndef_ = t
+
+                if spawndef_:
+                    newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
+                else:
+                    newspawndef = self._set_spawn_see_minutesgroup(DbWrapperBase.def_spawn, minpos)
+
+                earliest_unseen = 99999999
+                last_non_scanned = now
+                calcendtime = None
+                spawnpoint[spawnid_nohex] = spawnid_nohex
+
+                # TODO calculate newspawndef or check if spawnpoint ID already exists
+                # TODO check whether we don't accidentally overwrite a spawn from wild_pokemon
+
+                spawnpoint_args_unseen.append(
+                    (
+                        spawnid_nohex, lat, lng, earliest_unseen, last_non_scanned, newspawndef
+                    )
+                )
+
+        self.executemany(query_spawnpoints, spawnpoint_args, commit=True)
+
 
     def submit_spawnpoints_map_proto(self, map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
@@ -473,25 +537,6 @@ class DbWrapperBase(ABC):
         dt = datetime.now()
 
         for cell in cells:
-            for spawnpoint in cell["spawnpoints"]:
-                tmpLat = spawnpoint['latitude']
-                tmpLng = spawnpoint['longitude']
-                spawnid = int(S2Helper.get_cellid_from_latlng(tmpLat, tmpLng), 16)
-                lat, lng, alt = S2Helper.get_position_from_cell(spawnid)
-
-                earliest_unseen = 99999999
-                last_non_scanned = now
-                calcendtime = None
-
-                # TODO calculate newspawndef or check if spawnpoint ID already exists
-                # TODO check whether we don't accidentally overwrite a spawn from wild_pokemon
-
-                spawnpoint_args_unseen.append(
-                    (
-                        spawnid, lat, lng, earliest_unseen, last_non_scanned, newspawndef
-                    )
-                )
-
             for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon['spawnpoint_id']), 16)
                 lat, lng, alt = S2Helper.get_position_from_cell(int(str(wild_mon['spawnpoint_id']) + '00000', 16))

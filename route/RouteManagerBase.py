@@ -43,6 +43,7 @@ class RouteManagerBase(ABC):
         else:
             self._route = None
         self._current_index_of_route = 0
+        self._init_mode_rounds = 0
         if settings is not None:
             self.delay_after_timestamp_prio = settings.get("delay_after_prio_event", None)
             self.starve_route = settings.get("starve_route", False)
@@ -236,6 +237,9 @@ class RouteManagerBase(ABC):
             next_lng = self._route[self._current_index_of_route]['lng']
             self._current_index_of_route += 1
             if self.init and self._current_index_of_route >= len(self._route):
+                self._init_mode_rounds += 1
+            if self.init and self._current_index_of_route >= len(self._route) and \
+                    self._init_mode_rounds >= int(self.settings.get("init_mode_rounds", 1)):
                 # we are done with init, let's calculate a new route
                 log.warning("Init of %s done, it took %s, calculating new route..."
                             % (str(self.name), self._get_round_finished_string()))

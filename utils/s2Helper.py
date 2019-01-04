@@ -87,7 +87,6 @@ class S2Helper:
     def get_cellid_from_latlng(lat, lng, level=20):
         ll = s2sphere.LatLng.from_degrees(lat, lng)
         cell = s2sphere.CellId().from_lat_lng(ll)
-
         return cell.parent(level).to_token()
 
 # the following stuff is drafts for further consideration

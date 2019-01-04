@@ -329,8 +329,8 @@ class WorkerMITM(WorkerBase):
                 if latest_timestamp >= timestamp:
                     if current_mode == 'mon_mitm':
                         for data_extract in data['payload']['cells']:
-                            for WP in data_extract['wild_pokemon']:
-                                if WP['spawnpoint_id']:
+                            for WP in data_extract['spawnpoints']:
+                                if WP['latitude']:
                                     data_requested = data
                         if data_requested is None:
                             log.debug("No spawnpoints in data requested")
@@ -370,6 +370,11 @@ class WorkerMITM(WorkerBase):
         return data_requested, data_err_counter
 
     async def process_data(self, data, received_timestamp):
+        if MadGlobals.sleep and self._route_manager_nighttime is not None:
+            _init = self._route_manager_nighttime.init
+        else:
+            _init = self._route_manager_daytime.init
+        
         if 'cells' in data['payload']:
             try:
                 if self._applicationArgs.weather:
@@ -380,6 +385,8 @@ class WorkerMITM(WorkerBase):
                 self._db_wrapper.submit_raids_map_proto(data["payload"])
 
                 self._db_wrapper.submit_spawnpoints_map_proto(data["payload"])
+                if _init:
+                    self._db_wrapper.submit_spawnpoints_proto(data["payload"])
                 self._db_wrapper.submit_mons_map_proto(data["payload"])
             except Exception as e:
                 log.error("Issue updating DB: %s" % str(e))
