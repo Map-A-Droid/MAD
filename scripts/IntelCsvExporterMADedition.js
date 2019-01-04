@@ -161,14 +161,6 @@ function wrapper() {
         return csvData;
     };
 
-    self.downloadCSV = function() {
-        var csvData = self.generateCsvData();
-        var link = document.createElement("a");
-        link.download = 'Portal_Export.csv';
-        link.href = "data:text/csv," + escape(csvData);
-        link.click();
-    }
-
     self.showDialog = function showDialog(o) {
         var csvData = self.generateCsvData();
 
@@ -285,7 +277,6 @@ function wrapper() {
 
             <div id="csvControlsBox" style="display: none; margin-top: 5px; padding: 5px 0 5px 5px; border-top: 1px solid #20A8B1;">
                 <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_csv_export.gen();" title="View the CSV portal data.">View Data</a>
-                <a style="margin: 0 5px 0 5px;" onclick="window.plugin.portal_csv_export.downloadCSV();" title="Download the CSV portal data.">Download CSV</a>
             </div>
         </div>
         `;
