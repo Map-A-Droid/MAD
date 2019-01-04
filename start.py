@@ -113,9 +113,10 @@ def start_madmin():
 
 
 # TODO: IP and port for receiver from args...
-def start_mitm_receiver(mitm_mapper, auths):
+def start_mitm_receiver(mitm_mapper, auths, db_wrapper):
     from mitm_receiver.MITMReceiver import MITMReceiver
-    mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port), mitm_mapper, args, auths)
+    mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
+                                 mitm_mapper, args, auths, db_wrapper)
     mitm_receiver.run_receiver()
 
 
@@ -245,7 +246,7 @@ if __name__ == "__main__":
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
             t_flask = Thread(name='mitm_receiver', target=start_mitm_receiver,
-                             args=(mitm_mapper, auths,))
+                             args=(mitm_mapper, auths, db_wrapper))
             t_flask.daemon = False
             t_flask.start()
 

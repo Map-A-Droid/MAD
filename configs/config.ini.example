@@ -16,6 +16,7 @@
 #dbpassword:                 # Password of database (needed for ocr mode)
 #dbname:                     # Name of the database (needed for ocr mode)
 #dbport:                     # Port of the database (Default: 3306)
+#db_poolsize:                # Amount of connections to keep open to the DB. Default: 2
 
 # Websocket Settings (RGC receiver)
 ######################
@@ -29,6 +30,7 @@
 
 #mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
 #mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
+#mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
 
 # Walk Settings
 ######################

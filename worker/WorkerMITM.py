@@ -112,10 +112,10 @@ class WorkerMITM(WorkerBase):
         _data_err_counter, data_error_counter = 0, 0
         # first check if pogo is running etc etc
 
-        t_mitm_data = Thread(name='mitm_receiver_' + self.id, target=self.start_mitm_receiver,
-                             args=(self._mitm_mapper,))
-        t_mitm_data.daemon = False
-        t_mitm_data.start()
+        # t_mitm_data = Thread(name='mitm_receiver_' + self.id, target=self.start_mitm_receiver,
+        #                      args=(self._mitm_mapper,))
+        # t_mitm_data.daemon = False
+        # t_mitm_data.start()
 
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
         t_asyncio_loop.daemon = False
@@ -275,7 +275,7 @@ class WorkerMITM(WorkerBase):
             self._work_mutex.release()
             log.debug("Worker %s done, next iteration" % str(self.id))
 
-        t_mitm_data.join()
+        # t_mitm_data.join()
         t_asyncio_loop.join()
 
     async def update_scanned_location(self, latitude, longitude, timestamp):

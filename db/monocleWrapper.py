@@ -473,7 +473,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (external_id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[external_id] = self.__encode_hash_json(team, lat, lon, name, url, park, sponsor)
+            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), str(name), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
@@ -545,9 +545,10 @@ class MonocleWrapper(DbWrapperBase):
             cell_id, gameplay_weather, 0, 0, 2, float(now)
         )
 
-    def submit_mon_iv(self, encounter_id, type, lat, lon, desptime, spawnid, gender, weather,
-                      costume, form, cp, move_1, move_2, weight, height,
-                      individual_attack, individual_defense, individual_stamina, cpmulti):
+    def submit_mon_iv(self, timestamp, encounter_proto):
+        wild_pokemon = encounter_proto.get("wild_pokemon", None)
+        if wild_pokemon is None:
+            return
         now = time.time()
         despawn_time = datetime.now() + timedelta(seconds=300)
         despawn_time = datetime.utcfromtimestamp(
@@ -555,7 +556,7 @@ class MonocleWrapper(DbWrapperBase):
         ).strftime('%Y-%m-%d %H:%M:%S')
         init = True
 
-        getdetspawntime = self.get_detected_endtime(str(spawnid))
+        getdetspawntime = self.get_detected_endtime(int(str(wild_pokemon["spawnpoint_id"]), 16))
 
         if getdetspawntime:
             despawn_time = datetime.utcfromtimestamp(
@@ -563,10 +564,16 @@ class MonocleWrapper(DbWrapperBase):
             ).strftime('%Y-%m-%d %H:%M:%S')
             init = False
 
+        latitude = wild_pokemon.get("latitude")
+        longitude = wild_pokemon.get("longitude")
         if init:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(id, lat, lon, despawn_time))
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(id, latitude, longitude,
+                                                                                      despawn_time))
         else:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(id, lat, lon, despawn_time))
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(id, latitude, longitude,
+                                                                                          despawn_time))
+
+        pokemon_data = wild_pokemon.get("pokemon_data")
 
         query = (
             "UPDATE sightings "
@@ -575,8 +582,15 @@ class MonocleWrapper(DbWrapperBase):
             "WHERE encounter_id = %s"
         )
         vals = (
-            individual_attack, individual_defense, individual_stamina, move_1, move_2, cp,
-            now, weight, encounter_id
+            pokemon_data.get("individual_attack"),
+            pokemon_data.get("individual_defense"),
+            pokemon_data.get("individual_stamina"),
+            pokemon_data.get("move_1"),
+            pokemon_data.get("move_2"),
+            pokemon_data.get("cp"),
+            timestamp,
+            pokemon_data.get("weight"),
+            wild_pokemon.get("encounter_id")
         )
 
         self.execute(query, vals, commit=True)

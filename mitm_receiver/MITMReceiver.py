@@ -2,7 +2,9 @@ import json
 import logging
 import math
 import sys
+import threading
 import time
+from queue import Queue
 
 from flask import (Flask, request, Response)
 
@@ -56,7 +58,7 @@ class EndpointAction(object):
 
 
 class MITMReceiver(object):
-    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed, db_wrapper):
         global application_args, auths
         application_args = args_passed
         auths = auths_passed
@@ -68,6 +70,21 @@ class MITMReceiver(object):
                           methods_passed=['POST'])
         self.add_endpoint(endpoint='/get_latest_mitm', endpoint_name='get_latest_mitm', handler=self.get_latest,
                           methods_passed=['GET'])
+        self._data_queue = Queue()
+        self._db_wrapper = db_wrapper
+        self.worker_threads = []
+        for i in range(application_args.mitmreceiver_data_workers):
+            t = threading.Thread(target=self.received_data_worker)
+            t.start()
+            self.worker_threads.append(t)
+
+    def __del__(self):
+        global application_args
+        self._data_queue.join()
+        for i in range(application_args.mitmreceiver_data_workers):
+            self._data_queue.put(None)
+        for t in self.worker_threads:
+            t.join()
 
     def run_receiver(self):
         self.app.run(host=self.__listen_ip, port=int(self.__listen_port), threaded=True, use_reloader=False)
@@ -84,7 +101,11 @@ class MITMReceiver(object):
         if type is None:
             log.warning("Could not read method ID. Stopping processing of proto")
             return None
-        self.__mitm_mapper.update_latest(origin, timestamp=int(math.floor(time.time())), key=type, values_dict=data)
+        timestamp = int(math.floor(time.time()))
+        self.__mitm_mapper.update_latest(origin, timestamp=timestamp, key=type, values_dict=data)
+        self._data_queue.put(
+            (timestamp, data)
+        )
         return None
 
     def get_latest(self, origin, data):
@@ -95,3 +116,35 @@ class MITMReceiver(object):
             mon_ids_iv = mon_ids_iv.get("values", None)
         response = {"mon_ids_iv": mon_ids_iv, "injected_settings": injected_settings}
         return json.dumps(response)
+
+    def received_data_worker(self):
+        while True:
+            item = self._data_queue.get()
+            if item is None:
+                log.warning("Received none from queue of data")
+                break
+            self.process_data(item[0], item[1])
+            self._data_queue.task_done()
+
+    def process_data(self, received_timestamp, data):
+        global application_args
+        type = data.get("type", None)
+        if type:
+            if type == 106:
+                # process GetMapObject
+                try:
+                    if application_args.weather:
+                        self._db_wrapper.submit_weather_map_proto(data["payload"], received_timestamp)
+
+                    self._db_wrapper.submit_pokestops_map_proto(data["payload"])
+                    self._db_wrapper.submit_gyms_map_proto(data["payload"])
+                    self._db_wrapper.submit_raids_map_proto(data["payload"])
+
+                    self._db_wrapper.submit_spawnpoints_map_proto(data["payload"])
+                    self._db_wrapper.submit_mons_map_proto(data["payload"])
+                except Exception as e:
+                    log.error("Issue updating DB: %s" % str(e))
+
+            if type == 102:
+                # process Encounter
+                self._db_wrapper.submit_mon_iv(received_timestamp, data["payload"])

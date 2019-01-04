@@ -539,7 +539,7 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (gym_id, latitude, longitude, name, description, url, team_id) in res:
-            gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, name, description, url)
+            gyminfo[gym_id] = self.__encode_hash_json(team_id, float(latitude), float(longitude), str(name), description, url)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
@@ -617,17 +617,18 @@ class RmWrapper(DbWrapperBase):
             cell_id, gameplay_weather, 0, 0, weather_daytime, now_timezone
         )
 
-    def submit_mon_iv(self, id, type, lat, lon, desptime, spawnid, gender, weather, costume, form, cp, move_1, move_2,
-                      weight, height, individual_attack, individual_defense, individual_stamina, cpmulti):
-        log.debug("{RmWrapper::submit_mon_iv} called")
-        now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
+    def submit_mon_iv(self, timestamp, encounter_proto):
+        wild_pokemon = encounter_proto.get("wild_pokemon", None)
+        if wild_pokemon is None:
+            return
+        timestamp_entry = datetime.utcfromtimestamp(timestamp).strftime('%Y-%m-%d %H:%M:%S')
         despawn_time = datetime.now() + timedelta(seconds=300)
         despawn_time = datetime.utcfromtimestamp(
             time.mktime(despawn_time.timetuple())
         ).strftime('%Y-%m-%d %H:%M:%S')
         init = True
 
-        getdetspawntime = self.get_detected_endtime(str(spawnid))
+        getdetspawntime = self.get_detected_endtime(int(str(wild_pokemon["spawnpoint_id"]), 16))
 
         if getdetspawntime:
             despawn_time = datetime.utcfromtimestamp(
@@ -635,10 +636,18 @@ class RmWrapper(DbWrapperBase):
             ).strftime('%Y-%m-%d %H:%M:%S')
             init = False
 
+        latitude = wild_pokemon.get("latitude")
+        longitude = wild_pokemon.get("longitude")
         if init:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(id, lat, lon, despawn_time))
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(id, latitude, longitude,
+                                                                                      despawn_time))
         else:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(id, lat, lon, despawn_time))
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(id, latitude, longitude,
+                                                                                          despawn_time))
+
+        pokemon_data = wild_pokemon.get("pokemon_data")
+        capture_probability = encounter_proto.get("capture_probability")
+        capture_probability_list = capture_probability.get("capture_probability_list")
 
         query = (
             "UPDATE pokemon "
@@ -648,8 +657,20 @@ class RmWrapper(DbWrapperBase):
             "WHERE encounter_id = %s"
         )
         vals = (
-            individual_attack, individual_defense, individual_stamina, move_1, move_2, cp,
-            now, weight, height, cpmulti, 1, 1, 1, id
+            pokemon_data.get("individual_attack"),
+            pokemon_data.get("individual_defense"),
+            pokemon_data.get("individual_stamina"),
+            pokemon_data.get("move_1"),
+            pokemon_data.get("move_2"),
+            pokemon_data.get("cp"),
+            timestamp_entry,
+            pokemon_data.get("weight"),
+            pokemon_data.get("height"),
+            pokemon_data.get("cp_multiplier"),
+            capture_probability_list[0],
+            capture_probability_list[1],
+            capture_probability_list[2],
+            wild_pokemon.get("encounter_id")
         )
 
         self.execute(query, vals, commit=True)

@@ -230,9 +230,7 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def submit_mon_iv(self, id, type, lat, lon, desptime, spawnid, gender, weather, costume, form,
-                      cp, move_1, move_2, weight, height, individual_attack, individual_defense,
-                      individual_stamina, cpmulti):
+    def submit_mon_iv(self, timestamp, encounter_proto):
         """
         Update/Insert a mon with IVs
         """
@@ -629,7 +627,7 @@ class DbWrapperBase(ABC):
 
         found = self.execute(query, args)
 
-        if found[0][0]:
+        if len(found) > 0 and found[0][0]:
             return str(found[0][0])
         else:
             return False
