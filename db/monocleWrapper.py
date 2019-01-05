@@ -566,14 +566,16 @@ class MonocleWrapper(DbWrapperBase):
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
+        pokemon_data = wild_pokemon.get("pokemon_data")
+
         if init:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(id, latitude, longitude,
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(pokemon_data["id"],
+                                                                                      latitude, longitude,
                                                                                       despawn_time))
         else:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(id, latitude, longitude,
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(pokemon_data["id"],
+                                                                                          latitude, longitude,
                                                                                           despawn_time))
-
-        pokemon_data = wild_pokemon.get("pokemon_data")
 
         query = (
             "UPDATE sightings "
@@ -590,7 +592,7 @@ class MonocleWrapper(DbWrapperBase):
             pokemon_data.get("cp"),
             timestamp,
             pokemon_data.get("weight"),
-            wild_pokemon.get("encounter_id")
+            abs(wild_pokemon.get("encounter_id"))
         )
 
         self.execute(query, vals, commit=True)

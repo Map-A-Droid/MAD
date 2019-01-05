@@ -638,22 +638,26 @@ class RmWrapper(DbWrapperBase):
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
+        pokemon_data = wild_pokemon.get("pokemon_data")
+
         if init:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(id, latitude, longitude,
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(pokemon_data["id"],
+                                                                                      latitude, longitude,
                                                                                       despawn_time))
         else:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(id, latitude, longitude,
+            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(pokemon_data["id"],
+                                                                                          latitude, longitude,
                                                                                           despawn_time))
-
-        pokemon_data = wild_pokemon.get("pokemon_data")
         capture_probability = encounter_proto.get("capture_probability")
         capture_probability_list = capture_probability.get("capture_probability_list")
+        if capture_probability_list is not None:
+            capture_probability_list = capture_probability_list.replace("[", "").replace("]", "").split(",")
 
         query = (
             "UPDATE pokemon "
             "SET individual_attack = %s, individual_defense = %s, individual_stamina = %s, "
             "move_1 = %s, move_2 = %s, cp = %s, last_modified = %s, weight = %s, height = %s, "
-            "cp_multiplier = %s, catch_prob_1 = %s, catch_prob_2 = %s, catch_prob_3 = %s, "
+            "cp_multiplier = %s, catch_prob_1 = %s, catch_prob_2 = %s, catch_prob_3 = %s "
             "WHERE encounter_id = %s"
         )
         vals = (
@@ -667,10 +671,10 @@ class RmWrapper(DbWrapperBase):
             pokemon_data.get("weight"),
             pokemon_data.get("height"),
             pokemon_data.get("cp_multiplier"),
-            capture_probability_list[0],
-            capture_probability_list[1],
-            capture_probability_list[2],
-            wild_pokemon.get("encounter_id")
+            float(capture_probability_list[0]),
+            float(capture_probability_list[1]),
+            float(capture_probability_list[2]),
+            abs(wild_pokemon.get("encounter_id"))
         )
 
         self.execute(query, vals, commit=True)
