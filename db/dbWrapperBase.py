@@ -744,22 +744,16 @@ class DbWrapperBase(ABC):
         next_up = []
         current_time = time.time()
         for(latitude, longitude, spawndef, calc_endminsec) in res:
+            if not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
+                continue
             endminsec_split = calc_endminsec.split(":")
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
+            temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
             if math.floor(minutes / 10) == 0:
-                if current_time_of_day.hour == 23:
-                    temp_date = current_time_of_day.replace(
-                        hour=0, minute=minutes, second=seconds
-                    )
-                    temp_date = temp_date + timedelta(days=1)
-                else:
-                    temp_date = current_time_of_day.replace(hour=current_time_of_day.hour + 1,
-                                                            minute=minutes, second=seconds)
-            else:
-                temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
-            if (temp_date < current_time_of_day
-                    or not geofence_helper.is_coord_inside_include_geofence([latitude, longitude])):
+                temp_date = temp_date + timedelta(hours=1)
+
+            if temp_date < current_time_of_day:
                 # spawn has already happened, we should've added it in the past, let's move on
                 # TODO: consider crosschecking against current mons...
                 continue

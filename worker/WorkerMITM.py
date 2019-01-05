@@ -110,15 +110,9 @@ class WorkerMITM(WorkerBase):
         current_thread().name = self.id
         log.info("MITM worker starting")
         _data_err_counter, data_error_counter = 0, 0
-        # first check if pogo is running etc etc
-
-        # t_mitm_data = Thread(name='mitm_receiver_' + self.id, target=self.start_mitm_receiver,
-        #                      args=(self._mitm_mapper,))
-        # t_mitm_data.daemon = False
-        # t_mitm_data.start()
 
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
-        t_asyncio_loop.daemon = False
+        t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
 
         self._work_mutex.acquire()
@@ -275,7 +269,6 @@ class WorkerMITM(WorkerBase):
             self._work_mutex.release()
             log.debug("Worker %s done, next iteration" % str(self.id))
 
-        # t_mitm_data.join()
         t_asyncio_loop.join()
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
@@ -284,32 +277,6 @@ class WorkerMITM(WorkerBase):
         except Exception as e:
             log.error("Failed updating scanned location: %s" % str(e))
             return
-
-    def start_mitm_receiver(self, received_mapped):
-        __time_106 = time.time()
-        __time_102 = time.time()
-        while not self._stop_worker_event.isSet():
-            latest = received_mapped.request_latest(self.id)
-            if 106 in latest.keys():
-                if (latest[106]['timestamp']) >= __time_106:
-                    log.info('Processing MITM Data')
-                    data = latest[106]['values']
-                    received_timestamp = latest[106]['timestamp']
-                    # log.debug("Starting off thread in pool")
-                    self.__add_task_to_loop(
-                        self.process_data(data, received_timestamp))
-                    log.debug("Updating time...")
-                    __time_106 = time.time()
-            if 102 in latest.keys():
-                if (latest[102]['timestamp']) >= __time_102:
-                    log.info('Processing MITM Data')
-                    data = latest[102]['values']
-                    received_timestamp = latest[102]['timestamp']
-                    self.__add_task_to_loop(
-                        self.process_data(data, received_timestamp))
-                    log.debug("Updating time...")
-                    __time_102 = time.time()
-            time.sleep(0.2)
 
     def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
@@ -387,41 +354,3 @@ class WorkerMITM(WorkerBase):
         else:
             log.warning("Timeout waiting for data")
         return data_requested, data_err_counter
-
-    async def process_data(self, data, received_timestamp):
-        if 'cells' in data['payload']:
-            try:
-                if self._applicationArgs.weather:
-                    self._db_wrapper.submit_weather_map_proto(data["payload"], received_timestamp)
-
-                self._db_wrapper.submit_pokestops_map_proto(data["payload"])
-                self._db_wrapper.submit_gyms_map_proto(data["payload"])
-                self._db_wrapper.submit_raids_map_proto(data["payload"])
-
-                self._db_wrapper.submit_spawnpoints_map_proto(data["payload"])
-                self._db_wrapper.submit_mons_map_proto(data["payload"])
-            except Exception as e:
-                log.error("Issue updating DB: %s" % str(e))
-
-        #if 'wild_pokemon' in data['payload']:
-            #WP = data['payload']['wild_pokemon']
-
-            #lat, lng, alt = S2Helper.get_position_from_cell(int(str(WP['spawnpoint_id']) + '00000', 16))
-
-            #self._dbWrapper.submitspawnpoint(int(str(WP['spawnpoint_id']), 16), lat, lng, (WP['time_till_hidden']))
-            #self._dbWrapper.submitspsightings(int(str(WP['spawnpoint_id']), 16), abs(WP['encounter_id']),
-                                              #(WP['time_till_hidden']))
-
-            #self._dbWrapper.submit_mon_iv(abs(WP['encounter_id']), str(WP['pokemon_data']['id']), str(WP['latitude']),
-                                      #    str(WP['longitude']),
-                                      ##    abs(WP['time_till_hidden']), int(str(WP['spawnpoint_id']), 16),
-                                       #   WP['pokemon_data']['display']['gender_value'],
-                                        #  WP['pokemon_data']['display']['weather_boosted_value'],
-                                        #  WP['pokemon_data']['display']['costume_value'],
-                                     #     WP['pokemon_data']['display']['form_value'],
-                                    #      WP['pokemon_data']['cp'], WP['pokemon_data']['move_1'],
-                                    #      WP['pokemon_data']['move_2'],
-                                    #      WP['pokemon_data']['weight'], WP['pokemon_data']['height'],
-                                    #      WP['pokemon_data']['individual_attack'],
-                                    #      WP['pokemon_data']['individual_defense'],
-                                    #      WP['pokemon_data']['individual_stamina'], WP['pokemon_data']['cp_multiplier'])
