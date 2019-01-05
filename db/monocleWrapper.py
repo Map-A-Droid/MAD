@@ -600,7 +600,7 @@ class MonocleWrapper(DbWrapperBase):
             pokemon_data.get("cp"),
             timestamp,
             pokemon_data.get("weight"),
-            pokemonLevel
+            pokemonLevel,
             abs(wild_pokemon.get("encounter_id"))
         )
 
