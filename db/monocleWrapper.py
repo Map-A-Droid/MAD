@@ -576,11 +576,19 @@ class MonocleWrapper(DbWrapperBase):
             log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(pokemon_data["id"],
                                                                                           latitude, longitude,
                                                                                           despawn_time))
+            
+        #calculating level
+        if pokemon_data.get("cp_multiplier") < 0.734:
+            pokemonLevel = (58.35178527 * pokemon_data.get("cp_multiplier") * pokemon_data.get("cp_multiplier") - 2.838007664 * pokemon_data.get("cp_multiplier") + 0.8539209906)
+        else:
+            pokemonLevel = 171.0112688 * pokemon_data.get("cp_multiplier") - 95.20425243
+    
+        pokemonLevel = round(pokemonLevel) * 2 / 2
 
         query = (
             "UPDATE sightings "
             "SET atk_iv = %s, def_iv = %s, sta_iv = %s, move_1 = %s, move_2 = %s, cp = %s, "
-            "updated = %s, weight = %s "
+            "updated = %s, weight = %s, level = %s "
             "WHERE encounter_id = %s"
         )
         vals = (
@@ -592,6 +600,7 @@ class MonocleWrapper(DbWrapperBase):
             pokemon_data.get("cp"),
             timestamp,
             pokemon_data.get("weight"),
+            pokemonLevel
             abs(wild_pokemon.get("encounter_id"))
         )
 
