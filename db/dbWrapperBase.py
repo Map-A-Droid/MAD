@@ -746,8 +746,7 @@ class DbWrapperBase(ABC):
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
             if math.floor(minutes / 10) == 0:
-                temp_date = current_time_of_day.replace(hour=current_time_of_day.hour + 1,
-                                                        minute=minutes, second=seconds)
+                temp_date = current_time_of_day.replace(minute=minutes, second=seconds) + timedelta(hours=1)
             else:
                 temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
             if (temp_date < current_time_of_day
