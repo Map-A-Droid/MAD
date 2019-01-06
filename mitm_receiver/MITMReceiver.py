@@ -150,3 +150,8 @@ class MITMReceiver(object):
             if type == 102:
                 # process Encounter
                 self._db_wrapper.submit_mon_iv(received_timestamp, data["payload"])
+                
+        if 'fort_id' in data['payload']:
+            self._db_wrapper.submit_quest_proto(data["payload"])
+            self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
+            

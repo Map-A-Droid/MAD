@@ -88,6 +88,10 @@ def unknown():
 @app.route('/map', methods=['GET'])
 def map():
     return render_template('map.html')
+    
+@app.route('/quests', methods=['GET'])
+def quest():
+    return render_template('quests.html', responsive=str(args.madmin_noresponsive).lower(), title="show daily Quests")
 
 
 @app.route("/submit_hash")
@@ -497,6 +501,37 @@ def get_gymcoords():
             'lat': gym['latitude'],
             'lon': gym['longitude'],
             'team_id': gym['team_id']
+            })
+
+    return jsonify(coords)
+    
+@app.route("/get_quests")
+def get_quests():
+    coords = []
+    monName= ''
+    
+    with open('pokemon.json') as f:
+        mondata = json.load(f)
+
+    data = db_wrapper.quests_from_db()
+
+    for pokestopid in data:
+        pokestop = data[str(pokestopid)]
+        if int(pokestop['quest_pokemon_id']) > 0:
+            monName = mondata[str(int(pokestop['quest_pokemon_id']))]["name"]
+        coords.append({
+            'id': pokestopid,
+            'quest_type': pokestop['quest_type'],
+            'quest_stardust': pokestop['quest_stardust'],
+            'lat': pokestop['latitude'],
+            'lon': pokestop['longitude'],
+            'quest_pokemon_id': pokestop['quest_pokemon_id'],
+            'quest_reward_type': pokestop['quest_reward_type'],
+            'quest_item_id': pokestop['quest_item_id'],
+            'quest_item_amount': pokestop['quest_item_amount'],
+            'name': pokestop['name'],
+            'image': pokestop['image'],
+            'monname': monName
             })
 
     return jsonify(coords)

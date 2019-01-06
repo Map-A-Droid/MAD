@@ -25,6 +25,11 @@ mode_mapping = {
     "raids_ocr": {
         "range": 490,
         "max_count": 7
+    },
+    "pokestops": {
+        "s2_cell_level": 13,
+        "range": 10,
+        "max_count": 100000
     }
 }
 
@@ -100,6 +105,15 @@ class MappingParser(object):
                                                settings=area.get("settings", None),
                                                mode=mode
                                                )
+            elif mode == "pokestops":
+                route_manager = RouteManagerMon(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
+                                                mode_mapping[area["mode"]]["max_count"],
+                                                area["geofence_included"], area.get("geofence_excluded", None),
+                                                area["routecalc"], mode=area["mode"],
+                                                init=area.get("init", False),
+                                                name=area.get("name", "unknown"),
+                                                settings=area.get("settings", None)
+                                                )
             else:
                 log.error("Invalid mode found in mapping parser.")
                 sys.exit(1)
@@ -118,6 +132,8 @@ class MappingParser(object):
                         else:
                             log.info("Reading unknown Spawnpoints from DB")
                             coords = self.db_wrapper.get_undetected_spawns(geofence_helper)
+                    elif mode == "pokestops":
+                        coords = self.db_wrapper.stops_from_db(geofence_helper)
                     else:
                         log.fatal("Mode not implemented yet: %s" % str(mode))
                         exit(1)

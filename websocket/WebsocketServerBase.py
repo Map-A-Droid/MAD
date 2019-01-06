@@ -11,6 +11,7 @@ import websockets
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException
 from worker.WorkerMITM import WorkerMITM
+from worker.WorkerQuests import WorkerQuests
 
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
@@ -96,6 +97,9 @@ class WebsocketServerBase(ABC):
         if (daytime_routemanager.mode == "raids_mitm" or daytime_routemanager.mode == "mon_mitm"
                 or daytime_routemanager.mode == "iv_mitm"):
             Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+        elif daytime_routemanager.mode == "pokestops":
+            Worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                 self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
         else:
             from worker.WorkerOcr import WorkerOcr

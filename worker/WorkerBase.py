@@ -5,6 +5,7 @@ import time
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
+import json
 
 from utils.hamming import hamming_distance as hamming_dist
 from websocket.communicator import Communicator
@@ -16,7 +17,7 @@ log = logging.getLogger(__name__)
 
 class WorkerBase(ABC):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                 route_manager_nighttime, devicesettings, db_wrapper, NoOcr=False):
+                 route_manager_nighttime, devicesettings, db_wrapper, NoOcr=False, resocalc=False):
         # self.thread_pool = ThreadPool(processes=2)
         self._route_manager_daytime = route_manager_daytime
         self._route_manager_nighttime = route_manager_nighttime
@@ -33,6 +34,9 @@ class WorkerBase(ABC):
         self._lastScreenHash = None
         self._lastScreenHashCount = 0
         self._devicesettings = devicesettings
+        self._player_level = 0
+        self._level_up = False
+        self._resocalc = resocalc
         
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
@@ -230,5 +234,59 @@ class WorkerBase(ABC):
             attempts += 1
         log.debug("getToRaidscreen: done")
         return True
+        
+    def _open_gym(self, x, y):
+        time.sleep(2)
+        self._communicator.click(int(x), int(y))
+        time.sleep(2)
+        return True
+        
+    def _spin_wheel(self):
+        self._communicator.swipe(int(185), int(640), int(520), int(640))
+        time.sleep(0.5)
+        self._communicator.swipe(int(185), int(640), int(520), int(640))
+        time.sleep(0.5)
+        self._communicator.click(int(360), int(1185))
+        time.sleep(1)
+        return True
+        
+    def _turn_map(self):
+        self._communicator.swipe(int(185), int(640), int(400), int(640))
+        
+    def _clear_quests(self):
+        self._communicator.click(int(660), int(1100))
+        time.sleep(.5)
+        self._communicator.click(int(671), int(600))
+        time.sleep(.5)
+        self._communicator.click(int(360), int(695))
+        time.sleep(.5)
+        self._communicator.click(int(360), int(1182))
+        return True
+        
+    def _gen_player_stats(self, data):
+        if 'inventory_delta' not in data:
+            return True
+        stats= data['inventory_delta'].get("inventory_items", None)
+        if len(stats) > 0 :
+            for data_inventory in stats:
+                player_level = data_inventory['inventory_item_data']['player_stats']['level']
+                if int(player_level) > 0:
+                    if int(self._player_level) > 0:
+                        if int(self._player_level) != int(player_level):
+                            self._level_up = True
+                    
+                    self.player_level = int(player_level)
+                            
+                    data = {}  
+                    data[self.id] = []
+                    data[self.id].append({  
+                        'level': str(data_inventory['inventory_item_data']['player_stats']['level']), 
+                        'experience': str(data_inventory['inventory_item_data']['player_stats']['experience']),
+                        'km_walked': str(data_inventory['inventory_item_data']['player_stats']['km_walked']),
+                        'pokemons_encountered': str(data_inventory['inventory_item_data']['player_stats']['pokemons_encountered']),
+                        'poke_stop_visits': str(data_inventory['inventory_item_data']['player_stats']['poke_stop_visits'])
+                    })
+                    with open(self.id + '.stats', 'w') as outfile:  
+                        json.dump(data, outfile, indent=4, sort_keys=True)
     
     

@@ -196,6 +196,13 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def check_stop_quest(self, lat, lng):
+        """
+        Update scannedlocation (in RM) of a given lat/lng
+        """
+        pass
+
+    @abstractmethod
     def get_gym_infos(self, id=False):
         """
         Retrieve all the gyminfos from DB
@@ -213,6 +220,14 @@ class DbWrapperBase(ABC):
 
     @abstractmethod
     def stops_from_db(self, geofence_helper):
+        """
+        Retrieve all the pokestops valid within the area set by geofence_helper
+        :return: numpy array with coords
+        """
+        pass
+        
+    @abstractmethod
+    def quests_from_db(self):
         """
         Retrieve all the pokestops valid within the area set by geofence_helper
         :return: numpy array with coords
@@ -240,6 +255,21 @@ class DbWrapperBase(ABC):
     def submit_mons_map_proto(self, map_proto):
         """
         Update/Insert mons from a map_proto dict
+        """
+        pass
+        
+    @abstractmethod
+    def submit_quest_proto(self, map_proto):
+        """
+        Update/Insert quest from a map_proto dict
+        """
+        pass
+
+
+    @abstractmethod
+    def submit_pokestops_details_map_proto(self, map_proto):
+        """
+        Update/Insert pokestops from a map_proto dict
         """
         pass
 

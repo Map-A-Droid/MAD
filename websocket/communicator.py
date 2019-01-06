@@ -49,6 +49,13 @@ class Communicator:
 
     def click(self, x, y):
         return self.__runAndOk("screen click %s %s\r\n" % (str(int(round(x))), str(int(round(y)))), self.__commandTimeout)
+        
+    def swipe(self, x1, y1, x2, y2):
+        return self.websocketHandler.sendAndWait(self.id, "touch swipe %s %s %s %s\r\n" % (str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
+    
+    def getscreensize(self):
+        response = self.websocketHandler.sendAndWait(self.id, "screen size", self.__commandTimeout)
+        return response
 
     def getScreenshot(self, path):
         self.__sendMutex.acquire()

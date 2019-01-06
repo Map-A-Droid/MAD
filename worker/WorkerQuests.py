@@ -8,16 +8,19 @@ from threading import Thread, Lock, Event, current_thread
 from utils.collections import Location
 from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from utils.geo import get_distance_of_two_points_in_meters
+from utils.resolution import Resocalculator
 from worker.WorkerBase import WorkerBase
 
 log = logging.getLogger(__name__)
 
 
-class WorkerMITM(WorkerBase):
+class WorkerQuests(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
                  mitm_mapper, devicesettings, db_wrapper):
+                 
+        self._resocalc = Resocalculator
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True)
+                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, resocalc=self._resocalc)
 
         self.id = id
         self._work_mutex = Lock()
@@ -31,6 +34,9 @@ class WorkerMITM(WorkerBase):
         # TODO: own InjectionSettings class
         self._injection_settings = {}
         self.__update_injection_settings()
+        self._screen_x = 0
+        self._screen_y = 0
+        
 
     def __update_injection_settings(self):
         if MadGlobals.sleep and self._route_manager_nighttime is None:
@@ -51,6 +57,13 @@ class WorkerMITM(WorkerBase):
         self.loop_tid = current_thread()
         self.loop.call_soon(self.loop_started.set)
         self.loop.run_forever()
+        
+    def get_screen_size(self):
+        screen = self._communicator.getscreensize().split(' ')
+        self._screen_x = screen[0]
+        self._screen_y = screen[1]
+        log.debug('Get Screensize of %s: X: %s, Y: %s' % (str(self.id), str(self._screen_x), str(self._screen_y)))
+        self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y)
 
     def __add_task_to_loop(self, coro):
         # def _async_add(func, fut):
@@ -99,6 +112,7 @@ class WorkerMITM(WorkerBase):
             log.warning("startPogo: Starting pogo...")
             time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
+            self._communicator.click(int(360), int(700))
 
             # let's handle the login and stuff
             reached_raidtab = True
@@ -108,12 +122,15 @@ class WorkerMITM(WorkerBase):
     # TODO: update state...
     def _main_work_thread(self):
         current_thread().name = self.id
-        log.info("MITM worker starting")
+        log.info("Quests worker starting")
         _data_err_counter, data_error_counter = 0, 0
+        firstround = True
 
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
         t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
+        
+        self.get_screen_size()
 
         self._work_mutex.acquire()
         try:
@@ -131,6 +148,7 @@ class WorkerMITM(WorkerBase):
         if currentLocation is None:
             currentLocation = Location(0.0, 0.0)
         lastLocation = None
+        roundcount = 0
         while not self._stop_worker_event.isSet():
             while MadGlobals.sleep and self._route_manager_nighttime is None:
                 time.sleep(1)
@@ -169,12 +187,16 @@ class WorkerMITM(WorkerBase):
             if MadGlobals.sleep and self._route_manager_nighttime is not None:
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
+                while self._db_wrapper.check_stop_quest(currentLocation.lat, currentLocation.lng):
+                    currentLocation = self._route_manager_nighttime.get_next_location()
             elif MadGlobals.sleep:
                 # skip to top while loop to get to sleep loop
                 continue
             else:
                 currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
+                while self._db_wrapper.check_stop_quest(currentLocation.lat, currentLocation.lng):
+                    currentLocation = self._route_manager_nighttime.get_next_location()
 
             self.__update_injection_settings()
 
@@ -212,34 +234,26 @@ class WorkerMITM(WorkerBase):
                     return
                 delayUsed = self._devicesettings.get('post_teleport_delay', 7)
                 # Test for cooldown / teleported distance TODO: check this block...
-                if self._devicesettings.get('cool_down_sleep', False):
-                    if distance > 2500:
-                        delayUsed = 8
-                    elif distance > 5000:
-                        delayUsed = 10
-                    elif distance > 10000:
+                if firstround:
+                    delayUsed = 3
+                    firstround = False
+                else:
+                    if distance < 200:
+                        delayUsed = 5
+                    elif distance < 500:
                         delayUsed = 15
+                    elif distance < 1000:
+                        delayUsed = 30
+                    elif distance > 1000:
+                        delayUsed = 80
+                    elif distance > 5000:
+                        delayUsed = 200
+                    elif distance > 10000:
+                        delayUsed = 400
+                    elif distance > 20000:
+                        delayUsed = 800
                     log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
                     # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
-
-                if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
-                    toWalk = get_distance_of_two_points_in_meters(float(currentLocation.lat), float(currentLocation.lng),
-                                                                  float(currentLocation.lat) + 0.0001,
-                                                                  float(currentLocation.lng) + 0.0001)
-                    log.info("Walking a bit: %s" % str(toWalk))
-                    try:
-                        time.sleep(0.3)
-                        self._communicator.walkFromTo(currentLocation.lat, currentLocation.lng,
-                                                      currentLocation.lat + 0.0001, currentLocation.lng + 0.0001, 11)
-                        log.debug("Walking back")
-                        time.sleep(0.3)
-                        self._communicator.walkFromTo(currentLocation.lat + 0.0001, currentLocation.lng + 0.0001,
-                                                      currentLocation.lat, currentLocation.lng, 11)
-                    except WebsocketWorkerRemovedException:
-                        log.error("Timeout setting location for %s" % str(self.id))
-                        self._stop_worker_event.set()
-                        return
-                    log.debug("Done walking")
             else:
                 log.info("main: Walking...")
                 try:
@@ -261,10 +275,66 @@ class WorkerMITM(WorkerBase):
 
             log.debug("Acquiring lock")
             self._work_mutex.acquire()
-            log.debug("Waiting for data to be received...")
-            data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                                   timestamp=curTime)
+            log.debug("Processing Stop / Quest...")
+            
+            to = 0
+            data_received='-'
+            while not 'Stop' in data_received and int(to) < 3:
+                curTime = time.time()
+                self._open_gym(self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1])
+                data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
+                                                                       timestamp=curTime, proto_to_wait_for=104, timeout=25)
+                log.error(data_received)                                                       
+                if data_received is not None:
+                    if 'Gym' in data_received:
+                        log.error('GYM')
+                        self._communicator.click(int(360), int(1185))
+                        time.sleep(2)
+                        self._turn_map()
+                    if 'Mon' in data_received:
+                        time.sleep(2)
+                        self._communicator.click(int(64), int(104))
+                        time.sleep(.5)
+                        self._turn_map()
+                if data_received is None:
+                    data_received = '-'
+                    
+                to += 1
+                log.error(to)
+                time.sleep(0.5)
+
+            if 'Stop' in data_received:
+                curTime = time.time()
+                self._spin_wheel()
+                data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
+                                                               timestamp=curTime, proto_to_wait_for=101, timeout=15)
+                if data_received is not None:
+                    
+                    if self._level_up:
+                        self._communicator.click(int(360), int(1185))
+                        self.level_up = False
+                    
+                    if 'Box' in  data_received:
+                        log.error('Box is full ... Next round!')
+                        self.clear_box()
+                        roundcount = 0
+                        
+                    if 'Quest' in  data_received:
+                        self._clear_quests()
+                        roundcount += 1
+                        
+                        if roundcount == 5:
+                            self.clear_box()
+                            roundcount = 0
+                        
+                    
+                            
+                else:
+                    log.error('Did not get any data ... Next round!')
+
+                    
             _data_err_counter = data_error_counter
+
             log.debug("Releasing lock")
             self._work_mutex.release()
             log.debug("Worker %s done, next iteration" % str(self.id))
@@ -278,10 +348,9 @@ class WorkerMITM(WorkerBase):
             log.error("Failed updating scanned location: %s" % str(e))
             return
 
-    def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
-        timeout = self._devicesettings.get("mitm_wait_timeout", 45)
+    def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0, timeout=20):
 
-        log.info('Waiting for data...')
+        log.info('Waiting for  data...')
         data_requested = None
         while data_requested is None and timestamp + timeout >= time.time():
             # let's check for new data...
@@ -300,7 +369,12 @@ class WorkerMITM(WorkerBase):
                     'Did not get any of the requested data... (count: %s)' %
                     (str(data_err_counter)))
                 data_err_counter += 1
-
+                if 156 in latest:
+                    if latest[156]['timestamp'] >= timestamp:
+                        return 'Gym', data_err_counter
+                if 102 in latest:
+                    if latest[102]['timestamp'] >= timestamp:
+                        return 'Mon', data_err_counter
                 time.sleep(0.5)
             else:
                 # log.debug('latest contains data...')
@@ -315,28 +389,40 @@ class WorkerMITM(WorkerBase):
                 current_mode = daytime_mode if not MadGlobals.sleep else nighttime_mode
 
                 if latest_timestamp >= timestamp:
-                    if current_mode == 'mon_mitm' or current_mode == "iv_mitm":
-                        for data_extract in data['payload']['cells']:
-                            for WP in data_extract['wild_pokemon']:
-                                # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
-                                if WP['spawnpoint_id']:
-                                    data_requested = data
-                        if data_requested is None:
-                            log.debug("No spawnpoints in data requested")
-                    elif current_mode == 'raids_mitm':
-                        for data_extract in data['payload']['cells']:
-                            for forts in data_extract['forts']:
-                                if forts['id']:
-                                    data_requested = data
-                        if data_requested is None:
-                            log.debug("No forts in data received")
-                    else:
-                        log.warning("No mode specified to wait for")
-                        data_err_counter += 1
-                        time.sleep(0.5)
+
+                    if 'items_awarded' in data['payload']:
+                        if data['payload']['result'] == 1 and len(data['payload']['items_awarded'])>0:
+                            return 'Quest', data_err_counter
+                        elif data['payload']['result'] == 1 and len(data['payload']['items_awarded'])==0:
+                            return 'Time', data_err_counter
+                        elif data['payload']['result'] == 2:
+                            return None, data_err_counter
+                        elif data['payload']['result'] == 4:
+                            return 'Box', data_err_counter
+                            
+                    if 156 in latest:
+                        if latest[156]['timestamp'] >= timestamp:
+                            return 'Gym', data_err_counter
+                    if 102 in latest:
+                        if latest[102]['timestamp'] >= timestamp:
+                            return 'Mon', data_err_counter
+                        
+
+                    if 'fort_id' in data['payload']:
+                        if data['payload']['type'] == 1:
+                            return 'Stop', data_err_counter
+                            
+                    if 'inventory_delta' in data['payload']:
+                        return 'Clear', data_err_counter
                 else:
                     log.debug("latest timestamp of proto %s (%s) is older than %s"
                               % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
+                    if 156 in latest:
+                        if latest[156]['timestamp'] >= timestamp:
+                            return 'Gym', data_err_counter
+                    if 102 in latest:
+                        if latest[102]['timestamp'] >= timestamp:
+                            return 'Mon', data_err_counter
                     data_err_counter += 1
                     time.sleep(0.5)
 
@@ -357,3 +443,42 @@ class WorkerMITM(WorkerBase):
         else:
             log.warning("Timeout waiting for data")
         return data_requested, data_err_counter
+        
+    def clear_box(self):
+        self._communicator.click(int(360), int(1167))
+        time.sleep(.5)
+        self._communicator.click(int(555), int(1060))
+        time.sleep(.5)
+        data_received = '-'
+        _data_err_counter = 0
+        clicky = 225
+        to = 0
+        while int(to) <= 10:
+            
+            self._communicator.click(int(656), int(clicky))
+            time.sleep(.5)
+            #self._communicator.swipe(int(485), int(575),int(576), int(575))
+            curTime = time.time()
+            self._communicator.click(int(360), int(800))
+            
+            
+            data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
+                                                           timestamp=curTime, proto_to_wait_for=4, timeout=10)
+            _data_err_counter = data_error_counter
+            
+            if data_received is not None:
+                if 'Clear' in data_received:
+                    to += 1
+                else:
+                    self._communicator.backButton()
+                    data_received = '-'
+                    clicky += 255
+            else:
+                self._communicator.backButton()
+                data_received = '-'
+                clicky += 255
+            
+            
+            
+        self._communicator.click(int(360), int(1182))       
+        return True
