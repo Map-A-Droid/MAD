@@ -50,6 +50,7 @@ class EndpointAction(object):
                 response_payload = self.action(origin, request_data)
                 if response_payload is None:
                     response_payload = ""
+                self.response = Response(status=200, headers={})
                 self.response.data = response_payload
             except Exception as e: # TODO: catch exact exception
                 log.warning("Could not get JSON data from request: %s" % str(e))
@@ -68,7 +69,7 @@ class MITMReceiver(object):
         self.app = Flask("MITMReceiver")
         self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                           methods_passed=['POST'])
-        self.add_endpoint(endpoint='/get_latest_mitm', endpoint_name='get_latest_mitm', handler=self.get_latest,
+        self.add_endpoint(endpoint='/get_latest_mitm/', endpoint_name='get_latest_mitm/', handler=self.get_latest,
                           methods_passed=['GET'])
         self._data_queue = Queue()
         self._db_wrapper = db_wrapper
@@ -110,6 +111,7 @@ class MITMReceiver(object):
 
     def get_latest(self, origin, data):
         injected_settings = self.__mitm_mapper.request_latest(origin, "injected_settings")
+
         # TODO: replace with encounter IDs at some point...
         mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
         if mon_ids_iv is not None:
