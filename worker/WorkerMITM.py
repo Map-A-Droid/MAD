@@ -281,7 +281,7 @@ class WorkerMITM(WorkerBase):
     def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
 
-        log.info('Waiting for  data...')
+        log.info('Waiting for data...')
         data_requested = None
         while data_requested is None and timestamp + timeout >= time.time():
             # let's check for new data...
