@@ -171,6 +171,8 @@ def parseArgs():
                         help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
                         help='Activate weather webhook support')
+    parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
+                        help='Activate gym webhook support')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
