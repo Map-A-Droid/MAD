@@ -457,7 +457,7 @@ class MonocleWrapper(DbWrapperBase):
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
         log.info('Finished downloading gym images...')
-        
+
         return True
 
     def get_gym_infos(self, id=False):
@@ -714,6 +714,13 @@ class MonocleWrapper(DbWrapperBase):
                         is_in_battle = 1
                     else:
                         is_in_battle = 0
+
+                    if gym['gym_details']['has_raid']:
+                        raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
+
+                    self.webhook_helper.send_gym_webhook(
+                        gym_id, raidendSec, 'unknown', team, slots, guardmon, lat, lon
+                    )
 
                     vals_forts.append(
                         (
