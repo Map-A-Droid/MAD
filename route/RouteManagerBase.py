@@ -50,11 +50,12 @@ class RouteManagerBase(ABC):
         else:
             self.delay_after_timestamp_prio = None
             self.starve_route = False
-        if self.delay_after_timestamp_prio is not None:
+        if self.delay_after_timestamp_prio is not None or mode == "iv_mitm":
             self._prio_queue = []
-            self.clustering_helper = ClusteringHelper(self._max_radius,
-                                                      self._max_coords_within_radius,
-                                                      self._cluster_priority_queue_criteria())
+            if mode != "iv_mitm":
+                self.clustering_helper = ClusteringHelper(self._max_radius,
+                                                          self._max_coords_within_radius,
+                                                          self._cluster_priority_queue_criteria())
             self._stop_update_thread = Event()
             self._update_prio_queue_thread = Thread(name="prio_queue_update_" + name,
                                                     target=self._update_priority_queue_loop)
