@@ -983,3 +983,73 @@ class MonocleWrapper(DbWrapperBase):
                 time_of_day,
                 int(round(received_timestamp))
             )
+            
+    def check_stop_quest(self, latitude, longitude):
+        log.debug("{RmWrapper::stops_from_db} called")
+        query = (
+            "SELECT trs_quest.GUID "
+            "from trs_quest inner join pokestops on pokestops.external_id = trs_quest.GUID where "
+            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE() and pokestops.lat=%s and "
+            "pokestops.lon=%s"
+        )
+        data = (latitude, longitude)
+
+        res = self.execute(query, data)
+        number_of_rows = len(res)
+        if number_of_rows > 0:
+            log.debug('Pokestop has already a quest with CURDATE()')
+            return True
+        else:
+            log.debug('Pokestop has not a quest with CURDATE()')
+            return False
+
+    def quests_from_db(self):
+        log.debug("{RmWrapper::quests_from_db} called")
+        questinfo = {}
+
+        query = (
+            "SELECT pokestop.external_id, pokestop.lat, pokestop.lon, trs_quest.quest_type, "
+            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
+            "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
+            "pokestops.name, pokestops.url FROM pokestops inner join trs_quest on "
+            "pokestops.external_id = trs_quest.GUID where "
+            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE()"
+        )
+
+        res = self.execute(query)
+
+        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, \
+             quest_item_id, quest_item_amount, name, image) in res:
+            mon = "%03d" % quest_pokemon_id
+            questinfo[pokestop_id] = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
+            'quest_type': quest_type, 'quest_stardust': quest_stardust, 'quest_pokemon_id': mon, 
+            'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id, 'quest_item_amount': quest_item_amount, 
+            'name': name, 'image': image})
+        return questinfo
+        
+    def submit_pokestops_details_map_proto(self, map_proto):
+        log.debug("{MonocleWrapper::submit_pokestops_details_map_proto} called")
+        pokestop_args = []
+        # now = datetime.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+        query_pokestops = (
+            "UPDATE pokestops set name = %s, url= %s, updated = %s, lat = %s, lon = %s "
+            "where external_id = %s"
+        )
+        
+        pokestop_args = self.__extract_args_single_pokestop_details(map_proto)
+        
+        if pokestop_args is not None:
+            self.execute(query_pokestops, pokestop_args, commit=True)
+        return True
+        
+    def __extract_args_single_pokestop_details(self, stop_data):
+        if stop_data.get('type', 999) != 1:
+            log.warning("%s is not a pokestop" % str(stop_data))
+            return None
+        image = stop_data.get('image_urls', None)
+        name = stop_data.get('name', None)
+        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+        return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
+    

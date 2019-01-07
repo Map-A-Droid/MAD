@@ -1023,42 +1023,13 @@ class RmWrapper(DbWrapperBase):
             time_of_day, now
         )
         
-    def submit_quest_proto(self, map_proto):
-        log.debug("{RmWrapper::submit_quest_proto} called")
-        fort_id = map_proto.get("fort_id", None)
-        if fort_id is None:
-            return False
-        if 'challenge_quest' not in map_proto:
-            return False
-        quest_type = map_proto['challenge_quest']['quest'].get("quest_type", None)
-        if map_proto['challenge_quest']['quest'].get("quest_rewards", None):
-            rewardtype = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("type", None)
-            item = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("item", None)
-            itemamount = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("amount", None)
-            stardust = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("stardust", None)
-            pokemon_id = map_proto['challenge_quest']['quest']['quest_rewards'][0]['pokemon_encounter'].get("pokemon_id", None)
-            target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
-            condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
-            print (condition)
-        
-            query_quests = (
-                "UPDATE pokestop set quest_type =%s, quest_timestamp = %s, quest_stardust=%s, quest_pokemon_id = %s, "
-                "quest_reward_type = %s, quest_item_id = %s, quest_item_amount = %s, quest_target = %s, quest_condition=%s "
-                "WHERE pokestop_id = %s"
-            )
-                 
-            vals = (
-                quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target, str(condition), fort_id
-            )   
-        
-            self.execute(query_quests, vals, commit=True)
-        return True
-        
     def check_stop_quest(self, latitude, longitude):
         log.debug("{RmWrapper::stops_from_db} called")
         query = (
-            "SELECT pokestop_id "
-            "FROM pokestop where from_unixtime(quest_timestamp,'%Y-%m-%d') = CURDATE() and latitude=%s and longitude=%s"
+            "SELECT trs_quest.GUID "
+            "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
+            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE() and pokestop.latitude=%s "
+            "and pokestop.longitude=%s"
         )
         data = (latitude, longitude)
 
@@ -1076,17 +1047,22 @@ class RmWrapper(DbWrapperBase):
         questinfo = {}
 
         query = (
-            "SELECT pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, quest_item_id, quest_item_amount, "
-            "name, image FROM pokestop where from_unixtime(quest_timestamp,'%Y-%m-%d') = CURDATE()"
-            #where DATE(quest_timestamp) = CURDATE()"
+            "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
+            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
+            "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
+            "pokestop.name, pokestop.image FROM pokestop inner join trs_quest on "
+            "pokestop.pokestop_id = trs_quest.GUID where "
+            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE()"
         )
 
         res = self.execute(query)
 
-        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, quest_item_id, quest_item_amount, name, image) in res:
+        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, \
+             quest_item_id, quest_item_amount, name, image) in res:
             mon = "%03d" % quest_pokemon_id
-            questinfo[pokestop_id] = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 'quest_type': quest_type, 'quest_stardust': quest_stardust, 
-            'quest_pokemon_id': mon, 'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id, 'quest_item_amount': quest_item_amount, 
+            questinfo[pokestop_id] = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
+            'quest_type': quest_type, 'quest_stardust': quest_stardust, 'quest_pokemon_id': mon, 
+            'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id, 'quest_item_amount': quest_item_amount, 
             'name': name, 'image': image})
         return questinfo
         

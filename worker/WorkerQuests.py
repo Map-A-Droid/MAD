@@ -141,6 +141,8 @@ class WorkerQuests(WorkerBase):
             self._work_mutex.release()
             return
         self._work_mutex.release()
+        
+        self.clear_box()
 
         self.loop_started.wait()
 
@@ -281,26 +283,28 @@ class WorkerQuests(WorkerBase):
             data_received='-'
             while not 'Stop' in data_received and int(to) < 3:
                 curTime = time.time()
-                self._open_gym(self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1])
+                self._open_gym()
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                        timestamp=curTime, proto_to_wait_for=104, timeout=25)
                 log.error(data_received)                                                       
                 if data_received is not None:
                     if 'Gym' in data_received:
-                        log.error('GYM')
-                        self._communicator.click(int(360), int(1185))
+                        log.debug('Clicking GYM')
+                        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+                        self._communicator.click(int(x), int(y))
                         time.sleep(2)
                         self._turn_map()
                     if 'Mon' in data_received:
                         time.sleep(2)
-                        self._communicator.click(int(64), int(104))
+                        log.debug('Clicking MON')
+                        x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
+                        self._communicator.click(int(x), int(y))
                         time.sleep(.5)
                         self._turn_map()
                 if data_received is None:
                     data_received = '-'
                     
                 to += 1
-                log.error(to)
                 time.sleep(0.5)
 
             if 'Stop' in data_received:
@@ -311,7 +315,8 @@ class WorkerQuests(WorkerBase):
                 if data_received is not None:
                     
                     if self._level_up:
-                        self._communicator.click(int(360), int(1185))
+                        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+                        self._communicator.click(int(x), int(y))
                         self.level_up = False
                     
                     if 'Box' in  data_received:
@@ -445,22 +450,24 @@ class WorkerQuests(WorkerBase):
         return data_requested, data_err_counter
         
     def clear_box(self):
-        self._communicator.click(int(360), int(1167))
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))
         time.sleep(.5)
-        self._communicator.click(int(555), int(1060))
+        x, y = self._resocalc.get_item_menu_coords(self)[0], self._resocalc.get_item_menu_coords(self)[1]
+        self._communicator.click(int(x), int(y))
         time.sleep(.5)
         data_received = '-'
         _data_err_counter = 0
-        clicky = 225
+        x, y = self._resocalc.get_delete_item_coords(self)[0], self._resocalc.get_delete_item_coords(self)[1]
         to = 0
         while int(to) <= 10:
             
-            self._communicator.click(int(656), int(clicky))
+            self._communicator.click(int(x), int(y))
             time.sleep(.5)
-            #self._communicator.swipe(int(485), int(575),int(576), int(575))
             curTime = time.time()
-            self._communicator.click(int(360), int(800))
             
+            delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], self._resocalc.get_confirm_delete_item_coords(self)[1]
+            self._communicator.click(int(delx), int(dely))
             
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                            timestamp=curTime, proto_to_wait_for=4, timeout=10)
@@ -472,13 +479,12 @@ class WorkerQuests(WorkerBase):
                 else:
                     self._communicator.backButton()
                     data_received = '-'
-                    clicky += 255
+                    y += self._resocalc.get_next_item_coord(self)
             else:
                 self._communicator.backButton()
                 data_received = '-'
-                clicky += 255
+                y += self._resocalc.get_next_item_coord(self)
             
-            
-            
-        self._communicator.click(int(360), int(1182))       
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))     
         return True

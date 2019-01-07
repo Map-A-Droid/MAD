@@ -235,32 +235,41 @@ class WorkerBase(ABC):
         log.debug("getToRaidscreen: done")
         return True
         
-    def _open_gym(self, x, y):
+    def _open_gym(self):
         time.sleep(2)
+        x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(2)
         return True
         
     def _spin_wheel(self):
-        self._communicator.swipe(int(185), int(640), int(520), int(640))
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(0.5)
-        self._communicator.swipe(int(185), int(640), int(520), int(640))
+        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(0.5)
-        self._communicator.click(int(360), int(1185))
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))
         time.sleep(1)
         return True
         
     def _turn_map(self):
-        self._communicator.swipe(int(185), int(640), int(400), int(640))
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         
     def _clear_quests(self):
-        self._communicator.click(int(660), int(1100))
+        time.sleep(5)
+        x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
+        self._communicator.click(int(x), int(y))
         time.sleep(.5)
-        self._communicator.click(int(671), int(600))
+        x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
+        self._communicator.click(int(x), int(y))
         time.sleep(.5)
-        self._communicator.click(int(360), int(695))
+        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
+        self._communicator.click(int(x), int(y))
         time.sleep(.5)
-        self._communicator.click(int(360), int(1182))
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))
         return True
         
     def _gen_player_stats(self, data):
