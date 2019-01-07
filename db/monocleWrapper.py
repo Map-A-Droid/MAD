@@ -504,7 +504,7 @@ class MonocleWrapper(DbWrapperBase):
         log.info('Downloading pokestop coords from DB')
 
         query = (
-            "SELECT latitude, longitude "
+            "SELECT lat, lon "
             "FROM pokestops"
         )
 

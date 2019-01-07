@@ -57,6 +57,7 @@
                     "mode": "pokestops",
                     "geofence_included": "configs/geofences/iv_total.txt",
                     "geofence_excluded": null,
+					"routecalc": "superduperquest",
                     "settings": {
 						"speed": 30,
 						"max_distance": 400
