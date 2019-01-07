@@ -51,6 +51,16 @@
                         "mon_ids_iv" : [122, 200, 363],
                         "min_time_left_seconds": 600
 					}
+                },
+                {
+                    "name": "quests",
+                    "mode": "pokestops",
+                    "geofence_included": "configs/geofences/iv_total.txt",
+                    "geofence_excluded": null,
+                    "settings": {
+						"speed": 30,
+						"max_distance": 400
+					}
                 }
     ],
     "devices": [
