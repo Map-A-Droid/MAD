@@ -264,10 +264,10 @@ class WorkerBase(ABC):
         time.sleep(4 + int(delayadd))
         x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5 + int(delayadd))
+        time.sleep(2 + int(delayadd))
         x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5 + int(delayadd))
+        time.sleep(1 + int(delayadd))
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(.5 + int(delayadd))
@@ -304,12 +304,17 @@ class WorkerBase(ABC):
     def _check_weather_popup(self, data):
         if 'client_weather' not in data:
             return True
+        print (data)
         if len(data['client_weather']) > 0:
             for weatherdata in data['client_weather']:
                 for weathercelldata in weatherdata['alerts']:
                     if weathercelldata.get('is_warn_weather'):
-                        self._weatherwarn = True
-                        return
+                        weatherwarn = True
+                        
+                    else:
+                        weatherwarn = False
+            self._weatherwarn = weatherwarn
+            
                     
     
     

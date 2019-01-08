@@ -136,16 +136,10 @@ class WorkerQuests(WorkerBase):
         clearquestThread = Thread(name='clearquestThread%s' % self.id, target=self._clear_quest_thread)
         clearquestThread.daemon = False
         clearquestThread.start()
-        
-        clearweatherThread = Thread(name='clearweatherThread%s' % self.id, target=self._check_levelup_weather)
-        clearweatherThread.daemon = False
-        clearweatherThread.start()
 
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
         t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
-        
-        
         
 
         self.get_screen_size()
@@ -305,13 +299,28 @@ class WorkerQuests(WorkerBase):
             while self._clear_quest:
                 time.sleep(1)
                 
-            
+            if self._level_up:
+                log.debug('Found level up Popup - closing')
+                x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(int(self._delayadd))
+                self.level_up = False
+        
+            if self._weatherwarn:
+                log.debug('Found weather Popup - closing')
+                x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(.5)
+                x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(int(self._delayadd))
+                self._weatherwarn = False
             
             while not 'Stop' in data_received and int(to) < 3:
                 curTime = time.time()
                 self._open_gym(self._delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                                       timestamp=curTime, proto_to_wait_for=104, timeout=25)
+                                                                       timestamp=curTime, proto_to_wait_for=104)
                 log.error(data_received)                                                       
                 if data_received is not None:
                     if 'Gym' in data_received:
@@ -337,7 +346,7 @@ class WorkerQuests(WorkerBase):
                 curTime = time.time()
                 self._spin_wheel(self._delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                               timestamp=curTime, proto_to_wait_for=101, timeout=15)
+                                                               timestamp=curTime, proto_to_wait_for=101)
                 if data_received is not None:
                     
                     if 'Box' in  data_received:
@@ -374,8 +383,8 @@ class WorkerQuests(WorkerBase):
             log.error("Failed updating scanned location: %s" % str(e))
             return
 
-    def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0, timeout=20):
-
+    def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
+        timeout = self._devicesettings.get("mitm_wait_timeout", 45)
         log.info('Waiting for  data...')
         data_requested = None
         while data_requested is None and timestamp + timeout >= time.time():
@@ -495,7 +504,7 @@ class WorkerQuests(WorkerBase):
             self._communicator.click(int(delx), int(dely))
             
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                           timestamp=curTime, proto_to_wait_for=4, timeout=10)
+                                                           timestamp=curTime, proto_to_wait_for=4)
             _data_err_counter = data_error_counter
             
             if data_received is not None:
@@ -528,27 +537,4 @@ class WorkerQuests(WorkerBase):
             while self._clear_quest:
                 self._clear_quests(self._delayadd)
                 self._clear_quest = False
-            time.sleep(0.5)
-            
-    def _check_levelup_weather(self):
-        while True:
-            while self._level_up or self._weatherwarn:
-                
-                if self._level_up:
-                    log.debug('Found level up Popup - closing')
-                    x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-                    self._communicator.click(int(x), int(y))
-                    time.sleep(int(self._delayadd))
-                    self.level_up = False
-            
-                if self._weatherwarn:
-                    log.debug('Found weather Popup - closing')
-                    x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
-                    self._communicator.click(int(x), int(y))
-                    time.sleep(.5)
-                    x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
-                    self._communicator.click(int(x), int(y))
-                    time.sleep(int(self._delayadd))
-                    self._weatherwarn = False
-
             time.sleep(0.5)

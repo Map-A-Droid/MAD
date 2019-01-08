@@ -840,6 +840,7 @@ class DbWrapperBase(ABC):
             )
             vals = (
                 fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target, str(condition)
-            )   
+            )  
+            log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (str(quest_type), str(fort_id))) 
             self.execute(query_quests, vals, commit=True)
         return True
