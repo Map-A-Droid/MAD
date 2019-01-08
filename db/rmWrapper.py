@@ -148,7 +148,7 @@ class RmWrapper(DbWrapperBase):
         wh_start = 0
         wh_end = 0
         egg_hatched = False
-        
+
         now_timezone = datetime.fromtimestamp(float(capture_time))
         now_timezone = time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
 
@@ -442,7 +442,7 @@ class RmWrapper(DbWrapperBase):
         # else:
         #     distance = str(self.application_args.gym_scan_distance)
 
-        #dist = float(dist) * 1000
+        # dist = float(dist) * 1000
 
         query = (
             "SELECT gym_id, "
@@ -521,7 +521,7 @@ class RmWrapper(DbWrapperBase):
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
         log.debug('Finished downloading gym images...')
-        
+
         return True
 
     def get_gym_infos(self, id=False):
@@ -539,7 +539,8 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (gym_id, latitude, longitude, name, description, url, team_id) in res:
-            gyminfo[gym_id] = self.__encode_hash_json(team_id, float(latitude), float(longitude), str(name), description, url)
+            gyminfo[gym_id] = self.__encode_hash_json(team_id, float(latitude), float(longitude), str(name),
+                                                      description, url)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
@@ -617,7 +618,8 @@ class RmWrapper(DbWrapperBase):
             cell_id, gameplay_weather, 0, 0, weather_daytime, now_timezone
         )
 
-    def submit_mon_iv(self, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+        log.debug("Updating IV sent by %s" % str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
             return
@@ -641,13 +643,14 @@ class RmWrapper(DbWrapperBase):
         pokemon_data = wild_pokemon.get("pokemon_data")
 
         if init:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(pokemon_data["id"],
-                                                                                      latitude, longitude,
-                                                                                      despawn_time))
+            log.info("%s: updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(
+                str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
+            )
         else:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(pokemon_data["id"],
-                                                                                          latitude, longitude,
-                                                                                          despawn_time))
+            log.info("s: updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(
+                str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
+            )
+
         capture_probability = encounter_proto.get("capture_probability")
         capture_probability_list = capture_probability.get("capture_probability_list")
         if capture_probability_list is not None:
@@ -679,8 +682,8 @@ class RmWrapper(DbWrapperBase):
 
         self.execute(query, vals, commit=True)
 
-    def submit_mons_map_proto(self, map_proto):
-        log.debug("{RmWrapper::submit_mons_map_proto} called")
+    def submit_mons_map_proto(self, origin, map_proto):
+        log.debug("{RmWrapper::submit_mons_map_proto} called with data received from %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -719,11 +722,11 @@ class RmWrapper(DbWrapperBase):
                     init = False
 
                 if init:
-                    log.info("Adding mon with id #{0} at {1}, {2}. Despawning at {3} (init) ({4})"
-                             .format(mon_id, lat, lon, despawn_time, spawnid))
+                    log.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (init) ({5})"
+                             .format(str(origin), mon_id, lat, lon, despawn_time, spawnid))
                 else:
-                    log.info("Adding mon with id #{0} at {1}, {2}. Despawning at {3} (non-init) ({4})"
-                             .format(mon_id, lat, lon, despawn_time, spawnid))
+                    log.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (non-init) ({5})"
+                             .format(str(origin), mon_id, lat, lon, despawn_time, spawnid))
 
                 self.webhook_helper.submit_pokemon_webhook(
                     str(abs(wild_mon['encounter_id'])), mon_id, int(time.time()),
@@ -746,8 +749,8 @@ class RmWrapper(DbWrapperBase):
         self.executemany(query_mons, mon_args, commit=True)
         return True
 
-    def submit_pokestops_map_proto(self, map_proto):
-        log.debug("{RmWrapper::submit_pokestops_map_proto} called")
+    def submit_pokestops_map_proto(self, origin, map_proto):
+        log.debug("{RmWrapper::submit_pokestops_map_proto} called with data received from %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -769,8 +772,8 @@ class RmWrapper(DbWrapperBase):
         self.executemany(query_pokestops, pokestop_args, commit=True)
         return True
 
-    def submit_gyms_map_proto(self, map_proto):
-        log.debug("{RmWrapper::submit_gyms_map_proto} called")
+    def submit_gyms_map_proto(self, origin, map_proto):
+        log.debug("{RmWrapper::submit_gyms_map_proto} called with data received from %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -812,11 +815,11 @@ class RmWrapper(DbWrapperBase):
                     )
         self.executemany(query_gym, gym_args, commit=True)
         self.executemany(query_gym_details, gym_details_args, commit=True)
-        log.debug("submit_gyms done")
+        log.debug("%s: submit_gyms done" % str(origin))
         return True
 
-    def submit_raids_map_proto(self, map_proto):
-        log.debug("{RmWrapper::submit_raids_map_proto} called")
+    def submit_raids_map_proto(self, origin, map_proto):
+        log.debug("{RmWrapper::submit_raids_map_proto} called with data received from %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -882,11 +885,11 @@ class RmWrapper(DbWrapperBase):
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)
-        log.debug("dbWrapper::submit_raids_map_proto: Done submitting raids")
+        log.debug("dbWrapper::submit_raids_map_proto: Done submitting raids with data received from %s" % str(origin))
         return True
 
-    def submit_weather_map_proto(self, map_proto, received_timestamp):
-        log.debug("{RmWrapper::submit_weather_map_proto} called")
+    def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
+        log.debug("{RmWrapper::submit_weather_map_proto} called with data received from %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False

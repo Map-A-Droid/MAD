@@ -230,42 +230,42 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def submit_mon_iv(self, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto):
         """
         Update/Insert a mon with IVs
         """
         pass
 
     @abstractmethod
-    def submit_mons_map_proto(self, map_proto):
+    def submit_mons_map_proto(self, origin, map_proto):
         """
         Update/Insert mons from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_pokestops_map_proto(self, map_proto):
+    def submit_pokestops_map_proto(self, origin, map_proto):
         """
         Update/Insert pokestops from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_gyms_map_proto(self, map_proto):
+    def submit_gyms_map_proto(self, origin, map_proto):
         """
         Update/Insert gyms from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_raids_map_proto(self, map_proto):
+    def submit_raids_map_proto(self, origin, map_proto):
         """
         Update/Insert raids from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_weather_map_proto(self, map_proto, received_timestamp):
+    def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
         """
         Update/Insert weather from a map_proto dict
         """
@@ -447,7 +447,7 @@ class DbWrapperBase(ABC):
         ret = [row[0] for row in res]
         return ret
 
-    def submit_spawnpoints_map_proto(self, map_proto):
+    def submit_spawnpoints_map_proto(self, origin, map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
         cells = map_proto.get("cells", None)
         if cells is None:

@@ -105,7 +105,7 @@ class MITMReceiver(object):
         timestamp = int(math.floor(time.time()))
         self.__mitm_mapper.update_latest(origin, timestamp=timestamp, key=type, values_dict=data)
         self._data_queue.put(
-            (timestamp, data)
+            (timestamp, data, origin)
         )
         return None
 
@@ -125,28 +125,30 @@ class MITMReceiver(object):
             if item is None:
                 log.warning("Received none from queue of data")
                 break
-            self.process_data(item[0], item[1])
+            self.process_data(item[0], item[1], item[2])
             self._data_queue.task_done()
 
-    def process_data(self, received_timestamp, data):
+    def process_data(self, received_timestamp, data, origin):
         global application_args
         type = data.get("type", None)
         if type:
             if type == 106:
                 # process GetMapObject
+                log.info("Processing GMO received from %s at %s" % (str(origin), str(received_timestamp)))
                 try:
                     if application_args.weather:
-                        self._db_wrapper.submit_weather_map_proto(data["payload"], received_timestamp)
+                        self._db_wrapper.submit_weather_map_proto(origin, data["payload"], received_timestamp)
 
-                    self._db_wrapper.submit_pokestops_map_proto(data["payload"])
-                    self._db_wrapper.submit_gyms_map_proto(data["payload"])
-                    self._db_wrapper.submit_raids_map_proto(data["payload"])
+                    self._db_wrapper.submit_pokestops_map_proto(origin, data["payload"])
+                    self._db_wrapper.submit_gyms_map_proto(origin, data["payload"])
+                    self._db_wrapper.submit_raids_map_proto(origin, data["payload"])
 
-                    self._db_wrapper.submit_spawnpoints_map_proto(data["payload"])
-                    self._db_wrapper.submit_mons_map_proto(data["payload"])
+                    self._db_wrapper.submit_spawnpoints_map_proto(origin, data["payload"])
+                    self._db_wrapper.submit_mons_map_proto(origin, data["payload"])
                 except Exception as e:
                     log.error("Issue updating DB: %s" % str(e))
 
             if type == 102:
                 # process Encounter
-                self._db_wrapper.submit_mon_iv(received_timestamp, data["payload"])
+                log.info("Processing Encounter received from %s at %s" % (str(origin), str(received_timestamp)))
+                self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])

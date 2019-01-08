@@ -545,7 +545,8 @@ class MonocleWrapper(DbWrapperBase):
             cell_id, gameplay_weather, 0, 0, 2, float(now)
         )
 
-    def submit_mon_iv(self, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+        log.debug("Updating IV sent by %s" % str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
             return
@@ -569,21 +570,25 @@ class MonocleWrapper(DbWrapperBase):
         pokemon_data = wild_pokemon.get("pokemon_data")
 
         if init:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(pokemon_data["id"],
+            log.info("%s: updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(
+                                                                                      str(origin),
+                                                                                      pokemon_data["id"],
                                                                                       latitude, longitude,
                                                                                       despawn_time))
         else:
-            log.info("Updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(pokemon_data["id"],
+            log.info("%s: updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(
+                                                                                          str(origin),
+                                                                                          pokemon_data["id"],
                                                                                           latitude, longitude,
                                                                                           despawn_time))
             
-        #calculating level
+        # calculating level
         if pokemon_data.get("cp_multiplier") < 0.734:
-            pokemonLevel = (58.35178527 * pokemon_data.get("cp_multiplier") * pokemon_data.get("cp_multiplier") - 2.838007664 * pokemon_data.get("cp_multiplier") + 0.8539209906)
+            pokemon_level = (58.35178527 * pokemon_data.get("cp_multiplier") * pokemon_data.get("cp_multiplier") - 2.838007664 * pokemon_data.get("cp_multiplier") + 0.8539209906)
         else:
-            pokemonLevel = 171.0112688 * pokemon_data.get("cp_multiplier") - 95.20425243
-    
-        pokemonLevel = round(pokemonLevel) * 2 / 2
+            pokemon_level = 171.0112688 * pokemon_data.get("cp_multiplier") - 95.20425243
+
+            pokemon_level = round(pokemon_level) * 2 / 2
 
         query = (
             "UPDATE sightings "
@@ -600,13 +605,13 @@ class MonocleWrapper(DbWrapperBase):
             pokemon_data.get("cp"),
             timestamp,
             pokemon_data.get("weight"),
-            pokemonLevel,
+            pokemon_level,
             abs(wild_pokemon.get("encounter_id"))
         )
 
         self.execute(query, vals, commit=True)
 
-    def submit_mons_map_proto(self, map_proto):
+    def submit_mons_map_proto(self, origin, map_proto):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -638,11 +643,11 @@ class MonocleWrapper(DbWrapperBase):
                     init = False
 
                 if init:
-                    log.info("Adding mon with id #{0} at {1}, {2}. Despawning at {3} (init)"
-                             .format(wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
+                    log.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (init)"
+                             .format(str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
                 else:
-                    log.info("Adding mon with id #{0} at {1}, {2}. Despawning at {3} (non-init)"
-                             .format(wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
+                    log.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (non-init)"
+                             .format(str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
 
                 mon_id = wild_mon['pokemon_data']['id']
 
@@ -672,7 +677,8 @@ class MonocleWrapper(DbWrapperBase):
         self.executemany(query_mons, mon_vals, commit=True)
         return True
 
-    def submit_pokestops_map_proto(self, map_proto):
+    def submit_pokestops_map_proto(self, origin, map_proto):
+        log.debug("Inserting/Updating pokestops sent by %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -692,7 +698,8 @@ class MonocleWrapper(DbWrapperBase):
         self.executemany(query_pokestops, pokestop_vals, commit=True)
         return True
 
-    def submit_gyms_map_proto(self, map_proto):
+    def submit_gyms_map_proto(self, origin, map_proto):
+        log.debug("Inserting/Updating gyms sent by %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -770,7 +777,7 @@ class MonocleWrapper(DbWrapperBase):
         self.executemany(query_fort_sightings_update, vals_fort_sightings_update, commit=True)
         return True
 
-    def submit_raids_map_proto(self, map_proto):
+    def submit_raids_map_proto(self, origin, map_proto):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -818,8 +825,8 @@ class MonocleWrapper(DbWrapperBase):
                         image_url=gym['image_url']
                     )
 
-                    log.info("Adding/Updating gym at gym %s with level %s ending at %s"
-                             % (str(gymid), str(level), str(raidendSec)))
+                    log.info("%s: adding/Updating gym at gym %s with level %s ending at %s"
+                             % (str(origin), str(gymid), str(level), str(raidendSec)))
 
                     raid_vals.append(
                         (
@@ -835,10 +842,11 @@ class MonocleWrapper(DbWrapperBase):
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
-        log.debug("Done submitting raids")
+        log.debug("%s: done submitting raids" % str(origin))
         return True
 
-    def submit_weather_map_proto(self, map_proto, received_timestamp):
+    def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
+        log.debug("Inserting/updating weather sent by %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
