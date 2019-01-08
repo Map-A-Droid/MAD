@@ -261,7 +261,7 @@ class WorkerBase(ABC):
         time.sleep(int(delayadd))
         
     def _clear_quests(self, delayadd):
-        time.sleep(2 + int(delayadd))
+        time.sleep(4 + int(delayadd))
         x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(.5 + int(delayadd))
