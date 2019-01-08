@@ -1031,7 +1031,7 @@ class RmWrapper(DbWrapperBase):
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
-            "from_unixtime(trs_quest.quest_timestamp-54000,'%Y-%m-%d') = CURDATE() and pokestop.latitude=%s "
+            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE() and pokestop.latitude=%s "
             "and pokestop.longitude=%s"
         )
         data = (latitude, longitude)

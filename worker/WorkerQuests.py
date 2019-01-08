@@ -132,14 +132,6 @@ class WorkerQuests(WorkerBase):
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
         t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
-        
-        clearboxThread = Thread(name='clearboxThread%s' % self.id, target=self._clear_box_thread)
-        clearboxThread.daemon = False
-        clearboxThread.start()
-        
-        clearquestThread = Thread(name='clearquestThread%s' % self.id, target=self._clear_quest_thread)
-        clearquestThread.daemon = False
-        clearquestThread.start()
 
         self.get_screen_size()
         
@@ -350,15 +342,15 @@ class WorkerQuests(WorkerBase):
                     
                     if 'Box' in  data_received:
                         log.error('Box is full ... Next round!')
-                        self._clear_box = True
+                        self.clear_box(self._delayadd)
                         roundcount = 0
                         
                     if 'Quest' in  data_received:
-                        self._clear_quest = True
+                        self._clear_quests(self._delayadd)
                         roundcount += 1
                         
                         if roundcount == 5:
-                            self._clear_box = True
+                            self.clear_box(self._delayadd)
                             roundcount = 0
                         
                     
