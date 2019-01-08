@@ -238,13 +238,16 @@ class WorkerBase(ABC):
         return True
         
     def _open_gym(self, delayadd):
+        log.debug('{_open_gym} called')
         time.sleep(2)
         x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(2 + int(delayadd))
-        return True
+        log.debug('{_open_gym} called')
+        return
         
     def _spin_wheel(self, delayadd):
+        log.debug('{_spin_wheel} called')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(0.5)
@@ -253,14 +256,19 @@ class WorkerBase(ABC):
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
-        return True
+        log.debug('{_spin_wheel} called')
+        return 
         
     def _turn_map(self, delayadd):
+        log.debug('{_turn_map} called')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(int(delayadd))
+        log.debug('{_turn_map} called')
+        return
         
     def _clear_quests(self, delayadd):
+        log.debug('{_clear_quests} called')
         time.sleep(4 + int(delayadd))
         x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
@@ -273,7 +281,8 @@ class WorkerBase(ABC):
         time.sleep(.5 + int(delayadd))
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        return True
+        log.debug('{_clear_quests} finished')
+        return
         
     def _gen_player_stats(self, data):
         if 'inventory_delta' not in data:
@@ -304,7 +313,6 @@ class WorkerBase(ABC):
     def _check_weather_popup(self, data):
         if 'client_weather' not in data:
             return True
-        print (data)
         if len(data['client_weather']) > 0:
             for weatherdata in data['client_weather']:
                 for weathercelldata in weatherdata['alerts']:

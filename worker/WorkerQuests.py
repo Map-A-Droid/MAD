@@ -128,6 +128,10 @@ class WorkerQuests(WorkerBase):
         log.info("Quests worker starting")
         _data_err_counter, data_error_counter = 0, 0
         firstround = True
+
+        t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
+        t_asyncio_loop.daemon = True
+        t_asyncio_loop.start()
         
         clearboxThread = Thread(name='clearboxThread%s' % self.id, target=self._clear_box_thread)
         clearboxThread.daemon = False
@@ -136,11 +140,6 @@ class WorkerQuests(WorkerBase):
         clearquestThread = Thread(name='clearquestThread%s' % self.id, target=self._clear_quest_thread)
         clearquestThread.daemon = False
         clearquestThread.start()
-
-        t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
-        t_asyncio_loop.daemon = True
-        t_asyncio_loop.start()
-        
 
         self.get_screen_size()
         
