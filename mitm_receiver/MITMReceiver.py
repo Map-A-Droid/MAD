@@ -148,7 +148,11 @@ class MITMReceiver(object):
                 except Exception as e:
                     log.error("Issue updating DB: %s" % str(e))
 
-            if type == 102:
+            elif type == 102:
                 # process Encounter
                 log.info("Processing Encounter received from %s at %s" % (str(origin), str(received_timestamp)))
                 self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])
+            elif type == 101:
+                self._db_wrapper.submit_quest_proto(data["payload"])
+            elif type == 104:
+                self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])

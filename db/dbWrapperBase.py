@@ -196,6 +196,13 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def check_stop_quest(self, lat, lng):
+        """
+        Update scannedlocation (in RM) of a given lat/lng
+        """
+        pass
+
+    @abstractmethod
     def get_gym_infos(self, id=False):
         """
         Retrieve all the gyminfos from DB
@@ -213,6 +220,14 @@ class DbWrapperBase(ABC):
 
     @abstractmethod
     def stops_from_db(self, geofence_helper):
+        """
+        Retrieve all the pokestops valid within the area set by geofence_helper
+        :return: numpy array with coords
+        """
+        pass
+        
+    @abstractmethod
+    def quests_from_db(self):
         """
         Retrieve all the pokestops valid within the area set by geofence_helper
         :return: numpy array with coords
@@ -307,7 +322,30 @@ class DbWrapperBase(ABC):
                  ' count INT(10) NOT NULL DEFAULT 1, ' +
                  ' modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
                  ' PRIMARY KEY (hashid))')
-        log.debug(query)
+        self.execute(query, commit=True)
+
+        return True
+        
+    def create_quest_database_if_not_exists(self):
+        """
+        In order to store 'hashes' of crops/images, we require a table to store those hashes
+        """
+        log.debug("{DbWrapperBase::create_quest_database_if_not_exists} called")
+        log.debug('Creating hash db in database')
+
+        query = (' Create table if not exists trs_quest ( ' +
+                 ' GUID varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,' +
+                 ' quest_type tinyint(3) NOT NULL, ' +
+                 ' quest_timestamp int(11) NOT NULL,' +
+                 ' quest_stardust smallint(4) NOT NULL,' +
+                 ' quest_pokemon_id smallint(4) NOT NULL,' +
+                 ' quest_reward_type smallint(3) NOT NULL,' +
+                 ' quest_item_id smallint(3) NOT NULL,' +
+                 ' quest_item_amount tinyint(2) NOT NULL,' +
+                 ' quest_target tinyint(3) NOT NULL,' +
+                 ' quest_condition varchar(500), ' +
+                 ' PRIMARY KEY (GUID), ' + 
+                 ' KEY quest_type (quest_type))')
         self.execute(query, commit=True)
 
         return True
@@ -447,7 +485,7 @@ class DbWrapperBase(ABC):
         ret = [row[0] for row in res]
         return ret
 
-    def submit_spawnpoints_map_proto(self, origin, map_proto):
+    def submit_spawnpoints_map_proto(self, map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
         cells = map_proto.get("cells", None)
         if cells is None:

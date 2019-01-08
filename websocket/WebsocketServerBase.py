@@ -12,6 +12,7 @@ import websockets
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from worker.WorkerMITM import WorkerMITM
+from worker.WorkerQuests import WorkerQuests
 
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
@@ -108,6 +109,10 @@ class WebsocketServerBase(ABC):
                 Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                    devicesettings, db_wrapper=self.db_wrapper)
                 started = True
+            elif nightime_routemanager.mode in ["pokestops"]:
+                Worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                      self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+                started = True
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
@@ -120,6 +125,9 @@ class WebsocketServerBase(ABC):
                 from worker.WorkerOcr import WorkerOcr
                 Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                    devicesettings, db_wrapper=self.db_wrapper)
+            elif daytime_routemanager.mode in ["pokestops"]:
+                Worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                      self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)

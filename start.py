@@ -187,6 +187,7 @@ if __name__ == "__main__":
         sys.exit(1)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
+    db_wrapper.create_quest_database_if_not_exists()
     webhook_helper.set_gyminfo(db_wrapper)
 
     if not db_wrapper.ensure_last_updated_column():

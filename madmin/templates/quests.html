@@ -1,0 +1,192 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+				{ data: 'image', title: 'Image' },
+                { data: 'name', title: 'Name' },
+                { data: 'reward', title: 'Reward' },
+                { data: 'reward_amount', title: 'Amount' },
+                { data: 'quest_text', title: 'Kind of Quest' },
+
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
+                    }
+                },
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+						var reward = build_quest_small(row.quest_reward_type, row.quest_item_id, row.quest_pokemon_id);
+                        return reward;
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+						var reward_amount = build_reward_text(row.quest_reward_type, row.quest_item_amount, row.quest_stardust, row.monname);
+                        return reward_amount;
+                    }
+                },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+						var quest_text = build_quest(row.quest_type);
+                        return quest_text;
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "responsive": {{ responsive }},
+            "autoWidth": true
+        });
+	}
+	
+    $(document).ready(function () {
+        $("#navgyms").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "/get_quests",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+	
+	function build_reward_text(quest_reward_type, quest_item_amount, quest_stardust, monname){
+		
+		switch(quest_reward_type) {
+			
+		case 2:
+			var rewardtext = 'Pieces: ' + quest_item_amount;
+			break;
+		case 3:
+			var rewardtext = 'Amount: ' + quest_stardust;
+			break;
+		case 7:
+			var rewardtext = monname;
+			break;
+		}
+		
+		return rewardtext;
+	}
+	
+	function build_quest(quest_type){
+		
+		
+		switch(quest_type) {
+		case 4:
+			questtext = "CATCH_POKEMON";
+			break;
+		case 5:
+			questtext = "SPIN_POKESTOP";
+			break;
+		case 6:
+			questtext = "HATCH_EGG";
+			break;
+		case 7:
+			questtext = "COMPLETE_GYM_BATTLE";
+			break;
+		case 8:
+			questtext = "COMPLETE_RAID_BATTLE";
+			break;
+		case 10:
+			questtext = "TRANSFER_POKEMON";
+			break;
+		case 13:
+			questtext = "USE_BERRY_IN_ENCOUNTER";
+			break;
+		case 14:
+			questtext = "UPGRADE_POKEMON";
+			break;
+		case 15:
+			questtext = "EVOLVE_POKEMON";
+			break;
+		case 16:
+			questtext = "LAND_TROW";
+			break;
+		case 17:
+			questtext = "GET_BUDDY_CANDY";	
+			break;		
+		case 18:
+			questtext = "BADGE_RANK";
+			break;
+		case 19:
+			questtext = "PLAYER_LEVEL";
+			break;
+		case 20:
+			questtext = "JOIN_RAID";
+			break;
+		case 21:
+			questtext = "COMPLETE_BATTLE";
+			break;
+		case 22:
+			questtext = "ADD_FRIEND";
+			break;
+		case 23:
+			questtext = "TRADE_POKEMON";
+			break;
+		case 24:
+			questtext = "SEND_GIFT";
+			break;
+		}
+	
+		return questtext;
+		
+	}
+	
+	function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id){
+		
+		switch(quest_reward_type) {
+			
+		case 2:
+			var image = '<center><img src = static/quest/reward_' + quest_item_id + '_1.png width=50></center>';
+			break;
+		case 3:
+			var image = '<center><img src = static/quest/reward_stardust.png width=50></center>';
+			break;
+		case 7:
+			var form = '00';
+			if (quest_pokemon_id === '327') {
+				form = '11';
+			}
+			var image = '<center><img src = /asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png width=100></center>';
+			break;
+		}
+
+		return image;
+	}
+	
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Quests</h2>
+<table id="show-data" class="table"></table>
+{% endblock %}
+
+
+        coords.append({
+            'id': pokestopid,
+            'quest_type': pokestop['quest_type'],
+            'quest_stardust': pokestop['quest_stardust'],
+            'quest_pokemon_id': pokestop['quest_pokemon_id'],
+            'quest_reward_type': pokestop['quest_reward_type'],
+            'quest_item_id': pokestop['quest_item_id'],
+            'quest_item_amount': pokestop['quest_item_amount'],
+            'name': pokestop['name'],
+            'image': pokestop['image']
+            })

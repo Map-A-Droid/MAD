@@ -190,12 +190,14 @@
 		var spawns = L.layerGroup();
 		var gyms = L.layerGroup();
 		var fence = L.layerGroup();
+		var quests = L.layerGroup();
 
 		// base overlays
 		var overlays = {
 			"Spawnpoints": spawns,
 			"Gyms": gyms,
-			"Geofence": fence
+			"Geofence": fence,
+			"Quests": quests
 		};
 		
 		var extraOverlays = {
@@ -218,6 +220,7 @@
 		// add our base layers
 		extraLayerControl = L.control.layers(null, extraOverlays, {position: 'bottomright'}).addTo(map);
 		mapControl = L.control.layers(null, overlays, {position: 'bottomright'}).addTo(map);
+
 
 		// handle zoom events
 		map.on('zoomend', function () {
@@ -401,6 +404,19 @@
 			}
 		});
 
+		$.getJSON({
+			url: "/get_quests",
+			success: function(result) {
+				$.each(result, function(k, v) {
+					L.marker([v['lat'], v['lon']], {icon: build_quest_small(v['quest_reward_type'], v['quest_item_id'], v['quest_pokemon_id'])})
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['image']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a><br>' + build_quest(v['quest_type'], v['quest_reward_type'], v['quest_stardust'], v['quest_pokemon_id'], v['quest_item_id'], v['quest_item_amount']) + '</div>',
+							{'className': 'gympopup'})
+						.addTo(quests);
+				});
+			}
+		});
+		
+		
 		var t = 0;
 
 		(function work() {
@@ -437,6 +453,147 @@
 		})();
 
 	});
+
+	function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id){
+		
+		switch(quest_reward_type) {
+			
+		case 2:
+			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+			var size = [30, 30]
+			var anchor = [30, 20]
+			break;
+		case 3:
+			var image = 'static/quest/reward_stardust.png';
+			var size = [30, 30]
+			var anchor = [30, 20]
+			break;
+		case 7:
+			var form = '00';
+			if (quest_pokemon_id === '327') {
+				form = '11';
+			}
+			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+			var size = [50, 50]
+			var anchor = [40, 30]
+			break;
+		}
+		
+		var icon =  L.icon({
+			iconUrl: 'static/Pstop-quest.png',
+			shadowUrl: image,
+			iconSize: [30, 30],
+			shadowSize: size,
+			shadowAnchor: anchor
+		})
+		
+		
+		
+		return icon;
+	}
+	
+	function build_quest(quest_type, quest_reward_type, quest_stardust, quest_pokemon_id, quest_item_id, quest_item_amount){
+		
+		switch(quest_reward_type) {
+			
+		case 2:
+			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+			var rewardtext = 'Pieces: ' + quest_item_amount;
+			var width = 40;
+			break;
+		case 3:
+			var image = 'static/quest/reward_stardust.png';
+			var rewardtext = 'Amount: ' + quest_stardust;
+			var width = 40;
+			break;
+		case 7:
+			var form = '00';
+			if (quest_pokemon_id === '327') {
+				form = '11';
+			}
+			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+			var rewardtext = '';
+			var width = 60;
+			break;
+		}
+		
+		switch(quest_type) {
+		case 4:
+			questtext = "CATCH_POKEMON";
+			break;
+		case 5:
+			questtext = "SPIN_POKESTOP";
+			break;
+		case 6:
+			questtext = "HATCH_EGG";
+			break;
+		case 7:
+			questtext = "COMPLETE_GYM_BATTLE";
+			break;
+		case 8:
+			questtext = "COMPLETE_RAID_BATTLE";
+			break;
+		case 10:
+			questtext = "TRANSFER_POKEMON";
+			break;
+		case 13:
+			questtext = "USE_BERRY_IN_ENCOUNTER";
+			break;
+		case 14:
+			questtext = "UPGRADE_POKEMON";
+			break;
+		case 15:
+			questtext = "EVOLVE_POKEMON";
+			break;
+		case 16:
+			questtext = "LAND_TROW";
+			break;
+		case 17:
+			questtext = "GET_BUDDY_CANDY";	
+			break;		
+		case 18:
+			questtext = "BADGE_RANK";
+			break;
+		case 19:
+			questtext = "PLAYER_LEVEL";
+			break;
+		case 20:
+			questtext = "JOIN_RAID";
+			break;
+		case 21:
+			questtext = "COMPLETE_BATTLE";
+			break;
+		case 22:
+			questtext = "ADD_FRIEND";
+			break;
+		case 23:
+			questtext = "TRADE_POKEMON";
+			break;
+		case 24:
+			questtext = "SEND_GIFT";
+			break;
+		}
+		
+		popuptext = '</center><b>Quest: </b>' + questtext + '<br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
+		return popuptext;
+		
+	}
+	
+
+	function drawPolygon() {
+		var coords = document.getElementById("coordPolygon").value;
+		var json = '[';
+		var lines = coords.split('\n');
+		for (var i = 0; i < lines.length; i++) {
+			json = json.concat('[', lines[i], '],');
+		}
+		json = json.slice(0, -1);
+		json = json.concat(']');
+		var a = JSON.parse(json);
+		var polygon = L.polygon(a, { color: 'red' });
+		polygon.addTo(fence);
+	}
+
 </script>
 {% endblock %}
 

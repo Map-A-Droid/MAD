@@ -113,6 +113,84 @@
 			 "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
 			 "output": "int"
 	    }
+	},
+	{
+		"name": "mon_ids_iv",
+		"settings": {
+	    	 "type": "text",
+    		 "require": "false",
+			 "description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "min_time_left_seconds",
+		"settings": {
+	    	 "type": "text",
+    		 "require": "false",
+			 "description": "Ignore mons with less spawntime in seconds",
+			 "output": "int"
+	    }
+	}
+    ]
+	},{
+	"name": "pokestops",
+	"description": "Discover all quests from Pokestops",
+	"fields": [
+		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    },
+		{
+			"name": "geofence_included",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+			    "empty": "null",
+				"description": "Path to including geofence for scanarea"
+			}
+		},
+		{
+			"name": "geofence_excluded",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+			    "empty": "null",
+				"description": "Path to excluding geofence for scanarea"
+		    }
+	    },
+		{
+			"name": "routecalc",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of routefile"
+		    }
+	    }
+	],
+	"settings": [
+		{
+		"name": "speed",
+		"settings": {
+	    	"type": "text",
+			"require": "true",
+			"description": "Speed of player in kmh",
+			"output": "int"
+	    }
+	},
+	{
+		"name": "max_distance",
+		"settings": {
+			 "type": "text",
+			 "require": "true",
+			 "description": "Max. distance of walking - otherwise teleport to new location",
+			 "output": "int"
+	    }
 	}
     ]
 	},
@@ -431,6 +509,14 @@
 	        "type": "text",
 		    "require": "false",
 			"description": "Reaching wait-for-data timout n times for restart Pogo. (Default: 60)"
+		}
+	},
+	{
+		"name": "vps_delay",
+    	"settings": {
+	        "type": "text",
+		    "require": "false",
+			"description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
 		}
 	}
     ]
