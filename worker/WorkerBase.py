@@ -235,14 +235,14 @@ class WorkerBase(ABC):
         log.debug("getToRaidscreen: done")
         return True
         
-    def _open_gym(self):
+    def _open_gym(self, delayadd):
         time.sleep(2)
         x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(2)
+        time.sleep(2 + int(delayadd))
         return True
         
-    def _spin_wheel(self):
+    def _spin_wheel(self, delayadd):
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(0.5)
@@ -250,24 +250,25 @@ class WorkerBase(ABC):
         time.sleep(0.5)
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1)
+        time.sleep(1 + int(delayadd))
         return True
         
-    def _turn_map(self):
+    def _turn_map(self, delayadd):
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
+        time.sleep(int(delayadd))
         
-    def _clear_quests(self):
-        time.sleep(5)
+    def _clear_quests(self, delayadd):
+        time.sleep(2 + int(delayadd))
         x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5)
+        time.sleep(.5 + int(delayadd))
         x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5)
+        time.sleep(.5 + int(delayadd))
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5)
+        time.sleep(.5 + int(delayadd))
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
         return True

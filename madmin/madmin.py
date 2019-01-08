@@ -856,7 +856,13 @@ def addedit():
     return redirect("/showsettings", code=302)
 
 def match_typ(key):
-    if key in 'true':
+    if '[' in key or ']' in key:
+        print (key)
+        #key = map(int, key.replace('[', '').replace(']', '').split(','))
+        #key = list(map (int, key.replace('[', '').replace(']', '').split(',')))
+        key = list(key.replace('[', '').replace(']', '').split(','))
+        key = [int(i) for i in key]
+    elif key in 'true':
         key = bool(True)
     elif key in 'false':
         key = bool(False)

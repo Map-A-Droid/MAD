@@ -504,7 +504,7 @@ class MonocleWrapper(DbWrapperBase):
         log.info('Downloading pokestop coords from DB')
 
         query = (
-            "SELECT lat, lon "
+            "SELECT lat, lon     "
             "FROM pokestops"
         )
 
@@ -1008,7 +1008,7 @@ class MonocleWrapper(DbWrapperBase):
         questinfo = {}
 
         query = (
-            "SELECT pokestop.external_id, pokestop.lat, pokestop.lon, trs_quest.quest_type, "
+            "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
             "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
             "pokestops.name, pokestops.url FROM pokestops inner join trs_quest on "
@@ -1045,7 +1045,6 @@ class MonocleWrapper(DbWrapperBase):
         
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
-            log.warning("%s is not a pokestop" % str(stop_data))
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)

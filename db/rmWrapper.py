@@ -1087,7 +1087,6 @@ class RmWrapper(DbWrapperBase):
         
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
-            log.warning("%s is not a pokestop" % str(stop_data))
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)

@@ -131,6 +131,8 @@ class WorkerQuests(WorkerBase):
         t_asyncio_loop.start()
         
         self.get_screen_size()
+        
+        delayadd = int(self._devicesettings.get("vps_delay", 0))
 
         self._work_mutex.acquire()
         try:
@@ -142,7 +144,7 @@ class WorkerQuests(WorkerBase):
             return
         self._work_mutex.release()
         
-        self.clear_box()
+        #self.clear_box(delayadd)
 
         self.loop_started.wait()
 
@@ -283,7 +285,7 @@ class WorkerQuests(WorkerBase):
             data_received='-'
             while not 'Stop' in data_received and int(to) < 3:
                 curTime = time.time()
-                self._open_gym()
+                self._open_gym(delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                        timestamp=curTime, proto_to_wait_for=104, timeout=25)
                 log.error(data_received)                                                       
@@ -293,14 +295,14 @@ class WorkerQuests(WorkerBase):
                         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
                         self._communicator.click(int(x), int(y))
                         time.sleep(2)
-                        self._turn_map()
+                        self._turn_map(delayadd)
                     if 'Mon' in data_received:
                         time.sleep(2)
                         log.debug('Clicking MON')
                         x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
                         self._communicator.click(int(x), int(y))
                         time.sleep(.5)
-                        self._turn_map()
+                        self._turn_map(delayadd)
                 if data_received is None:
                     data_received = '-'
                     
@@ -309,7 +311,7 @@ class WorkerQuests(WorkerBase):
 
             if 'Stop' in data_received:
                 curTime = time.time()
-                self._spin_wheel()
+                self._spin_wheel(delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                timestamp=curTime, proto_to_wait_for=101, timeout=15)
                 if data_received is not None:
@@ -317,19 +319,20 @@ class WorkerQuests(WorkerBase):
                     if self._level_up:
                         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
                         self._communicator.click(int(x), int(y))
+                        time.sleep(int(delayadd))
                         self.level_up = False
                     
                     if 'Box' in  data_received:
                         log.error('Box is full ... Next round!')
-                        self.clear_box()
+                        self.clear_box(delayadd)
                         roundcount = 0
                         
                     if 'Quest' in  data_received:
-                        self._clear_quests()
+                        self._clear_quests(delayadd)
                         roundcount += 1
                         
                         if roundcount == 5:
-                            self.clear_box()
+                            self.clear_box(delayadd)
                             roundcount = 0
                         
                     
@@ -449,13 +452,13 @@ class WorkerQuests(WorkerBase):
             log.warning("Timeout waiting for data")
         return data_requested, data_err_counter
         
-    def clear_box(self):
+    def clear_box(self, delayadd):
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5)
+        time.sleep(.5 + int(delayadd))
         x, y = self._resocalc.get_item_menu_coords(self)[0], self._resocalc.get_item_menu_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5)
+        time.sleep(.5 + int(delayadd))
         data_received = '-'
         _data_err_counter = 0
         x, y = self._resocalc.get_delete_item_coords(self)[0], self._resocalc.get_delete_item_coords(self)[1]
@@ -463,7 +466,7 @@ class WorkerQuests(WorkerBase):
         while int(to) <= 10:
             
             self._communicator.click(int(x), int(y))
-            time.sleep(.5)
+            time.sleep(.5 + int(delayadd))
             curTime = time.time()
             
             delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], self._resocalc.get_confirm_delete_item_coords(self)[1]
@@ -482,9 +485,11 @@ class WorkerQuests(WorkerBase):
                     y += self._resocalc.get_next_item_coord(self)
             else:
                 self._communicator.backButton()
+                time.sleep(int(delayadd))
                 data_received = '-'
                 y += self._resocalc.get_next_item_coord(self)
             
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-        self._communicator.click(int(x), int(y))     
+        self._communicator.click(int(x), int(y))
+        time.sleep(int(delayadd))    
         return True
