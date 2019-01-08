@@ -811,3 +811,35 @@ class DbWrapperBase(ABC):
                 )
             )
         return next_up
+        
+    def submit_quest_proto(self, map_proto):
+        log.debug("{DbWrapperBase::submit_quest_proto} called")
+        fort_id = map_proto.get("fort_id", None)
+        if fort_id is None:
+            return False
+        if 'challenge_quest' not in map_proto:
+            return False
+        quest_type = map_proto['challenge_quest']['quest'].get("quest_type", None)
+        if map_proto['challenge_quest']['quest'].get("quest_rewards", None):
+            rewardtype = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("type", None)
+            item = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("item", None)
+            itemamount = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("amount", None)
+            stardust = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("stardust", None)
+            pokemon_id = map_proto['challenge_quest']['quest']['quest_rewards'][0]['pokemon_encounter'].get("pokemon_id", None)
+            target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
+            condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
+
+            query_quests = (
+                "INSERT into trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, quest_reward_type, "
+                "quest_item_id, quest_item_amount, quest_target, quest_condition) values "
+                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
+                "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
+                "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
+                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), quest_condition=VALUES(quest_condition)"
+            )
+            vals = (
+                fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target, str(condition)
+            )   
+            self.execute(query_quests, vals, commit=True)
+        return True

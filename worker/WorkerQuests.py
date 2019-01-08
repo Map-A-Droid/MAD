@@ -545,6 +545,7 @@ class WorkerQuests(WorkerBase):
                     log.debug('Found weather Popup - closing')
                     x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
                     self._communicator.click(int(x), int(y))
+                    time.sleep(.5)
                     x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(int(self._delayadd))
