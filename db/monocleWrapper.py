@@ -715,6 +715,7 @@ class MonocleWrapper(DbWrapperBase):
                     else:
                         is_in_battle = 0
 
+                    raidendSec = 0
                     if gym['gym_details']['has_raid']:
                         raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
 
