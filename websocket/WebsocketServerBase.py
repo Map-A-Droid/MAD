@@ -3,13 +3,14 @@ import collections
 import logging
 import math
 import queue
+import sys
 from abc import ABC
 from threading import Lock, Event, Thread
 
 import websockets
 
 from utils.authHelper import check_auth
-from utils.madGlobals import WebsocketWorkerRemovedException
+from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from worker.WorkerMITM import WorkerMITM
 
 log = logging.getLogger(__name__)
@@ -61,7 +62,7 @@ class WebsocketServerBase(ABC):
         if worker is None:
             return
         else:
-            worker[1].stop_worker()
+            # worker[1].stop_worker()
             self.__current_users.pop(id)
 
     async def __register(self, websocket):
@@ -93,16 +94,36 @@ class WebsocketServerBase(ABC):
             nightime_routemanager = None
         devicesettings = client_mapping["settings"]
 
-        if (daytime_routemanager.mode == "raids_mitm" or daytime_routemanager.mode == "mon_mitm"
-                or daytime_routemanager.mode == "iv_mitm"):
-            Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
-        else:
-            from worker.WorkerOcr import WorkerOcr
-            Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                               devicesettings, db_wrapper=self.db_wrapper)
-            # start off new thread, pass our instance in
-            
+        started = False
+        if MadGlobals.sleep is True:
+            # start the appropriate nighttime manager if set
+            if nightime_routemanager is None:
+                pass
+            elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+                Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                    self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+                started = True
+            elif nightime_routemanager.mode in ["raids_ocr"]:
+                from worker.WorkerOcr import WorkerOcr
+                Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                   devicesettings, db_wrapper=self.db_wrapper)
+                started = True
+            else:
+                log.fatal("Mode not implemented")
+                sys.exit(1)
+        if not MadGlobals.sleep or not started:
+            # we either gotta run daytime mode OR nighttime routemanager not set
+            if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+                Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                    self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+            elif daytime_routemanager.mode in ["raids_ocr"]:
+                from worker.WorkerOcr import WorkerOcr
+                Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                   devicesettings, db_wrapper=self.db_wrapper)
+            else:
+                log.fatal("Mode not implemented")
+                sys.exit(1)
+
         newWorkerThread = Thread(name='worker_%s' % id, target=Worker.start_worker)
         self.__current_users[id] = [newWorkerThread, Worker, websocket]
         newWorkerThread.daemon = False

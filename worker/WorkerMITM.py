@@ -167,12 +167,16 @@ class WorkerMITM(WorkerBase):
 
             log.debug("Requesting next location from routemanager")
             if MadGlobals.sleep and self._route_manager_nighttime is not None:
+                if self._route_manager_nighttime.mode not in ["iv_mitm", "raids_mitm", "mon_mitm"]:
+                    break
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
             elif MadGlobals.sleep:
                 # skip to top while loop to get to sleep loop
                 continue
             else:
+                if self._route_manager_daytime.mode not in ["iv_mitm", "raids_mitm", "mon_mitm"]:
+                    break
                 currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
 
@@ -202,7 +206,6 @@ class WorkerMITM(WorkerBase):
                     (settings['max_distance'] and 0 < settings['max_distance'] < distance)
                     or (lastLocation.lat == 0.0 and lastLocation.lng == 0.0)):
                 log.info("main: Teleporting...")
-                # TODO: catch exception...
                 try:
                     self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
                     curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
@@ -269,7 +272,9 @@ class WorkerMITM(WorkerBase):
             self._work_mutex.release()
             log.debug("Worker %s done, next iteration" % str(self.id))
 
-        t_asyncio_loop.join()
+        self.stop_worker()
+        self.loop.stop()
+        # t_asyncio_loop.join()
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
         try:

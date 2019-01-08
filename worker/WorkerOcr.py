@@ -108,18 +108,25 @@ class WorkerOcr(WorkerBase):
             # TODO: consider adding runWarningThreadEvent.set()
             lastLocation = currentLocation
             self._last_known_state["last_location"] = lastLocation
-            if MadGlobals.sleep:
+
+            # TODO: object oriented...
+            if MadGlobals.sleep and self._route_manager_nighttime is not None:
+                if self._route_manager_nighttime.mode not in ["raids_ocr"]:
+                    break
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
+            elif MadGlobals.sleep:
+                # skip to top while loop to get to sleep loop
+                continue
             else:
+                if self._route_manager_daytime.mode not in ["raids_ocr"]:
+                    break
                 currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
 
-            # TODO: set position... needs to be adjust for multidevice
-            
-            posfile = open(self.id+'.position', "w")
-            posfile.write(str(currentLocation.lat)+", "+str(currentLocation.lng))
-            posfile.close()
+            log.debug("Updating .position file")
+            with open(self.id + '.position', 'w') as outfile:
+                outfile.write(str(currentLocation.lat) + ", " + str(currentLocation.lng))
 
             log.debug("main: next stop: %s" % (str(currentLocation)))
             log.debug('main: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
@@ -187,11 +194,7 @@ class WorkerOcr(WorkerBase):
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
 
-            log.debug("main: Acquiring lock")
-
-            while MadGlobals.sleep: # or not runWarningThreadEvent.isSet():
-                time.sleep(0.1)
-            log.debug("Worker: acquiring lock")
+            log.debug("Main: acquiring lock")
             self._workMutex.acquire()
             log.debug("main: Lock acquired")
             try:
@@ -272,6 +275,7 @@ class WorkerOcr(WorkerBase):
             self._workMutex.release()
             log.debug("Worker: Lock released")
 
+        self.stop_worker()
 
     # TODO: update state...
     def _speed_weather_check_thread(self):

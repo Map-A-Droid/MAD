@@ -52,6 +52,7 @@ class WorkerBase(ABC):
 
     def stop_worker(self):
         self._stop_worker_event.set()
+        self._communicator.terminate_connection()
 
     @abstractmethod
     def _main_work_thread(self):

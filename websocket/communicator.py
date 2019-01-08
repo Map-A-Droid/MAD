@@ -99,6 +99,12 @@ class Communicator:
         self.__sendMutex.release()
         return response
 
+    def terminate_connection(self):
+        self.__sendMutex.acquire()
+        response = self.websocketHandler.sendAndWait(self.id, "exit\r\n", self.__commandTimeout)
+        self.__sendMutex.release()
+        return response
+
     # coords need to be float values
     # speed integer with km/h
     #######
