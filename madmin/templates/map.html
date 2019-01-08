@@ -407,7 +407,6 @@
 			$.getJSON({
 				url: "/get_position",
 				success: function (result) {
-					var t = 0;
 					$.each(result, function (pos, data) {
 						if (!marker.hasOwnProperty(pos)) {
 							poslay[pos] = L.layerGroup()
@@ -424,8 +423,7 @@
 								.bindPopup(pos)
 								.addTo(poslay[pos]);
 						}
-						marker[pos].setLatLng(data[t])
-						t = t + 1;
+						marker[pos].setLatLng([data.lat, data.lng]);
 
 						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
 							map.setView(data[t], map.getZoom());
