@@ -132,6 +132,7 @@ class MITMReceiver(object):
         global application_args
         type = data.get("type", None)
         if type:
+            print (data)
             if type == 106:
                 # process GetMapObject
                 log.info("Processing GMO received from %s at %s" % (str(origin), str(received_timestamp)))

@@ -37,6 +37,7 @@ class WorkerBase(ABC):
         self._player_level = 0
         self._level_up = False
         self._resocalc = resocalc
+        self._weatherwarn = False
         
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
@@ -299,5 +300,16 @@ class WorkerBase(ABC):
                     })
                     with open(self.id + '.stats', 'w') as outfile:  
                         json.dump(data, outfile, indent=4, sort_keys=True)
+                        
+    def _check_weather_popup(self, data):
+        if 'client_weather' not in data:
+            return True
+        if len(data['client_weather']) > 0:
+            for weatherdata in data['client_weather']:
+                for weathercelldata in weatherdata['alerts']:
+                    if weathercelldata.get('is_warn_weather'):
+                        self._weatherwarn = True
+                        return
+                    
     
     

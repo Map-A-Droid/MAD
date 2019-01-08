@@ -36,6 +36,9 @@ class WorkerQuests(WorkerBase):
         self.__update_injection_settings()
         self._screen_x = 0
         self._screen_y = 0
+        self._clear_box = False
+        self._clear_quest = False
+        self._delayadd = 0
         
 
     def __update_injection_settings(self):
@@ -125,14 +128,29 @@ class WorkerQuests(WorkerBase):
         log.info("Quests worker starting")
         _data_err_counter, data_error_counter = 0, 0
         firstround = True
+        
+        clearboxThread = Thread(name='clearboxThread%s' % self.id, target=self._clear_box_thread)
+        clearboxThread.daemon = False
+        clearboxThread.start()
+        
+        clearquestThread = Thread(name='clearquestThread%s' % self.id, target=self._clear_quest_thread)
+        clearquestThread.daemon = False
+        clearquestThread.start()
+        
+        clearweatherThread = Thread(name='clearweatherThread%s' % self.id, target=self._check_levelup_weather)
+        clearweatherThread.daemon = False
+        clearweatherThread.start()
 
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
         t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
         
+        
+        
+
         self.get_screen_size()
         
-        delayadd = int(self._devicesettings.get("vps_delay", 0))
+        self._delayadd = int(self._devicesettings.get("vps_delay", 0))
 
         self._work_mutex.acquire()
         try:
@@ -143,8 +161,6 @@ class WorkerQuests(WorkerBase):
             self._work_mutex.release()
             return
         self._work_mutex.release()
-        
-        #self.clear_box(delayadd)
 
         self.loop_started.wait()
 
@@ -283,9 +299,17 @@ class WorkerQuests(WorkerBase):
             
             to = 0
             data_received='-'
+            
+            while self._clear_box:
+                time.sleep(1)
+            while self._clear_quest:
+                time.sleep(1)
+                
+            
+            
             while not 'Stop' in data_received and int(to) < 3:
                 curTime = time.time()
-                self._open_gym(delayadd)
+                self._open_gym(self._delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                        timestamp=curTime, proto_to_wait_for=104, timeout=25)
                 log.error(data_received)                                                       
@@ -295,14 +319,14 @@ class WorkerQuests(WorkerBase):
                         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
                         self._communicator.click(int(x), int(y))
                         time.sleep(2)
-                        self._turn_map(delayadd)
+                        self._turn_map(self._delayadd)
                     if 'Mon' in data_received:
                         time.sleep(2)
                         log.debug('Clicking MON')
                         x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
                         self._communicator.click(int(x), int(y))
                         time.sleep(.5)
-                        self._turn_map(delayadd)
+                        self._turn_map(self._delayadd)
                 if data_received is None:
                     data_received = '-'
                     
@@ -311,28 +335,22 @@ class WorkerQuests(WorkerBase):
 
             if 'Stop' in data_received:
                 curTime = time.time()
-                self._spin_wheel(delayadd)
+                self._spin_wheel(self._delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                timestamp=curTime, proto_to_wait_for=101, timeout=15)
                 if data_received is not None:
                     
-                    if self._level_up:
-                        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-                        self._communicator.click(int(x), int(y))
-                        time.sleep(int(delayadd))
-                        self.level_up = False
-                    
                     if 'Box' in  data_received:
                         log.error('Box is full ... Next round!')
-                        self.clear_box(delayadd)
+                        self._clear_box = True
                         roundcount = 0
                         
                     if 'Quest' in  data_received:
-                        self._clear_quests(delayadd)
+                        self._clear_quest = True
                         roundcount += 1
                         
                         if roundcount == 5:
-                            self.clear_box(delayadd)
+                            self._clear_box = True
                             roundcount = 0
                         
                     
@@ -367,6 +385,10 @@ class WorkerQuests(WorkerBase):
             if 4 in latest:
                 if latest[4]['timestamp'] >= timestamp:
                     self._gen_player_stats(latest[4]['values']["payload"])
+            if 106 in latest:
+                if latest[106]['timestamp'] >= timestamp:
+                    self._check_weather_popup(latest[106]['values']["payload"])
+                
             if latest is None:
                 log.warning('Nothing received from client since MAD started...')
                 # we did not get anything from that client at all, let's check again in a sec
@@ -493,3 +515,39 @@ class WorkerQuests(WorkerBase):
         self._communicator.click(int(x), int(y))
         time.sleep(int(delayadd))    
         return True
+        
+    def _clear_box_thread(self):
+        while True:
+            while self._clear_box and not self._clear_quest:
+                self.clear_box(self._delayadd)
+                self._clear_box = False
+            time.sleep(0.5)
+
+    def _clear_quest_thread(self):
+        while True:
+            while self._clear_quest:
+                self._clear_quests(self._delayadd)
+                self._clear_quest = False
+            time.sleep(0.5)
+            
+    def _check_levelup_weather(self):
+        while True:
+            while self._level_up or self._weatherwarn:
+                
+                if self._level_up:
+                    log.debug('Found level up Popup - closing')
+                    x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(int(self._delayadd))
+                    self.level_up = False
+            
+                if self._weatherwarn:
+                    log.debug('Found weather Popup - closing')
+                    x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(int(self._delayadd))
+                    self._weatherwarn = False
+
+            time.sleep(0.5)
