@@ -58,7 +58,9 @@ weather_webhook_payload = """[{{
                 "alert_severity": {3},
                 "warn": {4},
                 "day": {5},
-                "time_changed": {6}
+                "time_changed": {6},
+                "latitude": {7},
+                "longitude": {8}
         }},
       "type": "weather"
    }} ]"""
@@ -75,6 +77,23 @@ pokemon_webhook_payload = """[{{
     "time_until_hidden_ms": {tth}
   }},
   "type": "pokemon"
+}}]"""
+
+gym_webhook_payload = """[{{
+  "message": {{
+    "raid_active_until": {raid_active_until},
+    "gym_id": "{gym_id}",
+    "gym_name": "{gym_name}",
+    "team_id": {team_id},
+    "slots_available": {slots_available},
+    "guard_pokemon_id": {guard_pokemon_id},
+    "lowest_pokemon_motivation": {lowest_pokemon_motivation},
+    "total_cp": {total_cp},
+    "enabled": "True",
+    "latitude": {latitude},
+    "longitude": {longitude}
+  }},
+  "type": "gym"
 }}]"""
 
 
@@ -180,6 +199,35 @@ class WebhookHelper(object):
         if self.__application_args.webhook and self.__application_args.pokemon_webhook:
             self.__add_task_to_loop(self._submit_pokemon_webhook(id, pokemon_id, now, spawnid,
                                                                  lat, lon, despawn_time_unix))
+
+    def send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id, slots_available, guard_pokemon_id,
+                         latitude, longitude):
+        if self.__application_args.webhook and self.__application_args.gym_webhook:
+            self.__add_task_to_loop(self._send_gym_webhook(gym_id, raid_active_until, gym_name, team_id,
+                                    slots_available, guard_pokemon_id, latitude, longitude))
+
+    async def _send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id,
+                                slots_available, guard_pokemon_id, latitude, longitude):
+        info_of_gym = self.gyminfo.get(gym_id, None)
+        if info_of_gym is not None and gym_name == 'unknown':
+            name = info_of_gym.get("name", "unknown")
+            gym_name = name.replace("\\", r"\\").replace('"', '')
+
+        payload_raw = gym_webhook_payload.format(
+            raid_active_until=raid_active_until,
+            gym_id=gym_id,
+            gym_name=gym_name,
+            team_id=team_id,
+            slots_available=slots_available,
+            guard_pokemon_id=guard_pokemon_id,
+            lowest_pokemon_motivation=0,
+            total_cp=0,
+            latitude=latitude,
+            longitude=longitude
+        )
+
+        payload = json.loads(payload_raw)
+        self.__sendToWebhook(payload)
 
     async def _send_raid_webhook(self, gymid, type, start, end, lvl, mon,
                                  team_param=None, cp_param=None, move1_param=None, move2_param=None,
@@ -320,13 +368,17 @@ class WebhookHelper(object):
         if self.__application_args.weather_webhook:
             log.debug("Send Weather Webhook")
 
+            ll = CellId(s2cellId).to_lat_lng()
+            latitude = ll.lat().degrees
+            longitude = ll.lng().degrees
+
             cell = Cell(CellId(s2cellId))
             coords = []
             for v in range(0, 4):
                 vertex = LatLng.from_point(cell.get_vertex(v))
                 coords.append([vertex.lat().degrees, vertex.lng().degrees])
 
-            data = weather_webhook_payload.format(s2cellId, coords, weatherId, severe, warn, day, time)
+            data = weather_webhook_payload.format(s2cellId, coords, weatherId, severe, warn, day, time, latitude, longitude)
 
             log.debug(data)
             payload = json.loads(data)

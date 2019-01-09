@@ -148,7 +148,7 @@ class RmWrapper(DbWrapperBase):
         wh_start = 0
         wh_end = 0
         egg_hatched = False
-        
+
         now_timezone = datetime.fromtimestamp(float(capture_time))
         now_timezone = time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
 
@@ -166,7 +166,7 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -182,7 +182,7 @@ class RmWrapper(DbWrapperBase):
             query = (
                 "UPDATE raid "
                 "SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -202,7 +202,7 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -467,7 +467,7 @@ class RmWrapper(DbWrapperBase):
         data = []
         res = self.execute(query, vals)
         for (gym_id, distance) in res:
-            data.append(gym_id)
+            data.append([gym_id, distance])
         log.debug("{RmWrapper::get_near_gyms} done")
         return data
 
@@ -521,7 +521,7 @@ class RmWrapper(DbWrapperBase):
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
         log.debug('Finished downloading gym images...')
-        
+
         return True
 
     def get_gym_infos(self, id=False):
@@ -771,13 +771,31 @@ class RmWrapper(DbWrapperBase):
         for cell in cells:
             for gym in cell['forts']:
                 if gym['type'] == 0:
+                    guard_pokemon_id = gym['gym_details']['guard_pokemon']
+                    gymid = gym['id']
+                    team_id = gym['gym_details']['owned_by_team']
+                    latitude = gym['latitude']
+                    longitude = gym['longitude']
+                    slots_available = gym['gym_details']['slots_available']
+                    raidendSec = 0
+
+                    if gym['gym_details']['has_raid']:
+                        raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
+
+                    self.webhook_helper.send_gym_webhook(
+                        gymid, raidendSec, 'unknown', team_id, slots_available, guard_pokemon_id,
+                        latitude, longitude
+                    )
+
                     gym_args.append(
                         (
-                            gym['id'], gym['gym_details']['owned_by_team'], gym['gym_details']['guard_pokemon'],
-                            gym['gym_details']['slots_available'], 1, gym['latitude'], gym['longitude'],
+                            gymid, team_id, guard_pokemon_id, slots_available,
+                            1,  # enabled
+                            latitude, longitude,
                             0,  # total CP
                             0,  # is_in_battle
-                            now, now
+                            now,  # last_modified
+                            now   # last_scanned
                         )
                     )
 

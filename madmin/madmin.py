@@ -415,31 +415,19 @@ def get_unknows():
 
 @app.route("/get_position")
 def get_position():
-    position = []
     positionexport = {}
-    fileName = args.position_file+'.position'
 
     for filename in glob.glob('*.position'):
         name = filename.split('.')
         with open(filename, 'r') as f:
             latlon = f.read().strip().split(', ')
-            position.append([
-                getCoordFloat(latlon[0]),
-                getCoordFloat(latlon[1])
-            ])
+            position = {
+                    'lat': getCoordFloat(latlon[0]),
+                    'lng': getCoordFloat(latlon[1])
+                }
             positionexport[str(name[0])] = position
 
     return jsonify(positionexport)
-
-    if not os.path.isfile(fileName):
-        return jsonify([0, 0])
-
-    with open(fileName) as f:
-        latlon = f.read().strip().split(', ')
-        if len(latlon) == 2:
-            return jsonify([getCoordFloat(latlon[0]), getCoordFloat(latlon[1])])
-        else:
-            return jsonify([0, 0])
 
 
 @cache.cached()

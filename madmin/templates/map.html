@@ -85,6 +85,8 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
 	var map;
+	var default_lat = 52.521374;
+	var default_lng = 13.411201
 
 	// helper method to convert lat/lon
 	function convertToLonLat(coords) {
@@ -178,7 +180,7 @@
 
 		// get stored center and zoom level if they exists
 		var storedZoom = localStorage.getItem('zoomlevel') || 13;
-		var storedCenter = localStorage.getItem('center') || '52.521374,13.411201';
+		var storedCenter = localStorage.getItem('center') || default_lat+','+default_lng;
 
 		// main map object
 		map = L.map('map', { layers: [tileLayer], zoomControl: false }).setView(storedCenter.split(','), storedZoom);
@@ -263,7 +265,7 @@
 					extraLayerControl.addOverlay(extraRouteCircle[pos], name + ' 490m');
 
 					$.each(data, function (k, v) {
-						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+						if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
 							map.setView(v, map.getZoom());
 						}
 						// TODO: check for mon/raid route
@@ -366,7 +368,7 @@
 							var color = "red";
 						}
 
-						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+						if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
 							map.setView([v['lat'], v['lon']], map.getZoom());
 						}
 
@@ -390,7 +392,7 @@
 			url: "/get_gymcoords",
 			success: function (result) {
 				$.each(result, function (k, v) {
-					if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+					if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
 						map.setView([v['lat'], v['lon']], map.getZoom());
 					}
 					L.marker([v['lat'], v['lon']], { icon: gymicon(v['team_id']) })
@@ -407,7 +409,6 @@
 			$.getJSON({
 				url: "/get_position",
 				success: function (result) {
-					var t = 0;
 					$.each(result, function (pos, data) {
 						if (!marker.hasOwnProperty(pos)) {
 							poslay[pos] = L.layerGroup()
@@ -424,10 +425,9 @@
 								.bindPopup(pos)
 								.addTo(poslay[pos]);
 						}
-						marker[pos].setLatLng(data[t])
-						t = t + 1;
+						marker[pos].setLatLng([data.lat, data.lng]);
 
-						if (map.getCenter().lat == 0 || map.getCenter().lng == 0) {
+						if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
 							map.setView(data[t], map.getZoom());
 						}
 					})

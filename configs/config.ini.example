@@ -64,7 +64,6 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #gym_scan_distance:          # Distance of scanned Gyms (Default: 6) - reduce if you scan an area with many gyms at one place
 #weather                     # Detect weather from captured Image and post to database - if your frontend support this!
 #route_file:                 # Filename for Route Cache without extension (Default: route)
-#position_file:              # Filename for the bot's current position (Default: current)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 
@@ -96,6 +95,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #webhook_url:                # URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*
 #weather_webhook             # Activate support for weather webhook
 #pokemon_webhook             # Activate support for pokemon webhook
+#gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
 
 # Auto Hatch
 ######################
