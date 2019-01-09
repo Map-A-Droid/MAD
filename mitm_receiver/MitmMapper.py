@@ -16,7 +16,10 @@ class MitmMapper(object):
     def request_latest(self, origin, key=None):
         self.__mapping_mutex.acquire()
         result = None
-        retrieved = self.__mapping.get(origin, None).copy()
+        retrieved = self.__mapping.get(origin, None)
+        if retrieved is not None:
+            # copy in case references are overwritten... who knows TODO: double check what python does in the background
+            retrieved = retrieved.copy()
         if key is None:
             result = retrieved
         elif retrieved is not None:
