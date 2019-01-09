@@ -20,6 +20,7 @@ import datetime
 from shutil import copyfile
 from math import floor
 import numbers
+from utils.questGen import generate_quest
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
@@ -514,6 +515,12 @@ def get_quests():
         mondata = json.load(f)
 
     data = db_wrapper.quests_from_db()
+    
+    for pokestopid in data:
+        quest = data[str(pokestopid)]
+        coords.append(generate_quest(quest))
+        
+    return jsonify(coords)
 
     for pokestopid in data:
         pokestop = data[str(pokestopid)]
@@ -531,7 +538,9 @@ def get_quests():
             'quest_item_amount': pokestop['quest_item_amount'],
             'name': pokestop['name'],
             'image': pokestop['image'],
-            'monname': monName
+            'monname': monName,
+            'quest_condition': pokestop['quest_condition'],
+            'quest_target': pokestop['quest_target']
             })
 
     return jsonify(coords)

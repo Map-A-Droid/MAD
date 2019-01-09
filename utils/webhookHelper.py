@@ -3,6 +3,7 @@ import functools
 import json
 import logging
 from threading import current_thread, Event, Thread
+from utils.questGen import generate_quest 
 
 import requests
 from s2sphere import Cell, CellId, LatLng
@@ -49,7 +50,30 @@ egg_webhook_payload = """[{{
       }},
       "type": "{type}"
    }} ]"""
-
+            
+quest_webhook_payload = """[{{
+      "message": {{
+                "pokestop_id": "{pokestop_id}",
+                "latitude": "{latitude}",
+                "longitude": "{longitude}",
+                "quest_type": "{quest_type}",
+                "quest_type_raw": "{quest_type_raw}",
+                "item_type": "{item_type}",
+                "item_amount": "{item_amount}",
+                "item_id": "{item_id}",
+                "pokemon_id": "{pokemon_id}",
+                "name": "{name}",
+                "url": "{url}",
+                "timestamp": "{timestamp}",
+                "quest_reward_type": "{quest_reward_type}",
+                "quest_reward_type_raw": "{quest_reward_type_raw}",
+                "quest_target": "{quest_target}"
+                
+        }},
+      "type": "quest"
+   }} ]"""            
+            
+            
 weather_webhook_payload = """[{{
       "message": {{
                 "s2_cell_id": {0},
@@ -180,6 +204,10 @@ class WebhookHelper(object):
         if self.__application_args.webhook and self.__application_args.pokemon_webhook:
             self.__add_task_to_loop(self._submit_pokemon_webhook(id, pokemon_id, now, spawnid,
                                                                  lat, lon, despawn_time_unix))
+    def submit_quest_webhook(self, rawquest):
+        if self.__application_args.webhook:
+            self.__add_task_to_loop(self._submit_quest_webhook(rawquest))                                                             
+                                                
 
     async def _send_raid_webhook(self, gymid, type, start, end, lvl, mon,
                                  team_param=None, cp_param=None, move1_param=None, move2_param=None,
@@ -348,6 +376,34 @@ class WebhookHelper(object):
             lon=lon,
             despawn_time_unix=despawn_time_unix,
             tth=tth)
+
+        log.debug(data)
+        payload = json.loads(data)
+        self.__sendToWebhook(payload)
+        
+    async def _submit_quest_webhook(self, rawquest):
+        log.info('Sending Quest to webhook')
+        
+        for pokestopid in rawquest:
+            quest = generate_quest(rawquest[str(pokestopid)])
+            print(quest)
+
+        data = quest_webhook_payload.format(
+            pokestop_id=quest['pokestop_id'],
+            latitude=quest['latitude'],
+            longitude=quest['longitude'],
+            quest_type=quest['quest_type'],
+            quest_type_raw=quest['quest_type_raw'],
+            item_type=quest['item_type'],
+            name=quest['name'],
+            url=quest['url'],
+            timestamp=quest['timestamp'],
+            quest_reward_type=quest['quest_reward_type'],
+            quest_reward_type_raw=quest['quest_reward_type_raw'],
+            quest_target=quest['quest_target'],
+            pokemon_id=quest['pokemon_id'],
+            item_amount=quest['item_amount'],
+            item_id=quest['item_id'])
 
         log.debug(data)
         payload = json.loads(data)

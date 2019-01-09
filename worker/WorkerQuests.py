@@ -132,6 +132,10 @@ class WorkerQuests(WorkerBase):
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
         t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
+        
+        checkWeatherThread = Thread(name='checkWeatherThread%s' % self.id, target=self._close_weather_popup)
+        checkWeatherThread.daemon = True
+        checkWeatherThread.start()
 
         self.get_screen_size()
         
@@ -297,15 +301,6 @@ class WorkerQuests(WorkerBase):
                 time.sleep(int(self._delayadd))
                 self.level_up = False
         
-            if self._weatherwarn:
-                log.debug('Found weather Popup - closing')
-                x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
-                self._communicator.click(int(x), int(y))
-                time.sleep(.5)
-                x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
-                self._communicator.click(int(x), int(y))
-                time.sleep(int(self._delayadd))
-                self._weatherwarn = False
             
             while not 'Stop' in data_received and int(to) < 3:
                 curTime = time.time()
@@ -352,6 +347,10 @@ class WorkerQuests(WorkerBase):
                         if roundcount == 5:
                             self.clear_box(self._delayadd)
                             roundcount = 0
+                            
+                    if 'SB' in data_received:
+                        log.error('Softban - waiting...')
+                        time.sleep(5)
                         
                     
                             
@@ -382,12 +381,7 @@ class WorkerQuests(WorkerBase):
             # let's check for new data...
             # log.info('Requesting latest...')
             latest = self._mitm_mapper.request_latest(self.id)
-            if 4 in latest:
-                if latest[4]['timestamp'] >= timestamp:
-                    self._gen_player_stats(latest[4]['values']["payload"])
-            if 106 in latest:
-                if latest[106]['timestamp'] >= timestamp:
-                    self._check_weather_popup(latest[106]['values']["payload"])
+
                 
             if latest is None:
                 log.warning('Nothing received from client since MAD started...')
@@ -426,7 +420,7 @@ class WorkerQuests(WorkerBase):
                         elif data['payload']['result'] == 1 and len(data['payload']['items_awarded'])==0:
                             return 'Time', data_err_counter
                         elif data['payload']['result'] == 2:
-                            return None, data_err_counter
+                            return 'SB', data_err_counter
                         elif data['payload']['result'] == 4:
                             return 'Box', data_err_counter
                             
@@ -529,3 +523,27 @@ class WorkerQuests(WorkerBase):
                 self._clear_quests(self._delayadd)
                 self._clear_quest = False
             time.sleep(0.5)
+            
+    def _close_weather_popup(self):
+        timestamp = time.time()
+        while True:
+            timestamp = time.time()
+            latest = self._mitm_mapper.request_latest(self.id)
+            if 4 in latest:
+                #if latest[4]['timestamp'] >= timestamp:
+                self._gen_player_stats(latest[4]['values']["payload"])
+            if 106 in latest:
+                #if latest[106]['timestamp'] >= timestamp:
+                log.error('Check for Weather Warning')
+                self._check_weather_popup(latest[106]['values']["payload"])
+            while self._weatherwarn:
+                log.debug('Found weather Popup - closing')
+                x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(.5)
+                x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(int(self._delayadd))
+                self._weatherwarn = False
+            time.sleep(2)
+            

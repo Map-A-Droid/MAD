@@ -993,7 +993,7 @@ class MonocleWrapper(DbWrapperBase):
             )
             
     def check_stop_quest(self, latitude, longitude):
-        log.debug("{RmWrapper::stops_from_db} called")
+        log.debug("{MonocleWrapper::stops_from_db} called")
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestops on pokestops.external_id = trs_quest.GUID where "
@@ -1011,8 +1011,8 @@ class MonocleWrapper(DbWrapperBase):
             log.debug('Pokestop has not a quest with CURDATE()')
             return False
 
-    def quests_from_db(self):
-        log.debug("{RmWrapper::quests_from_db} called")
+    def quests_from_db(self, GUID = False):
+        log.debug("{MonocleWrapper::quests_from_db} called")
         questinfo = {}
 
         query = (
