@@ -34,8 +34,6 @@ class DbWrapperBase(ABC):
         self._init_pool()
         self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
         self.webhook_helper = webhook_helper
-        self.__spawndefi = dict()
-        self.__globaldef = 99
 
     def _init_pool(self):
         log.info("Connecting pool to DB")
@@ -435,31 +433,24 @@ class DbWrapperBase(ABC):
             self.execute(query, commit=True)
         log.info('clearHashGyms: Deleted Raidhashes with unknown mons')
 
-    def getspawndef(self, spawn_id, pos):
+    def getspawndef(self, spawn_id):
+        if not spawn_id:
+            return False
         log.debug("{DbWrapperBase::getspawndef} called")
-        if str(spawn_id) in self.__spawndefi and self.__globaldef == pos:
-            log.debug("{DbWrapperBase::getspawndef} found spawndef (%s) in storage for spawnpoint %s" % (str(self.__spawndefi.get(str(spawn_id))), str(spawn_id)))
-            return self.__spawndefi.get(str(spawn_id))
         
-        log.debug("{DbWrapperBase::getspawndef} build local storage")
+        spawnids = ",".join( map(str, spawn_id) )
+        spawnret = {}
         
         query = (
             "SELECT spawnpoint, spawndef "
-            "FROM trs_spawn"
+            "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
 
         res = self.execute(query)
         for row in res:
-            self.__spawndefi[row[0]] = row[1]
-            
-        spawndef = self.__spawndefi.get(str(spawn_id))
-        if spawndef:
-            log.debug("{DbWrapperBase::getspawndef} found spawndef (%s) in storage for spawnpoint %s" % (str(spawndef), str(spawn_id)))
-            return spawndef
-        else:
-            log.debug("{DbWrapperBase::getspawndef} found no spawndef in storage for spawnpoint %s" % (str(spawn_id)))
+            spawnret[row[0]] = row[1]
 
-        return 
+        return spawnret
         
     def submit_spawnpoints_proto(self,map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
@@ -509,6 +500,7 @@ class DbWrapperBase(ABC):
         if cells is None:
             return False
         spawnpoint_args, spawnpoint_args_unseen = [], []
+        spawnids = []
 
         query_spawnpoints = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
@@ -529,6 +521,12 @@ class DbWrapperBase(ABC):
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dt = datetime.now()
+        
+        for cell in cells:
+            for wild_mon in cell["wild_pokemon"]:
+                spawnids.append(int(str(wild_mon['spawnpoint_id']), 16))
+                
+        spawndef = self.getspawndef(spawnids)
 
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
@@ -537,11 +535,10 @@ class DbWrapperBase(ABC):
                 despawntime = wild_mon['time_till_hidden']
 
                 minpos = self._get_min_pos_in_array()
-                # TODO: retrieve the spawndefs by a single executemany and pass that...
 
-                spawndef = self.getspawndef(spawnid, minpos)
-                if spawndef:
-                    newspawndef = self._set_spawn_see_minutesgroup(spawndef, minpos)
+                spawndef_ = spawndef.get(spawnid, False)
+                if spawndef_:
+                    newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
                 else:
                     newspawndef = self._set_spawn_see_minutesgroup(DbWrapperBase.def_spawn, minpos)
 
