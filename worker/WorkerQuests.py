@@ -311,7 +311,7 @@ class WorkerQuests(WorkerBase):
                 curTime = time.time()
                 self._open_gym(self._delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                                       timestamp=curTime, proto_to_wait_for=104)
+                                                                       timestamp=curTime, proto_to_wait_for=104,timeout=25)
                 log.error(data_received)                                                       
                 if data_received is not None:
                     if 'Gym' in data_received:
@@ -337,7 +337,7 @@ class WorkerQuests(WorkerBase):
                 curTime = time.time()
                 self._spin_wheel(self._delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                               timestamp=curTime, proto_to_wait_for=101)
+                                                               timestamp=curTime, proto_to_wait_for=101, timeout=25)
                 if data_received is not None:
                     
                     if 'Box' in  data_received:
@@ -374,8 +374,8 @@ class WorkerQuests(WorkerBase):
             log.error("Failed updating scanned location: %s" % str(e))
             return
 
-    def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
-        timeout = self._devicesettings.get("mitm_wait_timeout", 45)
+    def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0, timeout=45):
+        #timeout = self._devicesettings.get("mitm_wait_timeout", 45)
         log.info('Waiting for  data...')
         data_requested = None
         while data_requested is None and timestamp + timeout >= time.time():
@@ -495,7 +495,7 @@ class WorkerQuests(WorkerBase):
             self._communicator.click(int(delx), int(dely))
             
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                           timestamp=curTime, proto_to_wait_for=4)
+                                                           timestamp=curTime, proto_to_wait_for=4, timeout=15)
             _data_err_counter = data_error_counter
             
             if data_received is not None:

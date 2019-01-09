@@ -314,6 +314,7 @@ class WorkerBase(ABC):
         if 'client_weather' not in data:
             return True
         if len(data['client_weather']) > 0:
+            weatherwarn = False
             for weatherdata in data['client_weather']:
                 for weathercelldata in weatherdata['alerts']:
                     if weathercelldata.get('is_warn_weather'):
