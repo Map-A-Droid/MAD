@@ -58,7 +58,9 @@ weather_webhook_payload = """[{{
                 "alert_severity": {3},
                 "warn": {4},
                 "day": {5},
-                "time_changed": {6}
+                "time_changed": {6},
+                "latitude": {7},
+                "longitude": {8}
         }},
       "type": "weather"
    }} ]"""
@@ -366,13 +368,17 @@ class WebhookHelper(object):
         if self.__application_args.weather_webhook:
             log.debug("Send Weather Webhook")
 
+            ll = CellId(s2cellId).to_lat_lng()
+            latitude = ll.lat().degrees
+            longitude = ll.lng().degrees
+
             cell = Cell(CellId(s2cellId))
             coords = []
             for v in range(0, 4):
                 vertex = LatLng.from_point(cell.get_vertex(v))
                 coords.append([vertex.lat().degrees, vertex.lng().degrees])
 
-            data = weather_webhook_payload.format(s2cellId, coords, weatherId, severe, warn, day, time)
+            data = weather_webhook_payload.format(s2cellId, coords, weatherId, severe, warn, day, time, latitude, longitude)
 
             log.debug(data)
             payload = json.loads(data)
