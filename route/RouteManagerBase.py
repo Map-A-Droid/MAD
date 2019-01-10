@@ -226,7 +226,7 @@ class RouteManagerBase(ABC):
 
         # determine whether we move to the next location or the prio queue top's item
         if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
-                                                             and len(self._prio_queue) > 0
+                                                             and self._prio_queue and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
             log.debug("%s: Priority event" % str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]

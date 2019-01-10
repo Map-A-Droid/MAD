@@ -128,16 +128,6 @@ class MappingParser(object):
                     # coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
                     #                                       geofence_helper)
 
-                # retrieve the range and max count per circle from central mapping...
-                # route_manager = RouteManager(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
-                #                              mode_mapping[area["mode"]]["max_count"],
-                #                              area["geofence_included"], area.get("geofence_excluded", None),
-                #                              area["routecalc"],
-                #                              coords_spawns_known=area.get("coords_spawns_known", False),
-                #                              delayAfterHatch=delay_after_hatch,
-                #                              init=area.get("init", False), mode=area["mode"], settings=area["settings"],
-                #                              name=area.get("name", "unknown"))
-
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area["mode"]]["range"]
                 max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
