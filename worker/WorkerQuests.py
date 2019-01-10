@@ -359,6 +359,15 @@ class WorkerQuests(WorkerBase):
 
                     
             _data_err_counter = data_error_counter
+            if self._weatherwarn:
+                log.debug('Found weather Popup - closing')
+                x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(.5)
+                x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(int(self._delayadd))
+                self._weatherwarn = False
 
             log.debug("Releasing lock")
             self._work_mutex.release()
@@ -533,17 +542,8 @@ class WorkerQuests(WorkerBase):
                 #if latest[4]['timestamp'] >= timestamp:
                 self._gen_player_stats(latest[4]['values']["payload"])
             if 106 in latest:
-                #if latest[106]['timestamp'] >= timestamp:
-                log.error('Check for Weather Warning')
-                self._check_weather_popup(latest[106]['values']["payload"])
-            while self._weatherwarn:
-                log.debug('Found weather Popup - closing')
-                x, y = self._resocalc.get_weather_warn_popup_coords(self)[0], self._resocalc.get_weather_warn_popup_coords(self)[1]
-                self._communicator.click(int(x), int(y))
-                time.sleep(.5)
-                x, y = self._resocalc.get_weather_popup_coords(self)[0], self._resocalc.get_weather_popup_coords(self)[1]
-                self._communicator.click(int(x), int(y))
-                time.sleep(int(self._delayadd))
-                self._weatherwarn = False
+                if latest[106]['timestamp'] >= timestamp:
+                    log.debug('Check for Weather Warning')
+                    self._check_weather_popup(latest[106]['values']["payload"])
             time.sleep(2)
             
