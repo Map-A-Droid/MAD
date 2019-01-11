@@ -1,6 +1,13 @@
 #!/bin/bash
 #DONT FORGETT  sed -i -e 's/\r$//' scan.sh
 #Add  execution rights to file 777
+#MAD Script
+#Control scan MAD
+#Start, Stop and Status exemples 
+#./scan.bash start 
+#./scan.bash stop 
+#./scan.bash status
+
 
 DAEMON_NAME="Choose a Name"  # Choose a short Name
 WORKDIR="/Home/User/MAD"  #Here full directory of MAD
