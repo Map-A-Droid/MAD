@@ -615,7 +615,7 @@ class RmWrapper(DbWrapperBase):
         self.execute(query, data, commit=True)
 
         self.webhook_helper.send_weather_webhook(
-            cell_id, gameplay_weather, 0, 0, weather_daytime, now_timezone
+            cell_id, gameplay_weather, 0, 0, weather_daytime, capture_time
         )
 
     def submit_mon_iv(self, origin, timestamp, encounter_proto):
@@ -1010,7 +1010,7 @@ class RmWrapper(DbWrapperBase):
         now_timezone = time.mktime(now_timezone.timetuple()) - (self.timezone * 60 * 60)
 
         self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
-                                                 time_of_day, now_timezone)
+                                                 time_of_day, received_timestamp)
 
         return (
             cell_id, real_lat, real_lng,

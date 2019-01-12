@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -123,18 +124,30 @@ class MappingParser(object):
                         exit(1)
                 else:
                     # calculate all level N cells (mapping back from mapping above linked to mode)
-                    coords = S2Helper.get_s2_cells_from_fence(geofence=geofence_helper,
-                                                              cell_size=mode_mapping[mode]["s2_cell_level"])
-                    # coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
-                    #                                       geofence_helper)
+                    # coords = S2Helper.get_s2_cells_from_fence(geofence=geofence_helper,
+                    #                                           cell_size=mode_mapping[mode]["s2_cell_level"])
+                    coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
+                                                          geofence_helper)
 
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area["mode"]]["range"]
                 max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
-                proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
-                                                                                 0, False))
-
-                areas_procs[area["name"]] = proc
+                if not area.get("init", False) or len(coords) <= 400:
+                    log.info("Calculating route for %s" % str(area.get("name", "unknown")))
+                    proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
+                                                                                     0, False))
+                    areas_procs[area["name"]] = proc
+                else:
+                    log.info("Init mode enabled and more than 400 coords in init. Going row-based for %s"
+                             % str(area.get("name", "unknown")))
+                    # we are in init, let's write the init route to file to make it visible in madmin
+                    if area["routecalc"] is not None:
+                        routefile = area["routecalc"]
+                        if os.path.isfile(routefile + '.calc'):
+                            os.remove(routefile + '.calc')
+                        with open(routefile + '.calc', 'a') as f:
+                            for loc in coords:
+                                f.write(str(loc.lat) + ', ' + str(loc.lng) + '\n')
             # log.error("Calculated route, appending another coord and recalculating")
 
             area_dict["routemanager"] = route_manager
