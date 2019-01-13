@@ -28,7 +28,6 @@ class DbWrapperBase(ABC):
         self.user = args.dbusername
         self.password = args.dbpassword
         self.database = args.dbname
-        self.timezone = args.timezone
         self.pool = None
         self.pool_mutex = Lock()
         self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
