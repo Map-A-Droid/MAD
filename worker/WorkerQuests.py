@@ -339,7 +339,7 @@ class WorkerQuests(WorkerBase):
                     curTime = time.time()
                     self._spin_wheel(self._delayadd)
                     data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                               timestamp=curTime, proto_to_wait_for=101, timeout=25)
+                                                               timestamp=curTime, proto_to_wait_for=101, timeout=15)
                     if data_received is not None:
                     
                         if 'Box' in  data_received:
@@ -368,8 +368,10 @@ class WorkerQuests(WorkerBase):
                             
                     else:
                         data_received = '-'
-                        log.error('Did not get any data ... Next round!')
+                        log.error('Did not get any data ... Maybe already spinned or softban.')
                         to += 1
+                        if to == 3:
+                            self._close_gym(self._delayadd)
                     
             _data_err_counter = data_error_counter
 
