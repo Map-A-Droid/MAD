@@ -367,6 +367,7 @@ class WorkerQuests(WorkerBase):
                             self._close_gym(self._delayadd)
                             
                     else:
+                        data_received = '-'
                         log.error('Did not get any data ... Next round!')
                         to += 1
                     
