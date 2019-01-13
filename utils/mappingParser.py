@@ -28,7 +28,7 @@ mode_mapping = {
     },
     "pokestops": {
         "s2_cell_level": 13,
-        "range": 10,
+        "range": 0,
         "max_count": 100000
     }
 }

@@ -997,8 +997,8 @@ class MonocleWrapper(DbWrapperBase):
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestops on pokestops.external_id = trs_quest.GUID where "
-            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE() and pokestops.lat=%s and "
-            "pokestops.lon=%s"
+            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = date_format(DATE_ADD( curdate() , INTERVAL '-15' MINUTE ), '%Y-%m-%d') "
+            "and pokestops.lat=%s and pokestops.lon=%s"
         )
         data = (latitude, longitude)
 
