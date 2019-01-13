@@ -167,6 +167,68 @@ class WorkerBase(ABC):
             self._lastScreenHashCount = 0
 
             log.debug("_checkPogoFreeze: done")
+            
+    def _checkPogoMainScreen(self, maxAttempts, again=False):
+        log.debug("checkPogoMainScreen: Trying to get to the Mainscreen with %s max attempts..." % str(maxAttempts))
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return False
+
+        self._checkPogoFreeze()
+        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if again:
+                log.error("checkPogoMainScreen: failed getting a screenshot again")
+                return False
+            log.debug("checkPogoMainScreen: Got screenshot, checking GPS")
+        attempts = 0
+
+        if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+            log.error("checkPogoMainScreen: screenshot.png is not a file/corrupted")
+            return False
+            
+        while self._pogoWindowManager.isGpsSignalLost(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
+            log.debug("checkPogoMainScreen: GPS signal lost")
+            time.sleep(1)
+            self._takeScreenshot()
+            log.warning("checkPogoMainScreen: GPS signal error")
+            self._redErrorCount += 1
+            if self._redErrorCount > 3:
+                log.error("checkPogoMainScreen: Red error multiple times in a row, restarting")
+                self._redErrorCount = 0
+                self._restartPogo()
+                return False
+        self._redErrorCount = 0
+        log.debug("checkPogoMainScreen: checking mainscreen")
+        while not self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
+            log.debug("checkPogoMainScreen: not on Mainscreen...")
+            if attempts > maxAttempts:
+                # could not reach raidtab in given maxAttempts
+                log.error("checkPogoMainScreen: Could not get to Mainscreen within %s attempts" % str(maxAttempts))
+                return False
+            self._checkPogoFreeze()
+            # not using continue since we need to get a screen before the next round...
+            found = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), 2.20, 3.01)
+            if found:
+                log.info("checkPogoMainScreen: Found button (small)")
+
+            if not found and self._pogoWindowManager.checkCloseExceptNearbyButton(
+                    os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, closeraid=True):
+                log.info("checkPogoMainScreen: Found (X) button (except nearby)")
+                found = True
+
+            if not found and self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), 1.05,
+                                                             2.20):
+                log.info("checkPogoMainScreen: Found button (big)")
+                found = True
+
+            log.info("checkPogoMainScreen: Previous checks found popups: %s" % str(found))
+
+            if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+                return False
+
+            attempts += 1
+        log.debug("checkPogoMainScreen: done")
+        return True
 
     def _getToRaidscreen(self, maxAttempts, again=False):
         # check for any popups (including post login OK)
@@ -252,12 +314,14 @@ class WorkerBase(ABC):
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(0.5)
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
-        time.sleep(0.5)
+        return 
+        
+    def _close_gym(self, delayadd):
+        log.debug('{_close_gym} called')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
-        log.debug('{_spin_wheel} called')
-        return 
+        log.debug('{_close_gym} called')
         
     def _turn_map(self, delayadd):
         log.debug('{_turn_map} called')
