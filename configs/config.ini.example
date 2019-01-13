@@ -80,10 +80,6 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #madmin_user: madmin         # MADmin username for login
 #madmin_password: MySecret   # MADmin password for login
 
-# timezone settings
-######################
-
-#timezone:                   # Time difference from UTC (f.e "+2" for Berlin/Germany) - Needed for Rocketmap Database
 
 #sleeptimer settings
 ######################
