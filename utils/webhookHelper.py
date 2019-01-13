@@ -31,7 +31,6 @@ raid_webhook_payload = """[{{
       "type": "{type}"
    }} ]"""
 
-
 egg_webhook_payload = """[{{
       "message": {{
         "latitude": {lat},
@@ -62,20 +61,6 @@ weather_webhook_payload = """[{{
         }},
       "type": "weather"
    }} ]"""
-
-pokemon_webhook_payload = """[{{
-  "message": {{
-    "encounter_id": {id},
-    "pokemon_id": "{pokemon_id}",
-    "last_modified_time": {now} ,
-    "spawnpoint_id": {spawnid},
-    "latitude": {lat},
-    "longitude": {lon},
-    "disappear_time": {despawn_time_unix},
-    "time_until_hidden_ms": {tth}
-  }},
-  "type": "pokemon"
-}}]"""
 
 
 class WebhookHelper(object):
@@ -137,7 +122,8 @@ class WebhookHelper(object):
                     timeout=5
                 )
                 if response.status_code != 200:
-                    log.warning("Got status code other than 200 OK from webhook destination: %s" % str(response.status_code))
+                    log.warning(
+                        "Got status code other than 200 OK from webhook destination: %s" % str(response.status_code))
                 else:
                     log.info("Success sending webhook")
             except Exception as e:
@@ -176,10 +162,25 @@ class WebhookHelper(object):
         if self.__application_args.webhook and self.__application_args.weather_webhook:
             self.__add_task_to_loop(self._send_weather_webhook(s2_cell_id, weather_id, severe, warn, day, time))
 
-    def submit_pokemon_webhook(self, id, pokemon_id, now, spawnid, lat, lon, despawn_time_unix):
+    def send_pokemon_webhook(self, encounter_id, pokemon_id, last_modified_time, spawnpoint_id, lat, lon,
+                             despawn_time_unix,
+                             pokemon_level=None, cp_multiplier=None, form=None, cp=None,
+                             individual_attack=None, individual_defense=None, individual_stamina=None,
+                             move_1=None, move_2=None, height=None, weight=None):
         if self.__application_args.webhook and self.__application_args.pokemon_webhook:
-            self.__add_task_to_loop(self._submit_pokemon_webhook(id, pokemon_id, now, spawnid,
-                                                                 lat, lon, despawn_time_unix))
+            self.__add_task_to_loop(self._submit_pokemon_webhook(encounter_id=encounter_id, pokemon_id=pokemon_id,
+                                                                 last_modified_time=last_modified_time,
+                                                                 spawnpoint_id=spawnpoint_id, lat=lat, lon=lon,
+                                                                 despawn_time_unix=despawn_time_unix,
+                                                                 pokemon_level=pokemon_level,
+                                                                 cp_multiplier=cp_multiplier,
+                                                                 form=form, cp=cp,
+                                                                 individual_attack=individual_attack,
+                                                                 individual_defense=individual_defense,
+                                                                 individual_stamina=individual_stamina,
+                                                                 move_1=move_1, move_2=move_2,
+                                                                 height=height, weight=weight)
+                                    )
 
     async def _send_raid_webhook(self, gymid, type, start, end, lvl, mon,
                                  team_param=None, cp_param=None, move1_param=None, move2_param=None,
@@ -255,7 +256,7 @@ class WebhookHelper(object):
                 image_url = info_of_gym["url"]
                 if info_of_gym["description"]:
                     try:
-                        description = info_of_gym["description"]\
+                        description = info_of_gym["description"] \
                             .replace("\\", r"\\").replace('"', '').replace("\n", "")
                     except (ValueError, TypeError) as e:
                         description = ""
@@ -334,21 +335,54 @@ class WebhookHelper(object):
         else:
             log.debug("Weather Webhook Disabled")
 
-    async def _submit_pokemon_webhook(self, id, pokemon_id, now, spawnid, lat, lon, despawn_time_unix):
+    async def _submit_pokemon_webhook(self, encounter_id, pokemon_id, last_modified_time, spawnpoint_id, lat, lon,
+                                      despawn_time_unix,
+                                      pokemon_level=None, cp_multiplier=None, form=None, cp=None,
+                                      individual_attack=None, individual_defense=None, individual_stamina=None,
+                                      move_1=None, move_2=None, height=None, weight=None):
         log.info('Sending Pokemon %s (#%s) to webhook', pokemon_id, id)
 
-        tth = despawn_time_unix - now
+        mon_payload = {"encounter_id": encounter_id, "pokemon_id": pokemon_id, "last_modified_time": last_modified_time,
+                       "spawnpoint_id": spawnpoint_id, "latitude": lat, "longitude": lon,
+                       "disappear_time": despawn_time_unix}
+        tth = despawn_time_unix - last_modified_time
+        mon_payload["time_until_hidden_ms"] = tth
 
-        data = pokemon_webhook_payload.format(
-            id=id,
-            pokemon_id=pokemon_id,
-            now=now,
-            spawnid=spawnid,
-            lat=lat,
-            lon=lon,
-            despawn_time_unix=despawn_time_unix,
-            tth=tth)
+        if pokemon_level is not None:
+            mon_payload["pokemon_level"] = pokemon_level
 
-        log.debug(data)
-        payload = json.loads(data)
-        self.__sendToWebhook(payload)
+        if cp_multiplier is not None:
+            mon_payload["cp_multiplied"] = cp_multiplier
+
+        if form is not None:
+            mon_payload["form"] = form
+
+        if cp is not None:
+            mon_payload["cp"] = cp
+
+        if individual_attack is not None:
+            mon_payload["individual_attack"] = individual_attack
+
+        if individual_defense is not None:
+            mon_payload["individual_defense"] = individual_defense
+
+        if individual_stamina is not None:
+            mon_payload["individual_stamina"] = individual_stamina
+
+        if move_1 is not None:
+            mon_payload["move_1"] = move_1
+
+        if move_2 is not None:
+            mon_payload["move_2"] = move_2
+
+        if height is not None:
+            mon_payload["height"] = height
+
+        if weight is not None:
+            mon_payload["weight"] = weight
+
+        entire_payload = {"type": "pokemon", "message": mon_payload}
+
+        to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
+
+        self.__sendToWebhook(to_be_sent)

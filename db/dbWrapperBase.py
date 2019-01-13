@@ -237,7 +237,7 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def submit_mons_map_proto(self, origin, map_proto):
+    def submit_mons_map_proto(self, origin, map_proto, mon_ids_ivs):
         """
         Update/Insert mons from a map_proto dict
         """
