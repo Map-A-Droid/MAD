@@ -102,9 +102,6 @@ def parseArgs():
     parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots', # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
-    parser.add_argument('-ssvpath', '--successsave_path', default='ocr/success',
-                        help='Folder for saved Raidcrops. Default: ocr/success')
-
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
@@ -124,9 +121,6 @@ def parseArgs():
                         help=(
                             'Value of gym detection. The higher the more accurate is checked. 0.65 maybe generate '
                             'more false positive. Default: 0.75'))
-
-    parser.add_argument('-ssv', '--save_success', action='store_true', default=False,
-                        help='Save success submitted raidcrops.')
 
     parser.add_argument('-lc', '--last_scanned', action='store_true', default=False,
                         help='Submit last scanned location to RM DB (if supported). Default: False')
@@ -149,10 +143,6 @@ def parseArgs():
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
-
-    # timezone
-    parser.add_argument('-tz', '--timezone', type=int, required=False,
-                        help='Hours Difference to GMT0. f.e.: +2 for Berlin/Germany')
 
     # sleeptimer
     parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
