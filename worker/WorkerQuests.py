@@ -530,15 +530,17 @@ class WorkerQuests(WorkerBase):
             while self._clear_box and not self._clear_quest:
                 time.sleep(3)
                 self.clear_box(self._delayadd)
+                time.sleep(3)
                 self._clear_box = False
             time.sleep(0.5)
 
     def _clear_quest_thread(self):
         log.info('Starting clear Quest Thread')
         while True:
-            while self._clear_quest:
+            while self._clear_quest and not self._clear_box:
                 time.sleep(3)
                 self._clear_quests(self._delayadd)
+                time.sleep(3)
                 self._clear_quest = False
             time.sleep(0.5)
             
