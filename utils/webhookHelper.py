@@ -383,11 +383,11 @@ class WebhookHelper(object):
         if weight is not None:
             mon_payload["weight"] = weight
 
+        mon_payload = json.dumps(mon_payload, indent=4, sort_keys=False)
         entire_payload = {"type": "pokemon", "message": mon_payload}
 
-        to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
+        #to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
 
-        to_be_sent = plain_webhook.format(plain=to_be_sent)
-        log.debug(to_be_sent)
+        to_be_sent = plain_webhook.format(plain=entire_payload)
 
         self.__sendToWebhook(to_be_sent)
