@@ -354,7 +354,7 @@ class WebhookHelper(object):
             mon_payload["pokemon_level"] = pokemon_level
 
         if cp_multiplier is not None:
-            mon_payload["cp_multiplied"] = cp_multiplier
+            mon_payload["cp_multiplier"] = cp_multiplier
 
         if form is not None:
             mon_payload["form"] = form
