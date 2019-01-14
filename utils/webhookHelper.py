@@ -62,7 +62,7 @@ weather_webhook_payload = """[{{
       "type": "weather"
    }} ]"""
 
-plain_webhook = """[{{plain}}]"""
+plain_webhook = """[{{{plain}}}]"""
 
 
 class WebhookHelper(object):
