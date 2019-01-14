@@ -482,7 +482,7 @@ class PogoWindows:
             return False
             
         if self.__readCircleCount(filename, hash,
-                                          float(7), xcord=False, crop=True, click=False, canny=True) > 0:
+                                          float(7), xcord=True, crop=True, click=False, canny=True) > 0:
             log.debug("Found Pokeball.")
             return True
         return False

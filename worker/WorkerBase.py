@@ -198,9 +198,9 @@ class WorkerBase(ABC):
                 self._restartPogo()
                 return False
         self._redErrorCount = 0
-        log.debug("checkPogoMainScreen: checking mainscreen")
-        while not self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
-            log.debug("checkPogoMainScreen: not on Mainscreen...")
+        log.info("checkPogoMainScreen: checking mainscreen")
+        while self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
+            log.error("checkPogoMainScreen: not on Mainscreen...")
             if attempts > maxAttempts:
                 # could not reach raidtab in given maxAttempts
                 log.error("checkPogoMainScreen: Could not get to Mainscreen within %s attempts" % str(maxAttempts))
@@ -223,11 +223,8 @@ class WorkerBase(ABC):
 
             log.info("checkPogoMainScreen: Previous checks found popups: %s" % str(found))
 
-            if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
-                return False
-
             attempts += 1
-        log.debug("checkPogoMainScreen: done")
+        log.info("checkPogoMainScreen: done")
         return True
 
     def _getToRaidscreen(self, maxAttempts, again=False):
@@ -311,8 +308,6 @@ class WorkerBase(ABC):
     def _spin_wheel(self, delayadd):
         log.debug('{_spin_wheel} called')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
-        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
-        time.sleep(0.5)
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         return 
         

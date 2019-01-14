@@ -146,7 +146,7 @@ class WorkerQuests(WorkerBase):
         genPlayerStatThread.start()
         
         self.get_screen_size()
-        self._clear_quest = True
+        
         self._delayadd = int(self._devicesettings.get("vps_delay", 0))
 
         self._work_mutex.acquire()
@@ -285,9 +285,6 @@ class WorkerQuests(WorkerBase):
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
             
-            reachedRaidtab = self._checkPogoMainScreen(15, True)
-            if not reachedRaidtab:
-                self._restartPogo()
                 
             if self._applicationArgs.last_scanned:
                 log.info('main: Set new scannedlocation in Database')
@@ -305,6 +302,10 @@ class WorkerQuests(WorkerBase):
                 time.sleep(1)
             while self._clear_quest:
                 time.sleep(1)
+                
+            reachedRaidtab = self._checkPogoMainScreen(15, True)
+            if not reachedRaidtab:
+                self._restartPogo()
         
             while not 'Stop' in data_received and int(to) < 3:
                 curTime = time.time()
@@ -348,6 +349,7 @@ class WorkerQuests(WorkerBase):
                             to = 3
                             self._clear_box = True
                             roundcount = 0
+                            break
                         
                         if 'Quest' in  data_received:
                             self._close_gym(self._delayadd)
@@ -355,8 +357,11 @@ class WorkerQuests(WorkerBase):
                             roundcount += 1
                         
                             if roundcount == 10:
+                                time.sleep(1)
                                 self._clear_box = True
                                 roundcount = 0
+                                
+                            break
                             
                         if 'SB' in data_received:
                             log.error('Softban - waiting...')
@@ -534,17 +539,17 @@ class WorkerQuests(WorkerBase):
                 self.clear_box(self._delayadd)
                 time.sleep(3)
                 self._clear_box = False
-            time.sleep(0.5)
+            time.sleep(2)
 
     def _clear_quest_thread(self):
         log.info('Starting clear Quest Thread')
         while True:
-            while self._clear_quest and not self._clear_box:
+            while self._clear_quest:
                 time.sleep(3)
                 self._clear_quests(self._delayadd)
-                time.sleep(3)
+                time.sleep(1)
                 self._clear_quest = False
-            time.sleep(0.5)
+            time.sleep(2)
             
     def _gen_player_stat(self):
         log.info('Starting Player Stats Thread')
