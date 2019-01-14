@@ -62,6 +62,8 @@ weather_webhook_payload = """[{{
       "type": "weather"
    }} ]"""
 
+plain_webhook = """[{{plain}}]"""
+
 
 class WebhookHelper(object):
     def __init__(self, args):
@@ -384,5 +386,7 @@ class WebhookHelper(object):
         entire_payload = {"type": "pokemon", "message": mon_payload}
 
         to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
+
+        to_be_sent = plain_webhook.format(plain=to_be_sent)
 
         self.__sendToWebhook(to_be_sent)

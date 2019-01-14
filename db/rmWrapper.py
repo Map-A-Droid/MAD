@@ -630,6 +630,7 @@ class RmWrapper(DbWrapperBase):
             '%Y-%m-%d %H:%M:%S')
         init = True
 
+        spawnid = int(str(wild_pokemon['spawnpoint_id']), 16)
         getdetspawntime = self.get_detected_endtime(str(spawnid))
         if getdetspawntime:
             despawn_time_unix = self._gen_endtime(getdetspawntime)
@@ -663,7 +664,7 @@ class RmWrapper(DbWrapperBase):
             pokemon_display = {}
             # initialize to not run into nullpointer
 
-        query = {
+        query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
             "weight, height, gender, catch_prob_1, catch_prob_2, catch_prob_3, rating_attack, rating_defense, "
@@ -677,13 +678,13 @@ class RmWrapper(DbWrapperBase):
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "last_modified=VALUES(last_modified), costume=VALUES(costume), form=VALUES(form)"
-        }
+            "costume=VALUES(costume), form=VALUES(form)"
+        )
 
         vals = (
             abs(wild_pokemon.get("encounter_id")),
             wild_pokemon.get("spawnpoint_id"),
-            pokemon_data.get("pokemon_id"),
+            pokemon_data.get('id'),
             latitude, longitude, despawn_time,
             pokemon_data.get("individual_attack"),
             pokemon_data.get("individual_defense"),
@@ -723,7 +724,7 @@ class RmWrapper(DbWrapperBase):
 
         self.webhook_helper.send_pokemon_webhook(
             encounter_id=abs(wild_pokemon.get("encounter_id")),
-            pokemon_id=pokemon_data.get("pokemon_id"),
+            pokemon_id=pokemon_data.get("id"),
             last_modified_time=timestamp,
             spawnpoint_id=wild_pokemon.get("spawnpoint_id"),
             lat=latitude, lon=longitude,
