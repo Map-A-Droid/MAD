@@ -631,7 +631,7 @@ class MonocleWrapper(DbWrapperBase):
 
         self.webhook_helper.send_pokemon_webhook(
             encounter_id=abs(wild_pokemon.get("encounter_id")),
-            pokemon_id=pokemon_data.get("pokemon_id"),
+            pokemon_id=pokemon_data.get("id"),
             last_modified_time=timestamp,
             spawnpoint_id=wild_pokemon.get("spawnpoint_id"),
             lat=latitude, lon=longitude,
