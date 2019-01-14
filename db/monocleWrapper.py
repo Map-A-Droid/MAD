@@ -609,7 +609,7 @@ class MonocleWrapper(DbWrapperBase):
         )
         vals = (
             pokemon_data["id"],
-            wild_pokemon.get("spawnpoint_id"),
+            int(wild_pokemon.get("spawnpoint_id"), 16),
             despawn_time_unix,
             abs(wild_pokemon.get("encounter_id")),
             latitude, longitude, timestamp,
@@ -633,7 +633,7 @@ class MonocleWrapper(DbWrapperBase):
             encounter_id=abs(wild_pokemon.get("encounter_id")),
             pokemon_id=pokemon_data.get("id"),
             last_modified_time=timestamp,
-            spawnpoint_id=wild_pokemon.get("spawnpoint_id"),
+            spawnpoint_id=int(wild_pokemon.get("spawnpoint_id"), 16),
             lat=latitude, lon=longitude,
             despawn_time_unix=despawn_time_unix,
             pokemon_level=pokemon_level,
