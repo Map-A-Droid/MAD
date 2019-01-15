@@ -40,7 +40,7 @@ class Resocalculator(object):
         click_x = int(self._screen_x) / 1.07
         return click_x, click_y
         
-    def get_confirm_delete_quest_coords(self):
+    def get_swipe_item_amount(self):
         if int(self._xyratio) > 2:
             click_x1 = int(self._screen_x) / 1.46
             click_x2 = int(self._screen_x) / 1.26
@@ -50,6 +50,14 @@ class Resocalculator(object):
             click_x2 = int(self._screen_x) / 1.26
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.02)
         return click_x1, click_x2, click_y
+        
+    def get_confirm_delete_quest_coords(self):
+        click_x = int(self._screen_x) / 2
+        if int(self._xyratio) > 2:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.02)
+        else:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.22)
+        return click_x, click_y
         
     def get_item_menu_coords(self):
         click_x = int(self._screen_x) / 1.28
