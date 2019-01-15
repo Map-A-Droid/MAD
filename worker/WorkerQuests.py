@@ -133,20 +133,17 @@ class WorkerQuests(WorkerBase):
         t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
         
-        clearBoxThread = Thread(name='clearBoxThread%s' % self.id, target=self._clear_box_thread)
-        clearBoxThread.daemon = True
-        clearBoxThread.start()
-        
-        clearQuestThread = Thread(name='clearQuestThread%s' % self.id, target=self._clear_quest_thread)
-        clearQuestThread.daemon = True
-        clearQuestThread.start()
+    
+        clearThread = Thread(name='clearThread%s' % self.id, target=self._clear_thread)
+        clearThread.daemon = True
+        clearThread.start()
         
         genPlayerStatThread = Thread(name='genPlayerStatThread%s' % self.id, target=self._gen_player_stat)
         genPlayerStatThread.daemon = True
         genPlayerStatThread.start()
         
         self.get_screen_size()
-        
+        log.error(self._resocalc.get_confirm_delete_quest_coords(self))
         self._delayadd = int(self._devicesettings.get("vps_delay", 0))
 
         self._work_mutex.acquire()
@@ -160,7 +157,11 @@ class WorkerQuests(WorkerBase):
         self._work_mutex.release()
 
         self.loop_started.wait()
-
+        
+        reachedMainMenu = self._checkPogoMainScreen(15, True)
+        if not reachedMainMenu:
+            self._restartPogo()
+        
         currentLocation = self._last_known_state.get("last_location", None)
         if currentLocation is None:
             currentLocation = Location(0.0, 0.0)
@@ -298,13 +299,11 @@ class WorkerQuests(WorkerBase):
             to = 0
             data_received='-'
             
-            while self._clear_box:
-                time.sleep(1)
-            while self._clear_quest:
+            while self._clear_quest or self._clear_box:
                 time.sleep(1)
                 
-            reachedRaidtab = self._checkPogoMainScreen(15, True)
-            if not reachedRaidtab:
+            reachedMainMenu = self._checkPogoMainScreen(15, True)
+            if not reachedMainMenu:
                 self._restartPogo()
         
             while not 'Stop' in data_received and int(to) < 3:
@@ -312,7 +311,7 @@ class WorkerQuests(WorkerBase):
                 self._open_gym(self._delayadd)
                 data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                        timestamp=curTime, proto_to_wait_for=104,timeout=25)
-                log.error(data_received)                                                       
+                _data_err_counter = data_error_counter                                                    
                 if data_received is not None:
                     if 'Gym' in data_received:
                         log.debug('Clicking GYM')
@@ -340,7 +339,9 @@ class WorkerQuests(WorkerBase):
                     curTime = time.time()
                     self._spin_wheel(self._delayadd)
                     data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                               timestamp=curTime, proto_to_wait_for=101, timeout=15)
+                                                               timestamp=curTime, proto_to_wait_for=101, timeout=20)
+                    _data_err_counter = data_error_counter
+                    
                     if data_received is not None:
                     
                         if 'Box' in  data_received:
@@ -356,7 +357,7 @@ class WorkerQuests(WorkerBase):
                             self._clear_quest = True
                             roundcount += 1
                         
-                            if roundcount == 10:
+                            if roundcount == 30:
                                 time.sleep(1)
                                 self._clear_box = True
                                 roundcount = 0
@@ -378,8 +379,7 @@ class WorkerQuests(WorkerBase):
                         if to == 3:
                             self._close_gym(self._delayadd)
                     
-            _data_err_counter = data_error_counter
-
+                 
 
             log.debug("Releasing lock")
             self._work_mutex.release()
@@ -457,8 +457,12 @@ class WorkerQuests(WorkerBase):
                         if data['payload']['type'] == 1:
                             return 'Stop', data_err_counter
                             
+                    
+                            
                     if 'inventory_delta' in data['payload']:
-                        return 'Clear', data_err_counter
+                        if len(data['payload']['inventory_delta']['inventory_items']) > 0:
+                            print (data['payload'])
+                            return 'Clear', data_err_counter
                 else:
                     log.debug("latest timestamp of proto %s (%s) is older than %s"
                               % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
@@ -490,28 +494,35 @@ class WorkerQuests(WorkerBase):
         return data_requested, data_err_counter
         
     def clear_box(self, delayadd):
+        log.info('Cleanup Box')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(.5 + int(delayadd))
         x, y = self._resocalc.get_item_menu_coords(self)[0], self._resocalc.get_item_menu_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5 + int(delayadd))
+        time.sleep(1 + int(delayadd))
         data_received = '-'
         _data_err_counter = 0
         x, y = self._resocalc.get_delete_item_coords(self)[0], self._resocalc.get_delete_item_coords(self)[1]
+        click_x1, click_x2, click_y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1], self._resocalc.get_confirm_delete_quest_coords(self)[2]
         to = 0
-        while int(to) <= 10:
+        while int(to) <= 5:
             
             self._communicator.click(int(x), int(y))
             time.sleep(.5 + int(delayadd))
-            curTime = time.time()
             
+            
+            self._communicator.touchandhold(click_x1, click_y, click_x2, click_y)
+            time.sleep(3)
             delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], self._resocalc.get_confirm_delete_item_coords(self)[1]
+            curTime = time.time()
             self._communicator.click(int(delx), int(dely))
             
+            
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
-                                                           timestamp=curTime, proto_to_wait_for=4, timeout=15)
+                                                           timestamp=curTime, proto_to_wait_for=4, timeout=10)
             _data_err_counter = data_error_counter
+            log.error(data_received)
             
             if data_received is not None:
                 if 'Clear' in data_received:
@@ -521,14 +532,14 @@ class WorkerQuests(WorkerBase):
                     data_received = '-'
                     y += self._resocalc.get_next_item_coord(self)
             else:
-                self._communicator.backButton()
-                time.sleep(int(delayadd))
+                if not self._checkPogoButton():
+                    self._checkPogoClose()
                 data_received = '-'
                 y += self._resocalc.get_next_item_coord(self)
             
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(int(delayadd))    
+        time.sleep(1 + int(delayadd))    
         return True
         
     def _clear_box_thread(self):
@@ -541,14 +552,21 @@ class WorkerQuests(WorkerBase):
                 self._clear_box = False
             time.sleep(2)
 
-    def _clear_quest_thread(self):
+    def _clear_thread(self):
         log.info('Starting clear Quest Thread')
         while True:
-            while self._clear_quest:
-                time.sleep(3)
+            if self._clear_quest:
+                log.info('Clear Quest')
+                time.sleep(2)
                 self._clear_quests(self._delayadd)
-                time.sleep(1)
+                time.sleep(2)
                 self._clear_quest = False
+            if self._clear_box:
+                log.info('Clear Box')
+                time.sleep(2)
+                self.clear_box(self._delayadd)
+                time.sleep(2)
+                self._clear_box = False
             time.sleep(2)
             
     def _gen_player_stat(self):

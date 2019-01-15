@@ -199,7 +199,7 @@ class WorkerBase(ABC):
                 return False
         self._redErrorCount = 0
         log.info("checkPogoMainScreen: checking mainscreen")
-        while self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
+        while not self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
             log.error("checkPogoMainScreen: not on Mainscreen...")
             if attempts > maxAttempts:
                 # could not reach raidtab in given maxAttempts
@@ -226,6 +226,61 @@ class WorkerBase(ABC):
             attempts += 1
         log.info("checkPogoMainScreen: done")
         return True
+    
+    def _checkPogoButton(self):
+        log.debug("checkPogoButton: Trying to find buttons")
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return False
+
+        self._checkPogoFreeze()
+        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if again:
+                log.error("checkPogoButton: failed getting a screenshot again")
+                return False
+            log.debug("checkPogoButton: Got screenshot, checking GPS")
+        attempts = 0
+
+        if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+            log.error("checkPogoButton: screenshot.png is not a file/corrupted")
+            return False
+        
+        log.info("checkPogoButton: checking for buttons")
+        found = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), 2.20, 3.01)
+        if found:
+            log.info("checkPogoButton: Found button (small)")
+            log.info("checkPogoButton: done")
+            return True
+        log.info("checkPogoButton: done")
+        return False
+        
+    def _checkPogoClose(self):
+        log.debug("checkPogoClose: Trying to find closeX")
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return False
+
+        self._checkPogoFreeze()
+        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if again:
+                log.error("checkPogoClose: failed getting a screenshot again")
+                return False
+            log.debug("checkPogoClose: Got screenshot, checking GPS")
+        attempts = 0
+
+        if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+            log.error("checkPogoClose: screenshot.png is not a file/corrupted")
+            return False
+        
+        log.info("checkPogoClose: checking for CloseX")
+        found = self._pogoWindowManager.checkCloseExceptNearbyButton(
+                            os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id)
+        if found:
+            log.info("checkPogoClose: Found (X) button (except nearby)")
+            log.info("checkPogoClose: done")
+            return True
+        log.info("checkPogoClose: done")
+        return False
 
     def _getToRaidscreen(self, maxAttempts, again=False):
         # check for any popups (including post login OK)

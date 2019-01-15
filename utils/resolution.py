@@ -41,12 +41,15 @@ class Resocalculator(object):
         return click_x, click_y
         
     def get_confirm_delete_quest_coords(self):
-        click_x = int(self._screen_x) / 2
         if int(self._xyratio) > 2:
-            click_y = int(self._screen_y) - (int(self._screen_x) / 1.02)
+            click_x1 = int(self._screen_x) / 1.46
+            click_x2 = int(self._screen_x) / 1.26
+            click_y = int(self._screen_y) - (int(self._screen_x) / 0.87)
         else:
-            click_y = int(self._screen_y) - (int(self._screen_x) / 1.22)
-        return click_x, click_y
+            click_x1 = int(self._screen_x) / 1.46
+            click_x2 = int(self._screen_x) / 1.26
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.02)
+        return click_x1, click_x2, click_y
         
     def get_item_menu_coords(self):
         click_x = int(self._screen_x) / 1.28
@@ -64,7 +67,12 @@ class Resocalculator(object):
         
     def get_confirm_delete_item_coords(self):
         click_x = int(self._screen_x) / 2
-        click_y = int(self._screen_y) - (int(self._screen_x) / 1.5)
+        if int(self._xyratio) > 2:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.2)
+        else:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.5)
+        return click_x, click_y
+        
         return click_x, click_y
         
     def get_leave_mon_coords(self):
