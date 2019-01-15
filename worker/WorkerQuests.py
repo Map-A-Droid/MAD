@@ -143,7 +143,6 @@ class WorkerQuests(WorkerBase):
         genPlayerStatThread.start()
         
         self.get_screen_size()
-        log.error(self._resocalc.get_confirm_delete_quest_coords(self))
         self._delayadd = int(self._devicesettings.get("vps_delay", 0))
 
         self._work_mutex.acquire()
@@ -504,7 +503,7 @@ class WorkerQuests(WorkerBase):
         data_received = '-'
         _data_err_counter = 0
         x, y = self._resocalc.get_delete_item_coords(self)[0], self._resocalc.get_delete_item_coords(self)[1]
-        click_x1, click_x2, click_y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1], self._resocalc.get_confirm_delete_quest_coords(self)[2]
+        click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], self._resocalc.get_swipe_item_amount(self)[1], self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
         while int(to) <= 5:
             
