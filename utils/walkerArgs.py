@@ -192,6 +192,12 @@ def parseArgs():
     parser.add_argument('-mmnrsp', '--madmin_noresponsive', action='store_false', default=True,
                         help='MADmin deactivate responsive tables')
 
+    parser.add_argument('-mmuser', '--madmin_user', default='',
+                        help='Username for MADmin Frontend.')
+
+    parser.add_argument('-mmpassword', '--madmin_password', default='',
+                        help='Password for MADmin Frontend.')
+
     parser.add_argument('-pfile', '--position_file', default='current',
                         help='Filename for bot\'s current position (Default: current)')
 

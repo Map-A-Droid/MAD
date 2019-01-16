@@ -79,6 +79,8 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #madmin_time:                # MADmin clock format (12/24) (Default: 24)
 #madmin_noresponsive         # MADmin deactivate responsive tables
 #unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
+#madmin_user: madmin         # MADmin username for login
+#madmin_password: MySecret   # MADmin password for login
 
 # timezone settings
 ######################

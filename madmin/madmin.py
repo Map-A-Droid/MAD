@@ -9,14 +9,22 @@ sys.path.append("..")  # Adds higher directory to python modules path.
 import threading
 import logging
 import time
-from flask import (Flask, jsonify, render_template,
-                   request, send_from_directory, redirect)
+from flask import (
+    Flask,
+    jsonify,
+    render_template,
+    request,
+    send_from_directory,
+    redirect,
+    make_response
+)
 from flask_caching import Cache
 from utils.walkerArgs import parseArgs
 import json
 import os, glob, platform
 import re
 import datetime
+from functools import wraps
 from shutil import copyfile
 from math import floor
 import numbers
@@ -27,15 +35,31 @@ cache = Cache(app, config={'CACHE_TYPE': 'simple'})
 
 log = logging.getLogger(__name__)
 
-args = parseArgs()
+conf_args = parseArgs()
 
-if args.db_method == "rm":
-    db_wrapper = RmWrapper(args, None)
-elif args.db_method == "monocle":
-    db_wrapper = MonocleWrapper(args, None)
+if conf_args.db_method == "rm":
+    db_wrapper = RmWrapper(conf_args, None)
+elif conf_args.db_method == "monocle":
+    db_wrapper = MonocleWrapper(conf_args, None)
 else:
     log.error("Invalid db_method in config. Exiting")
     sys.exit(1)
+
+
+def auth_required(func):
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        username = getattr(conf_args, 'madmin_user', '')
+        password = getattr(conf_args, 'madmin_password', '')
+        if not username:
+            return func(*args, **kwargs)
+        if request.authorization:
+            if (request.authorization.username == username) and (
+                    request.authorization.password == password):
+                return func(*args, **kwargs)
+        return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+    return decorated
 
 
 # @app.before_first_request
@@ -54,6 +78,7 @@ def run_job():
 
 
 @app.after_request
+@auth_required
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
@@ -62,31 +87,37 @@ def after_request(response):
 
 
 @app.route('/screens', methods=['GET'])
+@auth_required
 def screens():
-    return render_template('screens.html', responsive=str(args.madmin_noresponsive).lower(), title="show success Screens")
+    return render_template('screens.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="show success Screens")
 
 
 @app.route('/', methods=['GET'])
+@auth_required
 def root():
     return render_template('index.html')
 
 
 @app.route('/raids', methods=['GET'])
+@auth_required
 def raids():
-    return render_template('raids.html', sort=str(args.madmin_sort), responsive=str(args.madmin_noresponsive).lower(), title="show Raid Matching")
+    return render_template('raids.html', sort=str(conf_args.madmin_sort), responsive=str(conf_args.madmin_noresponsive).lower(), title="show Raid Matching")
 
 
 @app.route('/gyms', methods=['GET'])
+@auth_required
 def gyms():
-    return render_template('gyms.html', sort=args.madmin_sort, responsive=str(args.madmin_noresponsive).lower(), title="show Gym Matching")
+    return render_template('gyms.html', sort=conf_args.madmin_sort, responsive=str(conf_args.madmin_noresponsive).lower(), title="show Gym Matching")
 
 
 @app.route('/unknown', methods=['GET'])
+@auth_required
 def unknown():
-    return render_template('unknown.html', responsive=str(args.madmin_noresponsive).lower(), title="show unkown Gym")
+    return render_template('unknown.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="show unkown Gym")
 
 
 @app.route('/map', methods=['GET'])
+@auth_required
 def map():
     return render_template('map.html')
     
@@ -96,9 +127,10 @@ def quest():
 
 
 @app.route("/submit_hash")
+@auth_required
 def submit_hash():
-    hash = request.args.get('hash')
-    id = request.args.get('id')
+    hash = request.conf_args.get('hash')
+    id = request.conf_args.get('id')
 
     if db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin"):
 
@@ -110,11 +142,12 @@ def submit_hash():
 
 
 @app.route("/modify_raid_gym")
+@auth_required
 def modify_raid_gym():
-    hash = request.args.get('hash')
-    id = request.args.get('id')
-    mon = request.args.get('mon')
-    lvl = request.args.get('lvl')
+    hash = request.conf_args.get('hash')
+    id = request.conf_args.get('id')
+    mon = request.conf_args.get('mon')
+    lvl = request.conf_args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
@@ -124,11 +157,12 @@ def modify_raid_gym():
 
 
 @app.route("/modify_raid_mon")
+@auth_required
 def modify_raid_mon():
-    hash = request.args.get('hash')
-    id = request.args.get('gym')
-    mon = request.args.get('mon')
-    lvl = request.args.get('lvl')
+    hash = request.conf_args.get('hash')
+    id = request.conf_args.get('gym')
+    mon = request.conf_args.get('mon')
+    lvl = request.conf_args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
@@ -138,9 +172,10 @@ def modify_raid_mon():
 
 
 @app.route("/modify_gym_hash")
+@auth_required
 def modify_gym_hash():
-    hash = request.args.get('hash')
-    id = request.args.get('id')
+    hash = request.conf_args.get('hash')
+    id = request.conf_args.get('id')
 
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'gym', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin")
@@ -149,18 +184,19 @@ def modify_gym_hash():
 
 
 @app.route("/near_gym")
+@auth_required
 def near_gym():
     nearGym = []
     with open('gym_info.json') as f:
         data = json.load(f)
-    lat = request.args.get('lat')
-    lon = request.args.get('lon')
+    lat = request.conf_args.get('lat')
+    lon = request.conf_args.get('lon')
     if lat == "9999":
         distance = int(9999)
-        lat = args.home_lat
-        lon = args.home_lng
+        lat = conf_args.home_lat
+        lon = conf_args.home_lng
     else:
-        distance = int(args.unknown_gym_distance)
+        distance = int(conf_args.unknown_gym_distance)
 
     if not lat or not lon:
         return 'Missing Argument...'
@@ -191,6 +227,7 @@ def near_gym():
 
 
 @app.route("/delete_hash")
+@auth_required
 def delete_hash():
     nearGym = []
     hash = request.args.get('hash')
@@ -207,6 +244,7 @@ def delete_hash():
 
 
 @app.route("/delete_file")
+@auth_required
 def delete_file():
     nearGym = []
     hash = request.args.get('hash')
@@ -222,6 +260,7 @@ def delete_file():
 
 
 @app.route("/get_gyms")
+@auth_required
 def get_gyms():
     gyms = []
     data = db_wrapper.get_gym_infos()
@@ -240,7 +279,7 @@ def get_gyms():
 
             creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
-            if args.madmin_time == "12":
+            if conf_args.madmin_time == "12":
                 creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
                 modify = datetime.datetime.strptime(modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
@@ -271,6 +310,7 @@ def get_gyms():
 
 
 @app.route("/get_raids")
+@auth_required
 def get_raids():
     raids = []
     eggIdsByLevel = [1, 1, 2, 2, 3]
@@ -318,7 +358,7 @@ def get_raids():
 
             creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
-            if args.madmin_time == "12":
+            if conf_args.madmin_time == "12":
                 creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
                 modify = datetime.datetime.strptime(modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
@@ -348,6 +388,7 @@ def get_raids():
 
 
 @app.route("/get_mons")
+@auth_required
 def get_mons():
     mons = []
     monList =[]
@@ -384,13 +425,14 @@ def get_mons():
 
 
 @app.route("/get_screens")
+@auth_required
 def get_screens():
     screens = []
 
-    for file in glob.glob(str(args.raidscreen_path) + "/raidscreen_*.png"):
+    for file in glob.glob(str(conf_args.raidscreen_path) + "/raidscreen_*.png"):
         creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
-        if args.madmin_time == "12":
+        if conf_args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
         screenJson = ({'filename': file, 'creation': creationdate})
@@ -400,6 +442,7 @@ def get_screens():
 
 
 @app.route("/get_unknows")
+@auth_required
 def get_unknows():
     unk = []
     for file in glob.glob("www_hash/unkgym_*.jpg"):
@@ -409,7 +452,7 @@ def get_unknows():
         lon = (unkfile.group(2))
         hashvalue = (unkfile.group(3))
 
-        if args.madmin_time == "12":
+        if conf_args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
         hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'creation': creationdate})
@@ -419,10 +462,11 @@ def get_unknows():
 
 
 @app.route("/get_position")
+@auth_required
 def get_position():
     position = []
     positionexport = {}
-    fileName = args.position_file+'.position'
+    fileName = conf_args.position_file+'.position'
 
     for filename in glob.glob('*.position'):
         name = filename.split('.')
@@ -449,6 +493,7 @@ def get_position():
 
 @cache.cached()
 @app.route("/get_route")
+@auth_required
 def get_route():
     route = []
     routeexport = {}
@@ -469,6 +514,7 @@ def get_route():
 
 
 @app.route("/get_spawns")
+@auth_required
 def get_spawns():
     coords = []
     data = json.loads(db_wrapper.download_spawns())
@@ -488,6 +534,7 @@ def get_spawns():
 
 @cache.cached()
 @app.route("/get_gymcoords")
+@auth_required
 def get_gymcoords():
     coords = []
 
@@ -547,61 +594,71 @@ def get_quests():
 
 
 @app.route('/gym_img/<path:path>', methods=['GET'])
+@auth_required
 def pushGyms(path):
     return send_from_directory('../ocr/gym_img', path)
 
 
 @app.route('/www_hash/<path:path>', methods=['GET'])
+@auth_required
 def pushHashes(path):
     return send_from_directory('../ocr/www_hash', path)
 
 
 @app.route('/screenshots/<path:path>', methods=['GET'])
+@auth_required
 def pushScreens(path):
-    return send_from_directory('../' + args.raidscreen_path, path)
+    return send_from_directory('../' + conf_args.raidscreen_path, path)
 
 
 
 @app.route('/match_unknows', methods=['GET'])
+@auth_required
 def match_unknows():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(args.madmin_noresponsive).lower(), title="match Unkown")
+    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(conf_args.madmin_noresponsive).lower(), title="match Unkown")
 
 
 @app.route('/modify_raid', methods=['GET'])
+@auth_required
 def modify_raid():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
     lvl = request.args.get('lvl')
     mon = request.args.get('mon')
-    return render_template('change_raid.html', hash = hash, lat = lat, lon = lon, lvl = lvl, mon = mon, responsive = str(args.madmin_noresponsive).lower(), title = "change Raid")
+    return render_template('change_raid.html', hash = hash, lat = lat, lon = lon, lvl = lvl, mon = mon, responsive = str(conf_args.madmin_noresponsive).lower(), title = "change Raid")
 
 
 @app.route('/modify_gym', methods=['GET'])
+@auth_required
 def modify_gym():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('change_gym.html', hash = hash, lat = lat, lon = lon, responsive = str(args.madmin_noresponsive).lower(), title = "change Gym")
+    return render_template('change_gym.html', hash = hash, lat = lat, lon = lon, responsive = str(conf_args.madmin_noresponsive).lower(), title = "change Gym")
 
 
 @app.route('/modify_mon', methods=['GET'])
+@auth_required
 def modify_mon():
     hash = request.args.get('hash')
     gym = request.args.get('gym')
     lvl = request.args.get('lvl')
-    return render_template('change_mon.html', hash = hash, gym = gym, lvl = lvl, responsive = str(args.madmin_noresponsive).lower(), title = "change Mon")
+    return render_template('change_mon.html', hash = hash, gym = gym, lvl = lvl, responsive = str(conf_args.madmin_noresponsive).lower(), title = "change Mon")
 
 
 @app.route('/asset/<path:path>', methods=['GET'])
+@auth_required
 def pushAssets(path):
-    return send_from_directory(str(args.pogoasset), path)
+    return send_from_directory(conf_args.pogoasset, path)
+
 
 
 @app.route('/config')
+@auth_required
 def config():
     fieldwebsite = []
     oldvalues = []
@@ -741,6 +798,7 @@ def config():
 
 
 @app.route('/delsetting', methods=['GET', 'POST'])
+@auth_required
 def delsetting():
 
     edit = request.args.get('edit')
@@ -779,6 +837,7 @@ def check_float(number):
 
 
 @app.route('/addedit', methods=['GET', 'POST'])
+@auth_required
 def addedit():
     data = request.args
     datavalue = {}
@@ -886,6 +945,7 @@ def match_typ(key):
     return key
 
 @app.route('/showsettings', methods=['GET', 'POST'])
+@auth_required
 def showsettings():
     table=''
     with open('configs/mappings.json') as f:
@@ -945,6 +1005,7 @@ def showsettings():
 
 
 @app.route('/addnew', methods=['GET', 'POST'])
+@auth_required
 def addnew():
     area = request.args.get('area')
     line = ''
@@ -1007,5 +1068,5 @@ def creation_date(path_to_file):
 
 if __name__ == "__main__":
     app.run()
-    # host='0.0.0.0', port=int(args.madmin_port), threaded=False)
+    # host='0.0.0.0', port=int(conf_args.madmin_port), threaded=False)
 
