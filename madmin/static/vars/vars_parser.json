@@ -133,7 +133,124 @@
 	    }
 	}
     ]
-	},{
+	},
+	{
+	"name": "iv_mitm",
+	"description": "IV worker for getting mon values",
+	"fields": [
+		{
+			"name": "name",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of area",
+				"lockonedit": "true"
+		    }
+	    },
+		{
+			"name": "geofence_included",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+			    "empty": "null",
+				"description": "Path to including geofence for scanarea"
+			}
+		},
+		{
+			"name": "geofence_excluded",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+			    "empty": "null",
+				"description": "Path to excluding geofence for scanarea"
+		    }
+	    },
+		{
+			"name": "routecalc",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "true",
+				"description": "Name of routefile"
+		    }
+	    }
+	],
+	"settings": [
+		{
+		"name": "speed",
+		"settings": {
+	    	"type": "text",
+			"require": "true",
+			"description": "Speed of player in kmh",
+			"output": "int"
+	    }
+	},
+	{
+		"name": "max_distance",
+		"settings": {
+			 "type": "text",
+			 "require": "true",
+			 "description": "Max. distance of walking - otherwise teleport to new location",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "delay_after_prio_event",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "priority_queue_clustering_timedelta",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "remove_from_queue_backlog",
+		"settings": {
+			 "type": "text",
+			 "require": "false",
+			 "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "starve_route",
+		"settings": {
+	    	 "type": "option",
+    		 "require": "false",
+	    	 "values": "false|true",
+			 "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "mon_ids_iv",
+		"settings": {
+	    	 "type": "text",
+    		 "require": "false",
+			 "description": "Encounter this mon ids (Put in brakets [1,2,3] as comma separated list!)",
+			 "output": "int"
+	    }
+	},
+	{
+		"name": "min_time_left_seconds",
+		"settings": {
+	    	 "type": "text",
+    		 "require": "false",
+			 "description": "Ignore mons with less spawntime in seconds",
+			 "output": "int"
+	    }
+	}
+    ]
+	},
+	{
 	"name": "pokestops",
 	"description": "Discover all quests from Pokestops",
 	"fields": [
