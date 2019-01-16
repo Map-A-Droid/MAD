@@ -219,7 +219,7 @@ class RouteManagerBase(ABC):
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))
                 time.sleep(0.5)
-        log.debug("%s: Location available, acquiring lock and trying to return location")
+        log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
         self._manager_mutex.acquire()
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route

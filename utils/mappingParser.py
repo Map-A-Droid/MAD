@@ -132,7 +132,7 @@ class MappingParser(object):
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area["mode"]]["range"]
                 max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
-                if not area.get("init", False) or len(coords) <= 400:
+                if not area.get("init", False):
                     log.info("Calculating route for %s" % str(area.get("name", "unknown")))
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
                                                                                      0, False))
@@ -148,6 +148,10 @@ class MappingParser(object):
                         with open(routefile + '.calc', 'a') as f:
                             for loc in coords:
                                 f.write(str(loc.lat) + ', ' + str(loc.lng) + '\n')
+                    # gotta feed the route to routemanager... TODO: without recalc...
+                    proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
+                                                                                     0, False))
+                    areas_procs[area["name"]] = proc
             # log.error("Calculated route, appending another coord and recalculating")
 
             area_dict["routemanager"] = route_manager

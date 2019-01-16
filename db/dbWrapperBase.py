@@ -448,7 +448,7 @@ class DbWrapperBase(ABC):
         return ret
 
     def submit_spawnpoints_map_proto(self, origin, map_proto):
-        log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
+        log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called with data received by %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
