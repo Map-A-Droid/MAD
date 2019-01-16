@@ -144,7 +144,8 @@ class MITMReceiver(object):
                     self._db_wrapper.submit_raids_map_proto(origin, data["payload"])
 
                     self._db_wrapper.submit_spawnpoints_map_proto(origin, data["payload"])
-                    self._db_wrapper.submit_mons_map_proto(origin, data["payload"])
+                    mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
+                    self._db_wrapper.submit_mons_map_proto(origin, data["payload"], mon_ids_iv)
                 except Exception as e:
                     log.error("Issue updating DB: %s" % str(e))
 

@@ -441,7 +441,7 @@ class MonocleWrapper(DbWrapperBase):
             "SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url, "
             "IFNULL(forts.park, 'unknown'), forts.sponsor, fort_sightings.team "
             "FROM forts "
-            "INNERT JOIN fort_sightings ON forts.id = fort_sightings.id"
+            "INNER JOIN fort_sightings ON forts.id = fort_sightings.id"
         )
 
         res = self.execute(query)
@@ -552,16 +552,17 @@ class MonocleWrapper(DbWrapperBase):
             return
         now = time.time()
         despawn_time = datetime.now() + timedelta(seconds=300)
+        despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
         despawn_time = datetime.utcfromtimestamp(
             time.mktime(despawn_time.timetuple())
         ).strftime('%Y-%m-%d %H:%M:%S')
         init = True
-
         getdetspawntime = self.get_detected_endtime(int(str(wild_pokemon["spawnpoint_id"]), 16))
 
         if getdetspawntime:
+            despawn_time_unix = self._gen_endtime(getdetspawntime)
             despawn_time = datetime.utcfromtimestamp(
-                self._gen_endtime(getdetspawntime)
+                despawn_time_unix
             ).strftime('%Y-%m-%d %H:%M:%S')
             init = False
 
@@ -570,13 +571,13 @@ class MonocleWrapper(DbWrapperBase):
         pokemon_data = wild_pokemon.get("pokemon_data")
 
         if init:
-            log.info("%s: updating mon #{0} at {1}, {2}. Despawning at {3} (init)".format(
+            log.info("{0}: updating mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
                                                                                       str(origin),
                                                                                       pokemon_data["id"],
                                                                                       latitude, longitude,
                                                                                       despawn_time))
         else:
-            log.info("%s: updating mon #{0} at {1}, {2}. Despawning at {3} (non-init)".format(
+            log.info("{0}: updating mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
                                                                                           str(origin),
                                                                                           pokemon_data["id"],
                                                                                           latitude, longitude,
@@ -590,36 +591,73 @@ class MonocleWrapper(DbWrapperBase):
 
             pokemon_level = round(pokemon_level) * 2 / 2
 
+        pokemon_display = pokemon_data.get("display")
+        if pokemon_display is None:
+            pokemon_display = {}
+            # initialize to not run into nullpointer
+
+        s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude, level=10)
+
         query = (
-            "UPDATE sightings "
-            "SET atk_iv = %s, def_iv = %s, sta_iv = %s, move_1 = %s, move_2 = %s, cp = %s, "
-            "updated = %s, weight = %s, level = %s "
-            "WHERE encounter_id = %s"
+            "INSERT INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
+            "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id, "
+            "atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight) "
+            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE updated=VALUES(UPDATED), atk_iv=VALUES(atk_iv), def_iv=VALUES(def_iv), "
+            "sta_iv=VALUES(sta_iv), move_1=VALUES(move_1), move_2=VALUES(move_2), cp=VALUES(cp), "
+            "level=VALUES(level), weight=VALUES(weight)"
         )
         vals = (
+            pokemon_data["id"],
+            int(wild_pokemon.get("spawnpoint_id"), 16),
+            despawn_time_unix,
+            abs(wild_pokemon.get("encounter_id")),
+            latitude, longitude, timestamp,
+            pokemon_display.get("gender_value", None),
+            pokemon_display.get("form_value", None),
+            pokemon_display.get("weather_boosted_value", None),
+            s2_weather_cell_id,
             pokemon_data.get("individual_attack"),
             pokemon_data.get("individual_defense"),
             pokemon_data.get("individual_stamina"),
             pokemon_data.get("move_1"),
             pokemon_data.get("move_2"),
             pokemon_data.get("cp"),
-            timestamp,
-            pokemon_data.get("weight"),
             pokemon_level,
-            abs(wild_pokemon.get("encounter_id"))
+            pokemon_data.get("weight"),
         )
 
         self.execute(query, vals, commit=True)
 
-    def submit_mons_map_proto(self, origin, map_proto):
+        self.webhook_helper.send_pokemon_webhook(
+            encounter_id=abs(wild_pokemon.get("encounter_id")),
+            pokemon_id=pokemon_data.get("id"),
+            last_modified_time=timestamp,
+            spawnpoint_id=int(wild_pokemon.get("spawnpoint_id"), 16),
+            lat=latitude, lon=longitude,
+            despawn_time_unix=despawn_time_unix,
+            pokemon_level=pokemon_level,
+            cp_multiplier=pokemon_data.get("cp_multiplier"),
+            form=pokemon_display.get("form_value", None),
+            cp=pokemon_data.get("cp"),
+            individual_attack=pokemon_data.get("individual_attack"),
+            individual_defense=pokemon_data.get("individual_defense"),
+            individual_stamina=pokemon_data.get("individual_stamina"),
+            move_1=pokemon_data.get("move_1"),
+            move_2=pokemon_data.get("move_2"),
+            height=pokemon_data.get("height"),
+            weight=pokemon_data.get("weight")
+        )
+
+    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
         query_mons = (
-            "INSERT IGNORE INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
-            "lat, lon, atk_iv, def_iv, sta_iv, move_1, move_2, gender, form, cp, level, updated, "
-            "weather_boosted_condition, weather_cell_id, weight) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "INSERT INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
+            "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE updated=VALUES(updated)"
         )
 
         mon_vals = []
@@ -651,10 +689,11 @@ class MonocleWrapper(DbWrapperBase):
 
                 mon_id = wild_mon['pokemon_data']['id']
 
-                self.webhook_helper.submit_pokemon_webhook(
-                    wild_mon['encounter_id'], mon_id, time.time(),
-                    spawnid, lat, lon, despawn_time_unix
-                )
+                if mon_ids_iv is not None and mon_id not in mon_ids_iv:
+                    self.webhook_helper.send_pokemon_webhook(
+                        wild_mon['encounter_id'], mon_id, time.time(),
+                        spawnid, lat, lon, despawn_time_unix
+                    )
 
                 mon_vals.append(
                     (
@@ -663,14 +702,11 @@ class MonocleWrapper(DbWrapperBase):
                         despawn_time_unix,
                         abs(wild_mon['encounter_id']),
                         lat, lon,
-                        None, None, None, None, None,  # IVs and moves
+                        now,
                         wild_mon['pokemon_data']['display']['gender_value'],
                         wild_mon['pokemon_data']['display']['form_value'],
-                        None, None,  # CP and level
-                        now,
                         wild_mon['pokemon_data']['display']['weather_boosted_value'],
-                        s2_weather_cell_id,
-                        None  # weight
+                        s2_weather_cell_id
                     )
                 )
 

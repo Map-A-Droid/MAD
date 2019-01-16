@@ -219,14 +219,14 @@ class RouteManagerBase(ABC):
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))
                 time.sleep(0.5)
-        log.debug("%s: Location available, acquiring lock and trying to return location")
+        log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
         self._manager_mutex.acquire()
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route
 
         # determine whether we move to the next location or the prio queue top's item
         if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
-                                                             and len(self._prio_queue) > 0
+                                                             and self._prio_queue and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
             log.debug("%s: Priority event" % str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]
