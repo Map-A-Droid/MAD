@@ -123,7 +123,7 @@ def map():
     
 @app.route('/quests', methods=['GET'])
 def quest():
-    return render_template('quests.html', responsive=str(args.madmin_noresponsive).lower(), title="show daily Quests")
+    return render_template('quests.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="show daily Quests")
 
 
 @app.route("/submit_hash")
