@@ -22,7 +22,6 @@ class ReceivedMapper(object):
     def update_retrieved(self, origin, method, data, timestamp):
         updated = False
         self.__mapping_mutex.acquire()
-        log.error(data)
         if origin in self.__mapping.keys():
             log.debug("Updating timestamp of %s with method %s to %s" % (str(origin), str(method), str(timestamp)))
             self.__mapping[origin][method] = {}

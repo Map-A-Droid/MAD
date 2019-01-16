@@ -131,7 +131,6 @@ class MITMReceiver(object):
     def process_data(self, received_timestamp, data, origin):
         global application_args
         type = data.get("type", None)
-        log.error(data)
         if type:
             if type == 106:
                 # process GetMapObject
