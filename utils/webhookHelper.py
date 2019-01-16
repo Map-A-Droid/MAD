@@ -62,7 +62,7 @@ weather_webhook_payload = """[{{
       "type": "weather"
    }} ]"""
 
-plain_webhook = """[{{plain}}]"""
+plain_webhook = """[{plain}]"""
 
 
 class WebhookHelper(object):
@@ -354,7 +354,7 @@ class WebhookHelper(object):
             mon_payload["pokemon_level"] = pokemon_level
 
         if cp_multiplier is not None:
-            mon_payload["cp_multiplied"] = cp_multiplier
+            mon_payload["cp_multiplier"] = cp_multiplier
 
         if form is not None:
             mon_payload["form"] = form
@@ -382,11 +382,10 @@ class WebhookHelper(object):
 
         if weight is not None:
             mon_payload["weight"] = weight
-
+            
         entire_payload = {"type": "pokemon", "message": mon_payload}
-
         to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
-
         to_be_sent = plain_webhook.format(plain=to_be_sent)
+        to_be_sent = json.loads(to_be_sent)
 
         self.__sendToWebhook(to_be_sent)
