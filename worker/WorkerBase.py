@@ -99,6 +99,16 @@ class WorkerBase(ABC):
             time.sleep(1)
             pogoTopmost = self._communicator.isPogoTopmost()
         return stopResult
+        
+    def _start_pogodroid(self):
+        start_result = False
+        start_result = self._communicator.startApp("com.mad.pogodroid")
+        return start_result
+    
+    def _stopPogoDroid(self):
+        stopResult= False
+        stopResult = self._communicator.stopApp("com.mad.pogodroid")
+        return stopResult
 
     def _restartPogo(self, clear_cache=True):
         successfulStop = self._stopPogo()
@@ -108,6 +118,14 @@ class WorkerBase(ABC):
                 self._communicator.clearAppCache("com.nianticlabs.pokemongo")
             time.sleep(1)
             return self._start_pogo()
+        else:
+            return False
+
+    def _restartPogoDroid(self):
+        successfulStop = self._stopPogoDroid()
+        log.debug("restartPogoDroid: stop pogodriud resulted in %s" % str(successfulStop))
+        if successfulStop:
+            return self._start_pogodroid()
         else:
             return False
 

@@ -115,11 +115,8 @@ class WorkerQuests(WorkerBase):
             log.warning("startPogo: Starting pogo...")
             time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
-            self._communicator.click(int(360), int(700))
-
-            # let's handle the login and stuff
+            self._checkPogoMainScreen(15, True)
             reached_raidtab = True
-
         return reached_raidtab
 
     # TODO: update state...
@@ -144,6 +141,8 @@ class WorkerQuests(WorkerBase):
         
         self.get_screen_size()
         self._delayadd = int(self._devicesettings.get("vps_delay", 0))
+        
+        
 
         self._work_mutex.acquire()
         try:
@@ -156,6 +155,7 @@ class WorkerQuests(WorkerBase):
         self._work_mutex.release()
 
         self.loop_started.wait()
+        
         
         reachedMainMenu = self._checkPogoMainScreen(15, True)
         if not reachedMainMenu:
@@ -415,9 +415,11 @@ class WorkerQuests(WorkerBase):
                 data_err_counter += 1
                 if 156 in latest:
                     if latest[156]['timestamp'] >= timestamp:
+                        data_err_counter = 0
                         return 'Gym', data_err_counter
                 if 102 in latest:
                     if latest[102]['timestamp'] >= timestamp:
+                        data_err_counter = 0
                         return 'Mon', data_err_counter
                 time.sleep(0.5)
             else:
@@ -436,40 +438,49 @@ class WorkerQuests(WorkerBase):
 
                     if 'items_awarded' in data['payload']:
                         if data['payload']['result'] == 1 and len(data['payload']['items_awarded'])>0:
+                            data_err_counter = 0
                             return 'Quest', data_err_counter
                         elif data['payload']['result'] == 1 and len(data['payload']['items_awarded'])==0:
+                            data_err_counter = 0
                             return 'Time', data_err_counter
                         elif data['payload']['result'] == 2:
+                            data_err_counter = 0
                             return 'SB', data_err_counter
                         elif data['payload']['result'] == 4:
+                            data_err_counter = 0
                             return 'Box', data_err_counter
                             
                     if 156 in latest:
                         if latest[156]['timestamp'] >= timestamp:
+                            data_err_counter = 0
                             return 'Gym', data_err_counter
                     if 102 in latest:
                         if latest[102]['timestamp'] >= timestamp:
+                            data_err_counter = 0
                             return 'Mon', data_err_counter
                         
 
                     if 'fort_id' in data['payload']:
                         if data['payload']['type'] == 1:
+                            data_err_counter = 0
                             return 'Stop', data_err_counter
                             
                     
                             
                     if 'inventory_delta' in data['payload']:
                         if len(data['payload']['inventory_delta']['inventory_items']) > 0:
-                            print (data['payload'])
+                            data_err_counter = 0
                             return 'Clear', data_err_counter
                 else:
                     log.debug("latest timestamp of proto %s (%s) is older than %s"
                               % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
                     if 156 in latest:
                         if latest[156]['timestamp'] >= timestamp:
+                            data_err_counter = 0
                             return 'Gym', data_err_counter
                     if 102 in latest:
                         if latest[102]['timestamp'] >= timestamp:
+                            data_err_counter = 0
                             return 'Mon', data_err_counter
                     data_err_counter += 1
                     time.sleep(0.5)
@@ -479,6 +490,7 @@ class WorkerQuests(WorkerBase):
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
             if data_err_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
+                self._restartPogoDroid()
                 self._restartPogo(False)
                 return None, 0
             elif data_requested is None:
