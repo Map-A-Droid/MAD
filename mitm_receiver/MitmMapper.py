@@ -1,6 +1,6 @@
 import logging
 from threading import Lock
-
+from utils.stats import PlayerStats
 
 log = logging.getLogger(__name__)
 
@@ -8,10 +8,13 @@ log = logging.getLogger(__name__)
 class MitmMapper(object):
     def __init__(self, device_mappings):
         self.__mapping = {}
+        self._playerstats = {}
         self.__mapping_mutex = Lock()
         if device_mappings is not None:
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}
+                self._playerstats[origin] = PlayerStats(origin)
+                self._playerstats[origin]._open_player_stats()
 
     def request_latest(self, origin, key=None):
         self.__mapping_mutex.acquire()

@@ -135,10 +135,6 @@ class WorkerQuests(WorkerBase):
         clearThread.daemon = True
         clearThread.start()
         
-        genPlayerStatThread = Thread(name='genPlayerStatThread%s' % self.id, target=self._gen_player_stat)
-        genPlayerStatThread.daemon = True
-        genPlayerStatThread.start()
-        
         self.get_screen_size()
         self._delayadd = int(self._devicesettings.get("vps_delay", 0))
         
@@ -552,16 +548,6 @@ class WorkerQuests(WorkerBase):
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))    
         return True
-        
-    def _clear_box_thread(self):
-        log.info('Starting clear Box Thread')
-        while True:
-            while self._clear_box and not self._clear_quest:
-                time.sleep(3)
-                self.clear_box(self._delayadd)
-                time.sleep(3)
-                self._clear_box = False
-            time.sleep(2)
 
     def _clear_thread(self):
         log.info('Starting clear Quest Thread')
@@ -579,14 +565,4 @@ class WorkerQuests(WorkerBase):
                 time.sleep(2)
                 self._clear_box = False
             time.sleep(2)
-            
-    def _gen_player_stat(self):
-        log.info('Starting Player Stats Thread')
-        timestamp = time.time()
-        while True:
-            timestamp = time.time()
-            latest = self._mitm_mapper.request_latest(self.id)
-            if 4 in latest:
-                #if latest[4]['timestamp'] >= timestamp:
-                self._gen_player_stats(latest[4]['values']["payload"])
             
