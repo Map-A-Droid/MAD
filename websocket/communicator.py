@@ -60,6 +60,30 @@ class Communicator:
         response = self.websocketHandler.sendAndWait(self.id, "screen size", self.__commandTimeout)
         return response
 
+    def get_screenshot_single(self, path):
+        self.__sendMutex.acquire()
+        encoded = self.websocketHandler.sendAndWait(self.id, "screen single\r\n", self.__commandTimeout)
+        self.__sendMutex.release()
+        if encoded is None:
+            return False
+        elif isinstance(encoded, str):
+            log.debug("Screenshot response not binary")
+            if "KO: " in encoded:
+                log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                return False
+            elif "OK:" not in encoded:
+                log.error("getScreenshot: response not OK")
+                return False
+            return False
+        else:
+            log.debug("Storing screenshot...")
+
+            fh = open(path, "wb")
+            fh.write(encoded)
+            fh.close()
+            log.debug("Done storing, returning")
+            return True
+
     def getScreenshot(self, path):
         self.__sendMutex.acquire()
         encoded = self.websocketHandler.sendAndWait(self.id, "screen capture\r\n", self.__commandTimeout)
@@ -127,42 +151,3 @@ class Communicator:
                                                      self.__commandTimeout)
         self.__sendMutex.release()
         return response
-        # startLat = float(startLat)
-        # startLng = float(startLng)
-        # destLat = float(destLat)
-        # destLng = float(destLng)
-        # start = gpxdata.TrackPoint(startLat, startLng, 1.0, datetime.datetime(2010, 1, 1, 0, 0, 0))
-        # dest = gpxdata.TrackPoint(destLat, destLng, 1.0, datetime.datetime(2010, 1, 1, 0, 0, 15))
-        #
-        # t_speed = None
-        # if speed:
-        #     t_speed = speed / 3.6
-        # log.debug("walkFromTo: calling __walkTrackSpeed")
-        # self.__walkTrackSpeed(start, t_speed, dest)
-
-    # TODO: errorhandling, return value
-    def __walkTrackSpeed(self, start, speed, dest):
-        log.debug("__walkTrackSpeed: called, calculating distance and travel_time")
-        distance = start.distance(dest)
-        travel_time = distance / speed
-
-        if travel_time <= Communicator.UPDATE_INTERVAL:
-            log.debug("__walkTrackSpeed: travel_time is <= UPDATE_INTERVAL")
-            time.sleep(travel_time)
-
-        log.debug("__walkTrackSpeed: starting to walk")
-        while travel_time > Communicator.UPDATE_INTERVAL:
-            log.debug("__walkTrackSpeed: sleeping for %s" % str(Communicator.UPDATE_INTERVAL))
-            time.sleep(Communicator.UPDATE_INTERVAL)
-            log.debug("__walkTrackSpeed: Next round")
-            travel_time -= Communicator.UPDATE_INTERVAL
-            # move GEOFIX_UPDATE_INTERVAL*speed meters
-            # in straight line between last_point and point
-            course = start.course(dest)
-            distance = Communicator.UPDATE_INTERVAL * speed
-            start = start + gpxdata.CourseDistance(course, distance)
-            startLat = start.lat
-            startLng = start.lon
-            log.debug("__walkTrackSpeed: sending location")
-            self.setLocation(repr(startLat), repr(startLng), "")
-            log.debug("__walkTrackSpeed: done sending location")
