@@ -1,7 +1,7 @@
 import shutil
 import sys
 import time
-import re
+
 import requests
 
 from db.dbWrapperBase import DbWrapperBase
@@ -452,7 +452,7 @@ class MonocleWrapper(DbWrapperBase):
                     filename = url_image_path + '_' + str(id) + '_.jpg'
                     log.debug('Downloading', filename)
                     self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encode_hash_json(team, lat, lon, name, url, park, sponsor)
+                gyminfo[id] = self.__encode_hash_json(team, lat, lon, str(name).replace('"', '\\"').replace('\n', '\\n'), url, park, sponsor)
 
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
@@ -473,7 +473,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (external_id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), re.escape(str(name)), str(url), park, sponsor)
+            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), str(name).replace('"', '\\"').replace('\n', '\\n'), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):

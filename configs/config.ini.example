@@ -69,6 +69,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #position_file:              # Filename for the bot's current position (Default: current)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
+#use_media_projection        # Use Mediaprojection for transfering images (OCR)
 
 # MADmin
 ######################
