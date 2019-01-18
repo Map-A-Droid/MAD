@@ -415,46 +415,6 @@ class WorkerBase(ABC):
         self._communicator.click(int(x), int(y))
         log.debug('{_clear_quests} finished')
         return
-        
-    def _gen_player_stats(self, data):
-        if 'inventory_delta' not in data:
-            return True
-        stats= data['inventory_delta'].get("inventory_items", None)
-        if len(stats) > 0 :
-            for data_inventory in stats:
-                player_level = data_inventory['inventory_item_data']['player_stats']['level']
-                if int(player_level) > 0:
-                    if int(self._player_level) > 0:
-                        if int(self._player_level) != int(player_level):
-                            self._level_up = True
-                    
-                    self.player_level = int(player_level)
-                            
-                    data = {}  
-                    data[self.id] = []
-                    data[self.id].append({  
-                        'level': str(data_inventory['inventory_item_data']['player_stats']['level']), 
-                        'experience': str(data_inventory['inventory_item_data']['player_stats']['experience']),
-                        'km_walked': str(data_inventory['inventory_item_data']['player_stats']['km_walked']),
-                        'pokemons_encountered': str(data_inventory['inventory_item_data']['player_stats']['pokemons_encountered']),
-                        'poke_stop_visits': str(data_inventory['inventory_item_data']['player_stats']['poke_stop_visits'])
-                    })
-                    with open(self.id + '.stats', 'w') as outfile:  
-                        json.dump(data, outfile, indent=4, sort_keys=True)
-                        
-    def _check_weather_popup(self, data):
-        if 'client_weather' not in data:
-            return True
-        if len(data['client_weather']) > 0:
-            weatherwarn = False
-            for weatherdata in data['client_weather']:
-                for weathercelldata in weatherdata['alerts']:
-                    if weathercelldata.get('is_warn_weather'):
-                        weatherwarn = True
-                        
-                    else:
-                        weatherwarn = False
-            self._weatherwarn = weatherwarn
             
                     
     

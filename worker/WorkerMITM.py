@@ -291,10 +291,7 @@ class WorkerMITM(WorkerBase):
         while data_requested is None and timestamp + timeout >= time.time():
             # let's check for new data...
             # log.info('Requesting latest...')
-            latest = self._mitm_mapper.request_latest(self.id)
-            if 4 in latest:
-                if latest[4]['timestamp'] >= timestamp:
-                    self._gen_player_stats(latest[4]['values']["payload"])
+            latest = self._mitm_mapper.request_latest(self.id)  
             if latest is None:
                 log.warning('Nothing received from client since MAD started...')
                 # we did not get anything from that client at all, let's check again in a sec
@@ -350,6 +347,7 @@ class WorkerMITM(WorkerBase):
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
             if data_err_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
+                self._restartPogoDroid()
                 self._restartPogo(False)
                 return None, 0
             elif data_requested is None:
