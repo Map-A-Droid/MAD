@@ -1,7 +1,7 @@
 import shutil
 import sys
 import time
-
+import re
 import requests
 
 from db.dbWrapperBase import DbWrapperBase
@@ -516,7 +516,7 @@ class RmWrapper(DbWrapperBase):
                     filename = url_image_path + '_' + str(gym_id) + '_.jpg'
                     log.debug('Downloading', filename)
                     self.__download_img(str(url), str(filename))
-                gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, name, description, url)
+                gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, re.escape(name), description, url)
 
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
@@ -539,7 +539,7 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (gym_id, latitude, longitude, name, description, url, team_id) in res:
-            gyminfo[gym_id] = self.__encode_hash_json(team_id, float(latitude), float(longitude), str(name),
+            gyminfo[gym_id] = self.__encode_hash_json(team_id, float(latitude), float(longitude), re.escape(str(name)),
                                                       description, url)
         return gyminfo
 

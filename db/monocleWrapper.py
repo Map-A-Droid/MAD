@@ -1,7 +1,7 @@
 import shutil
 import sys
 import time
-
+import re
 import requests
 
 from db.dbWrapperBase import DbWrapperBase
@@ -473,7 +473,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (external_id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), str(name), str(url), park, sponsor)
+            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), re.escape(str(name)), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
