@@ -154,7 +154,7 @@ class WorkerBase(ABC):
             log.debug("Screenshot taken recently, skipping")
             return True
         # TODO: screenshot.png needs identifier in name
-        elif not self._communicator.getScreenshot(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+        elif not self._communicator.get_screenshot_single(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
             log.error("takeScreenshot: Failed retrieving screenshot")
             log.debug("Failed retrieving screenshot")
             return False
