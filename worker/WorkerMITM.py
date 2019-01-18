@@ -320,7 +320,6 @@ class WorkerMITM(WorkerBase):
                     if current_mode == 'mon_mitm' or current_mode == "iv_mitm":
                         data_err_counter = 0
                         for data_extract in data['payload']['cells']:
-                            print (data_extract)
                             for WP in data_extract['wild_pokemon']:
                                 # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                                 if WP['spawnpoint_id']:
