@@ -318,11 +318,17 @@ class WorkerMITM(WorkerBase):
 
                 if latest_timestamp >= timestamp:
                     if current_mode == 'mon_mitm' or current_mode == "iv_mitm":
+                        data_err_counter = 0
                         for data_extract in data['payload']['cells']:
                             for WP in data_extract['wild_pokemon']:
                                 # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                                 if WP['spawnpoint_id']:
                                     data_requested = data
+                                    break
+                            if data_requested is None:
+                                for catchable_pokemon in data_extract['catchable_pokemons']:
+                                    if catchable_pokemon['spawn_id']:
+                                        data_requested = data
                         if data_requested is None:
                             log.debug("No spawnpoints in data requested")
                     elif current_mode == 'raids_mitm':
