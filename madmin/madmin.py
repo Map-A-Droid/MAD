@@ -854,7 +854,6 @@ def addedit():
 
     with open('configs/mappings.json') as f:
         mapping = json.load(f)
-
     with open('madmin/static/vars/settings.json') as f:
         settings = json.load(f)
 
@@ -924,10 +923,7 @@ def addedit():
     return redirect("/showsettings", code=302)
 
 def match_typ(key):
-    if '[' in key or ']' in key:
-        print (key)
-        #key = map(int, key.replace('[', '').replace(']', '').split(','))
-        #key = list(map (int, key.replace('[', '').replace(']', '').split(',')))
+    if '[' in key and ']' in key:
         key = list(key.replace('[', '').replace(']', '').split(','))
         key = [int(i) for i in key]
     elif key in 'true':

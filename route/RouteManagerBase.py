@@ -46,6 +46,7 @@ class RouteManagerBase(ABC):
         self._current_index_of_route = 0
         if settings is not None:
             self.delay_after_timestamp_prio = settings.get("delay_after_prio_event", None)
+            if self.delay_after_timestamp_prio == 0 : self.delay_after_timestamp_prio = None
             self.starve_route = settings.get("starve_route", False)
         else:
             self.delay_after_timestamp_prio = None
