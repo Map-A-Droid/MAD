@@ -286,7 +286,7 @@ class WorkerMITM(WorkerBase):
     def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
 
-        log.info('Waiting for data...')
+        log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
         while data_requested is None and timestamp + timeout >= time.time():
             # let's check for new data...
@@ -318,11 +318,17 @@ class WorkerMITM(WorkerBase):
 
                 if latest_timestamp >= timestamp:
                     if current_mode == 'mon_mitm' or current_mode == "iv_mitm":
+                        data_err_counter = 0
                         for data_extract in data['payload']['cells']:
                             for WP in data_extract['wild_pokemon']:
                                 # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                                 if WP['spawnpoint_id']:
                                     data_requested = data
+                                    break
+                            if data_requested is None:
+                                for catchable_pokemon in data_extract['catchable_pokemons']:
+                                    if catchable_pokemon['spawn_id']:
+                                        data_requested = data
                         if data_requested is None:
                             log.debug("No spawnpoints in data requested")
                     elif current_mode == 'raids_mitm':
