@@ -451,48 +451,6 @@ class DbWrapperBase(ABC):
             spawnret[row[0]] = row[1]
 
         return spawnret
-        
-    def submit_spawnpoints_proto(self,map_proto):
-        log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
-        cells = map_proto.get("cells", None)
-        if cells is None:
-            return False
-        spawnpoint_args, spawnpoint_args_unseen = [], []
-
-        query_spawnpoints = (
-            "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
-            "last_scanned, spawndef) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned) "
-        )
-
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        dt = datetime.now()
-
-        for cell in cells:
-            for spawnpoint in cell["spawnpoints"]:
-                tmpLat = spawnpoint['latitude']
-                tmpLng = spawnpoint['longitude']
-                spawnid = S2Helper.get_cellid_from_latlng(tmpLat, tmpLng)
-                spawnid_nohex = int(str(spawnid), 16)
-                lat, lng, alt = S2Helper.get_position_from_cell(int(str(spawnid) + '00000', 16))
-
-                earliest_unseen = 99999999
-                last_non_scanned = now
-                calcendtime = None
-                spawnpoint[spawnid_nohex] = spawnid_nohex
-
-                # TODO calculate newspawndef or check if spawnpoint ID already exists
-                # TODO check whether we don't accidentally overwrite a spawn from wild_pokemon
-
-                spawnpoint_args_unseen.append(
-                    (
-                        spawnid_nohex, lat, lng, earliest_unseen, last_non_scanned, DbWrapperBase.def_spawn
-                    )
-                )
-
-        self.executemany(query_spawnpoints, spawnpoint_args_unseen, commit=True)
-
 
     def submit_spawnpoints_map_proto(self, map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
