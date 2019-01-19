@@ -189,6 +189,8 @@ class RouteManagerBase(ABC):
         """
         # timedelta_seconds = self._cluster_priority_queue_criteria()
         if self.mode == "iv_mitm":
+            # exclude IV prioQ to also pass encounterIDs since we do not pass additional information through when
+            # clustering
             return latest
         delete_seconds_passed = 0
         if self.settings is not None:

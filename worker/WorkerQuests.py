@@ -39,20 +39,17 @@ class WorkerQuests(WorkerBase):
         self._clear_box = False
         self._clear_quest = False
         self._delayadd = 0
-        
 
     def __update_injection_settings(self):
-        if MadGlobals.sleep and self._route_manager_nighttime is None:
-            # worker has to sleep, just empty out the settings...
-            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="mon_ids_iv",
-                                            values_dict={})
-        else:
-            if MadGlobals.sleep:
-                routemanager = self._route_manager_nighttime
-            else:
-                routemanager = self._route_manager_daytime
-            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="mon_ids_iv",
-                                            values_dict=routemanager.settings.get("mon_ids_iv", None))
+        # we don't wanna do anything other than questscans, set ids_iv to null ;)
+        self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
+                                        values_dict=None)
+
+        injected_settings = {}
+        scanmode = "quests"
+        injected_settings["scanmode"] = scanmode
+        self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="injected_settings",
+                                        values_dict=injected_settings)
 
     def __start_asyncio_loop(self):
         self.loop = asyncio.new_event_loop()

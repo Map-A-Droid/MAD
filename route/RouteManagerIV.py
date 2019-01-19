@@ -9,10 +9,16 @@ class RouteManagerIV(RouteManagerBase):
         return 60
 
     def _retrieve_latest_priority_queue(self):
-        return self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,
-                                                     min_time_left_seconds=
-                                                     self.settings.get("min_time_left_seconds", None),
-                                                     eligible_mon_ids=self.settings.get("mon_ids_iv", None))
+        # IV is excluded from clustering, check RouteManagerBase for more info
+        latest_priorities = self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,
+                                                                  min_time_left_seconds=
+                                                                  self.settings.get("min_time_left_seconds", None),
+                                                                  eligible_mon_ids=self.settings.get("mon_ids_iv", None))
+        # extract the encounterIDs and set them in the routeManager...
+        new_list = []
+        for prio in latest_priorities:
+            new_list.append(prio[2])
+        return latest_priorities
 
     def _get_coords_post_init(self):
         # not necessary
@@ -32,6 +38,7 @@ class RouteManagerIV(RouteManagerBase):
                                   routefile=routefile, init=init,
                                   name=name, settings=settings, mode=mode
                                   )
+        self.encounter_ids_left = []
         self.starve_route = True
         if self.delay_after_timestamp_prio is None:
             # just set a value to enable the queue

@@ -952,7 +952,7 @@ class MonocleWrapper(DbWrapperBase):
 
             next_to_encounter.append(
                 (
-                    i, Location(lat, lon)
+                    i, Location(lat, lon), encounter_id
                 )
             )
             i += 1

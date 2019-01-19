@@ -978,7 +978,7 @@ class RmWrapper(DbWrapperBase):
 
     def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
         if min_time_left_seconds is None or eligible_mon_ids is None:
-            log.warning("MonocleWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
+            log.warning("RmWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
                         "eligible mon IDs specified")
             return []
         log.debug("Getting mons to be encountered")
@@ -1011,7 +1011,7 @@ class RmWrapper(DbWrapperBase):
                 continue
 
             next_to_encounter.append(
-                (i, Location(latitude, longitude))
+                (i, Location(latitude, longitude), encounter_id)
             )
             i += 1
         return next_to_encounter

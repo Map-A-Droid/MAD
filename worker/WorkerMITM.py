@@ -5,6 +5,7 @@ import math
 import time
 from threading import Thread, Lock, Event, current_thread
 
+from route.RouteManagerIV import RouteManagerIV
 from utils.collections import Location
 from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from utils.geo import get_distance_of_two_points_in_meters
@@ -33,17 +34,32 @@ class WorkerMITM(WorkerBase):
         self.__update_injection_settings()
 
     def __update_injection_settings(self):
+        injected_settings = {}
+        scanmode = "nothing"
         if MadGlobals.sleep and self._route_manager_nighttime is None:
             # worker has to sleep, just empty out the settings...
-            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="mon_ids_iv",
+            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
                                             values_dict={})
+            scanmode = "nothing"
         else:
             if MadGlobals.sleep:
                 routemanager = self._route_manager_nighttime
             else:
                 routemanager = self._route_manager_daytime
-            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="mon_ids_iv",
-                                            values_dict=routemanager.settings.get("mon_ids_iv", None))
+
+            ids_iv = routemanager.settings.get("mon_ids_iv", None)
+            if routemanager.mode == "mon_mitm":
+                scanmode = "mons"
+            elif routemanager.mode == "raids_mitm":
+                scanmode = "raids"
+            elif routemanager.mode == "iv_mitm" and isinstance(routemanager, RouteManagerIV):
+                scanmode = "ivs"
+                ids_iv = routemanager.encounter_ids_left
+            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
+                                            values_dict=ids_iv)
+        injected_settings["scanmode"] = scanmode
+        self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="injected_settings",
+                                        values_dict=injected_settings)
 
     def __start_asyncio_loop(self):
         self.loop = asyncio.new_event_loop()
@@ -326,7 +342,7 @@ class WorkerMITM(WorkerBase):
                                     data_requested = data
                                     break
                             if data_requested is None:
-                                for catchable_pokemon in data_extract['catchable_pokemons']:
+                                for catchable_pokemon in data_extract['catchable_pokemon']:
                                     if catchable_pokemon['spawn_id']:
                                         data_requested = data
                         if data_requested is None:
