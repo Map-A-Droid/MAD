@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import json
+
 import logging
 from threading import current_thread, Event, Thread
 from utils.questGen import generate_quest 
@@ -432,7 +433,7 @@ class WebhookHelper(object):
             quest_type=quest['quest_type'],
             quest_type_raw=quest['quest_type_raw'],
             item_type=quest['item_type'],
-            name=quest['name'],
+            name=quest['name'].replace('"', '\\"').replace('\n', '\\n'),
             url=quest['url'],
             timestamp=quest['timestamp'],
             quest_reward_type=quest['quest_reward_type'],
@@ -442,7 +443,6 @@ class WebhookHelper(object):
             item_amount=quest['item_amount'],
             item_id=quest['item_id'])
 
-        log.debug(data)
         payload = json.loads(data)
         self.__sendToWebhook(payload)
 

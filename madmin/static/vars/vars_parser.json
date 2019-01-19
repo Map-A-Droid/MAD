@@ -54,7 +54,7 @@
 	        	"type": "option",
 		    	"require": "true",
 			    "values": "true|false",
-				"description": "Scan all spawnpoints or just ones with unknwon endtimes"
+				"description": "Scan all spawnpoints or just ones with unknown endtimes"
 		    }
 	    }
 	],
@@ -82,7 +82,7 @@
 		"settings": {
 			 "type": "text",
 			 "require": "false",
-			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
 			 "output": "int"
 	    }
 	},
@@ -198,7 +198,7 @@
 		"settings": {
 			 "type": "text",
 			 "require": "false",
-			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
 			 "output": "int"
 	    }
 	},
@@ -207,7 +207,7 @@
 		"settings": {
 			 "type": "text",
 			 "require": "false",
-			 "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+			 "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 300)",
 			 "output": "int"
 	    }
 	},
@@ -216,7 +216,7 @@
 		"settings": {
 			 "type": "text",
 			 "require": "false",
-			 "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+			 "description": "Remove any events from priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
 			 "output": "int"
 	    }
 	},
@@ -382,7 +382,7 @@
 		"settings": {
 			 "type": "text",
 			 "require": "false",
-			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
 			 "output": "int"
 	    }
 	},
@@ -478,7 +478,7 @@
 		"settings": {
 			 "type": "text",
 			 "require": "false",
-			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: 0)",
+			 "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
 			 "output": "int"
 	    }
 	},

@@ -149,12 +149,18 @@ class WorkerBase(ABC):
         time.sleep(delayBefore)
         compareToTime = time.time() - self._lastScreenshotTaken
         log.debug("Last screenshot taken: %s" % str(self._lastScreenshotTaken))
+        
+        if self._applicationArgs.use_media_projection:
+            take_screenshot = self._communicator.getScreenshot(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
+        else:
+            take_screenshot = self._communicator.get_screenshot_single(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
+        
         if self._lastScreenshotTaken and compareToTime < 0.5:
             log.debug("takeScreenshot: screenshot taken recently, returning immediately")
             log.debug("Screenshot taken recently, skipping")
             return True
         # TODO: screenshot.png needs identifier in name
-        elif not self._communicator.getScreenshot(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+        elif not take_screenshot:
             log.error("takeScreenshot: Failed retrieving screenshot")
             log.debug("Failed retrieving screenshot")
             return False

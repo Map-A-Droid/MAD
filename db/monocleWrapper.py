@@ -452,7 +452,7 @@ class MonocleWrapper(DbWrapperBase):
                     filename = url_image_path + '_' + str(id) + '_.jpg'
                     log.debug('Downloading', filename)
                     self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encode_hash_json(team, lat, lon, name, url, park, sponsor)
+                gyminfo[id] = self.__encode_hash_json(team, lat, lon, str(name).replace('"', '\\"').replace('\n', '\\n'), url, park, sponsor)
 
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
@@ -473,7 +473,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (external_id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), str(name), str(url), park, sponsor)
+            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), str(name).replace('"', '\\"').replace('\n', '\\n'), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
@@ -887,21 +887,50 @@ class MonocleWrapper(DbWrapperBase):
         if cells is None:
             return False
 
-        query_weather = (
+        query_weather_insert = (
             "INSERT INTO weather (s2_cell_id, `condition`, alert_severity, warn, day, updated) "
             "VALUES (%s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE `condition`=VALUES(`condition`), alert_severity=VALUES(alert_severity), "
-            "warn=VALUES(warn), day=VALUES(day), updated=VALUES(updated)"
         )
-
+        query_weather_update = (
+            "UPDATE weather set `condition`=%s, alert_severity=%s, "
+            "warn=%s, day=%s, updated=%s where id = %s"
+        )
+        
         list_of_weather_vals = []
+        list_of_weather_updates_vals = []
+        list_of_weather_inserts_vals = []
+        
         for client_weather in map_proto['client_weather']:
             # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract['cell_id'])
             time_of_day = map_proto.get("time_of_day_value", 0)
             list_of_weather_vals.append(
                 self.__extract_args_single_weather(client_weather, time_of_day, received_timestamp)
             )
-        self.executemany(query_weather, list_of_weather_vals, commit=True)
+            
+        for weather_data in list_of_weather_vals:
+            query = (
+                "SELECT id "
+                "FROM weather "
+                "WHERE s2_cell_id = %s"
+            )
+            vals = (
+                weather_data[0],
+            )
+
+            res = self.execute(query, vals)
+            
+            number_of_rows = len(res)
+
+            if number_of_rows > 0:
+                dbid = ",".join(map(str, res[0]))
+                list_of_weather_updates_vals.append((weather_data[1], weather_data[2], weather_data[3], 
+                        weather_data[4], weather_data[5], dbid))
+            else:
+                list_of_weather_inserts_vals.append((weather_data[0], weather_data[1], weather_data[2], 
+                        weather_data[3], weather_data[4], weather_data[5]))
+        
+        self.executemany(query_weather_insert, list_of_weather_inserts_vals, commit=True)   
+        self.executemany(query_weather_update, list_of_weather_updates_vals, commit=True)
         return True
 
     def __check_last_updated_column_exists(self):
