@@ -465,7 +465,7 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT forts.external_id, forts.lat, forts.lon, forts.name, forts.url, "
-            "IFNULL(forts.park, 'unknown'), IFNULL(forts.sponsor,0), IFNULL(fort_sightings.team,0) "
+            "IFNULL(forts.park, 'unknown'), IFNULL(forts.sponsor,0), fort_sightings.team "
             "FROM forts "
             "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
             "WHERE forts.external_id IS NOT NULL "
