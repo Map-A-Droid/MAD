@@ -382,7 +382,8 @@ class WorkerMITM(WorkerBase):
                 self._db_wrapper.submit_spawnpoints_map_proto(data["payload"])
                 self._db_wrapper.submit_mons_map_proto(data["payload"])
             except Exception as e:
-                log.error("Issue updating DB: %s" % str(e))
+                log.error("An exception occured while processing data.")
+                log.exception(e)
 
         #if 'wild_pokemon' in data['payload']:
             #WP = data['payload']['wild_pokemon']
