@@ -18,6 +18,7 @@ class RouteManagerIV(RouteManagerBase):
         new_list = []
         for prio in latest_priorities:
             new_list.append(prio[2])
+        self.encounter_ids_left = new_list
         return latest_priorities
 
     def _get_coords_post_init(self):
