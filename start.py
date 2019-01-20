@@ -107,9 +107,9 @@ def start_ocr_observer(args, db_helper):
     observer.start()
 
 
-def start_madmin():
-    from madmin.madmin import app
-    app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True, use_reloader=False)
+def start_madmin(args, db_wrapper):
+    from madmin.madmin import madmin_start
+    madmin_start(args, db_wrapper)
 
 
 # TODO: IP and port for receiver from args...
@@ -269,7 +269,7 @@ if __name__ == "__main__":
 
     if args.with_madmin:
         log.info('Starting Madmin on Port: %s' % str(args.madmin_port))
-        t_flask = Thread(name='madmin', target=start_madmin)
+        t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper,))
         t_flask.daemon = False
         t_flask.start()
 

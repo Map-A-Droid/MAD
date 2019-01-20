@@ -1,0 +1,131 @@
+div.container[role="main"] {
+	max-width: 100%;
+	padding: 0px !important;
+}
+
+.material-switch {
+	display: inline-block;
+}
+
+.material-switch > input[type="checkbox"] {
+	display: none;
+}
+
+.material-switch > label {
+	cursor: pointer;
+	height: 0px;
+	position: relative;
+	width: 40px;
+}
+
+.material-switch > label::before {
+	background: rgb(0, 0, 0);
+	box-shadow: inset 0px 0px 10px rgba(0, 0, 0, 0.5);
+	border-radius: 8px;
+	content: '';
+	height: 16px;
+	margin-top: -8px;
+	position:absolute;
+	opacity: 0.3;
+	transition: all 0.4s ease-in-out;
+	width: 40px;
+}
+.material-switch > label::after {
+	background: rgb(255, 255, 255);
+	border-radius: 16px;
+	box-shadow: 0px 0px 5px rgba(0, 0, 0, 0.3);
+	content: '';
+	height: 24px;
+	left: -4px;
+	margin-top: -8px;
+	position: absolute;
+	top: -4px;
+	transition: all 0.3s ease-in-out;
+	width: 24px;
+}
+.material-switch > input[type="checkbox"]:checked + label::before {
+	background: inherit;
+	opacity: 0.5;
+}
+.material-switch > input[type="checkbox"]:checked + label::after {
+	background: inherit;
+	left: 20px;
+}
+
+#gymImage {
+	position: relative;
+	left: -30px;
+	top: -12.5px;
+	width: 125px;
+	height: 125px;
+	border-radius: 75px;
+	background-size: cover;
+	border: 4px solid white;
+	-webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
+	filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
+}
+
+#gymName {
+	position: absolute;
+	left: 120px;
+	top: 10px;
+	width: 270px;
+	font-size: large;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#gymID {
+	position: absolute;
+	left: 120px;
+	top: 40px;
+	width: 270px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+#gymCoords {
+	position: absolute;
+	left: 120px;
+	top: 60px;
+	width: 270px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#map {
+	width: 100%;
+	height: 100vh;
+	margin-top: -60px; /* yeah, don't ask */
+}
+
+.gympopup .leaflet-popup-tip {
+	text-align: center;
+}
+
+.gympopup .leaflet-popup-content-wrapper {
+	width: 400px;
+	text-align: center;
+}
+
+.spawntooltip {
+	font-weight: bold;
+	color: #FFF;
+	color: white;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;
+}
+
+.leaflet-bottom.leaflet-right div.leaflet-control-layers.leaflet-control:nth-child(3) a.leaflet-control-layers-toggle {
+	background-image: url('static/layers_extra.png');
+}
+
+.leaflet-sidebar {
+	top: 60px;
+}
+
