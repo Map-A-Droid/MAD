@@ -7,15 +7,17 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous" defer></script>
 <script src="https://vuejs.org/js/vue.min.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-<script src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous" defer></script>
 <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/js/leaflet-sidebar.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
 var map = null;
-var leaflet_data = {};
+var leaflet_data = {
+	layers: {}
+};
 
 new Vue({
 	el: '#app',
@@ -44,10 +46,10 @@ new Vue({
 				for (k in this.layers) {
 					tlayer = this.layers[k];
 
-					if (tlayer.show == true && !map.hasLayer(leaflet_data[k])) {
-						map.addLayer(leaflet_data[k]);
-					} else if (tlayer.show == false && map.hasLayer(leaflet_data[k])) {
-						map.removeLayer(leaflet_data[k]);
+					if (tlayer.show == true && !map.hasLayer(leaflet_data["layers"][k])) {
+						map.addLayer(leaflet_data["layers"][k]);
+					} else if (tlayer.show == false && map.hasLayer(leaflet_data["layers"][k])) {
+						map.removeLayer(leaflet_data["layers"][k]);
 					}
 				}
 			}
@@ -56,9 +58,17 @@ new Vue({
 			deep: true,
 			handler: function() {
 				for (routetype in this.settings.routes.coordinateRadius) {
-					this.coordinates.route[routetype].forEach(function(route) {
-						this.setCircleRadiusForRoute(route, routetype);
-					}, this);
+					for (layer in this.layers) {
+						if (this.layers[layer].type == "route-"+routetype) {
+							leaflet_data.layers[layer].getLayers().forEach(function(point) {
+								try {
+									point.setRadius(this.settings.routes.coordinateRadius[routetype]);
+								} catch (err) {
+									// yes, this is bad and I know it ...
+								}
+							}, this);
+						}
+					}
 				}
 			}
 		}
@@ -82,14 +92,11 @@ new Vue({
 			});
 
 			// add layer to map
-			$this.addLayer("gyms", l_gyms, false);
+			$this.addLayer("gyms", l_gyms, false, "gyms");
 		});
 
 		// retrieve routes
 		axios.get('/get_route').then(function(res) {
-			var dataprop = ""
-			var l_routes = L.featureGroup();
-
 			res.data.forEach(function(route) {
 				var group = L.layerGroup();
 				var coords = [];
@@ -127,10 +134,8 @@ new Vue({
 
 				// add route to layergroup
 				L.geoJSON(geojson, { style: { "color": "#FF0000", "weight": 2, "opacity": 0.5 } }).addTo(group);
-				// add layer group to routes featureGroup
-				group.addTo(l_routes);
 
-				$this.addLayer("routes", l_routes, true);
+				$this.addLayer(route.name, group, false, "route-"+mode);
 			});
 		});
 
@@ -195,14 +200,14 @@ new Vue({
 					.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>',{'className': 'gympopup'})
 			});
 
-			$this.addLayer("spawns", l_spawns, false);
+			$this.addLayer("spawns", l_spawns, false, "spawns");
 		});
 	},
 	methods: {
 		// add a new layer
-		addLayer(name, data, show) {
-			var lobj = {"show": show};
-			leaflet_data[name] = data;
+		addLayer(name, data, show, type) {
+			var lobj = {"show": show, "type": type};
+			leaflet_data["layers"][name] = data;
 			this.$set(this.layers, name, lobj);
 		},
 		// event handler if the map has been dragged/moved
@@ -242,14 +247,26 @@ new Vue({
 			const storedCenter = localStorage.getItem('center') || '52.521374,13.411201';
 			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
 
-			map = L.map('map', { layers: [layer], zoomControl: false}).setView(storedCenter.split(','), storedZoom);
+			map = L.map('map', { 
+				layers: [layer], 
+				zoomControl: false,
+				updateWhenZooming: false,
+				updateWhenIdle: true,
+				preferCanvas: true
+			}).setView(storedCenter.split(','), storedZoom);
 
-			L.control.sidebar({
+			L.control.zoom({
+				position: 'bottomright'
+			}).addTo(map);
+
+			var sidebar = L.control.sidebar({
 				autopan: false,
 				closeButton: true,
 				container: "sidebar",
 				position: "left",
 			}).addTo(map);
+
+			sidebar.open("layers");
 
 			map.on('zoomend', this.l_event_zoomed);
 			map.on('moveend', this.l_event_moveend);
@@ -261,29 +278,53 @@ new Vue({
 
 {% block content %}
 <div id="app">
-	<div id="sidebar" class="leaflet-sidebar collapsed">
-			<div class="leaflet-sidebar-tabs">
-				<ul role="tablist">
-					<li><a href="#home" role="tab"><i class="fa fa-home"></i></a></li>
+	<div id="sidebar" class="leaflet-sidebar">
+		<div class="leaflet-sidebar-tabs">
+			<ul role="tablist">
+				<li><a href="#layers" role="tab"><i class="fa fa-layer-group"></i></a></li>
+				<li><a href="#filters" role="tab"><i class="fa fa-filter"></i></a></li>
+				<li><a href="#settings" role="tab"><i class="fa fa-cog"></i></a></li>
+			</ul>
+		</div>
+
+		<div class="leaflet-sidebar-content">
+			<div class="leaflet-sidebar-pane" id="layers">
+				<h1 class="leaflet-sidebar-header bg-dark">Layers<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+				<ul class="list-group list-group-flush">
+					{% raw %}
+						<li v-for="(item, index) in layers" class="list-group-item layer-item">
+							<strong>{{ index }}</strong>
+							<div class="custom-control custom-switch">
+								<input :id="index" type="checkbox" v-model="item.show" class="custom-control-input" />
+								<label :for="index" class="custom-control-label"></label>
+							</div>
+						</li>
+					{% endraw %}
 				</ul>
 			</div>
-
-			<div class="leaflet-sidebar-content">
-				<div class="leaflet-sidebar-pane" id="home">
-					<h1 class="leaflet-sidebar-header">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
-					<ul class="list-group list-group-flush">
-						{% raw %}
-							<li v-for="(item, index) in layers" class="list-group-item">
-								<strong>{{ index }}</strong>
-								<div class="material-switch float-right">
-									<input :id="index" type="checkbox" v-model="item.show" />
-									<label :for="index" class="badge-primary"></label>
-								</div>
-							</li>
-						{% endraw %}
-					</ul>
-				</div>
+			<div class="leaflet-sidebar-pane" id="filters">
+				<h1 class="leaflet-sidebar-header bg-dark">Filters<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
 			</div>
+			<div class="leaflet-sidebar-pane" id="settings">
+				<h1 class="leaflet-sidebar-header bg-dark">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+				<ul class="list-group list-group-flush">
+						<li class="list-group-item layer-item">
+							<strong>Raid coordinate radius</strong>
+							<div class="custom-control custom-switch">
+								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raid" max="1100" class="form-control form-control-sm" />
+								<label for="raidcoordinateradius" class=""></label>
+							</div>
+						</li>
+						<li class="list-group-item layer-item">
+							<strong>Mon coordinate radius</strong>
+							<div class="custom-control custom-switch">
+								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mon" max="1100" class="form-control form-control-sm" />
+								<label for="raidcoordinateradius" class=""></label>
+							</div>
+						</li>
+				</ul>
+			</div>
+		</div>
 	</div>
 	<div id="map"></div>
 </div>
