@@ -14,33 +14,19 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/js/leaflet-sidebar.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
+var map = null;
+var leaflet_data = {};
+
 new Vue({
 	el: '#app',
 	data: {
-		map: null,
-		layers: {
-			spawnpoints: {
-				show: false,
-				l_group: null
-			},
-			routes: {
-				show: false,
-				l_group: null
-			},
-			gyms: {
-				show: false,
-				l_group: null
-			},
-			worker: {
-				show: true
-			}
-		},
+		layers: {},
 		coordinates: {
+			gyms: null,
 			route: {
-				raid: [],
-				mon: []
-			},
-			gyms: []
+				raid: null,
+				mon: null
+			}
 		},
 		settings: {
 			routes: {
@@ -58,14 +44,10 @@ new Vue({
 				for (k in this.layers) {
 					tlayer = this.layers[k];
 
-					if (tlayer.l_group == null) {
-						continue;
-					}
-
-					if (tlayer.show == true && !this.map.hasLayer(tlayer.l_group)) {
-						this.map.addLayer(tlayer.l_group);
-					} else if (tlayer.show == false && this.map.hasLayer(tlayer.l_group)) {
-						this.map.removeLayer(tlayer.l_group);
+					if (tlayer.show == true && !map.hasLayer(leaflet_data[k])) {
+						map.addLayer(leaflet_data[k]);
+					} else if (tlayer.show == false && map.hasLayer(leaflet_data[k])) {
+						map.removeLayer(leaflet_data[k]);
 					}
 				}
 			}
@@ -86,22 +68,26 @@ new Vue({
 		this.initMap();
 
 		// get vue object into here
-		var that = this;
+		var $this = this;
 
+		// retrieve gyms
 		axios.get('/get_gymcoords').then(function(res) {
 			var l_gyms = L.layerGroup();
 
 			res.data.forEach(function(gym) {
-				L.marker([gym['lat'], gym['lon']], { icon: that.gymicon(gym['team_id'])})
+				L.marker([gym['lat'], gym['lon']], { icon: $this.gymicon(gym['team_id'])})
 					.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>',
 						{ 'className': 'gympopup' })
 					.addTo(l_gyms);
 			});
 
-			that.layers.gyms.l_group = l_gyms;
+			// add layer to map
+			$this.addLayer("gyms", l_gyms, false);
 		});
 
+		// retrieve routes
 		axios.get('/get_route').then(function(res) {
+			var dataprop = ""
 			var l_routes = L.featureGroup();
 
 			res.data.forEach(function(route) {
@@ -110,10 +96,10 @@ new Vue({
 
 				if (route.mode == "mon_mitm") {
 					mode = "mon";
-					cradius = that.settings.routes.coordinateRadius.mon;
+					cradius = $this.settings.routes.coordinateRadius.mon;
 				} else {
 					mode = "raid";
-					cradius = that.settings.routes.coordinateRadius.raid;
+					cradius = $this.settings.routes.coordinateRadius.raid;
 				}
 
 				route.coordinates.forEach(function(coord) {
@@ -132,20 +118,20 @@ new Vue({
 				});
 
 				// add these coordinates to our global list
-				that.coordinates.route[mode].push(coords);
+				//that.coordinates.route[mode].push(coords);
 
 				var geojson = {
 					"type": "LineString",
-					"coordinates": that.convertToLonLat(route.coordinates)
+					"coordinates": $this.convertToLonLat(route.coordinates)
 				}
 
 				// add route to layergroup
 				L.geoJSON(geojson, { style: { "color": "#FF0000", "weight": 2, "opacity": 0.5 } }).addTo(group);
 				// add layer group to routes featureGroup
-				group.addTo(l_routes)
+				group.addTo(l_routes);
+
+				$this.addLayer("routes", l_routes, true);
 			});
-		
-			that.layers.routes.l_group = l_routes;
 		});
 
 		axios.get('/get_spawns').then(function(res) {
@@ -209,17 +195,26 @@ new Vue({
 					.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>',{'className': 'gympopup'})
 			});
 
-			that.layers.spawnpoints.l_group = l_spawns;
+			$this.addLayer("spawns", l_spawns, false);
 		});
 	},
 	methods: {
+		// add a new layer
+		addLayer(name, data, show) {
+			var lobj = {"show": show};
+			leaflet_data[name] = data;
+			this.$set(this.layers, name, lobj);
+		},
+		// event handler if the map has been dragged/moved
 		l_event_moveend() {
-			var center = this.map.getCenter();
+			var center = map.getCenter();
 			localStorage.setItem('center', center.lat+','+center.lng);
 		},
+		// event handler if the map has been zoomed
 		l_event_zoomed() {
-			localStorage.setItem('zoomlevel', this.map.getZoom());
+			localStorage.setItem('zoomlevel', map.getZoom());
 		},
+		// convert lat/lng to lng/lat
 		convertToLonLat(coords) {
 			lonlat = []
 			coords.forEach(function(coord) {
@@ -227,34 +222,37 @@ new Vue({
 			});
 			return lonlat;
 		},
+		// set a circle marker's radius
 		setCircleRadiusForRoute(route, type) {
 			route.forEach(function(circle) {
 				circle.setRadius(this.settings.routes.coordinateRadius[type]);
 			}, this);
 		},
+		// return a gym icon based on a team
 		gymicon(team) {
 			return L.icon({
 				iconUrl: 'static/gym_' + team + '.png',
 				iconSize: [32, 32]
 			});
 		},
+		// generate the map
 		initMap() {
 			// get stored center and zoom level if they exists
 			const storedZoom = localStorage.getItem('zoomlevel') || 13;
 			const storedCenter = localStorage.getItem('center') || '52.521374,13.411201';
 			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
 
-			this.map = L.map('map', { layers: [layer], zoomControl: false}).setView(storedCenter.split(','), storedZoom);
+			map = L.map('map', { layers: [layer], zoomControl: false}).setView(storedCenter.split(','), storedZoom);
 
 			L.control.sidebar({
 				autopan: false,
 				closeButton: true,
 				container: "sidebar",
 				position: "left",
-			}).addTo(this.map);
+			}).addTo(map);
 
-			this.map.on('zoomend', this.l_event_zoomed);
-			this.map.on('moveend', this.l_event_moveend);
+			map.on('zoomend', this.l_event_zoomed);
+			map.on('moveend', this.l_event_moveend);
 		}
 	}
 });
@@ -274,27 +272,15 @@ new Vue({
 				<div class="leaflet-sidebar-pane" id="home">
 					<h1 class="leaflet-sidebar-header">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
 					<ul class="list-group list-group-flush">
-						<li class="list-group-item">
-							<strong>Spawnpoints</strong>
-							<div class="material-switch float-right">
-								<input id="spawnpointscheckbox" type="checkbox" v-model="layers.spawnpoints.show"/>
-								<label for="spawnpointscheckbox" class="badge-primary"></label>
-							</div>
-						</li>
-						<li class="list-group-item">
-							<strong>Routes</strong>
-							<div class="material-switch float-right">
-								<input id="routescheckbox" type="checkbox" v-model="layers.routes.show" />
-								<label for="routescheckbox" class="badge-primary"></label>
-							</div>
-						</li>
-						<li class="list-group-item">
-							<strong>Gyms</strong>
-							<div class="material-switch float-right">
-								<input id="gymscheckbox" type="checkbox" v-model="layers.gyms.show"/>
-								<label for="gymscheckbox" class="badge-primary"></label>
-							</div>
-						</li>
+						{% raw %}
+							<li v-for="(item, index) in layers" class="list-group-item">
+								<strong>{{ index }}</strong>
+								<div class="material-switch float-right">
+									<input :id="index" type="checkbox" v-model="item.show" />
+									<label :for="index" class="badge-primary"></label>
+								</div>
+							</li>
+						{% endraw %}
 					</ul>
 				</div>
 			</div>
