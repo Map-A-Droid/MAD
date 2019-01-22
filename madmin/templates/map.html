@@ -235,9 +235,9 @@ new Vue({
 		},
 		// return a gym icon based on a team
 		gymicon(team) {
-			return L.icon({
-				iconUrl: 'static/gym_' + team + '.png',
-				iconSize: [32, 32]
+			return L.divIcon({ 
+				iconSize: [32, 32],
+				className: 'gym-icon gym-icon-'+team 
 			});
 		},
 		// generate the map
