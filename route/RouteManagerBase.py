@@ -273,3 +273,13 @@ class RouteManagerBase(ABC):
                  % (str(self.name), str(next_lat), str(next_lng)))
         self._manager_mutex.release()
         return Location(next_lat, next_lng)
+        
+    def del_from_route(self):
+        log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
+        self._manager_mutex.acquire()
+        log.info('Removing coords from Route')
+        self._route.pop(int(self._current_index_of_route)-1)
+        self._current_index_of_route -= 1
+        if len(self._route) == 0:
+            log.info('No more coords are available... Sleeping.')
+        self._manager_mutex.release()

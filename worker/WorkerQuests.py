@@ -158,7 +158,7 @@ class WorkerQuests(WorkerBase):
         if currentLocation is None:
             currentLocation = Location(0.0, 0.0)
         lastLocation = None
-        roundcount = 0
+
         while not self._stop_worker_event.isSet():
             while MadGlobals.sleep and self._route_manager_nighttime is None:
                 time.sleep(1)
@@ -198,6 +198,7 @@ class WorkerQuests(WorkerBase):
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
                 while self._db_wrapper.check_stop_quest(currentLocation.lat, currentLocation.lng):
+                    self._route_manager_nighttime.del_from_route()
                     currentLocation = self._route_manager_nighttime.get_next_location()
             elif MadGlobals.sleep:
                 # skip to top while loop to get to sleep loop
@@ -206,7 +207,8 @@ class WorkerQuests(WorkerBase):
                 currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
                 while self._db_wrapper.check_stop_quest(currentLocation.lat, currentLocation.lng):
-                    currentLocation = self._route_manager_nighttime.get_next_location()
+                    self._route_manager_daytime.del_from_route()
+                    currentLocation = self._route_manager_daytime.get_next_location()
 
             self.__update_injection_settings()
 
@@ -274,7 +276,7 @@ class WorkerQuests(WorkerBase):
                     log.error("Timeout setting location for %s" % str(self.id))
                     self._stop_worker_event.set()
                     return
-                delayUsed = self._devicesettings.get('post_walk_delay', 7)
+                delayUsed = 0
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
             
@@ -347,13 +349,6 @@ class WorkerQuests(WorkerBase):
                         if 'Quest' in  data_received:
                             self._close_gym(self._delayadd)
                             self._clear_quest = True
-                            roundcount += 1
-                        
-                            if roundcount == 30:
-                                time.sleep(1)
-                                self._clear_box = True
-                                roundcount = 0
-                                
                             break
                             
                         if 'SB' in data_received:
@@ -526,7 +521,6 @@ class WorkerQuests(WorkerBase):
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                            timestamp=curTime, proto_to_wait_for=4, timeout=10)
             _data_err_counter = data_error_counter
-            log.error(data_received)
             
             if data_received is not None:
                 if 'Clear' in data_received:

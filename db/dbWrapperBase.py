@@ -843,7 +843,7 @@ class DbWrapperBase(ABC):
             )  
             log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (str(quest_type), str(fort_id))) 
             self.execute(query_quests, vals, commit=True)
-            print (self.quests_from_db(GUID='f948ba009eec4edb9969e9f25a802c09.16'))
+
             if self.application_args.webhook:
                 log.debug('Sending quest webhook for pokestop {0}'.format(str(fort_id)))
                 self.webhook_helper.submit_quest_webhook(self.quests_from_db(GUID=fort_id))
