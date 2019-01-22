@@ -598,6 +598,8 @@ class MonocleWrapper(DbWrapperBase):
 
         s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude, level=10)
 
+        encounter_id = wild_pokemon['encounter_id'] + 2 ** 64
+
         query = (
             "INSERT INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
             "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id, "
@@ -611,7 +613,7 @@ class MonocleWrapper(DbWrapperBase):
             pokemon_data["id"],
             int(wild_pokemon.get("spawnpoint_id"), 16),
             despawn_time_unix,
-            abs(wild_pokemon.get("encounter_id")),
+            encounter_id,
             latitude, longitude, timestamp,
             pokemon_display.get("gender_value", None),
             pokemon_display.get("form_value", None),
@@ -630,7 +632,7 @@ class MonocleWrapper(DbWrapperBase):
         self.execute(query, vals, commit=True)
 
         self.webhook_helper.send_pokemon_webhook(
-            encounter_id=abs(wild_pokemon.get("encounter_id")),
+            encounter_id=encounter_id,
             pokemon_id=pokemon_data.get("id"),
             last_modified_time=timestamp,
             spawnpoint_id=int(wild_pokemon.get("spawnpoint_id"), 16),
@@ -688,10 +690,11 @@ class MonocleWrapper(DbWrapperBase):
                              .format(str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
 
                 mon_id = wild_mon['pokemon_data']['id']
+                encounter_id = wild_mon['encounter_id'] + 2 ** 64
 
                 if mon_ids_iv is not None and mon_id not in mon_ids_iv:
                     self.webhook_helper.send_pokemon_webhook(
-                        wild_mon['encounter_id'], mon_id, time.time(),
+                        encounter_id, mon_id, time.time(),
                         spawnid, lat, lon, despawn_time_unix
                     )
 
@@ -700,7 +703,7 @@ class MonocleWrapper(DbWrapperBase):
                         mon_id,
                         spawnid,
                         despawn_time_unix,
-                        abs(wild_mon['encounter_id']),
+                        encounter_id,
                         lat, lon,
                         now,
                         wild_mon['pokemon_data']['display']['gender_value'],

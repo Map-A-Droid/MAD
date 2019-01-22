@@ -182,6 +182,8 @@ class WorkerMITM(WorkerBase):
             self._last_known_state["last_location"] = lastLocation
 
             log.debug("Requesting next location from routemanager")
+            # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
+            # the workers up...
             if MadGlobals.sleep and self._route_manager_nighttime is not None:
                 if self._route_manager_nighttime.mode not in ["iv_mitm", "raids_mitm", "mon_mitm"]:
                     break

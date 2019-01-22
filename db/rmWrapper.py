@@ -2,6 +2,7 @@ import shutil
 import sys
 import time
 
+import numpy
 import requests
 
 from db.dbWrapperBase import DbWrapperBase
@@ -644,6 +645,7 @@ class RmWrapper(DbWrapperBase):
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
+        encounter_id = wild_pokemon['encounter_id'] + 2 ** 64
 
         if init:
             log.info("{0}: updating mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
@@ -682,7 +684,7 @@ class RmWrapper(DbWrapperBase):
         )
 
         vals = (
-            abs(wild_pokemon.get("encounter_id")),
+            encounter_id,
             wild_pokemon.get("spawnpoint_id"),
             pokemon_data.get('id'),
             latitude, longitude, despawn_time,
@@ -723,7 +725,7 @@ class RmWrapper(DbWrapperBase):
             pokemon_level = round(pokemon_level) * 2 / 2
 
         self.webhook_helper.send_pokemon_webhook(
-            encounter_id=abs(wild_pokemon.get("encounter_id")),
+            encounter_id=encounter_id,
             pokemon_id=pokemon_data.get("id"),
             last_modified_time=timestamp,
             spawnpoint_id=wild_pokemon.get("spawnpoint_id"),
@@ -764,6 +766,8 @@ class RmWrapper(DbWrapperBase):
                 lat = wild_mon['latitude']
                 lon = wild_mon['longitude']
                 mon_id = wild_mon['pokemon_data']['id']
+                # encounter IDs are unsigned long long
+                encounter_id = wild_mon['encounter_id'] + 2**64
 
                 now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
                 despawn_time = datetime.now() + timedelta(seconds=300)
@@ -790,13 +794,13 @@ class RmWrapper(DbWrapperBase):
 
                 if mon_ids_iv is not None and mon_id not in mon_ids_iv:
                     self.webhook_helper.send_pokemon_webhook(
-                        str(abs(wild_mon['encounter_id'])), mon_id, int(time.time()),
+                        str(encounter_id), mon_id, int(time.time()),
                         spawnid, lat, lon, int(despawn_time_unix)
                     )
 
                 mon_args.append(
                     (
-                        abs(wild_mon['encounter_id']), spawnid, mon_id, lat, lon,
+                        encounter_id, spawnid, mon_id, lat, lon,
                         despawn_time,
                         None, None, None, None, None, None, None, None, None,  # TODO: consider .get("XXX", None)
                         wild_mon['pokemon_data']['display']['gender_value'],
@@ -900,10 +904,10 @@ class RmWrapper(DbWrapperBase):
                 if gym['type'] == 0 and gym['gym_details']['has_raid']:
                     gym_has_raid = gym['gym_details']['raid_info']['has_pokemon']
                     if gym_has_raid:
-                        pokemon_id = gym['gym_details']['raid_info']['pokemon']['id']
-                        cp = gym['gym_details']['raid_info']['pokemon']['cp']
-                        move_1 = gym['gym_details']['raid_info']['pokemon']['move_1']
-                        move_2 = gym['gym_details']['raid_info']['pokemon']['move_2']
+                        pokemon_id = gym['gym_details']['raid_info']['raid_pokemon']['id']
+                        cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
+                        move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
+                        move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                     else:
                         pokemon_id = None
                         cp = 0
