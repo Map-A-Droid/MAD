@@ -11,15 +11,15 @@
             "data": gridData,
             "columns": [
                 { data: 'name', title: 'Name' },
+                { data: 'lastUpdate', title: 'Lastupdate' }
                 { data: 'lat', title: 'Lat' },
                 { data: 'lng', title: 'Lng' },
-                { data: 'lastUpdate', title: 'Lastupdate' }
             ],
             "columnDefs": [
                 {
-                    "targets": [3],
+                    "targets": [1],
                     "render": function (data, type, row) {
-                        return moment.unix(data).format();
+                        return moment.unix(data).format('YYYY-MM-DD HH:mm:ss');
                     }
                 }
             ],
