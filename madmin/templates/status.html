@@ -14,6 +14,14 @@ function setGrid(tableGridHtmlId, gridData) {
                 { data: 'lng', title: 'Lng' },
                 { data: 'lastUpdate', title: 'Lastupdate' }
             ],
+            "columnDefs": [
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        return moment.unit(data).format();
+                    }
+                }
+            ],
             "drawCallback": function () {
                 $("img.lazy").lazyload();
             },

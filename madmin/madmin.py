@@ -909,7 +909,7 @@ def status():
         with open(filename, 'r') as f:
             latlon = f.read().strip().split(', ')
             worker = {
-                "name": name,
+                "name": name[0],
                 "lat": getCoordFloat(latlon[0]),
                 "lng": getCoordFloat(latlon[1]),
                 "lastUpdate": os.stat(filename).st_mtime
