@@ -36,7 +36,7 @@ function setGrid(tableGridHtmlId, gridData) {
 
         $.ajax({
             type: "GET",
-            url: "/status",
+            url: "/get_status",
             success: function (result) {
                 setGrid('#show-data', result);
             }

@@ -900,7 +900,7 @@ def addnew():
 def statusview(): 
     return render_template('status.html', responsive=str(args.madmin_noresponsive).lower(), title="Worker Status")
 
-@app.route('/status', methods=['GET'])
+@app.route('/get_status', methods=['GET'])
 def status():    
     workerStatus = {}
 
@@ -914,7 +914,7 @@ def status():
                 "lng": getCoordFloat(latlon[1]),
                 "lastUpdate": os.stat(filename).st_mtime
             }
-            workerStatus[str(name[0])] = worker
+            workerStatus.append(worker)
 
     return jsonify(workerStatus)
 
