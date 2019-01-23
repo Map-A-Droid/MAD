@@ -10,10 +10,9 @@
         $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
-                { data: 'name', title: 'Name', width: '20%' },
-                { data: 'lastUpdate', title: 'Lastupdate', width: '20%' },
-                { data: 'lat', title: 'Lat', width: '25%'  },
-                { data: 'lng', title: 'Lng', width: '25%'  }
+                { data: 'name', title: 'Name' },
+                { data: 'lastUpdate', title: 'Lastupdate' },
+                { data: 'lat', title: 'Position' }
             ],
             "columnDefs": [
                 {
@@ -21,13 +20,17 @@
                     "render": function (data, type, row) {
                         return moment.unix(data).format('YYYY-MM-DD HH:mm:ss');
                     }
+                },
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+                        return "Lat: " + row.lat + "<br />" + "Lng: " + row.lng
+                    }
                 }
             ],
-            "drawCallback": function () {
-                //$("img.lazy").lazyload();
-            },
             "order": [[1, "asc"]],
             "responsive": {{ responsive }},
+            "autoWidth": true
         });
 	}
 
@@ -47,6 +50,6 @@
 {% endblock %}
 
 {% block content %}
-<h2>Status</h2>
+<h2>Show last position update</h2>
 <table id="show-data" class="table"></table>
 {% endblock %}
