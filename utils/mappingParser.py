@@ -210,13 +210,13 @@ class MappingParser(object):
 
     def get_areas(self):
         areas = {}
-        areas_arr = self.__raw_json.get("areas", None)
+        areas_arr = self.__raw_json["areas"]
         for area in areas_arr:
             area_dict = {}
             area_dict['routecalc'] = area['routecalc']
             area_dict['mode'] = area['mode']
             area_dict['geofence_included'] = area['geofence_included']
-            area_dict['geofence_excluded'] = area['geofence_excluded']
-            area_dict['init'] = area['init']
+            area_dict['geofence_excluded'] = area.get('geofence_excluded', None)
+            area_dict['init'] = area.get('init', False)
             areas[area['name']] = area_dict
         return areas
