@@ -126,6 +126,7 @@ class WorkerMITM(WorkerBase):
         current_thread().name = self.id
         log.info("MITM worker starting")
         _data_err_counter, data_error_counter = 0, 0
+        # first check if pogo is running etc etc
 
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
         t_asyncio_loop.daemon = True

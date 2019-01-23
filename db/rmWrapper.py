@@ -167,7 +167,7 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -183,7 +183,7 @@ class RmWrapper(DbWrapperBase):
             query = (
                 "UPDATE raid "
                 "SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -203,7 +203,7 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = FROM_UNIXTIME(%s), end = FROM_UNIXTIME(%s), "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s"
+                "move_1 = %s, move_2 = %s "
                 "WHERE gym_id = %s"
             )
             vals = (
@@ -468,7 +468,7 @@ class RmWrapper(DbWrapperBase):
         data = []
         res = self.execute(query, vals)
         for (gym_id, distance) in res:
-            data.append(gym_id)
+            data.append([gym_id, distance])
         log.debug("{RmWrapper::get_near_gyms} done")
         return data
 
@@ -852,7 +852,8 @@ class RmWrapper(DbWrapperBase):
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE "
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
-            "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned)"
+            "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
+            "last_modified=VALUES(last_modified)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
@@ -863,13 +864,31 @@ class RmWrapper(DbWrapperBase):
         for cell in cells:
             for gym in cell['forts']:
                 if gym['type'] == 0:
+                    guard_pokemon_id = gym['gym_details']['guard_pokemon']
+                    gymid = gym['id']
+                    team_id = gym['gym_details']['owned_by_team']
+                    latitude = gym['latitude']
+                    longitude = gym['longitude']
+                    slots_available = gym['gym_details']['slots_available']
+                    raidendSec = 0
+
+                    if gym['gym_details']['has_raid']:
+                        raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
+
+                    self.webhook_helper.send_gym_webhook(
+                        gymid, raidendSec, 'unknown', team_id, slots_available, guard_pokemon_id,
+                        latitude, longitude
+                    )
+
                     gym_args.append(
                         (
-                            gym['id'], gym['gym_details']['owned_by_team'], gym['gym_details']['guard_pokemon'],
-                            gym['gym_details']['slots_available'], 1, gym['latitude'], gym['longitude'],
+                            gymid, team_id, guard_pokemon_id, slots_available,
+                            1,  # enabled
+                            latitude, longitude,
                             0,  # total CP
                             0,  # is_in_battle
-                            now, now
+                            now,  # last_modified
+                            now   # last_scanned
                         )
                     )
 

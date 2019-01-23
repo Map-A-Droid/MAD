@@ -20,7 +20,7 @@
                 {
                     "targets": [1],
                     "render": function (data, type, row) {
-                        return "<img class='lazy' data-original='../" + data + "' width=100>";
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
                     }
                 },
                 {
@@ -33,7 +33,7 @@
             "drawCallback": function () {
                 $("img.lazy").lazyload();
             },
-            "order": [[2, "desc"]],
+            "order": [[2, "asc"]],
             "responsive": {{ responsive }},
             "autoWidth": true
         });

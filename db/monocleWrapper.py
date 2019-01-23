@@ -441,7 +441,7 @@ class MonocleWrapper(DbWrapperBase):
             "SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url, "
             "IFNULL(forts.park, 'unknown'), forts.sponsor, fort_sightings.team "
             "FROM forts "
-            "INNER JOIN fort_sightings ON forts.id = fort_sightings.id"
+            "LEFT JOIN fort_sightings ON forts.id = fort_sightings.id"
         )
 
         res = self.execute(query)
@@ -452,7 +452,7 @@ class MonocleWrapper(DbWrapperBase):
                     filename = url_image_path + '_' + str(id) + '_.jpg'
                     log.debug('Downloading', filename)
                     self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encode_hash_json(team, lat, lon, str(name).replace('"', '\\"').replace('\n', '\\n'), url, park, sponsor)
+                gyminfo[id] = self.__encode_hash_json(team, float(lat), float(lon), str(name).replace('"', '\\"').replace('\n', '\\n'), url, park, sponsor)
 
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
@@ -465,9 +465,10 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT forts.external_id, forts.lat, forts.lon, forts.name, forts.url, "
-            "IFNULL(forts.park, 'unknown'), forts.sponsor, fort_sightings.team "
+            "IFNULL(forts.park, 'unknown'), IFNULL(forts.sponsor,0), fort_sightings.team "
             "FROM forts "
-            "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id"
+            "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
+            "WHERE forts.external_id IS NOT NULL "
         )
 
         res = self.execute(query)
@@ -708,6 +709,8 @@ class MonocleWrapper(DbWrapperBase):
                         now,
                         wild_mon['pokemon_data']['display']['gender_value'],
                         wild_mon['pokemon_data']['display']['form_value'],
+                        None, None,  # CP and level
+                        now,
                         wild_mon['pokemon_data']['display']['weather_boosted_value'],
                         s2_weather_cell_id
                     )
@@ -784,6 +787,14 @@ class MonocleWrapper(DbWrapperBase):
                         is_in_battle = 1
                     else:
                         is_in_battle = 0
+
+                    raidendSec = 0
+                    if gym['gym_details']['has_raid']:
+                        raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
+
+                    self.webhook_helper.send_gym_webhook(
+                        gym_id, raidendSec, 'unknown', team, slots, guardmon, lat, lon
+                    )
 
                     vals_forts.append(
                         (
@@ -890,50 +901,21 @@ class MonocleWrapper(DbWrapperBase):
         if cells is None:
             return False
 
-        query_weather_insert = (
+        query_weather = (
             "INSERT INTO weather (s2_cell_id, `condition`, alert_severity, warn, day, updated) "
             "VALUES (%s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE `condition`=VALUES(`condition`), alert_severity=VALUES(alert_severity), "
+            "warn=VALUES(warn), day=VALUES(day), updated=VALUES(updated)"
         )
-        query_weather_update = (
-            "UPDATE weather set `condition`=%s, alert_severity=%s, "
-            "warn=%s, day=%s, updated=%s where id = %s"
-        )
-        
+
         list_of_weather_vals = []
-        list_of_weather_updates_vals = []
-        list_of_weather_inserts_vals = []
-        
         for client_weather in map_proto['client_weather']:
             # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract['cell_id'])
             time_of_day = map_proto.get("time_of_day_value", 0)
             list_of_weather_vals.append(
                 self.__extract_args_single_weather(client_weather, time_of_day, received_timestamp)
             )
-            
-        for weather_data in list_of_weather_vals:
-            query = (
-                "SELECT id "
-                "FROM weather "
-                "WHERE s2_cell_id = %s"
-            )
-            vals = (
-                weather_data[0],
-            )
-
-            res = self.execute(query, vals)
-            
-            number_of_rows = len(res)
-
-            if number_of_rows > 0:
-                dbid = ",".join(map(str, res[0]))
-                list_of_weather_updates_vals.append((weather_data[1], weather_data[2], weather_data[3], 
-                        weather_data[4], weather_data[5], dbid))
-            else:
-                list_of_weather_inserts_vals.append((weather_data[0], weather_data[1], weather_data[2], 
-                        weather_data[3], weather_data[4], weather_data[5]))
-        
-        self.executemany(query_weather_insert, list_of_weather_inserts_vals, commit=True)   
-        self.executemany(query_weather_update, list_of_weather_updates_vals, commit=True)
+        self.executemany(query_weather, list_of_weather_vals, commit=True)
         return True
 
     def __check_last_updated_column_exists(self):

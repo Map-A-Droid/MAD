@@ -237,7 +237,7 @@ def delete_hash():
         return 'Missing Argument...'
 
     db_wrapper.delete_hash_table('"' + str(hash) + '"', type, 'in', 'hash')
-    for file in glob.glob("www_hash/*" + str(hash) + ".jpg"):
+    for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
     return redirect('/' + str(redi), code=302)
@@ -253,7 +253,7 @@ def delete_file():
     if not hash or not type:
         return 'Missing Argument...'
 
-    for file in glob.glob("www_hash/*" + str(hash) + ".jpg"):
+    for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
     return redirect('/' + str(redi), code=302)
@@ -267,7 +267,7 @@ def get_gyms():
 
     hashdata = json.loads(getAllHash('gym'))
 
-    for file in glob.glob("www_hash/gym_*.jpg"):
+    for file in glob.glob("ocr/www_hash/gym_*.jpg"):
         unkfile = re.search('gym_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
         hashvalue = (unkfile.group(3))
 
@@ -298,7 +298,7 @@ def get_gyms():
                 if data[str(gymid)]["description"]:
                     description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
 
-            gymJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify })
+            gymJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify })
             gyms.append(gymJson)
 
         else:
@@ -322,7 +322,7 @@ def get_raids():
 
     hashdata = json.loads(getAllHash('raid'))
 
-    for file in glob.glob("www_hash/raid_*.jpg"):
+    for file in glob.glob("ocr/www_hash/raid_*.jpg"):
         unkfile = re.search('raid_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
         hashvalue = (unkfile.group(3))
 
@@ -377,7 +377,7 @@ def get_raids():
                 if data[str(gymid)]["description"]:
                     description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
 
-            raidJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify,  'level': lvl, 'mon': mon, 'type': type, 'eggPic': eggPic, 'monPic': monPic, 'monname': monName })
+            raidJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify,  'level': lvl, 'mon': mon, 'type': type, 'eggPic': eggPic, 'monPic': monPic, 'monname': monName })
             raids.append(raidJson)
         else:
             log.debug("File: " + str(file) + " not found in Database")
@@ -435,7 +435,7 @@ def get_screens():
         if conf_args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
-        screenJson = ({'filename': file, 'creation': creationdate})
+        screenJson = ({'filename': file[4:], 'creation': creationdate})
         screens.append(screenJson)
 
     return jsonify(screens)
@@ -445,7 +445,7 @@ def get_screens():
 @auth_required
 def get_unknows():
     unk = []
-    for file in glob.glob("www_hash/unkgym_*.jpg"):
+    for file in glob.glob("ocr/www_hash/unkgym_*.jpg"):
         unkfile = re.search('unkgym_(-?\d+\.?\d+)_(-?\d+\.?\d+)_((?s).*)\.jpg', file)
         creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
         lat = (unkfile.group(1))
@@ -455,7 +455,7 @@ def get_unknows():
         if conf_args.madmin_time == "12":
             creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
-        hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file, 'creation': creationdate})
+        hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'creation': creationdate})
         unk.append(hashJson)
 
     return jsonify(unk)
@@ -466,29 +466,19 @@ def get_unknows():
 def get_position():
     position = []
     positionexport = {}
-    fileName = conf_args.position_file+'.position'
+    fileName = args.position_file+'.position'
 
     for filename in glob.glob('*.position'):
         name = filename.split('.')
         with open(filename, 'r') as f:
             latlon = f.read().strip().split(', ')
-            position.append([
-                getCoordFloat(latlon[0]),
-                getCoordFloat(latlon[1])
-            ])
+            position = {
+                    'lat': getCoordFloat(latlon[0]),
+                    'lng': getCoordFloat(latlon[1])
+                }
             positionexport[str(name[0])] = position
 
     return jsonify(positionexport)
-
-    if not os.path.isfile(fileName):
-        return jsonify([0, 0])
-
-    with open(fileName) as f:
-        latlon = f.read().strip().split(', ')
-        if len(latlon) == 2:
-            return jsonify([getCoordFloat(latlon[0]), getCoordFloat(latlon[1])])
-        else:
-            return jsonify([0, 0])
 
 
 @cache.cached()
@@ -854,6 +844,7 @@ def addedit():
 
     with open('configs/mappings.json') as f:
         mapping = json.load(f)
+
     with open('madmin/static/vars/settings.json') as f:
         settings = json.load(f)
 
