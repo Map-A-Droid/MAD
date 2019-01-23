@@ -33,6 +33,7 @@ function setGrid(tableGridHtmlId, gridData) {
 
     $(document).ready(function () {
         $("#navstatus").addClass("active");
+
         $.ajax({
             type: "GET",
             url: "/status",
@@ -47,7 +48,5 @@ function setGrid(tableGridHtmlId, gridData) {
 
 {% block content %}
 <h2>Status</h2>
-
-{{settings | safe }}
-
+<table id="show-data" class="table"></table>
 {% endblock %}
