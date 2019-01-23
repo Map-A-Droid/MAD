@@ -902,7 +902,7 @@ def statusview():
 
 @app.route('/get_status', methods=['GET'])
 def status():    
-    workerStatus = {}
+    workerStatus = []
 
     for filename in glob.glob('*.position'):
         name = filename.split('.')
