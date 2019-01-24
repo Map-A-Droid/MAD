@@ -252,6 +252,7 @@ class RouteManagerBase(ABC):
                 log.debug("Route of %s is being calculated" % str(self.name))
                 self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
                 self.init = False
+                self.change_init_mapping(self, self.name)
                 return self.get_next_location()
             elif self._current_index_of_route >= len(self._route):
                 self._current_index_of_route = 0
@@ -260,3 +261,14 @@ class RouteManagerBase(ABC):
                  % (str(self.name), str(next_lat), str(next_lng)))
         self._manager_mutex.release()
         return Location(next_lat, next_lng)
+        
+    def change_init_mapping(self, name_area):
+        with open('mappings.json') as f:
+            vars = json.load(f)
+
+        for var in vars['areas']:
+            if (var['name']) == name_area:
+                var['init'] = bool(False)
+
+        with open('mappings.json', 'w') as outfile:
+            json.dump(vars, outfile, indent=4, sort_keys=True)
