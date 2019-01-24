@@ -217,9 +217,9 @@ class WebhookHelper(object):
             name = info_of_gym.get("name", "unknown")
             gym_name = name.replace("\\", r"\\").replace('"', '')
             gym_description = info_of_gym.get('description', 'unknown')\
-                .replace('\\' r'\\').replace('"', '')
+                .replace('\\', r'\\').replace('"', '')
             gym_url = info_of_gym.get('url', 'unknown')\
-                .replace('\\' r'\\').replace('"', '')
+                .replace('\\', r'\\').replace('"', '')
 
         payload_raw = gym_webhook_payload.format(
             raid_active_until=raid_active_until,
