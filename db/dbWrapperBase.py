@@ -19,6 +19,7 @@ log = logging.getLogger(__name__)
 
 class DbWrapperBase(ABC):
     def_spawn = 240
+   
 
     def __init__(self, args, webhook_helper):
         self.application_args = args
@@ -433,17 +434,23 @@ class DbWrapperBase(ABC):
         log.info('clearHashGyms: Deleted Raidhashes with unknown mons')
 
     def getspawndef(self, spawn_id):
+        if not spawn_id:
+            return False
         log.debug("{DbWrapperBase::getspawndef} called")
+        
+        spawnids = ",".join( map(str, spawn_id) )
+        spawnret = {}
+        
         query = (
-            "SELECT spawndef "
-            "FROM trs_spawn "
-            "WHERE spawnpoint=%s"
+            "SELECT spawnpoint, spawndef "
+            "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
-        vals = (spawn_id,)
 
-        res = self.execute(query, vals)
-        ret = [row[0] for row in res]
-        return ret
+        res = self.execute(query)
+        for row in res:
+            spawnret[row[0]] = row[1]
+
+        return spawnret
 
     def submit_spawnpoints_map_proto(self, map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
@@ -451,6 +458,7 @@ class DbWrapperBase(ABC):
         if cells is None:
             return False
         spawnpoint_args, spawnpoint_args_unseen = [], []
+        spawnids = []
 
         query_spawnpoints = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
@@ -471,6 +479,12 @@ class DbWrapperBase(ABC):
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dt = datetime.now()
+        
+        for cell in cells:
+            for wild_mon in cell["wild_pokemon"]:
+                spawnids.append(int(str(wild_mon['spawnpoint_id']), 16))
+                
+        spawndef = self.getspawndef(spawnids)
 
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
@@ -479,13 +493,8 @@ class DbWrapperBase(ABC):
                 despawntime = wild_mon['time_till_hidden']
 
                 minpos = self._get_min_pos_in_array()
-                # TODO: retrieve the spawndefs by a single executemany and pass that...
 
-                spawndef = self.getspawndef(spawnid)
-                spawndef_ = False
-                for t in spawndef:
-                    spawndef_ = t
-
+                spawndef_ = spawndef.get(spawnid, False)
                 if spawndef_:
                     newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
                 else:
@@ -625,7 +634,7 @@ class DbWrapperBase(ABC):
 
         found = self.execute(query, args)
 
-        if found[0][0]:
+        if found and found[0][0]:
             return str(found[0][0])
         else:
             return False
@@ -657,6 +666,8 @@ class DbWrapperBase(ABC):
             pos = 7
         else:
             pos = None
+            
+        self.__globaldef = pos
 
         return pos
 

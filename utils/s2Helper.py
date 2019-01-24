@@ -57,8 +57,8 @@ class S2Helper:
         cell = s2sphere.CellId(id_=int(cell_id)).to_lat_lng()
         return s2sphere.math.degrees(cell.lat().radians), \
                s2sphere.math.degrees(cell.lng().radians), 0
-               
-    @staticmethod    
+
+    @staticmethod
     def get_s2_cells_from_fence(geofence, cell_size=16):
         _geofence = geofence
         log.warning("Calculating corners of fences")
@@ -82,6 +82,12 @@ class S2Helper:
                  ' L{} Cells in Area'.format(str(cell_size)))
 
         return calc_route_data
+
+    @staticmethod
+    def get_cellid_from_latlng(lat, lng, level=20):
+        ll = s2sphere.LatLng.from_degrees(lat, lng)
+        cell = s2sphere.CellId().from_lat_lng(ll)
+        return cell.parent(level).to_token()
 
 # the following stuff is drafts for further consideration
     # @staticmethod
