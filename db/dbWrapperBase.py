@@ -634,7 +634,7 @@ class DbWrapperBase(ABC):
 
         found = self.execute(query, args)
 
-        if found[0][0]:
+        if found and found[0][0]:
             return str(found[0][0])
         else:
             return False
