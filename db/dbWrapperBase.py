@@ -31,18 +31,18 @@ class DbWrapperBase(ABC):
         self.timezone = args.timezone
         self.pool = None
         self.pool_mutex = Lock()
-        self._init_pool()
         self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
         self.webhook_helper = webhook_helper
         self.dbconfig = {"database": self.database, "user": self.user, "host": self.host, "password": self.password,
                          "port": self.port}
+        self._init_pool()
 
     def _init_pool(self):
         log.info("Connecting pool to DB")
         self.pool_mutex.acquire()
         self.pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="db_wrapper_pool",
                                                                 pool_size=self.application_args.db_poolsize,
-                                                          	**self.dbconfig)
+                                                                **self.dbconfig)
         self.pool_mutex.release()
 
     def close(self, conn, cursor):
@@ -493,13 +493,13 @@ class DbWrapperBase(ABC):
         if not spawn_id:
             return False
         log.debug("{DbWrapperBase::getspawndef} called")
-        
-        spawnids = ",".join( map(str, spawn_id) )
+
+        spawnids = ",".join(map(str, spawn_id))
         spawnret = {}
-        
+
         query = (
-            "SELECT spawnpoint, spawndef "
-            "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
+                "SELECT spawnpoint, spawndef "
+                "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
         # vals = (spawn_id,)
 
@@ -535,11 +535,11 @@ class DbWrapperBase(ABC):
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dt = datetime.now()
-        
+
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
                 spawnids.append(int(str(wild_mon['spawnpoint_id']), 16))
-                
+
         spawndef = self.getspawndef(spawnids)
 
         for cell in cells:
@@ -723,7 +723,7 @@ class DbWrapperBase(ABC):
             pos = 7
         else:
             pos = None
-            
+
         self.__globaldef = pos
 
         return pos
@@ -873,7 +873,7 @@ class DbWrapperBase(ABC):
                 str(condition)
             )
             log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (
-            str(quest_type), str(fort_id)))
+                str(quest_type), str(fort_id)))
             self.execute(query_quests, vals, commit=True)
 
             if self.application_args.webhook:
