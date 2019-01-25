@@ -15,7 +15,7 @@ log = logging.getLogger(__name__)
 mode_mapping = {
     "raids_mitm": {
         "s2_cell_level": 13,
-        "range": 490,
+        "range": 610,
         "max_count": 100000
     },
     "mon_mitm": {
@@ -24,7 +24,7 @@ mode_mapping = {
         "max_count": 100000
     },
     "raids_ocr": {
-        "range": 490,
+        "range": 610,
         "max_count": 7
     },
     "pokestops": {
