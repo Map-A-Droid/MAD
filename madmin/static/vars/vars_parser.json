@@ -560,6 +560,25 @@
 			    "empty": null,
 				"description": "Area of nighttime_area"
 		    }
+	    },
+		{
+			"name": "sleep",
+    		"settings": {
+	        	"type": "option",
+		    	"require": "true",
+				"values": "false|true",
+			    "empty": null,
+				"description": "Activate timer for Area Switch"
+		    }
+	    },
+		{
+			"name": "sleep_interval",
+    		"settings": {
+	        	"type": "text",
+		    	"require": "false",
+			    "empty": null,
+				"description": "Time for nightmode - Put in brakets ['21:00', '5:00'])"
+		    }
 	    }
 	],
 	"settings": [

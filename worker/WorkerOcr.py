@@ -6,7 +6,6 @@ from threading import Lock, Event, Thread, current_thread
 
 from ocr.checkWeather import checkWeather
 from utils.collections import Location
-from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.s2Helper import S2Helper
 from .WorkerBase import WorkerBase
@@ -19,13 +18,14 @@ log = logging.getLogger(__name__)
 # signals that the raid tab is open
 class WorkerOcr(WorkerBase):
     def __init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime, route_manager_nighttime,
-                 devicesettings, db_wrapper):
+                 devicesettings, db_wrapper, timer):
         WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper)
         self.id = id
         self._workMutex = Lock()
         self._run_warning_thread_event = Event()
         self._locationCount = 0
+        self._timer = timer
 
     def _start_pogo(self):
         pogoTopmost = self._communicator.isPogoTopmost()
@@ -81,7 +81,7 @@ class WorkerOcr(WorkerBase):
             currentLocation = Location(0.0, 0.0)
         lastLocation = None
         while not self._stop_worker_event.isSet():
-            while MadGlobals.sleep and self._route_manager_nighttime is None:
+            while self._timer.get_sleep() and self._route_manager_nighttime is None:
                 time.sleep(1)
             __time = time.time()
             log.debug("Worker: acquiring lock for restart check")
@@ -110,12 +110,12 @@ class WorkerOcr(WorkerBase):
             self._last_known_state["last_location"] = lastLocation
 
             # TODO: object oriented...
-            if MadGlobals.sleep and self._route_manager_nighttime is not None:
+            if self._timer.get_sleep() and self._route_manager_nighttime is not None:
                 if self._route_manager_nighttime.mode not in ["raids_ocr"]:
                     break
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
-            elif MadGlobals.sleep:
+            elif self._timer.get_sleep():
                 # skip to top while loop to get to sleep loop
                 continue
             else:
@@ -137,7 +137,7 @@ class WorkerOcr(WorkerBase):
                                                             float(currentLocation.lat), float(currentLocation.lng))
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
-            if MadGlobals.sleep:
+            if self._timer.get_sleep():
                 speed = self._route_manager_nighttime.settings.get("speed", 0)
             else:
                 speed = self._route_manager_daytime.settings.get("speed", 0)
@@ -280,7 +280,7 @@ class WorkerOcr(WorkerBase):
     # TODO: update state...
     def _speed_weather_check_thread(self):
         while not self._stop_worker_event.is_set():
-            while MadGlobals.sleep:
+            while self._timer.get_sleep():
                 time.sleep(0.5)
             log.debug("checkSpeedWeatherWarningThread: acquiring lock")
             log.debug("Speedweather: acquiring lock")

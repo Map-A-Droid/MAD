@@ -7,7 +7,6 @@ from threading import Thread, Lock, Event, current_thread
 
 from route.RouteManagerIV import RouteManagerIV
 from utils.collections import Location
-from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from utils.geo import get_distance_of_two_points_in_meters
 from worker.WorkerBase import WorkerBase
 
@@ -16,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class WorkerMITM(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 mitm_mapper, devicesettings, db_wrapper):
+                 mitm_mapper, devicesettings, db_wrapper, timer):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True)
 
@@ -25,6 +24,7 @@ class WorkerMITM(WorkerBase):
         self._run_warning_thread_event = Event()
         self._locationCount = 0
         self._mitm_mapper = mitm_mapper
+        self._timer = timer
         # self.thread_pool = ThreadPool(processes=4)
         self.loop = None
         self.loop_started = Event()
@@ -36,13 +36,13 @@ class WorkerMITM(WorkerBase):
     def __update_injection_settings(self):
         injected_settings = {}
         scanmode = "nothing"
-        if MadGlobals.sleep and self._route_manager_nighttime is None:
+        if self._timer.get_sleep() and self._route_manager_nighttime is None:
             # worker has to sleep, just empty out the settings...
             self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
                                             values_dict={})
             scanmode = "nothing"
         else:
-            if MadGlobals.sleep:
+            if self._timer.get_sleep():
                 routemanager = self._route_manager_nighttime
             else:
                 routemanager = self._route_manager_daytime
@@ -149,7 +149,7 @@ class WorkerMITM(WorkerBase):
             currentLocation = Location(0.0, 0.0)
         lastLocation = None
         while not self._stop_worker_event.isSet():
-            while MadGlobals.sleep and self._route_manager_nighttime is None:
+            while self._timer.get_sleep() and self._route_manager_nighttime is None:
                 time.sleep(1)
             log.debug("Worker: acquiring lock for restart check")
             self._work_mutex.acquire()
@@ -185,12 +185,12 @@ class WorkerMITM(WorkerBase):
             log.debug("Requesting next location from routemanager")
             # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
             # the workers up...
-            if MadGlobals.sleep and self._route_manager_nighttime is not None:
+            if self._timer.get_sleep() and self._route_manager_nighttime is not None:
                 if self._route_manager_nighttime.mode not in ["iv_mitm", "raids_mitm", "mon_mitm"]:
                     break
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
-            elif MadGlobals.sleep:
+            elif self._timer.get_sleep():
                 # skip to top while loop to get to sleep loop
                 continue
             else:
@@ -217,7 +217,7 @@ class WorkerMITM(WorkerBase):
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
             log.debug("Getting time")
-            if MadGlobals.sleep:
+            if self._timer.get_sleep():
                 speed = self._route_manager_nighttime.settings.get("speed", 0)
             else:
                 speed = self._route_manager_daytime.settings.get("speed", 0)
@@ -332,7 +332,7 @@ class WorkerMITM(WorkerBase):
                     nighttime_mode = None
                 daytime_mode = self._route_manager_daytime.mode
 
-                current_mode = daytime_mode if not MadGlobals.sleep else nighttime_mode
+                current_mode = daytime_mode if not self._timer.get_sleep() else nighttime_mode
 
                 if latest_timestamp >= timestamp:
                     if current_mode == 'mon_mitm' or current_mode == "iv_mitm":

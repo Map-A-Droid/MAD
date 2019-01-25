@@ -6,7 +6,6 @@ import time
 from threading import Thread, Lock, Event, current_thread
 
 from utils.collections import Location
-from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.resolution import Resocalculator
 from worker.WorkerBase import WorkerBase
@@ -16,7 +15,7 @@ log = logging.getLogger(__name__)
 
 class WorkerQuests(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 mitm_mapper, devicesettings, db_wrapper):
+                 mitm_mapper, devicesettings, db_wrapper, timer):
                  
         self._resocalc = Resocalculator
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
@@ -27,6 +26,7 @@ class WorkerQuests(WorkerBase):
         self._run_warning_thread_event = Event()
         self._locationCount = 0
         self._mitm_mapper = mitm_mapper
+        self._timer = timer
         # self.thread_pool = ThreadPool(processes=4)
         self.loop = None
         self.loop_started = Event()
@@ -160,7 +160,7 @@ class WorkerQuests(WorkerBase):
         lastLocation = None
 
         while not self._stop_worker_event.isSet():
-            while MadGlobals.sleep and self._route_manager_nighttime is None:
+            while self._timer.get_sleep() and self._route_manager_nighttime is None:
                 time.sleep(1)
             log.debug("Worker: acquiring lock for restart check")
             self._work_mutex.acquire()
@@ -194,13 +194,13 @@ class WorkerQuests(WorkerBase):
             self._last_known_state["last_location"] = lastLocation
 
             log.debug("Requesting next location from routemanager")
-            if MadGlobals.sleep and self._route_manager_nighttime is not None:
+            if self._timer.get_sleep() and self._route_manager_nighttime is not None:
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
                 while self._db_wrapper.check_stop_quest(currentLocation.lat, currentLocation.lng):
                     self._route_manager_nighttime.del_from_route()
                     currentLocation = self._route_manager_nighttime.get_next_location()
-            elif MadGlobals.sleep:
+            elif self._timer.get_sleep():
                 # skip to top while loop to get to sleep loop
                 continue
             else:
@@ -228,7 +228,7 @@ class WorkerQuests(WorkerBase):
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
             log.debug("Getting time")
-            if MadGlobals.sleep:
+            if self._timer.get_sleep():
                 speed = self._route_manager_nighttime.settings.get("speed", 0)
             else:
                 speed = self._route_manager_daytime.settings.get("speed", 0)
@@ -420,7 +420,7 @@ class WorkerQuests(WorkerBase):
                     nighttime_mode = None
                 daytime_mode = self._route_manager_daytime.mode
 
-                current_mode = daytime_mode if not MadGlobals.sleep else nighttime_mode
+                current_mode = daytime_mode if not self._timer.get_sleep() else nighttime_mode
 
                 if latest_timestamp >= timestamp:
 

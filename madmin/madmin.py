@@ -915,8 +915,16 @@ def addedit():
 
 def match_typ(key):
     if '[' in key and ']' in key:
-        key = list(key.replace('[', '').replace(']', '').split(','))
-        key = [int(i) for i in key]
+        if ':' in key:
+            tempkey = []
+            keyarray = key.replace('[', '').replace(']', '').replace(' ', '').replace("'", '').split(',')
+            for k in keyarray:
+                tempkey.append(str(k))
+
+            key = tempkey
+        else:
+            key = list(key.replace('[', '').replace(']', '').split(','))
+            key = [int(i) for i in key]
     elif key in 'true':
         key = bool(True)
     elif key in 'false':

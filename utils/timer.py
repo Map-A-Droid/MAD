@@ -1,59 +1,37 @@
 import logging
-import os, sys
-from pathlib import Path
-import json
+import datetime, time
+
+from threading import Thread
 
 log = logging.getLogger(__name__)
 
-class PlayerStats(object):
-    def __init__(self, id):
-        self._sleep = false
-        self._switch = false
-        self._sleeptime = "0"
+class Timer(object):
+    def __init__(self, sleep, id, sleeptime='0'):
+        self._switch = False
         
+        self._id = id
+        self._sleep = sleep
+        self._sleeptime = sleeptime
+        
+        log.info('[%s] - check for Sleeptimer' % str(self._id))
+        
+        if self._sleep:
+            t_sleeptimer = Thread(name='sleeptimer',
+                                  target=self.sleeptimer)
+            t_sleeptimer.daemon = True
+            t_sleeptimer.start()
         
     def set_sleep(self, switch):
-        log.info('[%s] - set sleep: %s' % (str(self._id), str(sleep)))
+        log.info('[%s] - set sleep: %s' % (str(self._id), str(switch)))
         self._switch = switch
         return
         
     def get_sleep(self):
         return self._switch
-        
-    def check_sleeptimer(self, sleep, sleeptime):
-        if sleep:
-            self._sleeptime = sleeptime
-            t_sleeptimer = Thread(name='sleeptimer',
-                                  target=sleeptimer)
-            t_sleeptimer.daemon = True
-            t_sleeptimer.start()
-            
-    def _gen_player_stats(self, data):
-        if 'inventory_delta' not in data:
-            log.debug('{{gen_player_stats}} cannot generate new stats')
-            return True
-        stats= data['inventory_delta'].get("inventory_items", None)
-        if len(stats) > 0 :
-            for data_inventory in stats:
-                player_level = data_inventory['inventory_item_data']['player_stats']['level']
-                if int(player_level) > 0:
-                    log.debug('{{gen_player_stats}} saving new playerstats')
-                    self.set_level(int(player_level))
-                            
-                    data = {}  
-                    data[self._id] = []
-                    data[self._id].append({  
-                        'level': str(data_inventory['inventory_item_data']['player_stats']['level']), 
-                        'experience': str(data_inventory['inventory_item_data']['player_stats']['experience']),
-                        'km_walked': str(data_inventory['inventory_item_data']['player_stats']['km_walked']),
-                        'pokemons_encountered': str(data_inventory['inventory_item_data']['player_stats']['pokemons_encountered']),
-                        'poke_stop_visits': str(data_inventory['inventory_item_data']['player_stats']['poke_stop_visits'])
-                    })
-                    with open(self._id + '.stats', 'w') as outfile:  
-                        json.dump(data, outfile, indent=4, sort_keys=True)
 
-    def sleeptimer():
-        sleeptime = _sleeptime
+    def sleeptimer(self):
+        log.info('[%s] - Starting Sleeptimer' % str(self._id))
+        sleeptime = self._sleeptime
         sts1 = sleeptime[0].split(':')
         sts2 = sleeptime[1].split(':')
         while True:
@@ -72,23 +50,23 @@ class PlayerStats(object):
             if tmTil < tmFrom:
                 tmTil = tmTil + datetime.timedelta(days=1)
 
-            log.debug("Time now: %s" % tmNow)
-            log.debug("Time From: %s" % tmFrom)
-            log.debug("Time Til: %s" % tmTil)
+            log.debug("[%s] - Time now: %s" % (tmNow, str(self._id)))
+            log.debug("[%s] - Time From: %s" % (tmFrom, str(self._id)))
+            log.debug("[%s] - Time Til: %s" % (tmTil, str(self._id)))
 
             if tmFrom <= tmNow < tmTil:
-                log.info('Going to sleep - bye bye')
+                log.info('[%s] - Going to sleep - bye bye'% str(self._id))
                 self.set_sleep(True)
 
-                while MadGlobals.sleep:
-                    log.info("Currently sleeping...zzz")
-                    log.debug("Time now: %s" % tmNow)
-                    log.debug("Time From: %s" % tmFrom)
-                    log.debug("Time Til: %s" % tmTil)
+                while self.get_sleep():
+                    log.info("[%s] - Currently sleeping...zzz" % str(self._id))
+                    log.debug("[%s] - Time now: %s" % (tmNow, str(self._id)))
+                    log.debug("[%s] - Time From: %s" % (tmFrom, str(self._id)))
+                    log.debug("[%s] - Time Til: %s" % (tmTil, str(self._id)))
                     tmNow = datetime.datetime.now()
-                    log.info('Still sleeping, current time... %s' % str(tmNow.strftime("%H:%M")))
+                    log.info('[%s] - Still sleeping, current time... %s' % (str(self._id), str(tmNow.strftime("%H:%M"))))
                     if tmNow >= tmTil:
-                        log.warning('sleeptimer: Wakeup - here we go ...')
+                        log.warning('[%s] - sleeptimer: Wakeup - here we go ...' % str(self._id))
                         self.set_sleep(False)
                         break
                     time.sleep(30)
