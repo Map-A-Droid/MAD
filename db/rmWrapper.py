@@ -645,7 +645,10 @@ class RmWrapper(DbWrapperBase):
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
-        encounter_id = wild_pokemon['encounter_id'] + 2 ** 64
+        encounter_id = wild_pokemon['encounter_id']
+
+        if encounter_id < 0:
+            encounter_id = encounter_id + 2**64
 
         if init:
             log.info("{0}: updating mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
@@ -766,8 +769,10 @@ class RmWrapper(DbWrapperBase):
                 lat = wild_mon['latitude']
                 lon = wild_mon['longitude']
                 mon_id = wild_mon['pokemon_data']['id']
-                # encounter IDs are unsigned long long
-                encounter_id = wild_mon['encounter_id'] + 2**64
+                encounter_id = wild_mon['encounter_id']
+
+                if encounter_id < 0:
+                    encounter_id = encounter_id + 2**64
 
                 now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
                 despawn_time = datetime.now() + timedelta(seconds=300)
@@ -1141,7 +1146,7 @@ class RmWrapper(DbWrapperBase):
                 "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp  "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
-                "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE()"
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
             )
             data = ()
         else:
@@ -1152,7 +1157,7 @@ class RmWrapper(DbWrapperBase):
                 "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
-                "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE() and "
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
                 "trs_quest.GUID = %s"
             )
             data = (GUID, )
