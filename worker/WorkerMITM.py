@@ -36,13 +36,13 @@ class WorkerMITM(WorkerBase):
     def __update_injection_settings(self):
         injected_settings = {}
         scanmode = "nothing"
-        if self._timer.get_sleep() and self._route_manager_nighttime is None:
+        if self._timer.get_switch() and self._route_manager_nighttime is None:
             # worker has to sleep, just empty out the settings...
             self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
                                             values_dict={})
             scanmode = "nothing"
         else:
-            if self._timer.get_sleep():
+            if self._timer.get_switch():
                 routemanager = self._route_manager_nighttime
             else:
                 routemanager = self._route_manager_daytime
@@ -153,7 +153,7 @@ class WorkerMITM(WorkerBase):
             currentLocation = Location(0.0, 0.0)
         lastLocation = None
         while not self._stop_worker_event.isSet():
-            while self._timer.get_sleep() and self._route_manager_nighttime is None:
+            while self._timer.get_switch() and self._route_manager_nighttime is None:
                 time.sleep(1)
             log.debug("Worker: acquiring lock for restart check")
             self._work_mutex.acquire()
@@ -191,12 +191,12 @@ class WorkerMITM(WorkerBase):
             log.debug("Requesting next location from routemanager")
             # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
             # the workers up...
-            if self._timer.get_sleep() and self._route_manager_nighttime is not None:
+            if self._timer.get_switch() and self._route_manager_nighttime is not None:
                 if self._route_manager_nighttime.mode not in ["iv_mitm", "raids_mitm", "mon_mitm"]:
                     break
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
-            elif self._timer.get_sleep():
+            elif self._timer.get_switch():
                 # skip to top while loop to get to sleep loop
                 continue
             else:
@@ -224,7 +224,7 @@ class WorkerMITM(WorkerBase):
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
             log.debug("Getting time")
-            if self._timer.get_sleep():
+            if self._timer.get_switch():
                 speed = self._route_manager_nighttime.settings.get("speed", 0)
             else:
                 speed = self._route_manager_daytime.settings.get("speed", 0)
@@ -349,7 +349,7 @@ class WorkerMITM(WorkerBase):
                     nighttime_mode = None
                 daytime_mode = self._route_manager_daytime.mode
 
-                current_mode = daytime_mode if not self._timer.get_sleep() else nighttime_mode
+                current_mode = daytime_mode if not self._timer.get_switch() else nighttime_mode
 
                 if latest_timestamp >= timestamp:
                     if current_mode == 'mon_mitm' or current_mode == "iv_mitm":

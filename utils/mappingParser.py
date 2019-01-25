@@ -211,8 +211,8 @@ class MappingParser(object):
             device_dict = {}
             daytime_area = device["daytime_area"]
             nighttime_area = device.get("nighttime_area", None)
-            sleep = device.get("sleep", False)
-            sleep_interval = device.get("sleep_interval", False)
+            sleep = device.get("switch", False)
+            sleep_interval = device.get("switch_interval", False)
             settings = device.get("settings", None)
             device_dict["daytime_area"] = daytime_area
             device_dict["nighttime_area"] = nighttime_area

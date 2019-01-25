@@ -562,7 +562,7 @@
 		    }
 	    },
 		{
-			"name": "sleep",
+			"name": "switch",
     		"settings": {
 	        	"type": "option",
 		    	"require": "true",
@@ -572,7 +572,7 @@
 		    }
 	    },
 		{
-			"name": "sleep_interval",
+			"name": "switch_interval",
     		"settings": {
 	        	"type": "text",
 		    	"require": "false",

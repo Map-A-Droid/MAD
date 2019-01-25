@@ -144,12 +144,6 @@ def parseArgs():
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
 
-    # sleeptimer
-    parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
-                        help='Activate the Sleeptimer.')
-    parser.add_argument('-si', '--sleepinterval', default=[], action='append',
-                        help='Intervals for the sleeptimer. f.e. [[22:00, 5:00]]')
-
     # download coords
     parser.add_argument('-jj', '--justjson', action='store_true', default=False,
                         help='just generate the gym_info.json')

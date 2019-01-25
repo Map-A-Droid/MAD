@@ -93,8 +93,8 @@ class WebsocketServerBase(ABC):
         lastKnownState = {}
         client_mapping = self.device_mappings[id]
 
-        timer = Timer(client_mapping["sleep"], id,
-                      client_mapping["sleep_interval"])
+        timer = Timer(client_mapping["switch"], id,
+                      client_mapping["switch_interval"])
 
         daytime_routemanager = self.routemanagers[client_mapping["daytime_area"]].get(
             "routemanager")
@@ -106,7 +106,7 @@ class WebsocketServerBase(ABC):
         devicesettings = client_mapping["settings"]
 
         started = False
-        if timer.get_sleep() is True:
+        if timer.get_switch() is True:
             # start the appropriate nighttime manager if set
             if nightime_routemanager is None:
                 pass
@@ -126,7 +126,7 @@ class WebsocketServerBase(ABC):
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
-        if not timer.get_sleep() or not started:
+        if not timer.get_switch() or not started:
             # we either gotta run daytime mode OR nighttime routemanager not set
             if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
                 Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,

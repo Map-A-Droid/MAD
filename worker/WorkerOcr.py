@@ -85,7 +85,7 @@ class WorkerOcr(WorkerBase):
             currentLocation = Location(0.0, 0.0)
         lastLocation = None
         while not self._stop_worker_event.isSet():
-            while self._timer.get_sleep() and self._route_manager_nighttime is None:
+            while self._timer.get_switch() and self._route_manager_nighttime is None:
                 time.sleep(1)
             __time = time.time()
             log.debug("Worker: acquiring lock for restart check")
@@ -116,12 +116,12 @@ class WorkerOcr(WorkerBase):
             self._last_known_state["last_location"] = lastLocation
 
             # TODO: object oriented...
-            if self._timer.get_sleep() and self._route_manager_nighttime is not None:
+            if self._timer.get_switch() and self._route_manager_nighttime is not None:
                 if self._route_manager_nighttime.mode not in ["raids_ocr"]:
                     break
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
-            elif self._timer.get_sleep():
+            elif self._timer.get_switch():
                 # skip to top while loop to get to sleep loop
                 continue
             else:
@@ -144,7 +144,7 @@ class WorkerOcr(WorkerBase):
                                                             float(currentLocation.lat), float(currentLocation.lng))
             log.info('main: Moving %s meters to the next position' % distance)
             delayUsed = 0
-            if self._timer.get_sleep():
+            if self._timer.get_switch():
                 speed = self._route_manager_nighttime.settings.get("speed", 0)
             else:
                 speed = self._route_manager_daytime.settings.get("speed", 0)
@@ -304,7 +304,7 @@ class WorkerOcr(WorkerBase):
     # TODO: update state...
     def _speed_weather_check_thread(self):
         while not self._stop_worker_event.is_set():
-            while self._timer.get_sleep():
+            while self._timer.get_switch():
                 time.sleep(0.5)
             log.debug("checkSpeedWeatherWarningThread: acquiring lock")
             log.debug("Speedweather: acquiring lock")

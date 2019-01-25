@@ -88,6 +88,11 @@
             "origin": "samsung",
             "daytime_area": "test123",
             "nighttime_area": "test123",
+            "switch": true,
+            "switch_interval": [
+                "22:30",
+                "5:30"
+            ],
             "settings": {
                 "post_walk_delay": 0,
                 "post_teleport_delay": 7,
