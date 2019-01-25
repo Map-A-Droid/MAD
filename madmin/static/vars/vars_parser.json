@@ -121,7 +121,7 @@
 			"require": "false",
 			"description": "Rounds in Init Mode. (Default: 1)"
 	    }
-	}
+	},
 	{
 		"name": "mon_ids_iv",
 		"settings": {
