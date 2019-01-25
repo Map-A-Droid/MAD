@@ -128,7 +128,6 @@ class S2Helper:
         ]
         # get the center
         center = get_middle_of_coord_list(corners)
-        results.append(Location(center.lat, center.lng))
 
         # get the farthest to the center...
         farthest_dist = 0
@@ -148,6 +147,7 @@ class S2Helper:
             temp = [pool.apply(S2Helper._generate_star_locs, args=(center, distance, i)) for i in range(1, step_limit)]
 
         results = [item for sublist in temp for item in sublist]
+        results.append(Location(center.lat, center.lng))
 
         # for ring in range(1, step_limit):
         #     for i in range(0, 6):
