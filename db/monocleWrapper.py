@@ -599,7 +599,10 @@ class MonocleWrapper(DbWrapperBase):
 
         s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude, level=10)
 
-        encounter_id = wild_pokemon['encounter_id'] + 2 ** 64
+        encounter_id = wild_pokemon['encounter_id']
+
+        if encounter_id < 0:
+            encounter_id = encounter_id + 2**64
 
         query = (
             "INSERT INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
@@ -691,7 +694,10 @@ class MonocleWrapper(DbWrapperBase):
                              .format(str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
 
                 mon_id = wild_mon['pokemon_data']['id']
-                encounter_id = wild_mon['encounter_id'] + 2 ** 64
+                encounter_id = wild_mon['encounter_id']
+
+                if encounter_id < 0:
+                    encounter_id = encounter_id + 2**64
 
                 if mon_ids_iv is not None and mon_id not in mon_ids_iv:
                     self.webhook_helper.send_pokemon_webhook(
