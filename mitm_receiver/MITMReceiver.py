@@ -78,7 +78,6 @@ class MITMReceiver(object):
             t = threading.Thread(target=self.received_data_worker)
             t.start()
             self.worker_threads.append(t)
-        
 
     def __del__(self):
         global application_args

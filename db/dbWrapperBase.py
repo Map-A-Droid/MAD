@@ -266,6 +266,15 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def submit_pokestops_details_map_proto(self, map_proto):
+        """
+        Update/Insert pokestop details from a GMO
+        :param map_proto:
+        :return:
+        """
+        pass
+
+    @abstractmethod
     def submit_gyms_map_proto(self, origin, map_proto):
         """
         Update/Insert gyms from a map_proto dict
