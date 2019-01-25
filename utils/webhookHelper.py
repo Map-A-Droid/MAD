@@ -95,7 +95,9 @@ gym_webhook_payload = """[{{
   "message": {{
     "raid_active_until": {raid_active_until},
     "gym_id": "{gym_id}",
-    "gym_name": "{gym_name}",
+    "name": "{gym_name}",
+    "description": "{gym_description}",
+    "url": "{gym_url}",
     "team_id": {team_id},
     "slots_available": {slots_available},
     "guard_pokemon_id": {guard_pokemon_id},
@@ -242,14 +244,22 @@ class WebhookHelper(object):
     async def _send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id,
                                 slots_available, guard_pokemon_id, latitude, longitude):
         info_of_gym = self.gyminfo.get(gym_id, None)
+        gym_url = 'unknown'
+        gym_description = 'unknown'
         if info_of_gym is not None and gym_name == 'unknown':
             name = info_of_gym.get("name", "unknown")
             gym_name = name.replace("\\", r"\\").replace('"', '')
+            gym_description = info_of_gym.get('description', 'unknown')\
+                .replace('\\', r'\\').replace('"', '')
+            gym_url = info_of_gym.get('url', 'unknown')\
+                .replace('\\', r'\\').replace('"', '')
 
         payload_raw = gym_webhook_payload.format(
             raid_active_until=raid_active_until,
             gym_id=gym_id,
             gym_name=gym_name,
+            gym_description=gym_description,
+            gym_url=gym_url,
             team_id=team_id,
             slots_available=slots_available,
             guard_pokemon_id=guard_pokemon_id,

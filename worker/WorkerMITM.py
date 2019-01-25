@@ -293,7 +293,6 @@ class WorkerMITM(WorkerBase):
 
         self.stop_worker()
         self.loop.stop()
-        # t_asyncio_loop.join()
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
         try:

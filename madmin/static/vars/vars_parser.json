@@ -115,6 +115,14 @@
 	    }
 	},
 	{
+		"name": "init_mode_rounds",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Rounds in Init Mode. (Default: 1)"
+	    }
+	}
+	{
 		"name": "mon_ids_iv",
 		"settings": {
 	    	 "type": "text",
@@ -412,6 +420,14 @@
 	    	"values": "false|true",
 			  "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
 			  "output": "int"
+	    }
+	},
+	{
+		"name": "init_mode_rounds",
+		"settings": {
+	    	"type": "text",
+			"require": "false",
+			"description": "Rounds in Init Mode. (Default: 1)"
 	    }
 	}
     ]

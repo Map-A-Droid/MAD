@@ -92,6 +92,12 @@ class S2Helper:
         return calc_route_data
 
     @staticmethod
+    def get_cellid_from_latlng(lat, lng, level=20):
+        ll = s2sphere.LatLng.from_degrees(lat, lng)
+        cell = s2sphere.CellId().from_lat_lng(ll)
+        return cell.parent(level).to_token()
+
+    @staticmethod
     def _generate_star_locs(center, distance, ring):
         results = []
         for i in range(0, 6):

@@ -858,7 +858,7 @@ def addedit():
             if 'username' in mapping[area][i]:
                     _checkfield = 'username'
 
-            if str(edit) in str(mapping[area][i][_checkfield]):
+            if str(edit) == str(mapping[area][i][_checkfield]):
                 if str(block) == str("settings"):
                     for ase, key in data.items():
                         if key == '':

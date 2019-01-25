@@ -42,7 +42,7 @@ class DbWrapperBase(ABC):
         self.pool_mutex.acquire()
         self.pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="db_wrapper_pool",
                                                                 pool_size=self.application_args.db_poolsize,
-                                                                **self.dbconfig)
+                                                          	**self.dbconfig)
         self.pool_mutex.release()
 
     def close(self, conn, cursor):
@@ -490,17 +490,23 @@ class DbWrapperBase(ABC):
         log.info('clearHashGyms: Deleted Raidhashes with unknown mons')
 
     def getspawndef(self, spawn_id):
+        if not spawn_id:
+            return False
         log.debug("{DbWrapperBase::getspawndef} called")
+        
+        spawnids = ",".join( map(str, spawn_id) )
+        spawnret = {}
+        
         query = (
-            "SELECT spawndef "
-            "FROM trs_spawn "
-            "WHERE spawnpoint=%s"
+            "SELECT spawnpoint, spawndef "
+            "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
         vals = (spawn_id,)
 
-        res = self.execute(query, vals)
-        ret = [row[0] for row in res]
-        return ret
+        res = self.execute(query)
+        for row in res:
+            spawnret[row[0]] = row[1]
+	return spawnret
 
     def submit_spawnpoints_map_proto(self, origin, map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called with data received by %s" % str(origin))
@@ -508,6 +514,7 @@ class DbWrapperBase(ABC):
         if cells is None:
             return False
         spawnpoint_args, spawnpoint_args_unseen = [], []
+        spawnids = []
 
         query_spawnpoints = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
@@ -528,6 +535,12 @@ class DbWrapperBase(ABC):
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         dt = datetime.now()
+        
+        for cell in cells:
+            for wild_mon in cell["wild_pokemon"]:
+                spawnids.append(int(str(wild_mon['spawnpoint_id']), 16))
+                
+        spawndef = self.getspawndef(spawnids)
 
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
@@ -538,11 +551,7 @@ class DbWrapperBase(ABC):
                 minpos = self._get_min_pos_in_array()
                 # TODO: retrieve the spawndefs by a single executemany and pass that...
 
-                spawndef = self.getspawndef(spawnid)
-                spawndef_ = False
-                for t in spawndef:
-                    spawndef_ = t
-
+                spawndef_ = spawndef.get(spawnid, False)
                 if spawndef_:
                     newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
                 else:
@@ -682,7 +691,7 @@ class DbWrapperBase(ABC):
 
         found = self.execute(query, args)
 
-        if len(found) > 0 and found[0][0]:
+        if found and len(found) > 0 and found[0][0]:
             return str(found[0][0])
         else:
             return False
@@ -714,6 +723,8 @@ class DbWrapperBase(ABC):
             pos = 7
         else:
             pos = None
+            
+        self.__globaldef = pos
 
         return pos
 
@@ -800,7 +811,7 @@ class DbWrapperBase(ABC):
         next_up = []
         current_time = time.time()
         for (latitude, longitude, spawndef, calc_endminsec) in res:
-            if not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
+            if geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
                 continue
             endminsec_split = calc_endminsec.split(":")
             minutes = int(endminsec_split[0])
