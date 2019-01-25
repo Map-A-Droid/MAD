@@ -1141,7 +1141,7 @@ class RmWrapper(DbWrapperBase):
                 "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp  "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
-                "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE()"
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
             )
             data = ()
         else:
@@ -1152,7 +1152,7 @@ class RmWrapper(DbWrapperBase):
                 "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
-                "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE() and "
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
                 "trs_quest.GUID = %s"
             )
             data = (GUID, )

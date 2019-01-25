@@ -1073,7 +1073,7 @@ class MonocleWrapper(DbWrapperBase):
             "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
             "trs_quest.quest_timestamp FROM pokestops inner join trs_quest on "
             "pokestops.external_id = trs_quest.GUID where "
-            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE()"
+            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
             )
             data = ()
         else:
@@ -1084,7 +1084,7 @@ class MonocleWrapper(DbWrapperBase):
                 "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
                 "trs_quest.quest_timestamp FROM pokestops inner join trs_quest on "
                 "pokestops.external_id = trs_quest.GUID where "
-                "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = CURDATE() and "
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
                 "trs_quest.GUID = %s"
             )
             data = (GUID, )
