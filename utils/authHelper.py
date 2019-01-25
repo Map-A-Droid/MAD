@@ -1,5 +1,5 @@
-import logging
 import base64
+import logging
 
 log = logging.getLogger(__name__)
 

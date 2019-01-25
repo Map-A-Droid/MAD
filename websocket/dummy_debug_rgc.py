@@ -3,6 +3,7 @@
 # WS server example
 
 import asyncio
+
 import websockets
 from aioconsole import ainput
 

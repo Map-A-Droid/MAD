@@ -5,14 +5,14 @@ import math
 import queue
 import sys
 from abc import ABC
-from threading import Lock, Event, Thread
+from threading import Event, Lock, Thread
 
 import websockets
 
 from utils.authHelper import check_auth
+from utils.timer import Timer
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
-from utils.timer import Timer
 
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
@@ -72,13 +72,17 @@ class WebsocketServerBase(ABC):
         try:
             id = str(websocket.request_headers.get_all("Origin")[0])
         except IndexError:
-            log.warning("Client from %s tried to connect without Origin header" % str(websocket)) # TODO: list IP or whatever...
+            # TODO: list IP or whatever...
+            log.warning(
+                "Client from %s tried to connect without Origin header" % str(websocket))
             return False
         if self.auths:
             try:
-                authBase64 = str(websocket.request_headers.get_all("Authorization")[0])
+                authBase64 = str(
+                    websocket.request_headers.get_all("Authorization")[0])
             except IndexError:
-                log.warning("Client from %s tried to connect without auth header" % str(websocket))
+                log.warning(
+                    "Client from %s tried to connect without auth header" % str(websocket))
                 return False
         if self.__current_users.get(id, None) is not None:
             log.warning("Worker for %s is already running" % str(id))
@@ -88,12 +92,15 @@ class WebsocketServerBase(ABC):
 
         lastKnownState = {}
         client_mapping = self.device_mappings[id]
-        
-        timer = Timer(client_mapping["sleep"], id, client_mapping["sleep_interval"])
-        
-        daytime_routemanager = self.routemanagers[client_mapping["daytime_area"]].get("routemanager")
+
+        timer = Timer(client_mapping["sleep"], id,
+                      client_mapping["sleep_interval"])
+
+        daytime_routemanager = self.routemanagers[client_mapping["daytime_area"]].get(
+            "routemanager")
         if client_mapping.get("nighttime_area", None) is not None:
-            nightime_routemanager = self.routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
+            nightime_routemanager = self.routemanagers[client_mapping["nighttime_area"]].get(
+                "routemanager", None)
         else:
             nightime_routemanager = None
         devicesettings = client_mapping["settings"]
@@ -135,7 +142,8 @@ class WebsocketServerBase(ABC):
                 log.fatal("Mode not implemented")
                 sys.exit(1)
 
-        newWorkerThread = Thread(name='worker_%s' % id, target=Worker.start_worker)
+        newWorkerThread = Thread(name='worker_%s' %
+                                 id, target=Worker.start_worker)
         self.__current_users[id] = [newWorkerThread, Worker, websocket]
         newWorkerThread.daemon = False
         newWorkerThread.start()
@@ -213,7 +221,8 @@ class WebsocketServerBase(ABC):
         )
         for task in pending:
             task.cancel()
-        log.info("All done with %s" % str(websocket.request_headers.get_all("Origin")[0]))
+        log.info("All done with %s" %
+                 str(websocket.request_headers.get_all("Origin")[0]))
         await self.__unregister(websocket)
 
     def __onMessage(self, message):

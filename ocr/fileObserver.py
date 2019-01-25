@@ -21,8 +21,10 @@ class RaidScan:
     def process(filename, args, db_wrapper, hash, raidno, captureTime, captureLat, captureLng, src_path, radius):
         log.debug("Cropscanning started")
         scanner = Scanner(args, db_wrapper, hash)
-        log.info("Initialized scanned, starting analysis of %s" % str(filename))
-        checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius)
+        log.info("Initialized scanned, starting analysis of %s" %
+                 str(filename))
+        checkcrop = scanner.start_detect(
+            filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius)
         return checkcrop
 
 
@@ -43,31 +45,36 @@ class checkScreenshot(PatternMatchingEventHandler):
         log.info("Starting pogo window manager in OCR thread")
 
         # let's start a thread handling the tasks...
-        
+
     def cropImage(self, screenshot, captureTime, captureLat, captureLng, src_path):
         p = None
         raidNo = 0
         processes = []
-        
+
         hash = str(time.time())
         orgScreen = screenshot
         height, width, channel = screenshot.shape
-        gray=cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
-        gray=cv2.GaussianBlur(gray, (7, 7), 2)
+        gray = cv2.cvtColor(screenshot, cv2.COLOR_BGR2GRAY)
+        gray = cv2.GaussianBlur(gray, (7, 7), 2)
 
-        minRadius = int(((width / 4.736)) / 2) 
+        minRadius = int(((width / 4.736)) / 2)
         maxRadius = int(((width / 4.736)) / 2)
-        log.debug('Searching for Raid Circles with Radius from %s to %s px' % (str(minRadius), str(maxRadius)))
-        
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50,param2=30, minRadius=minRadius, maxRadius=maxRadius)
-        
+        log.debug('Searching for Raid Circles with Radius from %s to %s px' % (
+            str(minRadius), str(maxRadius)))
+
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20,
+                                   param1=50, param2=30, minRadius=minRadius, maxRadius=maxRadius)
+
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (x, y, r) in circles:
-                log.debug('Found Circle with x:%s, y:%s, r:%s' % (str(x), str(y), str(r)))
+                log.debug('Found Circle with x:%s, y:%s, r:%s' %
+                          (str(x), str(y), str(r)))
                 raidNo += 1
-                raidCropFilepath = os.path.join(self.args.temp_path, str(hash) + "_raidcrop" + str(raidNo) +".jpg")
-                new_crop = orgScreen[y-r-int((r*2*0.03)):y+r+int((r*2*0.75)), x-r-int((r*2*0.03)):x+r+int((r*2*0.3))]
+                raidCropFilepath = os.path.join(self.args.temp_path, str(
+                    hash) + "_raidcrop" + str(raidNo) + ".jpg")
+                new_crop = orgScreen[y-r-int((r*2*0.03)):y+r+int(
+                    (r*2*0.75)), x-r-int((r*2*0.03)):x+r+int((r*2*0.3))]
                 cv2.imwrite(raidCropFilepath, new_crop)
                 log.info("Starting processing of crop")
                 self.thread_pool.apply_async(RaidScan.process, args=(raidCropFilepath, self.args, self.db_wrapper,
@@ -92,7 +99,8 @@ class checkScreenshot(PatternMatchingEventHandler):
         # print filename
         time.sleep(2)
         # groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
-        raidcount = re.search(r'.*raidscreen_(\d+\.?\d*)_(-?\d+\.?\d+)_(-?\d+\.?\d+)_(\d+)(\.jpg|\.png).*', event.src_path)
+        raidcount = re.search(
+            r'.*raidscreen_(\d+\.?\d*)_(-?\d+\.?\d+)_(-?\d+\.?\d+)_(\d+)(\.jpg|\.png).*', event.src_path)
         if raidcount is None:
             # we could not read the raidcount... stop
             log.warning("Could not read raidcount in %s" % event.src_path)
@@ -115,8 +123,9 @@ class checkScreenshot(PatternMatchingEventHandler):
             return
         processes = []
         bounds = []
-        
-        self.cropImage(raidPic, captureTime, captureLat, captureLng, event.src_path)
+
+        self.cropImage(raidPic, captureTime, captureLat,
+                       captureLng, event.src_path)
         log.debug("process: Done starting off processes")
 
     patterns = ['*.png', '*.jpg']

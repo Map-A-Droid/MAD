@@ -2,12 +2,13 @@ import logging
 import os
 import time
 from shutil import copyfile
-from threading import Lock, Event, Thread, current_thread
+from threading import Event, Lock, Thread, current_thread
 
 from ocr.checkWeather import checkWeather
 from utils.collections import Location
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.s2Helper import S2Helper
+
 from .WorkerBase import WorkerBase
 
 log = logging.getLogger(__name__)
@@ -36,12 +37,14 @@ class WorkerOcr(WorkerBase):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             log.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 7))
-            
+            time.sleep(self._devicesettings.get(
+                "post_turn_screen_on_delay", 7))
+
         curTime = time.time()
         startResult = False
         while not pogoTopmost:
-            startResult = self._communicator.startApp("com.nianticlabs.pokemongo")
+            startResult = self._communicator.startApp(
+                "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogoTopmost = self._communicator.isPogoTopmost()
         reachedRaidtab = False
@@ -72,7 +75,8 @@ class WorkerOcr(WorkerBase):
         # loop = asyncio.get_event_loop()
         # TODO:loop.create_task(self._speed_weather_check_thread())
 
-        speedWeatherCheckThread = Thread(name='speedWeatherCheckThread%s' % self.id, target=self._speed_weather_check_thread)
+        speedWeatherCheckThread = Thread(
+            name='speedWeatherCheckThread%s' % self.id, target=self._speed_weather_check_thread)
         speedWeatherCheckThread.daemon = False
         speedWeatherCheckThread.start()
 
@@ -93,11 +97,13 @@ class WorkerOcr(WorkerBase):
                 # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
                 self._locationCount += 1
                 if self._locationCount > self._devicesettings.get("restart_pogo", 80):
-                    log.error("scanned " + str(self._devicesettings.get("restart_pogo", 80)) + " locations, restarting pogo")
+                    log.error("scanned " + str(self._devicesettings.get(
+                        "restart_pogo", 80)) + " locations, restarting pogo")
                     try:
                         self._restartPogo()
                     except WebsocketWorkerRemovedException:
-                        log.error("Timeout restarting pogo on %s" % str(self.id))
+                        log.error("Timeout restarting pogo on %s" %
+                                  str(self.id))
                         self._stop_worker_event.set()
                         self._workMutex.release()
                         return
@@ -126,7 +132,8 @@ class WorkerOcr(WorkerBase):
 
             log.debug("Updating .position file")
             with open(self.id + '.position', 'w') as outfile:
-                outfile.write(str(currentLocation.lat) + ", " + str(currentLocation.lng))
+                outfile.write(str(currentLocation.lat) +
+                              ", " + str(currentLocation.lng))
 
             log.debug("main: next stop: %s" % (str(currentLocation)))
             log.debug('main: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
@@ -142,39 +149,43 @@ class WorkerOcr(WorkerBase):
             else:
                 speed = self._route_manager_daytime.settings.get("speed", 0)
             if (speed == 0 or
-                    (settings["max_distance"] and 0 < settings["max_distance"] < distance)
+                    (settings["max_distance"] and 0 <
+                     settings["max_distance"] < distance)
                     or (lastLocation.lat == 0.0 and lastLocation.lng == 0.0)):
                 log.info("main: Teleporting...")
                 try:
-                    self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
+                    self._communicator.setLocation(
+                        currentLocation.lat, currentLocation.lng, 0)
                 except WebsocketWorkerRemovedException:
                     log.error("Timeout setting location of %s" % str(self.id))
                     self._stop_worker_event.set()
                     return
-                delayUsed = self._devicesettings.get("post_teleport_delay",7)
+                delayUsed = self._devicesettings.get("post_teleport_delay", 7)
                 # Test for cooldown / teleported distance TODO: check this block...
-                if self._devicesettings.get("cool_down_sleep",False):
+                if self._devicesettings.get("cool_down_sleep", False):
                     if distance > 2500:
                         delayUsed = 30
                     elif distance > 5000:
                         delayUsed = 45
                     elif distance > 10000:
                         delayUsed = 60
-                    log.info("Need more sleep after Teleport: %s seconds!" % str(delayUsed))
+                    log.info("Need more sleep after Teleport: %s seconds!" %
+                             str(delayUsed))
 
-                if 0 < self._devicesettings.get("walk_after_teleport_distance",0) < distance:
+                if 0 < self._devicesettings.get("walk_after_teleport_distance", 0) < distance:
                     toWalk = get_distance_of_two_points_in_meters(float(currentLocation.lat), float(currentLocation.lng),
-                                                                  float(currentLocation.lat) + 0.0001,
+                                                                  float(
+                                                                      currentLocation.lat) + 0.0001,
                                                                   float(currentLocation.lng) + 0.0001)
                     log.info("Walking a bit: %s" % str(toWalk))
                     time.sleep(0.3)
                     try:
                         self._communicator.walkFromTo(currentLocation.lat, currentLocation.lng,
-                                                       currentLocation.lat + 0.0001, currentLocation.lng + 0.0001, 11)
+                                                      currentLocation.lat + 0.0001, currentLocation.lng + 0.0001, 11)
                         log.debug("Walking back")
                         time.sleep(0.3)
                         self._communicator.walkFromTo(currentLocation.lat + 0.0001, currentLocation.lng + 0.0001,
-                                                       currentLocation.lat, currentLocation.lng, 11)
+                                                      currentLocation.lat, currentLocation.lng, 11)
                     except WebsocketWorkerRemovedException:
                         log.error("Timeout walking a bit on %s" % str(self.id))
                         self._stop_worker_event.set()
@@ -187,10 +198,11 @@ class WorkerOcr(WorkerBase):
                                                   currentLocation.lat, currentLocation.lng,
                                                   speed)
                 except WebsocketWorkerRemovedException:
-                    log.error("Timeout while walking with worker %s" % str(self.id))
+                    log.error("Timeout while walking with worker %s" %
+                              str(self.id))
                     self._stop_worker_event.set()
                     return
-                delayUsed = self._devicesettings.get("post_walk_delay",7)
+                delayUsed = self._devicesettings.get("post_walk_delay", 7)
             log.info("Sleeping %s" % str(delayUsed))
             time.sleep(float(delayUsed))
 
@@ -203,7 +215,8 @@ class WorkerOcr(WorkerBase):
                     log.debug("Worker: Lock released")
                     continue
             except WebsocketWorkerRemovedException:
-                log.error("Timeout grabbing a screenshot from %s" % str(self.id))
+                log.error("Timeout grabbing a screenshot from %s" %
+                          str(self.id))
                 self._stop_worker_event.set()
                 self._workMutex.release()
                 return
@@ -211,17 +224,21 @@ class WorkerOcr(WorkerBase):
             curTime = time.time()
             if self._applicationArgs.last_scanned:
                 log.info('main: Set new scannedlocation in Database')
-                self._db_wrapper.set_scanned_location(str(currentLocation.lat), str(currentLocation.lng), str(curTime))
-            log.info("main: Checking raidcount and copying raidscreen if raids present")
+                self._db_wrapper.set_scanned_location(
+                    str(currentLocation.lat), str(currentLocation.lng), str(curTime))
+            log.info(
+                "main: Checking raidcount and copying raidscreen if raids present")
             countOfRaids = self._pogoWindowManager.readRaidCircles(os.path.join(
                 self._applicationArgs.temp_path, 'screenshot%s.png' % str(self.id)), self.id)
             if countOfRaids == -1:
                 log.debug("Worker: Count present but no raid shown")
-                log.warning("main: Count present but no raid shown, reopening raidTab")
+                log.warning(
+                    "main: Count present but no raid shown, reopening raidTab")
                 try:
                     self._reopenRaidTab()
                 except WebsocketWorkerRemovedException:
-                    log.error("Timeout reopening the raidtab on %s" % str(self.id))
+                    log.error("Timeout reopening the raidtab on %s" %
+                              str(self.id))
                     self._stop_worker_event.set()
                     self._workMutex.release()
                     return
@@ -233,7 +250,8 @@ class WorkerOcr(WorkerBase):
                         log.debug("Worker: Lock released")
                         continue
                 except WebsocketWorkerRemovedException:
-                    log.error("Timeout grabbing screenshot from worker %s" % str(self.id))
+                    log.error(
+                        "Timeout grabbing screenshot from worker %s" % str(self.id))
                     self._stop_worker_event.set()
                     self._workMutex.release()
                     return
@@ -250,26 +268,32 @@ class WorkerOcr(WorkerBase):
             # detectin weather
             if self._applicationArgs.weather:
                 log.debug("Worker: Checking weather...")
-                weather = checkWeather(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self.id)))
+                weather = checkWeather(os.path.join(
+                    self._applicationArgs.temp_path, 'screenshot%s.png' % str(self.id)))
                 if weather[0]:
                     log.debug('Submit Weather')
-                    cell_id = S2Helper.lat_lng_to_cell_id(currentLocation.lat, currentLocation.lng)
-                    self._db_wrapper.update_insert_weather(cell_id, weather[1], curTime)
+                    cell_id = S2Helper.lat_lng_to_cell_id(
+                        currentLocation.lat, currentLocation.lng)
+                    self._db_wrapper.update_insert_weather(
+                        cell_id, weather[1], curTime)
                 else:
                     log.error('Weather could not detected')
 
             if countOfRaids > 0:
                 log.debug("Worker: Count of raids >0")
-                log.debug("main: New und old Screenshoot are different - starting OCR")
+                log.debug(
+                    "main: New und old Screenshoot are different - starting OCR")
                 log.debug("main: countOfRaids: %s" % str(countOfRaids))
                 curTime = time.time()
                 copyFileName = self._applicationArgs.raidscreen_path + '/raidscreen_' + str(curTime) \
-                               + "_" + str(currentLocation.lat) + "_" + str(currentLocation.lng) + "_" \
-                               + str(countOfRaids) + '.png'
+                    + "_" + str(currentLocation.lat) + "_" + str(currentLocation.lng) + "_" \
+                    + str(countOfRaids) + '.png'
                 log.debug('Copying file: ' + copyFileName)
                 log.debug("Worker: Copying file to %s" % str(copyFileName))
-                copyfile(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self.id)), copyFileName)
-                os.remove(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self.id)))
+                copyfile(os.path.join(self._applicationArgs.temp_path,
+                                      'screenshot%s.png' % str(self.id)), copyFileName)
+                os.remove(os.path.join(self._applicationArgs.temp_path,
+                                       'screenshot%s.png' % str(self.id)))
 
             log.debug("main: Releasing lock")
             self._workMutex.release()
@@ -289,13 +313,16 @@ class WorkerOcr(WorkerBase):
                 log.debug("Speedweather: acquired lock")
                 log.debug("checkSpeedWeatherWarningThread: lock acquired")
 
-                log.debug("checkSpeedWeatherWarningThread: Checking if pogo is running...")
+                log.debug(
+                    "checkSpeedWeatherWarningThread: Checking if pogo is running...")
                 try:
                     if not self._communicator.isPogoTopmost():
-                        log.warning("checkSpeedWeatherWarningThread: Starting Pogo")
+                        log.warning(
+                            "checkSpeedWeatherWarningThread: Starting Pogo")
                         self._restartPogo()
                 except WebsocketWorkerRemovedException:
-                    log.error("Timeout checking if pogo is topmost/restarting pogo on %s" % str(self.id))
+                    log.error(
+                        "Timeout checking if pogo is topmost/restarting pogo on %s" % str(self.id))
                     self._stop_worker_event.set()
                     self._workMutex.release()
                     return
@@ -303,18 +330,22 @@ class WorkerOcr(WorkerBase):
                 try:
                     reachedRaidscreen = self._getToRaidscreen(10, True)
                 except WebsocketWorkerRemovedException:
-                    log.error("Timeout getting to raidscreen on %s" % str(self.id))
+                    log.error("Timeout getting to raidscreen on %s" %
+                              str(self.id))
                     self._stop_worker_event.set()
                     self._workMutex.release()
                     return
                 if reachedRaidscreen:
-                    log.debug("checkSpeedWeatherWarningThread: checkSpeedWeatherWarningThread: reached raidscreen...")
+                    log.debug(
+                        "checkSpeedWeatherWarningThread: checkSpeedWeatherWarningThread: reached raidscreen...")
                     self._run_warning_thread_event.set()
                 else:
-                    log.debug("checkSpeedWeatherWarningThread: did not reach raidscreen in 10 attempts")
+                    log.debug(
+                        "checkSpeedWeatherWarningThread: did not reach raidscreen in 10 attempts")
                     self._run_warning_thread_event.clear()
             except WebsocketWorkerRemovedException as e:
-                log.error("Timeout during init of worker %s with %s" % (str(self.id), str(e)))
+                log.error("Timeout during init of worker %s with %s" %
+                          (str(self.id), str(e)))
                 self._stop_worker_event.set()
                 self._workMutex.release()
                 return
@@ -322,11 +353,3 @@ class WorkerOcr(WorkerBase):
             self._workMutex.release()
             log.debug("Speedweather: released lock")
             time.sleep(1)
-
-
-
-
-
-
-
-

@@ -1,4 +1,5 @@
 import logging
+
 from route.RouteManagerBase import RouteManagerBase
 
 log = logging.getLogger(__name__)
@@ -29,7 +30,8 @@ class RouteManagerMon(RouteManagerBase):
             coords = self.db_wrapper.get_detected_spawns(self.geofence_helper)
         else:
             log.info("Reading unknown Spawnpoints from DB")
-            coords = self.db_wrapper.get_undetected_spawns(self.geofence_helper)
+            coords = self.db_wrapper.get_undetected_spawns(
+                self.geofence_helper)
         return coords
 
     def _cluster_priority_queue_criteria(self):
