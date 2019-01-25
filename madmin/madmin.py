@@ -466,7 +466,7 @@ def get_unknows():
 def get_position():
     position = []
     positionexport = {}
-    fileName = args.position_file+'.position'
+    # fileName = conf_args.position_file+'.position'
 
     for filename in glob.glob('*.position'):
         name = filename.split('.')
@@ -559,28 +559,28 @@ def get_quests():
         
     return jsonify(coords)
 
-    for pokestopid in data:
-        pokestop = data[str(pokestopid)]
-        if int(pokestop['quest_pokemon_id']) > 0:
-            monName = mondata[str(int(pokestop['quest_pokemon_id']))]["name"]
-        coords.append({
-            'id': pokestopid,
-            'quest_type': pokestop['quest_type'],
-            'quest_stardust': pokestop['quest_stardust'],
-            'lat': pokestop['latitude'],
-            'lon': pokestop['longitude'],
-            'quest_pokemon_id': pokestop['quest_pokemon_id'],
-            'quest_reward_type': pokestop['quest_reward_type'],
-            'quest_item_id': pokestop['quest_item_id'],
-            'quest_item_amount': pokestop['quest_item_amount'],
-            'name': pokestop['name'],
-            'image': pokestop['image'],
-            'monname': monName,
-            'quest_condition': pokestop['quest_condition'],
-            'quest_target': pokestop['quest_target']
-            })
-
-    return jsonify(coords)
+    # for pokestopid in data:
+    #     pokestop = data[str(pokestopid)]
+    #     if int(pokestop['quest_pokemon_id']) > 0:
+    #         monName = mondata[str(int(pokestop['quest_pokemon_id']))]["name"]
+    #     coords.append({
+    #         'id': pokestopid,
+    #         'quest_type': pokestop['quest_type'],
+    #         'quest_stardust': pokestop['quest_stardust'],
+    #         'lat': pokestop['latitude'],
+    #         'lon': pokestop['longitude'],
+    #         'quest_pokemon_id': pokestop['quest_pokemon_id'],
+    #         'quest_reward_type': pokestop['quest_reward_type'],
+    #         'quest_item_id': pokestop['quest_item_id'],
+    #         'quest_item_amount': pokestop['quest_item_amount'],
+    #         'name': pokestop['name'],
+    #         'image': pokestop['image'],
+    #         'monname': monName,
+    #         'quest_condition': pokestop['quest_condition'],
+    #         'quest_target': pokestop['quest_target']
+    #         })
+    #
+    # return jsonify(coords)
 
 
 @app.route('/gym_img/<path:path>', methods=['GET'])
@@ -988,7 +988,7 @@ def showsettings():
 
     return render_template('settings.html', settings='<table>' + table + '</table>', title="Mapping Editor")
 
-    return jsonify(table)
+    # return jsonify(table)
 
 
 @app.route('/addnew', methods=['GET', 'POST'])
