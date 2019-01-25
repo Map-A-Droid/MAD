@@ -39,7 +39,7 @@ if not args.verbose:
     console.setLevel(logging.INFO)
 
 formatter = ColoredFormatter(
-    '%(log_color)s [%(asctime)s] [%(threadName)16s] [%(module)14s]' +
+    '%(log_color)s [%(asctime)s] [%(threadName)16s] [%(module)14s:%(lineno)d]' +
     ' [%(levelname)8s] %(message)s',
     datefmt='%m-%d %H:%M:%S',
     reset=True,
