@@ -848,10 +848,10 @@ class MonocleWrapper(DbWrapperBase):
             for gym in cell['forts']:
                 if gym['type'] == 0 and gym['gym_details']['has_raid']:
                     if gym['gym_details']['raid_info']['has_pokemon']:
-                        pokemon_id = gym['gym_details']['raid_info']['pokemon']['id']
-                        cp = gym['gym_details']['raid_info']['pokemon']['cp']
-                        move_1 = gym['gym_details']['raid_info']['pokemon']['move_1']
-                        move_2 = gym['gym_details']['raid_info']['pokemon']['move_2']
+                        pokemon_id = gym['gym_details']['raid_info']['raid_pokemon']['id']
+                        cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
+                        move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
+                        move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                     else:
                         pokemon_id = None
                         cp = 0
