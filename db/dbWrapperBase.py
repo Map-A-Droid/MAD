@@ -501,12 +501,12 @@ class DbWrapperBase(ABC):
             "SELECT spawnpoint, spawndef "
             "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
-        vals = (spawn_id,)
+        # vals = (spawn_id,)
 
         res = self.execute(query)
         for row in res:
             spawnret[row[0]] = row[1]
-	return spawnret
+        return spawnret
 
     def submit_spawnpoints_map_proto(self, origin, map_proto):
         log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called with data received by %s" % str(origin))
