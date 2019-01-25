@@ -7,6 +7,7 @@ import mysql
 from threading import Lock, Semaphore
 
 from bitstring import BitArray
+from mysql.connector import OperationalError
 from mysql.connector.pooling import MySQLConnectionPool
 from abc import ABC, abstractmethod
 import numpy as np
@@ -33,15 +34,15 @@ class DbWrapperBase(ABC):
         self._init_pool()
         self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
         self.webhook_helper = webhook_helper
+        self.dbconfig = {"database": self.database, "user": self.user, "host": self.host, "password": self.password,
+                         "port": self.port}
 
     def _init_pool(self):
         log.info("Connecting pool to DB")
         self.pool_mutex.acquire()
-        dbconfig = {"database": self.database, "user": self.user, "host": self.host, "password": self.password,
-                    "port": self.port}
         self.pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="db_wrapper_pool",
                                                                 pool_size=self.application_args.db_poolsize,
-                                                                **dbconfig)
+                                                                **self.dbconfig)
         self.pool_mutex.release()
 
     def close(self, conn, cursor):
@@ -67,6 +68,13 @@ class DbWrapperBase(ABC):
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
         cursor = conn.cursor()
+        # TODO: consider catching OperationalError
+        # try:
+        #     cursor = conn.cursor()
+        # except OperationalError as e:
+        #     log.error("OperationalError trying to acquire a DB cursor: %s" % str(e))
+        #     conn.rollback()
+        #     return None
         if args:
             cursor.execute(sql, args)
         else:
@@ -225,7 +233,7 @@ class DbWrapperBase(ABC):
         :return: numpy array with coords
         """
         pass
-        
+
     @abstractmethod
     def quests_from_db(self, GUID=False):
         """
@@ -236,9 +244,9 @@ class DbWrapperBase(ABC):
 
     @abstractmethod
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time,
-                               cloud_level=0, rain_level=0, wind_level=0,
-                               snow_level=0, fog_level=0, wind_direction=0,
-                               weather_daytime=0):
+                              cloud_level=0, rain_level=0, wind_level=0,
+                              snow_level=0, fog_level=0, wind_direction=0,
+                              weather_daytime=0):
         """
         Updates the weather in a given cell_id
         """
@@ -334,7 +342,7 @@ class DbWrapperBase(ABC):
         self.execute(query, commit=True)
 
         return True
-        
+
     def create_quest_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -353,7 +361,7 @@ class DbWrapperBase(ABC):
                  ' quest_item_amount tinyint(2) NOT NULL,' +
                  ' quest_target tinyint(3) NOT NULL,' +
                  ' quest_condition varchar(500), ' +
-                 ' PRIMARY KEY (GUID), ' + 
+                 ' PRIMARY KEY (GUID), ' +
                  ' KEY quest_type (quest_type))')
         self.execute(query, commit=True)
 
@@ -770,7 +778,8 @@ class DbWrapperBase(ABC):
 
         res = self.execute(query)
         for (spawnid, lat, lon, endtime, spawndef, last_scanned) in res:
-            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef, 'lastscan': str(last_scanned)}
+            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef,
+                              'lastscan': str(last_scanned)}
 
         return str(json.dumps(spawn, indent=4, sort_keys=True))
 
@@ -790,7 +799,7 @@ class DbWrapperBase(ABC):
         res = self.execute(query)
         next_up = []
         current_time = time.time()
-        for(latitude, longitude, spawndef, calc_endminsec) in res:
+        for (latitude, longitude, spawndef, calc_endminsec) in res:
             if not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
                 continue
             endminsec_split = calc_endminsec.split(":")
@@ -820,7 +829,7 @@ class DbWrapperBase(ABC):
                 )
             )
         return next_up
-        
+
     def submit_quest_proto(self, map_proto):
         log.debug("{DbWrapperBase::submit_quest_proto} called")
         fort_id = map_proto.get("fort_id", None)
@@ -834,7 +843,8 @@ class DbWrapperBase(ABC):
             item = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("item", None)
             itemamount = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("amount", None)
             stardust = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("stardust", None)
-            pokemon_id = map_proto['challenge_quest']['quest']['quest_rewards'][0]['pokemon_encounter'].get("pokemon_id", None)
+            pokemon_id = map_proto['challenge_quest']['quest']['quest_rewards'][0]['pokemon_encounter'].get(
+                "pokemon_id", None)
             target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
             condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
 
@@ -848,9 +858,11 @@ class DbWrapperBase(ABC):
                 "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), quest_condition=VALUES(quest_condition)"
             )
             vals = (
-                fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target, str(condition)
-            )  
-            log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (str(quest_type), str(fort_id))) 
+                fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target,
+                str(condition)
+            )
+            log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (
+            str(quest_type), str(fort_id)))
             self.execute(query_quests, vals, commit=True)
 
             if self.application_args.webhook:
@@ -858,6 +870,5 @@ class DbWrapperBase(ABC):
                 self.webhook_helper.submit_quest_webhook(self.quests_from_db(GUID=fort_id))
             else:
                 log.debug('Sending Webhook is disabled')
-            
-            
+
         return True
