@@ -433,7 +433,7 @@ class WebhookHelper(object):
                                       despawn_time_unix,
                                       pokemon_level=None, cp_multiplier=None, form=None, cp=None,
                                       individual_attack=None, individual_defense=None, individual_stamina=None,
-                                      move_1=None, move_2=None, height=None, weight=None, weather=None, gender=None, boosted_weather=None):
+                                      move_1=None, move_2=None, height=None, weight=None, gender=None, boosted_weather=None):
         log.info('Sending Pokemon %s (#%s) to webhook', pokemon_id, id)
 
         mon_payload = {"encounter_id": encounter_id, "pokemon_id": pokemon_id, "last_modified_time": last_modified_time,
