@@ -4,6 +4,7 @@ import logging
 import math
 import queue
 import sys
+import time
 from abc import ABC
 from threading import Event, Lock, Thread
 
@@ -95,6 +96,7 @@ class WebsocketServerBase(ABC):
 
         timer = Timer(client_mapping["switch"], id,
                       client_mapping["switch_interval"])
+        time.sleep(1)
 
         daytime_routemanager = self.routemanagers[client_mapping["daytime_area"]].get(
             "routemanager")
