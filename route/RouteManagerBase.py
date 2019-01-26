@@ -19,7 +19,7 @@ Relation = collections.namedtuple('Relation', ['other_event', 'distance', 'timed
 
 class RouteManagerBase(ABC):
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, init=False,
+                 path_to_exclude_geofence, routefile, mode=None, init=False,
                  name="unknown", settings=None):
         self.db_wrapper = db_wrapper
         self.init = init
@@ -30,6 +30,7 @@ class RouteManagerBase(ABC):
         self._max_radius = max_radius
         self._max_coords_within_radius = max_coords_within_radius
         self.settings = settings
+        self.mode = mode
 
         self._last_round_prio = False
         self._manager_mutex = Lock()
@@ -46,15 +47,17 @@ class RouteManagerBase(ABC):
         self._init_mode_rounds = 0
         if settings is not None:
             self.delay_after_timestamp_prio = settings.get("delay_after_prio_event", None)
+            if self.delay_after_timestamp_prio == 0 : self.delay_after_timestamp_prio = None
             self.starve_route = settings.get("starve_route", False)
         else:
             self.delay_after_timestamp_prio = None
             self.starve_route = False
-        if self.delay_after_timestamp_prio is not None:
+        if self.delay_after_timestamp_prio is not None or mode == "iv_mitm":
             self._prio_queue = []
-            self.clustering_helper = ClusteringHelper(self._max_radius,
-                                                      self._max_coords_within_radius,
-                                                      self._cluster_priority_queue_criteria())
+            if mode != "iv_mitm":
+                self.clustering_helper = ClusteringHelper(self._max_radius,
+                                                          self._max_coords_within_radius,
+                                                          self._cluster_priority_queue_criteria())
             self._stop_update_thread = Event()
             self._update_prio_queue_thread = Thread(name="prio_queue_update_" + name,
                                                     target=self._update_priority_queue_loop)
@@ -115,16 +118,18 @@ class RouteManagerBase(ABC):
             # newQueue = self._db_wrapper.get_next_raid_hatches(self._delayAfterHatch, self._geofenceHelper)
             new_queue = self._retrieve_latest_priority_queue()
             self._merge_priority_queue(new_queue)
-            time.sleep(300)
+            time.sleep(self._priority_queue_update_interval())
 
     def _merge_priority_queue(self, new_queue):
-        self._manager_mutex.acquire()
-        merged = list(set(new_queue + self._prio_queue))
-        merged = self._filter_priority_queue_internal(merged)
-        heapq.heapify(merged)
-        self._prio_queue = merged
-        self._manager_mutex.release()
-        log.info("New priorityqueue: %s" % merged)
+        if new_queue is not None:
+            self._manager_mutex.acquire()
+            merged = set(new_queue + self._prio_queue)
+            merged = list(merged)
+            merged = self._filter_priority_queue_internal(merged)
+            heapq.heapify(merged)
+            self._prio_queue = merged
+            self._manager_mutex.release()
+            log.info("New priorityqueue: %s" % merged)
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
@@ -171,6 +176,13 @@ class RouteManagerBase(ABC):
         :return:
         """
 
+    @abstractmethod
+    def _priority_queue_update_interval(self):
+        """
+        The time to sleep in between consecutive updates of the priority queue
+        :return:
+        """
+
     def _filter_priority_queue_internal(self, latest):
         """
         Filter through the internal priority queue and cluster events within the timedelta and distance returned by
@@ -178,6 +190,10 @@ class RouteManagerBase(ABC):
         :return:
         """
         # timedelta_seconds = self._cluster_priority_queue_criteria()
+        if self.mode == "iv_mitm":
+            # exclude IV prioQ to also pass encounterIDs since we do not pass additional information through when
+            # clustering
+            return latest
         delete_seconds_passed = 0
         if self.settings is not None:
             delete_seconds_passed = self.settings.get("remove_from_queue_backlog", 0)
@@ -201,19 +217,20 @@ class RouteManagerBase(ABC):
         while not got_location:
             log.debug("%s: Checking if a location is available..." % str(self.name))
             self._manager_mutex.acquire()
-            got_location = self._prio_queue is not None and len(self._prio_queue) > 0 or len(self._route) > 0
+            got_location = (self._prio_queue is not None and len(self._prio_queue) > 0
+                            or (self._route is not None and len(self._route) > 0))
             self._manager_mutex.release()
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))
                 time.sleep(0.5)
-        log.debug("%s: Location available, acquiring lock and trying to return location")
+        log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
         self._manager_mutex.acquire()
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route
 
         # determine whether we move to the next location or the prio queue top's item
         if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
-                                                             and len(self._prio_queue) > 0
+                                                             and self._prio_queue and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
             log.debug("%s: Priority event" % str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]
@@ -262,6 +279,16 @@ class RouteManagerBase(ABC):
         self._manager_mutex.release()
         return Location(next_lat, next_lng)
         
+    def del_from_route(self):
+        log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
+        self._manager_mutex.acquire()
+        log.info('Removing coords from Route')
+        self._route.pop(int(self._current_index_of_route)-1)
+        self._current_index_of_route -= 1
+        if len(self._route) == 0:
+            log.info('No more coords are available... Sleeping.')
+        self._manager_mutex.release()
+
     def change_init_mapping(self, name_area):
         with open('mappings.json') as f:
             vars = json.load(f)

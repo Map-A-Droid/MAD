@@ -453,6 +453,9 @@ class PogoWindows:
         if self.__checkClosePresent(filename, hash, 10, True):
             log.debug("Found close button (X). Closing the window - Ratio: 10")
             return True
+        if self.__checkClosePresent(filename, hash, 11, True):
+            log.debug("Found close button (X). Closing the window - Ratio: 11")
+            return True
         elif self.__checkClosePresent(filename, hash, 12, True):
             log.debug("Found close button (X). Closing the window - Ratio: 12")
             return True
@@ -465,3 +468,59 @@ class PogoWindows:
         else:
             log.debug("Could not find close button (X).")
             return False
+            
+    def checkpogomainscreen(self, filename, hash):
+        log.debug("checkpogomainscreen: Checking close except nearby with: file %s, hash %s" % (filename, hash))
+        try:
+            screenshotRead = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            log.debug("checkCloseExceptNearbyButton: Screenshot corrupted...")
+            return False
+        if screenshotRead is None:
+            log.error("checkCloseExceptNearbyButton: Screenshot corrupted :(")
+            return False
+            
+        if self.__readCircleCount(filename, hash,
+                                          float(7.5), xcord=False, crop=True, click=False, canny=True) > 0:
+            log.info("Found Pokeball.")
+            return True
+        return False
+        
+    def checkCloseButton(self, filename, hash):
+        log.debug("checkCloseButton: Checking close with: file %s, hash %s" % (filename, hash))
+        try:
+            screenshotRead = cv2.imread(filename)
+        except:
+            log.error("Screenshot corrupted :(")
+            log.debug("checkCloseButton: Screenshot corrupted...")
+            return False
+        if screenshotRead is None:
+            log.error("checkCloseButton: Screenshot corrupted :(")
+            return False
+            
+        if self.__readCircleCount(filename, hash,
+                                          float(8), xcord=False, crop=True, click=True, canny=True) > 0:
+            log.debug("Found close button (X). Closing the window - Ratio: 10")
+            return True
+
+        if self.__checkClosePresent(filename, hash, 10, False):
+            log.debug("Found close button (X). Closing the window - Ratio: 10")
+            return True
+        if self.__checkClosePresent(filename, hash, 8, False):
+            log.debug("Found close button (X). Closing the window - Ratio: 8")
+            return True
+        elif self.__checkClosePresent(filename, hash, 12, False):
+            log.debug("Found close button (X). Closing the window - Ratio: 12")
+            return True
+        elif self.__checkClosePresent(filename, hash, 14, False):
+            log.debug("Found close button (X). Closing the window - Ratio: 14")
+            return True
+        elif self.__checkClosePresent(filename, hash, 13, False):
+            log.debug("Found close button (X). Closing the window - Ratio: 13")
+            return True
+        else:
+            log.debug("Could not find close button (X).")
+            return False
+            
+    

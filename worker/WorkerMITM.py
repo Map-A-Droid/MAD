@@ -5,6 +5,7 @@ import math
 import time
 from threading import Thread, Lock, Event, current_thread
 
+from route.RouteManagerIV import RouteManagerIV
 from utils.collections import Location
 from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
 from utils.geo import get_distance_of_two_points_in_meters
@@ -15,7 +16,7 @@ log = logging.getLogger(__name__)
 
 class WorkerMITM(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 received_mapping, devicesettings, db_wrapper):
+                 mitm_mapper, devicesettings, db_wrapper):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True)
 
@@ -23,11 +24,42 @@ class WorkerMITM(WorkerBase):
         self._work_mutex = Lock()
         self._run_warning_thread_event = Event()
         self._locationCount = 0
-        self._received_mapping = received_mapping
+        self._mitm_mapper = mitm_mapper
         # self.thread_pool = ThreadPool(processes=4)
         self.loop = None
         self.loop_started = Event()
         self.loop_tid = None
+        # TODO: own InjectionSettings class
+        self._injection_settings = {}
+        self.__update_injection_settings()
+
+    def __update_injection_settings(self):
+        injected_settings = {}
+        scanmode = "nothing"
+        if MadGlobals.sleep and self._route_manager_nighttime is None:
+            # worker has to sleep, just empty out the settings...
+            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
+                                            values_dict={})
+            scanmode = "nothing"
+        else:
+            if MadGlobals.sleep:
+                routemanager = self._route_manager_nighttime
+            else:
+                routemanager = self._route_manager_daytime
+
+            ids_iv = routemanager.settings.get("mon_ids_iv", None)
+            if routemanager.mode == "mon_mitm":
+                scanmode = "mons"
+            elif routemanager.mode == "raids_mitm":
+                scanmode = "raids"
+            elif routemanager.mode == "iv_mitm" and isinstance(routemanager, RouteManagerIV):
+                scanmode = "ivs"
+                ids_iv = routemanager.encounter_ids_left
+            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
+                                            values_dict=ids_iv)
+        injected_settings["scanmode"] = scanmode
+        self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="injected_settings",
+                                        values_dict=injected_settings)
 
     def __start_asyncio_loop(self):
         self.loop = asyncio.new_event_loop()
@@ -96,13 +128,8 @@ class WorkerMITM(WorkerBase):
         _data_err_counter, data_error_counter = 0, 0
         # first check if pogo is running etc etc
 
-        t_mitm_data = Thread(name='mitm_receiver_' + self.id, target=self.start_mitm_receiver,
-                             args=(self._received_mapping,))
-        t_mitm_data.daemon = False
-        t_mitm_data.start()
-
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
-        t_asyncio_loop.daemon = False
+        t_asyncio_loop.daemon = True
         t_asyncio_loop.start()
 
         self._work_mutex.acquire()
@@ -138,7 +165,7 @@ class WorkerMITM(WorkerBase):
                 self._work_mutex.release()
                 return
 
-            log.debug("Checking if we needto restart pogo")
+            log.debug("Checking if we need to restart pogo")
             # Restart pogo every now and then...
             if self._devicesettings.get("restart_pogo", 80) > 0:
                 # log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
@@ -156,15 +183,23 @@ class WorkerMITM(WorkerBase):
             self._last_known_state["last_location"] = lastLocation
 
             log.debug("Requesting next location from routemanager")
+            # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
+            # the workers up...
             if MadGlobals.sleep and self._route_manager_nighttime is not None:
+                if self._route_manager_nighttime.mode not in ["iv_mitm", "raids_mitm", "mon_mitm"]:
+                    break
                 currentLocation = self._route_manager_nighttime.get_next_location()
                 settings = self._route_manager_nighttime.settings
             elif MadGlobals.sleep:
                 # skip to top while loop to get to sleep loop
                 continue
             else:
+                if self._route_manager_daytime.mode not in ["iv_mitm", "raids_mitm", "mon_mitm"]:
+                    break
                 currentLocation = self._route_manager_daytime.get_next_location()
                 settings = self._route_manager_daytime.settings
+
+            self.__update_injection_settings()
 
             # TODO: set position... needs to be adjust for multidevice
 
@@ -190,7 +225,6 @@ class WorkerMITM(WorkerBase):
                     (settings['max_distance'] and 0 < settings['max_distance'] < distance)
                     or (lastLocation.lat == 0.0 and lastLocation.lng == 0.0)):
                 log.info("main: Teleporting...")
-                # TODO: catch exception...
                 try:
                     self._communicator.setLocation(currentLocation.lat, currentLocation.lng, 0)
                     curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
@@ -253,13 +287,12 @@ class WorkerMITM(WorkerBase):
             data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
                                                                    timestamp=curTime)
             _data_err_counter = data_error_counter
-            time.sleep(4)
             log.debug("Releasing lock")
             self._work_mutex.release()
             log.debug("Worker %s done, next iteration" % str(self.id))
 
-        t_mitm_data.join()
-        t_asyncio_loop.join()
+        self.stop_worker()
+        self.loop.stop()
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
         try:
@@ -268,41 +301,15 @@ class WorkerMITM(WorkerBase):
             log.error("Failed updating scanned location: %s" % str(e))
             return
 
-    def start_mitm_receiver(self, received_mapped):
-        __time_106 = time.time()
-        __time_102 = time.time()
-        while not self._stop_worker_event.isSet():
-            latest = received_mapped.request_latest(self.id)
-            if 106 in latest.keys():
-                if (latest[106]['timestamp']) >= __time_106:
-                    log.info('Processing MITM Data')
-                    data = latest[106]['data']
-                    received_timestamp = latest[106]['timestamp']
-                    # log.debug("Starting off thread in pool")
-                    self.__add_task_to_loop(
-                        self.process_data(data, received_timestamp))
-                    log.debug("Updating time...")
-                    __time_106 = time.time()
-            if 102 in latest.keys():
-                if (latest[102]['timestamp']) >= __time_102:
-                    log.info('Processing MITM Data')
-                    data = latest[102]['data']
-                    received_timestamp = latest[102]['timestamp']
-                    self.__add_task_to_loop(
-                        self.process_data(data, received_timestamp))
-                    log.debug("Updating time...")
-                    __time_102 = time.time()
-            time.sleep(0.2)
-
     def wait_for_data(self, timestamp, proto_to_wait_for=106, data_err_counter=0):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
 
-        log.info('Waiting for  data...')
+        log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
         while data_requested is None and timestamp + timeout >= time.time():
             # let's check for new data...
             # log.info('Requesting latest...')
-            latest = self._received_mapping.request_latest(self.id)
+            latest = self._mitm_mapper.request_latest(self.id)  
             if latest is None:
                 log.warning('Nothing received from client since MAD started...')
                 # we did not get anything from that client at all, let's check again in a sec
@@ -317,7 +324,7 @@ class WorkerMITM(WorkerBase):
                 time.sleep(0.5)
             else:
                 # log.debug('latest contains data...')
-                data = latest[proto_to_wait_for]['data']
+                data = latest[proto_to_wait_for]['values']
                 latest_timestamp = latest[proto_to_wait_for]['timestamp']
                 if self._route_manager_nighttime is not None:
                     nighttime_mode = self._route_manager_nighttime.mode
@@ -328,11 +335,18 @@ class WorkerMITM(WorkerBase):
                 current_mode = daytime_mode if not MadGlobals.sleep else nighttime_mode
 
                 if latest_timestamp >= timestamp:
-                    if current_mode == 'mon_mitm':
+                    if current_mode == 'mon_mitm' or current_mode == "iv_mitm":
+                        data_err_counter = 0
                         for data_extract in data['payload']['cells']:
                             for WP in data_extract['wild_pokemon']:
+                                # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                                 if WP['spawnpoint_id']:
                                     data_requested = data
+                                    break
+                            if data_requested is None:
+                                for catchable_pokemon in data_extract['catchable_pokemon']:
+                                    if catchable_pokemon['spawn_id']:
+                                        data_requested = data
                         if data_requested is None:
                             log.debug("No spawnpoints in data requested")
                     elif current_mode == 'raids_mitm':
@@ -357,6 +371,7 @@ class WorkerMITM(WorkerBase):
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
             if data_err_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
+                self._restartPogoDroid()
                 self._restartPogo(False)
                 return None, 0
             elif data_requested is None:
@@ -369,45 +384,3 @@ class WorkerMITM(WorkerBase):
         else:
             log.warning("Timeout waiting for data")
         return data_requested, data_err_counter
-
-    async def process_data(self, data, received_timestamp):
-
-        if 'cells' in data['payload']:
-            try:
-                if self._applicationArgs.weather:
-                    self._db_wrapper.submit_weather_map_proto(data["payload"], received_timestamp)
-
-                self._db_wrapper.submit_pokestops_map_proto(data["payload"])
-                self._db_wrapper.submit_gyms_map_proto(data["payload"])
-                self._db_wrapper.submit_raids_map_proto(data["payload"])
-                self._db_wrapper.submit_mons_map_proto(data["payload"])
-                self._db_wrapper.submit_spawnpoints_map_proto(data["payload"])
-                
-            except Exception as e:
-                log.error("An exception occured while processing data.")
-                log.exception(e)
-
-                
-
-        #if 'wild_pokemon' in data['payload']:
-            #WP = data['payload']['wild_pokemon']
-
-            #lat, lng, alt = S2Helper.get_position_from_cell(int(str(WP['spawnpoint_id']) + '00000', 16))
-
-            #self._dbWrapper.submitspawnpoint(int(str(WP['spawnpoint_id']), 16), lat, lng, (WP['time_till_hidden']))
-            #self._dbWrapper.submitspsightings(int(str(WP['spawnpoint_id']), 16), abs(WP['encounter_id']),
-                                              #(WP['time_till_hidden']))
-
-            #self._dbWrapper.submit_mon_iv(abs(WP['encounter_id']), str(WP['pokemon_data']['id']), str(WP['latitude']),
-                                      #    str(WP['longitude']),
-                                      ##    abs(WP['time_till_hidden']), int(str(WP['spawnpoint_id']), 16),
-                                       #   WP['pokemon_data']['display']['gender_value'],
-                                        #  WP['pokemon_data']['display']['weather_boosted_value'],
-                                        #  WP['pokemon_data']['display']['costume_value'],
-                                     #     WP['pokemon_data']['display']['form_value'],
-                                    #      WP['pokemon_data']['cp'], WP['pokemon_data']['move_1'],
-                                    #      WP['pokemon_data']['move_2'],
-                                    #      WP['pokemon_data']['weight'], WP['pokemon_data']['height'],
-                                    #      WP['pokemon_data']['individual_attack'],
-                                    #      WP['pokemon_data']['individual_defense'],
-                                    #      WP['pokemon_data']['individual_stamina'], WP['pokemon_data']['cp_multiplier'])

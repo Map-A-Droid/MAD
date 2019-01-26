@@ -270,7 +270,7 @@ class Scanner:
 
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Detecting Gym')
             for closegym in closestGymIds:
-                candidates = glob.glob("ocr/gym_img/_" + str(closegym) + "_.jpg")
+                candidates = glob.glob("ocr/gym_img/_" + str(closegym[0]) + "_.jpg")
                 for file in candidates:
                     find_gym = fort_image_matching(raidpic, file, True, float(self.args.gym_detection_value), raidNo, hash, checkX=True, radius=radius, x1=x1, x2=x2, y1=y1, y2=y2)
                     log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectGym: Compare Gym-ID - ' + str(closegym[0]) + ' - Match: ' + str(find_gym))
@@ -331,40 +331,6 @@ class Scanner:
         else:
             draw.text((x, y), text, (255,255,255), font=font)
         img.save(picture)
-        
-    def successfound(self, raidpic, type, gymId, raidNo, lvl, captureTime, mon=0):
-        if not self.args.save_success:
-            log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Saving submit raidpics is disable')
-            return
-        
-        
-        text = datetime.datetime.fromtimestamp(float(captureTime))
-        text = "Scanned: " + str(text.strftime("%Y-%m-%d %H:%M"))
-        self.addTextToCrop(raidpic, text)
-
-        if not os.path.exists(self.args.successsave_path):
-            log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Save directory created')
-            os.makedirs(self.args.successsave_path)
-           
-        with open('gym_info.json') as f:
-            data = json.load(f)
-            
-        gymname = 'unknown'
-        latitude = '00'
-        longitude = '00'
-        
-        if str(gymId) in data:
-            gymname = data[str(gymId)]["name"].replace('/', '-').replace('\\','/')
-            latitude = data[str(gymId)]["latitude"]
-            longitude = data[str(gymId)]["longitude"]
-            
-        curTime = time.time()
-        saveFileName = str(type) + "_" +  str(curTime) + "__LVL_" + str(lvl) + "__MON_" + str(mon) + "__LAT_"+ str(latitude) + "__LNG_" + str(longitude) + "__" + str(gymname) + "__" + str(gymId) + ".jpg"
-        log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Filename: ' + str(saveFileName))
-        
-        copyfile(raidpic, os.path.join(self.args.successsave_path, str(saveFileName)))
-        
-        log.info('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'successfound: Raidcrop successfully saved')
     
     def decodeHashJson(self, hashJson, raidNo):
         data = json.loads(hashJson)
@@ -482,7 +448,7 @@ class Scanner:
                         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an mon and endtime - fast submit')
                         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(mon), str(gym)))
                         self.db_wrapper.submit_raid(str(gym), mon, lvl, None, raidend[2], 'MON', raidNo, captureTime,
-                                                    unique_hash=self.uniqueHash, mon_with_no_egg=True)
+                                                    unique_hash=self.uniqueHash, MonWithNoEgg=True)
                     else:
                         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found Raidhash with an mon - fast submit')
                         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Submitting mon. ID: %s, gymId: %s' % (str(mon), str(gym)))
@@ -549,8 +515,7 @@ class Scanner:
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Found egg level %s starting at %s and ending at %s. GymID: %s' % (raidlevel, raidstart, raidend, gymId))
             submitStatus = self.db_wrapper.submit_raid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG', raidNo,
                                                        captureTime, unique_hash=self.uniqueHash)
-            if submitStatus:
-                self.successfound(filenameOfCrop, 'EGG', gymId, raidNo, raidlevel, captureTime)
+            #if submitStatus:
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False, raidNo)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Adding Raidhash to Database: ' + str(raidHashJson))
             self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
@@ -574,8 +539,6 @@ class Scanner:
                 submitStatus = self.db_wrapper.submit_raid(str(gymId), monFound[0], raidlevel, None, None, 'MON',
                                                            raidNo, captureTime, unique_hash=self.uniqueHash)
                 
-            if submitStatus:
-                self.successfound(filenameOfCrop, 'MON', gymId, raidNo, raidlevel, captureTime, str(monFound[0]))
             raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0], raidNo)
             log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'start_detect: Adding Raidhash to Database: ' + str(raidHashJson))
             self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)

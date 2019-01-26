@@ -16,6 +16,7 @@
 #dbpassword:                 # Password of database (needed for ocr mode)
 #dbname:                     # Name of the database (needed for ocr mode)
 #dbport:                     # Port of the database (Default: 3306)
+#db_poolsize:                # Amount of connections to keep open to the DB. Default: 2
 
 # Websocket Settings (RGC receiver)
 ######################
@@ -29,6 +30,7 @@
 
 #mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
 #mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
+#mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
 
 # Walk Settings
 ######################
@@ -51,13 +53,11 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
-#successsave_path:           # Path for successful submitted crops (Default: success/)
 
 # other settings
 ######################
 
 #cleanup_age:                # Delete Screenshots older than X minutes (Default: 1440. 0 to disable)
-#save_success                # Save successful submitted crops to successsave_path
 #last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
 #npValue:                    # Matching Zoom - Max Value (Default: 0.5 [for width = 720px]. 1.5 for width = 1080px)
 #npFrom:                     # Matching Zoom - Start Value (Default: 0.2 [for width = 720px]. 0.5 for width = 1080px)
@@ -66,6 +66,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #route_file:                 # Filename for Route Cache without extension (Default: route)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
+#use_media_projection        # Use Mediaprojection for transfering images (OCR)
 
 # MADmin
 ######################
@@ -76,11 +77,9 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #madmin_time:                # MADmin clock format (12/24) (Default: 24)
 #madmin_noresponsive         # MADmin deactivate responsive tables
 #unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
+#madmin_user: madmin         # MADmin username for login
+#madmin_password: MySecret   # MADmin password for login
 
-# timezone settings
-######################
-
-#timezone:                   # Time difference from UTC (f.e "+2" for Berlin/Germany) - Needed for Rocketmap Database
 
 #sleeptimer settings
 ######################
