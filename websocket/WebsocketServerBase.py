@@ -184,6 +184,7 @@ class WebsocketServerBase(ABC):
             id = str(websocket.request_headers.get_all("Origin")[0])
             try:
                 await asyncio.wait_for(websocket.recv(), timeout=0.01)
+                log.warning("Got message")
                 message = await websocket.recv()
             except asyncio.TimeoutError:
                 log.debug('timeout!')
