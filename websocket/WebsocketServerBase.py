@@ -65,6 +65,7 @@ class WebsocketServerBase(ABC):
         if worker is not None:
             self.__current_users.pop(id)
         self.__users_mutex.release()
+        websocket.close()
 
     async def __register(self, websocket):
         # await websocket.recv()
@@ -210,6 +211,7 @@ class WebsocketServerBase(ABC):
         # newWorkerThread.daemon = False
         # newWorkerThread.start()
         if not continueWork:
+            websocket.close()
             return
         consumer_task = asyncio.ensure_future(
             self._consumer_handler(websocket, path))
@@ -305,18 +307,27 @@ class WebsocketServerBase(ABC):
         log.debug("Timeout: " + str(timeout))
         if messageEvent.wait(timeout):
             log.debug("Received answer, popping response")
+            self.__users_mutex.acquire()
+            self.__current_users[id][3] = 0
+            self.__users_mutex.release()
             # okay, we can get the response..
             result = self.__popResponse(messageId)
             log.debug("Answer: %s" % result)
         else:
             # timeout reached
             log.warning("Timeout reached while waiting for a response...")
-            if self.__current_users.get(id, None) is None:
+            user_registered = self.__current_users.get(id, None)
+            if user_registered is None:
                 raise WebsocketWorkerRemovedException
             else:
-                # TODO: increase timeout counter
-                pass
+                self.__users_mutex.acquire()
+                new_count = self.__current_users[id][3] + 1
+                self.__current_users[id][3] = new_count
 
+                if new_count > 5:
+                    user_registered[2].close()
+
+                self.__users_mutex.release()
 
         log.debug("Received response: %s" % str(result))
         self.__removeRequest(messageId)
