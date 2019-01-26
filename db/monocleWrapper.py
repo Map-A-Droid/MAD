@@ -652,7 +652,9 @@ class MonocleWrapper(DbWrapperBase):
             move_1=pokemon_data.get("move_1"),
             move_2=pokemon_data.get("move_2"),
             height=pokemon_data.get("height"),
-            weight=pokemon_data.get("weight")
+            weight=pokemon_data.get("weight"),
+            gender=pokemon_display.get("gender_value", None),
+            boosted_weather=pokemon_display.get("weather_boosted_value", None)
         )
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
