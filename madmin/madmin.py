@@ -1008,7 +1008,7 @@ def addnew():
 
 @app.route('/statusview', methods=['GET'])
 def statusview(): 
-    return render_template('status.html', responsive=str(args.madmin_noresponsive).lower(), title="Worker Status")
+    return render_template('status.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="Worker Status")
 
 @app.route('/get_status', methods=['GET'])
 def status():    
