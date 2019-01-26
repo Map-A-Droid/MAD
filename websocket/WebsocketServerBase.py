@@ -191,10 +191,8 @@ class WebsocketServerBase(ABC):
             except websockets.exceptions.ConnectionClosed:
                 log.debug("Connection closed while receiving data")
                 log.debug("Closed connection to %s" % str(id))
-                self.__users_mutex.acquire()
                 worker = self.__current_users.get(id, None)
                 worker.stop_worker()
-                self.__users_mutex.release()
                 return
                 # TODO: cleanup, stop worker...
             if message is not None:
