@@ -22,6 +22,7 @@ class WebsocketServerBase(ABC):
     def __init__(self, args, listen_address, listen_port, mitm_mapper, db_wrapper, routemanagers, device_mappings,
                  auths):
         self.__current_users = {}
+        self.__users_mutex = Lock()
         self.__listen_adress = listen_address
         self.__listen_port = listen_port
         self._send_queue = queue.Queue()
@@ -59,12 +60,11 @@ class WebsocketServerBase(ABC):
 
     async def __unregister(self, websocket):
         id = str(websocket.request_headers.get_all("Origin")[0])
+        self.__users_mutex.acquire()
         worker = self.__current_users.get(id, None)
-        if worker is None:
-            return
-        else:
-            # worker[1].stop_worker()
+        if worker is not None:
             self.__current_users.pop(id)
+        self.__users_mutex.release()
 
     async def __register(self, websocket):
         # await websocket.recv()
@@ -80,10 +80,14 @@ class WebsocketServerBase(ABC):
             except IndexError:
                 log.warning("Client from %s tried to connect without auth header" % str(websocket))
                 return False
+
+        self.__users_mutex.acquire()
         if self.__current_users.get(id, None) is not None:
             log.warning("Worker for %s is already running" % str(id))
+            self.__users_mutex.release()
             return False
         elif self.auths and authBase64 and not check_auth(authBase64, self.args, self.auths):
+            self.__users_mutex.release()
             return False
 
         lastKnownState = {}
@@ -101,16 +105,16 @@ class WebsocketServerBase(ABC):
             if nightime_routemanager is None:
                 pass
             elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                     self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
                 started = True
             elif nightime_routemanager.mode in ["raids_ocr"]:
                 from worker.WorkerOcr import WorkerOcr
-                Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                    devicesettings, db_wrapper=self.db_wrapper)
                 started = True
             elif nightime_routemanager.mode in ["pokestops"]:
-                Worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                       self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
                 started = True
             else:
@@ -119,22 +123,23 @@ class WebsocketServerBase(ABC):
         if not MadGlobals.sleep or not started:
             # we either gotta run daytime mode OR nighttime routemanager not set
             if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                     self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
             elif daytime_routemanager.mode in ["raids_ocr"]:
                 from worker.WorkerOcr import WorkerOcr
-                Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                    devicesettings, db_wrapper=self.db_wrapper)
             elif daytime_routemanager.mode in ["pokestops"]:
-                Worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
                                       self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
 
-        newWorkerThread = Thread(name='worker_%s' % id, target=Worker.start_worker)
-        self.__current_users[id] = [newWorkerThread, Worker, websocket]
-        newWorkerThread.daemon = False
+        newWorkerThread = Thread(name='worker_%s' % id, target=worker.start_worker)
+        self.__current_users[id] = [newWorkerThread, worker, websocket]
+        self.__users_mutex.release()
+        newWorkerThread.daemon = True
         newWorkerThread.start()
 
         return True
@@ -186,7 +191,10 @@ class WebsocketServerBase(ABC):
             except websockets.exceptions.ConnectionClosed:
                 log.debug("Connection closed while receiving data")
                 log.debug("Closed connection to %s" % str(id))
+                self.__users_mutex.acquire()
                 worker = self.__current_users.get(id, None)
+                worker.stop_worker()
+                self.__users_mutex.release()
                 return
                 # TODO: cleanup, stop worker...
             if message is not None:
