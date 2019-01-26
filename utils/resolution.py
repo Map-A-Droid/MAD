@@ -35,27 +35,46 @@ class Resocalculator(object):
         return click_x, click_y
 
     def get_delete_quest_coords(self):
-        click_y = int(self._screen_x) / 1.2
-        click_x = int(self._screen_x) / 1.07
+        if float(self._xyratio) > 2:
+            click_y = int(self._screen_x) / 1.1
+            click_x = int(self._screen_x) / 1.07
+        elif float(self._xyratio) >= 1.7:
+            click_y = int(self._screen_x) / 1.2
+            click_x = int(self._screen_x) / 1.07
+        elif float(self._xyratio) < 1.7:
+            click_y = int(self._screen_x) / 1.2
+            click_x = int(self._screen_x) / 1.07
         return click_x, click_y
 
     def get_swipe_item_amount(self):
-        if int(self._xyratio) > 2:
+        if float(self._xyratio) > 2:
             click_x1 = int(self._screen_x) / 1.46
             click_x2 = int(self._screen_x) / 1.26
-            click_y = int(self._screen_y) - (int(self._screen_x) / 0.87)
-        else:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 0.90)
+        elif float(self._xyratio) >= 1.9:
+            click_x1 = int(self._screen_x) / 1.46
+            click_x2 = int(self._screen_x) / 1.26
+            click_y = int(self._screen_y) - (int(self._screen_x) / 0.94)
+        elif float(self._xyratio) >= 1.7:
             click_x1 = int(self._screen_x) / 1.46
             click_x2 = int(self._screen_x) / 1.26
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.02)
+        elif float(self._xyratio) < 1.7: 
+            click_x1 = int(self._screen_x) / 1.46
+            click_x2 = int(self._screen_x) / 1.26
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.12)
         return click_x1, click_x2, click_y
 
     def get_confirm_delete_quest_coords(self):
         click_x = int(self._screen_x) / 2
-        if int(self._xyratio) > 2:
-            click_y = int(self._screen_y) - (int(self._screen_x) / 1.02)
-        else:
+        if float(self._xyratio) > 2:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.06)
+        elif float(self._xyratio) >= 1.9:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.11)
+        elif float(self._xyratio) >= 1.7:
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.22)
+        elif float(self._xyratio) < 1.7: 
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.37)
         return click_x, click_y
 
     def get_item_menu_coords(self):
@@ -64,8 +83,18 @@ class Resocalculator(object):
         return click_x, click_y
 
     def get_delete_item_coords(self):
-        click_x = int(self._screen_x) / 1.09
-        click_y = int(self._screen_y) - (int(self._screen_x) / 0.68)
+        if float(self._xyratio) > 2:
+            click_x = int(self._screen_x) / 1.09
+            click_y = int(self._screen_y) - (int(self._screen_x) / 0.58)
+        elif float(self._xyratio) >= 1.9:
+            click_x = int(self._screen_x) / 1.09
+            click_y = int(self._screen_y) - (int(self._screen_x) / 0.61)
+        elif float(self._xyratio) >= 1.7: 
+            click_x = int(self._screen_x) / 1.09
+            click_y = int(self._screen_y) - (int(self._screen_x) / 0.68)
+        elif float(self._xyratio) < 1.7: 
+            click_x = int(self._screen_x) / 1.09
+            click_y = int(self._screen_y) - (int(self._screen_x) / 0.77)
         return click_x, click_y
 
     def get_next_item_coord(self):
@@ -74,10 +103,14 @@ class Resocalculator(object):
 
     def get_confirm_delete_item_coords(self):
         click_x = int(self._screen_x) / 2
-        if int(self._xyratio) > 2:
-            click_y = int(self._screen_y) - (int(self._screen_x) / 1.2)
-        else:
+        if float(self._xyratio) > 2:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.25)
+        elif float(self._xyratio) >= 1.9:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.3)
+        elif float(self._xyratio) >= 1.7:
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.5)
+        elif float(self._xyratio) < 1.7: 
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.7)
         return click_x, click_y
 
         return click_x, click_y

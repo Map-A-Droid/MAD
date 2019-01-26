@@ -726,7 +726,8 @@ class RmWrapper(DbWrapperBase):
             float(capture_probability_list[0]),
             float(capture_probability_list[1]),
             float(capture_probability_list[2]),
-            None, None, None,
+            None, None,
+            pokemon_display.get('weather_boosted_value', None),
             now,
             pokemon_display.get("costume_value", None),
             pokemon_display.get("form_value", None)
