@@ -183,7 +183,7 @@ class WebsocketServerBase(ABC):
             message = None
             id = str(websocket.request_headers.get_all("Origin")[0])
             try:
-                asyncio.wait_for(websocket.recv(), timeout=0.01)
+                await asyncio.wait_for(websocket.recv(), timeout=0.01)
                 message = await websocket.recv()
             except asyncio.TimeoutError:
                 log.debug('timeout!')
@@ -192,7 +192,7 @@ class WebsocketServerBase(ABC):
                 log.debug("Connection closed while receiving data")
                 log.debug("Closed connection to %s" % str(id))
                 worker = self.__current_users.get(id, None)
-                worker.stop_worker()
+                worker[1].stop_worker()
                 return
                 # TODO: cleanup, stop worker...
             if message is not None:
