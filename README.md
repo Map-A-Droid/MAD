@@ -53,6 +53,9 @@ Inside the `config` folder, duplicate the `config.ini.example` and rename it to 
 In order to map devices to areas, do the same with `mappings_example.json` and rename it to `mappings.json`
 Refer to mappings_example.json for examples or run `python3 start.py -wm` and open the MADMIN mappings editor (http://localhost:5000).
 
+#### IV
+MAD can scan for IVs with two different modes: `iv_mitm` scans already scanned Pokémon specified by `mon_ids_iv`. A typical usecase is to just IV check rare spawns with it. The second mode is `mon_mitm`. That is just like regular Pokémon scanning but every encounter defined in `mon_ids_iv` gets IV checked automatically with the same scanner - one encounter per location. Every other config parameter is explained in MADmin. 
+
 ### Geofence
 Each area *requires* `geofence_included`. A geofence can easily be created with [geo.jesparke.net](http://geo.jasparke.net/)
 > A geofence requires a name: `[geofence name]` with `lat, lng` per line, no empty lines at the end of file  

@@ -5,6 +5,9 @@ log = logging.getLogger(__name__)
 
 
 class RouteManagerMon(RouteManagerBase):
+    def _priority_queue_update_interval(self):
+        return 180
+
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
                  name="unknown", settings=None):
@@ -13,9 +16,8 @@ class RouteManagerMon(RouteManagerBase):
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
-                                  name=name, settings=settings
+                                  name=name, settings=settings, mode=mode
                                   )
-        self.mode = mode
         self.coords_spawns_known = coords_spawns_known
 
     def _retrieve_latest_priority_queue(self):

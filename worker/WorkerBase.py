@@ -5,6 +5,7 @@ import time
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread
+import json
 
 from utils.hamming import hamming_distance as hamming_dist
 from websocket.communicator import Communicator
@@ -16,7 +17,7 @@ log = logging.getLogger(__name__)
 
 class WorkerBase(ABC):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                 route_manager_nighttime, devicesettings, db_wrapper, NoOcr=False):
+                 route_manager_nighttime, devicesettings, db_wrapper, NoOcr=False, resocalc=False):
         # self.thread_pool = ThreadPool(processes=2)
         self._route_manager_daytime = route_manager_daytime
         self._route_manager_nighttime = route_manager_nighttime
@@ -33,6 +34,10 @@ class WorkerBase(ABC):
         self._lastScreenHash = None
         self._lastScreenHashCount = 0
         self._devicesettings = devicesettings
+        self._player_level = 0
+        self._level_up = False
+        self._resocalc = resocalc
+        self._weatherwarn = False
         
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
@@ -52,6 +57,7 @@ class WorkerBase(ABC):
 
     def stop_worker(self):
         self._stop_worker_event.set()
+        self._communicator.terminate_connection()
 
     @abstractmethod
     def _main_work_thread(self):
@@ -93,6 +99,16 @@ class WorkerBase(ABC):
             time.sleep(1)
             pogoTopmost = self._communicator.isPogoTopmost()
         return stopResult
+        
+    def _start_pogodroid(self):
+        start_result = False
+        start_result = self._communicator.startApp("com.mad.pogodroid")
+        return start_result
+    
+    def _stopPogoDroid(self):
+        stopResult= False
+        stopResult = self._communicator.stopApp("com.mad.pogodroid")
+        return stopResult
 
     def _restartPogo(self, clear_cache=True):
         successfulStop = self._stopPogo()
@@ -102,6 +118,14 @@ class WorkerBase(ABC):
                 self._communicator.clearAppCache("com.nianticlabs.pokemongo")
             time.sleep(1)
             return self._start_pogo()
+        else:
+            return False
+
+    def _restartPogoDroid(self):
+        successfulStop = self._stopPogoDroid()
+        log.debug("restartPogoDroid: stop pogodriud resulted in %s" % str(successfulStop))
+        if successfulStop:
+            return self._start_pogodroid()
         else:
             return False
 
@@ -125,12 +149,18 @@ class WorkerBase(ABC):
         time.sleep(delayBefore)
         compareToTime = time.time() - self._lastScreenshotTaken
         log.debug("Last screenshot taken: %s" % str(self._lastScreenshotTaken))
+        
+        if self._applicationArgs.use_media_projection:
+            take_screenshot = self._communicator.getScreenshot(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
+        else:
+            take_screenshot = self._communicator.get_screenshot_single(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
+        
         if self._lastScreenshotTaken and compareToTime < 0.5:
             log.debug("takeScreenshot: screenshot taken recently, returning immediately")
             log.debug("Screenshot taken recently, skipping")
             return True
         # TODO: screenshot.png needs identifier in name
-        elif not self._communicator.getScreenshot(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+        elif not take_screenshot:
             log.error("takeScreenshot: Failed retrieving screenshot")
             log.debug("Failed retrieving screenshot")
             return False
@@ -161,6 +191,120 @@ class WorkerBase(ABC):
             self._lastScreenHashCount = 0
 
             log.debug("_checkPogoFreeze: done")
+            
+    def _checkPogoMainScreen(self, maxAttempts, again=False):
+        log.debug("checkPogoMainScreen: Trying to get to the Mainscreen with %s max attempts..." % str(maxAttempts))
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return False
+
+        self._checkPogoFreeze()
+        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if again:
+                log.error("checkPogoMainScreen: failed getting a screenshot again")
+                return False
+            log.debug("checkPogoMainScreen: Got screenshot, checking GPS")
+        attempts = 0
+
+        if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+            log.error("checkPogoMainScreen: screenshot.png is not a file/corrupted")
+            return False
+            
+        while self._pogoWindowManager.isGpsSignalLost(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
+            log.debug("checkPogoMainScreen: GPS signal lost")
+            time.sleep(1)
+            self._takeScreenshot()
+            log.warning("checkPogoMainScreen: GPS signal error")
+            self._redErrorCount += 1
+            if self._redErrorCount > 3:
+                log.error("checkPogoMainScreen: Red error multiple times in a row, restarting")
+                self._redErrorCount = 0
+                self._restartPogo()
+                return False
+        self._redErrorCount = 0
+        log.info("checkPogoMainScreen: checking mainscreen")
+        while not self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id):
+            log.error("checkPogoMainScreen: not on Mainscreen...")
+            if attempts > maxAttempts:
+                # could not reach raidtab in given maxAttempts
+                log.error("checkPogoMainScreen: Could not get to Mainscreen within %s attempts" % str(maxAttempts))
+                return False
+            self._checkPogoFreeze()
+            # not using continue since we need to get a screen before the next round...
+            found = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), 2.20, 3.01)
+            if found:
+                log.info("checkPogoMainScreen: Found button (small)")
+
+            if not found and self._pogoWindowManager.checkCloseExceptNearbyButton(
+                    os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, closeraid=True):
+                log.info("checkPogoMainScreen: Found (X) button (except nearby)")
+                found = True
+
+            if not found and self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), 1.05,
+                                                             2.20):
+                log.info("checkPogoMainScreen: Found button (big)")
+                found = True
+
+            log.info("checkPogoMainScreen: Previous checks found popups: %s" % str(found))
+
+            attempts += 1
+        log.info("checkPogoMainScreen: done")
+        return True
+    
+    def _checkPogoButton(self):
+        log.debug("checkPogoButton: Trying to find buttons")
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return False
+
+        self._checkPogoFreeze()
+        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if again:
+                log.error("checkPogoButton: failed getting a screenshot again")
+                return False
+            log.debug("checkPogoButton: Got screenshot, checking GPS")
+        attempts = 0
+
+        if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+            log.error("checkPogoButton: screenshot.png is not a file/corrupted")
+            return False
+        
+        log.info("checkPogoButton: checking for buttons")
+        found = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), 2.20, 3.01)
+        if found:
+            log.info("checkPogoButton: Found button (small)")
+            log.info("checkPogoButton: done")
+            return True
+        log.info("checkPogoButton: done")
+        return False
+        
+    def _checkPogoClose(self):
+        log.debug("checkPogoClose: Trying to find closeX")
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return False
+
+        self._checkPogoFreeze()
+        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if again:
+                log.error("checkPogoClose: failed getting a screenshot again")
+                return False
+            log.debug("checkPogoClose: Got screenshot, checking GPS")
+        attempts = 0
+
+        if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
+            log.error("checkPogoClose: screenshot.png is not a file/corrupted")
+            return False
+        
+        log.info("checkPogoClose: checking for CloseX")
+        found = self._pogoWindowManager.checkCloseExceptNearbyButton(
+                            os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id)
+        if found:
+            log.info("checkPogoClose: Found (X) button (except nearby)")
+            log.info("checkPogoClose: done")
+            return True
+        log.info("checkPogoClose: done")
+        return False
 
     def _getToRaidscreen(self, maxAttempts, again=False):
         # check for any popups (including post login OK)
@@ -230,5 +374,54 @@ class WorkerBase(ABC):
             attempts += 1
         log.debug("getToRaidscreen: done")
         return True
+        
+    def _open_gym(self, delayadd):
+        log.debug('{_open_gym} called')
+        time.sleep(2)
+        x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(2 + int(delayadd))
+        log.debug('{_open_gym} called')
+        return
+        
+    def _spin_wheel(self, delayadd):
+        log.debug('{_spin_wheel} called')
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
+        return 
+        
+    def _close_gym(self, delayadd):
+        log.debug('{_close_gym} called')
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(1 + int(delayadd))
+        log.debug('{_close_gym} called')
+        
+    def _turn_map(self, delayadd):
+        log.debug('{_turn_map} called')
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
+        time.sleep(int(delayadd))
+        log.debug('{_turn_map} called')
+        return
+        
+    def _clear_quests(self, delayadd):
+        log.debug('{_clear_quests} called')
+        time.sleep(4 + int(delayadd))
+        x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(2 + int(delayadd))
+        x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(1 + int(delayadd))
+        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(.5 + int(delayadd))
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        log.debug('{_clear_quests} finished')
+        return
+            
+                    
     
     

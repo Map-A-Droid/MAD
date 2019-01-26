@@ -55,6 +55,8 @@ def parseArgs():
                         help='IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).')
     parser.add_argument('-mrport', '--mitmreceiver_port', required=False, default=8000,
                         help='Port to listen on for proto data (MITM data). Default: 8000.')
+    parser.add_argument('-mrdw', '--mitmreceiver_data_workers', type=int, default=2,
+                        help='Amount of workers to work off the data that queues up. Default: 2.')
 
     # WEBSOCKET
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,
@@ -100,9 +102,6 @@ def parseArgs():
     parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots', # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
-    parser.add_argument('-ssvpath', '--successsave_path', default='ocr/success',
-                        help='Folder for saved Raidcrops. Default: ocr/success')
-
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
@@ -122,9 +121,6 @@ def parseArgs():
                         help=(
                             'Value of gym detection. The higher the more accurate is checked. 0.65 maybe generate '
                             'more false positive. Default: 0.75'))
-
-    parser.add_argument('-ssv', '--save_success', action='store_true', default=False,
-                        help='Save success submitted raidcrops.')
 
     parser.add_argument('-lc', '--last_scanned', action='store_true', default=False,
                         help='Submit last scanned location to RM DB (if supported). Default: False')
@@ -147,10 +143,6 @@ def parseArgs():
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
-
-    # timezone
-    parser.add_argument('-tz', '--timezone', type=int, required=False,
-                        help='Hours Difference to GMT0. f.e.: +2 for Berlin/Germany')
 
     # sleeptimer
     parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
@@ -192,6 +184,15 @@ def parseArgs():
     parser.add_argument('-mmnrsp', '--madmin_noresponsive', action='store_false', default=True,
                         help='MADmin deactivate responsive tables')
 
+    parser.add_argument('-mmuser', '--madmin_user', default='',
+                        help='Username for MADmin Frontend.')
+
+    parser.add_argument('-mmpassword', '--madmin_password', default='',
+                        help='Password for MADmin Frontend.')
+
+    parser.add_argument('-pfile', '--position_file', default='current',
+                        help='Filename for bot\'s current position (Default: current)')
+
     parser.add_argument('-ugd', '--unknown_gym_distance', default='10',
                         help='Show matchable gyms for unknwon with this radius (in km!) (Default: 10)')
 
@@ -199,6 +200,8 @@ def parseArgs():
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
+    parser.add_argument('-ump', '--use_media_projection', action='store_true', default=False,
+                        help='Use Media Projection for image transfer (OCR) (Default: False)')
 
     # log settings
     parser.add_argument('--no-file-logs',

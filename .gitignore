@@ -16,7 +16,7 @@ configs/mappings.json
 configs/coords/*
 .DS_Store
 *.position
-
+*.stats
 # in case you create a virtual env called "env"
 env
 env/*

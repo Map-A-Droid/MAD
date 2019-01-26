@@ -7,6 +7,7 @@ import mysql
 from threading import Lock, Semaphore
 
 from bitstring import BitArray
+from mysql.connector import OperationalError
 from mysql.connector.pooling import MySQLConnectionPool
 from abc import ABC, abstractmethod
 import numpy as np
@@ -27,21 +28,20 @@ class DbWrapperBase(ABC):
         self.user = args.dbusername
         self.password = args.dbpassword
         self.database = args.dbname
-        self.timezone = args.timezone
         self.pool = None
         self.pool_mutex = Lock()
-        self._init_pool()
         self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
         self.webhook_helper = webhook_helper
+        self.dbconfig = {"database": self.database, "user": self.user, "host": self.host, "password": self.password,
+                         "port": self.port}
+        self._init_pool()
 
     def _init_pool(self):
         log.info("Connecting pool to DB")
         self.pool_mutex.acquire()
-        dbconfig = {"database": self.database, "user": self.user, "host": self.host, "password": self.password,
-                    "port": self.port}
         self.pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="db_wrapper_pool",
                                                                 pool_size=self.application_args.db_poolsize,
-                                                                **dbconfig)
+                                                                **self.dbconfig)
         self.pool_mutex.release()
 
     def close(self, conn, cursor):
@@ -67,6 +67,13 @@ class DbWrapperBase(ABC):
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
         cursor = conn.cursor()
+        # TODO: consider catching OperationalError
+        # try:
+        #     cursor = conn.cursor()
+        # except OperationalError as e:
+        #     log.error("OperationalError trying to acquire a DB cursor: %s" % str(e))
+        #     conn.rollback()
+        #     return None
         if args:
             cursor.execute(sql, args)
         else:
@@ -142,7 +149,7 @@ class DbWrapperBase(ABC):
 
     @abstractmethod
     def submit_raid(self, gym, pkm, lvl, start, end, type, raid_no, capture_time,
-                    unique_hash="123", mon_with_no_egg=False):
+                    unique_hash="123", MonWithNoEgg=False):
         """
         Insert or update raid in DB and send webhook
         :return: if raid has all the required values = True, else False
@@ -196,6 +203,13 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def check_stop_quest(self, lat, lng):
+        """
+        Update scannedlocation (in RM) of a given lat/lng
+        """
+        pass
+
+    @abstractmethod
     def get_gym_infos(self, id=False):
         """
         Retrieve all the gyminfos from DB
@@ -220,54 +234,69 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def quests_from_db(self, GUID=False):
+        """
+        Retrieve all the pokestops valid within the area set by geofence_helper
+        :return: numpy array with coords
+        """
+        pass
+
+    @abstractmethod
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time,
-                               cloud_level=0, rain_level=0, wind_level=0,
-                               snow_level=0, fog_level=0, wind_direction=0,
-                               weather_daytime=0):
+                              cloud_level=0, rain_level=0, wind_level=0,
+                              snow_level=0, fog_level=0, wind_direction=0,
+                              weather_daytime=0):
         """
         Updates the weather in a given cell_id
         """
         pass
 
     @abstractmethod
-    def submit_mon_iv(self, id, type, lat, lon, desptime, spawnid, gender, weather, costume, form,
-                      cp, move_1, move_2, weight, height, individual_attack, individual_defense,
-                      individual_stamina, cpmulti):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto):
         """
         Update/Insert a mon with IVs
         """
         pass
 
     @abstractmethod
-    def submit_mons_map_proto(self, map_proto):
+    def submit_mons_map_proto(self, origin, map_proto, mon_ids_ivs):
         """
         Update/Insert mons from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_pokestops_map_proto(self, map_proto):
+    def submit_pokestops_map_proto(self, origin, map_proto):
         """
         Update/Insert pokestops from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_gyms_map_proto(self, map_proto):
+    def submit_pokestops_details_map_proto(self, map_proto):
+        """
+        Update/Insert pokestop details from a GMO
+        :param map_proto:
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def submit_gyms_map_proto(self, origin, map_proto):
         """
         Update/Insert gyms from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_raids_map_proto(self, map_proto):
+    def submit_raids_map_proto(self, origin, map_proto):
         """
         Update/Insert raids from a map_proto dict
         """
         pass
 
     @abstractmethod
-    def submit_weather_map_proto(self, map_proto, received_timestamp):
+    def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
         """
         Update/Insert weather from a map_proto dict
         """
@@ -275,6 +304,10 @@ class DbWrapperBase(ABC):
 
     @abstractmethod
     def download_gym_images(self):
+        pass
+
+    @abstractmethod
+    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
         pass
 
     def download_gym_infos(self):
@@ -305,7 +338,30 @@ class DbWrapperBase(ABC):
                  ' count INT(10) NOT NULL DEFAULT 1, ' +
                  ' modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
                  ' PRIMARY KEY (hashid))')
-        log.debug(query)
+        self.execute(query, commit=True)
+
+        return True
+
+    def create_quest_database_if_not_exists(self):
+        """
+        In order to store 'hashes' of crops/images, we require a table to store those hashes
+        """
+        log.debug("{DbWrapperBase::create_quest_database_if_not_exists} called")
+        log.debug('Creating hash db in database')
+
+        query = (' Create table if not exists trs_quest ( ' +
+                 ' GUID varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,' +
+                 ' quest_type tinyint(3) NOT NULL, ' +
+                 ' quest_timestamp int(11) NOT NULL,' +
+                 ' quest_stardust smallint(4) NOT NULL,' +
+                 ' quest_pokemon_id smallint(4) NOT NULL,' +
+                 ' quest_reward_type smallint(3) NOT NULL,' +
+                 ' quest_item_id smallint(3) NOT NULL,' +
+                 ' quest_item_amount tinyint(2) NOT NULL,' +
+                 ' quest_target tinyint(3) NOT NULL,' +
+                 ' quest_condition varchar(500), ' +
+                 ' PRIMARY KEY (GUID), ' +
+                 ' KEY quest_type (quest_type))')
         self.execute(query, commit=True)
 
         return True
@@ -433,24 +489,31 @@ class DbWrapperBase(ABC):
         log.info('clearHashGyms: Deleted Raidhashes with unknown mons')
 
     def getspawndef(self, spawn_id):
+        if not spawn_id:
+            return False
         log.debug("{DbWrapperBase::getspawndef} called")
+
+        spawnids = ",".join(map(str, spawn_id))
+        spawnret = {}
+
         query = (
-            "SELECT spawndef "
-            "FROM trs_spawn "
-            "WHERE spawnpoint=%s"
+                "SELECT spawnpoint, spawndef "
+                "FROM trs_spawn where spawnpoint in (%s)" % (spawnids)
         )
-        vals = (spawn_id,)
+        # vals = (spawn_id,)
 
-        res = self.execute(query, vals)
-        ret = [row[0] for row in res]
-        return ret
+        res = self.execute(query)
+        for row in res:
+            spawnret[row[0]] = row[1]
+        return spawnret
 
-    def submit_spawnpoints_map_proto(self, map_proto):
-        log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called")
+    def submit_spawnpoints_map_proto(self, origin, map_proto):
+        log.debug("{DbWrapperBase::submit_spawnpoints_map_proto} called with data received by %s" % str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
         spawnpoint_args, spawnpoint_args_unseen = [], []
+        spawnids = []
 
         query_spawnpoints = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
@@ -474,6 +537,12 @@ class DbWrapperBase(ABC):
 
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:
+                spawnids.append(int(str(wild_mon['spawnpoint_id']), 16))
+
+        spawndef = self.getspawndef(spawnids)
+
+        for cell in cells:
+            for wild_mon in cell["wild_pokemon"]:
                 spawnid = int(str(wild_mon['spawnpoint_id']), 16)
                 lat, lng, alt = S2Helper.get_position_from_cell(int(str(wild_mon['spawnpoint_id']) + '00000', 16))
                 despawntime = wild_mon['time_till_hidden']
@@ -481,11 +550,7 @@ class DbWrapperBase(ABC):
                 minpos = self._get_min_pos_in_array()
                 # TODO: retrieve the spawndefs by a single executemany and pass that...
 
-                spawndef = self.getspawndef(spawnid)
-                spawndef_ = False
-                for t in spawndef:
-                    spawndef_ = t
-
+                spawndef_ = spawndef.get(spawnid, False)
                 if spawndef_:
                     newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
                 else:
@@ -625,7 +690,7 @@ class DbWrapperBase(ABC):
 
         found = self.execute(query, args)
 
-        if found[0][0]:
+        if found and len(found) > 0 and found[0][0]:
             return str(found[0][0])
         else:
             return False
@@ -657,6 +722,8 @@ class DbWrapperBase(ABC):
             pos = 7
         else:
             pos = None
+
+        self.__globaldef = pos
 
         return pos
 
@@ -721,7 +788,8 @@ class DbWrapperBase(ABC):
 
         res = self.execute(query)
         for (spawnid, lat, lon, endtime, spawndef, last_scanned) in res:
-            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef, 'lastscan': str(last_scanned)}
+            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef,
+                              'lastscan': str(last_scanned)}
 
         return str(json.dumps(spawn, indent=4, sort_keys=True))
 
@@ -741,16 +809,17 @@ class DbWrapperBase(ABC):
         res = self.execute(query)
         next_up = []
         current_time = time.time()
-        for(latitude, longitude, spawndef, calc_endminsec) in res:
+        for (latitude, longitude, spawndef, calc_endminsec) in res:
+            if geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
+                continue
             endminsec_split = calc_endminsec.split(":")
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
+            temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
             if math.floor(minutes / 10) == 0:
-                temp_date = current_time_of_day.replace(minute=minutes, second=seconds) + timedelta(hours=1)
-            else:
-                temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
-            if (temp_date < current_time_of_day
-                    or not geofence_helper.is_coord_inside_include_geofence([latitude, longitude])):
+                temp_date = temp_date + timedelta(hours=1)
+
+            if temp_date < current_time_of_day:
                 # spawn has already happened, we should've added it in the past, let's move on
                 # TODO: consider crosschecking against current mons...
                 continue
@@ -770,3 +839,46 @@ class DbWrapperBase(ABC):
                 )
             )
         return next_up
+
+    def submit_quest_proto(self, map_proto):
+        log.debug("{DbWrapperBase::submit_quest_proto} called")
+        fort_id = map_proto.get("fort_id", None)
+        if fort_id is None:
+            return False
+        if 'challenge_quest' not in map_proto:
+            return False
+        quest_type = map_proto['challenge_quest']['quest'].get("quest_type", None)
+        if map_proto['challenge_quest']['quest'].get("quest_rewards", None):
+            rewardtype = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("type", None)
+            item = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("item", None)
+            itemamount = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("amount", None)
+            stardust = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("stardust", None)
+            pokemon_id = map_proto['challenge_quest']['quest']['quest_rewards'][0]['pokemon_encounter'].get(
+                "pokemon_id", None)
+            target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
+            condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
+
+            query_quests = (
+                "INSERT into trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, quest_reward_type, "
+                "quest_item_id, quest_item_amount, quest_target, quest_condition) values "
+                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
+                "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
+                "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
+                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), quest_condition=VALUES(quest_condition)"
+            )
+            vals = (
+                fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target,
+                str(condition)
+            )
+            log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (
+                str(quest_type), str(fort_id)))
+            self.execute(query_quests, vals, commit=True)
+
+            if self.application_args.webhook:
+                log.debug('Sending quest webhook for pokestop {0}'.format(str(fort_id)))
+                self.webhook_helper.submit_quest_webhook(self.quests_from_db(GUID=fort_id))
+            else:
+                log.debug('Sending Webhook is disabled')
+
+        return True

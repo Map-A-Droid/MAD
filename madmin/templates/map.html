@@ -61,6 +61,16 @@
 		width: 400px;
 		text-align: center;
 	}
+	
+	.questpopup .leaflet-popup-tip {
+		text-align: center;
+	}
+
+	.questpopup .leaflet-popup-content-wrapper {
+		width: 400px;
+		height: 180px;
+		text-align: center;
+	}
 
 	.spawntooltip {
 		font-weight: bold;
@@ -192,12 +202,14 @@
 		var spawns = L.layerGroup();
 		var gyms = L.layerGroup();
 		var fence = L.layerGroup();
+		var quests = L.layerGroup();
 
 		// base overlays
 		var overlays = {
 			"Spawnpoints": spawns,
 			"Gyms": gyms,
-			"Geofence": fence
+			"Geofence": fence,
+			"Quests": quests
 		};
 		
 		var extraOverlays = {
@@ -220,6 +232,7 @@
 		// add our base layers
 		extraLayerControl = L.control.layers(null, extraOverlays, {position: 'bottomright'}).addTo(map);
 		mapControl = L.control.layers(null, overlays, {position: 'bottomright'}).addTo(map);
+
 
 		// handle zoom events
 		map.on('zoomend', function () {
@@ -402,7 +415,20 @@
 				});
 			}
 		});
-
+		
+		$.getJSON({
+			url: "/get_quests",
+			success: function(result) {
+				$.each(result, function(k, v) {
+					L.marker([v['latitude'], v['longitude']], {icon: build_quest_small(v['quest_reward_type_raw'], v['item_id'], v['pokemon_id'])})
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['latitude']+','+v['longitude']+'">'+v['latitude']+', '+v['longitude']+'</a><br>' + build_quest(v['quest_reward_type_raw'], v['quest_type'], v['pokemon_id'], v['item_id'], v['item_amount'], v['pokemon_name'],v['item_type']) + '</div>',
+							{'className': 'questpopup'})
+						.addTo(quests);
+				});
+			}
+		});
+		
+		
 		var t = 0;
 
 		(function work() {
@@ -437,6 +463,92 @@
 		})();
 
 	});
+
+	function build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id){
+		
+		switch(quest_reward_type_raw) {
+			
+		case 2:
+			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+			var size = [30, 30]
+			var anchor = [30, 20]
+			break;
+		case 3:
+			var image = 'static/quest/reward_stardust.png';
+			var size = [30, 30]
+			var anchor = [30, 20]
+			break;
+		case 7:
+			var form = '00';
+			if (quest_pokemon_id === '327') {
+				form = '11';
+			}
+			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+			var size = [50, 50]
+			var anchor = [40, 30]
+			break;
+		}
+		
+		var icon =  L.icon({
+			iconUrl: 'static/Pstop-quest.png',
+			shadowUrl: image,
+			iconSize: [30, 30],
+			shadowSize: size,
+			shadowAnchor: anchor
+		})
+		
+		
+		
+		return icon;
+	}
+	
+	function build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type){
+		
+		switch(quest_reward_type_raw) {
+			
+		case 2:
+			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+			var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
+			var width = 40;
+			break;
+		case 3:
+			var image = 'static/quest/reward_stardust.png';
+			var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
+			var width = 40;
+			break;
+		case 7:
+			var form = '00';
+			if (quest_pokemon_id === '327') {
+				form = '11';
+			}
+			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+			var rewardtext = quest_pokemon_name;
+			var width = 60;
+			break;
+		}
+
+		var questtext = quest_type;
+		
+		popuptext = '<center><b>' + questtext + '</b><br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
+		return popuptext;
+		
+	}
+	
+
+	function drawPolygon() {
+		var coords = document.getElementById("coordPolygon").value;
+		var json = '[';
+		var lines = coords.split('\n');
+		for (var i = 0; i < lines.length; i++) {
+			json = json.concat('[', lines[i], '],');
+		}
+		json = json.slice(0, -1);
+		json = json.concat(']');
+		var a = JSON.parse(json);
+		var polygon = L.polygon(a, { color: 'red' });
+		polygon.addTo(fence);
+	}
+
 </script>
 {% endblock %}
 

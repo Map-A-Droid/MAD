@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+				{ data: 'url', title: 'Pokestop Pic' },
+                { data: 'name', title: 'Pokestop Name' },
+				{ data: 'reward', title: 'Reward' },
+				{ data: 'reward_amount', title: ''},
+				{ data: 'quest', title: 'Quest'}
+                
+
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
+                    }
+                },
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+						var reward = build_quest_small(row.quest_reward_type_raw,row.item_id, row.pokemon_id);
+                        return reward;
+                    }
+                },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+						var reward_amount = row.quest_type;
+                        return reward_amount;
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+						var quest_text = build_reward_text(row.quest_reward_type_raw, row.item_amount, row.pokemon_name, row.item_type);
+                        return quest_text;
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "responsive": {{ responsive }},
+            "autoWidth": true
+        });
+	}
+	
+    $(document).ready(function () {
+        $("#navgyms").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "/get_quests",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+	
+	function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_item_name){
+		
+		switch(quest_reward_type) {
+			
+		case 2:
+			var rewardtext = quest_item_name + '<br>Pieces: ' + quest_item_amount;
+			break;
+		case 3:
+			var rewardtext = quest_item_name + '<br>Amount: ' + quest_item_amount;
+			break;
+		case 7:
+			var rewardtext = monname;
+			break;
+		}
+		
+		return rewardtext;
+	}
+	
+	function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id){
+		
+		switch(quest_reward_type) {
+			
+		case 2:
+			var image = '<center><img src = static/quest/reward_' + quest_item_id + '_1.png width=50></center>';
+			break;
+		case 3:
+			var image = '<center><img src = static/quest/reward_stardust.png width=50></center>';
+			break;
+		case 7:
+			var form = '00';
+			if (quest_pokemon_id === '327') {
+				form = '11';
+			}
+			var image = '<center><img src = /asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png width=100></center>';
+			break;
+		}
+
+		return image;
+	}
+	
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Quests</h2>
+<table id="show-data" class="table"></table>
+{% endblock %}
