@@ -186,7 +186,6 @@ class WebsocketServerBase(ABC):
             try:
                 asyncio.wait_for(websocket.recv(), timeout=0.01)
                 message = await websocket.recv()
-                log.warning("Got message %s" % str(message))
             except asyncio.TimeoutError:
                 # log.debug('timeout!')
                 await asyncio.sleep(0.02)
