@@ -137,7 +137,7 @@ class Communicator:
 
     def terminate_connection(self):
         self.__sendMutex.acquire()
-        response = self.websocketHandler.sendAndWait(self.id, "exit\r\n", self.__commandTimeout)
+        response = self.websocketHandler.sendAndWait(self.id, "exit\r\n", 5)
         self.__sendMutex.release()
         return response
 

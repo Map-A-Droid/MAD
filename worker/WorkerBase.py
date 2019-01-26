@@ -8,6 +8,7 @@ from threading import Event, Thread
 import json
 
 from utils.hamming import hamming_distance as hamming_dist
+from utils.madGlobals import WebsocketWorkerRemovedException
 from websocket.communicator import Communicator
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -57,7 +58,10 @@ class WorkerBase(ABC):
 
     def stop_worker(self):
         self._stop_worker_event.set()
-        self._communicator.terminate_connection()
+        try:
+            self._communicator.terminate_connection()
+        except WebsocketWorkerRemovedException as e:
+            log.debug("Stopped worker.")
 
     @abstractmethod
     def _main_work_thread(self):

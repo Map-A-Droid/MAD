@@ -194,6 +194,10 @@ class WebsocketServerBase(ABC):
                 log.debug("Closed connection to %s" % str(id))
                 worker = self.__current_users.get(id, None)
                 worker[1].stop_worker()
+                # also remove the worker from our current users list!
+                self.__users_mutex.acquire()
+                self.__current_users.pop(id)
+                self.__users_mutex.release()
                 return
                 # TODO: cleanup, stop worker...
             if message is not None:
@@ -309,6 +313,10 @@ class WebsocketServerBase(ABC):
             log.warning("Timeout reached while waiting for a response...")
             if self.__current_users.get(id, None) is None:
                 raise WebsocketWorkerRemovedException
+            else:
+                # TODO: increase timeout counter
+                pass
+
 
         log.debug("Received response: %s" % str(result))
         self.__removeRequest(messageId)
