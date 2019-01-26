@@ -55,7 +55,7 @@ class WebsocketServerBase(ABC):
         asyncio.set_event_loop(loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_adress, self.__listen_port, max_size=2 ** 25,
-                             origins=allowed_origins, ping_timeout=60, ping_interval=60))
+                             origins=allowed_origins, ping_timeout=10, ping_interval=15))
         asyncio.get_event_loop().run_forever()
 
     async def __unregister(self, websocket):
@@ -137,7 +137,7 @@ class WebsocketServerBase(ABC):
                 sys.exit(1)
 
         newWorkerThread = Thread(name='worker_%s' % id, target=worker.start_worker)
-        self.__current_users[id] = [newWorkerThread, worker, websocket]
+        self.__current_users[id] = [newWorkerThread, worker, websocket, 0]
         self.__users_mutex.release()
         newWorkerThread.daemon = True
         newWorkerThread.start()
