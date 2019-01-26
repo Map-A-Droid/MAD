@@ -184,10 +184,10 @@ class WebsocketServerBase(ABC):
             id = str(websocket.request_headers.get_all("Origin")[0])
             try:
                 await asyncio.wait_for(websocket.recv(), timeout=0.01)
-                log.warning("Got message")
                 message = await websocket.recv()
+                log.warning("Got message %s" % str(message))
             except asyncio.TimeoutError:
-                log.debug('timeout!')
+                # log.debug('timeout!')
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed:
                 log.debug("Connection closed while receiving data")
@@ -197,6 +197,7 @@ class WebsocketServerBase(ABC):
                 return
                 # TODO: cleanup, stop worker...
             if message is not None:
+                log.error("Setting message: %s" % str(message))
                 self.__onMessage(message)
 
     async def handler(self, websocket, path):
