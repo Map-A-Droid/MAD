@@ -474,9 +474,6 @@ class WebhookHelper(object):
 
         if weight is not None:
             mon_payload["weight"] = weight
-			
-        if weather is not None:
-            mon_payload["weather"] = weather
 
         if gender is not None:
             mon_payload["gender"] = gender
