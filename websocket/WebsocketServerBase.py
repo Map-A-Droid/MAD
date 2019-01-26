@@ -183,7 +183,7 @@ class WebsocketServerBase(ABC):
             message = None
             id = str(websocket.request_headers.get_all("Origin")[0])
             try:
-                await asyncio.wait_for(websocket.recv(), timeout=0.01)
+                asyncio.wait_for(websocket.recv(), timeout=0.01)
                 message = await websocket.recv()
                 log.warning("Got message %s" % str(message))
             except asyncio.TimeoutError:
@@ -197,7 +197,6 @@ class WebsocketServerBase(ABC):
                 return
                 # TODO: cleanup, stop worker...
             if message is not None:
-                log.error("Setting message: %s" % str(message))
                 self.__onMessage(message)
 
     async def handler(self, websocket, path):
@@ -261,6 +260,7 @@ class WebsocketServerBase(ABC):
             result = True
         else:
             # the request has already been deleted due to a timeout...
+            log.error("Request has already been deleted...")
             result = False
         self.__requestsMutex.release()
         return result
@@ -300,8 +300,7 @@ class WebsocketServerBase(ABC):
         result = None
         log.debug("Timeout: " + str(timeout))
         if messageEvent.wait(timeout):
-            log.debug("Received anser, popping response")
-            log.debug("Received an answer")
+            log.debug("Received answer, popping response")
             # okay, we can get the response..
             result = self.__popResponse(messageId)
             log.debug("Answer: %s" % result)

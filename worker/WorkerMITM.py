@@ -125,7 +125,7 @@ class WorkerMITM(WorkerBase):
     def _main_work_thread(self):
         current_thread().name = self.id
         log.info("MITM worker starting")
-        _data_err_counter, data_error_counter = 0, 0
+        data_error_counter = 0
         # first check if pogo is running etc etc
 
         t_asyncio_loop = Thread(name='mitm_asyncio_' + self.id, target=self.__start_asyncio_loop)
@@ -284,9 +284,8 @@ class WorkerMITM(WorkerBase):
             log.debug("Acquiring lock")
             self._work_mutex.acquire()
             log.debug("Waiting for data to be received...")
-            data_received, data_error_counter = self.wait_for_data(data_err_counter=_data_err_counter,
+            data_received, data_error_counter = self.wait_for_data(data_err_counter=data_error_counter,
                                                                    timestamp=curTime)
-            _data_err_counter = data_error_counter
             log.debug("Releasing lock")
             self._work_mutex.release()
             log.debug("Worker %s done, next iteration" % str(self.id))
@@ -335,8 +334,8 @@ class WorkerMITM(WorkerBase):
                 current_mode = daytime_mode if not MadGlobals.sleep else nighttime_mode
 
                 if latest_timestamp >= timestamp:
+                    data_err_counter = 0
                     if current_mode == 'mon_mitm' or current_mode == "iv_mitm":
-                        data_err_counter = 0
                         for data_extract in data['payload']['cells']:
                             for WP in data_extract['wild_pokemon']:
                                 # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
