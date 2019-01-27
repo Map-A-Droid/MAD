@@ -9,7 +9,9 @@ def generate_quest(quest):
         pokestop_id  = (quest['pokestop_id'])
         quest_reward_type = (questreward(quest['quest_reward_type']))
         quest_reward_type_raw = quest['quest_reward_type']
+        quest_type_raw = quest['quest_type']
         quest_type = (questtype(quest['quest_type']))
+        quest_condition = quest['quest_condition']
         name = (quest['name'])
         latitude = quest['latitude']
         longitude = quest['longitude']
@@ -50,7 +52,7 @@ def generate_quest(quest):
 
         
         quest_raw = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
-            'quest_type_raw': quest_type, 'quest_type': quest_type_text, 'item_amount': item_amount, 'item_type': item_type, 
+            'quest_type_raw': quest_type_raw, 'quest_type': quest_type_text, 'quest_condition': quest_condition, 'item_amount': item_amount, 'item_type': item_type, 
             'quest_target': quest_target, 'name': name, 'url': url, 'timestamp': timestamp, 'pokemon_id': pokemon_id, 'item_id': item_id,
             'pokemon_name': pokemon_name, 'quest_reward_type': quest_reward_type, 'quest_reward_type_raw': quest_reward_type_raw})
         return quest_raw
