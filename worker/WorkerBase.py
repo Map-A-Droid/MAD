@@ -105,7 +105,11 @@ class WorkerBase(ABC):
         return stopResult
 
     def _reboot(self):
-        start_result = self._communicator.startApp("more reboot")
+        try:
+            start_result = self._communicator.startApp("more reboot")
+        except WebsocketWorkerRemovedException as e:
+            log.error("Could not reboot due to client already having disconnected")
+            start_result = False
         time.sleep(5)
         self.stop_worker()
         return start_result
