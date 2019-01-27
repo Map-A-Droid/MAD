@@ -73,6 +73,17 @@ log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
 
+def handle_exception(exc_type, exc_value, exc_traceback):
+    if issubclass(exc_type, KeyboardInterrupt):
+        sys.__excepthook__(exc_type, exc_value, exc_traceback)
+        return
+
+    log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+
+
+sys.excepthook = handle_exception
+
+
 def set_log_and_verbosity(log):
     # Always write to log file.
     args = parseArgs()
