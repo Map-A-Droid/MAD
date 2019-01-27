@@ -375,6 +375,7 @@ class WorkerMITM(WorkerBase):
                 # self._restartPogoDroid()
                 self.reboot_count += 1
                 if self.reboot_count > 3:
+                    log.error("Rebooting %s" % str(self.id))
                     self._reboot()
                 else:
                     self._start_pogodroid()
@@ -391,5 +392,6 @@ class WorkerMITM(WorkerBase):
             log.warning("Timeout waiting for data")
             self.reboot_count += 1
             if self.reboot_count > 3:
+                log.error("Rebooting %s" % str(self.id))
                 self._reboot()
         return data_requested, data_err_counter

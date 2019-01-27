@@ -38,7 +38,7 @@ class Communicator:
             return True
 
     def reboot(self):
-        return self.__runAndOk("more reboot\r\n", self.__commandTimeout)
+        return self.__runAndOk("more reboot now\r\n", self.__commandTimeout)
 
     def restartApp(self, packageName):
         return self.__runAndOk("more restart %s\r\n" % (packageName), self.__commandTimeout)
