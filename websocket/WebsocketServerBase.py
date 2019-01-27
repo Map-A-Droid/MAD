@@ -326,8 +326,10 @@ class WebsocketServerBase(ABC):
             log.warning("Timeout reached while waiting for a response...")
             user_registered = self.__current_users.get(id, None)
             if user_registered is None:
+                log.warning("Worker has previously been removed")
                 raise WebsocketWorkerRemovedException
             else:
+                log.error("Timeout, increasing timeout-counter")
                 self.__users_mutex.acquire()
                 new_count = self.__current_users[id][3] + 1
                 self.__current_users[id][3] = new_count
