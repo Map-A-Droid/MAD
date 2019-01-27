@@ -105,12 +105,11 @@ class WorkerBase(ABC):
         return stopResult
         
     def _start_pogodroid(self):
-        start_result = False
         start_result = self._communicator.startApp("com.mad.pogodroid")
+        time.sleep(5)
         return start_result
     
     def _stopPogoDroid(self):
-        stopResult= False
         stopResult = self._communicator.stopApp("com.mad.pogodroid")
         return stopResult
 
@@ -127,6 +126,7 @@ class WorkerBase(ABC):
 
     def _restartPogoDroid(self):
         successfulStop = self._stopPogoDroid()
+        time.sleep(1)
         log.debug("restartPogoDroid: stop pogodriud resulted in %s" % str(successfulStop))
         if successfulStop:
             return self._start_pogodroid()
