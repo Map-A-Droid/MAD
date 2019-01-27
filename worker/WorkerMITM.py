@@ -33,6 +33,8 @@ class WorkerMITM(WorkerBase):
         self._injection_settings = {}
         self.__update_injection_settings()
 
+        self.reboot_count = 0
+
     def __update_injection_settings(self):
         injected_settings = {}
         scanmode = "nothing"
@@ -373,6 +375,10 @@ class WorkerMITM(WorkerBase):
                 # self._restartPogoDroid()
                 self._start_pogodroid()
                 self._restartPogo(True)
+
+                self.reboot_count += 1
+                if self.reboot_count > 3:
+                    self._reboot()
                 return None, 0
             elif data_requested is None:
                 # log.debug('data_requested still None...')
@@ -383,4 +389,7 @@ class WorkerMITM(WorkerBase):
             data_err_counter = 0
         else:
             log.warning("Timeout waiting for data")
+            self.reboot_count += 1
+            if self.reboot_count > 3:
+                self._reboot()
         return data_requested, data_err_counter

@@ -103,7 +103,13 @@ class WorkerBase(ABC):
             time.sleep(1)
             pogoTopmost = self._communicator.isPogoTopmost()
         return stopResult
-        
+
+    def _reboot(self):
+        start_result = self._communicator.startApp("more reboot")
+        time.sleep(5)
+        self.stop_worker()
+        return start_result
+
     def _start_pogodroid(self):
         start_result = self._communicator.startApp("com.mad.pogodroid")
         time.sleep(5)

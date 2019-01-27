@@ -83,8 +83,13 @@ class WebsocketServerBase(ABC):
                 return False
 
         self.__users_mutex.acquire()
-        if self.__current_users.get(id, None) is not None:
-            log.warning("Worker for %s is already running" % str(id))
+        user_present = self.__current_users.get(id, None)
+        if user_present is not None:
+            log.warning("Worker for %s is already running, checking if connection is alive" % str(id))
+            if user_present[2].closed:
+                log.warning("Connection is already closed, gotta unregister/remove and wait for worker to "
+                            "reconnect again")
+                self.__current_users.pop(id)
             self.__users_mutex.release()
             return False
         elif self.auths and authBase64 and not check_auth(authBase64, self.args, self.auths):
