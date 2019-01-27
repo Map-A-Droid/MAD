@@ -218,6 +218,7 @@ class WebsocketServerBase(ABC):
         # newWorkerThread.daemon = False
         # newWorkerThread.start()
         if not continueWork:
+            log.error("Not gonna continue, could not register. Closing connection")
             websocket.close()
             return
         consumer_task = asyncio.ensure_future(
