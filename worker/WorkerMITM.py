@@ -370,7 +370,7 @@ class WorkerMITM(WorkerBase):
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
             if data_err_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
-                self._restartPogoDroid()
+                # self._restartPogoDroid()
                 self._restartPogo(False)
                 return None, 0
             elif data_requested is None:

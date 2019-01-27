@@ -180,6 +180,8 @@ class WebsocketServerBase(ABC):
         # [value[1].send(next.message) for key, value in self.__current_users if key == next.id]
 
     async def _consumer_handler(self, websocket, path):
+        if websocket is None:
+            return
         while True:
             message = None
             id = str(websocket.request_headers.get_all("Origin")[0])
@@ -193,7 +195,8 @@ class WebsocketServerBase(ABC):
                 log.debug("Connection closed while receiving data")
                 log.debug("Closed connection to %s" % str(id))
                 worker = self.__current_users.get(id, None)
-                worker[1].stop_worker()
+                if worker is not None:
+                    worker[1].stop_worker()
                 # also remove the worker from our current users list!
                 self.__users_mutex.acquire()
                 self.__current_users.pop(id)
@@ -324,6 +327,7 @@ class WebsocketServerBase(ABC):
                 self.__current_users[id][3] = new_count
 
                 if new_count > 5:
+                    log.error("Closing websocket connection of %s "% str(user_registered[1].id))
                     user_registered[2].close()
 
                 self.__users_mutex.release()
