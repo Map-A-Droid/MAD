@@ -387,6 +387,7 @@ class WorkerMITM(WorkerBase):
 
         if data_requested is not None:
             log.debug('Got the data requested...')
+            self.reboot_count = 0
             data_err_counter = 0
         else:
             log.warning("Timeout waiting for data")
