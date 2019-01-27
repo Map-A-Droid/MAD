@@ -65,7 +65,6 @@ class WebsocketServerBase(ABC):
         if worker is not None:
             self.__current_users.pop(id)
         self.__users_mutex.release()
-        websocket.close()
 
     async def __register(self, websocket):
         # await websocket.recv()
@@ -219,7 +218,6 @@ class WebsocketServerBase(ABC):
         # newWorkerThread.start()
         if not continueWork:
             log.error("Not gonna continue, could not register. Closing connection")
-            websocket.close()
             return
         consumer_task = asyncio.ensure_future(
             self._consumer_handler(websocket, path))
@@ -335,9 +333,7 @@ class WebsocketServerBase(ABC):
                 self.__current_users[id][3] = new_count
 
                 if new_count > 5:
-                    log.error("Closing websocket connection of %s "% str(user_registered[1].id))
-                    user_registered[2].close()
-                    self.__current_users.pop(id)
+                    log.error("Closing websocket connection of %s by throwing an exception"% str(user_registered[1].id))
                     raise WebsocketWorkerRemovedException
                 self.__users_mutex.release()
 
