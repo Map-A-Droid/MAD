@@ -58,10 +58,7 @@ class WorkerBase(ABC):
 
     def stop_worker(self):
         self._stop_worker_event.set()
-        try:
-            self._communicator.terminate_connection()
-        except WebsocketWorkerRemovedException as e:
-            log.debug("Stopped worker.")
+        log.warning("Worker %s stop called" % str(self._id))
 
     @abstractmethod
     def _main_work_thread(self):
