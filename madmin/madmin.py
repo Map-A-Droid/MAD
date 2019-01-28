@@ -41,14 +41,14 @@ areas = None
 
 def madmin_start(arg_args, arg_db_wrapper):
     import json
-    global args, device_mappings, db_wrapper, routemanagers, areas
-    args = arg_args
+    global conf_args, device_mappings, db_wrapper, routemanagers, areas
+    conf_args = arg_args
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(arg_db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     routemanagers = mapping_parser.get_routemanagers()
     areas = mapping_parser.get_areas()
-    app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True, use_reloader=False)
+    app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
 
 
 def auth_required(func):
@@ -493,14 +493,18 @@ def get_route():
 
     for name, area in areas.items():
         route = []
-        with open(area['routecalc'] + '.calc', 'r') as f:
-            for line in f.readlines():
-                latlon = line.strip().split(', ')
-                route.append([
-                    getCoordFloat(latlon[0]),
-                    getCoordFloat(latlon[1])
-                ])
-            routeexport.append({'name': str(name), 'mode': area['mode'], 'coordinates': route})
+        try:
+            with open(area['routecalc'] + '.calc', 'r') as f:
+                for line in f.readlines():
+                    latlon = line.strip().split(', ')
+                    route.append([
+                        getCoordFloat(latlon[0]),
+                        getCoordFloat(latlon[1])
+                    ])
+                routeexport.append({'name': str(name), 'mode': area['mode'], 'coordinates': route})
+        # ignore missing routes files
+        except OSError:
+            pass
 
     return jsonify(routeexport)
 
