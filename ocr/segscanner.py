@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import time
+import calendar
 from shutil import copyfile
 
 import cv2
@@ -710,7 +711,7 @@ class Scanner:
     # returns UTC timestamp
     def getHatchTime(self,data, raidNo):
         zero = datetime.datetime.now().replace(hour=0,minute=0,second=0,microsecond=0)
-        unix_zero =  time.mktime(zero.timetuple())
+        unix_zero =  calendar.timegm(zero.timetuple())
         hour_min_divider = data.find(':')
         if hour_min_divider is None or hour_min_divider == -1:
             return False
