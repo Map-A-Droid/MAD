@@ -208,7 +208,6 @@
 		var overlays = {
 			"Spawnpoints": spawns,
 			"Gyms": gyms,
-			"Geofence": fence,
 			"Quests": quests
 		};
 		
@@ -260,6 +259,30 @@
 		L.control.zoom({
 			position: 'bottomright'
 		}).addTo(map);
+
+		$.getJSON({
+			url: "/get_geofence",
+			success: function (result) {
+				$.each(result, function (pos, data) {
+					fence[pos] = L.layerGroup();
+					var name = 'Geofence: ' + pos;
+					var obj = fence[pos];
+
+					if (shouldShowLayer(name)) {
+						map.addLayer(obj);
+					}
+
+					mapControl.addOverlay(obj, name);
+
+					var geojson = {
+						"type": "Polygon",
+						"coordinates": [convertToLonLat(data)]
+					}
+
+					L.geoJSON(geojson, { style: { "color": getRandomColor(), "weight": 2, "opacity": 0.25 } }).addTo(obj).bindPopup(pos);
+				});
+			}
+		});
 
 		$.getJSON({
 			url: "/get_route",

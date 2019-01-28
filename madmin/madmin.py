@@ -27,6 +27,7 @@ import datetime
 from functools import wraps
 from shutil import copyfile
 from math import floor
+from pathlib import Path
 import numbers
 from utils.questGen import generate_quest
 
@@ -542,7 +543,41 @@ def get_gymcoords():
             })
 
     return jsonify(coords)
-    
+
+
+@cache.cached()
+@app.route("/get_geofence")
+def get_geofence():
+    geofence = []
+    geofencexport = {}
+
+    with open('configs/mappings.json') as f:
+        mapping = json.load(f)
+        for area in mapping['areas']:
+            name = 'Unknown'
+            geofence_included = Path(area["geofence_included"])
+            if not geofence_included.is_file():
+                continue
+            with geofence_included.open() as gf:
+                for line in gf:
+                    line = line.strip()
+                    if not line:  # Empty line.
+                        continue
+                    elif line.startswith("["):  # Name line.
+                        name = line.replace("[", "").replace("]", "")
+                    else:  # Coordinate line.
+                        lat, lon = line.split(",")
+                        geofence.append([
+                            getCoordFloat(lat),
+                            getCoordFloat(lon)
+                        ])
+
+            geofencexport[name] = geofence
+            geofence = []
+
+    return jsonify(geofencexport)
+
+
 @app.route("/get_quests")
 def get_quests():
     coords = []
