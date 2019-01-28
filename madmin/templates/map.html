@@ -193,7 +193,7 @@
 		var storedCenter = localStorage.getItem('center') || default_lat+','+default_lng;
 
 		// main map object
-		map = L.map('map', { layers: [tileLayer], zoomControl: false }).setView(storedCenter.split(','), storedZoom);
+		map = L.map('map', { layers: [tileLayer], zoomControl: false, preferCanvas: true }).setView(storedCenter.split(','), storedZoom);
 
 		var poslay = L.layerGroup();
 		var extraRouteCircle = L.layerGroup();
