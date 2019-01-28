@@ -120,3 +120,12 @@ li.list-group-item.layer-item .custom-switch {
 	float: right;
 }
 
+.questpopup .leaflet-popup-tip {
+	text-align: center;
+}
+
+.questpopup .leaflet-popup-content-wrapper {
+	width: 400px;
+	height: 180px;
+	text-align: center;
+}

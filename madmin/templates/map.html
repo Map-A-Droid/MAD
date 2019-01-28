@@ -27,13 +27,15 @@ new Vue({
 			gyms: null,
 			route: {
 				raid: null,
-				mon: null
+				mon: null,
+				quest: null
 			}
 		},
 		settings: {
 			routes: {
 				coordinateRadius: {
 					raid: 490,
+					quest: 40,
 					mon: 67
 				}
 			}
@@ -104,7 +106,10 @@ new Vue({
 				if (route.mode == "mon_mitm") {
 					mode = "mon";
 					cradius = $this.settings.routes.coordinateRadius.mon;
-				} else {
+				} else if (route.mode == "pokestops") {
+					mode = "quest";
+					cradius = $this.settings.routes.coordinateRadius.quest;
+				} else if (route.mode == "raid_mitm" || route.mode == "raid_ocr") {
 					mode = "raid";
 					cradius = $this.settings.routes.coordinateRadius.raid;
 				}
@@ -202,8 +207,83 @@ new Vue({
 
 			$this.addLayer("spawns", l_spawns, false, "spawns");
 		});
+
+
+		axios.get('/get_quests').then(function(res) {
+			var l_quests = L.layerGroup();
+
+			res.data.forEach(function(quest) {
+				L.marker([quest['latitude'], quest['longitude']], {icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])})
+					.bindPopup('<div id="gymImage" style="background: url(&quot;'+quest['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+quest['name']+'</div><div id="gymID"></strong>'+quest['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+quest['latitude']+','+quest['longitude']+'">'+quest['latitude']+', '+quest['longitude']+'</a><br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_type'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', {'className': 'questpopup'})
+					.addTo(l_quests);
+			});
+
+			$this.addLayer("stops with quests", l_quests, false, "quets");
+		});
 	},
 	methods: {
+		build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
+			switch(quest_reward_type_raw) {
+				case 2:
+					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+					var size = [30, 30]
+					var anchor = [30, 20]
+					break;
+				case 3:
+					var image = 'static/quest/reward_stardust.png';
+					var size = [30, 30]
+					var anchor = [30, 20]
+					break;
+				case 7:
+					var form = '00';
+					if (quest_pokemon_id === '327') {
+						form = '11';
+					}
+					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+					var size = [50, 50]
+					var anchor = [40, 30]
+					break;
+			}
+
+			// TODO replace with divIcon
+			var icon =  L.icon({
+				iconUrl: 'static/Pstop-quest.png',
+				shadowUrl: image,
+				iconSize: [30, 30],
+				shadowSize: size,
+				shadowAnchor: anchor
+			})
+
+			return icon;
+		},
+		build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type) {
+			switch(quest_reward_type_raw) {
+				case 2:
+					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+					var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
+					var width = 40;
+					break;
+				case 3:
+					var image = 'static/quest/reward_stardust.png';
+					var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
+					var width = 40;
+					break;
+				case 7:
+					var form = '00';
+					if (quest_pokemon_id === '327') {
+						form = '11';
+					}
+					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+					var rewardtext = quest_pokemon_name;
+					var width = 60;
+					break;
+			}
+			var questtext = quest_type;
+
+			popuptext = '<center><b>' + questtext + '</b><br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
+			return popuptext;
+
+		},
 		// add a new layer
 		addLayer(name, data, show, type) {
 			var lobj = {"show": show, "type": type};
@@ -235,9 +315,9 @@ new Vue({
 		},
 		// return a gym icon based on a team
 		gymicon(team) {
-			return L.divIcon({ 
+			return L.divIcon({
 				iconSize: [32, 32],
-				className: 'gym-icon gym-icon-'+team 
+				className: 'gym-icon gym-icon-'+team
 			});
 		},
 		// generate the map
@@ -247,8 +327,8 @@ new Vue({
 			const storedCenter = localStorage.getItem('center') || '52.521374,13.411201';
 			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
 
-			map = L.map('map', { 
-				layers: [layer], 
+			map = L.map('map', {
+				layers: [layer],
 				zoomControl: false,
 				updateWhenZooming: false,
 				updateWhenIdle: true,
@@ -320,6 +400,13 @@ new Vue({
 							<div class="custom-control custom-switch">
 								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mon" max="1100" class="form-control form-control-sm" />
 								<label for="raidcoordinateradius" class=""></label>
+							</div>
+						</li>
+						<li class="list-group-item layer-item">
+							<strong>Quest coordinate radius</strong>
+							<div class="custom-control custom-switch">
+								<input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quest" max="1100" class="form-control form-control-sm" />
+								<label for="questcoordinateradius" class=""></label>
 							</div>
 						</li>
 				</ul>
