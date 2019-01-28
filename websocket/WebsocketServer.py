@@ -1,3 +1,4 @@
+import math
 import queue
 import asyncio
 import sys
@@ -9,7 +10,7 @@ import collections
 from threading import Lock, Event, Thread
 
 from utils.authHelper import check_auth
-from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
+from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals, WebsocketWorkerTimeoutException
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
 
@@ -27,6 +28,7 @@ class WebsocketServer(object):
         self.__listen_port = int(args.ws_port)
 
         self.__send_queue = queue.Queue()
+        self.__send_queue_mutex = Lock()
 
         self.__received = {}
         self.__received_mutex = Lock()
@@ -38,6 +40,9 @@ class WebsocketServer(object):
         self.__routemanagers = routemanagers
         self.__auths = auths
         self.__mitm_mapper = mitm_mapper
+
+        self.__next_id = 0
+        self.__id_mutex = Lock()
 
     def start_server(self):
         log.info("Starting websocket server...")
@@ -184,17 +189,171 @@ class WebsocketServer(object):
                 await self.__send_specific(next.id, next.message)
 
     async def __send_specific(self, id, message):
+        # self.__current_users_mutex.acquire()
         for key, value in self.__current_users.items():
             if key == id and value[2].open:
                 await value[2].send(message)
+        # self.__current_users_mutex.release()
 
-    async def _retrieve_next_send(self):
+    async def __retrieve_next_send(self):
         found = None
         while found is None:
             try:
+                self.__send_queue_mutex.acquire()
                 found = self.__send_queue.get_nowait()
             except Exception as e:
                 log.error("Exception %s in retrieve_next_send" % str(e))
                 await asyncio.sleep(0.02)
+            finally:
+                self.__send_queue_mutex.release()
         return found
 
+    async def __consumer_handler(self, websocket_client_connection, path):
+        if websocket_client_connection is None:
+            return
+        id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
+        log.warning("Consumer handler of %s starting" % str(id))
+        while True:
+            message = None
+            try:
+                asyncio.wait_for(websocket_client_connection.recv(), timeout=0.01)
+                message = await websocket_client_connection.recv()
+            except asyncio.TimeoutError as te:
+                await asyncio.sleep(0.02)
+            except websockets.exceptions.ConnectionClosed as cc:
+                log.warning("Connection to %s was closed, stopping worker" % str(id))
+                self.__current_users_mutex.acquire()
+                worker = self.__current_users.get(id, None)
+                self.__current_users_mutex.release()
+                if worker is not None:
+                    # TODO: do it abruptly in the worker, maybe set a flag to be checked for in send_and_wait to
+                    # TODO: throw an exception
+                    worker[1].stop_worker()
+                self.clean_up_user(id)
+                return
+
+            if message is not None:
+                await self.__on_message(message)
+
+    def clean_up_user(self, id):
+        self.__current_users_mutex.acquire()
+        self.__current_users.pop(id)
+        self.__current_users_mutex.release()
+
+    async def __on_message(self, message):
+        id = -1
+        response = None
+        if isinstance(message, str):
+            log.debug("Receiving message: %s" % str(message))
+            splitup = message.split(";")
+            id = int(splitup[0])
+            response = splitup[1]
+        else:
+            log.debug("Received binary values.")
+            id = int.from_bytes(message[:4], byteorder='big', signed=False)
+            response = message[4:]
+        await self.__set_response(id, response)
+        if not await self.__set_event(id):
+            # remove the response again - though that is kinda stupid
+            await self.__pop_response(id)
+
+    async def __set_event(self, id):
+        result = False
+        self.__requests_mutex.acquire()
+        if id in self.__requests:
+            self.__requests[id].set()
+            result = True
+        else:
+            # the request has already been deleted due to a timeout...
+            log.error("Request has already been deleted...")
+        self.__requests_mutex.release()
+        return result
+
+    async def __set_response(self, id, message):
+        self.__received_mutex.acquire()
+        self.__received[id] = message
+        self.__received_mutex.release()
+
+    async def __pop_response(self, id):
+        self.__received_mutex.acquire()
+        message = self.__received.pop(id)
+        self.__received_mutex.release()
+        return message
+
+    def __get_new_message_id(self):
+        self.__id_mutex.acquire()
+        self.__nextId += 1
+        self.__nextId = int(math.fmod(self.__nextId, 100000))
+        if self.__nextId == 100000:
+            self.__nextId = 1
+        toBeReturned = self.__nextId
+        self.__id_mutex.release()
+        return toBeReturned
+
+    def __send(self, id, to_be_sent):
+        next_message = OutgoingMessage(id, to_be_sent)
+        self.__send_queue_mutex.acquire()
+        self.__send_queue.put(next_message)
+        self.__send_queue_mutex.release()
+
+    def send_and_wait(self, id, message, timeout):
+        log.debug("%s sending command: %s" % (str(id), message))
+        self.__current_users_mutex.acquire()
+        user_entry = self.__current_users.get(id, None)
+        self.__current_users_mutex.release()
+        if user_entry is None:
+            raise WebsocketWorkerRemovedException
+
+        message_id = self.__get_new_message_id()
+        message_event = Event()
+        message_event.clear()
+
+        self.__set_request(message_id, message_event)
+
+        to_be_sent = u"%s;%s" % (str(message_id), message)
+        log.debug("To be sent: %s" % to_be_sent)
+        self.__send(id, timeout)
+
+        # now wait for the response!
+        result = None
+        log.debug("Timeout: %s" % str(timeout))
+        if message_event.wait(timeout):
+            log.debug("Received answer in time, popping response")
+            self.__reset_fail_counter(id)
+            result = self.__pop_response(id)
+            log.debug("Response: %s" % str(result))
+        else:
+            # timeout reached
+            log.warning("Timeout, increasing timeout-counter")
+            new_count = self.__increase_fail_counter(id)
+            if new_count > 5:
+                log.error("5 consecutive timeouts to %s, cleanup" % str(id))
+                # TODO: signal worker to stop and NOT cleanup the websocket by itself!
+                self.clean_up_user(id)
+                raise WebsocketWorkerTimeoutException
+
+        log.debug("Returning response to %s: %s" % (str(id), str(result)))
+        self.__remove_request(message_id)
+        return result
+
+    def __set_request(self, id, event):
+        self.__requests_mutex.acquire()
+        self.__requests[id] = event
+        self.__requests_mutex.release()
+
+    def __reset_fail_counter(self, id):
+        self.__current_users_mutex.acquire()
+        self.__current_users[id][3] = 0
+        self.__current_users_mutex.release()
+
+    def __increase_fail_counter(self, id):
+        self.__current_users_mutex.acquire()
+        new_count = self.__current_users[id][3] + 1
+        self.__current_users[id][3] = new_count
+        self.__current_users_mutex.release()
+        return new_count
+
+    def __remove_request(self, message_id):
+        self.__requests_mutex.acquire()
+        self.__requests.pop(message_id)
+        self.__requests_mutex.release()
