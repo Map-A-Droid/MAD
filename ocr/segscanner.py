@@ -48,7 +48,7 @@ class Scanner:
 
     def detectRaidTime(self, raidpic, hash, raidNo, radius):
         zero = datetime.datetime.now()
-        unixnow =  time.mktime(zero.timetuple())
+        unixnow =  calendar.timegm(zero.timetuple())
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' + 'detectRaidTime: Reading Raidtimer')
         height, width, channel = raidpic.shape
         raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.265)):int(round(radius*2*0.03)+(2*radius)+(radius*2*0.43)), 0:width]
@@ -96,7 +96,7 @@ class Scanner:
 
     def detectRaidEndtimer(self, raidpic, hash, raidNo, radius):
         zero = datetime.datetime.now()
-        unixnow =  time.mktime(zero.timetuple())
+        unixnow =  calendar.timegm(zero.timetuple())
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'detectRaidEndtimer: Reading Raidtimer')
         height, width, channel = raidpic.shape
         raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.10)):int(round(radius*2*0.03)+(2*radius)+(radius*2*0.23)), 0:width]
@@ -746,7 +746,7 @@ class Scanner:
 
     def getEndTime(self, data, raidNo):
         zero = datetime.datetime.now()
-        unix_zero =  time.mktime(zero.timetuple())
+        unix_zero =  calendar.timegm(zero.timetuple())
         hour_min_divider = data.find(':')
         log.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +') ] ' + 'getHatchTime: :Count: ' + str(data.count(':')))
         if data.count(':') < 2 :
