@@ -337,7 +337,7 @@ class WebsocketServerBase(ABC):
                 self.__current_users[id][3] = new_count
 
                 if new_count > 5:
-                    log.error("Closing websocket connection of %s by throwing an exception"% str(user_registered[1].id))
+                    log.error("Closing websocket connection by throwing an exception")
                     raise WebsocketWorkerRemovedException
                 self.__users_mutex.release()
 
