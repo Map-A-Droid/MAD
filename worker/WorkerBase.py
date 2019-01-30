@@ -294,8 +294,8 @@ class WorkerBase(ABC):
 
     def _internal_grab_next_location(self):
         # TODO: consider adding runWarningThreadEvent.set()
-        last_location = self.current_location
-        self._last_known_state["last_location"] = last_location
+        self.last_location = self.current_location
+        self._last_known_state["last_location"] = self.last_location
 
         log.debug("Requesting next location from routemanager")
         # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
