@@ -8,7 +8,8 @@ Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devic
 ## Information
 * [Website](https://www.maddev.de/) - For general information
 * [Discord](https://discord.gg/7TT58jU) - For general support
-*  [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
+* [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
+* [Supported Devices](https://github.com/Map-A-Droid/MAD-device-list) - Supported devices by MAD
 
 ## Requirements
 - Python **3.6**
