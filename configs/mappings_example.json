@@ -1,115 +1,119 @@
 {
     "areas": [
-                {
-                    "name": "test123",
-                    "mode": "mon_mitm",
-                    "init": false,
-                    "geofence_included": "configs/geofences/ND_mon.txt",
-                    "geofence_excluded": null,
-                    "routecalc": "test123",
-					"coords_spawns_known": true,
-					"settings": {
-						"speed": 70,
-						"max_distance": 200,
-                        "delay_after_prio_event": null,
-                        "starve_route": false,
-                        "priority_queue_clustering_timedelta": 300,
-                        "remove_from_queue_backlog" : 500
-					}
-                },
-                {
-                    "name": "huehuedurr",
-                    "mode": "raids_mitm",
-                    "init": false,
-                    "geofence_included": "configs/geofences/ND_raid.txt",
-                    "geofence_excluded": null,
-                    "routecalc": "nd_raid",
-					"settings": {
-						"speed": 70,
-						"max_distance": 200,
-                        "delay_after_prio_event": 50,
-                        "starve_route": true,
-                        "priority_queue_clustering_timedelta": 600,
-                        "remove_from_queue_backlog" : 1200
-					}
-                },
-                {
-                    "name": "iv_total",
-                    "mode": "iv_mitm",
-                    "init": false,
-                    "geofence_included": "configs/geofences/iv_total.txt",
-                    "geofence_excluded": null,
-                    "routecalc": "iv_total",
-                    "coords_spawns_known": true,
-                    "settings": {
-						"speed": 28,
-						"max_distance": 500,
-                        "delay_after_prio_event": 0,
-                        "starve_route": true,
-                        "priority_queue_clustering_timedelta": 50,
-                        "remove_from_queue_backlog" : 300,
-                        "mon_ids_iv" : [122, 200, 363],
-                        "min_time_left_seconds": 600
-					}
-                },
-                {
-                    "name": "quests",
-                    "mode": "pokestops",
-                    "geofence_included": "configs/geofences/iv_total.txt",
-                    "geofence_excluded": null,
-					"routecalc": "superduperquest",
-                    "settings": {
-						"speed": 30,
-						"max_distance": 400
-					}
-                }
+        {
+            "name": "test123",
+            "mode": "mon_mitm",
+            "init": false,
+            "geofence_included": "configs/geofences/ND_mon.txt",
+            "geofence_excluded": null,
+            "routecalc": "test123",
+            "coords_spawns_known": true,
+            "settings": {
+                "speed": 70,
+                "max_distance": 200,
+                "delay_after_prio_event": null,
+                "starve_route": false,
+                "priority_queue_clustering_timedelta": 300,
+                "remove_from_queue_backlog": 500
+            }
+        },
+        {
+            "name": "huehuedurr",
+            "mode": "raids_mitm",
+            "init": false,
+            "geofence_included": "configs/geofences/ND_raid.txt",
+            "geofence_excluded": null,
+            "routecalc": "nd_raid",
+            "settings": {
+                "speed": 70,
+                "max_distance": 200,
+                "delay_after_prio_event": 50,
+                "starve_route": true,
+                "priority_queue_clustering_timedelta": 600,
+                "remove_from_queue_backlog": 1200
+            }
+        },
+        {
+            "name": "iv_total",
+            "mode": "iv_mitm",
+            "init": false,
+            "geofence_included": "configs/geofences/iv_total.txt",
+            "geofence_excluded": null,
+            "routecalc": "iv_total",
+            "coords_spawns_known": true,
+            "settings": {
+                "speed": 28,
+                "max_distance": 500,
+                "delay_after_prio_event": 0,
+                "starve_route": true,
+                "priority_queue_clustering_timedelta": 50,
+                "remove_from_queue_backlog": 300,
+                "mon_ids_iv": [
+                    122,
+                    200,
+                    363
+                ],
+                "min_time_left_seconds": 600
+            }
+        },
+        {
+            "name": "quests",
+            "mode": "pokestops",
+            "geofence_included": "configs/geofences/iv_total.txt",
+            "geofence_excluded": null,
+            "routecalc": "superduperquest",
+            "settings": {
+                "speed": 30,
+                "max_distance": 400
+            }
+        }
     ],
     "devices": [
         {
             "origin": "redmi",
             "daytime_area": "test123",
             "nighttime_area": "huehuedurr",
-			"settings": {
-				"post_walk_delay": 0,
-				"post_teleport_delay": 7,
-				"walk_after_teleport_distance": 0,
-				"cool_down_sleep": false,
-				"post_turn_screen_on_delay": 10,
-				"post_pogo_start_delay": 60,
-				"restart_pogo": 100,
+            "settings": {
+                "post_walk_delay": 0,
+                "post_teleport_delay": 7,
+                "walk_after_teleport_distance": 0,
+                "cool_down_sleep": false,
+                "post_turn_screen_on_delay": 10,
+                "post_pogo_start_delay": 60,
+                "restart_pogo": 100,
                 "max_data_err_counter": 90
-			}
+            }
         },
         {
-              "origin": "samsung",
-              "daytime_area": "test123",
-              "nighttime_area": "test123",
-              "settings": {
-                  "post_walk_delay": 0,
-                  "post_teleport_delay": 7,
-                  "walk_after_teleport_distance": 1,
-                  "cool_down_sleep": false,
-                  "post_turn_screen_on_delay": 10,
-                  "post_pogo_start_delay": 60,
-                  "restart_pogo": 0,
-                  "max_data_err_counter": 60
-              }
-          },
-          {
-              "origin": "samsung_iv",
-              "daytime_area": "iv_total",
-              "nighttime_area": "iv_total",
-              "settings": {
-                  "post_walk_delay": 0,
-                  "post_teleport_delay": 7,
-                  "walk_after_teleport_distance": 1,
-                  "cool_down_sleep": false,
-                  "post_turn_screen_on_delay": 10,
-                  "post_pogo_start_delay": 60,
-                  "restart_pogo": 0,
-                  "max_data_err_counter": 60
-              }
-          }
+            "origin": "samsung",
+            "daytime_area": "test123",
+            "nighttime_area": "test123",
+            "settings": {
+                "post_walk_delay": 0,
+                "post_teleport_delay": 7,
+                "walk_after_teleport_distance": 1,
+                "cool_down_sleep": false,
+                "post_turn_screen_on_delay": 10,
+                "post_pogo_start_delay": 60,
+                "restart_pogo": 0,
+                "max_data_err_counter": 60
+            }
+        },
+        {
+            "origin": "samsung_iv",
+            "daytime_area": "iv_total",
+            "nighttime_area": "iv_total",
+            "settings": {
+                "post_walk_delay": 0,
+                "post_teleport_delay": 7,
+                "walk_after_teleport_distance": 1,
+                "cool_down_sleep": false,
+                "post_turn_screen_on_delay": 10,
+                "post_pogo_start_delay": 60,
+                "restart_pogo": 0,
+                "max_data_err_counter": 60
+            }
+        }
     ],
     "auth": [
         {

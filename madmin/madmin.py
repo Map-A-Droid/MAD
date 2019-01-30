@@ -344,17 +344,17 @@ def get_raids():
                 monPic = ''
             else:
                 type = 'mon'
-                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+                monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
                 if str(monid) in mondata:
                     monName = mondata[str(monid)]["name"]
 
             eggId = eggIdsByLevel[int(lvl) - 1]
             if eggId == 1:
-                eggPic = 'asset/static_assets/png/ic_raid_egg_normal.png'
+                eggPic = '/asset/static_assets/png/ic_raid_egg_normal.png'
             if eggId == 2:
-                eggPic = 'asset/static_assets/png/ic_raid_egg_rare.png'
+                eggPic = '/asset/static_assets/png/ic_raid_egg_rare.png'
             if eggId == 3:
-                eggPic = 'asset/static_assets/png/ic_raid_egg_legendary.png'
+                eggPic = '/asset/static_assets/png/ic_raid_egg_legendary.png'
 
             creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
@@ -411,7 +411,7 @@ def get_mons():
 
             mon = '{:03d}'.format(int(mon))
 
-            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+            monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
             monName = 'unknown'
             monid = int(mon)
 
@@ -640,7 +640,7 @@ def modify_mon():
     return render_template('change_mon.html', hash = hash, gym = gym, lvl = lvl, responsive = str(conf_args.madmin_noresponsive).lower(), title = "change Mon")
 
 
-@app.route('asset/<path:path>', methods=['GET'])
+@app.route('/asset/<path:path>', methods=['GET'])
 @auth_required
 def pushAssets(path):
     return send_from_directory(conf_args.pogoasset, path)
