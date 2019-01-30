@@ -4,7 +4,7 @@ import time
 
 from route.RouteManagerIV import RouteManagerIV
 from utils.geo import get_distance_of_two_points_in_meters
-from utils.madGlobals import MadGlobals, InternalStopWorkerException
+from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
 
 log = logging.getLogger(__name__)
@@ -120,9 +120,9 @@ class WorkerMITM(WorkerBase):
         return reached_raidtab
 
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 mitm_mapper, devicesettings, db_wrapper):
+                 mitm_mapper, devicesettings, db_wrapper, timer):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True)
+                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer)
         self._mitm_mapper = mitm_mapper
         # TODO: own InjectionSettings class
         self._injection_settings = {}
