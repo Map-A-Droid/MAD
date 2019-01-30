@@ -11,6 +11,9 @@ log = logging.getLogger(__name__)
 
 
 class WorkerMITM(WorkerBase):
+    def _valid_modes(self):
+        return ["iv_mitm", "raids_mitm", "mon_mitm"]
+
     def _health_check(self):
         log.debug("_health_check: called")
         pass
@@ -24,7 +27,7 @@ class WorkerMITM(WorkerBase):
         self.__wait_for_data(timestamp)
 
     def _move_to_location(self):
-        routemanager = self.__get_currently_valid_routemanager()
+        routemanager = self._get_currently_valid_routemanager()
         if routemanager is None:
             raise InternalStopWorkerException
         # get the distance from our current position (last) to the next gym (cur)
@@ -130,7 +133,7 @@ class WorkerMITM(WorkerBase):
         injected_settings = {}
 
         # don't try catch here, the injection settings update is called in the main loop anyway...
-        routemanager = self.__get_currently_valid_routemanager()
+        routemanager = self._get_currently_valid_routemanager()
         if routemanager is None:
             # worker has to sleep, just empty out the settings...
             ids_iv = {}
@@ -154,7 +157,7 @@ class WorkerMITM(WorkerBase):
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
                                         values_dict=injected_settings)
 
-    def wait_for_data(self, timestamp, proto_to_wait_for=106):
+    def __wait_for_data(self, timestamp, proto_to_wait_for=106):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
         log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
@@ -169,11 +172,12 @@ class WorkerMITM(WorkerBase):
                             % str(self.__data_error_counter))
                 self.__data_error_counter += 1
                 time.sleep(0.5)
+                continue
             else:
                 # proto has previously been received, let's check the timestamp...
                 latest_proto = latest.get(proto_to_wait_for, None)
 
-                current_routemanager = self.__get_currently_valid_routemanager()
+                current_routemanager = self._get_currently_valid_routemanager()
                 if current_routemanager is None:
                     # we should be sleeping...
                     log.warning("%s should be sleeping ;)" % str(self._id))
@@ -184,6 +188,7 @@ class WorkerMITM(WorkerBase):
                     latest_data = latest_proto.get("values", None)
                     if latest_data is None:
                         self.__data_error_counter += 1
+                        time.sleep(0.5)
                         return None
                     elif current_mode in ["mon_mitm", "iv_mitm"]:
                         # check if the GMO contains mons
@@ -196,6 +201,7 @@ class WorkerMITM(WorkerBase):
                         if data_requested is None:
                             log.debug("No spawnpoints in data requested")
                             self.__data_error_counter += 1
+                            time.sleep(1)
                     elif current_mode in ["raids_mitm"]:
                         for data_extract in latest_data['payload']['cells']:
                             for forts in data_extract['forts']:
@@ -204,6 +210,7 @@ class WorkerMITM(WorkerBase):
                         if data_requested is None:
                             log.debug("No forts in data received")
                             self.__data_error_counter += 1
+                            time.sleep(0.5)
                     else:
                         log.warning("No mode specified to wait for - this should not even happen...")
                         self.__data_error_counter += 1
@@ -217,9 +224,10 @@ class WorkerMITM(WorkerBase):
                     time.sleep(0.5)
 
             max_data_err_counter = 60
+            log.debug("Current errorcounter: %s" % str(self.__data_error_counter))
             if self._devicesettings is not None:
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
-            if data_requested is not None and self.__data_error_counter >= int(max_data_err_counter):
+            if data_requested is None and self.__data_error_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
                 self.reboot_count += 1
                 if self.reboot_count > 3:
@@ -227,14 +235,14 @@ class WorkerMITM(WorkerBase):
                     self._reboot()
                     raise InternalStopWorkerException
                 else:
-                    self._start_pogodroid()
+                    # self._start_pogodroid()
                     self._restart_pogo(True)
                 return None
             elif data_requested is None:
                 # log.debug('data_requested still None...')
                 time.sleep(0.5)
         if data_requested is not None:
-            log.debug('Got the data requested...')
+            log.warning('Got the data requested...')
             self.reboot_count = 0
             self.__data_error_counter = 0
         else:
