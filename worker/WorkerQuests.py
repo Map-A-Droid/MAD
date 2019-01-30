@@ -325,6 +325,7 @@ class WorkerQuests(WorkerBase):
                 log.warning("No data linked to the requested proto since MAD started. Count: %s"
                             % str(self._data_error_counter))
                 self._data_error_counter += 1
+                time.sleep(1)
             else:
                 # requested proto received previously
                 latest_proto = latest.get(proto_to_wait_for, None)
@@ -364,6 +365,7 @@ class WorkerQuests(WorkerBase):
                     # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                     # TODO: latter indicates too high speeds for example
                     self._data_error_counter += 1
+                    time.sleep(0.5)
             max_data_err_counter = 60
             if self._devicesettings is not None:
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
