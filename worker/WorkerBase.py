@@ -263,7 +263,11 @@ class WorkerBase(ABC):
                     self.current_location.lat, self.current_location.lng, time_snapshot)
                 )
 
-            self._post_move_location_routine(time_snapshot)
+            try:
+                self._post_move_location_routine(time_snapshot)
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException) as e:
+                log.warning("Worker %s failed running post_move_location_routine, stopping worker")
+                break
             log.info("Worker %s finished iteration, continuing work" % str(self._id))
 
         self._internal_cleanup()
