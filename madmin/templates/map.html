@@ -87,10 +87,30 @@ new Vue({
 			var l_gyms = L.layerGroup();
 
 			res.data.forEach(function(gym) {
-				L.marker([gym['lat'], gym['lon']], { icon: $this.gymicon(gym['team_id'])})
-					.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>',
-						{ 'className': 'gympopup' })
-					.addTo(l_gyms);
+				switch(gym['team_id']) {
+					default:
+						color = '#888';
+						break;
+					case 1:
+						color = '#0C6DFF';
+						break;
+					case 2:
+						color = '#FC0016';
+						break;
+					case 3:
+						color = '#FD830E';
+						break;
+				}
+
+				L.circleMarker([gym['lat'], gym['lon']], {
+					radius: 10,
+					color: color,
+					fillColor: color,
+					weight: 1,
+					opacity: 0.8,
+					fillOpacity: 0.8
+				}).addTo(l_gyms)
+					.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>', { 'className': 'gympopup' })
 			});
 
 			// add layer to map
@@ -312,13 +332,6 @@ new Vue({
 			route.forEach(function(circle) {
 				circle.setRadius(this.settings.routes.coordinateRadius[type]);
 			}, this);
-		},
-		// return a gym icon based on a team
-		gymicon(team) {
-			return L.divIcon({
-				iconSize: [32, 32],
-				className: 'gym-icon gym-icon-'+team
-			});
 		},
 		// generate the map
 		initMap() {
