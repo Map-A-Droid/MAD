@@ -17,6 +17,7 @@ from utils.mappingParser import MappingParser
 from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
 from utils.madGlobals import MadGlobals
+from websocket.WebsocketServer import WebsocketServer
 from websocket.WebsocketServerBase import WebsocketServerBase
 
 
@@ -105,8 +106,9 @@ def set_log_and_verbosity(log):
 
 
 def start_scan(mitm_mapper, db_wrapper, routemanagers, device_mappings, auths):
-    wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), mitm_mapper, db_wrapper, routemanagers,
-                                    device_mappings, auths)
+    # wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), mitm_mapper, db_wrapper, routemanagers,
+    #                                 device_mappings, auths)
+    wsRunning = WebsocketServer(args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths)
     wsRunning.start_server()
 
 

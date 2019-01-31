@@ -70,9 +70,9 @@ class WebsocketServer(object):
             return
 
         consumer_task = asyncio.ensure_future(
-            self._consumer_handler(websocket_client_connection, path))
+            self.__consumer_handler(websocket_client_connection))
         producer_task = asyncio.ensure_future(
-            self._producer_handler(websocket_client_connection, path))
+            self.__producer_handler())
         done, pending = await asyncio.wait(
             [producer_task, consumer_task],
             return_when=asyncio.FIRST_COMPLETED,
@@ -136,8 +136,8 @@ class WebsocketServer(object):
                                     self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper)
                 started = True
             elif nightime_routemanager.mode in ["raids_ocr"]:
-                from worker.WorkerOcr import WorkerOcr
-                worker = WorkerOcr(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                from worker.WorkerOCR import WorkerOCR
+                worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
                                    devicesettings, db_wrapper=self.__db_wrapper)
                 started = True
             elif nightime_routemanager.mode in ["pokestops"]:
@@ -153,8 +153,8 @@ class WebsocketServer(object):
                 worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
                                     self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper)
             elif daytime_routemanager.mode in ["raids_ocr"]:
-                from worker.WorkerOcr import WorkerOcr
-                worker = WorkerOcr(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                from worker.WorkerOCR import WorkerOCR
+                worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
                                    devicesettings, db_wrapper=self.__db_wrapper)
             elif daytime_routemanager.mode in ["pokestops"]:
                 worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
@@ -202,13 +202,13 @@ class WebsocketServer(object):
                 self.__send_queue_mutex.acquire()
                 found = self.__send_queue.get_nowait()
             except Exception as e:
-                log.error("Exception %s in retrieve_next_send" % str(e))
+                # log.error("Exception %s in retrieve_next_send" % str(e))
                 await asyncio.sleep(0.02)
             finally:
                 self.__send_queue_mutex.release()
         return found
 
-    async def __consumer_handler(self, websocket_client_connection, path):
+    async def __consumer_handler(self, websocket_client_connection):
         if websocket_client_connection is None:
             return
         id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
@@ -255,7 +255,7 @@ class WebsocketServer(object):
         await self.__set_response(id, response)
         if not await self.__set_event(id):
             # remove the response again - though that is kinda stupid
-            await self.__pop_response(id)
+            self.__pop_response(id)
 
     async def __set_event(self, id):
         result = False
@@ -274,7 +274,7 @@ class WebsocketServer(object):
         self.__received[id] = message
         self.__received_mutex.release()
 
-    async def __pop_response(self, id):
+    def __pop_response(self, id):
         self.__received_mutex.acquire()
         message = self.__received.pop(id)
         self.__received_mutex.release()
@@ -282,11 +282,11 @@ class WebsocketServer(object):
 
     def __get_new_message_id(self):
         self.__id_mutex.acquire()
-        self.__nextId += 1
-        self.__nextId = int(math.fmod(self.__nextId, 100000))
-        if self.__nextId == 100000:
-            self.__nextId = 1
-        toBeReturned = self.__nextId
+        self.__next_id += 1
+        self.__next_id = int(math.fmod(self.__next_id, 100000))
+        if self.__next_id == 100000:
+            self.__next_id = 1
+        toBeReturned = self.__next_id
         self.__id_mutex.release()
         return toBeReturned
 
@@ -312,7 +312,7 @@ class WebsocketServer(object):
 
         to_be_sent = u"%s;%s" % (str(message_id), message)
         log.debug("To be sent: %s" % to_be_sent)
-        self.__send(id, timeout)
+        self.__send(id, to_be_sent)
 
         # now wait for the response!
         result = None
@@ -320,7 +320,7 @@ class WebsocketServer(object):
         if message_event.wait(timeout):
             log.debug("Received answer in time, popping response")
             self.__reset_fail_counter(id)
-            result = self.__pop_response(id)
+            result = self.__pop_response(message_id)
             log.debug("Response: %s" % str(result))
         else:
             # timeout reached

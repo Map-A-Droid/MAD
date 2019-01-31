@@ -325,7 +325,7 @@ class WorkerBase(ABC):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             log.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._applicationArgs.post_turn_screen_on_delay)
+            time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 2))
         # check if pogo is running and start it if necessary
         log.warning("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
         self._start_pogo()
@@ -335,7 +335,7 @@ class WorkerBase(ABC):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             log.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._applicationArgs.post_turn_screen_on_delay)
+            time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 2))
 
     def _stop_pogo(self):
         attempts = 0

@@ -4,7 +4,7 @@ import time
 from threading import Thread, Event
 
 from utils.geo import get_distance_of_two_points_in_meters
-from utils.madGlobals import InternalStopWorkerException
+from utils.madGlobals import InternalStopWorkerException, WebsocketWorkerRemovedException
 from worker.WorkerBase import WorkerBase
 
 log = logging.getLogger(__name__)
@@ -51,6 +51,7 @@ class WorkerQuests(WorkerBase):
         pass
 
     def _pre_location_update(self):
+        self._start_inventory_clear.set()
         self._update_injection_settings()
 
     def _move_to_location(self):
@@ -107,6 +108,8 @@ class WorkerQuests(WorkerBase):
         return cur_time
 
     def _post_move_location_routine(self, timestamp):
+        if self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
         self._work_mutex.acquire()
         log.debug("Processing Stop / Quest...")
 
@@ -153,22 +156,27 @@ class WorkerQuests(WorkerBase):
 
     def _clear_thread(self):
         log.info('Starting clear Quest Thread')
-        while True:
+        while not self._stop_worker_event.is_set():
             # wait for event signal
             while not self._start_inventory_clear.is_set():
                 time.sleep(0.5)
             if self.clear_thread_task > 0:
                 self._work_mutex.acquire()
-                # TODO: less magic numbers?
-                time.sleep(2)
-                if self.clear_thread_task == 1:
-                    log.info("Clearing box")
-                    self.clear_box(self._delay_add)
-                elif self.clear_thread_task == 2:
-                    log.info("Clearing quest")
-                    self._clear_quests(self._delay_add)
-                time.sleep(2)
-                self._start_inventory_clear.clear()
+                try:
+                    # TODO: less magic numbers?
+                    time.sleep(2)
+                    if self.clear_thread_task == 1:
+                        log.info("Clearing box")
+                        self.clear_box(self._delay_add)
+                    elif self.clear_thread_task == 2:
+                        log.info("Clearing quest")
+                        self._clear_quests(self._delay_add)
+                    time.sleep(2)
+                    self._start_inventory_clear.clear()
+                except WebsocketWorkerRemovedException as e:
+                    log.error("Worker removed while clearing quest/box")
+                    self._stop_worker_event.set()
+                    return
                 self._work_mutex.release()
 
     def clear_box(self, delayadd):
@@ -272,8 +280,10 @@ class WorkerQuests(WorkerBase):
                     self._close_gym(self._delay_add)
                     # to = 3
                     self.clear_thread_task = 1
-                    self._start_inventory_clear.set()
-                    #self._clear_box = True
+                    # do NOT start the threads here since we may have a pogo restart at the beginning of a work
+                    # loop, the healthcheck will call the start of the clear...
+                    # self._start_inventory_clear.set()
+                    # self._clear_box = True
                     # TODO: what was that one for?
                     # roundcount = 0
                     break
@@ -282,7 +292,7 @@ class WorkerQuests(WorkerBase):
                     self._close_gym(self._delay_add)
                     self.clear_thread_task = 2
                     # self._clear_quest = True
-                    self._start_inventory_clear.set()
+                    # self._start_inventory_clear.set()
                     break
 
                 if 'SB' in data_received:
