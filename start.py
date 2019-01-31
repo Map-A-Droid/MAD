@@ -16,9 +16,7 @@ from mitm_receiver.MitmMapper import MitmMapper
 from utils.mappingParser import MappingParser
 from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
-from utils.madGlobals import MadGlobals
 from websocket.WebsocketServer import WebsocketServer
-from websocket.WebsocketServerBase import WebsocketServerBase
 
 
 class LogFilter(logging.Filter):

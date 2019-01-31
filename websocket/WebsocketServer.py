@@ -2,6 +2,7 @@ import math
 import queue
 import asyncio
 import sys
+import time
 
 import websockets
 import logging
@@ -10,9 +11,10 @@ import collections
 from threading import Lock, Event, Thread
 
 from utils.authHelper import check_auth
-from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals, WebsocketWorkerTimeoutException
+from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
+from utils.timer import Timer
 
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
@@ -119,6 +121,8 @@ class WebsocketServer(object):
 
         last_known_state = {}
         client_mapping = self.__device_mappings[id]
+        timer = Timer(client_mapping["switch"], id, client_mapping["switch_interval"])
+        await asyncio.sleep(0.8)
         daytime_routemanager = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager")
         if client_mapping.get("nighttime_area", None) is not None:
             nightime_routemanager = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
@@ -127,38 +131,38 @@ class WebsocketServer(object):
         devicesettings = client_mapping["settings"]
 
         started = False
-        if MadGlobals.sleep is True:
+        if timer.get_switch() is True:
             # start the appropriate nighttime manager if set
             if nightime_routemanager is None:
                 pass
             elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
                 worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper)
+                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
                 started = True
             elif nightime_routemanager.mode in ["raids_ocr"]:
                 from worker.WorkerOCR import WorkerOCR
                 worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.__db_wrapper)
+                                   devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
                 started = True
             elif nightime_routemanager.mode in ["pokestops"]:
                 worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper)
+                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
                 started = True
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
-        if not MadGlobals.sleep or not started:
+        if not timer.get_switch() or not started:
             # we either gotta run daytime mode OR nighttime routemanager not set
             if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
                 worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper)
+                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
             elif daytime_routemanager.mode in ["raids_ocr"]:
                 from worker.WorkerOCR import WorkerOCR
                 worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.__db_wrapper)
+                                   devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
             elif daytime_routemanager.mode in ["pokestops"]:
                 worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper)
+                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
