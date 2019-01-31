@@ -269,7 +269,7 @@ class RouteManagerBase(ABC):
                 log.debug("Route of %s is being calculated" % str(self.name))
                 self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
                 self.init = False
-                self.change_init_mapping(self, self.name)
+                self.change_init_mapping(self.name)
                 return self.get_next_location()
             elif self._current_index_of_route >= len(self._route):
                 self._current_index_of_route = 0
