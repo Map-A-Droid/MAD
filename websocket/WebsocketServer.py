@@ -237,7 +237,7 @@ class WebsocketServer(object):
 
     def clean_up_user(self, id):
         self.__current_users_mutex.acquire()
-        if self.__current_users[id]:
+        if id in self.__current_users.keys():
             self.__current_users.pop(id)
         self.__current_users_mutex.release()
 
@@ -348,7 +348,7 @@ class WebsocketServer(object):
 
     def __increase_fail_counter(self, id):
         self.__current_users_mutex.acquire()
-        if self.__current_users[id] is not None:
+        if id in self.__current_users.keys():
             new_count = self.__current_users[id][3] + 1
             self.__current_users[id][3] = new_count
         else:
