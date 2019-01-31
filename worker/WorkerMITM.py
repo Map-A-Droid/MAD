@@ -172,7 +172,6 @@ class WorkerMITM(WorkerBase):
                             % str(self.__data_error_counter))
                 self.__data_error_counter += 1
                 time.sleep(0.5)
-                continue
             else:
                 # proto has previously been received, let's check the timestamp...
                 latest_proto = latest.get(proto_to_wait_for, None)

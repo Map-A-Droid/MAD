@@ -324,6 +324,7 @@ class WebsocketServer(object):
         else:
             # timeout reached
             log.warning("Timeout, increasing timeout-counter")
+            # TODO: why is the user removed here?
             new_count = self.__increase_fail_counter(id)
             if new_count > 5:
                 log.error("5 consecutive timeouts to %s, cleanup" % str(id))
