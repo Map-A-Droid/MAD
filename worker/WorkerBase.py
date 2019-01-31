@@ -10,7 +10,7 @@ from threading import Event, Thread, current_thread, Lock
 import json
 
 from utils.hamming import hamming_distance as hamming_dist
-from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals, InternalStopWorkerException
+from utils.madGlobals import WebsocketWorkerRemovedException, InternalStopWorkerException
 from utils.resolution import Resocalculator
 from websocket.communicator import Communicator
 
@@ -21,7 +21,7 @@ log = logging.getLogger(__name__)
 
 class WorkerBase(ABC):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                 route_manager_nighttime, devicesettings, db_wrapper, NoOcr=False):
+                 route_manager_nighttime, devicesettings, db_wrapper, timer, NoOcr=False):
         # self.thread_pool = ThreadPool(processes=2)
         self._route_manager_daytime = route_manager_daytime
         self._route_manager_nighttime = route_manager_nighttime
@@ -36,6 +36,7 @@ class WorkerBase(ABC):
         self.loop_tid = None
         self._location_count = 0
         self.reboot_count = 0
+        self._timer = timer
 
         self._lastScreenshotTaken = 0
         self._stop_worker_event = Event()
@@ -44,9 +45,6 @@ class WorkerBase(ABC):
         self._lastScreenHash = None
         self._lastScreenHashCount = 0
         self._devicesettings = devicesettings
-        self._player_level = 0
-        self._level_up = False
-        self._weatherwarn = False
         self._resocalc = Resocalculator
         self._screen_x = 0
         self._screen_y = 0
@@ -217,7 +215,7 @@ class WorkerBase(ABC):
         self._internal_pre_work()
 
         while not self._stop_worker_event.isSet():
-            while MadGlobals.sleep and self._route_manager_nighttime is None:
+            while self._timer.get_switch() and self._route_manager_nighttime is None:
                 time.sleep(1)
             # check if stop_worker_event is set again since sleep may have taken ages ;)
             if self._stop_worker_event.is_set():
@@ -233,7 +231,7 @@ class WorkerBase(ABC):
 
             try:
                 settings = self._internal_grab_next_location()
-                if settings is None and MadGlobals.sleep:
+                if settings is None and self._timer.get_switch():
                     continue
             except InternalStopWorkerException as e:
                 log.warning("Worker of %s does not support mode that's to be run" % str(self._id))
@@ -286,12 +284,12 @@ class WorkerBase(ABC):
 
     def _get_currently_valid_routemanager(self):
         valid_modes = self._valid_modes()
-        if (MadGlobals.sleep and self._route_manager_nighttime is not None
+        if (self._timer.get_switch() and self._route_manager_nighttime is not None
                 and self._route_manager_nighttime.mode in valid_modes):
             return self._route_manager_nighttime
-        elif MadGlobals.sleep:
+        elif self._timer.get_switch():
             return None
-        elif not MadGlobals.sleep and self._route_manager_daytime.mode in valid_modes:
+        elif not self._timer.get_switch() and self._route_manager_daytime.mode in valid_modes:
             return self._route_manager_daytime
         else:
             raise InternalStopWorkerException

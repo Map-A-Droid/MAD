@@ -12,7 +12,7 @@
 		"could_edit": "true",
 		"field": "origin",
 		"description": "Assign devices to areas",
-		"quickview": "daytime_area|nighttime_area",
+		"quickview": "daytime_area|nighttime_area|switch|switch_interval",
 		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|max_data_err_counter|restart_pogo|walk_after_teleport_distance"
     },
 	"auth": {

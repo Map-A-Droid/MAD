@@ -142,50 +142,6 @@ def generate_mappingjson():
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
-
-def sleeptimer():
-    sleeptime = args.sleepinterval
-    sts1 = sleeptime[0].split(':')
-    sts2 = sleeptime[1].split(':')
-    while True:
-        tmFrom = datetime.datetime.now().replace(hour=int(sts1[0]),minute=int(sts1[1]),second=0,microsecond=0)
-        tmTil = datetime.datetime.now().replace(hour=int(sts2[0]),minute=int(sts2[1]),second=0,microsecond=0)
-        tmNow = datetime.datetime.now()
-
-        # check if current time is past start time
-        # and the day has changed already. thus shift
-        # start time back to the day before
-        if tmFrom > tmTil > tmNow:
-            tmFrom = tmFrom + datetime.timedelta(days=-1)
-
-        # check if start time is past end time thus
-        # shift start time one day into the future
-        if tmTil < tmFrom:
-            tmTil = tmTil + datetime.timedelta(days=1)
-
-        log.debug("Time now: %s" % tmNow)
-        log.debug("Time From: %s" % tmFrom)
-        log.debug("Time Til: %s" % tmTil)
-
-        if tmFrom <= tmNow < tmTil:
-            log.info('Going to sleep - bye bye')
-            MadGlobals.sleep = True
-
-            while MadGlobals.sleep:
-                log.info("Currently sleeping...zzz")
-                log.debug("Time now: %s" % tmNow)
-                log.debug("Time From: %s" % tmFrom)
-                log.debug("Time Til: %s" % tmTil)
-                tmNow = datetime.datetime.now()
-                log.info('Still sleeping, current time... %s' % str(tmNow.strftime("%H:%M")))
-                if tmNow >= tmTil:
-                    log.warning('sleeptimer: Wakeup - here we go ...')
-                    MadGlobals.sleep = False
-                    break
-                time.sleep(30)
-        time.sleep(30)
-
-
 if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     set_log_and_verbosity(log)
@@ -285,13 +241,6 @@ if __name__ == "__main__":
         t_flask = Thread(name='madmin', target=start_madmin)
         t_flask.daemon = False
         t_flask.start()
-
-    if args.sleeptimer:
-        log.info('Starting Sleeptimer....')
-        t_sleeptimer = Thread(name='sleeptimer',
-                              target=sleeptimer)
-        t_sleeptimer.daemon = True
-        t_sleeptimer.start()
 
     while True:
         time.sleep(10)

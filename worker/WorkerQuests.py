@@ -15,9 +15,9 @@ class WorkerQuests(WorkerBase):
         return ["pokestops"]
 
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 mitm_mapper, devicesettings, db_wrapper):
+                 mitm_mapper, devicesettings, db_wrapper, timer):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False)
+                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False, timer=timer)
         self.first_round = True
         self.clear_thread = None
         # 0 => None

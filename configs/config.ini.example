@@ -80,13 +80,6 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #madmin_user: madmin         # MADmin username for login
 #madmin_password: MySecret   # MADmin password for login
 
-
-#sleeptimer settings
-######################
-
-#sleeptimer                  # Sleep time for the phone
-#sleepinterval:              # f.e. [21:00, 05:00] to disable pk and device from 21 to 5 o'clock (9 pm to 5 am)
-
 # webhook
 ######################
 
