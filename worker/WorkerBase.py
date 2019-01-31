@@ -208,7 +208,7 @@ class WorkerBase(ABC):
 
     def _internal_cleanup(self):
         self._cleanup()
-        self.stop_worker()
+        # self.stop_worker()
         self.loop.call_soon_threadsafe(self.loop.stop)
 
     def _main_work_thread(self):
@@ -264,7 +264,7 @@ class WorkerBase(ABC):
             try:
                 self._post_move_location_routine(time_snapshot)
             except (InternalStopWorkerException, WebsocketWorkerRemovedException) as e:
-                log.warning("Worker %s failed running post_move_location_routine, stopping worker")
+                log.warning("Worker %s failed running post_move_location_routine, stopping worker" % str(self._id))
                 break
             log.info("Worker %s finished iteration, continuing work" % str(self._id))
 
