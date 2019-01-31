@@ -205,11 +205,11 @@ class WebsocketServer(object):
             try:
                 self.__send_queue_mutex.acquire()
                 found = self.__send_queue.get_nowait()
+                self.__send_queue_mutex.release()
             except Exception as e:
+                self.__send_queue_mutex.release()
                 # log.error("Exception %s in retrieve_next_send" % str(e))
                 await asyncio.sleep(0.02)
-            finally:
-                self.__send_queue_mutex.release()
         return found
 
     async def __consumer_handler(self, websocket_client_connection):
