@@ -30,7 +30,6 @@ class WebsocketServer(object):
         self.__listen_port = int(args.ws_port)
 
         self.__send_queue = queue.Queue()
-        self.__send_queue_mutex = Lock()
 
         self.__received = {}
         self.__received_mutex = Lock()
@@ -203,11 +202,8 @@ class WebsocketServer(object):
         found = None
         while found is None:
             try:
-                self.__send_queue_mutex.acquire()
                 found = self.__send_queue.get_nowait()
-                self.__send_queue_mutex.release()
             except Exception as e:
-                self.__send_queue_mutex.release()
                 # log.error("Exception %s in retrieve_next_send" % str(e))
                 await asyncio.sleep(0.02)
         return found
@@ -296,9 +292,7 @@ class WebsocketServer(object):
 
     def __send(self, id, to_be_sent):
         next_message = OutgoingMessage(id, to_be_sent)
-        self.__send_queue_mutex.acquire()
         self.__send_queue.put(next_message)
-        self.__send_queue_mutex.release()
 
     def send_and_wait(self, id, message, timeout):
         log.debug("%s sending command: %s" % (str(id), message))
