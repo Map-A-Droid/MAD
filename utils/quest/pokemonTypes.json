@@ -1,0 +1,21 @@
+{
+        "0": "NONE",
+        "1": "NORMAL",
+        "2": "FIGHTING",
+        "3": "FLYING",
+        "4": "POISON",
+        "5": "GROUND",
+        "6": "ROCK",
+        "7": "BUG",
+        "8": "GHOST",
+        "9": "STEEL",
+        "10": "FIRE",
+        "11": "WATER",
+        "12": "GRASS",
+        "13": "ELECTRIC",
+        "14": "PSYCHIC",
+        "15": "ICE",
+        "16": "DRAGON",
+        "17": "DARK",
+        "18": "FAIRY"
+}
