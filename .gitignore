@@ -10,6 +10,7 @@ ocr/weather/*
 configs/config.ini
 *.calc
 configs/geofences/*
+configs/confbak/*
 configs/mappings.json
 .idea/*
 .idea

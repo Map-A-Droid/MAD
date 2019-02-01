@@ -97,8 +97,16 @@ def questtask(typeid, condition, target):
                     for ty in pt:
                         arr['type'] += ('or ' if last == cur else '') + pokemonTypes[ty].title() + ('-type ' if last == cur else '-, ')
                         cur += 1
-        if re.search(r"'type': 3", condition):
+        if re.search(r"'type': 3", condition) is not None:
                 arr['wb'] = " with weather boost"
+        match_object = re.search(r"'pokemon_ids': \[([0-9, ]+)\]", condition)
+        if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['poke'] = pokemonname[pt[0]]
+                text = 'Catch a {poke}.'
         text = "Catch {0} {type}Pokemon{wb}."
     elif typeid == 5:
         text = "Spin {0} Pokestops or Gyms."
