@@ -4,6 +4,12 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
  crossorigin="" />
 <style>
+	html,
+	body,
+	div[role="main"] {
+		height: 100%;
+	}
+
 	#gymImage {
 		position: relative;
 		left: -30px;
@@ -13,8 +19,8 @@
 		border-radius: 75px;
 		background-size: cover;
 		border: 4px solid white;
-		-webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
-		filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
+		-webkit-filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 1));
+		filter: drop-shadow(0px 0px 5px rgba(0, 0, 0, 1));
 	}
 
 	#gymName {
@@ -49,8 +55,7 @@
 
 	#map {
 		width: 100%;
-		height: 100vh;
-    margin-top: -60px; /* yeah, don't ask */
+		height: 100%;
 	}
 
 	.gympopup .leaflet-popup-tip {
@@ -61,7 +66,7 @@
 		width: 400px;
 		text-align: center;
 	}
-	
+
 	.questpopup .leaflet-popup-tip {
 		text-align: center;
 	}
@@ -190,7 +195,7 @@
 
 		// get stored center and zoom level if they exists
 		var storedZoom = localStorage.getItem('zoomlevel') || 13;
-		var storedCenter = localStorage.getItem('center') || default_lat+','+default_lng;
+		var storedCenter = localStorage.getItem('center') || default_lat + ',' + default_lng;
 
 		// main map object
 		map = L.map('map', { layers: [tileLayer], zoomControl: false, preferCanvas: true }).setView(storedCenter.split(','), storedZoom);
@@ -211,7 +216,7 @@
 			"Geofence": fence,
 			"Quests": quests
 		};
-		
+
 		var extraOverlays = {
 			"Spawnpoint times": spawntimes,
 		};
@@ -222,7 +227,7 @@
 				map.addLayer(overlays[key]);
 			}
 		}
-		
+
 		for (var key in extraOverlays) {
 			if (shouldShowLayer(key)) {
 				map.addLayer(extraOverlays[key]);
@@ -230,8 +235,8 @@
 		}
 
 		// add our base layers
-		extraLayerControl = L.control.layers(null, extraOverlays, {position: 'bottomright'}).addTo(map);
-		mapControl = L.control.layers(null, overlays, {position: 'bottomright'}).addTo(map);
+		extraLayerControl = L.control.layers(null, extraOverlays, { position: 'bottomright' }).addTo(map);
+		mapControl = L.control.layers(null, overlays, { position: 'bottomright' }).addTo(map);
 
 
 		// handle zoom events
@@ -246,10 +251,10 @@
 		});
 
 		// handle drag events
-		map.on('moveend', function() {
+		map.on('moveend', function () {
 			// store map center
 			var center = map.getCenter();
-			localStorage.setItem('center', center.lat+','+center.lng);
+			localStorage.setItem('center', center.lat + ',' + center.lng);
 		})
 
 		// handle overlay show/hide events
@@ -262,7 +267,7 @@
 		}).addTo(map);
 
 		$.getJSON({
-			url: "/get_route",
+			url: "get_route",
 			success: function (result) {
 				$.each(result, function (pos, data) {
 					extraRouteCircle[pos] = L.layerGroup();
@@ -310,14 +315,14 @@
 						"coordinates": convertToLonLat(data)
 					}
 
-					L.geoJSON(geojson, { style: { "color": getRandomColor(), "weight": 2, "opacity": 0.5 } }).addTo(walklay[pos]).bindPopup(pos);
+					L.geoJSON(geojson, { style: { "color": getRandomColor(), "weight": 2, "opacity": 0.5 } }).addTo(obj).bindPopup(pos);
 				});
 			}
 		});
 
 		(function work() {
 			$.getJSON({
-				url: "/get_spawns",
+				url: "get_spawns",
 				success: function (result) {
 
 					$.each(result, function (k, v) {
@@ -402,38 +407,38 @@
 		})();
 
 		$.getJSON({
-			url: "/get_gymcoords",
+			url: "get_gymcoords",
 			success: function (result) {
 				$.each(result, function (k, v) {
 					if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
 						map.setView([v['lat'], v['lon']], map.getZoom());
 					}
 					L.marker([v['lat'], v['lon']], { icon: gymicon(v['team_id']) })
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a></div>',
+						.bindPopup('<div id="gymImage" style="background: url(&quot;' + v['img'] + '&quot;) center center no-repeat;"></div><div id="gymName"><strong>' + v['name'] + '</div><div id="gymID"></strong>' + v['id'] + '</div><div id="gymCoords"><a href="https://maps.google.com/?q=' + v['lat'] + ',' + v['lon'] + '">' + v['lat'] + ', ' + v['lon'] + '</a></div>',
 							{ 'className': 'gympopup' })
 						.addTo(gyms);
 				});
 			}
 		});
-		
+
 		$.getJSON({
-			url: "/get_quests",
-			success: function(result) {
-				$.each(result, function(k, v) {
-					L.marker([v['latitude'], v['longitude']], {icon: build_quest_small(v['quest_reward_type_raw'], v['item_id'], v['pokemon_id'])})
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['latitude']+','+v['longitude']+'">'+v['latitude']+', '+v['longitude']+'</a><br>' + build_quest(v['quest_reward_type_raw'], v['quest_type'], v['pokemon_id'], v['item_id'], v['item_amount'], v['pokemon_name'],v['item_type']) + '</div>',
-							{'className': 'questpopup'})
+			url: "get_quests",
+			success: function (result) {
+				$.each(result, function (k, v) {
+					L.marker([v['latitude'], v['longitude']], { icon: build_quest_small(v['quest_reward_type_raw'], v['item_id'], v['pokemon_id']) })
+						.bindPopup('<div id="gymImage" style="background: url(&quot;' + v['url'] + '&quot;) center center no-repeat;"></div><div id="gymName"><strong>' + v['name'] + '</div><div id="gymID"></strong>' + v['pokestop_id'] + '</div><div id="gymCoords"><a href="https://maps.google.com/?q=' + v['latitude'] + ',' + v['longitude'] + '">' + v['latitude'] + ', ' + v['longitude'] + '</a><br>' + build_quest(v['quest_reward_type_raw'], v['quest_type'], v['pokemon_id'], v['item_id'], v['item_amount'], v['pokemon_name'], v['item_type']) + '</div>',
+							{ 'className': 'questpopup' })
 						.addTo(quests);
 				});
 			}
 		});
-		
-		
+
+
 		var t = 0;
 
 		(function work() {
 			$.getJSON({
-				url: "/get_position",
+				url: "get_position",
 				success: function (result) {
 					$.each(result, function (pos, data) {
 						if (!marker.hasOwnProperty(pos)) {
@@ -464,76 +469,76 @@
 
 	});
 
-	function build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id){
-		
-		switch(quest_reward_type_raw) {
-			
-		case 2:
-			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
-			var size = [30, 30]
-			var anchor = [30, 20]
-			break;
-		case 3:
-			var image = 'static/quest/reward_stardust.png';
-			var size = [30, 30]
-			var anchor = [30, 20]
-			break;
-		case 7:
-			var form = '00';
-			if (quest_pokemon_id === '327') {
-				form = '11';
-			}
-			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
-			var size = [50, 50]
-			var anchor = [40, 30]
-			break;
+	function build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
+
+		switch (quest_reward_type_raw) {
+
+			case 2:
+				var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+				var size = [30, 30]
+				var anchor = [30, 20]
+				break;
+			case 3:
+				var image = 'static/quest/reward_stardust.png';
+				var size = [30, 30]
+				var anchor = [30, 20]
+				break;
+			case 7:
+				var form = '00';
+				if (quest_pokemon_id === '327') {
+					form = '11';
+				}
+				var image = 'asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+				var size = [50, 50]
+				var anchor = [40, 30]
+				break;
 		}
-		
-		var icon =  L.icon({
+
+		var icon = L.icon({
 			iconUrl: 'static/Pstop-quest.png',
 			shadowUrl: image,
 			iconSize: [30, 30],
 			shadowSize: size,
 			shadowAnchor: anchor
 		})
-		
-		
-		
+
+
+
 		return icon;
 	}
-	
-	function build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type){
-		
-		switch(quest_reward_type_raw) {
-			
-		case 2:
-			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
-			var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
-			var width = 40;
-			break;
-		case 3:
-			var image = 'static/quest/reward_stardust.png';
-			var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
-			var width = 40;
-			break;
-		case 7:
-			var form = '00';
-			if (quest_pokemon_id === '327') {
-				form = '11';
-			}
-			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
-			var rewardtext = quest_pokemon_name;
-			var width = 60;
-			break;
+
+	function build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type) {
+
+		switch (quest_reward_type_raw) {
+
+			case 2:
+				var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+				var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
+				var width = 40;
+				break;
+			case 3:
+				var image = 'static/quest/reward_stardust.png';
+				var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
+				var width = 40;
+				break;
+			case 7:
+				var form = '00';
+				if (quest_pokemon_id === '327') {
+					form = '11';
+				}
+				var image = 'asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+				var rewardtext = quest_pokemon_name;
+				var width = 60;
+				break;
 		}
 
 		var questtext = quest_type;
-		
-		popuptext = '<center><b>' + questtext + '</b><br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
+
+		popuptext = '<center><b>' + questtext + '</b><br><img src="' + image + '" width="' + width + '"><br />' + rewardtext + '</center>';
 		return popuptext;
-		
+
 	}
-	
+
 
 	function drawPolygon() {
 		var coords = document.getElementById("coordPolygon").value;

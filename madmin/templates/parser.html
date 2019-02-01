@@ -3,7 +3,8 @@
 {% block header %}
 <style>
   input[type=text],
-  select {
+  select,
+  textarea {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -81,7 +82,7 @@
 
 <h2>{{header | safe }}</h2>
 
-<h4><a href="/showsettings">Back to editor</a></h4>
+<h4><a href="showsettings">Back to editor</a></h4>
 <div id="inputdata">
   {% for item in editform %}
   {{item | safe }}
