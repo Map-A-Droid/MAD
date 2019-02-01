@@ -86,6 +86,7 @@ def questtask(typeid, condition, target):
     if typeid == 4:
         arr['wb'] = ""
         arr['type'] = ""
+        text = "Catch {0} {type}Pokemon{wb}."
         match_object = re.search(r"'pokemon_type': \[([0-9, ]+)\]", condition)
         if match_object is not None:
                 pt = match_object.group(1).split(', ')
@@ -107,7 +108,6 @@ def questtask(typeid, condition, target):
                 if last == 1:
                     arr['poke'] = pokemonname[pt[0]]
                 text = 'Catch a {poke}.'
-        text = "Catch {0} {type}Pokemon{wb}."
     elif typeid == 5:
         text = "Spin {0} Pokestops or Gyms."
     elif typeid == 6:
