@@ -796,7 +796,8 @@ class RmWrapper(DbWrapperBase):
                 if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
                     self.webhook_helper.send_pokemon_webhook(
                         str(encounter_id), mon_id, int(time.time()),
-                        spawnid, lat, lon, int(despawn_time_unix)
+                        spawnid, lat, lon, int(despawn_time_unix),
+                        gender, boosted_weather
                     )
 
                 mon_args.append(

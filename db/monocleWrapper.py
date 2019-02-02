@@ -704,7 +704,8 @@ class MonocleWrapper(DbWrapperBase):
                 if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
                     self.webhook_helper.send_pokemon_webhook(
                         encounter_id, mon_id, time.time(),
-                        spawnid, lat, lon, despawn_time_unix
+                        spawnid, lat, lon, despawn_time_unix,
+                        gender, boosted_weather
                     )
 
                 mon_vals.append(
