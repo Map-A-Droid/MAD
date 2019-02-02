@@ -249,24 +249,26 @@ class WorkerBase(ABC):
                 log.debug('main: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
                           (self.last_location.lat, self.last_location.lng,
                            self.current_location.lat, self.current_location.lng))
-                time_snapshot = self._move_to_location()
+                time_snapshot, process_location = self._move_to_location()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException) as e:
                 log.warning("Worker %s failed moving to new location, stopping worker")
                 break
+                
+            if process_location:
 
-            if self._applicationArgs.last_scanned:
-                log.info('main: Set new scannedlocation in Database')
-                # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
-                self._add_task_to_loop(self.update_scanned_location(
-                    self.current_location.lat, self.current_location.lng, time_snapshot)
-                )
+                if self._applicationArgs.last_scanned:
+                    log.info('main: Set new scannedlocation in Database')
+                    # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
+                    self._add_task_to_loop(self.update_scanned_location(
+                        self.current_location.lat, self.current_location.lng, time_snapshot)
+                    )
 
-            try:
-                self._post_move_location_routine(time_snapshot)
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException) as e:
-                log.warning("Worker %s failed running post_move_location_routine, stopping worker" % str(self._id))
-                break
-            log.info("Worker %s finished iteration, continuing work" % str(self._id))
+                try:
+                    self._post_move_location_routine(time_snapshot)
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException) as e:
+                    log.warning("Worker %s failed running post_move_location_routine, stopping worker" % str(self._id))
+                    break
+                log.info("Worker %s finished iteration, continuing work" % str(self._id))
 
         self._internal_cleanup()
 
@@ -284,12 +286,13 @@ class WorkerBase(ABC):
 
     def _get_currently_valid_routemanager(self):
         valid_modes = self._valid_modes()
-        if (self._timer.get_switch() and self._route_manager_nighttime is not None
-                and self._route_manager_nighttime.mode in valid_modes):
+        switch_mode = self._timer.get_switch()
+        if (switch_mode and self._route_manager_nighttime is not None
+            and self._route_manager_nighttime.mode in valid_modes):
             return self._route_manager_nighttime
-        elif self._timer.get_switch():
+        elif switch_mode is True and self._route_manager_nighttime is None:
             return None
-        elif not self._timer.get_switch() and self._route_manager_daytime.mode in valid_modes:
+        elif not switch_mode and self._route_manager_daytime.mode in valid_modes:
             return self._route_manager_daytime
         else:
             raise InternalStopWorkerException
@@ -641,10 +644,10 @@ class WorkerBase(ABC):
         
     def _open_gym(self, delayadd):
         log.debug('{_open_gym} called')
-        time.sleep(2)
+        time.sleep(1)
         x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(2 + int(delayadd))
+        time.sleep(1 + int(delayadd))
         log.debug('{_open_gym} called')
         return
         

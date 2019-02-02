@@ -41,6 +41,8 @@ class Timer(object):
             tmTil = datetime.datetime.now().replace(
                 hour=int(sts2[0]), minute=int(sts2[1]), second=0, microsecond=0)
             tmNow = datetime.datetime.now()
+            
+            
 
             # check if current time is past start time
             # and the day has changed already. thus shift
@@ -58,7 +60,10 @@ class Timer(object):
                 self.set_switch(True)
 
                 while self.get_switch():
+                    tmNow = datetime.datetime.now()
                     log.info("[%s] - Currently in switchmode" % str(self._id))
+                    log.error('[%s] - tmTil: %s' % (str(self._id), str(tmTil)))
+                    log.error('[%s] - tmNow: %s' % (str(self._id), str(tmNow)))
                     if tmNow >= tmTil:
                         log.warning(
                             '[%s] - Switching back - here we go ...' % str(self._id))

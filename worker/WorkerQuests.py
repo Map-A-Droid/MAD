@@ -58,6 +58,9 @@ class WorkerQuests(WorkerBase):
         routemanager = self._get_currently_valid_routemanager()
         if routemanager is None:
             raise InternalStopWorkerException
+            
+        if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
+            return False, False
 
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
                                                         float(self.last_location.lng),
@@ -105,7 +108,7 @@ class WorkerQuests(WorkerBase):
             delay_used = self._devicesettings.get('post_walk_delay', 7)
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
-        return cur_time
+        return cur_time, True
 
     def _post_move_location_routine(self, timestamp):
         if self._stop_worker_event.is_set():
@@ -120,7 +123,7 @@ class WorkerQuests(WorkerBase):
             self._restart_pogo()
 
         data_received = self._open_pokestop(data_received)
-        self._handle_stop(data_received)
+        if data_received == 'Stop' : self._handle_stop(data_received)
         log.debug("Releasing lock")
         self._work_mutex.release()
 
@@ -168,9 +171,11 @@ class WorkerQuests(WorkerBase):
                     if self.clear_thread_task == 1:
                         log.info("Clearing box")
                         self.clear_box(self._delay_add)
+                        self.clear_thread_task = 0
                     elif self.clear_thread_task == 2:
                         log.info("Clearing quest")
                         self._clear_quests(self._delay_add)
+                        self.clear_thread_task = 0
                     time.sleep(2)
                     self._start_inventory_clear.clear()
                 except WebsocketWorkerRemovedException as e:
@@ -201,7 +206,7 @@ class WorkerQuests(WorkerBase):
             time.sleep(.5 + int(delayadd))
 
             self._communicator.touchandhold(click_x1, click_y, click_x2, click_y)
-            time.sleep(3)
+            time.sleep(1)
             delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
                          self._resocalc.get_confirm_delete_item_coords(self)[1]
             curTime = time.time()
@@ -245,6 +250,7 @@ class WorkerQuests(WorkerBase):
             curTime = time.time()
             self._open_gym(self._delay_add)
             data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=25)
+            log.error(data_received)
             if data_received is not None:
                 if 'Gym' in data_received:
                     log.debug('Clicking GYM')
@@ -398,6 +404,8 @@ class WorkerQuests(WorkerBase):
             log.debug('Got the data requested...')
             self.reboot_count = 0
             self._data_error_counter = 0
+        elif proto_to_wait_for == '4':
+            return '-'
         else:
             log.warning("Timeout waiting for data")
             self.reboot_count += 1
