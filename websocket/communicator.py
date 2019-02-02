@@ -21,6 +21,11 @@ class Communicator:
         self.__commandTimeout = commandTimeout
         self.__sendMutex = Lock()
 
+    def cleanup_websocket(self):
+        self.__sendMutex.acquire()
+        self.websocketHandler.clean_up_user(self.id)
+        self.__sendMutex.release()
+
     def __runAndOk(self, command, timeout):
         self.__sendMutex.acquire()
         result = self.websocketHandler.send_and_wait(self.id, command, timeout)

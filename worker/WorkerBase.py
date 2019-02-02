@@ -10,7 +10,8 @@ from threading import Event, Thread, current_thread, Lock
 import json
 
 from utils.hamming import hamming_distance as hamming_dist
-from utils.madGlobals import WebsocketWorkerRemovedException, InternalStopWorkerException
+from utils.madGlobals import WebsocketWorkerRemovedException, InternalStopWorkerException, \
+    WebsocketWorkerTimeoutException
 from utils.resolution import Resocalculator
 from websocket.communicator import Communicator
 
@@ -208,11 +209,18 @@ class WorkerBase(ABC):
 
     def _internal_cleanup(self):
         self._cleanup()
+        self._communicator.cleanup_websocket()
         # self.stop_worker()
         self.loop.call_soon_threadsafe(self.loop.stop)
 
     def _main_work_thread(self):
-        self._internal_pre_work()
+        # TODO: signal websocketserver the removal
+        try:
+            self._internal_pre_work()
+        except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                as e:
+            log.error("Failed initializing worker %s, connection terminated exceptionally" % str(self._id))
+            return
 
         while not self._stop_worker_event.isSet():
             while self._timer.get_switch() and self._route_manager_nighttime is None:
@@ -225,33 +233,41 @@ class WorkerBase(ABC):
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 self._internal_health_check()
                 self._health_check()
-            except (WebsocketWorkerRemovedException, InternalStopWorkerException) as e:
-                log.error("Websocket connection to %s lost while running healthchecks" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
+                log.error("Websocket connection to %s lost while running healthchecks, "
+                          "connection terminated exceptionally" % str(self._id))
                 break
 
             try:
                 settings = self._internal_grab_next_location()
                 if settings is None and self._timer.get_switch():
                     continue
-            except InternalStopWorkerException as e:
-                log.warning("Worker of %s does not support mode that's to be run" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
+                log.warning("Worker of %s does not support mode that's to be run, "
+                            "connection terminated exceptionally" % str(self._id))
                 break
 
             try:
                 self._pre_location_update()
-            except InternalStopWorkerException as e:
-                log.warning("Worker of %s stopping because of stop signal in pre_location_update")
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
+                log.warning("Worker of %s stopping because of stop signal in pre_location_update, "
+                            "connection terminated exceptionally" % str(self._id))
                 break
 
             self._add_task_to_loop(self._update_position_file())
 
             try:
-                log.debug('main: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
-                          (self.last_location.lat, self.last_location.lng,
+                log.debug('main worker %s: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
+                          (str(self._id), self.last_location.lat, self.last_location.lng,
                            self.current_location.lat, self.current_location.lng))
                 time_snapshot, process_location = self._move_to_location()
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException) as e:
-                log.warning("Worker %s failed moving to new location, stopping worker")
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
+                log.warning("Worker %s failed moving to new location, stopping worker, "
+                            "connection terminated exceptionally" % str(self._id))
                 break
                 
             if process_location:
@@ -265,7 +281,8 @@ class WorkerBase(ABC):
 
                 try:
                     self._post_move_location_routine(time_snapshot)
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException) as e:
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                        as e:
                     log.warning("Worker %s failed running post_move_location_routine, stopping worker" % str(self._id))
                     break
                 log.info("Worker %s finished iteration, continuing work" % str(self._id))
