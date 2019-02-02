@@ -83,7 +83,7 @@ class WorkerMITM(WorkerBase):
             delay_used = self._devicesettings.get('post_walk_delay', 7)
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
-        return cur_time
+        return cur_time, True
 
     def _pre_location_update(self):
         self.__update_injection_settings()
