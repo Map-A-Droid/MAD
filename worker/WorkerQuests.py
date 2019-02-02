@@ -327,15 +327,16 @@ class WorkerQuests(WorkerBase):
                 log.warning("Nothing received since MAD started")
                 time.sleep(0.5)
                 continue
-            if 156 in latest:
-                if latest[156]['timestamp'] >= timestamp:
-                    # TODO: consider individual counters?
-                    self._data_error_counter = 0
-                    return 'Gym'
-            if 102 in latest:
-                if latest[102]['timestamp'] >= timestamp:
-                    self._data_error_counter = 0
-                return 'Mon'
+            elif proto_to_wait_for not in latest:
+                if 156 in latest:
+                    if latest[156]['timestamp'] >= timestamp:
+                        # TODO: consider individual counters?
+                        self._data_error_counter = 0
+                        return 'Gym'
+                if 102 in latest:
+                    if latest[102]['timestamp'] >= timestamp:
+                        self._data_error_counter = 0
+                    return 'Mon'
 
             if proto_to_wait_for not in latest:
                 log.warning("No data linked to the requested proto since MAD started. Count: %s"
