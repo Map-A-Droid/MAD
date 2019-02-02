@@ -238,6 +238,8 @@ class WebsocketServer(object):
     def clean_up_user(self, id):
         self.__current_users_mutex.acquire()
         if id in self.__current_users.keys():
+            if self.__current_users[id][2].open:
+                self.__current_users[id][2].close()
             self.__current_users.pop(id)
         self.__current_users_mutex.release()
 
