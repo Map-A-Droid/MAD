@@ -24,6 +24,7 @@ new Vue({
 	data: {
 		layers: {},
 		coordinates: {
+			worker: {},
 			gyms: null,
 			route: {
 				raid: null,
@@ -42,6 +43,12 @@ new Vue({
 		}
 	},
 	watch: {
+		'coordinates.worker': {
+			deep: true,
+			handler: function() {
+				// TODO add ability to update worker
+			}
+		},
 		layers: {
 			deep: true,
 			handler: function() {
@@ -79,169 +86,205 @@ new Vue({
 		// init our map first
 		this.initMap();
 
-		// get vue object into here
-		var $this = this;
+		// fetch everything
+		this.map_fetch_everything();
 
-		// retrieve gyms
-		axios.get('/get_gymcoords').then(function(res) {
-			var l_gyms = L.layerGroup();
-
-			res.data.forEach(function(gym) {
-				switch(gym['team_id']) {
-					default:
-						color = '#888';
-						break;
-					case 1:
-						color = '#0C6DFF';
-						break;
-					case 2:
-						color = '#FC0016';
-						break;
-					case 3:
-						color = '#FD830E';
-						break;
-				}
-
-				L.circleMarker([gym['lat'], gym['lon']], {
-					radius: 10,
-					color: color,
-					fillColor: color,
-					weight: 1,
-					opacity: 0.8,
-					fillOpacity: 0.8
-				}).addTo(l_gyms)
-					.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>', { 'className': 'gympopup' })
-			});
-
-			// add layer to map
-			$this.addLayer("gyms", l_gyms, false, "gyms");
-		});
-
-		// retrieve routes
-		axios.get('/get_route').then(function(res) {
-			res.data.forEach(function(route) {
-				var group = L.layerGroup();
-				var coords = [];
-
-				if (route.mode == "mon_mitm") {
-					mode = "mon";
-					cradius = $this.settings.routes.coordinateRadius.mon;
-				} else if (route.mode == "pokestops") {
-					mode = "quest";
-					cradius = $this.settings.routes.coordinateRadius.quest;
-				} else if (route.mode == "raid_mitm" || route.mode == "raid_ocr") {
-					mode = "raid";
-					cradius = $this.settings.routes.coordinateRadius.raid;
-				}
-
-				route.coordinates.forEach(function(coord) {
-					circle = L.circle(coord, {
-						radius: cradius,
-						color: "#9C3744",
-						fillColor: "#F4556A",
-						fillOpacity: 1,
-						weight: 1,
-						opacity: 0.2,
-						fillOpacity: 0.1
-					});
-
-					circle.addTo(group);
-					coords.push(circle);
-				});
-
-				// add these coordinates to our global list
-				//that.coordinates.route[mode].push(coords);
-
-				var geojson = {
-					"type": "LineString",
-					"coordinates": $this.convertToLonLat(route.coordinates)
-				}
-
-				// add route to layergroup
-				L.geoJSON(geojson, { style: { "color": "#FF0000", "weight": 2, "opacity": 0.5 } }).addTo(group);
-
-				$this.addLayer(route.name, group, false, "route-"+mode);
-			});
-		});
-
-		axios.get('/get_spawns').then(function(res) {
-			var l_spawns = L.layerGroup();
-
-			res.data.forEach(function(spawn) {
-				if (spawn['endtime'] !== null) {
-					var markertext = '<strong class="text-success">Known end time</strong><br>'
-					var endsplit = spawn['endtime'].split(':');
-					var endMinute = parseInt(endsplit[0]);
-					var endSecond = parseInt(endsplit[1]);
-					var despawntime = moment();
-					var now = moment();
-
-					if (spawn['spawndef'] == 15) {
-						markertext += '<br>Type: 1h spawn<br>';
-						var timeshift = 60;
-					} else {
-						markertext += '<br>Type: 30m spawn<br>';
-						var timeshift = 30;
-					}
-
-					// setting despawn and spawn time
-					despawntime.minute(endMinute);
-					despawntime.second(endSecond);
-					var spawntime = moment(despawntime);
-					spawntime.subtract(timeshift, 'm');
-
-					if (despawntime.isBefore(now)) {
-						// already despawned. shifting hours
-						spawntime.add(1, 'h');
-						despawntime.add(1, 'h');
-					}
-
-					timeformat = 'YYYY-MM-DD HH:mm:ss';
-					if (now.isBetween(spawntime, despawntime)) {
-						markertext += "<br><strong>SPAWN ACTIVE</strong>"
-						markertext += "<br>Spawned at: " + spawntime.format(timeformat);
-						markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-						overlaytext = 'Despawn ' + despawntime.fromNow();
-						var color = "green";
-					} else if (spawntime.isAfter(now)) {
-						markertext += "<br>Spawns at: " + spawntime.format(timeformat);
-						markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-						overlaytext = 'Spawn ' + spawntime.fromNow();
-						var color = "blue";
-					}
-				} else {
-					var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
-					var color = "red";
-				}
-
-				L.circle([spawn['lat'], spawn['lon']], {
-					radius: 2,
-					color: color,
-					fillColor: color,
-					weight: 1,
-					opacity: 0.7,
-					fillOpacity: 0.5
-				}).addTo(l_spawns)
-					.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>',{'className': 'gympopup'})
-			});
-
-			$this.addLayer("spawns", l_spawns, false, "spawns");
-		});
-
-
-		axios.get('/get_quests').then(function(res) {
-			var l_quests = L.layerGroup();
-
-			res.data.forEach(function(quest) {
-				L.marker([quest['latitude'], quest['longitude']], {icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])})
-					.bindPopup('<div id="gymImage" style="background: url(&quot;'+quest['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+quest['name']+'</div><div id="gymID"></strong>'+quest['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+quest['latitude']+','+quest['longitude']+'">'+quest['latitude']+', '+quest['longitude']+'</a><br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_type'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', {'className': 'questpopup'})
-					.addTo(l_quests);
-			});
-
-			$this.addLayer("stops with quests", l_quests, false, "quets");
-		});
+		// TODO auto-update some data
+		// setInterval(this.map_fetch_worker, 5000);
 	},
 	methods: {
+		map_fetch_everything() {
+			this.map_fetch_gyms();
+			this.map_fetch_worker();
+			this.map_fetch_routes();
+			this.map_fetch_spawns();
+			this.map_fetch_quests();
+		},
+		map_fetch_worker() {
+			var $this = this;
+			axios.get('/get_position').then(function(res) {
+				res.data.forEach(function(worker) {
+					var name = 'Worker '+worker['name'];
+
+					var workerMarker = L.circleMarker([worker['lat'], worker['lon']], {
+						radius: 7,
+						color: '#E612CB',
+						fillColor: '#E612CB',
+						weight: 1,
+						opacity: 0.9,
+						fillOpacity: 0.9
+					}).bindPopup(name, {'className': 'gympopup'});
+
+					$this.addLayer(name, workerMarker, false, 'worker');
+
+					$this.coordinates.worker[worker['name']] = { 'lat': worker['lat'], 'lng': worker['lng']};
+				});
+			});
+		},
+		map_fetch_gyms() {
+			var $this = this;
+			axios.get('/get_gymcoords').then(function(res) {
+				var l_gyms = L.layerGroup();
+
+				res.data.forEach(function(gym) {
+					switch(gym['team_id']) {
+						default:
+							color = '#888';
+							break;
+						case 1:
+							color = '#0C6DFF';
+							break;
+						case 2:
+							color = '#FC0016';
+							break;
+						case 3:
+							color = '#FD830E';
+							break;
+					}
+
+					L.circleMarker([gym['lat'], gym['lon']], {
+						radius: 10,
+						color: color,
+						fillColor: color,
+						weight: 1,
+						opacity: 0.8,
+						fillOpacity: 0.8
+					}).addTo(l_gyms)
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>', { 'className': 'gympopup' })
+				});
+
+				// add layer to map
+				$this.addLayer("gyms", l_gyms, false, "gyms");
+			});
+		},
+		map_fetch_routes() {
+			var $this = this;
+			axios.get('/get_route').then(function(res) {
+				res.data.forEach(function(route) {
+					var group = L.layerGroup();
+					var coords = [];
+
+					if (route.mode == "mon_mitm") {
+						mode = "mon";
+						cradius = $this.settings.routes.coordinateRadius.mon;
+					} else if (route.mode == "pokestops") {
+						mode = "quest";
+						cradius = $this.settings.routes.coordinateRadius.quest;
+					} else if (route.mode == "raid_mitm" || route.mode == "raid_ocr") {
+						mode = "raid";
+						cradius = $this.settings.routes.coordinateRadius.raid;
+					}
+
+					route.coordinates.forEach(function(coord) {
+						circle = L.circle(coord, {
+							radius: cradius,
+							color: "#9C3744",
+							fillColor: "#F4556A",
+							fillOpacity: 1,
+							weight: 1,
+							opacity: 0.2,
+							fillOpacity: 0.1
+						});
+
+						circle.addTo(group);
+						coords.push(circle);
+					});
+
+					// add these coordinates to our global list
+					//that.coordinates.route[mode].push(coords);
+
+					var geojson = {
+						"type": "LineString",
+						"coordinates": $this.convertToLonLat(route.coordinates)
+					}
+
+					// add route to layergroup
+					L.geoJSON(geojson, { style: { "color": "#FF0000", "weight": 2, "opacity": 0.5 } }).addTo(group);
+
+					$this.addLayer(route.name, group, false, "route-"+mode);
+				});
+			});
+		},
+		map_fetch_spawns() {
+			var $this = this;
+			axios.get('/get_spawns').then(function(res) {
+				var l_spawns = L.layerGroup();
+
+				res.data.forEach(function(spawn) {
+					if (spawn['endtime'] !== null) {
+						var markertext = '<strong class="text-success">Known end time</strong><br>'
+						var endsplit = spawn['endtime'].split(':');
+						var endMinute = parseInt(endsplit[0]);
+						var endSecond = parseInt(endsplit[1]);
+						var despawntime = moment();
+						var now = moment();
+
+						if (spawn['spawndef'] == 15) {
+							markertext += '<br>Type: 1h spawn<br>';
+							var timeshift = 60;
+						} else {
+							markertext += '<br>Type: 30m spawn<br>';
+							var timeshift = 30;
+						}
+
+						// setting despawn and spawn time
+						despawntime.minute(endMinute);
+						despawntime.second(endSecond);
+						var spawntime = moment(despawntime);
+						spawntime.subtract(timeshift, 'm');
+
+						if (despawntime.isBefore(now)) {
+							// already despawned. shifting hours
+							spawntime.add(1, 'h');
+							despawntime.add(1, 'h');
+						}
+
+						timeformat = 'YYYY-MM-DD HH:mm:ss';
+						if (now.isBetween(spawntime, despawntime)) {
+							markertext += "<br><strong>SPAWN ACTIVE</strong>"
+							markertext += "<br>Spawned at: " + spawntime.format(timeformat);
+							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							overlaytext = 'Despawn ' + despawntime.fromNow();
+							var color = "green";
+						} else if (spawntime.isAfter(now)) {
+							markertext += "<br>Spawns at: " + spawntime.format(timeformat);
+							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							overlaytext = 'Spawn ' + spawntime.fromNow();
+							var color = "blue";
+						}
+					} else {
+						var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
+						var color = "red";
+					}
+
+					L.circle([spawn['lat'], spawn['lon']], {
+						radius: 2,
+						color: color,
+						fillColor: color,
+						weight: 1,
+						opacity: 0.7,
+						fillOpacity: 0.5
+					}).addTo(l_spawns)
+						.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>',{'className': 'gympopup'})
+				});
+
+				$this.addLayer("spawns", l_spawns, false, "spawns");
+			});
+		},
+		map_fetch_quests() {
+			var $this = this;
+			axios.get('/get_quests').then(function(res) {
+				var l_quests = L.layerGroup();
+
+				res.data.forEach(function(quest) {
+					L.marker([quest['latitude'], quest['longitude']], {icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])})
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+quest['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+quest['name']+'</div><div id="gymID"></strong>'+quest['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+quest['latitude']+','+quest['longitude']+'">'+quest['latitude']+', '+quest['longitude']+'</a><br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_type'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', {'className': 'questpopup'})
+						.addTo(l_quests);
+				});
+
+				$this.addLayer("stops with quests", l_quests, false, "quets");
+			});
+		},
 		build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
 			switch(quest_reward_type_raw) {
 				case 2:
@@ -306,9 +349,11 @@ new Vue({
 		},
 		// add a new layer
 		addLayer(name, data, show, type) {
-			var lobj = {"show": show, "type": type};
-			leaflet_data["layers"][name] = data;
-			this.$set(this.layers, name, lobj);
+			if (!leaflet_data['layers'][name]) {
+				var lobj = {"show": show, "type": type};
+				leaflet_data["layers"][name] = data;
+				this.$set(this.layers, name, lobj);
+			}
 		},
 		// event handler if the map has been dragged/moved
 		l_event_moveend() {

@@ -469,21 +469,22 @@ def get_unknows():
 @app.route("/get_position")
 @auth_required
 def get_position():
-    position = []
-    positionexport = {}
-    # fileName = conf_args.position_file+'.position'
+    positions = []
 
-    for filename in glob.glob('*.position'):
-        name = filename.split('.')
-        with open(filename, 'r') as f:
-            latlon = f.read().strip().split(', ')
-            position = {
+    for name, device in device_mappings.items():
+        try:
+            with open(name + '.position', 'r') as f:
+                latlon = f.read().strip().split(', ')
+                worker = {
+                    'name': str(name),
                     'lat': getCoordFloat(latlon[0]),
-                    'lng': getCoordFloat(latlon[1])
+                    'lon': getCoordFloat(latlon[1])
                 }
-            positionexport[str(name[0])] = position
+                positions.append(worker)
+        except OSError:
+            pass
 
-    return jsonify(positionexport)
+    return jsonify(positions)
 
 
 @app.route("/get_route")
