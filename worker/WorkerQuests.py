@@ -332,10 +332,12 @@ class WorkerQuests(WorkerBase):
                     if latest[156]['timestamp'] >= timestamp:
                         # TODO: consider individual counters?
                         self._data_error_counter = 0
+                        self.reboot_count = 0
                         return 'Gym'
                 if 102 in latest:
                     if latest[102]['timestamp'] >= timestamp:
                         self._data_error_counter = 0
+                        self.reboot_count = 0
                     return 'Mon'
 
             if proto_to_wait_for not in latest:
@@ -357,24 +359,30 @@ class WorkerQuests(WorkerBase):
                     if 'items_awarded' in latest_data['payload']:
                         if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
                             self._data_error_counter = 0
+                            self.reboot_count = 0
                             return 'Quest'
                         elif (latest_data['payload']['result'] == 1
                               and len(latest_data['payload']['items_awarded']) == 0):
                             self._data_error_counter = 0
+                            self.reboot_count = 0
                             return 'Time'
                         elif latest_data['payload']['result'] == 2:
                             self._data_error_counter = 0
+                            self.reboot_count = 0
                             return 'SB'
                         elif latest_data['payload']['result'] == 4:
                             self._data_error_counter = 0
+                            self.reboot_count = 0
                             return 'Box'
                     if 'fort_id' in latest_data['payload']:
                         if latest_data['payload']['type'] == 1:
                             self._data_error_counter = 0
+                            self.reboot_count = 0
                             return 'Stop'
                     if 'inventory_delta' in latest_data['payload']:
                         if len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                             self._data_error_counter = 0
+                            self.reboot_count = 0
                             return 'Clear'
                 else:
                     log.debug("latest timestamp of proto %s (%s) is older than %s"
