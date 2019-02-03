@@ -23,15 +23,6 @@ new Vue({
 	el: '#app',
 	data: {
 		layers: {},
-		coordinates: {
-			worker: {},
-			gyms: null,
-			route: {
-				raid: null,
-				mon: null,
-				quest: null
-			}
-		},
 		settings: {
 			routes: {
 				coordinateRadius: {
@@ -113,11 +104,20 @@ new Vue({
 						weight: 1,
 						opacity: 0.9,
 						fillOpacity: 0.9
-					}).bindPopup(name, {'className': 'gympopup'});
+					}).bindPopup(name);
 
 					$this.addLayer(name, workerMarker, false, 'worker');
+				});
+			});
 
-					$this.coordinates.worker[worker['name']] = { 'lat': worker['lat'], 'lng': worker['lng']};
+			setInterval($this.update_worker_position, 5000);
+		},
+		update_worker_position() {
+			axios.get('/get_position').then(function(res) {
+				res.data.forEach(function(worker) {
+					var name = 'Worker '+worker['name'];
+
+					leaflet_data['layers'][name].setLatLng([worker['lat'], worker['lon']]);
 				});
 			});
 		},
@@ -170,7 +170,7 @@ new Vue({
 					} else if (route.mode == "pokestops") {
 						mode = "quest";
 						cradius = $this.settings.routes.coordinateRadius.quest;
-					} else if (route.mode == "raid_mitm" || route.mode == "raid_ocr") {
+					} else if (route.mode == "raids_mitm" || route.mode == "raids_ocr") {
 						mode = "raid";
 						cradius = $this.settings.routes.coordinateRadius.raid;
 					}
@@ -189,9 +189,6 @@ new Vue({
 						circle.addTo(group);
 						coords.push(circle);
 					});
-
-					// add these coordinates to our global list
-					//that.coordinates.route[mode].push(coords);
 
 					var geojson = {
 						"type": "LineString",
