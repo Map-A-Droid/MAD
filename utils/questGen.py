@@ -3,6 +3,8 @@ import json
 import re
 import gettext
 import os
+from utils.language import open_json_file, i8ln
+
 gettext.find('quest', 'locales')
 lang = gettext.translation('quest', localedir='locale', fallback=True)
 lang.install()
@@ -33,7 +35,7 @@ def generate_quest(quest):
             pokemon_name = ""
         elif quest_reward_type == _("Stardust"):
             item_amount = str(quest['quest_stardust'])
-            item_type = "Stardust"
+            item_type = _("Stardust")
             item_id = "000"
             pokemon_id = "0"
             pokemon_name = ""
@@ -41,7 +43,7 @@ def generate_quest(quest):
             item_amount = "1"
             item_type = "Pokemon"
             item_id = "000"
-            pokemon_name = pokemonname(str(quest['quest_pokemon_id']))
+            pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
             pokemon_id = str(quest['quest_pokemon_id'])
 
         if '{0}' in quest_type:
@@ -62,16 +64,6 @@ def questreward(quest_reward_type):
         7: _("Pokemon")
     }
     return type.get(quest_reward_type, "nothing")
-
-def open_json_file(jsonfile):
-    try:
-        with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
-            file_open = json.load(f)
-    except:
-        with open('locale/' + jsonfile + '.json') as f:
-            file_open = json.load(f)
-            
-    return file_open
     
 def questtype(quest_type):
     file = open_json_file('types')
@@ -116,7 +108,7 @@ def questtask(typeid, condition, target):
                 last = len(pt)
                 cur = 1
                 if last == 1:
-                    arr['poke'] = pokemonname[pt[0]]
+                    arr['poke'] = i8ln(pokemonname[pt[0]])
                 text = _('Catch a {poke}.')
     elif typeid == 5:
         text = _("Spin {0} Pokestops or Gyms.")

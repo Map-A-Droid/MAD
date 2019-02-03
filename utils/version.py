@@ -3,6 +3,7 @@ import functools
 import json
 import logging
 import requests
+import sys
 
 log = logging.getLogger(__name__)
 
@@ -30,24 +31,50 @@ class MADVersion(object):
         if self._version < 1:
             log.info('Execute Update for Version 1')
             # Adding quest_reward for PMSF ALT
-            alter_query = (
-                "ALTER TABLE trs_quest "
-                "ADD quest_reward VARCHAR(500) NULL AFTER quest_condition"
-            )
-            try:
-                self._dbwrapper.execute(alter_query, commit=True)
-            except Exception as e:
-                log.info("Unexpected error: %s" % (e))
+            if self._dbwrapper.check_column_exists('trs_quest', 'quest_reward') == 0:
+                alter_query = (
+                    "ALTER TABLE trs_quest "
+                    "ADD quest_reward VARCHAR(500) NULL AFTER quest_condition"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % (e))
 
             # Adding quest_task = ingame quest conditions
-            alter_query = (
-                "ALTER TABLE trs_quest "
-                "ADD quest_task VARCHAR(150) NULL AFTER quest_reward"
-            )
-            try:
-                self._dbwrapper.execute(alter_query, commit=True)
-            except Exception as e:
-                log.info("Unexpected error: %s" % (e))
+            if self._dbwrapper.check_column_exists('trs_quest', 'quest_task') == 0:
+                alter_query = (
+                    "ALTER TABLE trs_quest "
+                    "ADD quest_task VARCHAR(150) NULL AFTER quest_reward"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % (e))
+            
+            # Adding form column for rm / monocle if not exists
+            if self._application_args.db_method == "rm":
+                alter_query = (
+                    "ALTER TABLE raid "
+                    "ADD form smallint(6) DEFAULT NULL"
+                )
+                column_exist = self._dbwrapper.check_column_exists('raid', 'form')
+            elif self._application_args.db_method == "monocle":
+                alter_query = (
+                    "ALTER TABLE raids "
+                    "ADD form smallint(6) DEFAULT NULL"
+                )
+                column_exist = self._dbwrapper.check_column_exists('raids', 'form')
+            else:
+                log.error("Invalid db_method in config. Exiting")
+                sys.exit(1)   
+            
+            if column_exist == 0:
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % (e))    
+
             
             
         self.set_version(current_version)

@@ -31,6 +31,7 @@ class LogFilter(logging.Filter):
 
 
 args = parseArgs()
+os.environ['LANGUAGE']=args.language
 
 console = logging.StreamHandler()
 nextRaidQueue = []

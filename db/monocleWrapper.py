@@ -840,12 +840,13 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, last_updated, cp, move_1, move_2) "
+            "time_end, last_updated, cp, move_1, move_2, form) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
-            "last_updated=VALUES(last_updated), cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2)"
+            "last_updated=VALUES(last_updated), cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
+            "form=VALUES(form)"
         )
 
         for cell in cells:
@@ -856,11 +857,13 @@ class MonocleWrapper(DbWrapperBase):
                         cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
+                        form = gym['gym_details']['raid_info']['raid_pokemon']['form']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
+                        form = None
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
@@ -892,7 +895,8 @@ class MonocleWrapper(DbWrapperBase):
                             raidbattleSec,
                             raidendSec,
                             now,
-                            cp, move_1, move_2
+                            cp, move_1, move_2, 
+                            form
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)

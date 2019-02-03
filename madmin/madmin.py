@@ -3,6 +3,7 @@ import sys
 
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
+from utils.language import open_json_file, i8ln
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -307,16 +308,6 @@ def get_gyms():
             continue
 
     return jsonify(gyms)
-
-def open_json_file(jsonfile):
-    try:
-        with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
-            file_open = json.load(f)
-    except:
-        with open('locale/' + jsonfile + '.json') as f:
-            file_open = json.load(f)
-            
-    return file_open
 
 @app.route("/get_raids")
 @auth_required

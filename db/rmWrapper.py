@@ -909,8 +909,8 @@ class RmWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
             "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned)"
@@ -925,11 +925,13 @@ class RmWrapper(DbWrapperBase):
                         cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
+                        form = gym['gym_details']['raid_info']['raid_pokemon']['form']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
+                        form = None
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
@@ -963,7 +965,8 @@ class RmWrapper(DbWrapperBase):
                             raidspawn_date,
                             raidstart_date,
                             raidend_date,
-                            pokemon_id, cp, move_1, move_2, now
+                            pokemon_id, cp, move_1, move_2, now,
+                            form
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)

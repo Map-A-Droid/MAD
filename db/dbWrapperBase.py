@@ -887,3 +887,17 @@ class DbWrapperBase(ABC):
                 log.debug('Sending Webhook is disabled')
 
         return True
+        
+    def check_column_exists(self, table, column):
+        query = (
+            "SELECT count(*) "
+            "FROM information_schema.columns "
+            "WHERE table_name = %s "
+            "AND column_name = %s "
+            "AND table_schema = %s"
+        )
+        vals = (
+            table, column, self.database,
+        )
+
+        return int(self.execute(query, vals)[0][0])
