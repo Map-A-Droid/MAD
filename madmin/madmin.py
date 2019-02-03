@@ -136,7 +136,7 @@ def submit_hash():
             copyfile(file, 'www_hash/gym_0_0_' + str(hash) + '.jpg')
             os.remove(file)
 
-        return redirect("unknown", code=302)
+        return redirect(getBasePath(request) + "/unknown", code=302)
 
 
 @app.route("/modify_raid_gym")
@@ -152,7 +152,7 @@ def modify_raid_gym():
     db_wrapper.insert_hash(hash, 'raid', newJsonString,
                            '999', unique_hash="madmin")
 
-    return redirect("raids", code=302)
+    return redirect(getBasePath(request) + "/raids", code=302)
 
 
 @app.route("/modify_raid_mon")
@@ -168,7 +168,7 @@ def modify_raid_mon():
     db_wrapper.insert_hash(hash, 'raid', newJsonString,
                            '999', unique_hash="madmin")
 
-    return redirect("raids", code=302)
+    return redirect(getBasePath(request) + "/raids", code=302)
 
 
 @app.route("/modify_gym_hash")
@@ -180,7 +180,7 @@ def modify_gym_hash():
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'gym', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin")
 
-    return redirect("gyms", code=302)
+    return redirect(getBasePath(request) + "/gyms", code=302)
 
 
 @app.route("/near_gym")
@@ -242,7 +242,7 @@ def delete_hash():
     for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
-    return redirect(str(redi), code=302)
+    return redirect(getBasePath(request) + "/" + str(redi), code=302)
 
 
 @app.route("/delete_file")
@@ -841,7 +841,7 @@ def delsetting():
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-    return redirect("showsettings", code=302)
+    return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
 def check_float(number):
@@ -923,9 +923,9 @@ def addedit():
 
     except:
         log.info('Invalid data')
-        return redirect('config?type='+mode+'&area='+area+'&block='+block+'&edit='+edit, code=302)
+        return redirect(getBasePath(request) + '/config?type='+mode+'&area='+area+'&block='+block+'&edit='+edit, code=302)
 
-    return redirect("showsettings", code=302)
+    return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
 def match_typ(value):
@@ -1037,13 +1037,19 @@ def addnew():
     with open('madmin/static/vars/vars_parser.json') as f:
         settings = json.load(f)
     if (len(settings[area])) == 1:
-        return redirect('config?type=' + area + '&area=' + area + '&block=fields')
+        return redirect(getBasePath(request) + '/config?type=' + area + '&area=' + area + '&block=fields', code=302)
 
     for output in settings[area]:
         line = line + '<h3><a href="config?type=' + str(output['name']) + '&area=' + str(
             area) + '&block=fields">'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
 
     return render_template('sel_type.html', line=line, title="Type selector")
+
+
+def getBasePath(request):
+    if request.referrer:
+        return '/'.join(request.referrer.split('/')[:-1])
+    return ''
 
 
 def decodeHashJson(hashJson):
