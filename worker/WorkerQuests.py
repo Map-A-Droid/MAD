@@ -250,18 +250,18 @@ class WorkerQuests(WorkerBase):
             curTime = time.time()
             self._open_gym(self._delay_add)
             data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=25)
-            log.error(data_received)
             if data_received is not None:
                 if 'Gym' in data_received:
-                    log.debug('Clicking GYM')
+                    log.info('Clicking GYM')
+                    time.sleep(1)
                     x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                            self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
-                    time.sleep(2)
+                    time.sleep(1)
                     self._turn_map(self._delay_add)
                 if 'Mon' in data_received:
                     time.sleep(2)
-                    log.debug('Clicking MON')
+                    log.info('Clicking MON')
                     x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(.5)
@@ -317,7 +317,7 @@ class WorkerQuests(WorkerBase):
                     self._close_gym(self._delay_add)
 
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=45):
-        timeout = self._devicesettings.get("mitm_wait_timeout", 45)
+        #timeout = self._devicesettings.get("mitm_wait_timeout", 45)
         log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
         while data_requested is None and timestamp + timeout >= time.time():
@@ -402,7 +402,6 @@ class WorkerQuests(WorkerBase):
                     self._reboot()
                     raise InternalStopWorkerException
                 else:
-                    self._start_pogodroid()
                     self._restart_pogo(True)
                 return None
             elif data_requested is None:
@@ -413,8 +412,6 @@ class WorkerQuests(WorkerBase):
             log.debug('Got the data requested...')
             self.reboot_count = 0
             self._data_error_counter = 0
-        elif proto_to_wait_for == '4':
-            return '-'
         else:
             log.warning("Timeout waiting for data")
             self.reboot_count += 1

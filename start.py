@@ -16,6 +16,7 @@ from mitm_receiver.MitmMapper import MitmMapper
 from utils.mappingParser import MappingParser
 from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
+from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 
 
@@ -156,6 +157,8 @@ if __name__ == "__main__":
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     webhook_helper.set_gyminfo(db_wrapper)
+    version = MADVersion(args, db_wrapper)
+    version.get_version()
 
     if not db_wrapper.ensure_last_updated_column():
         log.fatal("Missing raids.last_updated column and couldn't create it")

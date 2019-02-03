@@ -1,6 +1,7 @@
 import asyncio
 import functools
 import json
+import os
 
 import logging
 from threading import current_thread, Event, Thread
@@ -67,8 +68,8 @@ quest_webhook_payload = """[{{
                 "timestamp": "{timestamp}",
                 "quest_reward_type": "{quest_reward_type}",
                 "quest_reward_type_raw": "{quest_reward_type_raw}",
-                "quest_target": "{quest_target}"
-                
+                "quest_target": "{quest_target}",
+                "quest_task": "{quest_task}",
         }},
       "type": "quest"
    }} ]"""            
@@ -115,8 +116,7 @@ class WebhookHelper(object):
     def __init__(self, args):
         self.__application_args = args
         self.pokemon_file = None
-        with open('pokemon.json') as j:
-            self.pokemon_file = json.load(j)
+        self.pokemon_file = self.open_json_file('pokemon')
         self.gyminfo = None
 
         self.loop = None
@@ -125,6 +125,17 @@ class WebhookHelper(object):
         self.t_asyncio_loop = Thread(name='webhook_asyncio_loop', target=self.__start_asyncio_loop)
         self.t_asyncio_loop.daemon = True
         self.t_asyncio_loop.start()
+        
+        
+    def open_json_file(self, jsonfile):
+        try:
+            with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
+                file_open = json.load(f)
+        except:
+            with open('locale/' + jsonfile + '.json') as f:
+                file_open = json.load(f)
+            
+        return file_open
 
     def set_gyminfo(self, db_wrapper):
         try:
@@ -503,7 +514,8 @@ class WebhookHelper(object):
             quest_target=quest['quest_target'],
             pokemon_id=quest['pokemon_id'],
             item_amount=quest['item_amount'],
-            item_id=quest['item_id'])
+            item_id=quest['item_id'],
+            task=quest['quest_task'])
 
         payload = json.loads(data)
         self.__sendToWebhook(payload)

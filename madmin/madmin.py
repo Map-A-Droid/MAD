@@ -308,6 +308,15 @@ def get_gyms():
 
     return jsonify(gyms)
 
+def open_json_file(jsonfile):
+    try:
+        with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
+            file_open = json.load(f)
+    except:
+        with open('locale/' + jsonfile + '.json') as f:
+            file_open = json.load(f)
+            
+    return file_open
 
 @app.route("/get_raids")
 @auth_required
@@ -317,8 +326,7 @@ def get_raids():
 
     data = db_wrapper.get_gym_infos()
 
-    with open('pokemon.json') as f:
-        mondata = json.load(f)
+    mondata = open_json_file('pokemon')
 
     hashdata = json.loads(getAllHash('raid'))
 
@@ -393,8 +401,7 @@ def get_mons():
     mons = []
     monList =[]
 
-    with open('pokemon.json') as f:
-        mondata = json.load(f)
+    mondata = open_json_file('pokemon')
 
     with open('raidmons.json') as f:
         raidmon = json.load(f)
@@ -548,8 +555,7 @@ def get_quests():
     coords = []
     monName= ''
     
-    with open('pokemon.json') as f:
-        mondata = json.load(f)
+    mondata = open_json_file('pokemon')
 
     data = db_wrapper.quests_from_db()
     
@@ -558,30 +564,6 @@ def get_quests():
         coords.append(generate_quest(quest))
         
     return jsonify(coords)
-
-    # for pokestopid in data:
-    #     pokestop = data[str(pokestopid)]
-    #     if int(pokestop['quest_pokemon_id']) > 0:
-    #         monName = mondata[str(int(pokestop['quest_pokemon_id']))]["name"]
-    #     coords.append({
-    #         'id': pokestopid,
-    #         'quest_type': pokestop['quest_type'],
-    #         'quest_stardust': pokestop['quest_stardust'],
-    #         'lat': pokestop['latitude'],
-    #         'lon': pokestop['longitude'],
-    #         'quest_pokemon_id': pokestop['quest_pokemon_id'],
-    #         'quest_reward_type': pokestop['quest_reward_type'],
-    #         'quest_item_id': pokestop['quest_item_id'],
-    #         'quest_item_amount': pokestop['quest_item_amount'],
-    #         'name': pokestop['name'],
-    #         'image': pokestop['image'],
-    #         'monname': monName,
-    #         'quest_condition': pokestop['quest_condition'],
-    #         'quest_target': pokestop['quest_target']
-    #         })
-    #
-    # return jsonify(coords)
-
 
 @app.route('/gym_img/<path:path>', methods=['GET'])
 @auth_required

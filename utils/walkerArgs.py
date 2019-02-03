@@ -106,6 +106,9 @@ def parseArgs():
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
+    
+    parser.add_argument('-L', '--language', default='en',
+                        help=('Set Language for MadMin / Quests. Default: en'))
 
     parser.add_argument('-hlat', '--home_lat', default='0.0', type=float,
                         help=('Set Lat from the center of your scan location.'

@@ -14,6 +14,7 @@ import numpy as np
 
 from utils.collections import Location
 from utils.s2Helper import S2Helper
+from utils.questGen import questtask
 
 log = logging.getLogger(__name__)
 
@@ -850,6 +851,7 @@ class DbWrapperBase(ABC):
         quest_type = map_proto['challenge_quest']['quest'].get("quest_type", None)
         if map_proto['challenge_quest']['quest'].get("quest_rewards", None):
             rewardtype = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("type", None)
+            reward = map_proto['challenge_quest']['quest'].get("quest_rewards", None)
             item = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("item", None)
             itemamount = map_proto['challenge_quest']['quest']['quest_rewards'][0]['item'].get("amount", None)
             stardust = map_proto['challenge_quest']['quest']['quest_rewards'][0].get("stardust", None)
@@ -857,19 +859,22 @@ class DbWrapperBase(ABC):
                 "pokemon_id", None)
             target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
             condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
+            
+            task = questtask(int(quest_type), str(condition), int(target))
 
             query_quests = (
                 "INSERT into trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, quest_reward_type, "
-                "quest_item_id, quest_item_amount, quest_target, quest_condition) values "
-                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                "quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, quest_task) values "
+                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                 "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
                 "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
                 "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
-                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), quest_condition=VALUES(quest_condition)"
+                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), quest_condition=VALUES(quest_condition), "
+                "quest_reward=VALUES(quest_reward), quest_task=VALUES(quest_task)"
             )
             vals = (
                 fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target,
-                str(condition)
+                str(condition), str(reward), task
             )
             log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (
                 str(quest_type), str(fort_id)))

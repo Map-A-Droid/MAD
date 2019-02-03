@@ -1,5 +1,11 @@
 import logging
 import json
+import re
+import gettext
+import os
+gettext.find('quest', 'locales')
+lang = gettext.translation('quest', localedir='locale', fallback=True)
+lang.install()
 
 log = logging.getLogger(__name__)
 
@@ -9,71 +15,175 @@ def generate_quest(quest):
         pokestop_id  = (quest['pokestop_id'])
         quest_reward_type = (questreward(quest['quest_reward_type']))
         quest_reward_type_raw = quest['quest_reward_type']
+        quest_type_raw = quest['quest_type']
         quest_type = (questtype(quest['quest_type']))
-        name = (quest['name'])
+        quest_condition = quest['quest_condition']
+        name = quest['name']
         latitude = quest['latitude']
         longitude = quest['longitude']
         url = quest['image']
         timestamp = quest['quest_timestamp']
+        quest_target = str(quest['quest_target'])
         
-        
-        if quest_reward_type == 'Item':
+        if quest_reward_type == _("Item"):
             item_amount = str(quest['quest_item_amount'])
             item_id = quest['quest_item_id']
             item_type = str(rewarditem(quest['quest_item_id']))
-            quest_target = str(quest['quest_target'])
             pokemon_id = "0"
             pokemon_name = ""
-            if '{0}' in quest_type:
-                quest_type_text = quest_type.replace('{0}', str(quest['quest_target']))
-                quest_target = str(quest['quest_target'])
-            
-        elif quest_reward_type == 'Stardust':
+        elif quest_reward_type == _("Stardust"):
             item_amount = str(quest['quest_stardust'])
             item_type = "Stardust"
             item_id = "000"
-            quest_target = str(quest['quest_target'])
             pokemon_id = "0"
             pokemon_name = ""
-            if '{0}' in quest_type:
-                quest_type_text = quest_type.replace('{0}', str(quest['quest_target']))
-                quest_target = str(quest['quest_target'])
-        elif quest_reward_type == 'Pokemon':
+        elif quest_reward_type == _("Pokemon"):
             item_amount = "1"
             item_type = "Pokemon"
             item_id = "000"
             pokemon_name = pokemonname(str(quest['quest_pokemon_id']))
             pokemon_id = str(quest['quest_pokemon_id'])
-            if '{0}' in quest_type:
-                quest_type_text = quest_type.replace('{0}', str(quest['quest_target']))
-                quest_target = str(quest['quest_target'])
 
+        if '{0}' in quest_type:
+            quest_type_text = quest_type.replace('{0}', quest_target)
+
+        quest_task = questtask(quest_type_raw, quest_condition, quest_target)
         
         quest_raw = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
-            'quest_type_raw': quest_type, 'quest_type': quest_type_text, 'item_amount': item_amount, 'item_type': item_type, 
+            'quest_type_raw': quest_type_raw, 'quest_type': quest_type_text, 'quest_condition': quest_condition, 'item_amount': item_amount, 'item_type': item_type, 
             'quest_target': quest_target, 'name': name, 'url': url, 'timestamp': timestamp, 'pokemon_id': pokemon_id, 'item_id': item_id,
-            'pokemon_name': pokemon_name, 'quest_reward_type': quest_reward_type, 'quest_reward_type_raw': quest_reward_type_raw})
+            'pokemon_name': pokemon_name, 'quest_reward_type': quest_reward_type, 'quest_reward_type_raw': quest_reward_type_raw, 'quest_task': quest_task})
         return quest_raw
     
 def questreward(quest_reward_type):
     type = {
-        2: "Item",
-        3: "Stardust",
-        7: "Pokemon"
+        2: _("Item"),
+        3: _("Stardust"),
+        7: _("Pokemon")
     }
     return type.get(quest_reward_type, "nothing")
+
+def open_json_file(jsonfile):
+    try:
+        with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
+            file_open = json.load(f)
+    except:
+        with open('locale/' + jsonfile + '.json') as f:
+            file_open = json.load(f)
+            
+    return file_open
     
 def questtype(quest_type):
-    with open('utils/quest/types.json') as f:
-        items = json.load(f)
-    return (items[str(quest_type)]['text'])
+    file = open_json_file('types')
+    return (file[str(quest_type)]['text'])
     
 def rewarditem(itemid):
-    with open('utils/quest/items.json') as f:
-        items = json.load(f)
-    return (items[str(itemid)]['name'])
+    file = open_json_file('items')
+    return (file[str(itemid)]['name'])
     
 def pokemonname(id):
-    with open('pokemon.json') as f:
-        mondata = json.load(f)
-    return mondata[str(int(id))]["name"]
+    file = open_json_file('pokemon')
+    return file[str(int(id))]["name"]
+
+def questtask(typeid, condition, target):
+    pokemonTypes = open_json_file('pokemonTypes')
+    items = open_json_file('items')
+    throwTypes = {"10":_("Nice"), "11":_("Great"), "12":_("Excellent"), "13":_("Curveball")}
+    arr = {}
+    arr['0'] = target
+    text = questtype(typeid)
+
+    if typeid == 4:
+        arr['wb'] = ""
+        arr['type'] = ""
+        text = _("Catch {0} {type}Pokemon{wb}.")
+        match_object = re.search(r"'pokemon_type': \[([0-9, ]+)\]", condition)
+        if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['type'] = pokemonTypes[pt[0]].title() + _('-type ')
+                else:
+                    for ty in pt:
+                        arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + ('-type ' if last == cur else '-, ')
+                        cur += 1
+        if re.search(r"'type': 3", condition) is not None:
+                arr['wb'] = _(" with weather boost")
+        match_object = re.search(r"'pokemon_ids': \[([0-9, ]+)\]", condition)
+        if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['poke'] = pokemonname[pt[0]]
+                text = _('Catch a {poke}.')
+    elif typeid == 5:
+        text = _("Spin {0} Pokestops or Gyms.")
+    elif typeid == 6:
+        text = _("Hatch {0} Eggs.")
+    elif typeid == 7:
+        if re.search(r"'type': 9", condition) is not None:
+            text = _("Win {0} Gym Battles.")
+        elif re.search(r"'type': 10",condition) is not None:
+            text = _("Use a supereffective Charged Attack in {0} Gym battles.")
+        else:
+            text = _("Battle in a Gym {0} times.")
+    elif typeid == 8:
+        if re.search(r"'type': 6",condition) is not None:
+            text = _("Win {0} Raids.")
+            if re.search(r"'raid_level': \[3, 4, 5\]",condition) is not None:
+                text = _('Win a level 3 or higher raid.')
+        else:
+            text = _("Battle in {0} Raids.")
+    elif typeid == 10:
+        text = _("Transfer {0} Pokemon.")
+    elif typeid == 11:
+        test = _("Favourite {0} Pokemon.")
+    elif typeid == 13:
+        text = _('Use {0} {type}Berries to help catch Pokemon.')
+        arr['type'] = "";
+        match_object = re.search(r"'item': ([0-9]+)",condition)
+        if match_object is not None:
+            arr['type'] = items[match_object.group(1)]['name'].replace(_(' Berry'),'')+" ";
+    elif typeid == 14:
+        text = _('Power up Pokemon {0} times.')
+    elif typeid == 15:
+        text = _("Evolve {0} Pokemon.")
+        if re.search(r"'type': 11",condition) is not None:
+            text = _("Use an item to evolve a Pokemon.")
+    elif typeid == 16:
+        arr['inrow'] = ""
+        arr['curve'] = ""
+        arr['type'] = ""
+        if re.search(r"'type': 14",condition) is not None:
+            arr['inrow'] = _(" in a row")
+        if re.search(r"'type': 15",condition) is not None:
+            arr['curve'] = _("Curveball ")
+        match_object = re.search(r"'throw_type': ([0-9]{2})",condition)
+        if match_object is not None:
+            arr['type'] = throwTypes[match_object.group(1)]+" "
+        text = _("Make {0} {type}{curve}Throws{inrow}.")
+    elif typeid == 17:
+        text = _('Earn {0} Candies walking with your buddy.')
+    elif typeid == 23:
+        text = _('Trade {0} Pokemon.')
+    elif typeid == 24:
+        text = _('Send {0} gifts to friends.')
+
+    if str(target) == str(1):
+        text = text.replace(_(' Eggs'),_('n Egg'))
+        text = text.replace(_(' Raids'),_(' Raid'))
+        text = text.replace(_(' Battles'),_(' Battle'))
+        text = text.replace(_(' candies'),_(' candy'))
+        text = text.replace(_(' gifts'),_(' gift'))
+        text = text.replace(_(' {0} times'),'')
+        arr['0'] = _("a");
+
+    for key, val in arr.items():
+            text = text.replace('{'+key+'}', str(val))
+    
+    text = text.replace(' .', '.')
+    text = text.replace('  ', ' ')
+
+    return text
