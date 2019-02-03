@@ -176,7 +176,11 @@ class WorkerMITM(WorkerBase):
                 # proto has previously been received, let's check the timestamp...
                 latest_proto = latest.get(proto_to_wait_for, None)
 
-                current_routemanager = self._get_currently_valid_routemanager()
+                try:
+                    current_routemanager = self._get_currently_valid_routemanager()
+                except InternalStopWorkerException as e:
+                    log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
+                    raise InternalStopWorkerException
                 if current_routemanager is None:
                     # we should be sleeping...
                     log.warning("%s should be sleeping ;)" % str(self._id))

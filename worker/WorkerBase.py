@@ -281,8 +281,7 @@ class WorkerBase(ABC):
 
                 try:
                     self._post_move_location_routine(time_snapshot)
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                        as e:
+                except InternalStopWorkerException as e:
                     log.warning("Worker %s failed running post_move_location_routine, stopping worker" % str(self._id))
                     break
                 log.info("Worker %s finished iteration, continuing work" % str(self._id))
@@ -312,6 +311,7 @@ class WorkerBase(ABC):
         elif not switch_mode and self._route_manager_daytime.mode in valid_modes:
             return self._route_manager_daytime
         else:
+            # log.fatal("Raising internal worker exception")
             raise InternalStopWorkerException
 
     def _internal_grab_next_location(self):

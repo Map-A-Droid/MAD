@@ -45,9 +45,11 @@ class WebsocketServer(object):
         self.__next_id = 0
         self.__id_mutex = Lock()
 
+        self.__loop = None
+
     def start_server(self):
         log.info("Starting websocket server...")
-        loop = asyncio.new_event_loop()
+        self.__loop = asyncio.new_event_loop()
         # build list of origin IDs
         allowed_origins = []
         for device in self.__device_mappings.keys():
@@ -55,7 +57,7 @@ class WebsocketServer(object):
 
         log.info("Device mappings: %s" % str(self.__device_mappings))
         log.info("Allowed origins derived: %s" % str(allowed_origins))
-        asyncio.set_event_loop(loop)
+        asyncio.set_event_loop(self.__loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
                              origins=allowed_origins, ping_timeout=10, ping_interval=15))
@@ -67,13 +69,13 @@ class WebsocketServer(object):
         continue_work = await self.__register(websocket_client_connection)
         if not continue_work:
             log.error("Failed registering client, closing connection")
-            websocket_client_connection.close()
+            await websocket_client_connection.close()
             return
 
         consumer_task = asyncio.ensure_future(
             self.__consumer_handler(websocket_client_connection))
         producer_task = asyncio.ensure_future(
-            self.__producer_handler())
+            self.__producer_handler(websocket_client_connection))
         done, pending = await asyncio.wait(
             [producer_task, consumer_task],
             return_when=asyncio.FIRST_COMPLETED,
@@ -183,29 +185,34 @@ class WebsocketServer(object):
             self.__current_users.pop(id)
         self.__current_users_mutex.release()
 
-    async def __producer_handler(self):
-        while True:
+    async def __producer_handler(self, websocket_client_connection):
+        while websocket_client_connection.open:
+            # log.debug("Connection still open, trying to send next message")
             # retrieve next message from queue to be sent, block if empty
             next = None
-            while next is None:
-                next = await self.__retrieve_next_send()
-                await self.__send_specific(next.id, next.message)
+            while next is None and websocket_client_connection.open:
+                log.debug("Retrieving next message to send")
+                next = await self.__retrieve_next_send(websocket_client_connection)
+                if next is None:
+                    # log.debug("next is None, stopping connection...")
+                    return
+                await self.__send_specific(websocket_client_connection, next.id, next.message)
 
-    async def __send_specific(self, id, message):
-        # self.__current_users_mutex.acquire()
-        for key, value in self.__current_users.items():
-            if key == id and value[2].open:
-                await value[2].send(message)
-        # self.__current_users_mutex.release()
+    async def __send_specific(self, websocket_client_connection, id, message):
+        await websocket_client_connection.send(message)
+        # for key, value in self.__current_users.items():
+        #     if key == id and value[2].open:
+        #         await value[2].send(message)
 
-    async def __retrieve_next_send(self):
+    async def __retrieve_next_send(self, websocket_client_connection):
         found = None
-        while found is None:
+        while found is None and websocket_client_connection.open:
             try:
                 found = self.__send_queue.get_nowait()
             except Exception as e:
-                # log.error("Exception %s in retrieve_next_send" % str(e))
                 await asyncio.sleep(0.02)
+        if not websocket_client_connection.open:
+            log.error("retrieve_next_send: connection closed, returning None")
         return found
 
     async def __consumer_handler(self, websocket_client_connection):
@@ -213,11 +220,10 @@ class WebsocketServer(object):
             return
         id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
         log.warning("Consumer handler of %s starting" % str(id))
-        while True:
+        while websocket_client_connection.open:
             message = None
             try:
-                asyncio.wait_for(websocket_client_connection.recv(), timeout=0.01)
-                message = await websocket_client_connection.recv()
+                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.02)
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
@@ -234,12 +240,14 @@ class WebsocketServer(object):
 
             if message is not None:
                 await self.__on_message(message)
+        log.warning("Connection closed in consumer_handler")
 
     def clean_up_user(self, id):
         self.__current_users_mutex.acquire()
         if id in self.__current_users.keys():
             if self.__current_users[id][2].open:
-                self.__current_users[id][2].close()
+                log.debug("Calling close for %s..." % str(id))
+                asyncio.ensure_future(self.__current_users[id][2].close(), loop=self.__loop)
             self.__current_users.pop(id)
         self.__current_users_mutex.release()
 
