@@ -113,10 +113,10 @@ class MITMReceiver(object):
         injected_settings = self.__mitm_mapper.request_latest(origin, "injected_settings")
 
         # TODO: replace with encounter IDs at some point...
-        ids_iv = self.__mitm_mapper.request_latest(origin, "ids_iv")
-        if ids_iv is not None:
-            ids_iv = ids_iv.get("values", None)
-        response = {"ids_iv": ids_iv, "injected_settings": injected_settings}
+        mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
+        if mon_ids_iv is not None:
+            mon_ids_iv = mon_ids_iv.get("values", None)
+        response = {"ids_iv": mon_ids_iv, "injected_settings": injected_settings}
         return json.dumps(response)
 
     def received_data_worker(self):

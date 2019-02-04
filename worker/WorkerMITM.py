@@ -38,7 +38,7 @@ class WorkerMITM(WorkerBase):
         scanmode = "nothing"
         if MadGlobals.sleep and self._route_manager_nighttime is None:
             # worker has to sleep, just empty out the settings...
-            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
+            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="mon_ids_iv",
                                             values_dict={})
             scanmode = "nothing"
         else:
@@ -47,16 +47,16 @@ class WorkerMITM(WorkerBase):
             else:
                 routemanager = self._route_manager_daytime
 
-            ids_iv = routemanager.settings.get("mon_ids_iv", None)
+            mon_ids_iv = routemanager.settings.get("mon_ids_iv", None)
             if routemanager.mode == "mon_mitm":
                 scanmode = "mons"
             elif routemanager.mode == "raids_mitm":
                 scanmode = "raids"
             elif routemanager.mode == "iv_mitm" and isinstance(routemanager, RouteManagerIV):
                 scanmode = "ivs"
-                ids_iv = routemanager.encounter_ids_left
-            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="ids_iv",
-                                            values_dict=ids_iv)
+                mon_ids_iv = routemanager.encounter_ids_left
+            self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="mon_ids_iv",
+                                            values_dict=mon_ids_iv)
         injected_settings["scanmode"] = scanmode
         self._mitm_mapper.update_latest(origin=self.id, timestamp=int(time.time()), key="injected_settings",
                                         values_dict=injected_settings)

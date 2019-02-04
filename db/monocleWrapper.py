@@ -699,7 +699,7 @@ class MonocleWrapper(DbWrapperBase):
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2**64
 
-                if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
+                if mon_ids_iv is not None and mon_id not in mon_ids_iv['values'] or mon_ids_iv is None:
                     self.webhook_helper.send_pokemon_webhook(
                         encounter_id, mon_id, time.time(),
                         spawnid, lat, lon, despawn_time_unix
