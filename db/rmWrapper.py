@@ -1067,12 +1067,9 @@ class RmWrapper(DbWrapperBase):
         if stop_data['type'] != 1:
             log.warning("%s is not a pokestop" % str(stop_data))
             return None
-        lure = stop_data['lure_expires']
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
-        if lure > 0:
-            lure = datetime.utcfromtimestamp(float(lure) / 1000).strftime("%Y-%m-%d %H:%M:%S")
-        else:
-            lure = '1970-01-01 00:00:00'
+        # lure isn't present anymore...
+        lure = '1970-01-01 00:00:00'
         return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], now, lure, now
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
