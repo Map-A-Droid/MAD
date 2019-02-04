@@ -1048,7 +1048,8 @@ class MonocleWrapper(DbWrapperBase):
             return None
 
         now = int(time.time())
-        lure = int(float(stop_data['lure_expires']))
+        # lure = int(float(stop_data['lure_expires']))
+        lure = 0
         if lure > 0:
             lure = lure / 1000
         return (
