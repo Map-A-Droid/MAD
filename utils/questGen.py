@@ -88,6 +88,7 @@ def questtask(typeid, condition, target):
     if typeid == 4:
         arr['wb'] = ""
         arr['type'] = ""
+        arr['poke'] = ""
         text = _("Catch {0} {type}Pokemon{wb}.")
         match_object = re.search(r"'pokemon_type': \[([0-9, ]+)\]", condition)
         if match_object is not None:
@@ -98,7 +99,7 @@ def questtask(typeid, condition, target):
                     arr['type'] = pokemonTypes[pt[0]].title() + _('-type ')
                 else:
                     for ty in pt:
-                        arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + ('-type ' if last == cur else '-, ')
+                        arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (_('-type ') if last == cur else '-, ')
                         cur += 1
         if re.search(r"'type': 3", condition) is not None:
                 arr['wb'] = _(" with weather boost")
@@ -109,6 +110,10 @@ def questtask(typeid, condition, target):
                 cur = 1
                 if last == 1:
                     arr['poke'] = i8ln(pokemonname[pt[0]])
+                else:
+                    for ty in pt:
+                        arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + ('' if last == cur else ', ')
+                        cur += 1
                 text = _('Catch a {poke}.')
     elif typeid == 5:
         text = _("Spin {0} Pokestops or Gyms.")
@@ -171,6 +176,8 @@ def questtask(typeid, condition, target):
         text = text.replace(_(' gifts'),_(' gift'))
         text = text.replace(_(' {0} times'),'')
         arr['0'] = _("a");
+        
+    
 
     for key, val in arr.items():
             text = text.replace('{'+key+'}', str(val))

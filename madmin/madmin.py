@@ -345,7 +345,7 @@ def get_raids():
                 type = 'mon'
                 monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
                 if str(monid) in mondata:
-                    monName = mondata[str(monid)]["name"]
+                    monName = i8ln(mondata[str(monid)]["name"])
 
             eggId = eggIdsByLevel[int(lvl) - 1]
             if eggId == 1:
@@ -414,7 +414,7 @@ def get_mons():
             monid = int(mon)
 
             if str(monid) in mondata:
-                monName = mondata[str(monid)]["name"]
+                monName = i8ln(mondata[str(monid)]["name"])
 
             monJson = ({'filename': monPic, 'mon': monid, 'name': monName, 'lvl': lvl})
             monList.append(monJson)
@@ -545,8 +545,6 @@ def get_gymcoords():
 def get_quests():
     coords = []
     monName= ''
-    
-    mondata = open_json_file('pokemon')
 
     data = db_wrapper.quests_from_db()
     

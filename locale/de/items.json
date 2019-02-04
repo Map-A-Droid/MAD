@@ -41,7 +41,7 @@
   },
   "202": {
     "protoname": "ITEM_MAX_REVIVE",
-    "name": "Max Revive"
+    "name": "Top-Beleber"
   },
   "301": {
     "protoname": "ITEM_LUCKY_EGG",
@@ -49,7 +49,7 @@
   },
   "401": {
     "protoname": "ITEM_INCENSE_ORDINARY",
-    "name": "Incense"
+    "name": "Rauch"
   },
   "402": {
     "protoname": "ITEM_INCENSE_SPICY",
@@ -109,7 +109,7 @@
   },
   "708": {
     "protoname": "ITEM_GOLDEN_PINAP_BERRY",
-    "name": "Silver Pinap"
+    "name": "Silberne Sananabeere"
   },
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
@@ -157,7 +157,7 @@
   },
   "1106": {
     "protoname": "ITEM_GEN4_EVOLUTION_STONE",
-    "name": "Sinnoh Stone"
+    "name": "Sinnoh-Stein"
   },
   "1201": {
     "protoname": "ITEM_MOVE_REROLL_FAST_ATTACK",
@@ -165,7 +165,7 @@
   },
   "1202": {
     "protoname": "ITEM_MOVE_REROLL_SPECIAL_ATTACK",
-    "name": "LAde TM"
+    "name": "Lade TM"
   },
   "1301": {
     "protoname": "ITEM_RARE_CANDY",
