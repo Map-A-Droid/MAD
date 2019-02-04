@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2019-02-04 19:51+0100\n"
-"PO-Revision-Date: 2019-02-04 22:52+0100\n"
+"PO-Revision-Date: 2019-02-04 23:35+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -27,7 +27,7 @@ msgid "Pokemon"
 msgstr "Pokemon"
 
 msgid "Curveball"
-msgstr "Lancer à effet"
+msgstr "à effet"
 
 msgid "Excellent"
 msgstr "Excellent"
@@ -39,10 +39,10 @@ msgid "Nice"
 msgstr "Joli"
 
 msgid "Catch {0} {type}Pokemon{wb}."
-msgstr "Attrape {0} Pokémon {type} {wb}."
+msgstr "Attrape {0} Pokémon {type}{wb}."
 
 msgid "-type "
-msgstr "-type "
+msgstr ""
 
 msgid "or "
 msgstr "ou "
@@ -84,7 +84,7 @@ msgid "Favourite {0} Pokemon."
 msgstr "Met en favoris {0} Pokemon."
 
 msgid "Use {0} {type}Berries to help catch Pokemon."
-msgstr "Utilise {0} Baies {type} pour t’aider à attraper des Pokémon."
+msgstr "Utilise {0} {type} pour t’aider à attraper des Pokémon."
 
 msgid " Berry"
 msgstr " Baie"
@@ -102,7 +102,7 @@ msgid " in a row"
 msgstr " à la suite"
 
 msgid "Curveball "
-msgstr "Lancer à effet "
+msgstr "à effet "
 
 msgid "Make {0} {type}{curve}Throws{inrow}."
 msgstr "Fais {0} {type} lancers {curve}{inrow}."
@@ -120,7 +120,7 @@ msgid " Eggs"
 msgstr " Œufs"
 
 msgid "n Egg"
-msgstr "n Œufs"
+msgstr "Œufs"
 
 msgid " Raid"
 msgstr " Raid"
@@ -135,10 +135,10 @@ msgid " Battles"
 msgstr " Combats"
 
 msgid " candies"
-msgstr " Bonbons"
+msgstr " bonbons"
 
 msgid " candy"
-msgstr " Bonbon"
+msgstr " bonbon"
 
 msgid " gift"
 msgstr " cadeau"
@@ -147,7 +147,7 @@ msgid " gifts"
 msgstr " cadeaux"
 
 msgid " {0} times"
-msgstr " {0} mal"
+msgstr " {0} fois"
 
 msgid "a"
-msgstr "un"
+msgstr "1"
