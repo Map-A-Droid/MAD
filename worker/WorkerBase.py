@@ -281,7 +281,8 @@ class WorkerBase(ABC):
 
                 try:
                     self._post_move_location_routine(time_snapshot)
-                except InternalStopWorkerException as e:
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
                     log.warning("Worker %s failed running post_move_location_routine, stopping worker" % str(self._id))
                     break
                 log.info("Worker %s finished iteration, continuing work" % str(self._id))
