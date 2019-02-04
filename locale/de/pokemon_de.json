@@ -6,7 +6,7 @@
               "cp":  3757,
               "types":  [
                             {
-                                "type":  "Pfanze",
+                                "type":  "Pflanze",
                                 "color":  "#78c850"
                             },
                             {
@@ -22,7 +22,7 @@
               "cp":  5238,
               "types":  [
                             {
-                                "type":  "Pfanze",
+                                "type":  "Pflanze",
                                 "color":  "#78c850"
                             },
                             {
@@ -38,7 +38,7 @@
               "cp":  26921,
               "types":  [
                             {
-                                "type":  "Pfanze",
+                                "type":  "Pflanze",
                                 "color":  "#78c850"
                             },
                             {
@@ -532,7 +532,7 @@
                "rarity":  "Ungewöhnlich",
                "types":  [
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              },
                              {
@@ -546,7 +546,7 @@
                "rarity":  "Sehr Selten",
                "types":  [
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              },
                              {
@@ -560,7 +560,7 @@
                "rarity":  "Ultra Selten",
                "types":  [
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              },
                              {
@@ -578,7 +578,7 @@
                                  "color":  "#a8b820"
                              },
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              }
                          ]
@@ -592,7 +592,7 @@
                                  "color":  "#a8b820"
                              },
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              }
                          ]
@@ -836,7 +836,7 @@
                "rarity":  "Ungewöhnlich",
                "types":  [
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              },
                              {
@@ -850,7 +850,7 @@
                "rarity":  "Selten",
                "types":  [
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              },
                              {
@@ -866,7 +866,7 @@
                "cp":  23780,
                "types":  [
                              {
-                                 "type":  "Pfanze",
+                                 "type":  "Pflanze",
                                  "color":  "#78c850"
                              },
                              {
@@ -1270,7 +1270,7 @@
                 "rarity":  "Selten",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -1286,7 +1286,7 @@
                 "cp":  13839,
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -1420,7 +1420,7 @@
                 "rarity":  "Selten",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -1906,7 +1906,7 @@
                 "rarity":  "Ungewöhnlich",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -1918,7 +1918,7 @@
                 "cp":  4375,
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -1928,7 +1928,7 @@
                 "rarity":  "Sehr Selten",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -2266,7 +2266,7 @@
                 "rarity":  "Ultra Selten",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -2328,7 +2328,7 @@
                 "rarity":  "Verbreitet",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -2342,7 +2342,7 @@
                 "rarity":  "Ungewöhnlich",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -2356,7 +2356,7 @@
                 "rarity":  "Sehr Selten",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -2380,7 +2380,7 @@
                 "rarity":  "Verbreitet",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -2390,7 +2390,7 @@
                 "rarity":  "Ultra Selten",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3134,7 +3134,7 @@
                                   "color":  "#f85888"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3144,7 +3144,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3154,7 +3154,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3164,7 +3164,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3354,7 +3354,7 @@
                                   "color":  "#6890f0"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3368,7 +3368,7 @@
                                   "color":  "#6890f0"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3382,7 +3382,7 @@
                                   "color":  "#6890f0"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3392,7 +3392,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3402,7 +3402,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -3416,7 +3416,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -3558,7 +3558,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -3570,7 +3570,7 @@
                 "cp":  18174,
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -3921,7 +3921,7 @@
                 "cp":  10887,
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -4111,7 +4111,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -4121,7 +4121,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -4299,7 +4299,7 @@
                                   "color":  "#b8a038"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -4313,7 +4313,7 @@
                                   "color":  "#b8a038"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -4435,7 +4435,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -4813,7 +4813,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -4823,7 +4823,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -4833,7 +4833,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -5035,7 +5035,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -5049,7 +5049,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -5193,7 +5193,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -5203,7 +5203,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -5619,7 +5619,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -5663,7 +5663,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -5677,7 +5677,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -5743,7 +5743,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -5801,7 +5801,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6083,7 +6083,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6093,7 +6093,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6103,7 +6103,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6251,7 +6251,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6261,7 +6261,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6577,7 +6577,7 @@
                                   "color":  "#a8b820"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6591,7 +6591,7 @@
                                   "color":  "#a8b820"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6605,7 +6605,7 @@
                                   "color":  "#a8b820"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6657,7 +6657,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -6671,7 +6671,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -6685,7 +6685,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6695,7 +6695,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -6777,7 +6777,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -7115,7 +7115,7 @@
                                   "color":  "#8a8a59"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -7129,7 +7129,7 @@
                                   "color":  "#8a8a59"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -7177,7 +7177,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -7191,7 +7191,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -7271,7 +7271,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -7285,7 +7285,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -7789,7 +7789,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -7873,7 +7873,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -7883,7 +7883,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -7893,7 +7893,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -8133,7 +8133,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -8143,7 +8143,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -8563,7 +8563,7 @@
                                   "color":  "#705898"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -8577,7 +8577,7 @@
                                   "color":  "#705898"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -8591,7 +8591,7 @@
                                   "color":  "#705898"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -8605,7 +8605,7 @@
                                   "color":  "#705898"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -8729,7 +8729,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -8743,7 +8743,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -8757,7 +8757,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -9111,7 +9111,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -9121,7 +9121,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -9131,7 +9131,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -9145,7 +9145,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -9215,7 +9215,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -9225,7 +9225,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -9235,7 +9235,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -9463,7 +9463,7 @@
                                   "color":  "#705898"
                               },
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               }
                           ]
@@ -9539,7 +9539,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
@@ -9681,7 +9681,7 @@
                 "rarity":  "",
                 "types":  [
                               {
-                                  "type":  "Pfanze",
+                                  "type":  "Pflanze",
                                   "color":  "#78c850"
                               },
                               {
