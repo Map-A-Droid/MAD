@@ -399,7 +399,7 @@ class WorkerQuests(WorkerBase):
                 self.reboot_count += 1
                 if self.reboot_count > 3:
                     log.error("Rebooting %s" % str(self._id))
-                    self._reboot()
+                    #self._reboot()
                     raise InternalStopWorkerException
                 else:
                     self._restart_pogo(True)
@@ -417,5 +417,5 @@ class WorkerQuests(WorkerBase):
             self.reboot_count += 1
             if self.reboot_count > 3:
                 log.error("Rebooting %s" % str(self._id))
-                self._reboot()
+                #self._reboot()
         return data_requested

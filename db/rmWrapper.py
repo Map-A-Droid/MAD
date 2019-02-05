@@ -925,7 +925,7 @@ class RmWrapper(DbWrapperBase):
                         cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
-                        form = gym['gym_details']['raid_info']['raid_pokemon']['form']
+                        form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
                     else:
                         pokemon_id = None
                         cp = 0
