@@ -34,17 +34,13 @@ new Vue({
 		}
 	},
 	watch: {
-		'coordinates.worker': {
-			deep: true,
-			handler: function() {
-				// TODO add ability to update worker
-			}
-		},
 		layers: {
 			deep: true,
 			handler: function() {
 				for (k in this.layers) {
 					tlayer = this.layers[k];
+
+					this.updateStoredSetting('layer-'+k, tlayer.show);
 
 					if (tlayer.show == true && !map.hasLayer(leaflet_data["layers"][k])) {
 						map.addLayer(leaflet_data["layers"][k]);
@@ -58,6 +54,7 @@ new Vue({
 			deep: true,
 			handler: function() {
 				for (routetype in this.settings.routes.coordinateRadius) {
+					this.updateStoredSetting('settings-coordinateRadius-'+routetype, this.settings.routes.coordinateRadius[routetype]);
 					for (layer in this.layers) {
 						if (this.layers[layer].type == "route-"+routetype) {
 							leaflet_data.layers[layer].getLayers().forEach(function(point) {
@@ -79,9 +76,6 @@ new Vue({
 
 		// fetch everything
 		this.map_fetch_everything();
-
-		// TODO auto-update some data
-		// setInterval(this.map_fetch_worker, 5000);
 	},
 	methods: {
 		map_fetch_everything() {
@@ -344,10 +338,33 @@ new Vue({
 			return popuptext;
 
 		},
+		getStoredSetting(name, defaultval) {
+			var val = localStorage.getItem('settings');
+			if (val == null) {
+				return defaultval;
+			}
+
+			var settings = JSON.parse(val);
+			if (settings[name] === undefined) {
+				return defaultval;
+			}
+
+			return settings[name];
+		},
+		updateStoredSetting(name, value) {
+			var settings = {};
+			var storedSettings = localStorage.getItem('settings');
+			if (storedSettings != null) {
+				settings = JSON.parse(storedSettings);
+			}
+
+			settings[name] = value;
+			localStorage.setItem('settings', JSON.stringify(settings));
+		},
 		// add a new layer
 		addLayer(name, data, show, type) {
 			if (!leaflet_data['layers'][name]) {
-				var lobj = {"show": show, "type": type};
+				var lobj = {"show": this.getStoredSetting('layer-'+name, show), "type": type};
 				leaflet_data["layers"][name] = data;
 				this.$set(this.layers, name, lobj);
 			}
@@ -355,11 +372,11 @@ new Vue({
 		// event handler if the map has been dragged/moved
 		l_event_moveend() {
 			var center = map.getCenter();
-			localStorage.setItem('center', center.lat+','+center.lng);
+			this.updateStoredSetting('center', center.lat+','+center.lng);
 		},
 		// event handler if the map has been zoomed
 		l_event_zoomed() {
-			localStorage.setItem('zoomlevel', map.getZoom());
+			this.updateStoredSetting('zoomlevel', map.getZoom());
 		},
 		// convert lat/lng to lng/lat
 		convertToLonLat(coords) {
@@ -378,9 +395,14 @@ new Vue({
 		// generate the map
 		initMap() {
 			// get stored center and zoom level if they exists
-			const storedZoom = localStorage.getItem('zoomlevel') || 13;
-			const storedCenter = localStorage.getItem('center') || '52.521374,13.411201';
+			const storedZoom = this.getStoredSetting('zoomlevel', 13);
+			const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
 			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
+
+			// TODO find a proper place for this
+			this.settings.routes.coordinateRadius.raid = this.getStoredSetting('settings-coordinateRadius-raid', 490);
+			this.settings.routes.coordinateRadius.quest = this.getStoredSetting('settings-coordinateRadius-quest', 40);
+			this.settings.routes.coordinateRadius.mon = this.getStoredSetting('settings-coordinateRadius-mon', 67);
 
 			map = L.map('map', {
 				layers: [layer],
