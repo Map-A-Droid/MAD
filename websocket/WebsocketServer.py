@@ -353,7 +353,8 @@ class WebsocketServer(object):
 
     def __reset_fail_counter(self, id):
         self.__current_users_mutex.acquire()
-        self.__current_users[id][3] = 0
+        if id in self.__current_users.keys():
+            self.__current_users[id][3] = 0
         self.__current_users_mutex.release()
 
     def __increase_fail_counter(self, id):
