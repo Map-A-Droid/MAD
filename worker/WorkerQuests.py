@@ -397,7 +397,8 @@ class WorkerQuests(WorkerBase):
             if data_requested is not None and self._data_error_counter >= int(max_data_err_counter):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
                 self.reboot_count += 1
-                if self.reboot_count > 3:
+                if (self._devicesettings.get("reboot", False)
+                        and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                     log.error("Rebooting %s" % str(self._id))
                     self._reboot()
                     raise InternalStopWorkerException
@@ -418,7 +419,8 @@ class WorkerQuests(WorkerBase):
         else:
             log.warning("Timeout waiting for data")
             self.reboot_count += 1
-            if self.reboot_count > 3:
+            if (self._devicesettings.get("reboot", False)
+                    and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
         return data_requested
