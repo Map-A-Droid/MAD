@@ -114,14 +114,15 @@ class WorkerQuests(WorkerBase):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         self._work_mutex.acquire()
-        log.debug("Processing Stop / Quest...")
+        log.info("Processing Stop / Quest...")
 
         data_received = '-'
 
         reachedMainMenu = self._check_pogo_main_screen(15, True)
         if not reachedMainMenu:
             self._restart_pogo()
-
+            
+        log.info('Open Stop')
         data_received = self._open_pokestop(data_received)
         if data_received == 'Stop' : self._handle_stop(data_received)
         log.debug("Releasing lock")
@@ -275,8 +276,9 @@ class WorkerQuests(WorkerBase):
 
     def _handle_stop(self, data_received):
         to = 0
-        while not 'Quest' in data_received and int(to) < 3:
+        while not 'Quest' in data_received and int(to) <= 3:
             curTime = time.time()
+            log.info('Spin Stop')
             self._spin_wheel(self._delay_add)
             data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=101, timeout=20)
             if data_received is not None:
@@ -284,26 +286,20 @@ class WorkerQuests(WorkerBase):
                 if 'Box' in data_received:
                     log.error('Box is full ... Next round!')
                     self._close_gym(self._delay_add)
-                    # to = 3
                     self.clear_thread_task = 1
-                    # do NOT start the threads here since we may have a pogo restart at the beginning of a work
-                    # loop, the healthcheck will call the start of the clear...
-                    # self._start_inventory_clear.set()
-                    # self._clear_box = True
-                    # TODO: what was that one for?
-                    # roundcount = 0
                     break
 
                 if 'Quest' in data_received:
+                    log.info('Getting new Quest')
                     self._close_gym(self._delay_add)
                     self.clear_thread_task = 2
-                    # self._clear_quest = True
-                    # self._start_inventory_clear.set()
                     break
 
                 if 'SB' in data_received:
                     log.error('Softban - waiting...')
                     time.sleep(10)
+                else:
+                    log.error('Other Return: %s' % str(data_received))
 
                 to += 1
                 if to >= 3:
@@ -400,7 +396,7 @@ class WorkerQuests(WorkerBase):
                 if (self._devicesettings.get("reboot", False)
                         and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                     log.error("Rebooting %s" % str(self._id))
-                    #self._reboot()
+                    self._reboot()
                     raise InternalStopWorkerException
                 else:
                     self._restart_pogo(True)
@@ -419,5 +415,5 @@ class WorkerQuests(WorkerBase):
             if (self._devicesettings.get("reboot", False)
                     and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                 log.error("Rebooting %s" % str(self._id))
-                #self._reboot()
+                self._reboot()
         return data_requested

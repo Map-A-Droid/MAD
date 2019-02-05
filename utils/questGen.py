@@ -48,8 +48,10 @@ def generate_quest(quest):
 
         if '{0}' in quest_type:
             quest_type_text = quest_type.replace('{0}', quest_target)
+            
+        
 
-        quest_task = questtask(quest_type_raw, quest_condition, quest_target)
+        quest_task = quest['task']
         
         quest_raw = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
             'quest_type_raw': quest_type_raw, 'quest_type': quest_type_text, 'quest_condition': quest_condition, 'item_amount': item_amount, 'item_type': item_type, 
