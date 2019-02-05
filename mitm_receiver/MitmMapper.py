@@ -10,11 +10,18 @@ class MitmMapper(object):
         self.__mapping = {}
         self._playerstats = {}
         self.__mapping_mutex = Lock()
+        self._device_mappings = device_mappings
         if device_mappings is not None:
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}
                 self._playerstats[origin] = PlayerStats(origin)
                 self._playerstats[origin]._open_player_stats()
+
+    def get_mon_ids_iv(self, origin):
+        if self._device_mappings is None or origin not in self._device_mappings.keys():
+            return []
+        else:
+            return self._device_mappings[origin].get("settings", {}).get("mon_ids_iv", [])
 
     def request_latest(self, origin, key=None):
         self.__mapping_mutex.acquire()

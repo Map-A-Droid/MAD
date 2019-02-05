@@ -228,12 +228,19 @@ class WorkerMITM(WorkerBase):
 
             max_data_err_counter = 60
             log.debug("Current errorcounter: %s" % str(self.__data_error_counter))
+            try:
+                current_routemanager = self._get_currently_valid_routemanager()
+            except InternalStopWorkerException as e:
+                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
+                raise InternalStopWorkerException
             if self._devicesettings is not None:
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
-            if data_requested is None and self.__data_error_counter >= int(max_data_err_counter):
+            if (data_requested is None and self.__data_error_counter >= int(max_data_err_counter)
+                    and not current_routemanager.init):
                 log.warning("Errorcounter reached restart thresh, restarting pogo")
                 self.reboot_count += 1
-                if self.reboot_count > 3:
+                if (self._devicesettings.get("reboot", False)
+                        and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                     log.error("Rebooting %s" % str(self._id))
                     self._reboot()
                     raise InternalStopWorkerException
@@ -249,9 +256,18 @@ class WorkerMITM(WorkerBase):
             self.reboot_count = 0
             self.__data_error_counter = 0
         else:
+            # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
+            # TODO: be more precise (timeout vs empty data)
             log.warning("Timeout waiting for data")
+            try:
+                current_routemanager = self._get_currently_valid_routemanager()
+            except InternalStopWorkerException as e:
+                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
+                raise InternalStopWorkerException
             self.reboot_count += 1
-            if self.reboot_count > 3:
+            if (self._devicesettings.get("reboot", False)
+                    and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)
+                    and not current_routemanager.init):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
         return data_requested
