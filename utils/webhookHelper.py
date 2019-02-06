@@ -70,6 +70,7 @@ quest_webhook_payload = """[{{
                 "quest_reward_type_raw": "{quest_reward_type_raw}",
                 "quest_target": "{quest_target}",
                 "quest_task": "{quest_task}",
+                "quest_condition": "{quest_condition}"
         }},
       "type": "quest"
    }} ]"""            
@@ -515,7 +516,8 @@ class WebhookHelper(object):
             pokemon_id=quest['pokemon_id'],
             item_amount=quest['item_amount'],
             item_id=quest['item_id'],
-            task=quest['quest_task'])
+            task=quest['quest_task'],
+            quest_condition: quest['quest_condition'])
 
         payload = json.loads(data)
         self.__sendToWebhook(payload)
