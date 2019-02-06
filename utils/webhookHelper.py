@@ -517,7 +517,7 @@ class WebhookHelper(object):
             item_amount=quest['item_amount'],
             item_id=quest['item_id'],
             task=quest['quest_task'],
-            quest_condition: quest['quest_condition'])
+            quest_condition=quest['quest_condition'])
 
         payload = json.loads(data)
         self.__sendToWebhook(payload)
