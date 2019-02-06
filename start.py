@@ -258,12 +258,6 @@ if __name__ == "__main__":
                                                                 device_mappings, auths,))
             t.daemon = True
             t.start()
-            
-    log.info('Starting Log Cleanup Thread....')
-    t_cleanup = Thread(name='cleanuplogs',
-                      target=delete_old_logs(args.cleanup_age))
-    t_cleanup.daemon = True
-    t_cleanup.start()
 
     if args.only_ocr:
         from ocr.copyMons import MonRaidImages
@@ -280,6 +274,13 @@ if __name__ == "__main__":
         t_flask = Thread(name='madmin', target=start_madmin)
         t_flask.daemon = False
         t_flask.start()
+        
+    log.info('Starting Log Cleanup Thread....')
+    t_cleanup = Thread(name='cleanuplogs',
+                      target=delete_old_logs(args.cleanup_age))
+    t_cleanup.join()
+    t_cleanup.daemon = True
+    t_cleanup.start()
 
     while True:
         time.sleep(10)
