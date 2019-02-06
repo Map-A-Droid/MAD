@@ -218,6 +218,16 @@ def parseArgs():
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
+                              
+    parser.add_argument('-lr', '--log-rotation',
+                        help=('Active log rotation. (Default: Disable)'),
+                        action='store_true', default=False)
+                              
+    parser.add_argument('-lrbc', '--log-rotation-backup-count', default=10, type=int,
+                        help=('Amount of Log Rotation Backup Files. (Default: 10)'))
+                              
+    parser.add_argument('-lrfs', '--log-rotation-file-size', default=10485760, type=int,
+                        help=('Filesize of Log Files in bytes (Default: 10485760 = 10 MB)'))
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
                         help='Activate auto hatch of level 5 eggs')

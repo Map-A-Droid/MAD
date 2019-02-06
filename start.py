@@ -8,6 +8,7 @@ import time
 from threading import Thread
 
 from colorlog import ColoredFormatter
+from logging.handlers import RotatingFileHandler
 from watchdog.observers import Observer
 
 from db.monocleWrapper import MonocleWrapper
@@ -70,6 +71,7 @@ stderr_hdlr.setFormatter(formatter)
 stderr_hdlr.setLevel(logging.WARNING)
 
 log = logging.getLogger()
+
 log.addHandler(stdout_hdlr)
 log.addHandler(stderr_hdlr)
 
@@ -92,8 +94,13 @@ def set_log_and_verbosity(log):
     if not os.path.exists(args.log_path):
         os.mkdir(args.log_path)
     if not args.no_file_logs:
+        
         filename = os.path.join(args.log_path, args.log_filename)
-        filelog = logging.FileHandler(filename)
+        if not args.log_rotation:
+            filelog = logging.FileHandler(filename)
+        else:
+            filelog = RotatingFileHandler(filename, maxBytes=args.log_rotation_file_size,
+                                          backupCount=args.log_rotation_backup_count)
         filelog.setFormatter(logging.Formatter(
             '%(asctime)s [%(threadName)18s][%(module)14s][%(levelname)8s] ' +
             '%(message)s'))
