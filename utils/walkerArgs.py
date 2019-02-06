@@ -226,7 +226,7 @@ def parseArgs():
     parser.add_argument('-lrfs', '--log-rotation-file-size', default=10485760, type=int,
                         help=('Filesize of Log Files in bytes (Default: 10485760 = 10 MB)'))
     
-    parser.add_argument('-clnupa', '--cleanup-age', default='300',
+    parser.add_argument('-cla', '--cleanup-age', default='300', type=int,
                         help='Delete logs older than X minutes. Default: 300')
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
