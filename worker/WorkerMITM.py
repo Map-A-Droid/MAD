@@ -245,8 +245,8 @@ class WorkerMITM(WorkerBase):
                     self._reboot()
                     raise InternalStopWorkerException
                 else:
-                    # self._start_pogodroid()
                     self._restart_pogo(True)
+                    self.reboot_count = 0
                 return None
             elif data_requested is None:
                 # log.debug('data_requested still None...')
@@ -270,4 +270,9 @@ class WorkerMITM(WorkerBase):
                     and not current_routemanager.init):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
+                raise InternalStopWorkerException
+            elif self.reboot_count > self._devicesettings.get("reboot_thresh", 5):
+                # self._start_pogodroid()
+                self._restart_pogo(True)
+                self.reboot_count = 0
         return data_requested

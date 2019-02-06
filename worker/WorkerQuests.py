@@ -190,7 +190,7 @@ class WorkerQuests(WorkerBase):
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
-        time.sleep(.5 + int(delayadd))
+        time.sleep(1 + int(delayadd))
         x, y = self._resocalc.get_item_menu_coords(self)[0], self._resocalc.get_item_menu_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
@@ -201,7 +201,7 @@ class WorkerQuests(WorkerBase):
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
-        while int(to) <= 5:
+        while int(to) <= 3:
 
             self._communicator.click(int(x), int(y))
             time.sleep(.5 + int(delayadd))
@@ -213,7 +213,7 @@ class WorkerQuests(WorkerBase):
             curTime = time.time()
             self._communicator.click(int(delx), int(dely))
 
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=10)
+            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=25)
 
             if data_received is not None:
                 if 'Clear' in data_received:
@@ -247,6 +247,7 @@ class WorkerQuests(WorkerBase):
 
     def _open_pokestop(self, data_received):
         to = 0
+        data_received = '-'
         while 'Stop' not in data_received and int(to) < 3:
             curTime = time.time()
             self._open_gym(self._delay_add)
@@ -295,7 +296,7 @@ class WorkerQuests(WorkerBase):
                     self.clear_thread_task = 2
                     break
 
-                if 'SB' in data_received:
+                if 'SB' in data_received or 'Time' in data_received:
                     log.error('Softban - waiting...')
                     time.sleep(10)
                 else:
@@ -329,12 +330,12 @@ class WorkerQuests(WorkerBase):
                         # TODO: consider individual counters?
                         self._data_error_counter = 0
                         self.reboot_count = 0
-                        return 'Gym'
+                        data_requested = 'Gym'
                 if 102 in latest:
                     if latest[102]['timestamp'] >= timestamp:
                         self._data_error_counter = 0
                         self.reboot_count = 0
-                    return 'Mon'
+                    data_requested = 'Mon'
 
             if proto_to_wait_for not in latest:
                 log.warning("No data linked to the requested proto since MAD started. Count: %s"
@@ -388,6 +389,12 @@ class WorkerQuests(WorkerBase):
                     self._data_error_counter += 1
                     time.sleep(0.5)
             max_data_err_counter = 60
+            log.debug("Current errorcounter: %s" % str(self._data_error_counter))
+            try:
+                current_routemanager = self._get_currently_valid_routemanager()
+            except InternalStopWorkerException as e:
+                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
+                raise InternalStopWorkerException
             if self._devicesettings is not None:
                 max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
             if data_requested is not None and self._data_error_counter >= int(max_data_err_counter):
@@ -400,6 +407,7 @@ class WorkerQuests(WorkerBase):
                     raise InternalStopWorkerException
                 else:
                     self._restart_pogo(True)
+                    self.reboot_count = 0
                 return None
             elif data_requested is None:
                 # log.debug('data_requested still None...')
@@ -416,4 +424,9 @@ class WorkerQuests(WorkerBase):
                     and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
+                raise InternalStopWorkerException
+            elif self.reboot_count > self._devicesettings.get("reboot_thresh", 5):
+                # self._start_pogodroid()
+                self._restart_pogo(True)
+                self.reboot_count = 0
         return data_requested
