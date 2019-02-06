@@ -126,6 +126,30 @@ def start_ocr_observer(args, db_helper):
     observer.schedule(checkScreenshot(args, db_helper), path=args.raidscreen_path)
     observer.start()
 
+def delete_old_logs(minutes):
+    if minutes == "0":
+        log.info('delete_old_logs: Search/Delete logs is disabled')
+        return
+
+    while True:
+        log.info('delete_old_logs: Search/Delete logs older than ' + str(minutes) + ' minutes')
+
+        now = time.time()
+        only_files = []
+        
+        logpath = args.log_path
+
+        log.debug('delete_old_logs: Log Folder: ' + str(logpath))
+        for file in os.listdir(logpath):
+            file_full_path = os.path.join(logpath, file)
+            if os.path.isfile(file_full_path):
+                # Delete files older than x days
+                if os.stat(file_full_path).st_mtime < now - int(minutes) * 60:
+                    os.remove(file_full_path)
+                    log.info('delete_old_logs: File Removed : ' + file_full_path)
+
+        log.info('delete_old_logs: Search/Delete logs finished')
+        time.sleep(3600)
 
 def start_madmin():
     from madmin.madmin import app
@@ -234,6 +258,12 @@ if __name__ == "__main__":
                                                                 device_mappings, auths,))
             t.daemon = True
             t.start()
+            
+    log.info('Starting Log Cleanup Thread....')
+    t_cleanup = Thread(name='cleanuplogs',
+                      target=delete_old_logs(args.cleanup_age))
+    t_cleanup.daemon = True
+    t_cleanup.start()
 
     if args.only_ocr:
         from ocr.copyMons import MonRaidImages

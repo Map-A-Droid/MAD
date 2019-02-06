@@ -117,9 +117,6 @@ def parseArgs():
                         help=('Set Lng from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
 
-    parser.add_argument('-clnupa', '--cleanup_age', default='1440',
-                        help='Delete Screenshots older than X minutes. Default: 1440')
-
     parser.add_argument('-gdv', '--gym_detection_value', default='0.75', type=float,
                         help=(
                             'Value of gym detection. The higher the more accurate is checked. 0.65 maybe generate '
@@ -224,10 +221,13 @@ def parseArgs():
                         action='store_true', default=False)
                               
     parser.add_argument('-lrbc', '--log-rotation-backup-count', default=10, type=int,
-                        help=('Amount of Log Rotation Backup Files. (Default: 10)'))
+                        help=('Number of Log Rotation Backup Files. (Default: 10)'))
                               
     parser.add_argument('-lrfs', '--log-rotation-file-size', default=10485760, type=int,
                         help=('Filesize of Log Files in bytes (Default: 10485760 = 10 MB)'))
+    
+    parser.add_argument('-clnupa', '--cleanup-age', default='300',
+                        help='Delete logs older than X minutes. Default: 300')
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
                         help='Activate auto hatch of level 5 eggs')
