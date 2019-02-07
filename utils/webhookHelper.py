@@ -516,7 +516,7 @@ class WebhookHelper(object):
             pokemon_id=quest['pokemon_id'],
             item_amount=quest['item_amount'],
             item_id=quest['item_id'],
-            task=quest['quest_task'],
+            quest_task=quest['quest_task'],
             quest_condition=quest['quest_condition'])
 
         payload = json.loads(data)

@@ -89,6 +89,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #weather_webhook             # Activate support for weather webhook
 #pokemon_webhook             # Activate support for pokemon webhook
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
+#quest_webhook               # Activate support for quest webhook
 
 # Auto Hatch
 ######################

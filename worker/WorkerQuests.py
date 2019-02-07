@@ -123,7 +123,7 @@ class WorkerQuests(WorkerBase):
             self._restart_pogo()
             
         log.info('Open Stop')
-        data_received = self._open_pokestop(data_received)
+        data_received = self._open_pokestop()
         if data_received == 'Stop' : self._handle_stop(data_received)
         log.debug("Releasing lock")
         self._work_mutex.release()
@@ -245,7 +245,7 @@ class WorkerQuests(WorkerBase):
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
                                         values_dict=injected_settings)
 
-    def _open_pokestop(self, data_received):
+    def _open_pokestop(self):
         to = 0
         data_received = '-'
         while 'Stop' not in data_received and int(to) < 3:
@@ -260,6 +260,8 @@ class WorkerQuests(WorkerBase):
                            self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(1)
+                    if not self._checkPogoButton():
+                        self._checkPogoClose()
                     self._turn_map(self._delay_add)
                 if 'Mon' in data_received:
                     time.sleep(2)
@@ -267,6 +269,8 @@ class WorkerQuests(WorkerBase):
                     x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(.5)
+                    if not self._checkPogoButton():
+                        self._checkPogoClose()
                     self._turn_map(self._delay_add)
             if data_received is None:
                 data_received = '-'
@@ -277,7 +281,7 @@ class WorkerQuests(WorkerBase):
 
     def _handle_stop(self, data_received):
         to = 0
-        while not 'Quest' in data_received and int(to) <= 3:
+        while not 'Quest' in data_received and int(to) < 3:
             curTime = time.time()
             log.info('Spin Stop')
             self._spin_wheel(self._delay_add)
@@ -298,7 +302,9 @@ class WorkerQuests(WorkerBase):
 
                 if 'SB' in data_received or 'Time' in data_received:
                     log.error('Softban - waiting...')
+                    self._close_gym(self._delay_add)
                     time.sleep(10)
+                    self._open_pokestop()
                 else:
                     log.error('Other Return: %s' % str(data_received))
 
@@ -330,12 +336,12 @@ class WorkerQuests(WorkerBase):
                         # TODO: consider individual counters?
                         self._data_error_counter = 0
                         self.reboot_count = 0
-                        data_requested = 'Gym'
+                        return 'Gym'
                 if 102 in latest:
                     if latest[102]['timestamp'] >= timestamp:
                         self._data_error_counter = 0
                         self.reboot_count = 0
-                    data_requested = 'Mon'
+                        return 'Mon'
 
             if proto_to_wait_for not in latest:
                 log.warning("No data linked to the requested proto since MAD started. Count: %s"
