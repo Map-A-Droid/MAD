@@ -840,12 +840,13 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, last_updated, cp, move_1, move_2) "
+            "time_end, last_updated, cp, move_1, move_2, form) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
-            "last_updated=VALUES(last_updated), cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2)"
+            "last_updated=VALUES(last_updated), cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
+            "form=VALUES(form)"
         )
 
         for cell in cells:
@@ -856,11 +857,13 @@ class MonocleWrapper(DbWrapperBase):
                         cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
+                        form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
+                        form = None
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
@@ -892,7 +895,8 @@ class MonocleWrapper(DbWrapperBase):
                             raidbattleSec,
                             raidendSec,
                             now,
-                            cp, move_1, move_2
+                            cp, move_1, move_2, 
+                            form
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -900,27 +904,56 @@ class MonocleWrapper(DbWrapperBase):
         return True
 
     def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
-        log.debug("Inserting/updating weather sent by %s" % str(origin))
-        cells = map_proto.get("cells", None)
-        if cells is None:
-            return False
+            log.debug("Inserting/updating weather sent by %s" % str(origin))
+            cells = map_proto.get("cells", None)
+            if cells is None:
+                return False
 
-        query_weather = (
-            "INSERT INTO weather (s2_cell_id, `condition`, alert_severity, warn, day, updated) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE `condition`=VALUES(`condition`), alert_severity=VALUES(alert_severity), "
-            "warn=VALUES(warn), day=VALUES(day), updated=VALUES(updated)"
-        )
-
-        list_of_weather_vals = []
-        for client_weather in map_proto['client_weather']:
-            # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract['cell_id'])
-            time_of_day = map_proto.get("time_of_day_value", 0)
-            list_of_weather_vals.append(
-                self.__extract_args_single_weather(client_weather, time_of_day, received_timestamp)
+            query_weather_insert = (
+                "INSERT INTO weather (s2_cell_id, `condition`, alert_severity, warn, day, updated) "
+                "VALUES (%s, %s, %s, %s, %s, %s) "
             )
-        self.executemany(query_weather, list_of_weather_vals, commit=True)
-        return True
+            query_weather_update = (
+                "UPDATE weather set `condition`=%s, alert_severity=%s, "
+                "warn=%s, day=%s, updated=%s where id = %s"
+            )
+        
+            list_of_weather_vals = []
+            list_of_weather_updates_vals = []
+            list_of_weather_inserts_vals = []
+        
+            for client_weather in map_proto['client_weather']:
+                # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract['cell_id'])
+                time_of_day = map_proto.get("time_of_day_value", 0)
+                list_of_weather_vals.append(
+                    self.__extract_args_single_weather(client_weather, time_of_day, received_timestamp)
+                )
+            
+            for weather_data in list_of_weather_vals:
+                query = (
+                    "SELECT id "
+                    "FROM weather "
+                    "WHERE s2_cell_id = %s"
+                )
+                vals = (
+                    weather_data[0],
+                )
+
+                res = self.execute(query, vals)
+            
+                number_of_rows = len(res)
+
+                if number_of_rows > 0:
+                    dbid = ",".join(map(str, res[0]))
+                    list_of_weather_updates_vals.append((weather_data[1], weather_data[2], weather_data[3], 
+                            weather_data[4], weather_data[5], dbid))
+                else:
+                    list_of_weather_inserts_vals.append((weather_data[0], weather_data[1], weather_data[2], 
+                            weather_data[3], weather_data[4], weather_data[5]))
+        
+            self.executemany(query_weather_insert, list_of_weather_inserts_vals, commit=True)   
+            self.executemany(query_weather_update, list_of_weather_updates_vals, commit=True)
+            return True
 
     def __check_last_updated_column_exists(self):
         query = (
@@ -1015,7 +1048,8 @@ class MonocleWrapper(DbWrapperBase):
             return None
 
         now = int(time.time())
-        lure = int(float(stop_data['lure_expires']))
+        # lure = int(float(stop_data['lure_expires']))
+        lure = 0
         if lure > 0:
             lure = lure / 1000
         return (

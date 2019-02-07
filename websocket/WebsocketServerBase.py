@@ -4,15 +4,17 @@ import logging
 import math
 import queue
 import sys
+import time
 from abc import ABC
 from threading import Lock, Event, Thread
 
 import websockets
 
 from utils.authHelper import check_auth
-from utils.madGlobals import WebsocketWorkerRemovedException, MadGlobals
+from utils.madGlobals import WebsocketWorkerRemovedException
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
+from utils.timer import Timer
 
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
@@ -22,6 +24,7 @@ class WebsocketServerBase(ABC):
     def __init__(self, args, listen_address, listen_port, mitm_mapper, db_wrapper, routemanagers, device_mappings,
                  auths):
         self.__current_users = {}
+        self.__users_mutex = Lock()
         self.__listen_adress = listen_address
         self.__listen_port = listen_port
         self._send_queue = queue.Queue()
@@ -54,17 +57,16 @@ class WebsocketServerBase(ABC):
         asyncio.set_event_loop(loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_adress, self.__listen_port, max_size=2 ** 25,
-                             origins=allowed_origins, ping_timeout=60, ping_interval=60))
+                             origins=allowed_origins, ping_timeout=10, ping_interval=15))
         asyncio.get_event_loop().run_forever()
 
     async def __unregister(self, websocket):
         id = str(websocket.request_headers.get_all("Origin")[0])
+        self.__users_mutex.acquire()
         worker = self.__current_users.get(id, None)
-        if worker is None:
-            return
-        else:
-            # worker[1].stop_worker()
+        if worker is not None:
             self.__current_users.pop(id)
+        self.__users_mutex.release()
 
     async def __register(self, websocket):
         # await websocket.recv()
@@ -80,14 +82,25 @@ class WebsocketServerBase(ABC):
             except IndexError:
                 log.warning("Client from %s tried to connect without auth header" % str(websocket))
                 return False
-        if self.__current_users.get(id, None) is not None:
-            log.warning("Worker for %s is already running" % str(id))
+
+        self.__users_mutex.acquire()
+        user_present = self.__current_users.get(id, None)
+        if user_present is not None:
+            log.warning("Worker for %s is already running, checking if connection is alive" % str(id))
+            if user_present[2].closed:
+                log.warning("Connection is already closed, gotta unregister/remove and wait for worker to "
+                            "reconnect again")
+                self.__current_users.pop(id)
+            self.__users_mutex.release()
             return False
         elif self.auths and authBase64 and not check_auth(authBase64, self.args, self.auths):
+            self.__users_mutex.release()
             return False
 
         lastKnownState = {}
         client_mapping = self.device_mappings[id]
+        timer = Timer(client_mapping["switch"], id, client_mapping["switch_interval"])
+        time.sleep(1)
         daytime_routemanager = self.routemanagers[client_mapping["daytime_area"]].get("routemanager")
         if client_mapping.get("nighttime_area", None) is not None:
             nightime_routemanager = self.routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
@@ -96,45 +109,46 @@ class WebsocketServerBase(ABC):
         devicesettings = client_mapping["settings"]
 
         started = False
-        if MadGlobals.sleep is True:
+        if timer.get_switch() is True:
             # start the appropriate nighttime manager if set
             if nightime_routemanager is None:
                 pass
             elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                    self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+                worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                    self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper, timer=timer)
                 started = True
             elif nightime_routemanager.mode in ["raids_ocr"]:
                 from worker.WorkerOcr import WorkerOcr
-                Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.db_wrapper)
+                worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                   devicesettings, db_wrapper=self.db_wrapper, timer=timer)
                 started = True
             elif nightime_routemanager.mode in ["pokestops"]:
-                Worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                      self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+                worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                      self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper, timer=timer)
                 started = True
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
-        if not MadGlobals.sleep or not started:
+        if not timer.get_switch() or not started:
             # we either gotta run daytime mode OR nighttime routemanager not set
             if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                Worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                    self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+                worker = WorkerMITM(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                    self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper, timer=timer)
             elif daytime_routemanager.mode in ["raids_ocr"]:
                 from worker.WorkerOcr import WorkerOcr
-                Worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.db_wrapper)
+                worker = WorkerOcr(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                   devicesettings, db_wrapper=self.db_wrapper, timer=timer)
             elif daytime_routemanager.mode in ["pokestops"]:
-                Worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
-                                      self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper)
+                worker = WorkerQuests(self.args, id, lastKnownState, self, daytime_routemanager, nightime_routemanager,
+                                      self._mitm_mapper, devicesettings, db_wrapper=self.db_wrapper, timer=timer)
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
 
-        newWorkerThread = Thread(name='worker_%s' % id, target=Worker.start_worker)
-        self.__current_users[id] = [newWorkerThread, Worker, websocket]
-        newWorkerThread.daemon = False
+        newWorkerThread = Thread(name='worker_%s' % id, target=worker.start_worker)
+        self.__current_users[id] = [newWorkerThread, worker, websocket, 0]
+        self.__users_mutex.release()
+        newWorkerThread.daemon = True
         newWorkerThread.start()
 
         return True
@@ -174,6 +188,8 @@ class WebsocketServerBase(ABC):
         # [value[1].send(next.message) for key, value in self.__current_users if key == next.id]
 
     async def _consumer_handler(self, websocket, path):
+        if websocket is None:
+            return
         while True:
             message = None
             id = str(websocket.request_headers.get_all("Origin")[0])
@@ -181,12 +197,18 @@ class WebsocketServerBase(ABC):
                 asyncio.wait_for(websocket.recv(), timeout=0.01)
                 message = await websocket.recv()
             except asyncio.TimeoutError:
-                log.debug('timeout!')
+                # log.debug('timeout!')
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed:
                 log.debug("Connection closed while receiving data")
                 log.debug("Closed connection to %s" % str(id))
                 worker = self.__current_users.get(id, None)
+                if worker is not None:
+                    worker[1].stop_worker()
+                # also remove the worker from our current users list!
+                self.__users_mutex.acquire()
+                self.__current_users.pop(id)
+                self.__users_mutex.release()
                 return
                 # TODO: cleanup, stop worker...
             if message is not None:
@@ -199,6 +221,7 @@ class WebsocketServerBase(ABC):
         # newWorkerThread.daemon = False
         # newWorkerThread.start()
         if not continueWork:
+            log.error("Not gonna continue, could not register. Closing connection")
             return
         consumer_task = asyncio.ensure_future(
             self._consumer_handler(websocket, path))
@@ -253,6 +276,7 @@ class WebsocketServerBase(ABC):
             result = True
         else:
             # the request has already been deleted due to a timeout...
+            log.error("Request has already been deleted...")
             result = False
         self.__requestsMutex.release()
         return result
@@ -292,16 +316,30 @@ class WebsocketServerBase(ABC):
         result = None
         log.debug("Timeout: " + str(timeout))
         if messageEvent.wait(timeout):
-            log.debug("Received anser, popping response")
-            log.debug("Received an answer")
+            log.debug("Received answer, popping response")
+            self.__users_mutex.acquire()
+            self.__current_users[id][3] = 0
+            self.__users_mutex.release()
             # okay, we can get the response..
             result = self.__popResponse(messageId)
             log.debug("Answer: %s" % result)
         else:
             # timeout reached
             log.warning("Timeout reached while waiting for a response...")
-            if self.__current_users.get(id, None) is None:
+            user_registered = self.__current_users.get(id, None)
+            if user_registered is None:
+                log.warning("Worker has previously been removed")
                 raise WebsocketWorkerRemovedException
+            else:
+                log.error("Timeout, increasing timeout-counter")
+                self.__users_mutex.acquire()
+                new_count = self.__current_users[id][3] + 1
+                self.__current_users[id][3] = new_count
+
+                if new_count > 5:
+                    log.error("Closing websocket connection by throwing an exception")
+                    raise WebsocketWorkerRemovedException
+                self.__users_mutex.release()
 
         log.debug("Received response: %s" % str(result))
         self.__removeRequest(messageId)

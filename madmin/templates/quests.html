@@ -14,7 +14,7 @@
                 { data: 'name', title: 'Pokestop Name' },
 				{ data: 'reward', title: 'Reward' },
 				{ data: 'reward_amount', title: ''},
-				{ data: 'quest', title: 'Quest'}
+				{ data: 'quest_task', title: 'Quest'}
                 
 
             ],
@@ -30,13 +30,6 @@
                     "render": function (data, type, row) {
 						var reward = build_quest_small(row.quest_reward_type_raw,row.item_id, row.pokemon_id);
                         return reward;
-                    }
-                },
-                {
-                    "targets": [4],
-                    "render": function (data, type, row) {
-						var reward_amount = row.quest_type;
-                        return reward_amount;
                     }
                 },
                 {

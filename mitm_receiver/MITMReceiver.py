@@ -112,11 +112,10 @@ class MITMReceiver(object):
     def get_latest(self, origin, data):
         injected_settings = self.__mitm_mapper.request_latest(origin, "injected_settings")
 
-        # TODO: replace with encounter IDs at some point...
-        mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
-        if mon_ids_iv is not None:
-            mon_ids_iv = mon_ids_iv.get("values", None)
-        response = {"ids_iv": mon_ids_iv, "injected_settings": injected_settings}
+        ids_iv = self.__mitm_mapper.request_latest(origin, "ids_iv")
+        if ids_iv is not None:
+            ids_iv = ids_iv.get("values", None)
+        response = {"ids_iv": ids_iv, "injected_settings": injected_settings}
         return json.dumps(response)
 
     def received_data_worker(self):
@@ -144,7 +143,8 @@ class MITMReceiver(object):
                     self._db_wrapper.submit_raids_map_proto(origin, data["payload"])
 
                     self._db_wrapper.submit_spawnpoints_map_proto(origin, data["payload"])
-                    mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
+                    # mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
+                    mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
                     self._db_wrapper.submit_mons_map_proto(origin, data["payload"], mon_ids_iv)
                 except Exception as e:
                     log.error("Issue updating DB: %s" % str(e))
