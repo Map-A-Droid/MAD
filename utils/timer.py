@@ -62,8 +62,6 @@ class Timer(object):
                 while self.get_switch():
                     tmNow = datetime.datetime.now()
                     log.info("[%s] - Currently in switchmode" % str(self._id))
-                    log.error('[%s] - tmTil: %s' % (str(self._id), str(tmTil)))
-                    log.error('[%s] - tmNow: %s' % (str(self._id), str(tmNow)))
                     if tmNow >= tmTil:
                         log.warning(
                             '[%s] - Switching back - here we go ...' % str(self._id))

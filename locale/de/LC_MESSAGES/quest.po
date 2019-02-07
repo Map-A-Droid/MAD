@@ -1,0 +1,153 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2019-02-04 19:51+0100\n"
+"PO-Revision-Date: 2019-02-04 21:18+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: de_DE\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+"X-Generator: Poedit 2.2.1\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Item"
+msgstr "Item"
+
+msgid "Stardust"
+msgstr "Sternenstaub"
+
+msgid "Pokemon"
+msgstr "Pokemon"
+
+msgid "Curveball"
+msgstr "Curveball"
+
+msgid "Excellent"
+msgstr "hervorragende"
+
+msgid "Great"
+msgstr "großartige"
+
+msgid "Nice"
+msgstr "gute"
+
+msgid "Catch {0} {type}Pokemon{wb}."
+msgstr "Fange {0} {type}Pokemon{wb}."
+
+msgid "-type "
+msgstr "  "
+
+msgid "or "
+msgstr "oder "
+
+msgid " with weather boost"
+msgstr " mit Wetterverstärkung"
+
+msgid "Catch a {poke}."
+msgstr "Fange ein {poke}"
+
+msgid "Spin {0} Pokestops or Gyms."
+msgstr "Drehe {0} Pokestops oder Arenen."
+
+msgid "Hatch {0} Eggs."
+msgstr "Brüte {0} Eier aus."
+
+msgid "Win {0} Gym Battles."
+msgstr "Gewinne {0} Arenakämpfe."
+
+msgid "Use a supereffective Charged Attack in {0} Gym battles."
+msgstr "Benutze eine super effektive Ladeattacke in {0} Arenakämpfen."
+
+msgid "Battle in a Gym {0} times."
+msgstr "Kämpfe {0} mal in einer Arena."
+
+msgid "Win {0} Raids."
+msgstr "Gewinne {0} Raids."
+
+msgid "Win a level 3 or higher raid."
+msgstr "Gewinne einen Level 3 oder höheren Raid."
+
+msgid "Battle in {0} Raids."
+msgstr "Kämpfe in {0} Raids."
+
+msgid "Transfer {0} Pokemon."
+msgstr "Verschicke {0} Pokemon."
+
+msgid "Favourite {0} Pokemon."
+msgstr "Favourite {0} Pokemon."
+
+msgid "Use {0} {type}Berries to help catch Pokemon."
+msgstr "Benutze {0} {type} um ein Pokemon zu fangen."
+
+msgid " Berry"
+msgstr " Beere"
+
+msgid "Power up Pokemon {0} times."
+msgstr "Power up Pokemon  {0} mal."
+
+msgid "Evolve {0} Pokemon."
+msgstr "Entwickle {0} Pokemon."
+
+msgid "Use an item to evolve a Pokemon."
+msgstr "Benutze einen Item um ein Pokemon zu entwickeln."
+
+msgid " in a row"
+msgstr " hintereinander"
+
+msgid "Curveball "
+msgstr "Curvebälle"
+
+msgid "Make {0} {type}{curve}Throws{inrow}."
+msgstr "Lande {0} {type}{curve} Würfe {inrow}."
+
+msgid "Earn {0} Candies walking with your buddy."
+msgstr "Verdiene {0} Bonbons mit deinem Begleiter."
+
+msgid "Trade {0} Pokemon."
+msgstr "Tausche {0} Pokemon."
+
+msgid "Send {0} gifts to friends."
+msgstr "Sende {0} Geschenke an Freunde."
+
+msgid " Eggs"
+msgstr " Eier"
+
+msgid "n Egg"
+msgstr " Ei"
+
+msgid " Raid"
+msgstr " Raid"
+
+msgid " Raids"
+msgstr " Raids"
+
+msgid " Battle"
+msgstr "kampf"
+
+msgid " Battles"
+msgstr "kämpfe"
+
+msgid " candies"
+msgstr " Bonbons"
+
+msgid " candy"
+msgstr " Bonbon"
+
+msgid " gift"
+msgstr " Geschenk"
+
+msgid " gifts"
+msgstr " Geschenke"
+
+msgid " {0} times"
+msgstr " {0} mal"
+
+msgid "a"
+msgstr "1"

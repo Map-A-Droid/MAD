@@ -67,6 +67,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #use_media_projection        # Use Mediaprojection for transfering images (OCR)
+#language:                   # Language for quests (default:en - others: de (more soon))
 
 # MADmin
 ######################
@@ -88,8 +89,19 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #weather_webhook             # Activate support for weather webhook
 #pokemon_webhook             # Activate support for pokemon webhook
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
+#quest_webhook               # Activate support for quest webhook
 
 # Auto Hatch
 ######################
 #auto_hatch                  # Activate auto hatch of level 5 eggs
 #auto_hatch_number           # Auto hatch of level 5 Pokemon ID
+
+# Logging
+######################
+#no-file-logs                # Disable logging (Default: disable)
+#log-path:                   # Path for Logs (Default: logs/)
+#log-filename:               # Filename for logs (Default: Default: %%Y%%m%%d_%%H%%M_<SN>.log)
+#log-rotation                # Enable log rotation (Default: disable)
+#log-rotation-backup-count:  # Number of saved rotated log files (Default: 10)
+#log-rotation-file-size:     # Filesize of Log Files in bytes (Default: 10485760 = 10 MB)
+#cleanup-age:                # Delete logs older than X minutes (Default: 300. 0 to disable)

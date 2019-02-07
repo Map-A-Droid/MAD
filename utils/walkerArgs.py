@@ -106,6 +106,9 @@ def parseArgs():
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
+    
+    parser.add_argument('-L', '--language', default='en',
+                        help=('Set Language for MadMin / Quests. Default: en'))
 
     parser.add_argument('-hlat', '--home_lat', default='0.0', type=float,
                         help=('Set Lat from the center of your scan location.'
@@ -113,9 +116,6 @@ def parseArgs():
     parser.add_argument('-hlng', '--home_lng', default='0.0', type=float,
                         help=('Set Lng from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
-
-    parser.add_argument('-clnupa', '--cleanup_age', default='1440',
-                        help='Delete Screenshots older than X minutes. Default: 1440')
 
     parser.add_argument('-gdv', '--gym_detection_value', default='0.75', type=float,
                         help=(
@@ -157,6 +157,8 @@ def parseArgs():
                         help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
                         help='Activate weather webhook support')
+    parser.add_argument('-qwh', '--quest_webhook', action='store_true', default=False,
+                        help='Activate quest webhook support')
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
                         help='Activate gym webhook support')
     # weather
@@ -215,6 +217,19 @@ def parseArgs():
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
+                              
+    parser.add_argument('-lr', '--log-rotation',
+                        help=('Active log rotation. (Default: Disable)'),
+                        action='store_true', default=False)
+                              
+    parser.add_argument('-lrbc', '--log-rotation-backup-count', default=10, type=int,
+                        help=('Number of Log Rotation Backup Files. (Default: 10)'))
+                              
+    parser.add_argument('-lrfs', '--log-rotation-file-size', default=10485760, type=int,
+                        help=('Filesize of Log Files in bytes (Default: 10485760 = 10 MB)'))
+    
+    parser.add_argument('-cla', '--cleanup-age', default='300', type=int,
+                        help='Delete logs older than X minutes. Default: 300')
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
                         help='Activate auto hatch of level 5 eggs')

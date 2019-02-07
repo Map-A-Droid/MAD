@@ -909,8 +909,8 @@ class RmWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
             "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned)"
@@ -925,11 +925,13 @@ class RmWrapper(DbWrapperBase):
                         cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
+                        form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
+                        form = None
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
@@ -963,7 +965,8 @@ class RmWrapper(DbWrapperBase):
                             raidspawn_date,
                             raidstart_date,
                             raidend_date,
-                            pokemon_id, cp, move_1, move_2, now
+                            pokemon_id, cp, move_1, move_2, now,
+                            form
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)
@@ -1131,7 +1134,8 @@ class RmWrapper(DbWrapperBase):
                 "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
                 "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
                 "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp  "
+                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
+                "trs_quest.quest_task "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
@@ -1142,7 +1146,8 @@ class RmWrapper(DbWrapperBase):
                 "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
                 "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
                 "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp "
+                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
+                "trs_quest.quest_task "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
@@ -1153,12 +1158,13 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query, data)
 
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, \
-             quest_item_id, quest_item_amount, name, image, quest_target, quest_condition, quest_timestamp) in res:
+             quest_item_id, quest_item_amount, name, image, quest_target, quest_condition, quest_timestamp, quest_task) in res:
             mon = "%03d" % quest_pokemon_id
             questinfo[pokestop_id] = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
             'quest_type': quest_type, 'quest_stardust': quest_stardust, 'quest_pokemon_id': mon, 
             'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id, 'quest_item_amount': quest_item_amount, 
-            'name': name, 'image': image, 'quest_target': quest_target, 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp})
+            'name': name, 'image': image, 'quest_target': quest_target, 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
+            'task': quest_task})
         return questinfo
         
     def submit_pokestops_details_map_proto(self, map_proto):
