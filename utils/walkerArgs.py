@@ -86,7 +86,7 @@ def parseArgs():
                         help='Use this instance only for OCR.')
     parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
                         help='Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.')
-    parser.add_argument('-otc', '--ocr_thread_count', action='store_true', default=2,
+    parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
                         help='Amount of threads/processes to be used for screenshot-analysis.')
     parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
                         help='Start madmin as instance.')
