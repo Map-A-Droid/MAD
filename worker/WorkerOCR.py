@@ -223,6 +223,6 @@ class WorkerOCR(WorkerBase):
     def __init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime, route_manager_nighttime,
                  devicesettings, db_wrapper, timer):
         WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper timer=timer)
+                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, timer=timer)
         self.__speed_weather_check_thread = None
         self.__start_speed_weather_check_event = Event()
