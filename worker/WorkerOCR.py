@@ -221,7 +221,7 @@ class WorkerOCR(WorkerBase):
             time.sleep(1)
 
     def __init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime, route_manager_nighttime,
-                 devicesettings, db_wrapper):
+                 devicesettings, db_wrapper, timer):
         WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper)
         self.__speed_weather_check_thread = None
