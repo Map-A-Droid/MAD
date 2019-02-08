@@ -1,0 +1,194 @@
+{
+  "1": {
+    "protoname": "ITEM_POKE_BALL",
+    "name": "Pokéball"
+  },
+  "2": {
+    "protoname": "ITEM_GREAT_BALL",
+    "name": "Greatball"
+  },
+  "3": {
+    "protoname": "ITEM_ULTRA_BALL",
+    "name": "Ultraball"
+  },
+  "4": {
+    "protoname": "ITEM_MASTER_BALL",
+    "name": "Masterball"
+  },
+  "5": {
+    "protoname": "ITEM_PREMIER_BALL",
+    "name": "Premierball"
+  },
+  "101": {
+    "protoname": "ITEM_POTION",
+    "name": "Potion"
+  },
+  "102": {
+    "protoname": "ITEM_SUPER_POTION",
+    "name": "Super Potion"
+  },
+  "103": {
+    "protoname": "ITEM_HYPER_POTION",
+    "name": "Hyper Potion"
+  },
+  "104": {
+    "protoname": "ITEM_MAX_POTION",
+    "name": "Max Potion"
+  },
+  "201": {
+    "protoname": "ITEM_REVIVE",
+    "name": "Revive"
+  },
+  "202": {
+    "protoname": "ITEM_MAX_REVIVE",
+    "name": "Max Revive"
+  },
+  "301": {
+    "protoname": "ITEM_LUCKY_EGG",
+    "name": "Lucky Egg"
+  },
+  "401": {
+    "protoname": "ITEM_INCENSE_ORDINARY",
+    "name": "Incense"
+  },
+  "402": {
+    "protoname": "ITEM_INCENSE_SPICY",
+    "name": "Incense Spicy"
+  },
+  "403": {
+    "protoname": "ITEM_INCENSE_COOL",
+    "name": "Incense Cool"
+  },
+  "404": {
+    "protoname": "ITEM_INCENSE_FLORAL",
+    "name": "Incense Floral"
+  },
+  "501": {
+    "protoname": "ITEM_TROY_DISK",
+    "name": "Lure Module"
+  },
+  "602": {
+    "protoname": "ITEM_X_ATTACK",
+    "name": "X Attack"
+  },
+  "603": {
+    "protoname": "ITEM_X_DEFENSE",
+    "name": "X Defense"
+  },
+  "604": {
+    "protoname": "ITEM_X_MIRACLE",
+    "name": "X Miracle"
+  },
+  "701": {
+    "protoname": "ITEM_RAZZ_BERRY",
+    "name": "Razz Berry"
+  },
+  "702": {
+    "protoname": "ITEM_BLUK_BERRY",
+    "name": "Bluk Berry"
+  },
+  "703": {
+    "protoname": "ITEM_NANAB_BERRY",
+    "name": "Nanab Berry"
+  },
+  "704": {
+    "protoname": "ITEM_WEPAR_BERRY",
+    "name": "Wepar Berry"
+  },
+  "705": {
+    "protoname": "ITEM_PINAP_BERRY",
+    "name": "Pinap Berry"
+  },
+  "706": {
+    "protoname": "ITEM_GOLDEN_RAZZ_BERRY",
+    "name": "Golden Razz"
+  },
+  "707": {
+    "protoname": "ITEM_GOLDEN_NANAB_BERRY",
+    "name": "Golden Pinap"
+  },
+  "708": {
+    "protoname": "ITEM_GOLDEN_PINAP_BERRY",
+    "name": "Silver Pinap"
+  },
+  "801": {
+    "protoname": "ITEM_SPECIAL_CAMERA",
+    "name": "Camera"
+  },
+  "901": {
+    "protoname": "ITEM_INCUBATOR_BASIC_UNLIMITED",
+    "name": "Unlimited Incubator"
+  },
+  "902": {
+    "protoname": "ITEM_INCUBATOR_BASIC",
+    "name": "Incubator"
+  },
+  "903": {
+    "protoname": "ITEM_INCUBATOR_SUPER",
+    "name": "Super Incubator"
+  },
+  "1001": {
+    "protoname": "ITEM_POKEMON_STORAGE_UPGRADE",
+    "name": "Pokémon Storage Upgrade"
+  },
+  "1002": {
+    "protoname": "ITEM_ITEM_STORAGE_UPGRADE",
+    "name": "Item Storage Upgrade"
+  },
+  "1101": {
+    "protoname": "ITEM_SUN_STONE",
+    "name": "Sun Stone"
+  },
+  "1102": {
+    "protoname": "ITEM_KINGS_ROCK",
+    "name": "Kings Rock"
+  },
+  "1103": {
+    "protoname": "ITEM_METAL_COAT",
+    "name": "Metal Coat"
+  },
+  "1104": {
+    "protoname": "ITEM_DRAGON_SCALE",
+    "name": "Dragon Scale"
+  },
+  "1105": {
+    "protoname": "ITEM_UP_GRADE",
+    "name": "Item Upgrade"
+  },
+  "1106": {
+    "protoname": "ITEM_GEN4_EVOLUTION_STONE",
+    "name": "Sinnoh Stone"
+  },
+  "1201": {
+    "protoname": "ITEM_MOVE_REROLL_FAST_ATTACK",
+    "name": "Fast TM"
+  },
+  "1202": {
+    "protoname": "ITEM_MOVE_REROLL_SPECIAL_ATTACK",
+    "name": "Charge TM"
+  },
+  "1301": {
+    "protoname": "ITEM_RARE_CANDY",
+    "name": "Rare Candy"
+  },
+  "1401": {
+    "protoname": "ITEM_FREE_RAID_TICKET",
+    "name": "Free Raid Pass"
+  },
+  "1402": {
+    "protoname": "ITEM_PAID_RAID_TICKET",
+    "name": "Paid Raid Pass"
+  },
+  "1403": {
+    "protoname": "ITEM_LEGENDARY_RAID_TICKET",
+    "name": "EX Raid Pass"
+  },
+  "1404": {
+    "protoname": "ITEM_STAR_PIECE",
+    "name": "Star Piece"
+  },
+  "1405": {
+    "protoname": "ITEM_FRIEND_GIFT_BOX",
+    "name": "Gift"
+  }
+}

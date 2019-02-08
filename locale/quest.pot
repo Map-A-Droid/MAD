@@ -1,0 +1,152 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: PACKAGE VERSION\n"
+"POT-Creation-Date: 2019-02-03 20:29+0100\n"
+"PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
+"Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
+"Language-Team: LANGUAGE <LL@li.org>\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+
+
+msgid "Item"
+msgstr ""
+
+msgid "Stardust"
+msgstr ""
+
+msgid "Pokemon"
+msgstr ""
+
+msgid "Curveball"
+msgstr ""
+
+msgid "Excellent"
+msgstr ""
+
+msgid "Great"
+msgstr ""
+
+msgid "Nice"
+msgstr ""
+
+msgid "Catch {0} {type}Pokemon{wb}."
+msgstr ""
+
+msgid "-type "
+msgstr ""
+
+msgid "or "
+msgstr ""
+
+msgid " with weather boost"
+msgstr ""
+
+msgid "Catch a {poke}."
+msgstr ""
+
+msgid "Spin {0} Pokestops or Gyms."
+msgstr ""
+
+msgid "Hatch {0} Eggs."
+msgstr ""
+
+msgid "Win {0} Gym Battles."
+msgstr ""
+
+msgid "Use a supereffective Charged Attack in {0} Gym battles."
+msgstr ""
+
+msgid "Battle in a Gym {0} times."
+msgstr ""
+
+msgid "Win {0} Raids."
+msgstr ""
+
+msgid "Win a level 3 or higher raid."
+msgstr ""
+
+msgid "Battle in {0} Raids."
+msgstr ""
+
+msgid "Transfer {0} Pokemon."
+msgstr ""
+
+msgid "Favourite {0} Pokemon."
+msgstr ""
+
+msgid "Use {0} {type}Berries to help catch Pokemon."
+msgstr ""
+
+msgid " Berry"
+msgstr ""
+
+msgid "Power up Pokemon {0} times."
+msgstr ""
+
+msgid "Evolve {0} Pokemon."
+msgstr ""
+
+msgid "Use an item to evolve a Pokemon."
+msgstr ""
+
+msgid " in a row"
+msgstr ""
+
+msgid "Curveball "
+msgstr ""
+
+msgid "Make {0} {type}{curve}Throws{inrow}."
+msgstr ""
+
+msgid "Earn {0} Candies walking with your buddy."
+msgstr ""
+
+msgid "Trade {0} Pokemon."
+msgstr ""
+
+msgid "Send {0} gifts to friends."
+msgstr ""
+
+msgid " Eggs"
+msgstr ""
+
+msgid "n Egg"
+msgstr ""
+
+msgid " Raid"
+msgstr ""
+
+msgid " Raids"
+msgstr ""
+
+msgid " Battle"
+msgstr ""
+
+msgid " Battles"
+msgstr ""
+
+msgid " candies"
+msgstr ""
+
+msgid " candy"
+msgstr ""
+
+msgid " gift"
+msgstr ""
+
+msgid " gifts"
+msgstr ""
+
+msgid " {0} times"
+msgstr ""
+
+msgid "a"
+msgstr ""
+
