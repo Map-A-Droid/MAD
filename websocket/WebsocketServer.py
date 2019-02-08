@@ -203,10 +203,10 @@ class WebsocketServer(object):
                 await self.__send_specific(websocket_client_connection, next.id, next.message)
 
     async def __send_specific(self, websocket_client_connection, id, message):
-        await websocket_client_connection.send(message)
-        # for key, value in self.__current_users.items():
-        #     if key == id and value[2].open:
-        #         await value[2].send(message)
+        #await websocket_client_connection.send(message)
+         for key, value in self.__current_users.items():
+             if key == id and value[2].open:
+                 await value[2].send(message)
 
     async def __retrieve_next_send(self, websocket_client_connection):
         found = None
