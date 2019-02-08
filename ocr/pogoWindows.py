@@ -500,7 +500,7 @@ class PogoWindows:
             return False
             
         if self.__readCircleCount(filename, hash,
-                                          float(8), xcord=False, crop=True, click=True, canny=True) > 0:
+                                          float(7.7), xcord=False, crop=True, click=True, canny=True) > 0:
             log.debug("Found close button (X). Closing the window - Ratio: 10")
             return True
 

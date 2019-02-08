@@ -5,8 +5,10 @@ ocr/mon_img/*
 ocr/www_hash/*
 temp/*
 ocr/weather/*
+version.json
 *.pyc
 *.log
+*.log.*
 configs/config.ini
 *.calc
 configs/geofences/*

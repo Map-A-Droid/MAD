@@ -421,7 +421,7 @@
 			success: function(result) {
 				$.each(result, function(k, v) {
 					L.marker([v['latitude'], v['longitude']], {icon: build_quest_small(v['quest_reward_type_raw'], v['item_id'], v['pokemon_id'])})
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['latitude']+','+v['longitude']+'">'+v['latitude']+', '+v['longitude']+'</a><br>' + build_quest(v['quest_reward_type_raw'], v['quest_type'], v['pokemon_id'], v['item_id'], v['item_amount'], v['pokemon_name'],v['item_type']) + '</div>',
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['latitude']+','+v['longitude']+'">'+v['latitude']+', '+v['longitude']+'</a><br>' + build_quest(v['quest_reward_type_raw'], v['quest_task'], v['pokemon_id'], v['item_id'], v['item_amount'], v['pokemon_name'],v['item_type']) + '</div>',
 							{'className': 'questpopup'})
 						.addTo(quests);
 				});

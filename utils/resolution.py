@@ -21,7 +21,12 @@ class Resocalculator(object):
             
     def get_gym_click_coords(self):
         click_x = int(self._screen_x) / 2
-        click_y = int(self._screen_y) - (int(self._screen_x) / 1.5)
+        if float(self._xyratio) > 2:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.4)
+        elif float(self._xyratio) >= 1.7:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.5)
+        elif float(self._xyratio) < 1.7:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.6)
         return click_x, click_y
         
     def get_gym_spin_coords(self):
@@ -113,9 +118,7 @@ class Resocalculator(object):
         elif float(self._xyratio) < 1.7: 
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.7)
         return click_x, click_y
-        
-        return click_x, click_y
-        
+
     def get_leave_mon_coords(self):
         click_x = int(self._screen_x) / 11.25
         click_y = int(self._screen_x) / 6.82
@@ -130,5 +133,3 @@ class Resocalculator(object):
         click_x = int(self._screen_x) / 2
         click_y = int(self._screen_y) - (int(self._screen_x) / 4)
         return click_x, click_y
-    
-    

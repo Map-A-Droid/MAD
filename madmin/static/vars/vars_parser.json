@@ -560,6 +560,25 @@
 			    "empty": null,
 				"description": "Area of nighttime_area"
 		    }
+		},
+		{
+			"name": "switch",
+		    "settings": {
+			    "type": "option",
+		        "require": "true",
+			    "values": "false|true",
+			    "empty": null,
+			    "description": "Activate timer for Area Switch"
+		    }
+	    },
+		{
+			"name": "switch_interval",
+		    "settings": {
+			    "type": "text",
+				"require": "false",
+				"empty": null,
+				"description": "Time for nightmode - Put in brakets ['21:00', '5:00'])"
+			}
 	    }
 	],
 	"settings": [
@@ -650,6 +669,23 @@
 	        "type": "text",
 		    "require": "false",
 			"description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
+		}
+	},
+	{
+		"name": "reboot",
+    	"settings": {
+	    	"type": "option",
+			"require": "false",
+			"values": "false|true",
+			"description": "Reboot device if reboot_thresh is reached (Default: false)"
+		}
+	},
+	{
+		"name": "reboot_thresh",
+    	"settings": {
+	        "type": "text",
+		    "require": "false",
+			"description": "Reaching this thresh restart the phone (Default: 5)"
 		}
 	}
     ]
