@@ -670,6 +670,23 @@
 		    "require": "false",
 			"description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
 		}
+	},
+	{
+		"name": "reboot",
+    	"settings": {
+	    	"type": "option",
+			"require": "false",
+			"values": "false|true",
+			"description": "Reboot device if reboot_thresh is reached (Default: false)"
+		}
+	},
+	{
+		"name": "reboot_thresh",
+    	"settings": {
+	        "type": "text",
+		    "require": "false",
+			"description": "Reaching this thresh restart the phone (Default: 5)"
+		}
 	}
     ]
 }

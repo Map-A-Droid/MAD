@@ -133,6 +133,8 @@ class WebsocketServer(object):
 
         started = False
         if timer.get_switch() is True:
+            # set global mon_iv
+            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
             # start the appropriate nighttime manager if set
             if nightime_routemanager is None:
                 pass
@@ -153,6 +155,8 @@ class WebsocketServer(object):
                 log.fatal("Mode not implemented")
                 sys.exit(1)
         if not timer.get_switch() or not started:
+            # set mon_iv
+            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
             # we either gotta run daytime mode OR nighttime routemanager not set
             if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
                 worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,

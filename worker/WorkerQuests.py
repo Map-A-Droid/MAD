@@ -168,7 +168,7 @@ class WorkerQuests(WorkerBase):
                 self._work_mutex.acquire()
                 try:
                     # TODO: less magic numbers?
-                    time.sleep(2)
+                    time.sleep(1)
                     if self.clear_thread_task == 1:
                         log.info("Clearing box")
                         self.clear_box(self._delay_add)
@@ -177,7 +177,7 @@ class WorkerQuests(WorkerBase):
                         log.info("Clearing quest")
                         self._clear_quests(self._delay_add)
                         self.clear_thread_task = 0
-                    time.sleep(2)
+                    time.sleep(1)
                     self._start_inventory_clear.clear()
                 except WebsocketWorkerRemovedException as e:
                     log.error("Worker removed while clearing quest/box")
@@ -251,7 +251,7 @@ class WorkerQuests(WorkerBase):
         while 'Stop' not in data_received and int(to) < 3:
             curTime = time.time()
             self._open_gym(self._delay_add)
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=25)
+            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=20)
             if data_received is not None:
                 if 'Gym' in data_received:
                     log.info('Clicking GYM')
@@ -264,7 +264,7 @@ class WorkerQuests(WorkerBase):
                         self._checkPogoClose()
                     self._turn_map(self._delay_add)
                 if 'Mon' in data_received:
-                    time.sleep(2)
+                    time.sleep(1)
                     log.info('Clicking MON')
                     x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
                     self._communicator.click(int(x), int(y))

@@ -793,7 +793,7 @@ class RmWrapper(DbWrapperBase):
                     log.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (non-init) ({5})"
                              .format(str(origin), mon_id, lat, lon, despawn_time, spawnid))
 
-                if mon_ids_iv is not None and mon_id not in mon_ids_iv['values'] or mon_ids_iv is None:
+                if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
                     self.webhook_helper.send_pokemon_webhook(
                         str(encounter_id), mon_id, int(time.time()),
                         spawnid, lat, lon, int(despawn_time_unix)
