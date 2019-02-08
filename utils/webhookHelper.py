@@ -45,7 +45,7 @@ egg_webhook_payload = """[{{
         "gym_id": "{ext_id}",
         "name": "{name_id}",
         "url": "{url}",
-        "pokemon_id": "0",
+        "pokemon_id": 0,
         "sponsor": "{sponsor}",
         "weather": "{weather}",
         "park": "{park}"
