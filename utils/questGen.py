@@ -5,7 +5,8 @@ import gettext
 import os
 from utils.language import open_json_file, i8ln
 
-gettext.find('quest', 'locales')
+
+gettext.find('quest', 'locales', all=True)
 lang = gettext.translation('quest', localedir='locale', fallback=True)
 lang.install()
 
@@ -14,51 +15,55 @@ log = logging.getLogger(__name__)
 
 def generate_quest(quest):
     
-        pokestop_id  = (quest['pokestop_id'])
-        quest_reward_type = (questreward(quest['quest_reward_type']))
-        quest_reward_type_raw = quest['quest_reward_type']
-        quest_type_raw = quest['quest_type']
-        quest_type = (questtype(quest['quest_type']))
-        quest_condition = quest['quest_condition']
-        name = quest['name']
-        latitude = quest['latitude']
-        longitude = quest['longitude']
-        url = quest['image']
-        timestamp = quest['quest_timestamp']
-        quest_target = str(quest['quest_target'])
-        
-        if quest_reward_type == _("Item"):
-            item_amount = str(quest['quest_item_amount'])
-            item_id = quest['quest_item_id']
-            item_type = str(rewarditem(quest['quest_item_id']))
-            pokemon_id = "0"
-            pokemon_name = ""
-        elif quest_reward_type == _("Stardust"):
-            item_amount = str(quest['quest_stardust'])
-            item_type = _("Stardust")
-            item_id = "000"
-            pokemon_id = "0"
-            pokemon_name = ""
-        elif quest_reward_type == _("Pokemon"):
-            item_amount = "1"
-            item_type = "Pokemon"
-            item_id = "000"
-            pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
-            pokemon_id = str(quest['quest_pokemon_id'])
+    gettext.find('quest', 'locales', all=True)
+    lang = gettext.translation('quest', localedir='locale', fallback=True)
+    lang.install()
+    
+    pokestop_id  = (quest['pokestop_id'])
+    quest_reward_type = (questreward(quest['quest_reward_type']))
+    quest_reward_type_raw = quest['quest_reward_type']
+    quest_type_raw = quest['quest_type']
+    quest_type = (questtype(quest['quest_type']))
+    quest_condition = quest['quest_condition']
+    name = quest['name']
+    latitude = quest['latitude']
+    longitude = quest['longitude']
+    url = quest['image']
+    timestamp = quest['quest_timestamp']
+    quest_target = str(quest['quest_target'])
+    
+    if quest_reward_type == _("Item"):
+        item_amount = str(quest['quest_item_amount'])
+        item_id = quest['quest_item_id']
+        item_type = str(rewarditem(quest['quest_item_id']))
+        pokemon_id = "0"
+        pokemon_name = ""
+    elif quest_reward_type == _("Stardust"):
+        item_amount = str(quest['quest_stardust'])
+        item_type = _("Stardust")
+        item_id = "000"
+        pokemon_id = "0"
+        pokemon_name = ""
+    elif quest_reward_type == _("Pokemon"):
+        item_amount = "1"
+        item_type = "Pokemon"
+        item_id = "000"
+        pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
+        pokemon_id = str(quest['quest_pokemon_id'])
+    if '{0}' in quest_type:
+        quest_type_text = quest_type.replace('{0}', quest_target)            
 
-        if '{0}' in quest_type:
-            quest_type_text = quest_type.replace('{0}', quest_target)
-            
-        
-
+    if not quest['task']:
+        quest_task = questtask(quest['quest_type'], quest['quest_condition'], quest['quest_target'])
+    else:
         quest_task = quest['task']
         
-        quest_raw = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
-            'quest_type_raw': quest_type_raw, 'quest_type': quest_type_text, 'quest_condition': quest_condition, 'item_amount': item_amount, 'item_type': item_type, 
-            'quest_target': quest_target, 'name': name, 'url': url, 'timestamp': timestamp, 'pokemon_id': pokemon_id, 'item_id': item_id,
-            'pokemon_name': pokemon_name, 'quest_reward_type': quest_reward_type, 'quest_reward_type_raw': quest_reward_type_raw, 'quest_task': quest_task,
-            'quest_condition': quest_condition})
-        return quest_raw
+    quest_raw = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
+        'quest_type_raw': quest_type_raw, 'quest_type': quest_type_text, 'quest_condition': quest_condition, 'item_amount': item_amount, 'item_type': item_type, 
+        'quest_target': quest_target, 'name': name, 'url': url, 'timestamp': timestamp, 'pokemon_id': pokemon_id, 'item_id': item_id,
+        'pokemon_name': pokemon_name, 'quest_reward_type': quest_reward_type, 'quest_reward_type_raw': quest_reward_type_raw, 'quest_task': quest_task,
+        'quest_condition': quest_condition})
+    return quest_raw
     
 def questreward(quest_reward_type):
     type = {
@@ -81,6 +86,10 @@ def pokemonname(id):
     return file[str(int(id))]["name"]
 
 def questtask(typeid, condition, target):
+    gettext.find('quest', 'locales', all=True)
+    lang = gettext.translation('quest', localedir='locale', fallback=True)
+    lang.install()
+    
     pokemonTypes = open_json_file('pokemonTypes')
     items = open_json_file('items')
     throwTypes = {"10":_("Nice"), "11":_("Great"), "12":_("Excellent"), "13":_("Curveball")}
