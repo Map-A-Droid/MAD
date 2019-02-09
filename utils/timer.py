@@ -18,7 +18,7 @@ class Timer(object):
 
         if self._switch:
             t_switchtimer = Thread(name='switchtimer',
-                                  target=self.switchtimer)
+                                   target=self.switchtimer)
             t_switchtimer.daemon = True
             t_switchtimer.start()
 
@@ -41,8 +41,6 @@ class Timer(object):
             tmTil = datetime.datetime.now().replace(
                 hour=int(sts2[0]), minute=int(sts2[1]), second=0, microsecond=0)
             tmNow = datetime.datetime.now()
-            
-            
 
             # check if current time is past start time
             # and the day has changed already. thus shift

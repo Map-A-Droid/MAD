@@ -1,10 +1,11 @@
 import logging
 import math
 import time
-from threading import Thread, Event
+from threading import Event, Thread
 
 from utils.geo import get_distance_of_two_points_in_meters
-from utils.madGlobals import InternalStopWorkerException, WebsocketWorkerRemovedException
+from utils.madGlobals import (InternalStopWorkerException,
+                              WebsocketWorkerRemovedException)
 from worker.WorkerBase import WorkerBase
 
 log = logging.getLogger(__name__)
@@ -32,7 +33,8 @@ class WorkerQuests(WorkerBase):
     def _pre_work_loop(self):
         if self.clear_thread is not None:
             return
-        self.clear_thread = Thread(name="clear_thread_%s" % str(self._id), target=self._clear_thread)
+        self.clear_thread = Thread(name="clear_thread_%s" % str(
+            self._id), target=self._clear_thread)
         self.clear_thread.daemon = True
         self.clear_thread.start()
         self._get_screen_size()
@@ -58,13 +60,15 @@ class WorkerQuests(WorkerBase):
         routemanager = self._get_currently_valid_routemanager()
         if routemanager is None:
             raise InternalStopWorkerException
-            
+
         if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
             return False, False
 
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(self.last_location.lng),
-                                                        float(self.current_location.lat),
+                                                        float(
+                                                            self.last_location.lng),
+                                                        float(
+                                                            self.current_location.lat),
                                                         float(self.current_location.lng))
         log.info('main: Moving %s meters to the next position' % distance)
 
@@ -76,8 +80,10 @@ class WorkerQuests(WorkerBase):
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             log.info("main: Teleporting...")
-            self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
-            cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
+            self._communicator.setLocation(
+                self.current_location.lat, self.current_location.lng, 0)
+            # the time we will take as a starting point to wait for data...
+            cur_time = math.floor(time.time())
 
             delay_used = self._devicesettings.get('post_teleport_delay', 7)
             # Test for cooldown / teleported distance TODO: check this block...
@@ -99,12 +105,14 @@ class WorkerQuests(WorkerBase):
                     delay_used = 400
                 elif distance > 20000:
                     delay_used = 800
-                log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+                log.info("Need more sleep after Teleport: %s seconds!" %
+                         str(delay_used))
         else:
             log.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat, self.current_location.lng, speed)
-            cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
+            # the time we will take as a starting point to wait for data...
+            cur_time = math.floor(time.time())
             delay_used = self._devicesettings.get('post_walk_delay', 7)
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
@@ -121,10 +129,11 @@ class WorkerQuests(WorkerBase):
         reachedMainMenu = self._check_pogo_main_screen(5, True)
         if not reachedMainMenu:
             self._restart_pogo()
-            
+
         log.info('Open Stop')
         data_received = self._open_pokestop()
-        if data_received == 'Stop' : self._handle_stop(data_received)
+        if data_received == 'Stop':
+            self._handle_stop(data_received)
         log.debug("Releasing lock")
         self._work_mutex.release()
 
@@ -138,12 +147,14 @@ class WorkerQuests(WorkerBase):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             log.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 7))
+            time.sleep(self._devicesettings.get(
+                "post_turn_screen_on_delay", 7))
 
         cur_time = time.time()
         start_result = False
         while not pogo_topmost:
-            start_result = self._communicator.startApp("com.nianticlabs.pokemongo")
+            start_result = self._communicator.startApp(
+                "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
         reached_raidtab = False
@@ -179,7 +190,7 @@ class WorkerQuests(WorkerBase):
                         self.clear_thread_task = 0
                     time.sleep(1)
                     self._start_inventory_clear.clear()
-                except WebsocketWorkerRemovedException as e:
+                except WebsocketWorkerRemovedException:
                     log.error("Worker removed while clearing quest/box")
                     self._stop_worker_event.set()
                     return
@@ -191,29 +202,33 @@ class WorkerQuests(WorkerBase):
             1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
-        x, y = self._resocalc.get_item_menu_coords(self)[0], self._resocalc.get_item_menu_coords(self)[1]
+        x, y = self._resocalc.get_item_menu_coords(
+            self)[0], self._resocalc.get_item_menu_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
         data_received = '-'
         _data_err_counter = 0
-        x, y = self._resocalc.get_delete_item_coords(self)[0], self._resocalc.get_delete_item_coords(self)[1]
+        x, y = self._resocalc.get_delete_item_coords(
+            self)[0], self._resocalc.get_delete_item_coords(self)[1]
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], \
-                                      self._resocalc.get_swipe_item_amount(self)[1], \
-                                      self._resocalc.get_swipe_item_amount(self)[2]
+            self._resocalc.get_swipe_item_amount(self)[1], \
+            self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
         while int(to) <= 3:
 
             self._communicator.click(int(x), int(y))
             time.sleep(.5 + int(delayadd))
 
-            self._communicator.touchandhold(click_x1, click_y, click_x2, click_y)
+            self._communicator.touchandhold(
+                click_x1, click_y, click_x2, click_y)
             time.sleep(1)
             delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
-                         self._resocalc.get_confirm_delete_item_coords(self)[1]
+                self._resocalc.get_confirm_delete_item_coords(self)[1]
             curTime = time.time()
             self._communicator.click(int(delx), int(dely))
 
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=15)
+            data_received = self._wait_for_data(
+                timestamp=curTime, proto_to_wait_for=4, timeout=15)
 
             if data_received is not None:
                 if 'Clear' in data_received:
@@ -253,13 +268,14 @@ class WorkerQuests(WorkerBase):
         while 'Stop' not in data_received and int(to) < 3:
             curTime = time.time()
             self._open_gym(self._delay_add)
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=25)
+            data_received = self._wait_for_data(
+                timestamp=curTime, proto_to_wait_for=104, timeout=25)
             if data_received is not None:
                 if 'Gym' in data_received:
                     log.info('Clicking GYM')
                     time.sleep(1)
                     x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-                           self._resocalc.get_close_main_button_coords(self)[1]
+                        self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(1)
                     if not self._checkPogoButton():
@@ -268,7 +284,8 @@ class WorkerQuests(WorkerBase):
                 if 'Mon' in data_received:
                     time.sleep(1)
                     log.info('Clicking MON')
-                    x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
+                    x, y = self._resocalc.get_leave_mon_coords(
+                        self)[0], self._resocalc.get_leave_mon_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(.5)
                     if not self._checkPogoButton():
@@ -287,7 +304,8 @@ class WorkerQuests(WorkerBase):
             curTime = time.time()
             log.info('Spin Stop')
             self._spin_wheel(self._delay_add)
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=101, timeout=20)
+            data_received = self._wait_for_data(
+                timestamp=curTime, proto_to_wait_for=101, timeout=20)
             if data_received is not None:
 
                 if 'Box' in data_received:
@@ -316,15 +334,18 @@ class WorkerQuests(WorkerBase):
 
             else:
                 data_received = '-'
-                log.error('Did not get any data ... Maybe already spinned or softban.')
+                log.error(
+                    'Did not get any data ... Maybe already spinned or softban.')
                 to += 1
                 if to >= 3:
                     self._close_gym(self._delay_add)
 
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=45):
         #timeout = self._devicesettings.get("mitm_wait_timeout", 45)
-        max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
-        log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self.__data_error_counter)))
+        max_data_err_counter = self._devicesettings.get(
+            "max_data_err_counter", 60)
+        log.info('Waiting for data after %s, error count is at %s' %
+                 (str(timestamp), str(self.__data_error_counter)))
         data_requested = None
         while (data_requested is None and timestamp + timeout >= time.time()
                and self.__data_error_counter < max_data_err_counter):
@@ -353,7 +374,7 @@ class WorkerQuests(WorkerBase):
 
             if proto_to_wait_for not in latest:
                 log.debug("No data linked to the requested proto since MAD started. Count: %s"
-                            % str(self.__data_error_counter))
+                          % str(self.__data_error_counter))
                 self.__data_error_counter += 1
                 time.sleep(1)
             else:

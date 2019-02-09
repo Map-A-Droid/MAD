@@ -1,8 +1,8 @@
 import logging
 
 import cv2
-from PIL import Image
 from imagehash import dhash
+from PIL import Image
 
 log = logging.getLogger(__name__)
 

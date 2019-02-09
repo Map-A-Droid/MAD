@@ -4,7 +4,6 @@ import time
 from threading import Lock
 
 import gpxdata
-
 from utils.geo import get_distance_of_two_points_in_meters
 
 log = logging.getLogger(__name__)
@@ -37,7 +36,8 @@ class Communicator:
 
     def stopApp(self, packageName):
         if not self.__runAndOk("more stop %s\r\n" % (packageName), self.__commandTimeout):
-            log.error("Failed stopping %s, please check if SU has been granted" % packageName)
+            log.error(
+                "Failed stopping %s, please check if SU has been granted" % packageName)
             return False
         else:
             return True
@@ -59,27 +59,30 @@ class Communicator:
 
     def click(self, x, y):
         return self.__runAndOk("screen click %s %s\r\n" % (str(int(round(x))), str(int(round(y)))), self.__commandTimeout)
-        
+
     def swipe(self, x1, y1, x2, y2):
         return self.websocketHandler.send_and_wait(self.id, "touch swipe %s %s %s %s\r\n" % (str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
-        
+
     def touchandhold(self, x1, y1, x2, y2):
         return self.__runAndOk("touch swipe %s %s %s %s 3000" % (str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
-    
+
     def getscreensize(self):
-        response = self.websocketHandler.send_and_wait(self.id, "screen size", self.__commandTimeout)
+        response = self.websocketHandler.send_and_wait(
+            self.id, "screen size", self.__commandTimeout)
         return response
 
     def get_screenshot_single(self, path):
         self.__sendMutex.acquire()
-        encoded = self.websocketHandler.send_and_wait(self.id, "screen single\r\n", self.__commandTimeout)
+        encoded = self.websocketHandler.send_and_wait(
+            self.id, "screen single\r\n", self.__commandTimeout)
         self.__sendMutex.release()
         if encoded is None:
             return False
         elif isinstance(encoded, str):
             log.debug("Screenshot response not binary")
             if "KO: " in encoded:
-                log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                log.error(
+                    "getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
                 return False
             elif "OK:" not in encoded:
                 log.error("getScreenshot: response not OK")
@@ -96,14 +99,16 @@ class Communicator:
 
     def getScreenshot(self, path):
         self.__sendMutex.acquire()
-        encoded = self.websocketHandler.send_and_wait(self.id, "screen capture\r\n", self.__commandTimeout)
+        encoded = self.websocketHandler.send_and_wait(
+            self.id, "screen capture\r\n", self.__commandTimeout)
         self.__sendMutex.release()
         if encoded is None:
             return False
         elif isinstance(encoded, str):
             log.debug("Screenshot response not binary")
             if "KO: " in encoded:
-                log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                log.error(
+                    "getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
                 return False
             elif "OK:" not in encoded:
                 log.error("getScreenshot: response not OK")
@@ -123,7 +128,8 @@ class Communicator:
 
     def isScreenOn(self):
         self.__sendMutex.acquire()
-        state = self.websocketHandler.send_and_wait(self.id, "more state screen\r\n", self.__commandTimeout)
+        state = self.websocketHandler.send_and_wait(
+            self.id, "more state screen\r\n", self.__commandTimeout)
         self.__sendMutex.release()
         if state is None:
             return False
@@ -131,7 +137,8 @@ class Communicator:
 
     def isPogoTopmost(self):
         self.__sendMutex.acquire()
-        topmost = self.websocketHandler.send_and_wait(self.id, "more topmost app\r\n", self.__commandTimeout)
+        topmost = self.websocketHandler.send_and_wait(
+            self.id, "more topmost app\r\n", self.__commandTimeout)
         self.__sendMutex.release()
         if topmost is None:
             return False
@@ -139,7 +146,8 @@ class Communicator:
 
     def setLocation(self, lat, lng, alt):
         self.__sendMutex.acquire()
-        response = self.websocketHandler.send_and_wait(self.id, "geo fix %s %s %s\r\n" % (lat, lng, alt), self.__commandTimeout)
+        response = self.websocketHandler.send_and_wait(
+            self.id, "geo fix %s %s %s\r\n" % (lat, lng, alt), self.__commandTimeout)
         self.__sendMutex.release()
         return response
 
@@ -157,14 +165,15 @@ class Communicator:
     def walkFromTo(self, startLat, startLng, destLat, destLng, speed):
         self.__sendMutex.acquire()
         # calculate the time it will take to walk and add it to the timeout!
-        distance = get_distance_of_two_points_in_meters(startLat, startLng, destLat, destLng)
+        distance = get_distance_of_two_points_in_meters(
+            startLat, startLng, destLat, destLng)
         # speed is in kmph, distance in m
         # we want m/s -> speed / 3.6
         speed_meters = speed / 3.6
         seconds_traveltime = distance / speed_meters
 
         response = self.websocketHandler.send_and_wait(self.id, "geo walk %s %s %s %s %s\r\n"
-                                                     % (startLat, startLng, destLat, destLng, speed),
-                                                     self.__commandTimeout + seconds_traveltime)
+                                                       % (startLat, startLng, destLat, destLng, speed),
+                                                       self.__commandTimeout + seconds_traveltime)
         self.__sendMutex.release()
         return response

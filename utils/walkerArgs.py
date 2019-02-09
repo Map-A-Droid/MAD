@@ -99,14 +99,14 @@ def parseArgs():
                         help=('Path to Pogo Asset.'
                               'See https://github.com/ZeChrales/PogoAssets/'))
 
-    parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots', # TODO: check if user appended / or not and deal accordingly (rmeove it?)
+    parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots',  # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
-    
+
     parser.add_argument('-L', '--language', default='en',
                         help=('Set Language for MadMin / Quests. Default: en'))
 
@@ -217,17 +217,17 @@ def parseArgs():
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
-                              
+
     parser.add_argument('-lr', '--log-rotation',
                         help=('Active log rotation. (Default: Disable)'),
                         action='store_true', default=False)
-                              
+
     parser.add_argument('-lrbc', '--log-rotation-backup-count', default=10, type=int,
                         help=('Number of Log Rotation Backup Files. (Default: 10)'))
-                              
+
     parser.add_argument('-lrfs', '--log-rotation-file-size', default=10485760, type=int,
                         help=('Filesize of Log Files in bytes (Default: 10485760 = 10 MB)'))
-    
+
     parser.add_argument('-cla', '--cleanup-age', default='300', type=int,
                         help='Delete logs older than X minutes. Default: 300')
 
