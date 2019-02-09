@@ -3,6 +3,8 @@ import sys
 sys.path.append("..")
 from utils.resolution import Resocalculator
 import cv2
+import sys
+import numpy as np
 
 class testimage(object):
     def __init__(self, image, mode):
@@ -38,6 +40,10 @@ class testimage(object):
             
         if self._mode == "open_gym":
             self._image_check = self.get_gym_click_coords(self._image)
+            
+        if self._mode == "find_pokeball":
+            self._image_check = self.find_pokeball(self._image)
+            sys.exit(0)
         
         
             
@@ -85,6 +91,28 @@ class testimage(object):
         print ('Opening gym')
         x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
         return cv2.circle(image,(int(x),int(y)), 20, (0,0,255), -1)
+        
+    def find_pokeball(self, image):
+        print ('Check Pokeball Mainscreen')
+        height, width, _ = image.shape
+        image = image[int(height) - int(round(height / 4.5)):int(height),
+                             round(int(width) / 2) - round(int(width) / 8):round(int(width) / 2) + round(
+                                 int(width) / 8)]
+        output = image.copy()
+        gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+        radMin = int((width /  float(8.5)- 3) / 2)
+        radMax = int((width / float(7.5) + 3) / 2)
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        gray = cv2.Canny(gray, 100, 50, apertureSize=3)   
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,width / 8,param1=100,param2=15,minRadius=radMin,maxRadius=radMax)
+        if circles is not None:
+            circles = np.round(circles[0, :]).astype("int")
+            for (x, y, r) in circles:
+                raidhash = output[y-r-1:y+r+1, x-r-1:x+r+1]
+                cv2.imshow("output", np.hstack([raidhash]))
+                cv2.waitKey(0)
+        else:
+            print ('No Mainscreen found')        
         
             
     

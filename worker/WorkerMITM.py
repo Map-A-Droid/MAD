@@ -163,7 +163,7 @@ class WorkerMITM(WorkerBase):
 
         log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
-        while (data_requested is None and timestamp + timestamp >= time.time()
+        while (data_requested is None and timestamp + timeout >= time.time()
                and self.__data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
             if latest is None:
@@ -232,7 +232,7 @@ class WorkerMITM(WorkerBase):
                     time.sleep(0.5)
 
         if data_requested is not None:
-            log.warning('Got the data requested...')
+            log.info('Got the data requested...')
             self.reboot_count = 0
             self.__data_error_counter = 0
         else:

@@ -6,6 +6,7 @@ import os
 import logging
 from threading import current_thread, Event, Thread
 from utils.questGen import generate_quest 
+from utils.language import open_json_file
 
 import requests
 from s2sphere import Cell, CellId, LatLng
@@ -118,7 +119,7 @@ class WebhookHelper(object):
     def __init__(self, args):
         self.__application_args = args
         self.pokemon_file = None
-        self.pokemon_file = self.open_json_file('pokemon')
+        self.pokemon_file = open_json_file('pokemon')
         self.gyminfo = None
 
         self.loop = None
@@ -127,17 +128,6 @@ class WebhookHelper(object):
         self.t_asyncio_loop = Thread(name='webhook_asyncio_loop', target=self.__start_asyncio_loop)
         self.t_asyncio_loop.daemon = True
         self.t_asyncio_loop.start()
-        
-        
-    def open_json_file(self, jsonfile):
-        try:
-            with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
-                file_open = json.load(f)
-        except:
-            with open('locale/' + jsonfile + '.json') as f:
-                file_open = json.load(f)
-            
-        return file_open
 
     def set_gyminfo(self, db_wrapper):
         try:

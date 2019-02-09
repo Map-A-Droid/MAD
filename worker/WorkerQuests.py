@@ -224,6 +224,7 @@ class WorkerQuests(WorkerBase):
                     data_received = '-'
                     y += self._resocalc.get_next_item_coord(self)
             else:
+                log.info('Click Gift / Raidpass')
                 if not self._checkPogoButton():
                     self._checkPogoClose()
                 data_received = '-'
@@ -326,7 +327,7 @@ class WorkerQuests(WorkerBase):
         max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
         log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
-        while (data_requested is None and timestamp + timestamp >= time.time()
+        while (data_requested is None and timestamp + timeout >= time.time()
                and self.__data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
 
@@ -403,7 +404,7 @@ class WorkerQuests(WorkerBase):
                     self.__data_error_counter += 1
                     time.sleep(0.5)
         if data_requested is not None:
-            log.debug('Got the data requested...')
+            log.info('Got the data requested...')
             self.reboot_count = 0
             self.__data_error_counter = 0
         else:

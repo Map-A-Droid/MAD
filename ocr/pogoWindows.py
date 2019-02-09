@@ -68,7 +68,7 @@ class PogoWindows:
         else:
             return False
 
-    def __readCircleCount(self, filename, hash, ratio, xcord=False, crop=False, click=False, canny=False):
+    def __readCircleCount(self, filename, hash, ratio, xcord=False, crop=False, click=False, canny=False, secondratio=False):
         log.debug("__readCircleCount: Reading circles")
 
         try:
@@ -91,10 +91,13 @@ class PogoWindows:
         log.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
-
-        radMin = int((width / float(ratio) - 3) / 2)
-        radMax = int((width / float(ratio) + 3) / 2)
-
+        
+        if not secondratio:
+            radMin = int((width / float(ratio) - 3) / 2)
+            radMax = int((width / float(ratio) + 3) / 2)
+        else:
+            radMin = int((width / float(ratio) - 3) / 2)
+            radMax = int((width / float(secondratio) + 3) / 2)
         if canny:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
@@ -469,7 +472,7 @@ class PogoWindows:
             log.debug("Could not find close button (X).")
             return False
             
-    def checkpogomainscreen(self, filename, hash, ratio):
+    def checkpogomainscreen(self, filename, hash):
         log.debug("checkpogomainscreen: Checking close except nearby with: file %s, hash %s" % (filename, hash))
         try:
             screenshotRead = cv2.imread(filename)
@@ -482,7 +485,7 @@ class PogoWindows:
             return False
             #7.5
         if self.__readCircleCount(filename, hash,
-                                          float(ratio), xcord=False, crop=True, click=False, canny=True) > 0:
+                                          float(8.5), xcord=False, crop=True, click=False, canny=True, secondratio=float(7.5)) > 0:
             log.info("Found Pokeball.")
             return True
         return False
