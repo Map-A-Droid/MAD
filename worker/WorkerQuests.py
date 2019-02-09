@@ -29,6 +29,8 @@ class WorkerQuests(WorkerBase):
         self.__data_error_counter = 0
         self._start_inventory_clear = Event()
         self._delay_add = int(self._devicesettings.get("vps_delay", 0))
+        self.__reboot_count = 0
+        self.__restart_count = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -364,12 +366,14 @@ class WorkerQuests(WorkerBase):
                 if latest[156]['timestamp'] >= timestamp:
                     # TODO: consider individual counters?
                     self.__data_error_counter = 0
-                    self.reboot_count = 0
+                    self.__reboot_count = 0
+                    self.__restart_count = 0
                     return 'Gym'
             elif 102 in latest:
                 if latest[102]['timestamp'] >= timestamp:
                     self.__data_error_counter = 0
-                    self.reboot_count = 0
+                    self.__reboot_count = 0
+                    self.__restart_count = 0
                     return 'Mon'
 
             if proto_to_wait_for not in latest:
@@ -391,30 +395,36 @@ class WorkerQuests(WorkerBase):
                     if 'items_awarded' in latest_data['payload']:
                         if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
                             self.__data_error_counter = 0
-                            self.reboot_count = 0
+                            self.__reboot_count = 0
+                            self.__restart_count = 0
                             return 'Quest'
                         elif (latest_data['payload']['result'] == 1
                               and len(latest_data['payload']['items_awarded']) == 0):
                             self.__data_error_counter = 0
-                            self.reboot_count = 0
+                            self.__reboot_count = 0
+                            self.__restart_count = 0
                             return 'Time'
                         elif latest_data['payload']['result'] == 2:
                             self.__data_error_counter = 0
-                            self.reboot_count = 0
+                            self.__reboot_count = 0
+                            self.__restart_count = 0
                             return 'SB'
                         elif latest_data['payload']['result'] == 4:
                             self.__data_error_counter = 0
-                            self.reboot_count = 0
+                            self.__reboot_count = 0
+                            self.__restart_count = 0
                             return 'Box'
                     if 'fort_id' in latest_data['payload']:
                         if latest_data['payload']['type'] == 1:
                             self.__data_error_counter = 0
-                            self.reboot_count = 0
+                            self.__reboot_count = 0
+                            self.__restart_count = 0
                             return 'Stop'
                     if 'inventory_delta' in latest_data['payload']:
                         if len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                             self.__data_error_counter = 0
-                            self.reboot_count = 0
+                            self.__reboot_count = 0
+                            self.__restart_count = 0
                             return 'Clear'
                 else:
                     log.debug("latest timestamp of proto %s (%s) is older than %s"
@@ -425,18 +435,22 @@ class WorkerQuests(WorkerBase):
                     time.sleep(0.5)
         if data_requested is not None:
             log.info('Got the data requested...')
-            self.reboot_count = 0
+            self.__reboot_count = 0
+            self.__restart_count = 0
             self.__data_error_counter = 0
         else:
             log.warning("Timeout waiting for data")
-            self.reboot_count += 1
+            self.__reboot_count += 1
+            self.__restart_count += 1
             if (self._devicesettings.get("reboot", False)
                     and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
                 raise InternalStopWorkerException
-            elif self.__data_error_counter > max_data_err_counter:
-                # self._start_pogodroid()
+            elif self.__data_error_counter >= max_data_err_counter and self.__restart_count > 5:
                 self.__data_error_counter = 0
+                self.__restart_count = 0
                 self._restart_pogo(True)
+            elif self.__data_error_counter >= max_data_err_counter and self.__restart_count <= 5:
+                self.__data_error_counter = 0
         return data_requested
