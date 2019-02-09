@@ -10,7 +10,7 @@ def open_json_file(jsonfile):
         with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
             file_open = json.load(f)
     except:
-        with open('locale/' + jsonfile + '.json') as f:
+        with open('locale/en/' + jsonfile + '.json') as f:
             file_open = json.load(f)
             
     return file_open

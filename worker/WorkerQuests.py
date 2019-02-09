@@ -25,7 +25,7 @@ class WorkerQuests(WorkerBase):
         # 2 => clear quest
         self.clear_thread_task = 0
         self._mitm_mapper = mitm_mapper
-        self._data_error_counter = 0
+        self.__data_error_counter = 0
         self._start_inventory_clear = Event()
         self._delay_add = int(self._devicesettings.get("vps_delay", 0))
 
@@ -37,7 +37,7 @@ class WorkerQuests(WorkerBase):
         self.clear_thread.start()
         self._get_screen_size()
 
-        reached_main_menu = self._check_pogo_main_screen(15, True)
+        reached_main_menu = self._check_pogo_main_screen(5, True)
         if not reached_main_menu:
             if not self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
@@ -118,7 +118,7 @@ class WorkerQuests(WorkerBase):
 
         data_received = '-'
 
-        reachedMainMenu = self._check_pogo_main_screen(15, True)
+        reachedMainMenu = self._check_pogo_main_screen(5, True)
         if not reachedMainMenu:
             self._restart_pogo()
             
@@ -213,7 +213,7 @@ class WorkerQuests(WorkerBase):
             curTime = time.time()
             self._communicator.click(int(delx), int(dely))
 
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=25)
+            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=15)
 
             if data_received is not None:
                 if 'Clear' in data_received:
@@ -223,9 +223,11 @@ class WorkerQuests(WorkerBase):
                     data_received = '-'
                     y += self._resocalc.get_next_item_coord(self)
             else:
+                log.info('Click Gift / Raidpass')
                 if not self._checkPogoButton():
                     self._checkPogoClose()
                 data_received = '-'
+                y += self._resocalc.get_next_item_coord(self)
                 y += self._resocalc.get_next_item_coord(self)
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
@@ -251,7 +253,7 @@ class WorkerQuests(WorkerBase):
         while 'Stop' not in data_received and int(to) < 3:
             curTime = time.time()
             self._open_gym(self._delay_add)
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=20)
+            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=25)
             if data_received is not None:
                 if 'Gym' in data_received:
                     log.info('Clicking GYM')
@@ -321,32 +323,38 @@ class WorkerQuests(WorkerBase):
 
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=45):
         #timeout = self._devicesettings.get("mitm_wait_timeout", 45)
-        log.info('Waiting for data after %s' % str(timestamp))
+        max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
+        log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self.__data_error_counter)))
         data_requested = None
-        while data_requested is None and timestamp + timeout >= time.time():
+        while (data_requested is None and timestamp + timeout >= time.time()
+               and self.__data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
 
             if latest is None:
-                log.warning("Nothing received since MAD started")
+                log.debug("Nothing received since MAD started")
                 time.sleep(0.5)
                 continue
             elif proto_to_wait_for not in latest:
-                if 156 in latest:
-                    if latest[156]['timestamp'] >= timestamp:
-                        # TODO: consider individual counters?
-                        self._data_error_counter = 0
-                        self.reboot_count = 0
-                        return 'Gym'
-                if 102 in latest:
-                    if latest[102]['timestamp'] >= timestamp:
-                        self._data_error_counter = 0
-                        self.reboot_count = 0
-                        return 'Mon'
+                log.debug("No data linked to the requested proto since MAD started. Count: %s"
+                          % str(self.__data_error_counter))
+                self.__data_error_counter += 1
+                time.sleep(0.5)
+            elif 156 in latest:
+                if latest[156]['timestamp'] >= timestamp:
+                    # TODO: consider individual counters?
+                    self.__data_error_counter = 0
+                    self.reboot_count = 0
+                    return 'Gym'
+            elif 102 in latest:
+                if latest[102]['timestamp'] >= timestamp:
+                    self.__data_error_counter = 0
+                    self.reboot_count = 0
+                    return 'Mon'
 
             if proto_to_wait_for not in latest:
-                log.warning("No data linked to the requested proto since MAD started. Count: %s"
-                            % str(self._data_error_counter))
-                self._data_error_counter += 1
+                log.debug("No data linked to the requested proto since MAD started. Count: %s"
+                            % str(self.__data_error_counter))
+                self.__data_error_counter += 1
                 time.sleep(1)
             else:
                 # requested proto received previously
@@ -354,37 +362,37 @@ class WorkerQuests(WorkerBase):
                 current_routemanager = self._get_currently_valid_routemanager()
                 if current_routemanager is None:
                     # we should be sleeping...
-                    log.warning("%s should be sleeping ;)" % str(self._id))
+                    log.info("%s should be sleeping ;)" % str(self._id))
                     return None
                 latest_timestamp = latest_proto.get("timestamp", 0)
                 if latest_timestamp >= timestamp:
                     latest_data = latest_proto.get("values", None)
                     if 'items_awarded' in latest_data['payload']:
                         if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
-                            self._data_error_counter = 0
+                            self.__data_error_counter = 0
                             self.reboot_count = 0
                             return 'Quest'
                         elif (latest_data['payload']['result'] == 1
                               and len(latest_data['payload']['items_awarded']) == 0):
-                            self._data_error_counter = 0
+                            self.__data_error_counter = 0
                             self.reboot_count = 0
                             return 'Time'
                         elif latest_data['payload']['result'] == 2:
-                            self._data_error_counter = 0
+                            self.__data_error_counter = 0
                             self.reboot_count = 0
                             return 'SB'
                         elif latest_data['payload']['result'] == 4:
-                            self._data_error_counter = 0
+                            self.__data_error_counter = 0
                             self.reboot_count = 0
                             return 'Box'
                     if 'fort_id' in latest_data['payload']:
                         if latest_data['payload']['type'] == 1:
-                            self._data_error_counter = 0
+                            self.__data_error_counter = 0
                             self.reboot_count = 0
                             return 'Stop'
                     if 'inventory_delta' in latest_data['payload']:
                         if len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
-                            self._data_error_counter = 0
+                            self.__data_error_counter = 0
                             self.reboot_count = 0
                             return 'Clear'
                 else:
@@ -392,37 +400,12 @@ class WorkerQuests(WorkerBase):
                               % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
                     # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                     # TODO: latter indicates too high speeds for example
-                    self._data_error_counter += 1
+                    self.__data_error_counter += 1
                     time.sleep(0.5)
-            max_data_err_counter = 60
-            log.debug("Current errorcounter: %s" % str(self._data_error_counter))
-            try:
-                current_routemanager = self._get_currently_valid_routemanager()
-            except InternalStopWorkerException as e:
-                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
-                raise InternalStopWorkerException
-            if self._devicesettings is not None:
-                max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
-            if data_requested is not None and self._data_error_counter >= int(max_data_err_counter):
-                log.warning("Errorcounter reached restart thresh, restarting pogo")
-                self.reboot_count += 1
-                if (self._devicesettings.get("reboot", False)
-                        and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
-                    log.error("Rebooting %s" % str(self._id))
-                    self._reboot()
-                    raise InternalStopWorkerException
-                else:
-                    self._restart_pogo(True)
-                    self.reboot_count = 0
-                return None
-            elif data_requested is None:
-                # log.debug('data_requested still None...')
-                time.sleep(0.5)
-
         if data_requested is not None:
-            log.debug('Got the data requested...')
+            log.info('Got the data requested...')
             self.reboot_count = 0
-            self._data_error_counter = 0
+            self.__data_error_counter = 0
         else:
             log.warning("Timeout waiting for data")
             self.reboot_count += 1
@@ -431,8 +414,8 @@ class WorkerQuests(WorkerBase):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
                 raise InternalStopWorkerException
-            elif self.reboot_count > self._devicesettings.get("reboot_thresh", 5):
+            elif self.__data_error_counter > max_data_err_counter:
                 # self._start_pogodroid()
+                self.__data_error_counter = 0
                 self._restart_pogo(True)
-                self.reboot_count = 0
         return data_requested
