@@ -29,6 +29,8 @@ class WorkerQuests(WorkerBase):
         self.__data_error_counter = 0
         self._start_inventory_clear = Event()
         self._delay_add = int(self._devicesettings.get("vps_delay", 0))
+        self.__reboot_count = 0
+        self.__restart_count = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -409,14 +411,17 @@ class WorkerQuests(WorkerBase):
             self.__data_error_counter = 0
         else:
             log.warning("Timeout waiting for data")
-            self.reboot_count += 1
+            self.__reboot_count += 1
+            self.__restart_count += 1
             if (self._devicesettings.get("reboot", False)
                     and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
                 raise InternalStopWorkerException
-            elif self.__data_error_counter > max_data_err_counter:
-                # self._start_pogodroid()
+            elif self.__data_error_counter >= max_data_err_counter and self.__restart_count > 5:
                 self.__data_error_counter = 0
+                self.__restart_count = 0
                 self._restart_pogo(True)
+            elif self.__data_error_counter >= max_data_err_counter and self.__restart_count <= 5:
+                self.__data_error_counter = 0
         return data_requested

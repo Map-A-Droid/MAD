@@ -128,6 +128,8 @@ class WorkerMITM(WorkerBase):
         self._injection_settings = {}
         self.__update_injection_settings()
         self.__data_error_counter = 0
+        self.__reboot_count = 0
+        self.__restart_count = 0
 
     def __update_injection_settings(self):
         injected_settings = {}
@@ -163,7 +165,8 @@ class WorkerMITM(WorkerBase):
 
         log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
-        while (data_requested is None and timestamp + timeout >= time.time()
+        log.info(str(self._id) + ' ' + str(data_requested) + ' ' + str(timestamp + timeout)  + ' ' + str(math.floor(time.time())) + ' ' + str(timestamp + timeout - math.floor(time.time()))+ ' ' + str(self.__data_error_counter)  + ' ' +  str(max_data_err_counter))
+        while (data_requested is None and timestamp + timeout >= math.floor(time.time())
                and self.__data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
             if latest is None:
@@ -215,6 +218,7 @@ class WorkerMITM(WorkerBase):
                             for forts in data_extract['forts']:
                                 if forts['id']:
                                     data_requested = latest_data
+                                    break
                         if data_requested is None:
                             log.debug("No forts in data received")
                             self.__data_error_counter += 1
@@ -233,7 +237,8 @@ class WorkerMITM(WorkerBase):
 
         if data_requested is not None:
             log.info('Got the data requested...')
-            self.reboot_count = 0
+            self.__reboot_count = 0
+            self.__restart_count = 0
             self.__data_error_counter = 0
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
@@ -244,15 +249,18 @@ class WorkerMITM(WorkerBase):
             except InternalStopWorkerException as e:
                 log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
-            self.reboot_count += 1
+            self.__reboot_count += 1
+            self.__restart_count += 1
             if (self._devicesettings.get("reboot", False)
-                    and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)
+                    and self.__reboot_count > self._devicesettings.get("reboot_thresh", 5)
                     and not current_routemanager.init):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
                 raise InternalStopWorkerException
-            elif self.__data_error_counter > max_data_err_counter:
-                # self._start_pogodroid()
+            elif self.__data_error_counter >= max_data_err_counter and self.__restart_count > 5:
                 self.__data_error_counter = 0
+                self.__restart_count = 0
                 self._restart_pogo(True)
+            elif self.__data_error_counter >= max_data_err_counter and self.__restart_count <= 5:
+                self.__data_error_counter = 0
         return data_requested
