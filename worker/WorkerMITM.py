@@ -232,7 +232,7 @@ class WorkerMITM(WorkerBase):
                     time.sleep(0.5)
 
         if data_requested is not None:
-            log.warning('Got the data requested...')
+            log.info('Got the data requested...')
             self.reboot_count = 0
             self.__data_error_counter = 0
         else:

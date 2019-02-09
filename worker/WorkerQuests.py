@@ -402,7 +402,7 @@ class WorkerQuests(WorkerBase):
                     self.__data_error_counter += 1
                     time.sleep(0.5)
         if data_requested is not None:
-            log.debug('Got the data requested...')
+            log.info('Got the data requested...')
             self.reboot_count = 0
             self.__data_error_counter = 0
         else:
