@@ -469,7 +469,7 @@ class PogoWindows:
             log.debug("Could not find close button (X).")
             return False
             
-    def checkpogomainscreen(self, filename, hash):
+    def checkpogomainscreen(self, filename, hash, ratio):
         log.debug("checkpogomainscreen: Checking close except nearby with: file %s, hash %s" % (filename, hash))
         try:
             screenshotRead = cv2.imread(filename)
@@ -480,9 +480,9 @@ class PogoWindows:
         if screenshotRead is None:
             log.error("checkCloseExceptNearbyButton: Screenshot corrupted :(")
             return False
-            
+            #7.5
         if self.__readCircleCount(filename, hash,
-                                          float(7.5), xcord=False, crop=True, click=False, canny=True) > 0:
+                                          float(ratio), xcord=False, crop=True, click=False, canny=True) > 0:
             log.info("Found Pokeball.")
             return True
         return False

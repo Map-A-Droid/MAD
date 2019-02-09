@@ -5,7 +5,15 @@ import gettext
 import os
 from utils.language import open_json_file, i8ln
 
-gettext.find('quest', 'locales')
+#try:
+#    lang = gettext.translation(
+#            'quest', localedir='locale', languages=[os.environ['LANGUAGE']], fallback=True)
+#    lang.install()
+#except:
+#    lang = gettext.NullTranslations()
+
+gettext.find('quest', 'locales', all=True)
+
 lang = gettext.translation('quest', localedir='locale', fallback=True)
 lang.install()
 
