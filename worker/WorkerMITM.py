@@ -159,21 +159,25 @@ class WorkerMITM(WorkerBase):
 
     def __wait_for_data(self, timestamp, proto_to_wait_for=106):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
+        max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
+
         log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
-        while data_requested is None and timestamp + timeout >= time.time():
+        while (data_requested is None and timestamp + timestamp >= time.time()
+               and self.__data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
             if latest is None:
-                log.warning("Nothing received since MAD started")
+                log.debug("Nothing received from %s since MAD started" % str(self._id))
                 time.sleep(0.5)
                 continue
             elif proto_to_wait_for not in latest:
-                log.warning("No data linked to the requested proto since MAD started. Count: %s"
-                            % str(self.__data_error_counter))
+                log.debug("No data linked to the requested proto since MAD started. Count: %s"
+                          % str(self.__data_error_counter))
                 self.__data_error_counter += 1
                 time.sleep(0.5)
             else:
                 # proto has previously been received, let's check the timestamp...
+                # TODO: int vs str-key?
                 latest_proto = latest.get(proto_to_wait_for, None)
 
                 try:
@@ -188,6 +192,7 @@ class WorkerMITM(WorkerBase):
                 current_mode = current_routemanager.mode
                 latest_timestamp = latest_proto.get("timestamp", 0)
                 if latest_timestamp >= timestamp:
+                    # TODO: consider reseting timestamp here since we clearly received SOMETHING
                     latest_data = latest_proto.get("values", None)
                     if latest_data is None:
                         self.__data_error_counter += 1
@@ -226,31 +231,6 @@ class WorkerMITM(WorkerBase):
                     self.__data_error_counter += 1
                     time.sleep(0.5)
 
-            max_data_err_counter = 60
-            log.debug("Current errorcounter: %s" % str(self.__data_error_counter))
-            try:
-                current_routemanager = self._get_currently_valid_routemanager()
-            except InternalStopWorkerException as e:
-                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
-                raise InternalStopWorkerException
-            if self._devicesettings is not None:
-                max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
-            if (data_requested is None and self.__data_error_counter >= int(max_data_err_counter)
-                    and not current_routemanager.init):
-                log.warning("Errorcounter reached restart thresh, restarting pogo")
-                self.reboot_count += 1
-                if (self._devicesettings.get("reboot", False)
-                        and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
-                    log.error("Rebooting %s" % str(self._id))
-                    self._reboot()
-                    raise InternalStopWorkerException
-                else:
-                    self._restart_pogo(True)
-                    self.reboot_count = 0
-                return None
-            elif data_requested is None:
-                # log.debug('data_requested still None...')
-                time.sleep(0.5)
         if data_requested is not None:
             log.warning('Got the data requested...')
             self.reboot_count = 0
