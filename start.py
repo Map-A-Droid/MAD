@@ -5,19 +5,18 @@ import os
 #os.environ['PYTHONASYNCIODEBUG'] = '1'
 import sys
 import time
+from logging.handlers import RotatingFileHandler
 from threading import Thread
 
 from colorlog import ColoredFormatter
-from logging.handlers import RotatingFileHandler
-from watchdog.observers import Observer
-
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
 from mitm_receiver.MitmMapper import MitmMapper
 from utils.mappingParser import MappingParser
+from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
-from utils.version import MADVersion
+from watchdog.observers import Observer
 from websocket.WebsocketServer import WebsocketServer
 
 
@@ -32,7 +31,7 @@ class LogFilter(logging.Filter):
 
 
 args = parseArgs()
-os.environ['LANGUAGE']=args.language
+os.environ['LANGUAGE'] = args.language
 
 console = logging.StreamHandler()
 nextRaidQueue = []
@@ -81,7 +80,8 @@ def handle_exception(exc_type, exc_value, exc_traceback):
         sys.__excepthook__(exc_type, exc_value, exc_traceback)
         return
 
-    log.error("Uncaught exception", exc_info=(exc_type, exc_value, exc_traceback))
+    log.error("Uncaught exception", exc_info=(
+        exc_type, exc_value, exc_traceback))
 
 
 sys.excepthook = handle_exception
@@ -94,7 +94,7 @@ def set_log_and_verbosity(log):
     if not os.path.exists(args.log_path):
         os.mkdir(args.log_path)
     if not args.no_file_logs:
-        
+
         filename = os.path.join(args.log_path, args.log_filename)
         if not args.log_rotation:
             filelog = logging.FileHandler(filename)
@@ -115,7 +115,8 @@ def set_log_and_verbosity(log):
 def start_scan(mitm_mapper, db_wrapper, routemanagers, device_mappings, auths):
     # wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), mitm_mapper, db_wrapper, routemanagers,
     #                                 device_mappings, auths)
-    wsRunning = WebsocketServer(args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths)
+    wsRunning = WebsocketServer(
+        args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths)
     wsRunning.start_server()
 
 
@@ -123,8 +124,10 @@ def start_ocr_observer(args, db_helper):
     from ocr.fileObserver import checkScreenshot
     observer = Observer()
     log.error(args.raidscreen_path)
-    observer.schedule(checkScreenshot(args, db_helper), path=args.raidscreen_path)
+    observer.schedule(checkScreenshot(args, db_helper),
+                      path=args.raidscreen_path)
     observer.start()
+
 
 def delete_old_logs(minutes):
     if minutes == "0":
@@ -132,11 +135,12 @@ def delete_old_logs(minutes):
         return
 
     while True:
-        log.info('delete_old_logs: Search/Delete logs older than ' + str(minutes) + ' minutes')
+        log.info('delete_old_logs: Search/Delete logs older than ' +
+                 str(minutes) + ' minutes')
 
         now = time.time()
         only_files = []
-        
+
         logpath = args.log_path
 
         log.debug('delete_old_logs: Log Folder: ' + str(logpath))
@@ -151,9 +155,11 @@ def delete_old_logs(minutes):
         log.info('delete_old_logs: Search/Delete logs finished')
         time.sleep(3600)
 
+
 def start_madmin():
     from madmin.madmin import app
-    app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True, use_reloader=False)
+    app.run(host=args.madmin_ip, port=int(args.madmin_port),
+            threaded=True, use_reloader=False)
 
 
 # TODO: IP and port for receiver from args...
@@ -172,6 +178,7 @@ def generate_mappingjson():
     newfile['devices'] = []
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
+
 
 if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
@@ -215,15 +222,17 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if args.only_scan:
-        
+
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
             if not args.with_madmin:
-                log.fatal("No mappings.json found - start madmin with with_madmin in config or copy example")
+                log.fatal(
+                    "No mappings.json found - start madmin with with_madmin in config or copy example")
                 sys.exit(1)
-                
+
             log.fatal("No mappings.json found - starting setup mode with madmin.")
-            log.fatal("Open Madmin (ServerIP with Port " + str(args.madmin_port) + ") - 'Mapping Editor' and restart.")
+            log.fatal("Open Madmin (ServerIP with Port " +
+                      str(args.madmin_port) + ") - 'Mapping Editor' and restart.")
             generate_mappingjson()
         else:
 
@@ -233,7 +242,8 @@ if __name__ == "__main__":
                 routemanagers = mapping_parser.get_routemanagers()
                 auths = mapping_parser.get_auths()
             except KeyError as e:
-                log.fatal("Could not parse mappings. Please check those. Description: %s" % str(e))
+                log.fatal(
+                    "Could not parse mappings. Please check those. Description: %s" % str(e))
                 sys.exit(1)
 
             mitm_mapper = MitmMapper(device_mappings)
@@ -265,7 +275,8 @@ if __name__ == "__main__":
         MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
         log.info('Starting OCR Thread....')
-        t_observ = Thread(name='observer', target=start_ocr_observer, args=(args, db_wrapper,))
+        t_observ = Thread(
+            name='observer', target=start_ocr_observer, args=(args, db_wrapper,))
         t_observ.daemon = True
         t_observ.start()
 
@@ -274,10 +285,10 @@ if __name__ == "__main__":
         t_flask = Thread(name='madmin', target=start_madmin)
         t_flask.daemon = False
         t_flask.start()
-        
+
     log.info('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
-                      target=delete_old_logs(args.cleanup_age))
+                       target=delete_old_logs(args.cleanup_age))
     t_cleanup.join()
     t_cleanup.daemon = True
     t_cleanup.start()

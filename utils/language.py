@@ -1,9 +1,9 @@
-import logging
 import json
+import logging
 import os
 
-
 log = logging.getLogger(__name__)
+
 
 def open_json_file(jsonfile):
     try:
@@ -12,9 +12,10 @@ def open_json_file(jsonfile):
     except:
         with open('locale/en/' + jsonfile + '.json') as f:
             file_open = json.load(f)
-            
+
     return file_open
-    
+
+
 def i8ln(word):
     lang_file = 'locale/' + os.environ['LANGUAGE'] + '/mad.json'
     if os.path.isfile(lang_file):
@@ -22,5 +23,5 @@ def i8ln(word):
             language_file = json.load(f)
         if word in language_file:
             return language_file[word]
-    
+
     return word

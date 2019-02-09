@@ -1,15 +1,15 @@
 import asyncio
 import functools
 import json
-import os
-
 import logging
-from threading import current_thread, Event, Thread
-from utils.questGen import generate_quest 
-from utils.language import open_json_file
+import os
+from threading import Event, Thread, current_thread
 
 import requests
+
 from s2sphere import Cell, CellId, LatLng
+from utils.language import open_json_file
+from utils.questGen import generate_quest
 
 log = logging.getLogger(__name__)
 
@@ -53,7 +53,7 @@ egg_webhook_payload = """[{{
       }},
       "type": "{type}"
    }} ]"""
-            
+
 quest_webhook_payload = """[{{
       "message": {{
                 "pokestop_id": "{pokestop_id}",
@@ -75,9 +75,9 @@ quest_webhook_payload = """[{{
                 "quest_condition": "{quest_condition}"
         }},
       "type": "quest"
-   }} ]"""            
-            
-            
+   }} ]"""
+
+
 weather_webhook_payload = """[{{
       "message": {{
                 "s2_cell_id": {0},
@@ -125,7 +125,8 @@ class WebhookHelper(object):
         self.loop = None
         self.loop_started = Event()
         self.loop_tid = None
-        self.t_asyncio_loop = Thread(name='webhook_asyncio_loop', target=self.__start_asyncio_loop)
+        self.t_asyncio_loop = Thread(
+            name='webhook_asyncio_loop', target=self.__start_asyncio_loop)
         self.t_asyncio_loop.daemon = True
         self.t_asyncio_loop.start()
 
@@ -151,7 +152,8 @@ class WebhookHelper(object):
     def __add_task_to_loop(self, coro):
         f = functools.partial(self.loop.create_task, coro)
         if current_thread() == self.loop_tid:
-            return f()  # We can call directly if we're not going between threads.
+            # We can call directly if we're not going between threads.
+            return f()
         else:
             return self.loop.call_soon_threadsafe(f)
 
@@ -178,7 +180,8 @@ class WebhookHelper(object):
                 else:
                     log.info("Success sending webhook")
             except Exception as e:
-                log.warning("Exception occured while sending webhook: %s" % str(e))
+                log.warning(
+                    "Exception occured while sending webhook: %s" % str(e))
 
     def get_raid_boss_cp(self, mon_id):
         if self.pokemon_file is not None and int(mon_id) > 0:
@@ -211,7 +214,8 @@ class WebhookHelper(object):
 
     def send_weather_webhook(self, s2_cell_id, weather_id, severe, warn, day, time):
         if self.__application_args.webhook and self.__application_args.weather_webhook:
-            self.__add_task_to_loop(self._send_weather_webhook(s2_cell_id, weather_id, severe, warn, day, time))
+            self.__add_task_to_loop(self._send_weather_webhook(
+                s2_cell_id, weather_id, severe, warn, day, time))
 
     def send_pokemon_webhook(self, encounter_id, pokemon_id, last_modified_time, spawnpoint_id, lat, lon,
                              despawn_time_unix,
@@ -235,14 +239,13 @@ class WebhookHelper(object):
 
     def submit_quest_webhook(self, rawquest):
         if self.__application_args.webhook:
-            self.__add_task_to_loop(self._submit_quest_webhook(rawquest))                                                             
-    
+            self.__add_task_to_loop(self._submit_quest_webhook(rawquest))
 
     def send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id, slots_available, guard_pokemon_id,
                          latitude, longitude):
         if self.__application_args.webhook and self.__application_args.gym_webhook:
             self.__add_task_to_loop(self._send_gym_webhook(gym_id, raid_active_until, gym_name, team_id,
-                                    slots_available, guard_pokemon_id, latitude, longitude))
+                                                           slots_available, guard_pokemon_id, latitude, longitude))
 
     async def _send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id,
                                 slots_available, guard_pokemon_id, latitude, longitude):
@@ -424,7 +427,8 @@ class WebhookHelper(object):
                 vertex = LatLng.from_point(cell.get_vertex(v))
                 coords.append([vertex.lat().degrees, vertex.lng().degrees])
 
-            data = weather_webhook_payload.format(s2cellId, coords, weatherId, severe, warn, day, time, latitude, longitude)
+            data = weather_webhook_payload.format(
+                s2cellId, coords, weatherId, severe, warn, day, time, latitude, longitude)
 
             log.debug(data)
             payload = json.loads(data)
@@ -477,17 +481,17 @@ class WebhookHelper(object):
 
         if weight is not None:
             mon_payload["weight"] = weight
-            
+
         entire_payload = {"type": "pokemon", "message": mon_payload}
         to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
         to_be_sent = plain_webhook.format(plain=to_be_sent)
         to_be_sent = json.loads(to_be_sent)
 
         self.__sendToWebhook(to_be_sent)
-        
+
     async def _submit_quest_webhook(self, rawquest):
         log.info('Sending Quest to webhook')
-        
+
         for pokestopid in rawquest:
             quest = generate_quest(rawquest[str(pokestopid)])
 
@@ -512,4 +516,3 @@ class WebhookHelper(object):
 
         payload = json.loads(data)
         self.__sendToWebhook(payload)
-

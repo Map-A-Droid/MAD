@@ -6,7 +6,7 @@ import threading
 import time
 from queue import Queue
 
-from flask import (Flask, request, Response)
+from flask import Flask, Response, request
 
 from utils.authHelper import check_auth
 
@@ -34,10 +34,11 @@ class EndpointAction(object):
         elif allowed_origins is not None and (origin is None or origin not in allowed_origins):
             self.response = Response(status=403, headers={})
             abort = True
-        elif auths is not None: # TODO check auth properly...
+        elif auths is not None:  # TODO check auth properly...
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(auth, application_args, auths):
-                log.warning("Unauthorized attempt to POST from %s" % str(request.remote_addr))
+                log.warning("Unauthorized attempt to POST from %s" %
+                            str(request.remote_addr))
                 self.response = Response(status=403, headers={})
                 abort = True
         if not abort:
@@ -52,8 +53,9 @@ class EndpointAction(object):
                     response_payload = ""
                 self.response = Response(status=200, headers={})
                 self.response.data = response_payload
-            except Exception as e: # TODO: catch exact exception
-                log.warning("Could not get JSON data from request: %s" % str(e))
+            except Exception as e:  # TODO: catch exact exception
+                log.warning(
+                    "Could not get JSON data from request: %s" % str(e))
                 self.response = Response(status=500, headers={})
         return self.response
 
@@ -88,29 +90,34 @@ class MITMReceiver(object):
             t.join()
 
     def run_receiver(self):
-        self.app.run(host=self.__listen_ip, port=int(self.__listen_port), threaded=True, use_reloader=False)
+        self.app.run(host=self.__listen_ip, port=int(
+            self.__listen_port), threaded=True, use_reloader=False)
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
         if methods_passed is None:
             log.fatal("Invalid REST method specified")
             sys.exit(1)
-        self.app.add_url_rule(endpoint, endpoint_name, EndpointAction(handler), methods=methods_passed)
+        self.app.add_url_rule(endpoint, endpoint_name,
+                              EndpointAction(handler), methods=methods_passed)
 
     def proto_endpoint(self, origin, data):
         # data = json.loads(request.data)
         type = data.get("type", None)
         if type is None:
-            log.warning("Could not read method ID. Stopping processing of proto")
+            log.warning(
+                "Could not read method ID. Stopping processing of proto")
             return None
         timestamp = int(math.floor(time.time()))
-        self.__mitm_mapper.update_latest(origin, timestamp=timestamp, key=type, values_dict=data)
+        self.__mitm_mapper.update_latest(
+            origin, timestamp=timestamp, key=type, values_dict=data)
         self._data_queue.put(
             (timestamp, data, origin)
         )
         return None
 
     def get_latest(self, origin, data):
-        injected_settings = self.__mitm_mapper.request_latest(origin, "injected_settings")
+        injected_settings = self.__mitm_mapper.request_latest(
+            origin, "injected_settings")
 
         ids_iv = self.__mitm_mapper.request_latest(origin, "ids_iv")
         if ids_iv is not None:
@@ -133,33 +140,46 @@ class MITMReceiver(object):
         if type:
             if type == 106:
                 # process GetMapObject
-                log.info("Processing GMO received from %s at %s" % (str(origin), str(received_timestamp)))
+                log.info("Processing GMO received from %s at %s" %
+                         (str(origin), str(received_timestamp)))
                 try:
                     if application_args.weather:
-                        self._db_wrapper.submit_weather_map_proto(origin, data["payload"], received_timestamp)
+                        self._db_wrapper.submit_weather_map_proto(
+                            origin, data["payload"], received_timestamp)
 
-                    self._db_wrapper.submit_pokestops_map_proto(origin, data["payload"])
-                    self._db_wrapper.submit_gyms_map_proto(origin, data["payload"])
-                    self._db_wrapper.submit_raids_map_proto(origin, data["payload"])
+                    self._db_wrapper.submit_pokestops_map_proto(
+                        origin, data["payload"])
+                    self._db_wrapper.submit_gyms_map_proto(
+                        origin, data["payload"])
+                    self._db_wrapper.submit_raids_map_proto(
+                        origin, data["payload"])
 
-                    self._db_wrapper.submit_spawnpoints_map_proto(origin, data["payload"])
+                    self._db_wrapper.submit_spawnpoints_map_proto(
+                        origin, data["payload"])
                     # mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
                     mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
-                    self._db_wrapper.submit_mons_map_proto(origin, data["payload"], mon_ids_iv)
+                    self._db_wrapper.submit_mons_map_proto(
+                        origin, data["payload"], mon_ids_iv)
                 except Exception as e:
                     log.error("Issue updating DB: %s" % str(e))
 
             elif type == 102:
                 # process Encounter
-                playerlevel = self.__mitm_mapper._playerstats[origin].get_level()
+                playerlevel = self.__mitm_mapper._playerstats[origin].get_level(
+                )
                 if playerlevel >= 30:
-                    log.info("Processing Encounter received from %s at %s" % (str(origin), str(received_timestamp)))
-                    self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])
+                    log.info("Processing Encounter received from %s at %s" %
+                             (str(origin), str(received_timestamp)))
+                    self._db_wrapper.submit_mon_iv(
+                        origin, received_timestamp, data["payload"])
                 else:
-                    log.error('Playerlevel lower than 30 - not processing encounter Data')
+                    log.error(
+                        'Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
                 self._db_wrapper.submit_quest_proto(data["payload"])
             elif type == 104:
-                self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
+                self._db_wrapper.submit_pokestops_details_map_proto(
+                    data["payload"])
             elif type == 4:
-                self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
+                self.__mitm_mapper._playerstats[origin]._gen_player_stats(
+                    data["payload"])

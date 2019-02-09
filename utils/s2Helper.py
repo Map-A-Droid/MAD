@@ -1,20 +1,23 @@
 import logging
-# import sys
-
 # import geopy
 import math
 import multiprocessing
 import sys
 
 import gpxdata
-from geopy import distance, Point
 import s2sphere
-# import math
-
+from geopy import Point, distance
 # from utils.collections import Location
 # from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
 from utils.collections import Location
-from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
+from utils.geo import (get_distance_of_two_points_in_meters,
+                       get_middle_of_coord_list)
+
+# import sys
+
+
+# import math
+
 
 log = logging.getLogger(__name__)
 
@@ -28,7 +31,8 @@ class S2Helper:
         region_cover.max_cells = 1
         p1 = s2sphere.LatLng.from_degrees(lat, lng)
         p2 = s2sphere.LatLng.from_degrees(lat, lng)
-        covering = region_cover.get_covering(s2sphere.LatLngRect.from_point_pair(p1, p2))
+        covering = region_cover.get_covering(
+            s2sphere.LatLngRect.from_point_pair(p1, p2))
         # we will only get our desired cell ;)
         return covering[0].id()
 
@@ -54,7 +58,8 @@ class S2Helper:
                   ' L{} Cells in Area'.format(str(cell_size)))
         for cell_id in cell_ids:
             split_cell_id = str(cell_id).split(' ')
-            position = S2Helper.get_position_from_cell(int(split_cell_id[1], 16))
+            position = S2Helper.get_position_from_cell(
+                int(split_cell_id[1], 16))
             centers_in_area.append([position[0], position[1]])
             # calc_route_data.append(str(position[0]) + ', ' + str(position[1]))
 
@@ -64,7 +69,7 @@ class S2Helper:
     def get_position_from_cell(cell_id):
         cell = s2sphere.CellId(id_=int(cell_id)).to_lat_lng()
         return s2sphere.math.degrees(cell.lat().radians), \
-               s2sphere.math.degrees(cell.lng().radians), 0
+            s2sphere.math.degrees(cell.lng().radians), 0
 
     @staticmethod
     def get_s2_cells_from_fence(geofence, cell_size=16):
@@ -110,7 +115,8 @@ class S2Helper:
                 # Then from each point on the star, create locations
                 # towards the next point of star along the edge of the
                 # current ring
-                loc = S2Helper.get_new_coords(star_loc, distance * j, 210 + 60 * i)
+                loc = S2Helper.get_new_coords(
+                    star_loc, distance * j, 210 + 60 * i)
                 results.append(loc)
         return results
 
@@ -132,7 +138,8 @@ class S2Helper:
         # get the farthest to the center...
         farthest_dist = 0
         for corner in corners:
-            dist_temp = get_distance_of_two_points_in_meters(center.lat, center.lng, corner.lat, corner.lng)
+            dist_temp = get_distance_of_two_points_in_meters(
+                center.lat, center.lng, corner.lat, corner.lng)
             if dist_temp > farthest_dist:
                 farthest_dist = dist_temp
 
@@ -144,7 +151,8 @@ class S2Helper:
         log.info("Calculating positions for init scan")
         num_cores = multiprocessing.cpu_count()
         with multiprocessing.Pool(processes=num_cores) as pool:
-            temp = [pool.apply(S2Helper._generate_star_locs, args=(center, distance, i)) for i in range(1, step_limit)]
+            temp = [pool.apply(S2Helper._generate_star_locs, args=(
+                center, distance, i)) for i in range(1, step_limit)]
 
         results = [item for sublist in temp for item in sublist]
         results.append(Location(center.lat, center.lng))
@@ -203,7 +211,8 @@ class S2Helper:
                 flip = True
             for loc in next_row:
                 new_list.append(loc)
-            location_list = S2Helper.delete_row_from_list(location_list, next_row)
+            location_list = S2Helper.delete_row_from_list(
+                location_list, next_row)
         return new_list
 
     @staticmethod
@@ -241,7 +250,6 @@ class S2Helper:
         #     row.remove(most_west)
         #     new_row.append(most_west)
         # return new_row
-
 
     @staticmethod
     def get_most_west(location_list):

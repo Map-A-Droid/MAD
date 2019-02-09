@@ -1,20 +1,19 @@
+import asyncio
+import collections
+import logging
 import math
 import queue
-import asyncio
 import sys
 import time
+from threading import Event, Lock, Thread
 
 import websockets
-import logging
-import collections
-
-from threading import Lock, Event, Thread
-
 from utils.authHelper import check_auth
-from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
+from utils.madGlobals import (WebsocketWorkerRemovedException,
+                              WebsocketWorkerTimeoutException)
+from utils.timer import Timer
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
-from utils.timer import Timer
 
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
@@ -84,14 +83,18 @@ class WebsocketServer(object):
                  % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
         for task in pending:
             task.cancel()
-        log.info("Awaiting unregister of %s" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        log.info("Awaiting unregister of %s" % str(
+            websocket_client_connection.request_headers.get_all("Origin")[0]))
         await self.__unregister(websocket_client_connection)
-        log.info("All done with %s" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        log.info("All done with %s" % str(
+            websocket_client_connection.request_headers.get_all("Origin")[0]))
 
     async def __register(self, websocket_client_connection):
-        log.info("Client %s registering" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        log.info("Client %s registering" % str(
+            websocket_client_connection.request_headers.get_all("Origin")[0]))
         try:
-            id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
+            id = str(
+                websocket_client_connection.request_headers.get_all("Origin")[0])
         except IndexError:
             log.warning("Client from %s tried to connect without Origin header"
                         % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
@@ -99,7 +102,8 @@ class WebsocketServer(object):
 
         if self.__auths:
             try:
-                authBase64 = str(websocket_client_connection.request_headers.get_all("Authorization")[0])
+                authBase64 = str(
+                    websocket_client_connection.request_headers.get_all("Authorization")[0])
             except IndexError:
                 log.warning("Client from %s tried to connect without auth header"
                             % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
@@ -122,11 +126,14 @@ class WebsocketServer(object):
 
         last_known_state = {}
         client_mapping = self.__device_mappings[id]
-        timer = Timer(client_mapping["switch"], id, client_mapping["switch_interval"])
+        timer = Timer(client_mapping["switch"], id,
+                      client_mapping["switch_interval"])
         await asyncio.sleep(0.8)
-        daytime_routemanager = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager")
+        daytime_routemanager = self.__routemanagers[client_mapping["daytime_area"]].get(
+            "routemanager")
         if client_mapping.get("nighttime_area", None) is not None:
-            nightime_routemanager = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
+            nightime_routemanager = self.__routemanagers[client_mapping["nighttime_area"]].get(
+                "routemanager", None)
         else:
             nightime_routemanager = None
         devicesettings = client_mapping["settings"]
@@ -134,7 +141,8 @@ class WebsocketServer(object):
         started = False
         if timer.get_switch() is True:
             # set global mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
+            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get(
+                "routemanager").settings.get("mon_ids_iv", [])
             # start the appropriate nighttime manager if set
             if nightime_routemanager is None:
                 pass
@@ -156,7 +164,8 @@ class WebsocketServer(object):
                 sys.exit(1)
         if not timer.get_switch() or not started:
             # set mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
+            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get(
+                "routemanager").settings.get("mon_ids_iv", [])
             # we either gotta run daytime mode OR nighttime routemanager not set
             if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
                 worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
@@ -172,17 +181,20 @@ class WebsocketServer(object):
                 log.fatal("Mode not implemented")
                 sys.exit(1)
 
-        new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
+        new_worker_thread = Thread(name='worker_%s' %
+                                   id, target=worker.start_worker)
         new_worker_thread.daemon = True
         self.__current_users_mutex.acquire()
-        self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
+        self.__current_users[id] = [new_worker_thread,
+                                    worker, websocket_client_connection, 0]
         self.__current_users_mutex.release()
         new_worker_thread.start()
 
         return True
 
     async def __unregister(self, websocket_client_connection):
-        id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
+        id = str(
+            websocket_client_connection.request_headers.get_all("Origin")[0])
         self.__current_users_mutex.acquire()
         worker = self.__current_users.get(id, None)
         if worker is not None:
@@ -203,10 +215,10 @@ class WebsocketServer(object):
                 await self.__send_specific(websocket_client_connection, next.id, next.message)
 
     async def __send_specific(self, websocket_client_connection, id, message):
-        #await websocket_client_connection.send(message)
-         for key, value in self.__current_users.items():
-             if key == id and value[2].open:
-                 await value[2].send(message)
+        # await websocket_client_connection.send(message)
+        for key, value in self.__current_users.items():
+            if key == id and value[2].open:
+                await value[2].send(message)
 
     async def __retrieve_next_send(self, websocket_client_connection):
         found = None
@@ -222,7 +234,8 @@ class WebsocketServer(object):
     async def __consumer_handler(self, websocket_client_connection):
         if websocket_client_connection is None:
             return
-        id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
+        id = str(
+            websocket_client_connection.request_headers.get_all("Origin")[0])
         log.warning("Consumer handler of %s starting" % str(id))
         while websocket_client_connection.open:
             message = None
@@ -231,7 +244,8 @@ class WebsocketServer(object):
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
-                log.warning("Connection to %s was closed, stopping worker" % str(id))
+                log.warning(
+                    "Connection to %s was closed, stopping worker" % str(id))
                 self.__current_users_mutex.acquire()
                 worker = self.__current_users.get(id, None)
                 self.__current_users_mutex.release()
@@ -251,7 +265,8 @@ class WebsocketServer(object):
         if id in self.__current_users.keys():
             if self.__current_users[id][2].open:
                 log.debug("Calling close for %s..." % str(id))
-                asyncio.ensure_future(self.__current_users[id][2].close(), loop=self.__loop)
+                asyncio.ensure_future(
+                    self.__current_users[id][2].close(), loop=self.__loop)
             self.__current_users.pop(id)
         self.__current_users_mutex.release()
 

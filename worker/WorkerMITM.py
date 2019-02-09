@@ -32,8 +32,10 @@ class WorkerMITM(WorkerBase):
             raise InternalStopWorkerException
         # get the distance from our current position (last) to the next gym (cur)
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(self.last_location.lng),
-                                                        float(self.current_location.lat),
+                                                        float(
+                                                            self.last_location.lng),
+                                                        float(
+                                                            self.current_location.lat),
                                                         float(self.current_location.lng))
         log.info('main: Moving %s meters to the next position' % distance)
         delay_used = 0
@@ -44,8 +46,10 @@ class WorkerMITM(WorkerBase):
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             log.info("main: Teleporting...")
-            self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
-            cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
+            self._communicator.setLocation(
+                self.current_location.lat, self.current_location.lng, 0)
+            # the time we will take as a starting point to wait for data...
+            cur_time = math.floor(time.time())
 
             delay_used = self._devicesettings.get('post_teleport_delay', 7)
             # Test for cooldown / teleported distance TODO: check this block...
@@ -56,15 +60,18 @@ class WorkerMITM(WorkerBase):
                     delay_used = 10
                 elif distance > 10000:
                     delay_used = 15
-                log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+                log.info("Need more sleep after Teleport: %s seconds!" %
+                         str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
             if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
                 # TODO: actually use to_walk for distance
                 to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
-                                                              float(self.current_location.lng),
-                                                              float(self.current_location.lat) + 0.0001,
-                                                              float(self.current_location.lng) + 0.0001)
+                                                               float(
+                                                                   self.current_location.lng),
+                                                               float(
+                                                                   self.current_location.lat) + 0.0001,
+                                                               float(self.current_location.lng) + 0.0001)
                 log.info("Walking a bit: %s" % str(to_walk))
                 time.sleep(0.3)
                 self._communicator.walkFromTo(self.current_location.lat, self.current_location.lng,
@@ -79,7 +86,8 @@ class WorkerMITM(WorkerBase):
             log.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat, self.current_location.lng, speed)
-            cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
+            # the time we will take as a starting point to wait for data...
+            cur_time = math.floor(time.time())
             delay_used = self._devicesettings.get('post_walk_delay', 7)
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
@@ -100,12 +108,14 @@ class WorkerMITM(WorkerBase):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             log.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 7))
+            time.sleep(self._devicesettings.get(
+                "post_turn_screen_on_delay", 7))
 
         cur_time = time.time()
         start_result = False
         while not pogo_topmost:
-            start_result = self._communicator.startApp("com.nianticlabs.pokemongo")
+            start_result = self._communicator.startApp(
+                "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
         reached_raidtab = False
@@ -161,17 +171,21 @@ class WorkerMITM(WorkerBase):
 
     def __wait_for_data(self, timestamp, proto_to_wait_for=106):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
-        max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
+        max_data_err_counter = self._devicesettings.get(
+            "max_data_err_counter", 60)
 
-        log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self.__data_error_counter)))
+        log.info('Waiting for data after %s, error count is at %s' %
+                 (str(timestamp), str(self.__data_error_counter)))
         data_requested = None
 
-        log.info(str(self._id) + ' ' + str(data_requested) + ' ' + str(timestamp + timeout)  + ' ' + str(math.floor(time.time())) + ' ' + str(timestamp + timeout - math.floor(time.time()))+ ' ' + str(self.__data_error_counter)  + ' ' +  str(max_data_err_counter))
+        log.info(str(self._id) + ' ' + str(data_requested) + ' ' + str(timestamp + timeout) + ' ' + str(math.floor(time.time())) + ' ' +
+                 str(timestamp + timeout - math.floor(time.time())) + ' ' + str(self.__data_error_counter) + ' ' + str(max_data_err_counter))
         while (data_requested is None and timestamp + timeout >= math.floor(time.time())
                and self.__data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
             if latest is None:
-                log.debug("Nothing received from %s since MAD started" % str(self._id))
+                log.debug("Nothing received from %s since MAD started" %
+                          str(self._id))
                 time.sleep(0.5)
                 continue
             elif proto_to_wait_for not in latest:
@@ -187,7 +201,8 @@ class WorkerMITM(WorkerBase):
                 try:
                     current_routemanager = self._get_currently_valid_routemanager()
                 except InternalStopWorkerException as e:
-                    log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
+                    log.info(
+                        "Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                     raise InternalStopWorkerException
                 if current_routemanager is None:
                     # we should be sleeping...
@@ -225,7 +240,8 @@ class WorkerMITM(WorkerBase):
                             self.__data_error_counter += 1
                             time.sleep(0.5)
                     else:
-                        log.warning("No mode specified to wait for - this should not even happen...")
+                        log.warning(
+                            "No mode specified to wait for - this should not even happen...")
                         self.__data_error_counter += 1
                         time.sleep(0.5)
                 else:
@@ -248,7 +264,8 @@ class WorkerMITM(WorkerBase):
             try:
                 current_routemanager = self._get_currently_valid_routemanager()
             except InternalStopWorkerException as e:
-                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
+                log.info(
+                    "Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
             self.__reboot_count += 1
             self.__restart_count += 1

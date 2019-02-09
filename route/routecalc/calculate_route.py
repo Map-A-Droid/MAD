@@ -7,6 +7,7 @@ import secrets
 
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
+
 from .util import *
 
 log = logging.getLogger(__name__)
@@ -92,7 +93,8 @@ def get_index_array_numpy_compary(arr_orig, arr_new):
 def merge_results(arr_original, arr_first, arr_second):
     # if we cannot merge it, arr_first will be returned
     differences_first = get_index_array_numpy_compary(arr_original, arr_first)
-    differences_second = get_index_array_numpy_compary(arr_original, arr_second)
+    differences_second = get_index_array_numpy_compary(
+        arr_original, arr_second)
 
     # check if first index of first is > last index of second and vice-versa
     if len(differences_first) == 0 and len(differences_second) == 0:
@@ -149,7 +151,8 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
             lessCoordinates[i][0] = newCoords[i][0]
             lessCoordinates[i][1] = newCoords[i][1]
 
-        log.debug("Coords summed up: %s, that's just %s coords" % (str(lessCoordinates), str(len(lessCoordinates))))
+        log.debug("Coords summed up: %s, that's just %s coords" %
+                  (str(lessCoordinates), str(len(lessCoordinates))))
 
     log.info("Got %s coordinates" % (len(lessCoordinates) / 2.0))
     if not len(lessCoordinates) > 2:
@@ -206,7 +209,8 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
 
     # Simulated Annealing
     while T > T_MIN and cost_best_counter < halt:
-        log.info("Still calculating... cost_best_counter: %s" % str(cost_best_counter))
+        log.info("Still calculating... cost_best_counter: %s" %
+                 str(cost_best_counter))
 
         if num_cores and num_cores != 1 and thread_pool and cost_best_counter > 0:
             running_calculations = []
@@ -262,7 +266,8 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
                 # range_to_be_searched = range(length_sols_minus_one)
                 # log.error("Scanning range: %s" % str(range_to_be_searched))
                 for i in range(len(solutions_temp) - 1):
-                    merged_sol = merge_results(merged_sol, solutions_temp[i], solutions_temp[i + 1])
+                    merged_sol = merge_results(
+                        merged_sol, solutions_temp[i], solutions_temp[i + 1])
                     # TODO: if merged_sol == sol_best, check for the best solution in the set and use that...
                 if np.array_equal(merged_sol, sol_best) or np.array_equal(merged_sol, solutions_temp[0]):
                     for i in range(len(costs_temps)):
@@ -273,7 +278,8 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
                     sol_best = merged_sol.copy()
                     cost_best = sum_distmat(sol_best, distmat)
         else:
-            cost_best, sol_best = __generate_new_solution(-1, int(round(num_location * 2)), distmat, T, cost_best, sol_best)
+            cost_best, sol_best = __generate_new_solution(
+                -1, int(round(num_location * 2)), distmat, T, cost_best, sol_best)
 
         # Lower the temperature
         alpha = 1 + math.log(1 + T_NUM_CYCLE + 1)
