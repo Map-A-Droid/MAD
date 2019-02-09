@@ -414,8 +414,8 @@ class WorkerQuests(WorkerBase):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
                 raise InternalStopWorkerException
-            elif self.reboot_count > self._devicesettings.get("reboot_thresh", 5):
+            elif self.__data_error_counter > max_data_err_counter:
                 # self._start_pogodroid()
+                self.__data_error_counter = 0
                 self._restart_pogo(True)
-                self.reboot_count = 0
         return data_requested
