@@ -161,7 +161,7 @@ class WorkerMITM(WorkerBase):
         timeout = self._devicesettings.get("mitm_wait_timeout", 45)
         max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
 
-        log.info('Waiting for data after %s' % str(timestamp))
+        log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self.__data_error_counter)))
         data_requested = None
         while (data_requested is None and timestamp + timeout >= time.time()
                and self.__data_error_counter < max_data_err_counter):
