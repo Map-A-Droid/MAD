@@ -165,12 +165,9 @@ class WorkerMITM(WorkerBase):
 
         log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self.__data_error_counter)))
         data_requested = None
-<<<<<<< HEAD
-        while (data_requested is None and timestamp + timeout >= time.time()
-=======
+
         log.info(str(self._id) + ' ' + str(data_requested) + ' ' + str(timestamp + timeout)  + ' ' + str(math.floor(time.time())) + ' ' + str(timestamp + timeout - math.floor(time.time()))+ ' ' + str(self.__data_error_counter)  + ' ' +  str(max_data_err_counter))
         while (data_requested is None and timestamp + timeout >= math.floor(time.time())
->>>>>>> fix_worker_reboot_loop
                and self.__data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
             if latest is None:
