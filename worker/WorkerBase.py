@@ -737,9 +737,12 @@ class WorkerBase(ABC):
         log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
         log.debug('Last Restart: %s' % str(self._lastStart))
         log.debug('===============================')
-        set_status(self._id, {'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
+        try:        
+            set_status(self._id, {'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
                               'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
                                str(self.last_location.lng)), 'RoutePos': str(routemanager.get_route_status()[0]) , 
                                'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init), 
                                'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
+        except:
+            log.info('Json error')
     
