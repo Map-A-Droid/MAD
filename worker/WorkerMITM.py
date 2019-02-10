@@ -128,10 +128,6 @@ class WorkerMITM(WorkerBase):
         # TODO: own InjectionSettings class
         self._injection_settings = {}
         self.__update_injection_settings()
-        self._data_error_counter = 0
-        self._reboot_count = 0
-        self._restart_count = 0
-        self._rec_data_time = 0
 
     def __update_injection_settings(self):
         injected_settings = {}
@@ -227,7 +223,7 @@ class WorkerMITM(WorkerBase):
                             time.sleep(0.5)
                     else:
                         log.warning("No mode specified to wait for - this should not even happen...")
-                        self.__data_error_counter += 1
+                        self._data_error_counter += 1
                         time.sleep(0.5)
                 else:
                     log.debug("latest timestamp of proto %s (%s) is older than %s"
@@ -236,7 +232,7 @@ class WorkerMITM(WorkerBase):
                     # TODO: latter indicates too high speeds for example
                     self._data_error_counter += 1
                     time.sleep(0.5)
-        
+
         if data_requested is not None:
             log.info('Got the data requested...')
             self._reboot_count = 0
@@ -255,7 +251,7 @@ class WorkerMITM(WorkerBase):
             self._reboot_count += 1
             self._restart_count += 1
             if (self._devicesettings.get("reboot", False)
-                    and self.__reboot_count > self._devicesettings.get("reboot_thresh", 5)
+                    and self._reboot_count > self._devicesettings.get("reboot_thresh", 5)
                     and not current_routemanager.init):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
