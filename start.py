@@ -235,6 +235,10 @@ if __name__ == "__main__":
             except KeyError as e:
                 log.fatal("Could not parse mappings. Please check those. Description: %s" % str(e))
                 sys.exit(1)
+            except RuntimeError as e:
+                log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
+                sys.exit(1)
+
 
             mitm_mapper = MitmMapper(device_mappings)
             ocr_enabled = False
