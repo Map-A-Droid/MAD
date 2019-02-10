@@ -132,7 +132,7 @@ class WebsocketServer(object):
         devicesettings = client_mapping["settings"]
 
         started = False
-        if timer.get_switch() is True:
+        if timer.get_switch() is True and client_mapping.get("nighttime_area", None) is not None:
             # set global mon_iv
             client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
             # start the appropriate nighttime manager if set
