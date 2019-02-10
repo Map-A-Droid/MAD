@@ -425,7 +425,7 @@ class WorkerQuests(WorkerBase):
             self._reboot_count += 1
             self._restart_count += 1
             if (self._devicesettings.get("reboot", False)
-                    and self.reboot_count > self._devicesettings.get("reboot_thresh", 5)):
+                    and self._reboot_count > self._devicesettings.get("reboot_thresh", 5)):
                 log.error("Rebooting %s" % str(self._id))
                 self._reboot()
                 raise InternalStopWorkerException
