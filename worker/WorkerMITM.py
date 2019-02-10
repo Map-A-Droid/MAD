@@ -128,10 +128,6 @@ class WorkerMITM(WorkerBase):
         # TODO: own InjectionSettings class
         self._injection_settings = {}
         self.__update_injection_settings()
-        self._data_error_counter = 0
-        self._reboot_count = 0
-        self._restart_count = 0
-        self._rec_data_time = 0
 
     def __update_injection_settings(self):
         injected_settings = {}
