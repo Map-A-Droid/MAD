@@ -29,71 +29,7 @@ class MITMBase(WorkerBase):
         while (data_requested is None and timestamp + timeout >= math.floor(time.time())
                and self._data_error_counter < max_data_err_counter):
             latest = self._mitm_mapper.request_latest(self._id)
-            if latest is None:
-                log.debug("Nothing received from %s since MAD started" % str(self._id))
-                time.sleep(0.5)
-                continue
-            elif proto_to_wait_for not in latest:
-                log.debug("No data linked to the requested proto since MAD started. Count: %s"
-                          % str(self._data_error_counter))
-                self._data_error_counter += 1
-                time.sleep(0.5)
-            else:
-                # proto has previously been received, let's check the timestamp...
-                # TODO: int vs str-key?
-                latest_proto = latest.get(proto_to_wait_for, None)
-
-                try:
-                    current_routemanager = self._get_currently_valid_routemanager()
-                except InternalStopWorkerException as e:
-                    log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
-                    raise InternalStopWorkerException
-                if current_routemanager is None:
-                    # we should be sleeping...
-                    log.warning("%s should be sleeping ;)" % str(self._id))
-                    return None
-                current_mode = current_routemanager.mode
-                latest_timestamp = latest_proto.get("timestamp", 0)
-                if latest_timestamp >= timestamp:
-                    # TODO: consider reseting timestamp here since we clearly received SOMETHING
-                    latest_data = latest_proto.get("values", None)
-                    if latest_data is None:
-                        self._data_error_counter += 1
-                        time.sleep(0.5)
-                        return None
-                    elif current_mode in ["mon_mitm", "iv_mitm"]:
-                        # check if the GMO contains mons
-                        for data_extract in latest_data['payload']['cells']:
-                            for WP in data_extract['wild_pokemon']:
-                                # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
-                                if WP['spawnpoint_id']:
-                                    data_requested = latest_data
-                                    break
-                        if data_requested is None:
-                            log.debug("No spawnpoints in data requested")
-                            self._data_error_counter += 1
-                            time.sleep(1)
-                    elif current_mode in ["raids_mitm"]:
-                        for data_extract in latest_data['payload']['cells']:
-                            for forts in data_extract['forts']:
-                                if forts['id']:
-                                    data_requested = latest_data
-                                    break
-                        if data_requested is None:
-                            log.debug("No forts in data received")
-                            self._data_error_counter += 1
-                            time.sleep(0.5)
-                    else:
-                        log.warning("No mode specified to wait for - this should not even happen...")
-                        self._data_error_counter += 1
-                        time.sleep(0.5)
-                else:
-                    log.debug("latest timestamp of proto %s (%s) is older than %s"
-                              % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
-                    # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
-                    # TODO: latter indicates too high speeds for example
-                    self._data_error_counter += 1
-                    time.sleep(0.5)
+            data_requested = self._wait_data_worker(latest, proto_to_wait_for, timestamp)
 
         if data_requested is not None:
             log.info('Got the data requested...')
@@ -126,3 +62,11 @@ class MITMBase(WorkerBase):
                 self._data_error_counter = 0
         return data_requested
         
+        
+    @abstractmethod
+    def _wait_data_worker(self, proto_to_wait_for, timestamp):
+        """
+        Wait_for_data for each worker
+        :return:
+        """
+        pass
