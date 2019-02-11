@@ -262,4 +262,5 @@ class WorkerMITM(WorkerBase):
                 self._restart_pogo(True)
             elif self._data_error_counter >= max_data_err_counter and self._restart_count <= 5:
                 self._data_error_counter = 0
+        self.worker_stats()
         return data_requested

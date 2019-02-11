@@ -888,6 +888,84 @@ class DbWrapperBase(ABC):
 
         return True
         
+    def create_status_database_if_not_exists(self):
+        log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
+
+        query = (' Create table if not exists trs_status ( ' +
+                ' origin VARCHAR(50) NOT NULL , '
+                ' currentPos VARCHAR(50) NOT NULL, '
+                ' lastPos VARCHAR(50) NOT NULL, '
+                ' routePos INT(11) NOT NULL, '
+                ' routeMax INT(11) NOT NULL, '
+                ' routemanager VARCHAR(50) NOT NULL, '
+                ' errorCounter INT(11)  NOT NULL, '
+                ' lastProtoDateTime TIMESTAMP NOT NULL, '
+                ' lastPogoRestart TIMESTAMP NOT NULL, '
+                ' init BIT NOT NULL, '
+                ' rebootingOption BIT NOT NULL, '
+                ' restartCounter INT(11) NOT NULL, '
+	            ' PRIMARY KEY (origin))')
+
+        self.execute(query, commit=True)
+
+        return True
+
+    def save_status(self, data):
+        log.debug("dbWrapper::save_status")
+
+        query = (
+            "INSERT into trs_status (origin, currentPos, lastPos, routePos, routeMax, "
+            "routemanager, errorCounter, lastProtoDateTime, lastPogoRestart, "
+            "init, rebootingOption, restartCounter) values "
+            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "ON DUPLICATE KEY UPDATE currentPos=VALUES(currentPos), "
+            "lastPos=VALUES(lastPos), routePos=VALUES(routePos), "
+            "routeMax=VALUES(routeMax), routemanager=VALUES(routemanager), "
+            "errorCounter=VALUES(errorCounter), lastProtoDateTime=VALUES(lastProtoDateTime), "
+            "lastPogoRestart=VALUES(lastPogoRestart), init=VALUES(init), "
+            "rebootingOption=VALUES(rebootingOption) restartCounter=VALUES(restartCounter)"
+        )
+        vals = (
+            data.origin, data.currentPos, data.lastPos, data.routePos, data.routeMax, 
+            data.routemanager, data.errorCounter, data.lastProtoDateTime, data.lastPogoRestart,
+            data.init, data.rebootingOption, data.restartCounter
+        )
+        self.execute(query, vals, commit=True)
+
+    def download_status(self):
+        log.debug("dbWrapper::download_status")
+        workerstatus = []
+
+        query = (
+            "SELECT origin, currentPos, lastPos, routePos, routeMax, "
+            "routemanager, errorCounter, lastProtoDateTime, lastPogoRestart, "
+            "init, rebootingOption, restartCounter "
+            "FROM trs_status"
+        )
+
+        result = self.execute(query)
+        for (origin, currentPos, lastPos, routePos, routeMax, routemanager, \
+                errorCounter, lastProtoDateTime, lastPogoRestart, init, rebootingOption, restartCounter) in result:
+            status = {
+                "origin": origin,
+                "currentPos": currentPos,
+                "lastPos": lastPos,
+                "routePos": routePos,
+                "routeMax": routeMax,
+                "routemanager": routemanager,
+                "errorCounter": errorCounter,
+                "lastProtoDateTime": str(lastProtoDateTime),
+                "lastPogoRestart": str(lastPogoRestart),
+                "init": init,
+                "rebootingOption": rebootingOption,
+                "restartCounter": restartCounter
+            }
+
+            workerstatus.append(status)
+
+        return str(json.dumps(workerstatus, indent=4, sort_keys=True))
+
+
     def check_column_exists(self, table, column):
         query = (
             "SELECT count(*) "

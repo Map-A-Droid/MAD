@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'origin', title: 'origin' },
+                { data: 'currentPos', title: 'currentPos' },
+                { data: 'lastPos', title: 'lastPos' },
+                { data: 'routePos', title: 'routePos' },
+                { data: 'routeMax', title: 'routeMax' },
+                { data: 'routemanager', title: 'routemanager' },
+                { data: 'errorCounter', title: 'errorCounter' },
+                { data: 'lastProtoDateTime', title: 'lastProtoDateTime' },
+                { data: 'lastPogoRestart', title: 'lastPogoRestart' },
+                { data: 'init', title: 'init' },
+                { data: 'rebootingOption', title: 'rebootingOption' },
+                { data: 'restartCounter', title: 'restartCounter' }
+            ],
+            // "columnDefs": [
+            //     {
+            //         "targets": [1],
+            //         "render": function (data, type, row) {
+            //             return moment.unix(data).format('YYYY-MM-DD HH:mm:ss');
+            //         }
+            //     },
+            //     {
+            //         "targets": [2],
+            //         "render": function (data, type, row) {
+            //             return "Lat: " + row.lat + "<br />" + "Lng: " + row.lng
+            //         }
+            //     }
+            // ],
+            "order": [[1, "asc"]],
+            "responsive": {{ responsive }},
+            "autoWidth": true
+        });
+	}
+
+    $(document).ready(function () {
+        $("#navstatus").addClass("active");
+
+        $.ajax({
+            type: "GET",
+            url: "/get_status",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+</script>
+
+{% endblock %}
+
+{% block content %}
+<h2>Worker Status</h2>
+<table id="show-data" class="table"></table>
+{% endblock %}
