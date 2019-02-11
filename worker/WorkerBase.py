@@ -741,11 +741,21 @@ class WorkerBase(ABC):
         log.debug('Last Restart: %s' % str(self._lastStart))
         log.debug('===============================')
 
-        self._db_wrapper.save_status(self._id, {'Origin': self._id , 'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
-                              'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
-                               str(self.last_location.lng)), 'RoutePos': str(routemanager.get_route_status()[0]) , 
-                               'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init), 
-                               'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
+        dataToSave = {
+            'Origin': self._id,
+            'Routemanager': str(routemanager.name),
+            'ErrorCounter': str(self._data_error_counter),
+            'RestartCounter': str(self._restart_count),
+            'RebootingOption': str(self._devicesettings.get("reboot", False)),
+            'CurrentPos': (str(self.last_location.lat), str(self.last_location.lng)),
+            'RoutePos': str(routemanager.get_route_status()[0]),
+            'RouteMax': str(routemanager.get_route_status()[1]),
+            'Init': str(routemanager.init),
+            'LastProtoDateTime': str(self._rec_data_time),
+            'lastPogoRestart': str(self._lastStart)
+        }
+
+        self._db_wrapper.save_status(dataToSave)
         # try:        
         #     set_status(self._id, {'Origin': self._id , 'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
         #                       'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
