@@ -899,8 +899,8 @@ class DbWrapperBase(ABC):
                 ' routeMax INT(11) NOT NULL, '
                 ' routemanager VARCHAR(50) NOT NULL, '
                 ' errorCounter INT(11)  NOT NULL, '
-                ' lastProtoDateTime TIMESTAMP NOT NULL, '
-                ' lastPogoRestart TIMESTAMP NOT NULL, '
+                ' lastProtoDateTime VARCHAR(50) NOT NULL, '
+                ' lastPogoRestart VARCHAR(50) NOT NULL, '
                 ' init BIT NOT NULL, '
                 ' rebootingOption BIT NOT NULL, '
                 ' restartCounter INT(11) NOT NULL, '
@@ -912,7 +912,8 @@ class DbWrapperBase(ABC):
 
     def save_status(self, data):
         log.debug("dbWrapper::save_status")
-
+        log.debug(data)
+        
         query = (
             "INSERT into trs_status (origin, currentPos, lastPos, routePos, routeMax, "
             "routemanager, errorCounter, lastProtoDateTime, lastPogoRestart, "
@@ -926,8 +927,8 @@ class DbWrapperBase(ABC):
             "rebootingOption=VALUES(rebootingOption) restartCounter=VALUES(restartCounter)"
         )
         vals = (
-            data["Origin"], data["CurrentPos"], data["LastPos"], data["RoutePos"], data["RouteMax"], 
-            data["Routemanager"], data["ErrorCounter"], data["LastProtoDateTime"], data["LastPogoRestart"],
+            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"], 
+            data["Routemanager"], data["ErrorCounter"], data["LastProtoDateTime"], str(data["LastPogoRestart"]),
             data["Init"], data["RebootingOption"], data["RestartCounter"]
         )
         self.execute(query, vals, commit=True)
