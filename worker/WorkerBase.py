@@ -82,6 +82,14 @@ class WorkerBase(ABC):
         :return:
         """
         pass
+        
+    @abstractmethod
+    def _wait_for_data(self):
+        """
+        Wait function for MITM Data
+        :return:
+        """
+        pass
 
     @abstractmethod
     def _pre_location_update(self):
