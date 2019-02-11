@@ -18,9 +18,14 @@ class MITMBase(WorkerBase):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer)
                             
+        if not NoOcr:
+            from ocr.pogoWindows import PogoWindows
+            self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
                             
-    def _wait_for_data(self, timestamp, proto_to_wait_for=106):
-        timeout = self._devicesettings.get("mitm_wait_timeout", 45)
+                            
+    def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
+        if not timeout:
+            timeout = self._devicesettings.get("mitm_wait_timeout", 45)
         max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
 
         log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self._data_error_counter)))
@@ -70,3 +75,50 @@ class MITMBase(WorkerBase):
         :return:
         """
         pass
+        
+    def _clear_quests(self, delayadd):
+        log.debug('{_clear_quests} called')
+        time.sleep(4 + int(delayadd))
+        x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(2 + int(delayadd))
+        x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(1 + int(delayadd))
+        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(.5 + int(delayadd))
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        log.debug('{_clear_quests} finished')
+        return
+        
+    def _open_gym(self, delayadd):
+        log.debug('{_open_gym} called')
+        time.sleep(1)
+        x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(1 + int(delayadd))
+        log.debug('{_open_gym} called')
+        return
+        
+    def _spin_wheel(self, delayadd):
+        log.debug('{_spin_wheel} called')
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
+        return 
+        
+    def _close_gym(self, delayadd):
+        log.debug('{_close_gym} called')
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(1 + int(delayadd))
+        log.debug('{_close_gym} called')
+        
+    def _turn_map(self, delayadd):
+        log.debug('{_turn_map} called')
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
+        time.sleep(int(delayadd))
+        log.debug('{_turn_map} called')
+        return

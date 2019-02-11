@@ -666,53 +666,7 @@ class WorkerBase(ABC):
             attempts += 1
         log.debug("getToRaidscreen: done")
         return True
-        
-    def _open_gym(self, delayadd):
-        log.debug('{_open_gym} called')
-        time.sleep(1)
-        x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
-        log.debug('{_open_gym} called')
-        return
-        
-    def _spin_wheel(self, delayadd):
-        log.debug('{_spin_wheel} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
-        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
-        return 
-        
-    def _close_gym(self, delayadd):
-        log.debug('{_close_gym} called')
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
-        log.debug('{_close_gym} called')
-        
-    def _turn_map(self, delayadd):
-        log.debug('{_turn_map} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
-        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
-        time.sleep(int(delayadd))
-        log.debug('{_turn_map} called')
-        return
-        
-    def _clear_quests(self, delayadd):
-        log.debug('{_clear_quests} called')
-        time.sleep(4 + int(delayadd))
-        x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(2 + int(delayadd))
-        x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
-        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(.5 + int(delayadd))
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        log.debug('{_clear_quests} finished')
-        return
+
 
     def _get_screen_size(self):
         screen = self._communicator.getscreensize().split(' ')
