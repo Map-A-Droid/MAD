@@ -43,11 +43,12 @@
                 {
                     "targets": [5, 6],
                     "render": function (data, type, row) {
-                        return moment.unix(data).format('YYYY-MM-DD HH:mm:ss');
+                        return data
+                        //return moment(data).format('YYYY-MM-DD HH:mm:ss');
                     }
                 }
             ],
-            "order": [[1, "asc"]],
+            "order": [[4, "asc"]],
             "responsive": {{ responsive }},
             "autoWidth": true
         });
