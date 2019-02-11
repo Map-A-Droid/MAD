@@ -926,9 +926,9 @@ class DbWrapperBase(ABC):
             "rebootingOption=VALUES(rebootingOption) restartCounter=VALUES(restartCounter)"
         )
         vals = (
-            data.origin, data.currentPos, data.lastPos, data.routePos, data.routeMax, 
-            data.routemanager, data.errorCounter, data.lastProtoDateTime, data.lastPogoRestart,
-            data.init, data.rebootingOption, data.restartCounter
+            data["origin"], data["currentPos"], data["lastPos"], data["routePos"], data["routeMax"], 
+            data["routemanager"], data["errorCounter"], data["lastProtoDateTime"], data["lastPogoRestart"],
+            data["init"], data["rebootingOption"], data["restartCounter"]
         )
         self.execute(query, vals, commit=True)
 
