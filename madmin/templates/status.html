@@ -10,33 +10,43 @@
         $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
-                { data: 'origin', title: 'origin' },
-                { data: 'currentPos', title: 'currentPos' },
-                { data: 'lastPos', title: 'lastPos' },
-                { data: 'routePos', title: 'routePos' },
-                { data: 'routeMax', title: 'routeMax' },
-                { data: 'routemanager', title: 'routemanager' },
-                { data: 'errorCounter', title: 'errorCounter' },
-                { data: 'lastProtoDateTime', title: 'lastProtoDateTime' },
-                { data: 'lastPogoRestart', title: 'lastPogoRestart' },
-                { data: 'init', title: 'init' },
-                { data: 'rebootingOption', title: 'rebootingOption' },
-                { data: 'restartCounter', title: 'restartCounter' }
+                { data: 'origin', title: 'Origin' },
+                { data: 'routemanager', title: 'Routemanager' },
+                { data: 'routePos', title: 'Route Pos' },
+                { data: 'routeMax', title: 'Route Length' },
+                { data: 'init', title: 'Init Mode' },
+                { data: 'lastProtoDateTime', title: 'Last Date/Time of Data' },
+                { data: 'lastPogoRestart', title: 'Last Restart' },
+                { data: 'errorCounter', title: 'Error Counter' },
+                { data: 'rebootingOption', title: 'Reboot Option' },
+                { data: 'restartCounter', title: 'Re-start/boot Counter' },
+                { data: 'currentPos', title: 'Current Pos' },
+                { data: 'lastPos', title: 'Last Pos' }
             ],
-            // "columnDefs": [
-            //     {
-            //         "targets": [1],
-            //         "render": function (data, type, row) {
-            //             return moment.unix(data).format('YYYY-MM-DD HH:mm:ss');
-            //         }
-            //     },
-            //     {
-            //         "targets": [2],
-            //         "render": function (data, type, row) {
-            //             return "Lat: " + row.lat + "<br />" + "Lng: " + row.lng
-            //         }
-            //     }
-            // ],
+            "columnDefs": [
+                {
+                    "targets": [3],
+                    "visible": false
+                },
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+                        return row.routePos + "/" + row.routeMax
+                    }
+                },
+                {
+                    "targets": [4, 8],
+                    "render": function (data, type, row) {
+                        return data ? "true" : "false"
+                    }
+                },
+                {
+                    "targets": [5, 6],
+                    "render": function (data, type, row) {
+                        return moment.unix(data).format('YYYY-MM-DD HH:mm:ss');
+                    }
+                }
+            ],
             "order": [[1, "asc"]],
             "responsive": {{ responsive }},
             "autoWidth": true
