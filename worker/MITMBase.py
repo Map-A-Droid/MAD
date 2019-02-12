@@ -122,3 +122,29 @@ class MITMBase(WorkerBase):
         time.sleep(int(delayadd))
         log.debug('{_turn_map} called')
         return
+        
+    def worker_stats(self):
+        routemanager = self._get_currently_valid_routemanager()
+        log.debug('===============================')
+        log.debug('Worker Stats')
+        log.debug('Origin: %s' % str(self._id))
+        log.debug('Routemanager: %s' % str(routemanager.name))
+        log.debug('Error Counter: %s' % str(self._data_error_counter))
+        log.debug('Re-start/boot Counter: %s' % str(self._restart_count))
+        log.debug('Reboot Option: %s' % str(self._devicesettings.get("reboot", False)))
+        log.debug('Current Pos: %s %s' % (str(self.current_location.lat),
+                                                        str(self.current_location.lng)))
+        log.debug('Last Pos: %s %s' % (str(self.last_location.lat),
+                                                        str(self.last_location.lng)))
+        log.debug('Route Pos: %s - Route Length: %s ' % (str(routemanager.get_route_status()[0]),
+                                                        str(routemanager.get_route_status()[1])))
+        log.debug('Init Mode: %s' % str(routemanager.init))
+        log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
+        log.debug('Last Restart: %s' % str(self._lastStart))
+        log.debug('===============================')      
+        set_status(self._id, {'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
+                              'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
+                               str(self.last_location.lng)), 'RoutePos': str(routemanager.get_route_status()[0]) , 
+                               'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init), 
+                               'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
+
