@@ -70,8 +70,7 @@
 
     function reloadGrid() {
         getStatusData().then(function(result) {
-            $('#show-data').fnClearTable();
-            $('#show-data').fnAddData(result);
+                setGrid('#show-data', result);
         });
     }
 
