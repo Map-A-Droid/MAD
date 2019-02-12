@@ -984,28 +984,6 @@ def addnew():
 
     return render_template('sel_type.html', line=line, title="Type selector")
 
-@app.route('/statusview', methods=['GET'])
-def statusview(): 
-    return render_template('status.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="Worker Status")
-
-@app.route('/get_status', methods=['GET'])
-def status():    
-    workerStatus = []
-
-    for filename in glob.glob('*.position'):
-        name = filename.split('.')
-        with open(filename, 'r') as f:
-            latlon = f.read().strip().split(', ')
-            worker = {
-                "name": name[0],
-                "lat": getCoordFloat(latlon[0]),
-                "lng": getCoordFloat(latlon[1]),
-                "lastUpdate": os.stat(filename).st_mtime
-            }
-            workerStatus.append(worker)
-
-    return jsonify(workerStatus)
-
 
 @app.route('/status', methods=['GET'])
 @auth_required
