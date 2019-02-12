@@ -45,7 +45,7 @@
                     "render": function (data, type, row) {
                         var dateToShow = moment(data);
                         if(dateToShow.isValid()) {
-                            return dateToShow.formNow();
+                            return dateToShow.fromNow();
                         }
 
                         return "None";
