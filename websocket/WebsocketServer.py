@@ -11,8 +11,6 @@ from threading import Lock, Event, Thread
 
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
-from utils.mappingParser import MappingParser
-from mitm_receiver.MitmMapper import MitmMapper
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
 from utils.timer import Timer
@@ -58,7 +56,6 @@ class WebsocketServer(object):
 
         log.info("Device mappings: %s" % str(self.__device_mappings))
         log.info("Allowed origins derived: %s" % str(allowed_origins))
-
         asyncio.set_event_loop(self.__loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
