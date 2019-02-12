@@ -8,7 +8,6 @@ import datetime
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread, current_thread, Lock
-import json
 
 from utils.hamming import hamming_distance as hamming_dist
 from utils.madGlobals import WebsocketWorkerRemovedException, InternalStopWorkerException, \

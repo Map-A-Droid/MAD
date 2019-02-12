@@ -1,7 +1,6 @@
 import logging
 import math
 import time
-import datetime
 
 from route.RouteManagerIV import RouteManagerIV
 from utils.geo import get_distance_of_two_points_in_meters
@@ -123,8 +122,9 @@ class WorkerMITM(MITMBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
                  mitm_mapper, devicesettings, db_wrapper, timer):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer)
-        self._mitm_mapper = mitm_mapper
+                          route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer,
+                          mitm_mapper=mitm_mapper)
+
         # TODO: own InjectionSettings class
         self._injection_settings = {}
         self.__update_injection_settings()

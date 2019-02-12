@@ -3,8 +3,6 @@ import math
 import time
 import datetime
 
-from route.RouteManagerIV import RouteManagerIV
-from utils.geo import get_distance_of_two_points_in_meters
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
 from utils.status import set_status
@@ -15,19 +13,19 @@ log = logging.getLogger(__name__)
 
 class MITMBase(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                 route_manager_nighttime, devicesettings, db_wrapper, timer, NoOcr=False):
+                 route_manager_nighttime, devicesettings, db_wrapper, timer, mitm_mapper, NoOcr=False):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer)
                             
         self._reboot_count = 0
         self._restart_count = 0
         self._rec_data_time = ""
+        self._mitm_mapper = mitm_mapper
                             
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
             self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
-                            
-                            
+
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
         if not timeout:
             timeout = self._devicesettings.get("mitm_wait_timeout", 45)
@@ -35,7 +33,7 @@ class MITMBase(WorkerBase):
         log.info('Waiting for data after %s' % str(timestamp))
         data_requested = None
 
-        while (data_requested is None and timestamp + timeout >= math.floor(time.time())):
+        while data_requested is None and timestamp + timeout >= math.floor(time.time()):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(latest, proto_to_wait_for, timestamp)
 
@@ -54,8 +52,7 @@ class MITMBase(WorkerBase):
                 log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
             self._restart_count += 1
-            
-            
+
             restart_thresh = self._devicesettings.get("restart_thresh", 5)
             reboot_thresh = self._devicesettings.get("reboot_thresh", 3)
             if current_routemanager.init:
@@ -64,8 +61,8 @@ class MITMBase(WorkerBase):
             
             if self._restart_count >  restart_thresh:
                 self._reboot_count += 1
-                if (self._reboot_count >  reboot_thresh and
-                    self._devicesettings.get("reboot", False)):
+                if self._reboot_count >  reboot_thresh \
+                        and self._devicesettings.get("reboot", False):
                     log.error("Rebooting %s" % str(self._id))
                     self._reboot()
                     raise InternalStopWorkerException
@@ -74,12 +71,12 @@ class MITMBase(WorkerBase):
                 self._restart_pogo(True)
 
         # TODO: Add stats to database - not a json file!
-        #self.worker_stats()
+        # self.worker_stats()
         return data_requested
         
         
     @abstractmethod
-    def _wait_data_worker(self, proto_to_wait_for, timestamp):
+    def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         """
         Wait_for_data for each worker
         :return:
@@ -89,17 +86,28 @@ class MITMBase(WorkerBase):
     def _clear_quests(self, delayadd):
         log.debug('{_clear_quests} called')
         time.sleep(4 + int(delayadd))
-        x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
+        x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+               self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
+
         time.sleep(2 + int(delayadd))
-        x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
+
+        x, y = self._resocalc.get_delete_quest_coords(self)[0], \
+               self._resocalc.get_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
+
         time.sleep(1 + int(delayadd))
-        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
+
+        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
+               self._resocalc.get_confirm_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
+
         time.sleep(.5 + int(delayadd))
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+               self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
+
         log.debug('{_clear_quests} finished')
         return
         
@@ -114,20 +122,23 @@ class MITMBase(WorkerBase):
         
     def _spin_wheel(self, delayadd):
         log.debug('{_spin_wheel} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
+                    self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         return 
         
     def _close_gym(self, delayadd):
         log.debug('{_close_gym} called')
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+        x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+               self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
         log.debug('{_close_gym} called')
         
     def _turn_map(self, delayadd):
         log.debug('{_turn_map} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
+        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
+                    self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(int(delayadd))
         log.debug('{_turn_map} called')
@@ -152,9 +163,11 @@ class MITMBase(WorkerBase):
         log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
         log.debug('Last Restart: %s' % str(self._lastStart))
         log.debug('===============================')      
-        set_status(self._id, {'Routemanager': str(routemanager.name), 'RebootCounter': str(self._reboot_count) , 'RestartCounter': str(self._restart_count),
-                              'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
-                               str(self.last_location.lng)), 'RoutePos': str(routemanager.get_route_status()[0]) , 
-                               'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init), 
-                               'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
+        set_status(self._id, {'Routemanager': str(routemanager.name), 'RebootCounter': str(self._reboot_count) ,
+                              'RestartCounter': str(self._restart_count),
+                              'RebootingOption': str(self._devicesettings.get("reboot", False)),
+                              'CurrentPos': (str(self.last_location.lat),str(self.last_location.lng)),
+                              'RoutePos': str(routemanager.get_route_status()[0]),
+                              'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init),
+                              'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
 

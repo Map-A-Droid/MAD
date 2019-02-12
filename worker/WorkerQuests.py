@@ -1,7 +1,6 @@
 import logging
 import math
 import time
-import datetime
 from threading import Thread, Event
 
 from utils.geo import get_distance_of_two_points_in_meters
@@ -18,14 +17,14 @@ class WorkerQuests(MITMBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
                  mitm_mapper, devicesettings, db_wrapper, timer):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False, timer=timer)
+                          route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False, timer=timer,
+                          mitm_mapper=mitm_mapper)
         self.first_round = True
         self.clear_thread = None
         # 0 => None
         # 1 => clear box
         # 2 => clear quest
         self.clear_thread_task = 0
-        self._mitm_mapper = mitm_mapper
         self._start_inventory_clear = Event()
         self._delay_add = int(self._devicesettings.get("vps_delay", 0))
 

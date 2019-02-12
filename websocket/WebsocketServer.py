@@ -420,7 +420,7 @@ class WebsocketServer(object):
         self.__device_mappings = device_mappings
         self.__routemanagers = routemanagers
         self.__auths = auths
-        self.__mitm_mapper = mitm_mapper
+        # self.__mitm_mapper = mitm_mapper
 
     def __update_clients(self):
         for id, worker in self.__current_users.items():
