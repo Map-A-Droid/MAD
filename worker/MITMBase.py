@@ -53,16 +53,16 @@ class MITMBase(WorkerBase):
                 log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
             self._restart_count += 1
-            if self._restart_count > 5 and self._devicesettings.get("reboot", False):
+            if self._restart_count > 5 and not current_routemanager.init:
                 self._reboot_count += 1
-                if (self._reboot_count > self._devicesettings.get("reboot_thresh", 5)
-                    and not current_routemanager.init):
+                if (self._reboot_count > self._devicesettings.get("reboot_thresh", 5) and
+                    self._devicesettings.get("reboot", False)):
                     log.error("Rebooting %s" % str(self._id))
                     self._reboot()
                     raise InternalStopWorkerException
                     
-            self._restart_count = 0
-            self._restart_pogo(True)
+                self._restart_count = 0
+                self._restart_pogo(True)
 
         return data_requested
         

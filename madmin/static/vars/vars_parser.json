@@ -656,14 +656,6 @@
 		}
 	},
 	{
-		"name": "max_data_err_counter",
-    	"settings": {
-	        "type": "text",
-		    "require": "false",
-			"description": "Reaching wait-for-data timout n times for restart Pogo. (Default: 60)"
-		}
-	},
-	{
 		"name": "vps_delay",
     	"settings": {
 	        "type": "text",
