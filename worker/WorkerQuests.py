@@ -356,37 +356,37 @@ class WorkerQuests(MITMBase):
                 log.warning("%s should be sleeping ;)" % str(self._id))
                 return None
             latest_timestamp = latest_proto.get("timestamp", 0)
-                if latest_timestamp >= timestamp:
-                    # TODO: consider reseting timestamp here since we clearly received SOMETHING
-                    latest_data = latest_proto.get("values", None)
-                    if latest_data is None:
-                        self._data_error_counter += 1
-                        time.sleep(0.5)
-                        return None
-                    if 'items_awarded' in latest_data['payload']:
-                        if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
-                            return 'Quest'
-                        elif (latest_data['payload']['result'] == 1
-                              and len(latest_data['payload']['items_awarded']) == 0):
-                            return 'Time'
-                        elif latest_data['payload']['result'] == 2:
-                            return 'SB'
-                        elif latest_data['payload']['result'] == 4:
-                            return 'Box'
-                    if 'fort_id' in latest_data['payload']:
-                        if latest_data['payload']['type'] == 1:
-                            return 'Stop'
-                    if 'inventory_delta' in latest_data['payload']:
-                        if len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
-                            return 'Clear'
-                else:
-                    log.debug("latest timestamp of proto %s (%s) is older than %s"
-                              % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
-                    # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
-                    # TODO: latter indicates too high speeds for example
+            if latest_timestamp >= timestamp:
+                # TODO: consider reseting timestamp here since we clearly received SOMETHING
+                latest_data = latest_proto.get("values", None)
+                if latest_data is None:
                     self._data_error_counter += 1
                     time.sleep(0.5)
-            return data_requested
+                    return None
+                if 'items_awarded' in latest_data['payload']:
+                    if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
+                        return 'Quest'
+                    elif (latest_data['payload']['result'] == 1
+                          and len(latest_data['payload']['items_awarded']) == 0):
+                        return 'Time'
+                    elif latest_data['payload']['result'] == 2:
+                        return 'SB'
+                    elif latest_data['payload']['result'] == 4:
+                        return 'Box'
+                if 'fort_id' in latest_data['payload']:
+                    if latest_data['payload']['type'] == 1:
+                        return 'Stop'
+                if 'inventory_delta' in latest_data['payload']:
+                    if len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
+                        return 'Clear'
+            else:
+                log.debug("latest timestamp of proto %s (%s) is older than %s"
+                          % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
+                # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
+                # TODO: latter indicates too high speeds for example
+                self._data_error_counter += 1
+                time.sleep(0.5)
+        return data_requested
 
 
 
