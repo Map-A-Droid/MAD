@@ -199,8 +199,7 @@ class WorkerBase(ABC):
         if self._devicesettings.get("restart_pogo", 80) > 0:
             # log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
             # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
-            self._location_count += 1
-            if self._location_count > self._devicesettings.get("restart_pogo", 80):
+            if self._location_count >= self._devicesettings.get("restart_pogo", 80):
                 log.error(
                     "scanned " + str(self._devicesettings.get("restart_pogo", 80)) + " locations, restarting pogo")
                 pogo_started = self._restart_pogo()
@@ -277,7 +276,7 @@ class WorkerBase(ABC):
                 break
                 
             if process_location:
-
+                self._location_count += 1
                 if self._applicationArgs.last_scanned:
                     log.info('main: Set new scannedlocation in Database')
                     # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
