@@ -4,6 +4,7 @@ import functools
 import logging
 import os
 import time
+import datetime
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread, current_thread, Lock
@@ -36,7 +37,10 @@ class WorkerBase(ABC):
         self.loop_started = Event()
         self.loop_tid = None
         self._location_count = 0
-        self.reboot_count = 0
+        self._data_error_counter = 0
+        self._reboot_count = 0
+        self._restart_count = 0
+        self._rec_data_time = ""
         self._timer = timer
 
         self._lastScreenshotTaken = 0
@@ -49,6 +53,7 @@ class WorkerBase(ABC):
         self._resocalc = Resocalculator
         self._screen_x = 0
         self._screen_y = 0
+        self._lastStart = 0
 
         self.current_location = self._last_known_state.get("last_location", None)
         if self.current_location is None:
@@ -390,6 +395,7 @@ class WorkerBase(ABC):
 
     def _restart_pogo(self, clear_cache=True):
         successful_stop = self._stop_pogo()
+        self._lastStart = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         log.debug("restartPogo: stop pogo resulted in %s" % str(successful_stop))
         if successful_stop:
             if clear_cache:
@@ -713,3 +719,40 @@ class WorkerBase(ABC):
         self._screen_y = screen[1]
         log.debug('Get Screensize of %s: X: %s, Y: %s' % (str(self._id), str(self._screen_x), str(self._screen_y)))
         self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y)
+        
+    def worker_stats(self):
+        routemanager = self._get_currently_valid_routemanager()
+        log.debug('===============================')
+        log.debug('Worker Stats')
+        log.debug('Origin: %s' % str(self._id))
+        log.debug('Routemanager: %s' % str(routemanager.name))
+        log.debug('Error Counter: %s' % str(self._data_error_counter))
+        log.debug('Re-start/boot Counter: %s' % str(self._restart_count))
+        log.debug('Reboot Option: %s' % str(self._devicesettings.get("reboot", False)))
+        log.debug('Current Pos: %s %s' % (str(self.current_location.lat),
+                                                        str(self.current_location.lng)))
+        log.debug('Last Pos: %s %s' % (str(self.last_location.lat),
+                                                        str(self.last_location.lng)))
+        log.debug('Route Pos: %s - Route Length: %s ' % (str(routemanager.get_route_status()[0]),
+                                                        str(routemanager.get_route_status()[1])))
+        log.debug('Init Mode: %s' % str(routemanager.init))
+        log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
+        log.debug('Last Restart: %s' % str(self._lastStart))
+        log.debug('===============================')
+
+        dataToSave = {
+            'Origin': self._id,
+            'Routemanager': str(routemanager.name),
+            'ErrorCounter': str(self._data_error_counter),
+            'RestartCounter': str(self._restart_count),
+            'RebootingOption': str(self._devicesettings.get("reboot", False)),
+            'CurrentPos': str(self.current_location.lat) + ", " + str(self.current_location.lng),
+            'LastPos': str(self.last_location.lat) + ", " + str(self.last_location.lng),
+            'RoutePos': str(routemanager.get_route_status()[0]),
+            'RouteMax': str(routemanager.get_route_status()[1]),
+            'Init': str(routemanager.init),
+            'LastProtoDateTime': str(self._rec_data_time),
+            'LastPogoRestart': str(self._lastStart)
+        }
+
+        self._db_wrapper.save_status(dataToSave)    
