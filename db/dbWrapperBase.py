@@ -892,18 +892,18 @@ class DbWrapperBase(ABC):
         log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
 
         query = (' Create table if not exists trs_status ( ' +
-                ' origin VARCHAR(50) NOT NULL , '
+                ' origin VARCHAR(255) NOT NULL , '
                 ' currentPos VARCHAR(50) NOT NULL, '
                 ' lastPos VARCHAR(50) NOT NULL, '
                 ' routePos INT(11) NOT NULL, '
                 ' routeMax INT(11) NOT NULL, '
-                ' routemanager VARCHAR(50) NOT NULL, '
+                ' routemanager VARCHAR(255) NOT NULL, '
                 ' errorCounter INT(11)  NOT NULL, '
                 ' lastProtoDateTime VARCHAR(50) NOT NULL, '
                 ' lastPogoRestart VARCHAR(50) NOT NULL, '
-                ' init BIT NOT NULL, '
-                ' rebootingOption BIT NOT NULL, '
-                ' restartCounter INT(11) NOT NULL, '
+                ' init TEXT NOT NULL, '
+                ' rebootingOption TEXT NOT NULL, '
+                ' restartCounter TEXT NOT NULL, '
 	            ' PRIMARY KEY (origin))')
 
         self.execute(query, commit=True)
