@@ -677,7 +677,15 @@
     	"settings": {
 	        "type": "text",
 		    "require": "false",
-			"description": "Reaching this thresh restart the phone (Default: 5)"
+			"description": "Restart Phone after restart Pogo N times. (Default: 3)"
+		}
+	},
+	{
+		"name": "restart_thresh",
+    	"settings": {
+	        "type": "text",
+		    "require": "false",
+			"description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
 		}
 	}
     ]

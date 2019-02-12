@@ -14,7 +14,6 @@ from utils.hamming import hamming_distance as hamming_dist
 from utils.madGlobals import WebsocketWorkerRemovedException, InternalStopWorkerException, \
     WebsocketWorkerTimeoutException
 from utils.resolution import Resocalculator
-from utils.status import set_status
 from websocket.communicator import Communicator
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])

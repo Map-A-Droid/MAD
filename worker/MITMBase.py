@@ -7,6 +7,7 @@ from route.RouteManagerIV import RouteManagerIV
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
+from utils.status import set_status
 from abc import ABC, abstractmethod
 
 log = logging.getLogger(__name__)
@@ -53,9 +54,17 @@ class MITMBase(WorkerBase):
                 log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
             self._restart_count += 1
-            if self._restart_count > 5 and not current_routemanager.init:
+            
+            
+            restart_thresh = self._devicesettings.get("restart_thresh", 5)
+            reboot_thresh = self._devicesettings.get("reboot_thresh", 3)
+            if current_routemanager.init:
+                restart_thresh = self._devicesettings.get("restart_thresh", 5) * 2
+                reboot_thresh = self._devicesettings.get("reboot_thresh", 3) * 2
+            
+            if self._restart_count >  restart_thresh:
                 self._reboot_count += 1
-                if (self._reboot_count > self._devicesettings.get("reboot_thresh", 5) and
+                if (self._reboot_count >  reboot_thresh and
                     self._devicesettings.get("reboot", False)):
                     log.error("Rebooting %s" % str(self._id))
                     self._reboot()
@@ -64,6 +73,8 @@ class MITMBase(WorkerBase):
                 self._restart_count = 0
                 self._restart_pogo(True)
 
+        # TODO: Add stats to database - not a json file!
+        #self.worker_stats()
         return data_requested
         
         
