@@ -14,7 +14,6 @@ from utils.hamming import hamming_distance as hamming_dist
 from utils.madGlobals import WebsocketWorkerRemovedException, InternalStopWorkerException, \
     WebsocketWorkerTimeoutException
 from utils.resolution import Resocalculator
-from utils.status import set_status
 from websocket.communicator import Communicator
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -756,13 +755,4 @@ class WorkerBase(ABC):
             'LastPogoRestart': str(self._lastStart)
         }
 
-        self._db_wrapper.save_status(dataToSave)
-        # try:        
-        #     set_status(self._id, {'Origin': self._id , 'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
-        #                       'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
-        #                        str(self.last_location.lng)), 'RoutePos': str(routemanager.get_route_status()[0]) , 
-        #                        'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init), 
-        #                        'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
-        # except:
-        #     log.info('Json error')
-    
+        self._db_wrapper.save_status(dataToSave)    

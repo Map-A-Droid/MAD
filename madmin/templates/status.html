@@ -43,26 +43,45 @@
                 {
                     "targets": [5, 6],
                     "render": function (data, type, row) {
-                        return data
-                        //return moment(data).format('YYYY-MM-DD HH:mm:ss');
+                        var dateToShow = moment(data);
+                        if(dateToShow.isValid()) {
+                            return dateToShow.formNow();
+                        }
+
+                        return "None";
                     }
                 }
             ],
-            "order": [[4, "asc"]],
+            "order": [[5, "desc"]],
             "responsive": {{ responsive }},
             "autoWidth": true
         });
 	}
 
-    $(document).ready(function () {
-        $("#navstatus").addClass("active");
-
-        $.ajax({
+    function getStatusData() {
+        return $.ajax({
             type: "GET",
             url: "/get_status",
             success: function (result) {
-                setGrid('#show-data', result);
+                return result;
             }
+        });
+    }
+
+    function reloadGrid() {
+        getStatusData().then(function(result) {
+            $('#show-data').fnClearTable();
+            $('#show-data').fnAddData(result);
+        });
+    }
+
+    $(document).ready(function () {
+        $("#navstatus").addClass("active");
+
+        getStatusData().then(function (result) {
+                setGrid('#show-data', result);
+
+                setInterval(reloadGrid, 5000);
         });
     });
 </script>
