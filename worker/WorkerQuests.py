@@ -26,12 +26,8 @@ class WorkerQuests(MITMBase):
         # 2 => clear quest
         self.clear_thread_task = 0
         self._mitm_mapper = mitm_mapper
-        self._data_error_counter = 0
         self._start_inventory_clear = Event()
         self._delay_add = int(self._devicesettings.get("vps_delay", 0))
-        self._reboot_count = 0
-        self._restart_count = 0
-        self._rec_data_time = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -331,9 +327,7 @@ class WorkerQuests(MITMBase):
             log.debug("Nothing received since MAD started")
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
-            log.debug("No data linked to the requested proto since MAD started. Count: %s"
-                      % str(self._data_error_counter))
-            self._data_error_counter += 1
+            log.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         elif 156 in latest:
             if latest[156]['timestamp'] >= timestamp:
@@ -360,7 +354,6 @@ class WorkerQuests(MITMBase):
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
                 if latest_data is None:
-                    self._data_error_counter += 1
                     time.sleep(0.5)
                     return None
                 if 'items_awarded' in latest_data['payload']:
@@ -384,7 +377,6 @@ class WorkerQuests(MITMBase):
                           % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
-                self._data_error_counter += 1
                 time.sleep(0.5)
         return data_requested
 

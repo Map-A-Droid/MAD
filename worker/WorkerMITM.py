@@ -163,9 +163,7 @@ class WorkerMITM(MITMBase):
             log.debug("Nothing received from %s since MAD started" % str(self._id))
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
-            log.debug("No data linked to the requested proto since MAD started. Count: %s"
-                      % str(self._data_error_counter))
-            self._data_error_counter += 1
+            log.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         else:
             # proto has previously been received, let's check the timestamp...
@@ -187,7 +185,6 @@ class WorkerMITM(MITMBase):
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
                 if latest_data is None:
-                    self._data_error_counter += 1
                     time.sleep(0.5)
                     return None
                 elif current_mode in ["mon_mitm", "iv_mitm"]:
@@ -200,7 +197,6 @@ class WorkerMITM(MITMBase):
                                 break
                     if data_requested is None:
                         log.debug("No spawnpoints in data requested")
-                        self._data_error_counter += 1
                         time.sleep(1)
                 elif current_mode in ["raids_mitm"]:
                     for data_extract in latest_data['payload']['cells']:
@@ -210,18 +206,15 @@ class WorkerMITM(MITMBase):
                                 break
                     if data_requested is None:
                         log.debug("No forts in data received")
-                        self._data_error_counter += 1
                         time.sleep(0.5)
                 else:
                     log.warning("No mode specified to wait for - this should not even happen...")
-                    self._data_error_counter += 1
                     time.sleep(0.5)
             else:
                 log.debug("latest timestamp of proto %s (%s) is older than %s"
                           % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
-                self._data_error_counter += 1
                 time.sleep(0.5)
         return data_requested
 
