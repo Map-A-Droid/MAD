@@ -3,6 +3,7 @@ import queue
 import asyncio
 import sys
 import time
+import os
 
 import websockets
 import logging
@@ -12,6 +13,8 @@ from threading import Lock, Event, Thread
 
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
+from utils.mappingParser import MappingParser
+from mitm_receiver.MitmMapper import MitmMapper
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
 from utils.timer import Timer
@@ -57,6 +60,12 @@ class WebsocketServer(object):
 
         log.info("Device mappings: %s" % str(self.__device_mappings))
         log.info("Allowed origins derived: %s" % str(allowed_origins))
+
+        log.info("Starting file watcher for mappings.json changes.")
+        t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher)
+        t_file_watcher.daemon = False
+        t_file_watcher.start()
+
         asyncio.set_event_loop(self.__loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
@@ -375,3 +384,45 @@ class WebsocketServer(object):
         self.__requests_mutex.acquire()
         self.__requests.pop(message_id)
         self.__requests_mutex.release()
+
+    def __file_watcher(self):
+        # We're on a 60-second timer.
+        refresh_time_sec = 60
+        filename = 'configs/mappings.json'
+
+        while True:
+            # Wait (x-1) seconds before refresh, min. 1s.
+            time.sleep(max(1, refresh_time_sec - 1))
+            try:
+                # Only refresh if the file has changed.
+                current_time_sec = time.time()
+                file_modified_time_sec = os.path.getmtime(filename)
+                time_diff_sec = current_time_sec - file_modified_time_sec
+
+                # File has changed in the last refresh_time_sec seconds.
+                if time_diff_sec < refresh_time_sec:
+                    log.info(
+                        'Change found in %s. Updating device mappings.', filename)
+                    self.__reload_mappings()
+                    log.info('Propagating new mappings to all clients.')
+                    self.__update_clients()
+                else:
+                    log.debug('No change found in %s.', filename)
+            except Exception as e:
+                log.exception('Exception occurred while updating device mappings: %s.', e)
+
+    def __reload_mappings(self):
+        mapping_parser = MappingParser(self.__db_wrapper)
+        device_mappings = mapping_parser.get_devicemappings()
+        routemanagers = mapping_parser.get_routemanagers()
+        auths = mapping_parser.get_auths()
+        mitm_mapper = MitmMapper(device_mappings)
+        self.__device_mappings = device_mappings
+        self.__routemanagers = routemanagers
+        self.__auths = auths
+        self.__mitm_mapper = mitm_mapper
+
+    def __update_clients(self):
+        for id, worker in self.__current_users.items():
+            log.info('Stopping worker %s to apply new mappings.', id)
+            worker[1].stop_worker()

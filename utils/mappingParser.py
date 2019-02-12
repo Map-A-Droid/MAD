@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-import sys
 from pathlib import Path
 
 from geofence.geofenceHelper import GeofenceHelper
@@ -58,15 +57,13 @@ class MappingParser(object):
 
             geofence_included = Path(area["geofence_included"])
             if not geofence_included.is_file():
-                log.error("Geofence included file configured does not exist")
-                sys.exit(1)
+                raise RuntimeError("Geofence included file configured does not exist")
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
             if geofence_excluded_raw_path is not None:
                 geofence_excluded = Path(geofence_excluded_raw_path)
                 if not geofence_excluded.is_file():
-                    log.error("Geofence excluded specified but does not exist")
-                    sys.exit(1)
+                    raise RuntimeError("Geofence excluded file is specified but does not exist")
 
             area_dict = {"mode": area["mode"],
                          "geofence_included": area["geofence_included"],
@@ -116,8 +113,7 @@ class MappingParser(object):
                                                 settings=area.get("settings", None)
                                                 )
             else:
-                log.error("Invalid mode found in mapping parser.")
-                sys.exit(1)
+                raise RuntimeError("Invalid mode found in mapping parser.")
 
             if not mode == "iv_mitm":
                 if mode == "raids_ocr" or area.get("init", False) is False:

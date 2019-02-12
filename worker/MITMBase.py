@@ -18,6 +18,10 @@ class MITMBase(WorkerBase):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer)
                             
+        self._reboot_count = 0
+        self._restart_count = 0
+        self._rec_data_time = ""
+                            
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
             self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
@@ -26,13 +30,11 @@ class MITMBase(WorkerBase):
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
         if not timeout:
             timeout = self._devicesettings.get("mitm_wait_timeout", 45)
-        max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
 
         log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self._data_error_counter)))
         data_requested = None
 
-        while (data_requested is None and timestamp + timeout >= math.floor(time.time())
-               and self._data_error_counter < max_data_err_counter):
+        while (data_requested is None and timestamp + timeout >= math.floor(time.time())):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(latest, proto_to_wait_for, timestamp)
 
@@ -40,7 +42,6 @@ class MITMBase(WorkerBase):
             log.info('Got the data requested...')
             self._reboot_count = 0
             self._restart_count = 0
-            self._data_error_counter = 0
             self._rec_data_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
@@ -51,20 +52,18 @@ class MITMBase(WorkerBase):
             except InternalStopWorkerException as e:
                 log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
-            self._reboot_count += 1
             self._restart_count += 1
-            if (self._devicesettings.get("reboot", False)
-                    and self._reboot_count > self._devicesettings.get("reboot_thresh", 5)
+            if self._restart_count > 5 and self._devicesettings.get("reboot", False):
+                self._reboot_count += 1
+                if (self._reboot_count > self._devicesettings.get("reboot_thresh", 5)
                     and not current_routemanager.init):
-                log.error("Rebooting %s" % str(self._id))
-                self._reboot()
-                raise InternalStopWorkerException
-            elif self._data_error_counter >= max_data_err_counter and self._restart_count > 5:
-                self._data_error_counter = 0
-                self._restart_count = 0
-                self._restart_pogo(True)
-            elif self._data_error_counter >= max_data_err_counter and self._restart_count <= 5:
-                self._data_error_counter = 0
+                    log.error("Rebooting %s" % str(self._id))
+                    self._reboot()
+                    raise InternalStopWorkerException
+                    
+            self._restart_count = 0
+            self._restart_pogo(True)
+
         return data_requested
         
         
@@ -129,8 +128,8 @@ class MITMBase(WorkerBase):
         log.debug('Worker Stats')
         log.debug('Origin: %s' % str(self._id))
         log.debug('Routemanager: %s' % str(routemanager.name))
-        log.debug('Error Counter: %s' % str(self._data_error_counter))
-        log.debug('Re-start/boot Counter: %s' % str(self._restart_count))
+        log.debug('Restart Counter: %s' % str(self._restart_count))
+        log.debug('Reboot Counter: %s' % str(self._reboot_count))
         log.debug('Reboot Option: %s' % str(self._devicesettings.get("reboot", False)))
         log.debug('Current Pos: %s %s' % (str(self.current_location.lat),
                                                         str(self.current_location.lng)))
@@ -142,7 +141,7 @@ class MITMBase(WorkerBase):
         log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
         log.debug('Last Restart: %s' % str(self._lastStart))
         log.debug('===============================')      
-        set_status(self._id, {'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
+        set_status(self._id, {'Routemanager': str(routemanager.name), 'RebootCounter': str(self._reboot_count) , 'RestartCounter': str(self._restart_count),
                               'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
                                str(self.last_location.lng)), 'RoutePos': str(routemanager.get_route_status()[0]) , 
                                'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init), 

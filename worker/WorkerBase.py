@@ -38,10 +38,6 @@ class WorkerBase(ABC):
         self.loop_started = Event()
         self.loop_tid = None
         self._location_count = 0
-        self._data_error_counter = 0
-        self._reboot_count = 0
-        self._restart_count = 0
-        self._rec_data_time = ""
         self._timer = timer
 
         self._lastScreenshotTaken = 0
