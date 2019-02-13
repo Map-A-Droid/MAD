@@ -352,7 +352,7 @@ class WorkerQuests(MITMBase):
                 if latest_data is None:
                     time.sleep(0.5)
                     return None
-                if 'items_awarded' in latest_data['payload']:
+                elif proto_to_wait_for == 101:
                     if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
                         return 'Quest'
                     elif (latest_data['payload']['result'] == 1
@@ -362,11 +362,9 @@ class WorkerQuests(MITMBase):
                         return 'SB'
                     elif latest_data['payload']['result'] == 4:
                         return 'Box'
-                if 'fort_id' in latest_data['payload']:
-                    if latest_data['payload']['type'] == 1:
+                elif proto_to_wait_for == 104 and latest_data['payload']['type'] == 1:
                         return 'Stop'
-                if 'inventory_delta' in latest_data['payload']:
-                    if len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
+                if proto_to_wait_for == 4 and len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                         return 'Clear'
             else:
                 log.debug("latest timestamp of proto %s (%s) is older than %s"
