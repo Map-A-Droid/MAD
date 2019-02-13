@@ -121,7 +121,7 @@ def questtask(typeid, condition, target):
                 last = len(pt)
                 cur = 1
                 if last == 1:
-                    arr['poke'] = i8ln(pokemonname[pt[0]])
+                    arr['poke'] =i8ln(pokemonname(pt[0]))
                 else:
                     for ty in pt:
                         arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + ('' if last == cur else ', ')

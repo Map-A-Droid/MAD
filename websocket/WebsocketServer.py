@@ -11,6 +11,8 @@ from threading import Lock, Event, Thread
 
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
+from utils.mappingParser import MappingParser
+from mitm_receiver.MitmMapper import MitmMapper
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
 from utils.timer import Timer
@@ -56,6 +58,12 @@ class WebsocketServer(object):
 
         log.info("Device mappings: %s" % str(self.__device_mappings))
         log.info("Allowed origins derived: %s" % str(allowed_origins))
+
+        log.info("Starting file watcher for mappings.json changes.")
+        t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher)
+        t_file_watcher.daemon = False
+        t_file_watcher.start()
+
         asyncio.set_event_loop(self.__loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
@@ -131,7 +139,7 @@ class WebsocketServer(object):
         devicesettings = client_mapping["settings"]
 
         started = False
-        if timer.get_switch() is True:
+        if timer.get_switch() is True and client_mapping.get("nighttime_area", None) is not None:
             # set global mon_iv
             client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
             # start the appropriate nighttime manager if set

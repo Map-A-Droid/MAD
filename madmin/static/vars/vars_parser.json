@@ -656,14 +656,6 @@
 		}
 	},
 	{
-		"name": "max_data_err_counter",
-    	"settings": {
-	        "type": "text",
-		    "require": "false",
-			"description": "Reaching wait-for-data timout n times for restart Pogo. (Default: 60)"
-		}
-	},
-	{
 		"name": "vps_delay",
     	"settings": {
 	        "type": "text",
@@ -685,7 +677,15 @@
     	"settings": {
 	        "type": "text",
 		    "require": "false",
-			"description": "Reaching this thresh restart the phone (Default: 5)"
+			"description": "Restart Phone after restart Pogo N times. (Default: 3)"
+		}
+	},
+	{
+		"name": "restart_thresh",
+    	"settings": {
+	        "type": "text",
+		    "require": "false",
+			"description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
 		}
 	}
     ]
