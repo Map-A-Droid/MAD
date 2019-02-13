@@ -96,12 +96,11 @@ class testimage(object):
         print ('Check Pokeball Mainscreen')
         height, width, _ = image.shape
         image = image[int(height) - int(round(height / 4.5)):int(height),
-                             round(int(width) / 2) - round(int(width) / 8):round(int(width) / 2) + round(
-                                 int(width) / 8)]
+                             0: round(int(width) /2)]
         output = image.copy()
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        radMin = int((width /  float(8.5)- 3) / 2)
-        radMax = int((width / float(7.5) + 3) / 2)
+        radMin = int((width /  float(7.5)- 3) / 2)
+        radMax = int((width / float(6.5) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         gray = cv2.Canny(gray, 100, 50, apertureSize=3)   
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT,1,width / 8,param1=100,param2=15,minRadius=radMin,maxRadius=radMax)

@@ -1,20 +1,18 @@
+import asyncio
+import collections
+import logging
 import math
 import queue
-import asyncio
 import sys
-import time
+from threading import Event, Lock, Thread
 
 import websockets
-import logging
-import collections
-
-from threading import Lock, Event, Thread
 
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
+from utils.timer import Timer
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
-from utils.timer import Timer
 
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
@@ -57,10 +55,11 @@ class WebsocketServer(object):
 
         log.info("Device mappings: %s" % str(self.__device_mappings))
         log.info("Allowed origins derived: %s" % str(allowed_origins))
+
         asyncio.set_event_loop(self.__loop)
         asyncio.get_event_loop().run_until_complete(
-            websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
-                             origins=allowed_origins, ping_timeout=10, ping_interval=15))
+                websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
+                                 origins=allowed_origins, ping_timeout=10, ping_interval=15))
         asyncio.get_event_loop().run_forever()
 
     async def handler(self, websocket_client_connection, path):
@@ -73,12 +72,12 @@ class WebsocketServer(object):
             return
 
         consumer_task = asyncio.ensure_future(
-            self.__consumer_handler(websocket_client_connection))
+                self.__consumer_handler(websocket_client_connection))
         producer_task = asyncio.ensure_future(
-            self.__producer_handler(websocket_client_connection))
+                self.__producer_handler(websocket_client_connection))
         done, pending = await asyncio.wait(
-            [producer_task, consumer_task],
-            return_when=asyncio.FIRST_COMPLETED,
+                [producer_task, consumer_task],
+                return_when=asyncio.FIRST_COMPLETED,
         )
         log.info("consumer or producer of %s stopped, cancelling pending tasks"
                  % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
@@ -134,7 +133,8 @@ class WebsocketServer(object):
         started = False
         if timer.get_switch() is True and client_mapping.get("nighttime_area", None) is not None:
             # set global mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
+            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get(
+                "routemanager").settings.get("mon_ids_iv", [])
             # start the appropriate nighttime manager if set
             if nightime_routemanager is None:
                 pass
@@ -148,7 +148,8 @@ class WebsocketServer(object):
                                    devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
                 started = True
             elif nightime_routemanager.mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
+                                      nightime_routemanager,
                                       self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
                 started = True
             else:
@@ -156,7 +157,8 @@ class WebsocketServer(object):
                 sys.exit(1)
         if not timer.get_switch() or not started:
             # set mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager").settings.get("mon_ids_iv", [])
+            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get(
+                "routemanager").settings.get("mon_ids_iv", [])
             # we either gotta run daytime mode OR nighttime routemanager not set
             if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
                 worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
@@ -166,7 +168,8 @@ class WebsocketServer(object):
                 worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
                                    devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
             elif daytime_routemanager.mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
+                                      nightime_routemanager,
                                       self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
             else:
                 log.fatal("Mode not implemented")
@@ -203,10 +206,10 @@ class WebsocketServer(object):
                 await self.__send_specific(websocket_client_connection, next.id, next.message)
 
     async def __send_specific(self, websocket_client_connection, id, message):
-        #await websocket_client_connection.send(message)
-         for key, value in self.__current_users.items():
-             if key == id and value[2].open:
-                 await value[2].send(message)
+        # await websocket_client_connection.send(message)
+        for key, value in self.__current_users.items():
+            if key == id and value[2].open:
+                await value[2].send(message)
 
     async def __retrieve_next_send(self, websocket_client_connection):
         found = None
@@ -375,3 +378,13 @@ class WebsocketServer(object):
         self.__requests_mutex.acquire()
         self.__requests.pop(message_id)
         self.__requests_mutex.release()
+
+    def update_settings(self, routemanagers, device_mappings, auths):
+        self.__current_users_mutex.acquire()
+        self.__device_mappings = device_mappings
+        self.__routemanagers = routemanagers
+        self.__auths = auths
+        for id, worker in self.__current_users.items():
+            log.info('Stopping worker %s to apply new mappings.', id)
+            worker[1].stop_worker()
+        self.__current_users_mutex.release()

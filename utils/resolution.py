@@ -41,8 +41,11 @@ class Resocalculator(object):
         return click_x, click_y
         
     def get_delete_quest_coords(self):
-        if float(self._xyratio) > 2:
+        if float(self._xyratio) > 2.1:
             click_y = int(self._screen_x) / 1.1
+            click_x = int(self._screen_x) / 1.07
+        elif float(self._xyratio) >= 2:
+            click_y = int(self._screen_x) / 1.195
             click_x = int(self._screen_x) / 1.07
         elif float(self._xyratio) >= 1.7:
             click_y = int(self._screen_x) / 1.2

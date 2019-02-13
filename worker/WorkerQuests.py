@@ -1,37 +1,32 @@
 import logging
 import math
 import time
-import datetime
 from threading import Thread, Event
 
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.madGlobals import InternalStopWorkerException, WebsocketWorkerRemovedException
-from worker.WorkerBase import WorkerBase
+from worker.MITMBase import MITMBase
 
 log = logging.getLogger(__name__)
 
 
-class WorkerQuests(WorkerBase):
+class WorkerQuests(MITMBase):
     def _valid_modes(self):
         return ["pokestops"]
 
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
                  mitm_mapper, devicesettings, db_wrapper, timer):
-        WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False, timer=timer)
+        MITMBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
+                          route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False, timer=timer,
+                          mitm_mapper=mitm_mapper)
         self.first_round = True
         self.clear_thread = None
         # 0 => None
         # 1 => clear box
         # 2 => clear quest
         self.clear_thread_task = 0
-        self._mitm_mapper = mitm_mapper
-        self._data_error_counter = 0
         self._start_inventory_clear = Event()
         self._delay_add = int(self._devicesettings.get("vps_delay", 0))
-        self._reboot_count = 0
-        self._restart_count = 0
-        self._rec_data_time = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -217,7 +212,7 @@ class WorkerQuests(WorkerBase):
             curTime = time.time()
             self._communicator.click(int(delx), int(dely))
 
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=15)
+            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=20)
 
             if data_received is not None:
                 if 'Clear' in data_received:
@@ -325,115 +320,59 @@ class WorkerQuests(WorkerBase):
                 if to >= 3:
                     self._close_gym(self._delay_add)
 
-    def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=45):
-        #timeout = self._devicesettings.get("mitm_wait_timeout", 45)
-        max_data_err_counter = self._devicesettings.get("max_data_err_counter", 60)
-        log.info('Waiting for data after %s, error count is at %s' % (str(timestamp), str(self._data_error_counter)))
+    def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None
-        while (data_requested is None and timestamp + timeout >= time.time()
-               and self._data_error_counter < max_data_err_counter):
-            latest = self._mitm_mapper.request_latest(self._id)
-
-            if latest is None:
-                log.debug("Nothing received since MAD started")
-                time.sleep(0.5)
-                continue
-            elif proto_to_wait_for not in latest:
-                log.debug("No data linked to the requested proto since MAD started. Count: %s"
-                          % str(self._data_error_counter))
-                self._data_error_counter += 1
-                time.sleep(0.5)
-            elif 156 in latest:
-                if latest[156]['timestamp'] >= timestamp:
-                    # TODO: consider individual counters?
-                    self._data_error_counter = 0
-                    self._reboot_count = 0
-                    self._restart_count = 0
-                    return 'Gym'
-            elif 102 in latest:
-                if latest[102]['timestamp'] >= timestamp:
-                    self._data_error_counter = 0
-                    self._reboot_count = 0
-                    self._restart_count = 0
-                    return 'Mon'
-
-            if proto_to_wait_for not in latest:
-                log.debug("No data linked to the requested proto since MAD started. Count: %s"
-                            % str(self._data_error_counter))
-                self._data_error_counter += 1
-                time.sleep(1)
-            else:
-                # requested proto received previously
-                latest_proto = latest.get(proto_to_wait_for, None)
-                current_routemanager = self._get_currently_valid_routemanager()
-                if current_routemanager is None:
-                    # we should be sleeping...
-                    log.info("%s should be sleeping ;)" % str(self._id))
-                    return None
-                latest_timestamp = latest_proto.get("timestamp", 0)
-                if latest_timestamp >= timestamp:
-                    latest_data = latest_proto.get("values", None)
-                    if 'items_awarded' in latest_data['payload']:
-                        if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
-                            self._data_error_counter = 0
-                            self._reboot_count = 0
-                            self._restart_count = 0
-                            return 'Quest'
-                        elif (latest_data['payload']['result'] == 1
-                              and len(latest_data['payload']['items_awarded']) == 0):
-                            self._data_error_counter = 0
-                            self._reboot_count = 0
-                            self._restart_count = 0
-                            return 'Time'
-                        elif latest_data['payload']['result'] == 2:
-                            self._data_error_counter = 0
-                            self._reboot_count = 0
-                            self._restart_count = 0
-                            return 'SB'
-                        elif latest_data['payload']['result'] == 4:
-                            self._data_error_counter = 0
-                            self._reboot_count = 0
-                            self._restart_count = 0
-                            return 'Box'
-                    if 'fort_id' in latest_data['payload']:
-                        if latest_data['payload']['type'] == 1:
-                            self._data_error_counter = 0
-                            self._reboot_count = 0
-                            self._restart_count = 0
-                            return 'Stop'
-                    if 'inventory_delta' in latest_data['payload']:
-                        if len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
-                            self._data_error_counter = 0
-                            self._reboot_count = 0
-                            self._restart_count = 0
-                            return 'Clear'
-                else:
-                    log.debug("latest timestamp of proto %s (%s) is older than %s"
-                              % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
-                    # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
-                    # TODO: latter indicates too high speeds for example
-                    self._data_error_counter += 1
-                    time.sleep(0.5)
-        if data_requested is not None:
-            log.info('Got the data requested...')
-            self._reboot_count = 0
-            self._restart_count = 0
-            self._data_error_counter = 0
-            self._rec_data_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        if latest is None:
+            log.debug("Nothing received since MAD started")
+            time.sleep(0.5)
+        elif proto_to_wait_for not in latest:
+            log.debug("No data linked to the requested proto since MAD started.")
+            time.sleep(0.5)
+        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp:
+            return 'Gym'
+        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
+            return 'Mon'
         else:
-            log.warning("Timeout waiting for data")
-            self._reboot_count += 1
-            self._restart_count += 1
-            if (self._devicesettings.get("reboot", False)
-                    and self._reboot_count > self._devicesettings.get("reboot_thresh", 5)):
-                log.error("Rebooting %s" % str(self._id))
-                self._reboot()
+            # proto has previously been received, let's check the timestamp...
+            # TODO: int vs str-key?
+            latest_proto = latest.get(proto_to_wait_for, None)
+            try:
+                current_routemanager = self._get_currently_valid_routemanager()
+            except InternalStopWorkerException as e:
+                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
-            elif self._data_error_counter >= max_data_err_counter and self._restart_count > 5:
-                self._data_error_counter = 0
-                self._restart_count = 0
-                self._restart_pogo(True)
-            elif self._data_error_counter >= max_data_err_counter and self._restart_count <= 5:
-                self._data_error_counter = 0
-        self.worker_stats()
+            if current_routemanager is None:
+                # we should be sleeping...
+                log.warning("%s should be sleeping ;)" % str(self._id))
+                return None
+            latest_timestamp = latest_proto.get("timestamp", 0)
+            if latest_timestamp >= timestamp:
+                # TODO: consider reseting timestamp here since we clearly received SOMETHING
+                latest_data = latest_proto.get("values", None)
+                if latest_data is None:
+                    time.sleep(0.5)
+                    return None
+                elif proto_to_wait_for == 101:
+                    if latest_data['payload']['result'] == 1 and len(latest_data['payload']['items_awarded']) > 0:
+                        return 'Quest'
+                    elif (latest_data['payload']['result'] == 1
+                          and len(latest_data['payload']['items_awarded']) == 0):
+                        return 'Time'
+                    elif latest_data['payload']['result'] == 2:
+                        return 'SB'
+                    elif latest_data['payload']['result'] == 4:
+                        return 'Box'
+                elif proto_to_wait_for == 104 and latest_data['payload']['type'] == 1:
+                        return 'Stop'
+                if proto_to_wait_for == 4 and len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
+                        return 'Clear'
+            else:
+                log.debug("latest timestamp of proto %s (%s) is older than %s"
+                          % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
+                # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
+                # TODO: latter indicates too high speeds for example
+                time.sleep(0.5)
         return data_requested
+
+
+
