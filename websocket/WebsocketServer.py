@@ -59,11 +59,6 @@ class WebsocketServer(object):
         log.info("Device mappings: %s" % str(self.__device_mappings))
         log.info("Allowed origins derived: %s" % str(allowed_origins))
 
-        log.info("Starting file watcher for mappings.json changes.")
-        t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher)
-        t_file_watcher.daemon = False
-        t_file_watcher.start()
-
         asyncio.set_event_loop(self.__loop)
         asyncio.get_event_loop().run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
