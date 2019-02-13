@@ -878,7 +878,7 @@ class RmWrapper(DbWrapperBase):
 
                     self.webhook_helper.send_gym_webhook(
                         gymid, raidendSec, 'unknown', team_id, slots_available, guard_pokemon_id,
-                        latitude, longitude
+                        latitude, longitude, last_modified
                     )
 
                     gym_args.append(
