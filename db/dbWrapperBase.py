@@ -863,14 +863,15 @@ class DbWrapperBase(ABC):
             task = questtask(int(quest_type), str(condition), int(target))
 
             query_quests = (
-                "INSERT into trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, quest_reward_type, "
-                "quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, quest_task) values "
-                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                "INSERT into trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
+                "quest_reward_type, quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, "
+                "quest_task) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                 "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
                 "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
                 "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
-                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), quest_condition=VALUES(quest_condition), "
-                "quest_reward=VALUES(quest_reward), quest_task=VALUES(quest_task)"
+                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), "
+                "quest_condition=VALUES(quest_condition), quest_reward=VALUES(quest_reward), "
+                "quest_task=VALUES(quest_task)"
             )
             vals = (
                 fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target,
@@ -891,20 +892,21 @@ class DbWrapperBase(ABC):
     def create_status_database_if_not_exists(self):
         log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
 
-        query = (' Create table if not exists trs_status ( ' +
-                ' origin VARCHAR(255) NOT NULL , '
-                ' currentPos VARCHAR(50) NOT NULL, '
-                ' lastPos VARCHAR(50) NOT NULL, '
-                ' routePos INT(11) NOT NULL, '
-                ' routeMax INT(11) NOT NULL, '
-                ' routemanager VARCHAR(255) NOT NULL, '
-                ' rebootCounter INT(11)  NOT NULL, '
-                ' lastProtoDateTime VARCHAR(50) NOT NULL, '
-                ' lastPogoRestart VARCHAR(50) NOT NULL, '
-                ' init TEXT NOT NULL, '
-                ' rebootingOption TEXT NOT NULL, '
-                ' restartCounter TEXT NOT NULL, '
-	            ' PRIMARY KEY (origin))')
+        query = (' Create table if not exists trs_status (  '
+                 'origin VARCHAR(50) NOT NULL , '
+                 ' currentPos VARCHAR(50) NOT NULL, '
+                 ' lastPos VARCHAR(50) NOT NULL, '
+                 ' routePos INT(11) NOT NULL, '
+                 ' routeMax INT(11) NOT NULL, '
+                 ' routemanager VARCHAR(255) NOT NULL, '
+                 ' rebootCounter INT(11)  NOT NULL, '
+                 ' lastProtoDateTime VARCHAR(50) NOT NULL, '
+                 ' lastPogoRestart VARCHAR(50) NOT NULL, '
+                 ' init TEXT NOT NULL, '
+                 ' rebootingOption TEXT NOT NULL, '
+                 ' restartCounter TEXT NOT NULL, '
+                 ' PRIMARY KEY (origin))')
+
 
         self.execute(query, commit=True)
 

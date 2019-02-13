@@ -452,7 +452,9 @@ class MonocleWrapper(DbWrapperBase):
                     filename = url_image_path + '_' + str(id) + '_.jpg'
                     log.debug('Downloading', filename)
                     self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encode_hash_json(team, float(lat), float(lon), str(name).replace('"', '\\"').replace('\n', '\\n'), url, park, sponsor)
+                gyminfo[id] = self.__encode_hash_json(team, float(lat), float(lon),
+                                                      str(name).replace('"', '\\"')
+                                                      .replace('\n', '\\n'), url, park, sponsor)
 
         with io.open('gym_info.json', 'w') as outfile:
             outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
@@ -474,7 +476,11 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (external_id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[external_id] = self.__encode_hash_json(team, float(lat), float(lon), str(name).replace('"', '\\"').replace('\n', '\\n'), str(url), park, sponsor)
+            gyminfo[external_id] = self.__encode_hash_json(team,
+                                                           float(lat),
+                                                           float(lon),
+                                                           str(name).replace('"', '\\"')
+                                                           .replace('\n', '\\n'), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
@@ -586,7 +592,8 @@ class MonocleWrapper(DbWrapperBase):
             
         # calculating level
         if pokemon_data.get("cp_multiplier") < 0.734:
-            pokemon_level = (58.35178527 * pokemon_data.get("cp_multiplier") * pokemon_data.get("cp_multiplier") - 2.838007664 * pokemon_data.get("cp_multiplier") + 0.8539209906)
+            pokemon_level = (58.35178527 * pokemon_data.get("cp_multiplier") * pokemon_data.get("cp_multiplier") -
+                             2.838007664 * pokemon_data.get("cp_multiplier") + 0.8539209906)
         else:
             pokemon_level = 171.0112688 * pokemon_data.get("cp_multiplier") - 95.20425243
 
@@ -660,7 +667,7 @@ class MonocleWrapper(DbWrapperBase):
         if cells is None:
             return False
         query_mons = (
-            "INSERT INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
+            "INSERT IGNORE INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
             "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated)"
@@ -728,20 +735,45 @@ class MonocleWrapper(DbWrapperBase):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
-        pokestop_vals = []
-        # now = datetime.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
-        query_pokestops = (
+        query_pokestops_insert = (
             "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires)"
         )
+        query_pokestops_update = (
+            "UPDATE pokestops set updated=VALUES(updated), expires=VALUES(expires) where external_id = %s"
+        )
+
+        list_of_pokestops_updates_vals = []
+        list_of_pokestops_insert_vals = []
 
         for cell in cells:
             for fort in cell['forts']:
                 if fort['type'] == 1:
-                    pokestop_vals.append(self.__extract_args_single_pokestop(fort))
-        self.executemany(query_pokestops, pokestop_vals, commit=True)
+
+                    list_of_stops_vals = self.__extract_args_single_pokestop(fort)
+
+                    external_id = list_of_stops_vals[0]
+
+                    query_get_count = "SELECT count(*) from pokestops where external_id = %s"
+                    vals_get_count = (external_id,)
+                    res = self.execute(query_get_count, vals_get_count)
+
+                    pokestop_exists = res[0]
+                    pokestop_exists = ",".join(map(str, pokestop_exists))
+
+                    if int(pokestop_exists) == 0:
+                        list_of_pokestops_insert_vals.append((list_of_stops_vals[0], list_of_stops_vals[1],
+                                                              list_of_stops_vals[2], list_of_stops_vals[3],
+                                                              list_of_stops_vals[4], list_of_stops_vals[5],
+                                                              list_of_stops_vals[6], ))
+                    else:
+                        list_of_pokestops_updates_vals.append((list_of_stops_vals[5], list_of_stops_vals[6]))
+
+        self.executemany(query_pokestops_insert, list_of_pokestops_insert_vals, commit=True)
+        self.executemany(query_pokestops_update, list_of_pokestops_updates_vals, commit=True)
+
         return True
 
     def submit_gyms_map_proto(self, origin, map_proto):
@@ -1083,9 +1115,9 @@ class MonocleWrapper(DbWrapperBase):
     def check_stop_quest(self, latitude, longitude):
         log.debug("{MonocleWrapper::stops_from_db} called")
         query = (
-            "SELECT trs_quest.GUID "
-            "from trs_quest inner join pokestops on pokestops.external_id = trs_quest.GUID where "
-            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = date_format(DATE_ADD( now() , INTERVAL '-15' MINUTE ), '%Y-%m-%d') "
+            "SELECT trs_quest.GUID from trs_quest inner join pokestops on pokestops.external_id = trs_quest.GUID "
+            "where from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = "
+            "date_format(DATE_ADD( now() , INTERVAL '-15' MINUTE ), '%Y-%m-%d') "
             "and pokestops.lat=%s and pokestops.lon=%s"
         )
         data = (latitude, longitude)
@@ -1170,4 +1202,3 @@ class MonocleWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
-    
