@@ -766,7 +766,7 @@ class MonocleWrapper(DbWrapperBase):
                         list_of_pokestops_insert_vals.append((external_id, list_of_stops_vals[1],
                                                               list_of_stops_vals[2], list_of_stops_vals[3],
                                                               list_of_stops_vals[4], list_of_stops_vals[5],
-                                                              list_of_stops_vals[6], ))
+                                                              list_of_stops_vals[6]))
                     else:
                         list_of_pokestops_updates_vals.append((list_of_stops_vals[5], list_of_stops_vals[6],
                                                                external_id))
