@@ -739,10 +739,9 @@ class MonocleWrapper(DbWrapperBase):
         query_pokestops_insert = (
             "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires)"
         )
         query_pokestops_update = (
-            "UPDATE pokestops set updated=VALUES(updated), expires=VALUES(expires) where external_id = %s"
+            "UPDATE pokestops set updated=%s, expires=%s where external_id = %s"
         )
 
         list_of_pokestops_updates_vals = []
@@ -764,12 +763,13 @@ class MonocleWrapper(DbWrapperBase):
                     pokestop_exists = ",".join(map(str, pokestop_exists))
 
                     if int(pokestop_exists) == 0:
-                        list_of_pokestops_insert_vals.append((list_of_stops_vals[0], list_of_stops_vals[1],
+                        list_of_pokestops_insert_vals.append((external_id, list_of_stops_vals[1],
                                                               list_of_stops_vals[2], list_of_stops_vals[3],
                                                               list_of_stops_vals[4], list_of_stops_vals[5],
                                                               list_of_stops_vals[6], ))
                     else:
-                        list_of_pokestops_updates_vals.append((list_of_stops_vals[5], list_of_stops_vals[6]))
+                        list_of_pokestops_updates_vals.append((list_of_stops_vals[5], list_of_stops_vals[6],
+                                                               external_id))
 
         self.executemany(query_pokestops_insert, list_of_pokestops_insert_vals, commit=True)
         self.executemany(query_pokestops_update, list_of_pokestops_updates_vals, commit=True)
