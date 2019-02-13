@@ -488,7 +488,6 @@ class PogoWindows:
         height, width, _ = screenshotRead.shape
         image = screenshotRead[int(height) - int(round(height / 4.5)):int(height),
                              0: round(int(width) /2)]
-        output = image.copy()
         gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
         radMin = int((width /  float(7.5)- 3) / 2)
         radMax = int((width / float(6.5) + 3) / 2)
@@ -502,7 +501,7 @@ class PogoWindows:
             
             #7.5
         if mainscreen > 0:
-            log.info("Found Pokeball.")
+            log.info("Found Avatar.")
             return True
         return False
         
