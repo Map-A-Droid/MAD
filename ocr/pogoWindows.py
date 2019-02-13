@@ -68,7 +68,7 @@ class PogoWindows:
         else:
             return False
 
-    def __readCircleCount(self, filename, hash, ratio, xcord=False, crop=False, click=False, canny=False):
+    def __readCircleCount(self, filename, hash, ratio, xcord=False, crop=False, click=False, canny=False, secondratio=False):
         log.debug("__readCircleCount: Reading circles")
 
         try:
@@ -91,10 +91,13 @@ class PogoWindows:
         log.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
-
-        radMin = int((width / float(ratio) - 3) / 2)
-        radMax = int((width / float(ratio) + 3) / 2)
-
+        
+        if not secondratio:
+            radMin = int((width / float(ratio) - 3) / 2)
+            radMax = int((width / float(ratio) + 3) / 2)
+        else:
+            radMin = int((width / float(ratio) - 3) / 2)
+            radMax = int((width / float(secondratio) + 3) / 2)
         if canny:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
@@ -480,9 +483,9 @@ class PogoWindows:
         if screenshotRead is None:
             log.error("checkCloseExceptNearbyButton: Screenshot corrupted :(")
             return False
-            
+            #7.5
         if self.__readCircleCount(filename, hash,
-                                          float(7.5), xcord=False, crop=True, click=False, canny=True) > 0:
+                                          float(8.5), xcord=False, crop=True, click=False, canny=True, secondratio=float(7.5)) > 0:
             log.info("Found Pokeball.")
             return True
         return False
@@ -500,7 +503,7 @@ class PogoWindows:
             return False
             
         if self.__readCircleCount(filename, hash,
-                                          float(8), xcord=False, crop=True, click=True, canny=True) > 0:
+                                          float(7.7), xcord=False, crop=True, click=True, canny=True) > 0:
             log.debug("Found close button (X). Closing the window - Ratio: 10")
             return True
 

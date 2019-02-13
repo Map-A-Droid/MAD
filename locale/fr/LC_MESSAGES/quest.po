@@ -1,0 +1,153 @@
+# SOME DESCRIPTIVE TITLE.
+# Copyright (C) YEAR ORGANIZATION
+# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: \n"
+"POT-Creation-Date: 2019-02-04 19:51+0100\n"
+"PO-Revision-Date: 2019-02-04 23:37+0100\n"
+"Last-Translator: \n"
+"Language-Team: \n"
+"Language: fr_FR\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Generated-By: pygettext.py 1.5\n"
+"X-Generator: Poedit 2.2.1\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "Item"
+msgstr "Objet"
+
+msgid "Stardust"
+msgstr "Poussières Étoiles"
+
+msgid "Pokemon"
+msgstr "Pokemon"
+
+msgid "Curveball"
+msgstr "à effet"
+
+msgid "Excellent"
+msgstr "Excellent"
+
+msgid "Great"
+msgstr "Superbe"
+
+msgid "Nice"
+msgstr "Joli"
+
+msgid "Catch {0} {type}Pokemon{wb}."
+msgstr "Attrape {0} Pokémon {type}{wb}."
+
+msgid "-type "
+msgstr " "
+
+msgid "or "
+msgstr "ou "
+
+msgid " with weather boost"
+msgstr " boostés par la météo"
+
+msgid "Catch a {poke}."
+msgstr "Attrape un {poke}."
+
+msgid "Spin {0} Pokestops or Gyms."
+msgstr "Fais tourner {0} PokéStops ou Arènes."
+
+msgid "Hatch {0} Eggs."
+msgstr "Fais éclore {0} Œufs."
+
+msgid "Win {0} Gym Battles."
+msgstr "Gagne {0} combats d’Arènes."
+
+msgid "Use a supereffective Charged Attack in {0} Gym battles."
+msgstr "Utilise une Attaque Chargée très efficace dans {0} combats."
+
+msgid "Battle in a Gym {0} times."
+msgstr "Gagne {0} combats d’Arènes."
+
+msgid "Win {0} Raids."
+msgstr "Gagne {0} Raids."
+
+msgid "Win a level 3 or higher raid."
+msgstr "Gagne un Raid de niveau 3 ou plus."
+
+msgid "Battle in {0} Raids."
+msgstr "Combats dans {0} Raids."
+
+msgid "Transfer {0} Pokemon."
+msgstr "Transfère {0} Pokémon."
+
+msgid "Favourite {0} Pokemon."
+msgstr "Met en favoris {0} Pokemon."
+
+msgid "Use {0} {type}Berries to help catch Pokemon."
+msgstr "Utilise {0} {type} pour t’aider à attraper des Pokémon."
+
+msgid " Berry"
+msgstr " Baie"
+
+msgid "Power up Pokemon {0} times."
+msgstr "Recharge un Pokémon {0} fois."
+
+msgid "Evolve {0} Pokemon."
+msgstr "Fais évoluer {0} Pokémon."
+
+msgid "Use an item to evolve a Pokemon."
+msgstr "Utilise un objet pour faire évoluer un Pokémon."
+
+msgid " in a row"
+msgstr " à la suite"
+
+msgid "Curveball "
+msgstr "à effet "
+
+msgid "Make {0} {type}{curve}Throws{inrow}."
+msgstr "Fais {0} {type} lancers {curve}{inrow}."
+
+msgid "Earn {0} Candies walking with your buddy."
+msgstr "Gagne {0} Bonbons en marchant avec ton copain."
+
+msgid "Trade {0} Pokemon."
+msgstr "Échange {0} fois des Pokémon."
+
+msgid "Send {0} gifts to friends."
+msgstr "Envoie {0} Cadeaux à des amis."
+
+msgid " Eggs"
+msgstr " Œufs"
+
+msgid "n Egg"
+msgstr "Œufs"
+
+msgid " Raid"
+msgstr " Raid"
+
+msgid " Raids"
+msgstr " Raids"
+
+msgid " Battle"
+msgstr " Combat"
+
+msgid " Battles"
+msgstr " Combats"
+
+msgid " candies"
+msgstr " bonbons"
+
+msgid " candy"
+msgstr " bonbon"
+
+msgid " gift"
+msgstr " cadeau"
+
+msgid " gifts"
+msgstr " cadeaux"
+
+msgid " {0} times"
+msgstr " {0} fois"
+
+msgid "a"
+msgstr "1"

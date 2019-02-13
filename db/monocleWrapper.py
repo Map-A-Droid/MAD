@@ -787,6 +787,7 @@ class MonocleWrapper(DbWrapperBase):
                     team = gym['gym_details']['owned_by_team']
                     slots = gym['gym_details']['slots_available']
                     is_in_battle = gym['gym_details'].get('is_in_battle', False)
+                    last_modified = gym['last_modified_timestamp_ms']/1000
                     if is_in_battle:
                         is_in_battle = 1
                     else:
@@ -817,13 +818,13 @@ class MonocleWrapper(DbWrapperBase):
                     if int(fort_sightings_exists) == 0:
                         vals_fort_sightings_insert.append(
                             (
-                                gym_id, now, team, guardmon, slots, is_in_battle, now
+                                gym_id, last_modified, team, guardmon, slots, is_in_battle, now
                             )
                         )
                     else:
                         vals_fort_sightings_update.append(
                             (
-                                team, guardmon, slots, now, now, is_in_battle, gym_id
+                                team, guardmon, slots, now, last_modified, is_in_battle, gym_id
                             )
                         )
         self.executemany(query_forts, vals_forts, commit=True)
@@ -840,12 +841,13 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, last_updated, cp, move_1, move_2) "
+            "time_end, last_updated, cp, move_1, move_2, form) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
-            "last_updated=VALUES(last_updated), cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2)"
+            "last_updated=VALUES(last_updated), cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
+            "form=VALUES(form)"
         )
 
         for cell in cells:
@@ -856,11 +858,13 @@ class MonocleWrapper(DbWrapperBase):
                         cp = gym['gym_details']['raid_info']['raid_pokemon']['cp']
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
+                        form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
+                        form = None
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
@@ -892,7 +896,8 @@ class MonocleWrapper(DbWrapperBase):
                             raidbattleSec,
                             raidendSec,
                             now,
-                            cp, move_1, move_2
+                            cp, move_1, move_2, 
+                            form
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -900,27 +905,56 @@ class MonocleWrapper(DbWrapperBase):
         return True
 
     def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
-        log.debug("Inserting/updating weather sent by %s" % str(origin))
-        cells = map_proto.get("cells", None)
-        if cells is None:
-            return False
+            log.debug("Inserting/updating weather sent by %s" % str(origin))
+            cells = map_proto.get("cells", None)
+            if cells is None:
+                return False
 
-        query_weather = (
-            "INSERT INTO weather (s2_cell_id, `condition`, alert_severity, warn, day, updated) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE `condition`=VALUES(`condition`), alert_severity=VALUES(alert_severity), "
-            "warn=VALUES(warn), day=VALUES(day), updated=VALUES(updated)"
-        )
-
-        list_of_weather_vals = []
-        for client_weather in map_proto['client_weather']:
-            # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract['cell_id'])
-            time_of_day = map_proto.get("time_of_day_value", 0)
-            list_of_weather_vals.append(
-                self.__extract_args_single_weather(client_weather, time_of_day, received_timestamp)
+            query_weather_insert = (
+                "INSERT INTO weather (s2_cell_id, `condition`, alert_severity, warn, day, updated) "
+                "VALUES (%s, %s, %s, %s, %s, %s) "
             )
-        self.executemany(query_weather, list_of_weather_vals, commit=True)
-        return True
+            query_weather_update = (
+                "UPDATE weather set `condition`=%s, alert_severity=%s, "
+                "warn=%s, day=%s, updated=%s where id = %s"
+            )
+        
+            list_of_weather_vals = []
+            list_of_weather_updates_vals = []
+            list_of_weather_inserts_vals = []
+        
+            for client_weather in map_proto['client_weather']:
+                # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract['cell_id'])
+                time_of_day = map_proto.get("time_of_day_value", 0)
+                list_of_weather_vals.append(
+                    self.__extract_args_single_weather(client_weather, time_of_day, received_timestamp)
+                )
+            
+            for weather_data in list_of_weather_vals:
+                query = (
+                    "SELECT id "
+                    "FROM weather "
+                    "WHERE s2_cell_id = %s"
+                )
+                vals = (
+                    weather_data[0],
+                )
+
+                res = self.execute(query, vals)
+            
+                number_of_rows = len(res)
+
+                if number_of_rows > 0:
+                    dbid = ",".join(map(str, res[0]))
+                    list_of_weather_updates_vals.append((weather_data[1], weather_data[2], weather_data[3], 
+                            weather_data[4], weather_data[5], dbid))
+                else:
+                    list_of_weather_inserts_vals.append((weather_data[0], weather_data[1], weather_data[2], 
+                            weather_data[3], weather_data[4], weather_data[5]))
+        
+            self.executemany(query_weather_insert, list_of_weather_inserts_vals, commit=True)   
+            self.executemany(query_weather_update, list_of_weather_updates_vals, commit=True)
+            return True
 
     def __check_last_updated_column_exists(self):
         query = (
@@ -1015,7 +1049,8 @@ class MonocleWrapper(DbWrapperBase):
             return None
 
         now = int(time.time())
-        lure = int(float(stop_data['lure_expires']))
+        # lure = int(float(stop_data['lure_expires']))
+        lure = 0
         if lure > 0:
             lure = lure / 1000
         return (
@@ -1068,16 +1103,17 @@ class MonocleWrapper(DbWrapperBase):
     def quests_from_db(self, GUID = False):
         log.debug("{MonocleWrapper::quests_from_db} called")
         questinfo = {}
-        
+
         if not GUID:
             query = (
-            "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
-            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
-            "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-            "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
-            "trs_quest.quest_timestamp FROM pokestops inner join trs_quest on "
-            "(pokestops.external_id COLLATE utf8mb4_general_ci) = trs_quest.GUID where "
-            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
+                "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
+                "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
+                "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
+                "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
+                "trs_quest.quest_timestamp,trs_quest.quest_task "
+                "FROM pokestops inner join trs_quest on "
+                "(pokestops.external_id COLLATE utf8mb4_general_ci) = trs_quest.GUID where "
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
             )
             data = ()
         else:
@@ -1086,8 +1122,9 @@ class MonocleWrapper(DbWrapperBase):
                 "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
                 "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
                 "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
-                "trs_quest.quest_timestamp FROM pokestops inner join trs_quest on "
-                "(pokestops.external_id COLLATE utf8mb4_general_ci) = trs_quest.GUID where "
+                "trs_quest.quest_timestamp,trs_quest.quest_task "
+                "FROM pokestops inner join trs_quest on "
+                "(pokestops.external_id COLLATE utf8mb4_general_ci)= trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
                 "trs_quest.GUID = %s"
             )
@@ -1095,14 +1132,19 @@ class MonocleWrapper(DbWrapperBase):
 
         res = self.execute(query, data)
 
-        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, \
-             quest_item_id, quest_item_amount, name, image, quest_target, quest_condition, quest_timestamp) in res:
+        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
+             quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
+             quest_timestamp, quest_task) in res:
             mon = "%03d" % quest_pokemon_id
-            questinfo[pokestop_id] = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
-            'quest_type': quest_type, 'quest_stardust': quest_stardust, 'quest_pokemon_id': mon, 
-            'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id, 'quest_item_amount': quest_item_amount, 
-            'name': name, 'image': image, 'quest_target': quest_target, 'quest_condition': quest_condition, 
-            'quest_timestamp': quest_timestamp})
+            questinfo[pokestop_id] = ({
+                'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,
+                'quest_type': quest_type, 'quest_stardust': quest_stardust,
+                'quest_pokemon_id': mon,
+                'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id,
+                'quest_item_amount': quest_item_amount, 'name': name, 'image': image,
+                'quest_target': quest_target,
+                'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
+                'task': quest_task})
         return questinfo
         
     def submit_pokestops_details_map_proto(self, map_proto):
