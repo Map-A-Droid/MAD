@@ -871,6 +871,7 @@ class RmWrapper(DbWrapperBase):
                     longitude = gym['longitude']
                     slots_available = gym['gym_details']['slots_available']
                     raidendSec = 0
+                    last_modified = datetime.utcfromtimestamp(gym['last_modified_timestamp_ms']/1000).strftime("%Y-%m-%d %H:%M:%S")
 
                     if gym['gym_details']['has_raid']:
                         raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
@@ -887,7 +888,7 @@ class RmWrapper(DbWrapperBase):
                             latitude, longitude,
                             0,  # total CP
                             0,  # is_in_battle
-                            now,  # last_modified
+                            last_modified,  # last_modified
                             now   # last_scanned
                         )
                     )
