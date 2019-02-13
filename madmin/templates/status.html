@@ -22,9 +22,9 @@
                 { data: 'init', title: 'Init Mode' },
                 { data: 'lastProtoDateTime', title: 'Last Date/Time of Data' },
                 { data: 'lastPogoRestart', title: 'Last Restart' },
-                { data: 'rebootCounter', title: 'Reboot Counter' },
+                { data: 'restartCounter', title: 'Restart Counter' },
                 { data: 'rebootingOption', title: 'Reboot Option' },
-                { data: 'restartCounter', title: 'Re-start/boot Counter' },
+                { data: 'rebootCounter', title: 'Reboot Counter' },
                 { data: 'currentPos', title: 'Current Pos' },
                 { data: 'lastPos', title: 'Last Pos' }
             ],
@@ -40,12 +40,6 @@
                     }
                 },
                 {
-                    "targets": [4, 8],
-                    "render": function (data, type, row) {
-                        return data ? "true" : "false"
-                    }
-                },
-                {
                     "targets": [5, 6],
                     "render": function (data, type, row) {
                         var dateToShow = moment(data);
@@ -57,7 +51,7 @@
                     }
                 }
             ],
-            "order": [[5, "desc"]],
+            "order": [[5, "asc"]],
             "responsive": {{ responsive }},
             "autoWidth": true
         });
