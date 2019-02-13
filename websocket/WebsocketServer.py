@@ -2,8 +2,6 @@ import math
 import queue
 import asyncio
 import sys
-import time
-import os
 
 import websockets
 import logging
@@ -385,44 +383,10 @@ class WebsocketServer(object):
         self.__requests.pop(message_id)
         self.__requests_mutex.release()
 
-    def __file_watcher(self):
-        # We're on a 60-second timer.
-        refresh_time_sec = 60
-        filename = 'configs/mappings.json'
-
-        while True:
-            # Wait (x-1) seconds before refresh, min. 1s.
-            time.sleep(max(1, refresh_time_sec - 1))
-            try:
-                # Only refresh if the file has changed.
-                current_time_sec = time.time()
-                file_modified_time_sec = os.path.getmtime(filename)
-                time_diff_sec = current_time_sec - file_modified_time_sec
-
-                # File has changed in the last refresh_time_sec seconds.
-                if time_diff_sec < refresh_time_sec:
-                    log.info(
-                        'Change found in %s. Updating device mappings.', filename)
-                    self.__reload_mappings()
-                    log.info('Propagating new mappings to all clients.')
-                    self.__update_clients()
-                else:
-                    log.debug('No change found in %s.', filename)
-            except Exception as e:
-                log.exception('Exception occurred while updating device mappings: %s.', e)
-
-    def __reload_mappings(self):
-        mapping_parser = MappingParser(self.__db_wrapper)
-        device_mappings = mapping_parser.get_devicemappings()
-        routemanagers = mapping_parser.get_routemanagers()
-        auths = mapping_parser.get_auths()
-        mitm_mapper = MitmMapper(device_mappings)
+    def update_settings(self, routemanagers, device_mappings, auths):
         self.__device_mappings = device_mappings
         self.__routemanagers = routemanagers
         self.__auths = auths
-        # self.__mitm_mapper = mitm_mapper
-
-    def __update_clients(self):
         for id, worker in self.__current_users.items():
             log.info('Stopping worker %s to apply new mappings.', id)
             worker[1].stop_worker()
