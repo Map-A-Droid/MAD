@@ -5,7 +5,6 @@ import datetime
 
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
-from utils.status import set_status
 from abc import ABC, abstractmethod
 
 log = logging.getLogger(__name__)
@@ -164,11 +163,21 @@ class MITMBase(WorkerBase):
         log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
         log.debug('Last Restart: %s' % str(self._lastStart))
         log.debug('===============================')      
-        set_status(self._id, {'Routemanager': str(routemanager.name), 'RebootCounter': str(self._reboot_count) ,
-                              'RestartCounter': str(self._restart_count),
-                              'RebootingOption': str(self._devicesettings.get("reboot", False)),
-                              'CurrentPos': (str(self.last_location.lat),str(self.last_location.lng)),
-                              'RoutePos': str(routemanager.get_route_status()[0]),
-                              'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init),
-                              'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
+
+        dataToSave = {
+            'Origin': self._id,
+            'Routemanager': str(routemanager.name),
+            'RebootCounter': str(self._reboot_count),
+            'RestartCounter': str(self._restart_count),
+            'RebootingOption': str(self._devicesettings.get("reboot", False)),
+            'CurrentPos': str(self.current_location.lat) + ", " + str(self.current_location.lng),
+            'LastPos': str(self.last_location.lat) + ", " + str(self.last_location.lng),
+            'RoutePos': str(routemanager.get_route_status()[0]),
+            'RouteMax': str(routemanager.get_route_status()[1]),
+            'Init': str(routemanager.init),
+            'LastProtoDateTime': str(self._rec_data_time),
+            'LastPogoRestart': str(self._lastStart)
+        }
+
+        self._db_wrapper.save_status(dataToSave)    
 

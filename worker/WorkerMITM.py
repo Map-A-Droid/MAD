@@ -175,7 +175,6 @@ class WorkerMITM(MITMBase):
             except InternalStopWorkerException as e:
                 log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
                 raise InternalStopWorkerException
-
             if current_routemanager is None:
                 # we should be sleeping...
                 log.warning("%s should be sleeping ;)" % str(self._id))
@@ -217,4 +216,5 @@ class WorkerMITM(MITMBase):
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
+            self.worker_stats()
         return data_requested
