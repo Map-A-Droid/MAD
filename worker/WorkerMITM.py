@@ -62,9 +62,9 @@ class WorkerMITM(MITMBase):
             if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
                 # TODO: actually use to_walk for distance
                 to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
-                                                              float(self.current_location.lng),
-                                                              float(self.current_location.lat) + 0.0001,
-                                                              float(self.current_location.lng) + 0.0001)
+                                                               float(self.current_location.lng),
+                                                               float(self.current_location.lat) + 0.0001,
+                                                               float(self.current_location.lng) + 0.0001)
                 log.info("Walking a bit: %s" % str(to_walk))
                 time.sleep(0.3)
                 self._communicator.walkFromTo(self.current_location.lat, self.current_location.lng,
@@ -156,7 +156,7 @@ class WorkerMITM(MITMBase):
                                         values_dict=ids_iv)
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
                                         values_dict=injected_settings)
-                                        
+
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None
         if latest is None:
@@ -217,4 +217,3 @@ class WorkerMITM(MITMBase):
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
         return data_requested
-
