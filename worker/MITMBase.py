@@ -36,6 +36,7 @@ class MITMBase(WorkerBase):
         while data_requested is None and timestamp + timeout >= math.floor(time.time()):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(latest, proto_to_wait_for, timestamp)
+            time.sleep(1)
 
         if data_requested is not None:
             log.info('Got the data requested...')

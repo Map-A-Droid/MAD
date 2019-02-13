@@ -328,13 +328,10 @@ class WorkerQuests(MITMBase):
         elif proto_to_wait_for not in latest:
             log.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
-        elif 156 in latest:
-            if latest[156]['timestamp'] >= timestamp:
-                # TODO: consider individual counters?
-                return 'Gym'
-        elif 102 in latest:
-            if latest[102]['timestamp'] >= timestamp:
-                return 'Mon'
+        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp:
+            return 'Gym'
+        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
+            return 'Mon'
         else:
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?
