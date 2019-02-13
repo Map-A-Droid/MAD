@@ -48,7 +48,7 @@ class WorkerBase(ABC):
         self._resocalc = Resocalculator
         self._screen_x = 0
         self._screen_y = 0
-        self._lastStart = 0
+        self._lastStart = ""
 
         self.current_location = self._last_known_state.get("last_location", None)
         if self.current_location is None:
@@ -668,5 +668,4 @@ class WorkerBase(ABC):
         self._screen_y = screen[1]
         log.debug('Get Screensize of %s: X: %s, Y: %s' % (str(self._id), str(self._screen_x), str(self._screen_y)))
         self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y)
-
-    
+        

@@ -302,4 +302,6 @@ class RouteManagerBase(ABC):
             json.dump(vars, outfile, indent=4, sort_keys=True)
             
     def get_route_status(self):
-        return self._current_index_of_route, len(self._route)
+        if self._route:
+            return self._current_index_of_route, len(self._route)
+        return self._current_index_of_route, self._current_index_of_route

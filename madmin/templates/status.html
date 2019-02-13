@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script>
+    var dataTable;
+    function setGrid(tableGridHtmlId, gridData) {
+        if ($.fn.dataTable.isDataTable(tableGridHtmlId) ) {
+            dataTable.destroy();
+        }
+
+        dataTable = $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'origin', title: 'Origin' },
+                { data: 'routemanager', title: 'Routemanager' },
+                { data: 'routePos', title: 'Route Pos' },
+                { data: 'routeMax', title: 'Route Length' },
+                { data: 'init', title: 'Init Mode' },
+                { data: 'lastProtoDateTime', title: 'Last Date/Time of Data' },
+                { data: 'lastPogoRestart', title: 'Last Restart' },
+                { data: 'restartCounter', title: 'Restart Counter' },
+                { data: 'rebootingOption', title: 'Reboot Option' },
+                { data: 'rebootCounter', title: 'Reboot Counter' },
+                { data: 'currentPos', title: 'Current Pos' },
+                { data: 'lastPos', title: 'Last Pos' }
+            ],
+            "columnDefs": [
+                {
+                    "targets": [3],
+                    "visible": false
+                },
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+                        return row.routePos + "/" + row.routeMax
+                    }
+                },
+                {
+                    "targets": [5, 6],
+                    "render": function (data, type, row) {
+                        var dateToShow = moment(data);
+                        if(dateToShow.isValid()) {
+                            return dateToShow.fromNow();
+                        }
+
+                        return "None";
+                    }
+                }
+            ],
+            "order": [[5, "asc"]],
+            "responsive": {{ responsive }},
+            "autoWidth": true
+        });
+	}
+
+    function getStatusData() {
+        return $.ajax({
+            type: "GET",
+            url: "/get_status",
+            success: function (result) {
+                return result;
+            }
+        });
+    }
+
+    function reloadGrid() {
+        getStatusData().then(function(result) {
+                setGrid('#show-data', result);
+        });
+    }
+
+    $(document).ready(function () {
+        $("#navstatus").addClass("active");
+
+        getStatusData().then(function (result) {
+                setGrid('#show-data', result);
+
+                setInterval(reloadGrid, 5000);
+        });
+    });
+</script>
+
+{% endblock %}
+
+{% block content %}
+<h2>Worker Status</h2>
+<table id="show-data" class="table"></table>
+{% endblock %}
