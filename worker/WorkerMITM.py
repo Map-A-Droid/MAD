@@ -216,5 +216,4 @@ class WorkerMITM(MITMBase):
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
-            self.worker_stats()
         return data_requested

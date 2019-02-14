@@ -1,11 +1,11 @@
+import datetime
 import logging
 import math
 import time
-import datetime
+from abc import abstractmethod
 
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
-from abc import ABC, abstractmethod
 
 log = logging.getLogger(__name__)
 
@@ -15,12 +15,12 @@ class MITMBase(WorkerBase):
                  route_manager_nighttime, devicesettings, db_wrapper, timer, mitm_mapper, NoOcr=False):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                             route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer)
-                            
+
         self._reboot_count = 0
         self._restart_count = 0
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
-                            
+
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
             self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
@@ -58,23 +58,21 @@ class MITMBase(WorkerBase):
             if current_routemanager.init:
                 restart_thresh = self._devicesettings.get("restart_thresh", 5) * 2
                 reboot_thresh = self._devicesettings.get("reboot_thresh", 3) * 2
-            
-            if self._restart_count >  restart_thresh:
+
+            if self._restart_count > restart_thresh:
                 self._reboot_count += 1
-                if self._reboot_count >  reboot_thresh \
+                if self._reboot_count > reboot_thresh \
                         and self._devicesettings.get("reboot", False):
                     log.error("Rebooting %s" % str(self._id))
                     self._reboot()
                     raise InternalStopWorkerException
-                    
+
                 self._restart_count = 0
                 self._restart_pogo(True)
 
-        # TODO: Add stats to database - not a json file!
-        # self.worker_stats()
+        self.worker_stats()
         return data_requested
-        
-        
+
     @abstractmethod
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         """
@@ -82,7 +80,7 @@ class MITMBase(WorkerBase):
         :return:
         """
         pass
-        
+
     def _clear_quests(self, delayadd):
         log.debug('{_clear_quests} called')
         time.sleep(4 + int(delayadd))
@@ -110,7 +108,7 @@ class MITMBase(WorkerBase):
 
         log.debug('{_clear_quests} finished')
         return
-        
+
     def _open_gym(self, delayadd):
         log.debug('{_open_gym} called')
         time.sleep(1)
@@ -119,14 +117,14 @@ class MITMBase(WorkerBase):
         time.sleep(1 + int(delayadd))
         log.debug('{_open_gym} called')
         return
-        
+
     def _spin_wheel(self, delayadd):
         log.debug('{_spin_wheel} called')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
                     self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
-        return 
-        
+        return
+
     def _close_gym(self, delayadd):
         log.debug('{_close_gym} called')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], \
@@ -134,7 +132,7 @@ class MITMBase(WorkerBase):
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
         log.debug('{_close_gym} called')
-        
+
     def _turn_map(self, delayadd):
         log.debug('{_turn_map} called')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
@@ -143,7 +141,7 @@ class MITMBase(WorkerBase):
         time.sleep(int(delayadd))
         log.debug('{_turn_map} called')
         return
-        
+
     def worker_stats(self):
         routemanager = self._get_currently_valid_routemanager()
         log.debug('===============================')
@@ -154,30 +152,29 @@ class MITMBase(WorkerBase):
         log.debug('Reboot Counter: %s' % str(self._reboot_count))
         log.debug('Reboot Option: %s' % str(self._devicesettings.get("reboot", False)))
         log.debug('Current Pos: %s %s' % (str(self.current_location.lat),
-                                                        str(self.current_location.lng)))
+                                          str(self.current_location.lng)))
         log.debug('Last Pos: %s %s' % (str(self.last_location.lat),
-                                                        str(self.last_location.lng)))
+                                       str(self.last_location.lng)))
         log.debug('Route Pos: %s - Route Length: %s ' % (str(routemanager.get_route_status()[0]),
-                                                        str(routemanager.get_route_status()[1])))
+                                                         str(routemanager.get_route_status()[1])))
         log.debug('Init Mode: %s' % str(routemanager.init))
         log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
         log.debug('Last Restart: %s' % str(self._lastStart))
-        log.debug('===============================')      
+        log.debug('===============================')
 
         dataToSave = {
-            'Origin': self._id,
-            'Routemanager': str(routemanager.name),
-            'RebootCounter': str(self._reboot_count),
-            'RestartCounter': str(self._restart_count),
-            'RebootingOption': str(self._devicesettings.get("reboot", False)),
-            'CurrentPos': str(self.current_location.lat) + ", " + str(self.current_location.lng),
-            'LastPos': str(self.last_location.lat) + ", " + str(self.last_location.lng),
-            'RoutePos': str(routemanager.get_route_status()[0]),
-            'RouteMax': str(routemanager.get_route_status()[1]),
-            'Init': str(routemanager.init),
+            'Origin':            self._id,
+            'Routemanager':      str(routemanager.name),
+            'RebootCounter':     str(self._reboot_count),
+            'RestartCounter':    str(self._restart_count),
+            'RebootingOption':   str(self._devicesettings.get("reboot", False)),
+            'CurrentPos':        str(self.current_location.lat) + ", " + str(self.current_location.lng),
+            'LastPos':           str(self.last_location.lat) + ", " + str(self.last_location.lng),
+            'RoutePos':          str(routemanager.get_route_status()[0]),
+            'RouteMax':          str(routemanager.get_route_status()[1]),
+            'Init':              str(routemanager.init),
             'LastProtoDateTime': str(self._rec_data_time),
-            'LastPogoRestart': str(self._lastStart)
+            'LastPogoRestart':   str(self._lastStart)
         }
 
-        self._db_wrapper.save_status(dataToSave)    
-
+        self._db_wrapper.save_status(dataToSave)
