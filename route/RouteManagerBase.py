@@ -53,9 +53,9 @@ class RouteManagerBase(ABC):
         else:
             self.delay_after_timestamp_prio = None
             self.starve_route = False
-        if self.delay_after_timestamp_prio is not None or mode == "iv_mitm":
+        if (self.delay_after_timestamp_prio is not None or mode == "iv_mitm") and not mode == "pokestops":
             self._prio_queue = []
-            if mode != "iv_mitm":
+            if mode not in ["iv_mitm", "pokestops"]:
                 self.clustering_helper = ClusteringHelper(self._max_radius,
                                                           self._max_coords_within_radius,
                                                           self._cluster_priority_queue_criteria())
@@ -114,6 +114,8 @@ class RouteManagerBase(ABC):
         self._manager_mutex.release()
 
     def _update_priority_queue_loop(self):
+        if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:
+            return
         while not self._stop_update_thread.is_set():
             # retrieve the latest hatches from DB
             # newQueue = self._db_wrapper.get_next_raid_hatches(self._delayAfterHatch, self._geofenceHelper)
