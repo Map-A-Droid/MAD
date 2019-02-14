@@ -1,0 +1,131 @@
+div.container[role="main"] {
+	max-width: 100%;
+	padding: 0px !important;
+}
+
+#gymImage {
+	position: relative;
+	left: -30px;
+	top: -12.5px;
+	width: 125px;
+	height: 125px;
+	border-radius: 75px;
+	background-size: cover;
+	border: 4px solid white;
+	-webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
+	filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
+}
+
+#gymName {
+	position: absolute;
+	left: 120px;
+	top: 10px;
+	width: 270px;
+	font-size: large;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#gymID {
+	position: absolute;
+	left: 120px;
+	top: 40px;
+	width: 270px;
+	overflow: hidden;
+	white-space: nowrap;
+}
+
+#gymCoords {
+	position: absolute;
+	left: 120px;
+	top: 60px;
+	width: 270px;
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+#map {
+	width: 100%;
+	height: 100vh;
+	margin-top: -60px; /* yeah, don't ask */
+}
+
+.gympopup .leaflet-popup-tip {
+	text-align: center;
+}
+
+.gympopup .leaflet-popup-content-wrapper {
+	width: 400px;
+	text-align: center;
+}
+
+.spawntooltip {
+	font-weight: bold;
+	color: #FFF;
+	color: white;
+	text-shadow:
+		-1px -1px 0 #000,
+		1px -1px 0 #000,
+		-1px 1px 0 #000,
+		1px 1px 0 #000;
+}
+
+.gym-icon {
+	width: 32px;
+	height: 32px;
+	background-repeat: no-repeat;
+	background-position: center;
+	background-size: 32px 32px;
+}
+
+.gym-icon-0 {
+	background-image: url('/static/gym_0.png');
+}
+.gym-icon-1 {
+	background-image: url('/static/gym_1.png');
+}
+.gym-icon-2 {
+	background-image: url('/static/gym_2.png');
+}
+.gym-icon-3 {
+	background-image: url('/static/gym_3.png');
+}
+
+.layer-item {
+	text-transform: capitalize;
+}
+
+.layer-item strong {
+	font-weight: 400;
+}
+
+.leaflet-sidebar #settings input[type="number"] {
+	float: right;
+	width: 80px;
+}
+
+.leaflet-sidebar {
+	top: 60px;
+	z-index: 1000;
+	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+
+li.list-group-item.layer-item {
+	font-size: 12pt;
+}
+
+li.list-group-item.layer-item .custom-switch {
+	float: right;
+}
+
+.questpopup .leaflet-popup-tip {
+	text-align: center;
+}
+
+.questpopup .leaflet-popup-content-wrapper {
+	width: 400px;
+	height: 180px;
+	text-align: center;
+}

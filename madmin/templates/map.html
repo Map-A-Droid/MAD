@@ -1,557 +1,495 @@
 {% extends "base.html" %}
 
 {% block header %}
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA=="
- crossorigin="" />
-<style>
-	#gymImage {
-		position: relative;
-		left: -30px;
-		top: -12.5px;
-		width: 125px;
-		height: 125px;
-		border-radius: 75px;
-		background-size: cover;
-		border: 4px solid white;
-		-webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
-		filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
-	}
-
-	#gymName {
-		position: absolute;
-		left: 120px;
-		top: 10px;
-		width: 270px;
-		font-size: large;
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
-
-	#gymID {
-		position: absolute;
-		left: 120px;
-		top: 40px;
-		width: 270px;
-		overflow: hidden;
-		white-space: nowrap;
-	}
-
-	#gymCoords {
-		position: absolute;
-		left: 120px;
-		top: 60px;
-		width: 270px;
-		overflow: hidden;
-		white-space: nowrap;
-		text-overflow: ellipsis;
-	}
-
-	#map {
-		width: 100%;
-		height: 100vh;
-    margin-top: -60px; /* yeah, don't ask */
-	}
-
-	.gympopup .leaflet-popup-tip {
-		text-align: center;
-	}
-
-	.gympopup .leaflet-popup-content-wrapper {
-		width: 400px;
-		text-align: center;
-	}
-	
-	.questpopup .leaflet-popup-tip {
-		text-align: center;
-	}
-
-	.questpopup .leaflet-popup-content-wrapper {
-		width: 400px;
-		height: 180px;
-		text-align: center;
-	}
-
-	.spawntooltip {
-		font-weight: bold;
-		color: #FFF;
-		color: white;
-		text-shadow:
-			-1px -1px 0 #000,
-			1px -1px 0 #000,
-			-1px 1px 0 #000,
-			1px 1px 0 #000;
-	}
-
-	.leaflet-bottom.leaflet-right div.leaflet-control-layers.leaflet-control:nth-child(3) a.leaflet-control-layers-toggle {
-		background-image: url('static/layers_extra.png');
-	}
-</style>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
+<link rel="stylesheet" href="static/style/madmin.css" />
 {% endblock %}
 
 {% block scripts %}
-<script src="https://code.jquery.com/jquery-3.3.1.js"></script>
-<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet-src.js"></script>
+<script src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous" defer></script>
+<script src="https://vuejs.org/js/vue.min.js"></script>
+<script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/js/leaflet-sidebar.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
-	var map;
-	var default_lat = 52.521374;
-	var default_lng = 13.411201
+var map = null;
+var leaflet_data = {
+	layers: {}
+};
 
-	// helper method to convert lat/lon
-	function convertToLonLat(coords) {
-		lonlat = []
-		$.each(coords, function (k, v) {
-			lonlat.push([v[1], v[0]]);
-		})
-		return lonlat;
-	}
-
-	// helper method to check whether a layer should be shown or not
-	function shouldShowLayer(name) {
-		var layersRaw = localStorage.getItem('layers');
-		var spawntimesName = 'Spawnpoint times';
-
-		if (layersRaw != null) {
-			var layers = JSON.parse(layersRaw);
-			// use stored settings or default to showing it
-			if (layers.hasOwnProperty(name)) {
-				return layers[name];
-			} else {
-				// except spawntimes
-				if (name != spawntimesName) {
-					return true;
+new Vue({
+	el: '#app',
+	data: {
+		layers: {},
+		settings: {
+			routes: {
+				coordinateRadius: {
+					raid: 490,
+					quest: 40,
+					mon: 67
 				}
 			}
 		}
+	},
+	watch: {
+		layers: {
+			deep: true,
+			handler: function() {
+				for (k in this.layers) {
+					tlayer = this.layers[k];
 
-		// no stored layers available. Show
-		// everything except this nicelely
-		// hardcoded spawntimes
-		if (name != spawntimesName) {
-			return true;
+					this.updateStoredSetting('layer-'+k, tlayer.show);
+
+					if (tlayer.show == true && !map.hasLayer(leaflet_data["layers"][k])) {
+						map.addLayer(leaflet_data["layers"][k]);
+					} else if (tlayer.show == false && map.hasLayer(leaflet_data["layers"][k])) {
+						map.removeLayer(leaflet_data["layers"][k]);
+					}
+				}
+			}
+		},
+		'settings.routes.coordinateRadius': {
+			deep: true,
+			handler: function() {
+				for (routetype in this.settings.routes.coordinateRadius) {
+					this.updateStoredSetting('settings-coordinateRadius-'+routetype, this.settings.routes.coordinateRadius[routetype]);
+					for (layer in this.layers) {
+						if (this.layers[layer].type == "route-"+routetype) {
+							leaflet_data.layers[layer].getLayers().forEach(function(point) {
+								try {
+									point.setRadius(this.settings.routes.coordinateRadius[routetype]);
+								} catch (err) {
+									// yes, this is bad and I know it ...
+								}
+							}, this);
+						}
+					}
+				}
+			}
 		}
-	};
+	},
+	mounted() {
+		// init our map first
+		this.initMap();
 
-	// helper method to toggle layer visibility
-	function toggleOverlay(e) {
-		if (e.type == 'overlayadd') {
-			shown = true;
-		} else if (e.type == 'overlayremove') {
-			shown = false;
-		} else {
-			return;
-		}
+		// fetch everything
+		this.map_fetch_everything();
+	},
+	methods: {
+		map_fetch_everything() {
+			this.map_fetch_gyms();
+			this.map_fetch_worker();
+			this.map_fetch_routes();
+			this.map_fetch_spawns();
+			this.map_fetch_quests();
+		},
+		map_fetch_worker() {
+			var $this = this;
+			axios.get('/get_position').then(function(res) {
+				res.data.forEach(function(worker) {
+					var name = 'Worker '+worker['name'];
 
-		var layersRaw = localStorage.getItem('layers');
+					var workerMarker = L.circleMarker([worker['lat'], worker['lon']], {
+						radius: 7,
+						color: '#E612CB',
+						fillColor: '#E612CB',
+						weight: 1,
+						opacity: 0.9,
+						fillOpacity: 0.9
+					}).bindPopup(name);
 
-		if (layersRaw != null) {
-			var layers = JSON.parse(layersRaw);
-		} else {
-			var layers = {};
-		}
-
-		layers[e.name] = shown;
-		localStorage.setItem('layers', JSON.stringify(layers));
-	}
-
-	// helper method to generate a random color string
-	function getRandomColor() {
-		var letters = '0123456789ABCDEF';
-		var color = '#';
-		for (var i = 0; i < 6; i++) {
-			color += letters[Math.floor(Math.random() * 16)];
-		}
-		return color;
-	}
-
-	$(document).ready(function () {
-		$("#navmap").addClass("active");
-		$("div[role='main']").removeClass("container");
-
-		var marker = {};
-		var spawn = L.circle;
-
-		var gymicon = function (team) {
-			return L.icon({
-				iconUrl: 'static/gym_' + team + '.png',
-				iconSize: [32, 32]
+					$this.addLayer(name, workerMarker, false, 'worker');
+				});
 			});
-		};
 
-		var markericon = L.icon({
-			iconUrl: 'static/bot.png',
-			iconSize: [20, 20]
-		});
+			setInterval($this.update_worker_position, 5000);
+		},
+		update_worker_position() {
+			axios.get('/get_position').then(function(res) {
+				res.data.forEach(function(worker) {
+					var name = 'Worker '+worker['name'];
 
-		var tileLayer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png', {
-			attribution: '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors, &copy; <a href="http://cartodb.com/attributions">CartoDB</a>'
-		});
+					leaflet_data['layers'][name].setLatLng([worker['lat'], worker['lon']]);
+				});
+			});
+		},
+		map_fetch_gyms() {
+			var $this = this;
+			axios.get('/get_gymcoords').then(function(res) {
+				var l_gyms = L.layerGroup();
 
-		// get stored center and zoom level if they exists
-		var storedZoom = localStorage.getItem('zoomlevel') || 13;
-		var storedCenter = localStorage.getItem('center') || default_lat+','+default_lng;
-
-		// main map object
-		map = L.map('map', { layers: [tileLayer], zoomControl: false, preferCanvas: true }).setView(storedCenter.split(','), storedZoom);
-
-		var poslay = L.layerGroup();
-		var extraRouteCircle = L.layerGroup();
-		var walklay = L.layerGroup();
-		var spawntimes = L.layerGroup();
-		var spawns = L.layerGroup();
-		var gyms = L.layerGroup();
-		var fence = L.layerGroup();
-		var quests = L.layerGroup();
-
-		// base overlays
-		var overlays = {
-			"Spawnpoints": spawns,
-			"Gyms": gyms,
-			"Geofence": fence,
-			"Quests": quests
-		};
-		
-		var extraOverlays = {
-			"Spawnpoint times": spawntimes,
-		};
-
-		// show or hide overlays if they've been modified before
-		for (var key in overlays) {
-			if (shouldShowLayer(key)) {
-				map.addLayer(overlays[key]);
-			}
-		}
-		
-		for (var key in extraOverlays) {
-			if (shouldShowLayer(key)) {
-				map.addLayer(extraOverlays[key]);
-			}
-		}
-
-		// add our base layers
-		extraLayerControl = L.control.layers(null, extraOverlays, {position: 'bottomright'}).addTo(map);
-		mapControl = L.control.layers(null, overlays, {position: 'bottomright'}).addTo(map);
-
-
-		// handle zoom events
-		map.on('zoomend', function () {
-			// hide spawntimes if being zoomed out too far
-			if (map.getZoom() < 16 && map.hasLayer(spawntimes)) {
-				map.removeLayer(spawntimes);
-			}
-
-			// store zoom level
-			localStorage.setItem('zoomlevel', map.getZoom());
-		});
-
-		// handle drag events
-		map.on('moveend', function() {
-			// store map center
-			var center = map.getCenter();
-			localStorage.setItem('center', center.lat+','+center.lng);
-		})
-
-		// handle overlay show/hide events
-		map.on('overlayremove', toggleOverlay);
-		map.on('overlayadd', toggleOverlay);
-
-		// add new zoom control
-		L.control.zoom({
-			position: 'bottomright'
-		}).addTo(map);
-
-		$.getJSON({
-			url: "/get_route",
-			success: function (result) {
-				$.each(result, function (pos, data) {
-					extraRouteCircle[pos] = L.layerGroup();
-					walklay[pos] = L.layerGroup();
-					var name = 'Route: ' + pos;
-					var obj = walklay[pos];
-
-					if (shouldShowLayer(name)) {
-						map.addLayer(obj);
+				res.data.forEach(function(gym) {
+					switch(gym['team_id']) {
+						default:
+							color = '#888';
+							break;
+						case 1:
+							color = '#0C6DFF';
+							break;
+						case 2:
+							color = '#FC0016';
+							break;
+						case 3:
+							color = '#FD830E';
+							break;
 					}
 
-					mapControl.addOverlay(obj, name);
-					extraLayerControl.addOverlay(extraRouteCircle[pos], name + ' 490m');
+					L.circleMarker([gym['lat'], gym['lon']], {
+						radius: 10,
+						color: color,
+						fillColor: color,
+						weight: 1,
+						opacity: 0.8,
+						fillOpacity: 0.8
+					}).addTo(l_gyms)
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>', { 'className': 'gympopup' })
+				});
 
-					$.each(data, function (k, v) {
-						if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
-							map.setView(v, map.getZoom());
-						}
-						// TODO: check for mon/raid route
-						// TODO: instead of adding new cirlces,
-						// one could change the circle radius dynamically
-						L.circle(v, {
-							radius: 490,
-							color: "#A311CE",
-							fillColor: "#F511CE",
-							fillOpacity: 0.5,
-							weight: 1,
-							opacity: 0.2,
-							fillOpacity: 0.1
-						}).addTo(extraRouteCircle[pos]);
+				// add layer to map
+				$this.addLayer("gyms", l_gyms, false, "gyms");
+			});
+		},
+		map_fetch_routes() {
+			var $this = this;
+			axios.get('/get_route').then(function(res) {
+				res.data.forEach(function(route) {
+					var group = L.layerGroup();
+					var coords = [];
 
-						L.circle(v, {
-							radius: 15,
+					if (route.mode == "mon_mitm") {
+						mode = "mon";
+						cradius = $this.settings.routes.coordinateRadius.mon;
+					} else if (route.mode == "pokestops") {
+						mode = "quest";
+						cradius = $this.settings.routes.coordinateRadius.quest;
+					} else if (route.mode == "raids_mitm" || route.mode == "raids_ocr") {
+						mode = "raid";
+						cradius = $this.settings.routes.coordinateRadius.raid;
+					}
+
+					route.coordinates.forEach(function(coord) {
+						circle = L.circle(coord, {
+							radius: cradius,
 							color: "#9C3744",
 							fillColor: "#F4556A",
-							fillOpacity: 0.5,
+							fillOpacity: 1,
 							weight: 1,
 							opacity: 0.2,
 							fillOpacity: 0.1
-						}).addTo(walklay[pos]);
+						});
+
+						circle.addTo(group);
+						coords.push(circle);
 					});
 
 					var geojson = {
 						"type": "LineString",
-						"coordinates": convertToLonLat(data)
+						"coordinates": $this.convertToLonLat(route.coordinates)
 					}
 
-					L.geoJSON(geojson, { style: { "color": getRandomColor(), "weight": 2, "opacity": 0.5 } }).addTo(walklay[pos]).bindPopup(pos);
+					// add route to layergroup
+					L.geoJSON(geojson, { style: { "color": "#FF0000", "weight": 2, "opacity": 0.5 } }).addTo(group);
+
+					$this.addLayer(route.name, group, false, "route-"+mode);
 				});
-			}
-		});
+			});
+		},
+		map_fetch_spawns() {
+			var $this = this;
+			axios.get('/get_spawns').then(function(res) {
+				var l_spawns = L.layerGroup();
 
-		(function work() {
-			$.getJSON({
-				url: "/get_spawns",
-				success: function (result) {
+				res.data.forEach(function(spawn) {
+					if (spawn['endtime'] !== null) {
+						var markertext = '<strong class="text-success">Known end time</strong><br>'
+						var endsplit = spawn['endtime'].split(':');
+						var endMinute = parseInt(endsplit[0]);
+						var endSecond = parseInt(endsplit[1]);
+						var despawntime = moment();
+						var now = moment();
 
-					$.each(result, function (k, v) {
-						if (typeof spawn[k] !== 'undefined') {
-							map.removeLayer(spawn[k]);
-						}
-
-						if (v['endtime'] !== null) {
-							var markertext = '<strong class="text-success">Known end time</strong><br>'
-							var endsplit = v['endtime'].split(':');
-							var endMinute = parseInt(endsplit[0]);
-							var endSecond = parseInt(endsplit[1]);
-							var despawntime = moment();
-							var now = moment();
-
-							if (v['spawndef'] == 15) {
-								markertext += '<br>Type: 1h spawn<br>';
-								var timeshift = 60;
-							} else {
-								markertext += '<br>Type: 30m spawn<br>';
-								var timeshift = 30;
-							}
-
-							// setting despawn and spawn time
-							despawntime.minute(endMinute);
-							despawntime.second(endSecond);
-							var spawntime = moment(despawntime);
-							spawntime.subtract(timeshift, 'm');
-
-							if (despawntime.isBefore(now)) {
-								// already despawned. shifting hours
-								spawntime.add(1, 'h');
-								despawntime.add(1, 'h');
-							}
-
-							timeformat = 'YYYY-MM-DD HH:mm:ss';
-							if (now.isBetween(spawntime, despawntime)) {
-								markertext += "<br><strong>SPAWN ACTIVE</strong>"
-								markertext += "<br>Spawned at: " + spawntime.format(timeformat);
-								markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-								overlaytext = 'Despawn ' + despawntime.fromNow();
-								var color = "green";
-							} else if (spawntime.isAfter(now)) {
-								markertext += "<br>Spawns at: " + spawntime.format(timeformat);
-								markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-								overlaytext = 'Spawn ' + spawntime.fromNow();
-								var color = "blue";
-							}
-
-							L.marker([v['lat'], (v['lon'])], {
-								interactive: false, icon: L.divIcon({
-									iconAnchor: [-10, 10],
-									iconSize: [300, 20],
-									html: overlaytext,
-									className: 'spawntooltip'
-								})
-							}).addTo(spawntimes);
-
+						if (spawn['spawndef'] == 15) {
+							markertext += '<br>Type: 1h spawn<br>';
+							var timeshift = 60;
 						} else {
-							var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
-							var color = "red";
+							markertext += '<br>Type: 30m spawn<br>';
+							var timeshift = 30;
 						}
 
-						if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
-							map.setView([v['lat'], v['lon']], map.getZoom());
+						// setting despawn and spawn time
+						despawntime.minute(endMinute);
+						despawntime.second(endSecond);
+						var spawntime = moment(despawntime);
+						spawntime.subtract(timeshift, 'm');
+
+						if (despawntime.isBefore(now)) {
+							// already despawned. shifting hours
+							spawntime.add(1, 'h');
+							despawntime.add(1, 'h');
 						}
 
-						spawn[k] = L.circle([v['lat'], v['lon']], {
-							radius: 2,
-							color: color,
-							fillColor: color,
-							weight: 1,
-							opacity: 0.7,
-							fillOpacity: 0.5
-						}).addTo(spawns)
-							.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + v['lat'] + ',' + v['lon'] + '">' + v['lat'] + ', ' + v['lon'] + '</a>',
-								{ 'className': 'gympopup' })
-					})
-					setTimeout(work, 60000);
-				}
-			});
-		})();
-
-		$.getJSON({
-			url: "/get_gymcoords",
-			success: function (result) {
-				$.each(result, function (k, v) {
-					if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
-						map.setView([v['lat'], v['lon']], map.getZoom());
+						timeformat = 'YYYY-MM-DD HH:mm:ss';
+						if (now.isBetween(spawntime, despawntime)) {
+							markertext += "<br><strong>SPAWN ACTIVE</strong>"
+							markertext += "<br>Spawned at: " + spawntime.format(timeformat);
+							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							overlaytext = 'Despawn ' + despawntime.fromNow();
+							var color = "green";
+						} else if (spawntime.isAfter(now)) {
+							markertext += "<br>Spawns at: " + spawntime.format(timeformat);
+							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
+							overlaytext = 'Spawn ' + spawntime.fromNow();
+							var color = "blue";
+						}
+					} else {
+						var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
+						var color = "red";
 					}
-					L.marker([v['lat'], v['lon']], { icon: gymicon(v['team_id']) })
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['lat']+','+v['lon']+'">'+v['lat']+', '+v['lon']+'</a></div>',
-							{ 'className': 'gympopup' })
-						.addTo(gyms);
+
+					L.circle([spawn['lat'], spawn['lon']], {
+						radius: 2,
+						color: color,
+						fillColor: color,
+						weight: 1,
+						opacity: 0.7,
+						fillOpacity: 0.5
+					}).addTo(l_spawns)
+						.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>',{'className': 'gympopup'})
 				});
-			}
-		});
-		
-		$.getJSON({
-			url: "/get_quests",
-			success: function(result) {
-				$.each(result, function(k, v) {
-					L.marker([v['latitude'], v['longitude']], {icon: build_quest_small(v['quest_reward_type_raw'], v['item_id'], v['pokemon_id'])})
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+v['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+v['name']+'</div><div id="gymID"></strong>'+v['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+v['latitude']+','+v['longitude']+'">'+v['latitude']+', '+v['longitude']+'</a><br>' + build_quest(v['quest_reward_type_raw'], v['quest_task'], v['pokemon_id'], v['item_id'], v['item_amount'], v['pokemon_name'],v['item_type']) + '</div>',
-							{'className': 'questpopup'})
-						.addTo(quests);
-				});
-			}
-		});
-		
-		
-		var t = 0;
 
-		(function work() {
-			$.getJSON({
-				url: "/get_position",
-				success: function (result) {
-					$.each(result, function (pos, data) {
-						if (!marker.hasOwnProperty(pos)) {
-							poslay[pos] = L.layerGroup()
-
-							var name = 'Worker: ' + pos;
-							var obj = poslay[pos];
-
-							if (shouldShowLayer(name)) {
-								map.addLayer(obj);
-							}
-
-							mapControl.addOverlay(obj, name);
-							marker[pos] = L.marker([0, 0], { icon: markericon, title: "Bot position" })
-								.bindPopup(pos)
-								.addTo(poslay[pos]);
-						}
-						marker[pos].setLatLng([data.lat, data.lng]);
-
-						if (map.getCenter().lat == default_lat || map.getCenter().lng == default_lng) {
-							map.setView(data[t], map.getZoom());
-						}
-					})
-					setTimeout(work, 5000);
-				}
+				$this.addLayer("spawns", l_spawns, false, "spawns");
 			});
-		})();
+		},
+		map_fetch_quests() {
+			var $this = this;
+			axios.get('/get_quests').then(function(res) {
+				var l_quests = L.layerGroup();
 
-	});
+				res.data.forEach(function(quest) {
+					L.marker([quest['latitude'], quest['longitude']], {icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])})
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+quest['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+quest['name']+'</div><div id="gymID"></strong>'+quest['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+quest['latitude']+','+quest['longitude']+'">'+quest['latitude']+', '+quest['longitude']+'</a><br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_type'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', {'className': 'questpopup'})
+						.addTo(l_quests);
+				});
 
-	function build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id){
-		
-		switch(quest_reward_type_raw) {
-			
-		case 2:
-			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
-			var size = [30, 30]
-			var anchor = [30, 20]
-			break;
-		case 3:
-			var image = 'static/quest/reward_stardust.png';
-			var size = [30, 30]
-			var anchor = [30, 20]
-			break;
-		case 7:
-			var form = '00';
-			if (quest_pokemon_id === '327') {
-				form = '11';
+				$this.addLayer("stops with quests", l_quests, false, "quets");
+			});
+		},
+		build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
+			switch(quest_reward_type_raw) {
+				case 2:
+					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+					var size = [30, 30]
+					var anchor = [30, 20]
+					break;
+				case 3:
+					var image = 'static/quest/reward_stardust.png';
+					var size = [30, 30]
+					var anchor = [30, 20]
+					break;
+				case 7:
+					var form = '00';
+					if (quest_pokemon_id === '327') {
+						form = '11';
+					}
+					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+					var size = [50, 50]
+					var anchor = [40, 30]
+					break;
 			}
-			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
-			var size = [50, 50]
-			var anchor = [40, 30]
-			break;
-		}
-		
-		var icon =  L.icon({
-			iconUrl: 'static/Pstop-quest.png',
-			shadowUrl: image,
-			iconSize: [30, 30],
-			shadowSize: size,
-			shadowAnchor: anchor
-		})
-		
-		
-		
-		return icon;
-	}
-	
-	function build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type){
-		
-		switch(quest_reward_type_raw) {
-			
-		case 2:
-			var image = 'static/quest/reward_' + quest_item_id + '_1.png';
-			var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
-			var width = 40;
-			break;
-		case 3:
-			var image = 'static/quest/reward_stardust.png';
-			var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
-			var width = 40;
-			break;
-		case 7:
-			var form = '00';
-			if (quest_pokemon_id === '327') {
-				form = '11';
+
+			// TODO replace with divIcon
+			var icon =  L.icon({
+				iconUrl: 'static/Pstop-quest.png',
+				shadowUrl: image,
+				iconSize: [30, 30],
+				shadowSize: size,
+				shadowAnchor: anchor
+			})
+
+			return icon;
+		},
+		build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type) {
+			switch(quest_reward_type_raw) {
+				case 2:
+					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+					var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
+					var width = 40;
+					break;
+				case 3:
+					var image = 'static/quest/reward_stardust.png';
+					var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
+					var width = 40;
+					break;
+				case 7:
+					var form = '00';
+					if (quest_pokemon_id === '327') {
+						form = '11';
+					}
+					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+					var rewardtext = quest_pokemon_name;
+					var width = 60;
+					break;
 			}
-			var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
-			var rewardtext = quest_pokemon_name;
-			var width = 60;
-			break;
+			var questtext = quest_type;
+
+			popuptext = '<center><b>' + questtext + '</b><br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
+			return popuptext;
+
+		},
+		getStoredSetting(name, defaultval) {
+			var val = localStorage.getItem('settings');
+			if (val == null) {
+				return defaultval;
+			}
+
+			var settings = JSON.parse(val);
+			if (settings[name] === undefined) {
+				return defaultval;
+			}
+
+			return settings[name];
+		},
+		updateStoredSetting(name, value) {
+			var settings = {};
+			var storedSettings = localStorage.getItem('settings');
+			if (storedSettings != null) {
+				settings = JSON.parse(storedSettings);
+			}
+
+			settings[name] = value;
+			localStorage.setItem('settings', JSON.stringify(settings));
+		},
+		// add a new layer
+		addLayer(name, data, show, type) {
+			if (!leaflet_data['layers'][name]) {
+				var lobj = {"show": this.getStoredSetting('layer-'+name, show), "type": type};
+				leaflet_data["layers"][name] = data;
+				this.$set(this.layers, name, lobj);
+			}
+		},
+		// event handler if the map has been dragged/moved
+		l_event_moveend() {
+			var center = map.getCenter();
+			this.updateStoredSetting('center', center.lat+','+center.lng);
+		},
+		// event handler if the map has been zoomed
+		l_event_zoomed() {
+			this.updateStoredSetting('zoomlevel', map.getZoom());
+		},
+		// convert lat/lng to lng/lat
+		convertToLonLat(coords) {
+			lonlat = []
+			coords.forEach(function(coord) {
+				lonlat.push([coord[1], coord[0]]);
+			});
+			return lonlat;
+		},
+		// set a circle marker's radius
+		setCircleRadiusForRoute(route, type) {
+			route.forEach(function(circle) {
+				circle.setRadius(this.settings.routes.coordinateRadius[type]);
+			}, this);
+		},
+		// generate the map
+		initMap() {
+			// get stored center and zoom level if they exists
+			const storedZoom = this.getStoredSetting('zoomlevel', 13);
+			const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
+			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
+
+			// TODO find a proper place for this
+			this.settings.routes.coordinateRadius.raid = this.getStoredSetting('settings-coordinateRadius-raid', 490);
+			this.settings.routes.coordinateRadius.quest = this.getStoredSetting('settings-coordinateRadius-quest', 40);
+			this.settings.routes.coordinateRadius.mon = this.getStoredSetting('settings-coordinateRadius-mon', 67);
+
+			map = L.map('map', {
+				layers: [layer],
+				zoomControl: false,
+				updateWhenZooming: false,
+				updateWhenIdle: true,
+				preferCanvas: true
+			}).setView(storedCenter.split(','), storedZoom);
+
+			L.control.zoom({
+				position: 'bottomright'
+			}).addTo(map);
+
+			var sidebar = L.control.sidebar({
+				autopan: false,
+				closeButton: true,
+				container: "sidebar",
+				position: "left",
+			}).addTo(map);
+
+			sidebar.open("layers");
+
+			map.on('zoomend', this.l_event_zoomed);
+			map.on('moveend', this.l_event_moveend);
 		}
-
-		var questtext = quest_type;
-		
-		popuptext = '<center><b>' + questtext + '</b><br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
-		return popuptext;
-		
 	}
-	
-
-	function drawPolygon() {
-		var coords = document.getElementById("coordPolygon").value;
-		var json = '[';
-		var lines = coords.split('\n');
-		for (var i = 0; i < lines.length; i++) {
-			json = json.concat('[', lines[i], '],');
-		}
-		json = json.slice(0, -1);
-		json = json.concat(']');
-		var a = JSON.parse(json);
-		var polygon = L.polygon(a, { color: 'red' });
-		polygon.addTo(fence);
-	}
-
+});
 </script>
 {% endblock %}
 
 {% block content %}
-<div id="map"></div>
+<div id="app">
+	<div id="sidebar" class="leaflet-sidebar">
+		<div class="leaflet-sidebar-tabs">
+			<ul role="tablist">
+				<li><a href="#layers" role="tab"><i class="fa fa-layer-group"></i></a></li>
+				<!--<li><a href="#filters" role="tab"><i class="fa fa-filter"></i></a></li>-->
+				<li><a href="#settings" role="tab"><i class="fa fa-cog"></i></a></li>
+			</ul>
+		</div>
+
+		<div class="leaflet-sidebar-content">
+			<div class="leaflet-sidebar-pane" id="layers">
+				<h1 class="leaflet-sidebar-header bg-dark">Layers<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+				<ul class="list-group list-group-flush">
+					{% raw %}
+						<li v-for="(item, index) in layers" class="list-group-item layer-item">
+							<strong>{{ index }}</strong>
+							<div class="custom-control custom-switch">
+								<input :id="index" type="checkbox" v-model="item.show" class="custom-control-input" />
+								<label :for="index" class="custom-control-label"></label>
+							</div>
+						</li>
+					{% endraw %}
+				</ul>
+			</div>
+			<div class="leaflet-sidebar-pane" id="filters">
+				<h1 class="leaflet-sidebar-header bg-dark">Filters<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+			</div>
+			<div class="leaflet-sidebar-pane" id="settings">
+				<h1 class="leaflet-sidebar-header bg-dark">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+				<ul class="list-group list-group-flush">
+						<li class="list-group-item layer-item">
+							<strong>Raid coordinate radius</strong>
+							<div class="custom-control custom-switch">
+								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raid" max="1100" class="form-control form-control-sm" />
+								<label for="raidcoordinateradius" class=""></label>
+							</div>
+						</li>
+						<li class="list-group-item layer-item">
+							<strong>Mon coordinate radius</strong>
+							<div class="custom-control custom-switch">
+								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mon" max="1100" class="form-control form-control-sm" />
+								<label for="raidcoordinateradius" class=""></label>
+							</div>
+						</li>
+						<li class="list-group-item layer-item">
+							<strong>Quest coordinate radius</strong>
+							<div class="custom-control custom-switch">
+								<input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quest" max="1100" class="form-control form-control-sm" />
+								<label for="questcoordinateradius" class=""></label>
+							</div>
+						</li>
+				</ul>
+			</div>
+		</div>
+	</div>
+	<div id="map"></div>
+</div>
 {% endblock %}

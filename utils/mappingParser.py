@@ -211,3 +211,16 @@ class MappingParser(object):
         for auth in auth_arr:
             auths[auth["username"]] = auth["password"]
         return auths
+
+    def get_areas(self):
+        areas = {}
+        areas_arr = self.__raw_json["areas"]
+        for area in areas_arr:
+            area_dict = {}
+            area_dict['routecalc'] = area['routecalc']
+            area_dict['mode'] = area['mode']
+            area_dict['geofence_included'] = area['geofence_included']
+            area_dict['geofence_excluded'] = area.get('geofence_excluded', None)
+            area_dict['init'] = area.get('init', False)
+            areas[area['name']] = area_dict
+        return areas
