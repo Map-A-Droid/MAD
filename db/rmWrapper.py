@@ -871,14 +871,15 @@ class RmWrapper(DbWrapperBase):
                     longitude = gym['longitude']
                     slots_available = gym['gym_details']['slots_available']
                     raidendSec = 0
-                    last_modified = datetime.utcfromtimestamp(gym['last_modified_timestamp_ms']/1000).strftime("%Y-%m-%d %H:%M:%S")
+                    last_modified_ts = gym['last_modified_timestamp_ms']/1000
+                    last_modified = datetime.utcfromtimestamp(last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
 
                     if gym['gym_details']['has_raid']:
                         raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
 
                     self.webhook_helper.send_gym_webhook(
                         gymid, raidendSec, 'unknown', team_id, slots_available, guard_pokemon_id,
-                        latitude, longitude
+                        latitude, longitude, last_modified_ts
                     )
 
                     gym_args.append(

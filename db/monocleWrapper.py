@@ -798,7 +798,7 @@ class MonocleWrapper(DbWrapperBase):
                         raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
 
                     self.webhook_helper.send_gym_webhook(
-                        gym_id, raidendSec, 'unknown', team, slots, guardmon, lat, lon
+                        gym_id, raidendSec, 'unknown', team, slots, guardmon, lat, lon, last_modified
                     )
 
                     vals_forts.append(
