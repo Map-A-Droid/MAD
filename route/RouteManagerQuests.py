@@ -28,3 +28,6 @@ class RouteManagerQuests(RouteManagerBase):
                                   name=name, settings=settings, mode=mode
                                   )
         self.starve_route = False
+
+    def _get_coords_after_finish_route(self):
+        return self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)

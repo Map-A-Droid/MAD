@@ -8,6 +8,9 @@ class RouteManagerMon(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 180
 
+    def _get_coords_after_finish_route(self):
+        return False
+
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
                  name="unknown", settings=None):

@@ -172,6 +172,14 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
+    def _get_coords_after_finish_route(self):
+        """
+        Return list of coords to be fetched after finish a route
+        :return:
+        """
+        pass
+
+    @abstractmethod
     def _cluster_priority_queue_criteria(self):
         """
         If you do not want to have any filtering, simply return 0, 0, otherwise simply
@@ -276,6 +284,12 @@ class RouteManagerBase(ABC):
                 return self.get_next_location()
             elif self._current_index_of_route >= len(self._route):
                 self._current_index_of_route = 0
+                coords_after_round = self._get_coords_after_finish_route()
+                if not coords_after_round:
+                    self.clear_coords()
+                    coords = coords_after_round
+                    self.add_coords_list(coords)
+                    self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
             self._last_round_prio = False
         log.info("%s done grabbing next coord, releasing lock and returning location: %s, %s"
                  % (str(self.name), str(next_lat), str(next_lng)))
@@ -293,7 +307,7 @@ class RouteManagerBase(ABC):
         self._manager_mutex.release()
 
     def change_init_mapping(self, name_area):
-        with open('mappings.json') as f:
+        with open('config/mappings.json') as f:
             vars = json.load(f)
 
         for var in vars['areas']:

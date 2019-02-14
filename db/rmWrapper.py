@@ -1107,13 +1107,14 @@ class RmWrapper(DbWrapperBase):
             0, 0,
             time_of_day, now
         )
-        
+
     def check_stop_quest(self, latitude, longitude):
         log.debug("{RmWrapper::stops_from_db} called")
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
-            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = date_format(DATE_ADD( now() , INTERVAL '-15' MINUTE ), '%Y-%m-%d') "
+            "from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = "
+            "date_format(DATE_ADD( now() , INTERVAL '-15' MINUTE ), '%Y-%m-%d') "
             "and pokestop.latitude=%s and pokestop.longitude=%s"
         )
         data = (latitude, longitude)
@@ -1127,6 +1128,34 @@ class RmWrapper(DbWrapperBase):
             log.debug('Pokestop has not a quest with CURDATE()')
             return False
 
+    def stop_from_db_without_quests(self, geofence_helper):
+        log.debug("{RmWrapper::stop_from_db_without_questsb} called")
+        questinfo = {}
+
+
+        query = (
+                "SELECT pokestop.latitude, pokestop.longitude "
+                "FROM pokestop inner join trs_quest on "
+                "pokestop.pokestop_id = trs_quest.GUID where "
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE()"
+            )
+
+        res = self.execute(query)
+        list_of_coords = []
+        for (latitude, longitude) in res:
+            list_of_coords.append([latitude, longitude])
+
+        if geofence_helper is not None:
+            geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
+            return geofenced_coords
+        else:
+            import numpy as np
+            to_return = np.zeros(shape=(len(list_of_coords), 2))
+            for i in range(len(to_return)):
+                to_return[i][0] = list_of_coords[i][0]
+                to_return[i][1] = list_of_coords[i][1]
+            return to_return
+
     def quests_from_db(self, GUID = False):
         log.debug("{RmWrapper::quests_from_db} called")
         questinfo = {}
@@ -1136,8 +1165,8 @@ class RmWrapper(DbWrapperBase):
                 "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
                 "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
                 "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
-                "trs_quest.quest_task "
+                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, "
+                "trs_quest.quest_timestamp, trs_quest.quest_task "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
@@ -1148,8 +1177,8 @@ class RmWrapper(DbWrapperBase):
                 "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
                 "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
                 "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
-                "trs_quest.quest_task "
+                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, "
+                "trs_quest.quest_timestamp, trs_quest.quest_task "
                 "FROM pokestop inner join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
@@ -1159,14 +1188,19 @@ class RmWrapper(DbWrapperBase):
 
         res = self.execute(query, data)
 
-        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, \
-             quest_item_id, quest_item_amount, name, image, quest_target, quest_condition, quest_timestamp, quest_task) in res:
+        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
+             quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
+             quest_timestamp, quest_task) in res:
             mon = "%03d" % quest_pokemon_id
-            questinfo[pokestop_id] = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude, 
-            'quest_type': quest_type, 'quest_stardust': quest_stardust, 'quest_pokemon_id': mon, 
-            'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id, 'quest_item_amount': quest_item_amount, 
-            'name': name, 'image': image, 'quest_target': quest_target, 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
-            'task': quest_task})
+            questinfo[pokestop_id] = ({
+                'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,
+                'quest_type': quest_type, 'quest_stardust': quest_stardust,
+                'quest_pokemon_id': mon,
+                'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id,
+                'quest_item_amount': quest_item_amount, 'name': name, 'image': image,
+                'quest_target': quest_target,
+                'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
+                'task': quest_task})
         return questinfo
         
     def submit_pokestops_details_map_proto(self, map_proto):

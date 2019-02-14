@@ -8,6 +8,9 @@ class RouteManagerIV(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 60
 
+    def _get_coords_after_finish_route(self):
+        return False
+
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
         latest_priorities = self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,

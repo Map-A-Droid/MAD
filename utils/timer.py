@@ -13,6 +13,7 @@ class Timer(object):
         self._id = id
         self._switch = switch
         self._switchtime = switchtime
+        self._breakup = False
 
         log.info('[%s] - check for Switchtimer' % str(self._id))
 
@@ -29,6 +30,9 @@ class Timer(object):
 
     def get_switch(self):
         return self._switchmode
+
+    def breakup_switch(self):
+        self._breakup = True
 
     def switchtimer(self):
         log.info('[%s] - Starting Switchtimer' % str(self._id))
@@ -67,5 +71,12 @@ class Timer(object):
                             '[%s] - Switching back - here we go ...' % str(self._id))
                         self.set_switch(False)
                         break
+                    if tmNow < tmTil and self._breakup:
+                        log.warning(
+                            '[%s] - Switch breakup! - here we go ...' % str(self._id))
+                        self.set_switch(False)
+                        while tmNow <= tmTil:
+                            self._breakup = False
+                            time.sleep(60)
                     time.sleep(30)
             time.sleep(30)
