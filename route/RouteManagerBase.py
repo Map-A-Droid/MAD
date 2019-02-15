@@ -285,7 +285,8 @@ class RouteManagerBase(ABC):
             elif self._current_index_of_route >= len(self._route):
                 self._current_index_of_route = 0
                 coords_after_round = self._get_coords_after_finish_route()
-                if not coords_after_round:
+                # TODO: check isinstance list?
+                if coords_after_round is not None:
                     self.clear_coords()
                     coords = coords_after_round
                     self.add_coords_list(coords)

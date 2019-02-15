@@ -9,7 +9,7 @@ class RouteManagerIV(RouteManagerBase):
         return 60
 
     def _get_coords_after_finish_route(self):
-        return False
+        return None
 
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info

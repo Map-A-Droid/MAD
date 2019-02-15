@@ -9,7 +9,7 @@ class RouteManagerMon(RouteManagerBase):
         return 180
 
     def _get_coords_after_finish_route(self):
-        return False
+        return None
 
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
