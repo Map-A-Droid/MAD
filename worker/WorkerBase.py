@@ -193,7 +193,6 @@ class WorkerBase(ABC):
         if self._devicesettings.get("restart_pogo", 80) > 0:
             # log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
             # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
-            self._location_count += 1
             if self._location_count > self._devicesettings.get("restart_pogo", 80):
                 log.error(
                     "scanned " + str(self._devicesettings.get("restart_pogo", 80)) + " locations, restarting pogo")
@@ -271,7 +270,7 @@ class WorkerBase(ABC):
                 break
                 
             if process_location:
-
+                self._location_count += 1
                 if self._applicationArgs.last_scanned:
                     log.info('main: Set new scannedlocation in Database')
                     # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
@@ -668,4 +667,3 @@ class WorkerBase(ABC):
         self._screen_y = screen[1]
         log.debug('Get Screensize of %s: X: %s, Y: %s' % (str(self._id), str(self._screen_x), str(self._screen_y)))
         self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y)
-        

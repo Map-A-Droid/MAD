@@ -121,7 +121,7 @@ def start_ocr_observer(args, db_helper):
     observer.start()
 
 def delete_old_logs(minutes):
-    if minutes == "0":
+    if minutes == 0:
         log.info('delete_old_logs: Search/Delete logs is disabled')
         return
 
@@ -314,7 +314,6 @@ if __name__ == "__main__":
     log.info('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
                       target=delete_old_logs(args.cleanup_age))
-    t_cleanup.join()
     t_cleanup.daemon = True
     t_cleanup.start()
 

@@ -1135,9 +1135,10 @@ class RmWrapper(DbWrapperBase):
 
         query = (
                 "SELECT pokestop.latitude, pokestop.longitude "
-                "FROM pokestop inner join trs_quest on "
+                "FROM pokestop left join trs_quest on "
                 "pokestop.pokestop_id = trs_quest.GUID where "
-                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE()"
+                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+                "or trs_quest.GUID IS NULL"
             )
 
         res = self.execute(query)

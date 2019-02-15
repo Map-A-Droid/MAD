@@ -21,7 +21,6 @@ OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 logging.getLogger('websockets.server').setLevel(logging.INFO)
 logging.getLogger('websockets.protocol').setLevel(logging.INFO)
 
-
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths):
         self.__current_users = {}

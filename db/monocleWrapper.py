@@ -1137,9 +1137,10 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT pokestops.lat, pokestops.lon "
-            "FROM pokestops inner join trs_quest on "
+            "FROM pokestops left join trs_quest on "
             "pokestops.external_id = trs_quest.GUID where "
-            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE()"
+            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+            "or trs_quest.GUID IS NULL"
         )
 
         res = self.execute(query)
