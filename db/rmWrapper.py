@@ -826,7 +826,8 @@ class RmWrapper(DbWrapperBase):
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
             "last_updated) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration)"
+            "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
+            "last_modified=VALUES(last_modified)"
         )
 
         for cell in cells:
