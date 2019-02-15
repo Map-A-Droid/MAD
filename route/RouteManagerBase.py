@@ -6,7 +6,7 @@ import os
 import time
 import numpy as np
 from abc import ABC, abstractmethod
-from threading import Lock, Event, Thread
+from threading import Event, Thread, RLock
 from datetime import datetime
 
 from geofence.geofenceHelper import GeofenceHelper
@@ -34,7 +34,7 @@ class RouteManagerBase(ABC):
         self.mode = mode
 
         self._last_round_prio = False
-        self._manager_mutex = Lock()
+        self._manager_mutex = RLock()
         self._round_started_time = None
         if coords is not None:
             if init:
@@ -271,7 +271,6 @@ class RouteManagerBase(ABC):
                 # we are done with init, let's calculate a new route
                 log.warning("Init of %s done, it took %s, calculating new route..."
                             % (str(self.name), self._get_round_finished_string()))
-                self._manager_mutex.release()
                 self.clear_coords()
                 coords = self._get_coords_post_init()
                 log.debug("Setting %s coords to as new points in route of %s"
@@ -281,6 +280,7 @@ class RouteManagerBase(ABC):
                 self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
                 self.init = False
                 self.change_init_mapping(self.name)
+                self._manager_mutex.release()
                 return self.get_next_location()
             elif self._current_index_of_route >= len(self._route):
                 self._current_index_of_route = 0
@@ -290,6 +290,7 @@ class RouteManagerBase(ABC):
                     coords = coords_after_round
                     self.add_coords_list(coords)
                     self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
+                return self.get_next_location()
             self._last_round_prio = False
         log.info("%s done grabbing next coord, releasing lock and returning location: %s, %s"
                  % (str(self.name), str(next_lat), str(next_lng)))
