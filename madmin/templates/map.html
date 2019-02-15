@@ -48,6 +48,13 @@ new Vue({
 						map.removeLayer(leaflet_data["layers"][k]);
 					}
 				}
+
+				// make sure certain layers are always on top
+				for (layer in leaflet_data['layers']) {
+					if (layer.startsWith('Worker') || layer.startsWith('Gyms')) {
+						leaflet_data['layers'][layer].bringToFront();
+					}
+				}
 			}
 		},
 		'settings.routes.coordinateRadius': {
