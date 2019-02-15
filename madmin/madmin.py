@@ -128,7 +128,7 @@ def unknown():
 @app.route('/map', methods=['GET'])
 @auth_required
 def map():
-    return render_template('map.html')
+    return render_template('map.html', lat=conf_args.home_lat,lng=conf_args.home_lng)
     
 @app.route('/quests', methods=['GET'])
 def quest():
