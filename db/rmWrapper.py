@@ -1163,7 +1163,7 @@ class RmWrapper(DbWrapperBase):
 
         res = self.execute(query, data)
 
-        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type, \
+        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition, quest_timestamp, quest_task) in res:
             mon = "%03d" % quest_pokemon_id
             questinfo[pokestop_id] = ({'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,
@@ -1176,14 +1176,14 @@ class RmWrapper(DbWrapperBase):
     def submit_pokestops_details_map_proto(self, map_proto):
         log.debug("{RmWrapper::submit_pokestops_details_map_proto} called")
         pokestop_args = []
-        # now = datetime.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, "
             "last_updated, name, image) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
-            "latitude=VALUES(latitude), longitude=VALUES(longitude), name=VALUES(name), image=VALUES(image)"
+            "latitude=VALUES(latitude), longitude=VALUES(longitude), name=VALUES(name), image=VALUES(image), "
+            "last_modified=VALUES(last_modified)"
         )
 
         pokestop_args = self.__extract_args_single_pokestop_details(map_proto)
