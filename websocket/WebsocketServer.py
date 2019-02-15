@@ -17,6 +17,10 @@ from worker.WorkerQuests import WorkerQuests
 log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 
+# Silence the websocket library.
+logging.getLogger('websockets.server').setLevel(logging.INFO)
+logging.getLogger('websockets.protocol').setLevel(logging.INFO)
+
 
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths):
