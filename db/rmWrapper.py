@@ -706,12 +706,14 @@ class RmWrapper(DbWrapperBase):
             pokemon_display.get("form_value", None)
         )
 
+        log.debug("Placing query to update mon")
         self.execute(query, vals, commit=True)
-
+        log.debug("Done updating mon in DB")
         # TODO: check above vs this...
         despawn_time = datetime.now() + timedelta(seconds=300)
         despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
         if getdetspawntime:
+            log.debug("Retrieving endtime")
             despawn_time = self._gen_endtime(getdetspawntime)
             despawn_time_unix = despawn_time
 
@@ -723,6 +725,7 @@ class RmWrapper(DbWrapperBase):
 
             pokemon_level = round(pokemon_level) * 2 / 2
 
+        log.debug("Sending webhook")
         self.webhook_helper.send_pokemon_webhook(
             encounter_id=encounter_id,
             pokemon_id=pokemon_data.get("id"),
@@ -742,6 +745,7 @@ class RmWrapper(DbWrapperBase):
             height=pokemon_data.get("height"),
             weight=pokemon_data.get("weight")
         )
+        log.debug("Done submitting encounter data to DB")
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
         log.debug("{RmWrapper::submit_mons_map_proto} called with data received from %s" % str(origin))

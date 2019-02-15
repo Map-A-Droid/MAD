@@ -64,10 +64,10 @@ class DbWrapperBase(ABC):
         :param commit: whether to commit
         :return: if commit, return None, else, return result
         """
-        # get connection form connection pool instead of create one.
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
         cursor = conn.cursor()
+
         # TODO: consider catching OperationalError
         # try:
         #     cursor = conn.cursor()
@@ -75,21 +75,24 @@ class DbWrapperBase(ABC):
         #     log.error("OperationalError trying to acquire a DB cursor: %s" % str(e))
         #     conn.rollback()
         #     return None
-        if args:
-            cursor.execute(sql, args)
-        else:
-            cursor.execute(sql)
-        if commit is True:
-            affected_rows = cursor.rowcount
-            conn.commit()
+        try:
+            if args:
+                cursor.execute(sql, args)
+            else:
+                cursor.execute(sql)
+            if commit is True:
+                affected_rows = cursor.rowcount
+                conn.commit()
+                return affected_rows
+            else:
+                res = cursor.fetchall()
+                return res
+        except mysql.connector.Error as err:
+            log.error("Failed executing query: %s" % str(err))
+            return None
+        finally:
             self.close(conn, cursor)
             self.connection_semaphore.release()
-            return affected_rows
-        else:
-            res = cursor.fetchall()
-            self.close(conn, cursor)
-            self.connection_semaphore.release()
-            return res
 
     def executemany(self, sql, args, commit=False):
         """
@@ -104,18 +107,22 @@ class DbWrapperBase(ABC):
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
         cursor = conn.cursor()
-        cursor.executemany(sql, args)
 
-        if commit is True:
-            conn.commit()
-            self.close(conn, cursor)
-            self.connection_semaphore.release()
+        try:
+            cursor.executemany(sql, args)
+
+            if commit is True:
+                conn.commit()
+                return None
+            else:
+                res = cursor.fetchall()
+                return res
+        except mysql.connector.Error as err:
+            log.error("Failed executing query: %s" % str(err))
             return None
-        else:
-            res = cursor.fetchall()
+        finally:
             self.close(conn, cursor)
             self.connection_semaphore.release()
-            return res
 
     @abstractmethod
     def ensure_last_updated_column(self):
