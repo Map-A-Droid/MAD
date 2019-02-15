@@ -290,6 +290,7 @@ class RouteManagerBase(ABC):
                     coords = coords_after_round
                     self.add_coords_list(coords)
                     self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
+                self._manager_mutex.release()
                 return self.get_next_location()
             self._last_round_prio = False
         log.info("%s done grabbing next coord, releasing lock and returning location: %s, %s"
