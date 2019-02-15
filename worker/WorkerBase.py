@@ -249,6 +249,14 @@ class WorkerBase(ABC):
                 break
 
             try:
+                log.debug('Checking if new location is valid')
+                self._check_location_is_valid()
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
+                log.warning("Worker %s get non valid coords!" % str(self._id))
+                break
+
+            try:
                 self._pre_location_update()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
@@ -337,6 +345,20 @@ class WorkerBase(ABC):
                 while not self._restart_pogo():
                     log.warning("failed starting pogo")
                     # TODO: stop after X attempts
+
+    def _check_location_is_valid(self):
+        if self.current_location is None and not self._timer.get_switch:
+            log.info('Sleeping - Route is finished and no Switchtimer is set')
+            while True:
+                log.info('Sleeping - Route is finished')
+                time.sleep(120)
+        elif self.current_location is None and self._timer.get_switch:
+            log.info('Route is finished and Switchtimer is set - breakup switching')
+            self._timer.breakup_switch()
+            time.sleep(120)
+        elif self.current_location is not None:
+            log.debug('Coords are valid')
+            return True
 
     def _turn_screen_on_and_start_pogo(self):
         if not self._communicator.isScreenOn():

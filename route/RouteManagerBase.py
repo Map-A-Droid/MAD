@@ -268,9 +268,7 @@ class RouteManagerBase(ABC):
                     log.info("Round of route %s reached the first spot again. It took %s"
                              % (str(self.name), str(self._get_round_finished_string())))
                 self._round_started_time = datetime.now()
-                while len(self._route) == 0:
-                    log.info('Sleeping - Route is finished')
-                    time.sleep(120)
+                if len(self._route) == 0: return None
                 log.info("Round of route %s started at %s" % (str(self.name), str(self._round_started_time)))
 
             # continue as usual
@@ -306,9 +304,7 @@ class RouteManagerBase(ABC):
                     coords = coords_after_round
                     self.add_coords_list(coords)
                     self._recalc_route_workertype()
-                    while len(self._route) == 0:
-                        log.info('Sleeping - Route is finished')
-                        time.sleep(120)
+                    if len(self._route) == 0: return None
                 self._manager_mutex.release()
                 return self.get_next_location()
             self._last_round_prio = False
