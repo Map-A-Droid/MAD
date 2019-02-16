@@ -163,5 +163,5 @@ class MITMReceiver(object):
                 self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
             elif type == 4:
                 self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
-            elif type == 4: #TODO : this is bad index is not 4
+            elif type == 2:
                 self.__mitm_mapper._playername[origin]._gen_player_name(data["payload"])

@@ -9,6 +9,8 @@ log = logging.getLogger(__name__)
 class MitmMapper(object):
     def __init__(self, device_mappings):
         self.__mapping = {}
+        self._playerstats = {}
+        self._playername = {}
         self.__mapping_mutex = Lock()
         self._device_mappings = device_mappings
         if device_mappings is not None:
