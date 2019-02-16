@@ -14,7 +14,7 @@ class Timer(object):
         self._switch = switch
         self._switchtime = switchtime
         self.__stop_switchtimer = Event()
-
+        self.__t_switchtimer = None
         log.info('[%s] - check for Switchtimer' % str(self._id))
 
         if self._switch:

@@ -611,6 +611,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query_get_count, vals_get_count)
         mon_exists = res[0]
         mon_exists = ",".join(map(str, mon_exists))
+        log.info('Found %s mon entries' % str(mon_exists))
 
         if int(mon_exists) > 0:
             log.info("{0}: updating mon with id #{1} at {2}, {3}"
