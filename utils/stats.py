@@ -5,50 +5,85 @@ import json
 
 log = logging.getLogger(__name__)
 
-class PlayerStats(object):
+class PlayerName(object):
     def __init__(self, id, name):
         self._id = id
-        self._level = 0
         self._name = name
+
+    def set_name(self, name):
+        log.info('[%s] - set name %s' % (str(self._id), str(name)))
+        self._name = str(name)
+        return True
+
+    def get_name(self):
+        return self._name
+
+    def _gen_player_name(self, data):
+        if 'username' not in data:
+            log.debug('{{gen_player_name}} cannot generate new name')
+            return True
+        playerdata = data['player_data'].get(None)
+
+        if len(playerdata) > 0:
+            for data in playerdata:
+                player_name = data['username']
+
+                if int(data) > 0:
+                    log.debug('{{gen_player_name}} saving new playername')
+                    self.set_name(str(player_name))
+
+                    data = {}
+                    data[self._id] = []
+                    data[self._id].append({
+                        'name': str(data['username'])
+                    })
+
+                    with open(self._id + '.playername', 'w') as outfile:
+                        json.dump(data, outfile, indent=4, sort_keys=True)
+
+
+    def _open_player_name(self):
+        name = Path(str(self._id) + '.playername')
+        if not name.is_file():
+            log.error('[%s] - no PlayerName found' % (str(self._id)))
+            self.set_name(0)
+            return False
+
+        with open(str(self._id) + '.playername') as f:
+            data = json.load(f)
+
+        self.set_name(data[self._name][0]['username'])
+
+
+class PlayerStats(object):
+    def __init__(self, id):
+        self._id = id
+        self._level = 0
 
     def set_level(self, level):
         log.info('[%s] - set level %s' % (str(self._id), str(level)))
         self._level = int(level)
         return True
-		
-    def set_name(self, name):
-        log.info('[%s] - set name %s' % (str(self._id), str(name)))
-        self._name = str(name)
-        return True
-        
+
     def get_level(self):
         return self._level
-		
-    def get_name(self):
-        return self._name
-            
+
     def _gen_player_stats(self, data):
         if 'inventory_delta' not in data:
             log.debug('{{gen_player_stats}} cannot generate new stats')
             return True
-        stats= data['inventory_delta'].get("inventory_items", None)
+        stats = data['inventory_delta'].get("inventory_items", None)
         if len(stats) > 0 :
             for data_inventory in stats:
                 player_level = data_inventory['inventory_item_data']['player_stats']['level']
-                player_name = data_inventory['inventory_item_data']['player_public_profile']['name']
-				#or
-				#player_name = data_inventory['inventory_item_data']['player_data ']['username']
 
                 if int(player_level) > 0:
                     log.debug('{{gen_player_stats}} saving new playerstats')
                     self.set_level(int(player_level))
-					#self.set_name(str(player_name))
-                    self.set_name(int(player_name))
-                            
+
                     data = {}  
                     data[self._id] = []
                     data[self._id].append({  
-                        'name': str(data_inventory['inventory_item_data']['player_stats']['name']),
                         'level': str(data_inventory['inventory_item_data']['player_stats']['level']),
                         'experience': str(data_inventory['inventory_item_data']['player_stats']['experience']),
                         'prev_level_xp': str(data_inventory['inventory_item_data']['player_stats']['prev_level_xp']),
@@ -89,13 +124,9 @@ class PlayerStats(object):
         if not statsfile.is_file():
             log.error('[%s] - no Statsfile found' % (str(self._id)))
             self.set_level(0)
-			#self.set_name("")
-            self.set_name(0)
             return False
             
         with open(str(self._id) + '.stats') as f:
             data = json.load(f)
             
         self.set_level(data[self._id][0]['level'])
-		#self.set_name(data[self._name][""]['name'])
-        self.set_name(data[self._name][0]['name'])
