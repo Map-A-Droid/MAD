@@ -263,7 +263,9 @@ class WorkerBase(ABC):
 
             try:
                 log.debug('Checking if new location is valid')
-                self._check_location_is_valid()
+                valid = self._check_location_is_valid()
+                if not valid:
+                    break
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
                 log.warning("Worker %s get non valid coords!" % str(self._id))
@@ -369,7 +371,7 @@ class WorkerBase(ABC):
         elif self.current_location is None and self._timer.get_switch:
             log.info('Route is finished and Switchtimer is set - breakup switching')
             self._timer.breakup_switch()
-            time.sleep(120)
+            return False
         elif self.current_location is not None:
             log.debug('Coords are valid')
             return True
