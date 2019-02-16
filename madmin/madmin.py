@@ -28,6 +28,8 @@ import datetime
 from functools import wraps
 from shutil import copyfile
 from math import floor
+from pathlib import Path
+import numbers
 from utils.questGen import generate_quest
 
 app = Flask(__name__)
@@ -486,6 +488,40 @@ def get_position():
     return jsonify(positions)
 
 
+@cache.cached()
+@app.route("/get_geofence")
+@auth_required
+def get_geofence():
+    geofences = {}
+
+    for name, area in areas.items():
+        name = 'Unknown'
+        geofence_included = Path(area["geofence_included"])
+        if not geofence_included.is_file():
+            continue
+        with geofence_included.open() as gf:
+            for line in gf:
+                line = line.strip()
+                if not line:  # Empty line.
+                    continue
+                elif line.startswith("["):  # Name line.
+                    name = line.replace("[", "").replace("]", "")
+                    geofences[name] = []
+                else:  # Coordinate line.
+                    lat, lon = line.split(",")
+                    geofences[name].append([
+                        getCoordFloat(lat),
+                        getCoordFloat(lon)
+                    ])
+
+    geofencexport = []
+    for name, coordinates in geofences.items():
+        geofencexport.append({'name': name, 'coordinates': coordinates})
+
+    return jsonify(geofencexport)
+
+
+@cache.cached()
 @app.route("/get_route")
 @auth_required
 def get_route():

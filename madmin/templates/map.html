@@ -199,7 +199,7 @@ new Vue({
 					// add route to layergroup
 					L.geoJSON(geojson, { style: { "color": "#FF0000", "weight": 2, "opacity": 0.5 } }).addTo(group);
 
-					$this.addLayer(route.name, group, false, "route-"+mode);
+					$this.addLayer("route - " + route.name, group, false, "route-"+mode);
 				});
 			});
 		},
@@ -282,6 +282,29 @@ new Vue({
 
 				$this.addLayer("stops with quests", l_quests, false, "quets");
 			});
+		},
+		map_fetch_geofences() {
+			var $this = this;
+			axios.get('/get_geofence').then(function (res) {
+				res.data.forEach(function (geofence) {
+					var group = L.layerGroup();
+					var geojson = {
+						"type": "Polygon",
+						"coordinates": [$this.convertToLonLat(geofence.coordinates)]
+					}
+					// add geofence to layergroup
+					L.geoJSON(geojson, { style: { "color": $this.getRandomColor(), "weight": 2, "opacity": 0.25 } }).addTo(group);
+					$this.addLayer("geofence - " + geofence.name, group, false, "geofence-" + geofence.name);
+				});
+			});
+		},
+		getRandomColor() {
+			var letters = '0123456789ABCDEF';
+			var color = '#';
+			for (var i = 0; i < 6; i++) {
+				color += letters[Math.floor(Math.random() * 16)];
+			}
+			return color;
 		},
 		build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
 			switch(quest_reward_type_raw) {
