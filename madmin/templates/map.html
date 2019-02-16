@@ -36,11 +36,11 @@ new Vue({
 	watch: {
 		layers: {
 			deep: true,
-			handler: function() {
+			handler: function () {
 				for (k in this.layers) {
 					tlayer = this.layers[k];
 
-					this.updateStoredSetting('layer-'+k, tlayer.show);
+					this.updateStoredSetting('layer-' + k, tlayer.show);
 
 					if (tlayer.show == true && !map.hasLayer(leaflet_data["layers"][k])) {
 						map.addLayer(leaflet_data["layers"][k]);
@@ -51,7 +51,7 @@ new Vue({
 
 				// make sure certain layers are always on top
 				for (layer in leaflet_data['layers']) {
-					if (layer.startsWith('Worker') || layer.startsWith('Gyms')) {
+					if (layer.startsWith('Worker') || layer.startsWith('Gyms')) {
 						leaflet_data['layers'][layer].bringToFront();
 					}
 				}
@@ -59,12 +59,12 @@ new Vue({
 		},
 		'settings.routes.coordinateRadius': {
 			deep: true,
-			handler: function() {
+			handler: function () {
 				for (routetype in this.settings.routes.coordinateRadius) {
-					this.updateStoredSetting('settings-coordinateRadius-'+routetype, this.settings.routes.coordinateRadius[routetype]);
+					this.updateStoredSetting('settings-coordinateRadius-' + routetype, this.settings.routes.coordinateRadius[routetype]);
 					for (layer in this.layers) {
-						if (this.layers[layer].type == "route-"+routetype) {
-							leaflet_data.layers[layer].getLayers().forEach(function(point) {
+						if (this.layers[layer].type == "route-" + routetype) {
+							leaflet_data.layers[layer].getLayers().forEach(function (point) {
 								try {
 									point.setRadius(this.settings.routes.coordinateRadius[routetype]);
 								} catch (err) {
@@ -95,9 +95,9 @@ new Vue({
 		},
 		map_fetch_worker() {
 			var $this = this;
-			axios.get('/get_position').then(function(res) {
-				res.data.forEach(function(worker) {
-					var name = 'Worker '+worker['name'];
+			axios.get('get_position').then(function (res) {
+				res.data.forEach(function (worker) {
+					var name = 'Worker ' + worker['name'];
 
 					var workerMarker = L.circleMarker([worker['lat'], worker['lon']], {
 						radius: 7,
@@ -115,9 +115,9 @@ new Vue({
 			setInterval($this.update_worker_position, 5000);
 		},
 		update_worker_position() {
-			axios.get('/get_position').then(function(res) {
-				res.data.forEach(function(worker) {
-					var name = 'Worker '+worker['name'];
+			axios.get('get_position').then(function (res) {
+				res.data.forEach(function (worker) {
+					var name = 'Worker ' + worker['name'];
 
 					leaflet_data['layers'][name].setLatLng([worker['lat'], worker['lon']]);
 				});
@@ -125,11 +125,11 @@ new Vue({
 		},
 		map_fetch_gyms() {
 			var $this = this;
-			axios.get('/get_gymcoords').then(function(res) {
+			axios.get('get_gymcoords').then(function (res) {
 				var l_gyms = L.layerGroup();
 
-				res.data.forEach(function(gym) {
-					switch(gym['team_id']) {
+				res.data.forEach(function (gym) {
+					switch (gym['team_id']) {
 						default:
 							color = '#888';
 							break;
@@ -152,7 +152,7 @@ new Vue({
 						opacity: 0.8,
 						fillOpacity: 0.8
 					}).addTo(l_gyms)
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>', { 'className': 'gympopup' })
+						.bindPopup('<div id="gymImage" style="background: url(&quot;' + gym['img'] + '&quot;) center center no-repeat;"></div><div id="gymName"><strong>' + gym['name'] + '</div><div id="gymID"></strong>' + gym['id'] + '</div><div id="gymCoords"><a href="https://maps.google.com/?q=' + gym['lat'] + ',' + gym['lon'] + '">' + gym['lat'] + ', ' + gym['lon'] + '</a></div>', { 'className': 'gympopup' })
 				});
 
 				// add layer to map
@@ -161,8 +161,8 @@ new Vue({
 		},
 		map_fetch_routes() {
 			var $this = this;
-			axios.get('/get_route').then(function(res) {
-				res.data.forEach(function(route) {
+			axios.get('get_route').then(function (res) {
+				res.data.forEach(function (route) {
 					var group = L.layerGroup();
 					var coords = [];
 
@@ -177,7 +177,7 @@ new Vue({
 						cradius = $this.settings.routes.coordinateRadius.raid;
 					}
 
-					route.coordinates.forEach(function(coord) {
+					route.coordinates.forEach(function (coord) {
 						circle = L.circle(coord, {
 							radius: cradius,
 							color: "#9C3744",
@@ -206,10 +206,10 @@ new Vue({
 		},
 		map_fetch_spawns() {
 			var $this = this;
-			axios.get('/get_spawns').then(function(res) {
+			axios.get('get_spawns').then(function (res) {
 				var l_spawns = L.layerGroup();
 
-				res.data.forEach(function(spawn) {
+				res.data.forEach(function (spawn) {
 					if (spawn['endtime'] !== null) {
 						var markertext = '<strong class="text-success">Known end time</strong><br>'
 						var endsplit = spawn['endtime'].split(':');
@@ -264,7 +264,7 @@ new Vue({
 						opacity: 0.7,
 						fillOpacity: 0.5
 					}).addTo(l_spawns)
-						.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>',{'className': 'gympopup'})
+						.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>', { 'className': 'gympopup' })
 				});
 
 				$this.addLayer("spawns", l_spawns, false, "spawns");
@@ -272,7 +272,7 @@ new Vue({
 		},
 		map_fetch_quests() {
 			var $this = this;
-			axios.get('/get_quests').then(function(res) {
+			axios.get('get_quests').then(function (res) {
 				var l_quests = L.layerGroup();
 
 				res.data.forEach(function(quest) {
@@ -308,7 +308,7 @@ new Vue({
 			return color;
 		},
 		build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
-			switch(quest_reward_type_raw) {
+			switch (quest_reward_type_raw) {
 				case 2:
 					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
 					var size = [30, 30]
@@ -324,14 +324,14 @@ new Vue({
 					if (quest_pokemon_id === '327') {
 						form = '11';
 					}
-					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+					var image = 'asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
 					var size = [50, 50]
 					var anchor = [40, 30]
 					break;
 			}
 
 			// TODO replace with divIcon
-			var icon =  L.icon({
+			var icon = L.icon({
 				iconUrl: 'static/Pstop-quest.png',
 				shadowUrl: image,
 				iconSize: [30, 30],
@@ -342,7 +342,7 @@ new Vue({
 			return icon;
 		},
 		build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type) {
-			switch(quest_reward_type_raw) {
+			switch (quest_reward_type_raw) {
 				case 2:
 					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
 					var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
@@ -358,7 +358,7 @@ new Vue({
 					if (quest_pokemon_id === '327') {
 						form = '11';
 					}
-					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
+					var image = 'asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
 					var rewardtext = quest_pokemon_name;
 					var width = 60;
 					break;
@@ -395,7 +395,7 @@ new Vue({
 		// add a new layer
 		addLayer(name, data, show, type) {
 			if (!leaflet_data['layers'][name]) {
-				var lobj = {"show": this.getStoredSetting('layer-'+name, show), "type": type};
+				var lobj = { "show": this.getStoredSetting('layer-' + name, show), "type": type };
 				leaflet_data["layers"][name] = data;
 				this.$set(this.layers, name, lobj);
 			}
@@ -403,7 +403,7 @@ new Vue({
 		// event handler if the map has been dragged/moved
 		l_event_moveend() {
 			var center = map.getCenter();
-			this.updateStoredSetting('center', center.lat+','+center.lng);
+			this.updateStoredSetting('center', center.lat + ',' + center.lng);
 		},
 		// event handler if the map has been zoomed
 		l_event_zoomed() {
@@ -412,21 +412,21 @@ new Vue({
 		// convert lat/lng to lng/lat
 		convertToLonLat(coords) {
 			lonlat = []
-			coords.forEach(function(coord) {
+			coords.forEach(function (coord) {
 				lonlat.push([coord[1], coord[0]]);
 			});
 			return lonlat;
 		},
 		// set a circle marker's radius
 		setCircleRadiusForRoute(route, type) {
-			route.forEach(function(circle) {
+			route.forEach(function (circle) {
 				circle.setRadius(this.settings.routes.coordinateRadius[type]);
 			}, this);
 		},
 		// generate the map
 		initMap() {
 			// get stored center and zoom level if they exists
-			const storedZoom = this.getStoredSetting('zoomlevel', (({{lat}} == 0 || {{lng}} == 0) ? 3 : 12));
+			const storedZoom = this.getStoredSetting('zoomlevel', (({{ lat }} == 0 || {{ lng }} == 0) ? 3 : 12));
 			const storedCenter = this.getStoredSetting('center', '{{lat}},{{lng}}');
 			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
 
@@ -477,46 +477,50 @@ new Vue({
 
 		<div class="leaflet-sidebar-content">
 			<div class="leaflet-sidebar-pane" id="layers">
-				<h1 class="leaflet-sidebar-header bg-dark">Layers<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+				<h1 class="leaflet-sidebar-header bg-dark">Layers<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div>
+				</h1>
 				<ul class="list-group list-group-flush">
 					{% raw %}
-						<li v-for="(item, index) in layers" class="list-group-item layer-item">
-							<strong>{{ index }}</strong>
-							<div class="custom-control custom-switch">
-								<input :id="index" type="checkbox" v-model="item.show" class="custom-control-input" />
-								<label :for="index" class="custom-control-label"></label>
-							</div>
-						</li>
+					<li v-for="(item, index) in layers" class="list-group-item layer-item">
+						<strong>{{ index }}</strong>
+						<div class="custom-control custom-switch">
+							<input :id="index" type="checkbox" v-model="item.show" class="custom-control-input" />
+							<label :for="index" class="custom-control-label"></label>
+						</div>
+					</li>
 					{% endraw %}
 				</ul>
 			</div>
 			<div class="leaflet-sidebar-pane" id="filters">
-				<h1 class="leaflet-sidebar-header bg-dark">Filters<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+				<h1 class="leaflet-sidebar-header bg-dark">Filters<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div>
+				</h1>
 			</div>
 			<div class="leaflet-sidebar-pane" id="settings">
-				<h1 class="leaflet-sidebar-header bg-dark">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+				<h1 class="leaflet-sidebar-header bg-dark">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div>
+				</h1>
 				<ul class="list-group list-group-flush">
-						<li class="list-group-item layer-item">
-							<strong>Raid coordinate radius</strong>
-							<div class="custom-control custom-switch">
-								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raid" max="1100" class="form-control form-control-sm" />
-								<label for="raidcoordinateradius" class=""></label>
-							</div>
-						</li>
-						<li class="list-group-item layer-item">
-							<strong>Mon coordinate radius</strong>
-							<div class="custom-control custom-switch">
-								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mon" max="1100" class="form-control form-control-sm" />
-								<label for="raidcoordinateradius" class=""></label>
-							</div>
-						</li>
-						<li class="list-group-item layer-item">
-							<strong>Quest coordinate radius</strong>
-							<div class="custom-control custom-switch">
-								<input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quest" max="1100" class="form-control form-control-sm" />
-								<label for="questcoordinateradius" class=""></label>
-							</div>
-						</li>
+					<li class="list-group-item layer-item">
+						<strong>Raid coordinate radius</strong>
+						<div class="custom-control custom-switch">
+							<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raid" max="1100" class="form-control form-control-sm" />
+							<label for="raidcoordinateradius" class=""></label>
+						</div>
+					</li>
+					<li class="list-group-item layer-item">
+						<strong>Mon coordinate radius</strong>
+						<div class="custom-control custom-switch">
+							<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mon" max="1100" class="form-control form-control-sm" />
+							<label for="raidcoordinateradius" class=""></label>
+						</div>
+					</li>
+					<li class="list-group-item layer-item">
+						<strong>Quest coordinate radius</strong>
+						<div class="custom-control custom-switch">
+							<input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quest" max="1100"
+							 class="form-control form-control-sm" />
+							<label for="questcoordinateradius" class=""></label>
+						</div>
+					</li>
 				</ul>
 			</div>
 		</div>

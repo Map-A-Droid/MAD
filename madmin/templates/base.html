@@ -11,12 +11,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/v/bs4/dt-1.10.18/fh-3.1.4/r-2.2.2/datatables.min.css" />
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
     {% block header %}{% endblock %}
     <style>
         body {
-          padding-top: 60px;
+          padding-top: 56px;
         }
         .brandimg {
             max-height: 20px;
@@ -27,8 +27,8 @@
 <body>
     <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
         <div class="container">
-          <a class="navbar-brand" href="/">
-              <img src="{{ url_for('static', filename='mad_banner_trans.png') }}" class="brandimg">
+          <a class="navbar-brand" href=".">
+              <img src="{{ url_for('static', filename='mad_banner_trans.png').lstrip('/') }}" class="brandimg">
           </a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
@@ -36,13 +36,13 @@
           <div id="navbarNav" class="navbar-collapse collapse">
               <ul class="navbar-nav mr-auto">
                   <li class="nav-item">
-                    <a href="/map" class="nav-link">Map</a>
+                    <a href="map" class="nav-link">Map</a>
                   </li>
                   <li class="nav-item">
-                    <a href="/quests" class="nav-link">Quests</a>
+                    <a href="quests" class="nav-link">Quests</a>
                   </li>
                   <li class="nav-item">
-                    <a href="/showsettings" class="nav-link">Mapping Editor</a>
+                    <a href="showsettings" class="nav-link">Mapping Editor</a>
                   </li>
                   <li class="nav-item">
                     <a href="/status" class="nav-link">Status</a>
@@ -57,10 +57,10 @@
                         OCR Settings
                     </a>
                     <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                      <a href="/raids" class="dropdown-item">Check Raids</a>
-                      <a href="/gyms" class="dropdown-item">Check Gyms</a>
-                      <a href="/unknown" class="dropdown-item">Unrecognized Gyms</a>
-                      <a href="/screens" class="dropdown-item">Processed Screens</a>
+                      <a href="raids" class="dropdown-item">Check Raids</a>
+                      <a href="gyms" class="dropdown-item">Check Gyms</a>
+                      <a href="unknown" class="dropdown-item">Unrecognized Gyms</a>
+                      <a href="screens" class="dropdown-item">Processed Screens</a>
                     </div>
                   </li>
                   {% endif %}
