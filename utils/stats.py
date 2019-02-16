@@ -5,7 +5,7 @@ import json
 
 log = logging.getLogger(__name__)
 
-class PlayerName(object):
+class PlayerData(object):
     def __init__(self, name):
         self._name = name
 
@@ -19,36 +19,36 @@ class PlayerName(object):
 
     def _gen_player_name(self, data):
         if 'username' not in data:
-            log.debug('{{gen_player_name}} cannot generate new name')
+            log.debug('{{gen_player_name}} cannot generate new playerdata')
             return True
-        playerdata = data['player_data'].get('player_data', None)
+        playerdata = data['player_data'].get('', None)
 
         if len(playerdata) > 0:
             for data in playerdata:
-                player_name = data['player_data']['username']
+                player_name = data['username']
 
                 if len(data) > 0:
-                    log.debug('{{gen_player_name}} saving new playername')
+                    log.debug('{{gen_player_name}} saving new playerdata')
                     self.set_name(str(player_name))
 
                     data = {}
                     data[self._name] = []
                     data[self._name].append({
-                        'name': str(data['player_data']['username'])
+                        'name': str(data['username'])
                     })
 
-                    with open(self._name + '.playername', 'w') as outfile:
+                    with open(self._name + '.playerdata', 'w') as outfile:
                         json.dump(data, outfile, indent=4, sort_keys=True)
 
 
-    def _open_player_name(self):
-        name = Path(str(self._name) + '.playername')
+    def _open_player_data(self):
+        name = Path(str(self._name) + '.playerdata')
         if not name.is_file():
-            log.error('[%s] - no PlayerName found' % (str(self._name)))
+            log.error('[%s] - no PlayerData found' % (str(self._name)))
             self.set_name(0)
             return False
 
-        with open(str(self._name) + '.playername') as f:
+        with open(str(self._name) + '.playerdata') as f:
             data = json.load(f)
 
         self.set_name(data[self._name][0]['username'])
