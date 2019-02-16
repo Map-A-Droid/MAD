@@ -559,7 +559,7 @@ class MonocleWrapper(DbWrapperBase):
             return
 
         query_insert = (
-            "INSERT sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
+            "INSERT IGNORE sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
             "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id, "
             "atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight) "
             "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
@@ -690,7 +690,7 @@ class MonocleWrapper(DbWrapperBase):
         if cells is None:
             return False
         query_mons_insert = (
-            "INSERT INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
+            "INSERT IGNORE INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
             "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
@@ -716,6 +716,7 @@ class MonocleWrapper(DbWrapperBase):
                 res = self.execute(query_get_count, vals_get_count)
                 mon_exists = res[0]
                 mon_exists = ",".join(map(str, mon_exists))
+                log.info('Found %s mon entries' % str(mon_exists))
 
                 if int(mon_exists) > 0:
                     log.info("{0}: updating mon with id #{1} at {2}, {3}"
