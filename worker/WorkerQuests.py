@@ -91,7 +91,7 @@ class WorkerQuests(MITMBase):
                 elif distance < 1000:
                     delay_used = 30
                 elif distance > 1000:
-                    delay_used = 80
+                    delay_used = 100
                 elif distance > 5000:
                     delay_used = 200
                 elif distance > 10000:
@@ -200,7 +200,7 @@ class WorkerQuests(MITMBase):
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
-        while int(to) <= 3:
+        while int(to) <= 4:
 
             self._communicator.click(int(x), int(y))
             time.sleep(.5 + int(delayadd))
@@ -212,7 +212,7 @@ class WorkerQuests(MITMBase):
             curTime = time.time()
             self._communicator.click(int(delx), int(dely))
 
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=20)
+            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=15)
 
             if data_received is not None:
                 if 'Clear' in data_received:
@@ -226,7 +226,6 @@ class WorkerQuests(MITMBase):
                 if not self._checkPogoButton():
                     self._checkPogoClose()
                 data_received = '-'
-                y += self._resocalc.get_next_item_coord(self)
                 y += self._resocalc.get_next_item_coord(self)
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
@@ -308,17 +307,15 @@ class WorkerQuests(MITMBase):
                     self._open_pokestop()
                 else:
                     log.error('Other Return: %s' % str(data_received))
-
                 to += 1
-                if to >= 3:
-                    self._close_gym(self._delay_add)
 
             else:
                 data_received = '-'
                 log.error('Did not get any data ... Maybe already spinned or softban.')
                 to += 1
-                if to >= 3:
-                    self._close_gym(self._delay_add)
+
+        if to >= 3:
+            self._close_gym(self._delay_add)
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None

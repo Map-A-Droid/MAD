@@ -35,6 +35,7 @@ class WorkerBase(ABC):
         self.loop = None
         self.loop_started = Event()
         self.loop_tid = None
+        self._async_io_looper_thread = None
         self._location_count = 0
         self._timer = timer
 
@@ -156,6 +157,7 @@ class WorkerBase(ABC):
         while not self._stop_worker_event.isSet():
             time.sleep(1)
         t_main_work.join()
+        log.info("Worker %s stopping gracefully" % str(self._id))
         # async_result.get()
         return self._last_known_state
 
@@ -176,9 +178,9 @@ class WorkerBase(ABC):
             return
         self._work_mutex.release()
 
-        t_asyncio_loop = Thread(name=str(self._id) + '_asyncio_' + self._id, target=self._start_asyncio_loop)
-        t_asyncio_loop.daemon = True
-        t_asyncio_loop.start()
+        self._async_io_looper_thread = Thread(name=str(self._id) + '_asyncio_' + self._id, target=self._start_asyncio_loop)
+        self._async_io_looper_thread.daemon = False
+        self._async_io_looper_thread.start()
 
         self.loop_started.wait()
         self._pre_work_loop()
@@ -193,7 +195,6 @@ class WorkerBase(ABC):
         if self._devicesettings.get("restart_pogo", 80) > 0:
             # log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
             # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
-            self._location_count += 1
             if self._location_count > self._devicesettings.get("restart_pogo", 80):
                 log.error(
                     "scanned " + str(self._devicesettings.get("restart_pogo", 80)) + " locations, restarting pogo")
@@ -208,10 +209,21 @@ class WorkerBase(ABC):
         return pogo_started
 
     def _internal_cleanup(self):
+        # set the event just to make sure - in case of exceptions for example
+        self._stop_worker_event.set()
+        log.info("Internal cleanup of %s started" % str(self._id))
         self._cleanup()
+        log.info("Internal cleanup of %s signalling end to websocketserver" % str(self._id))
         self._communicator.cleanup_websocket()
         # self.stop_worker()
-        self.loop.call_soon_threadsafe(self.loop.stop)
+        if self._async_io_looper_thread is not None:
+            log.info("Stopping worker's asyncio loop")
+            self.loop.call_soon_threadsafe(self.loop.stop)
+            self._async_io_looper_thread.join()
+        if self._timer is not None:
+            log.info("Stopping switch timer")
+            self._timer.stop_switch()
+        log.info("Internal cleanup of %s finished" % str(self._id))
 
     def _main_work_thread(self):
         # TODO: signal websocketserver the removal
@@ -250,6 +262,14 @@ class WorkerBase(ABC):
                 break
 
             try:
+                log.debug('Checking if new location is valid')
+                self._check_location_is_valid()
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
+                log.warning("Worker %s get non valid coords!" % str(self._id))
+                break
+
+            try:
                 self._pre_location_update()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
@@ -271,7 +291,7 @@ class WorkerBase(ABC):
                 break
                 
             if process_location:
-
+                self._location_count += 1
                 if self._applicationArgs.last_scanned:
                     log.info('main: Set new scannedlocation in Database')
                     # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
@@ -291,8 +311,9 @@ class WorkerBase(ABC):
 
     async def _update_position_file(self):
         log.debug("Updating .position file")
-        with open(self._id + '.position', 'w') as outfile:
-            outfile.write(str(self.current_location.lat) + ", " + str(self.current_location.lng))
+        if self.current_location is not None:
+            with open(self._id + '.position', 'w') as outfile:
+                outfile.write(str(self.current_location.lat) + ", " + str(self.current_location.lng))
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
         try:
@@ -338,6 +359,20 @@ class WorkerBase(ABC):
                 while not self._restart_pogo():
                     log.warning("failed starting pogo")
                     # TODO: stop after X attempts
+
+    def _check_location_is_valid(self):
+        if self.current_location is None and not self._timer.get_switch:
+            log.info('Sleeping - Route is finished and no Switchtimer is set')
+            while True:
+                log.info('Sleeping - Route is finished')
+                time.sleep(120)
+        elif self.current_location is None and self._timer.get_switch:
+            log.info('Route is finished and Switchtimer is set - breakup switching')
+            self._timer.breakup_switch()
+            time.sleep(120)
+        elif self.current_location is not None:
+            log.debug('Coords are valid')
+            return True
 
     def _turn_screen_on_and_start_pogo(self):
         if not self._communicator.isScreenOn():
@@ -668,4 +703,3 @@ class WorkerBase(ABC):
         self._screen_y = screen[1]
         log.debug('Get Screensize of %s: X: %s, Y: %s' % (str(self._id), str(self._screen_x), str(self._screen_y)))
         self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y)
-        

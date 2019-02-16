@@ -1,0 +1,107 @@
+# DO NOT USE NOTEPAD TO EDIT CONFIG FILES! USE NOTEPAD++ INSTEAD!
+# Uncomment a line when you want to change its default value (Remove # at the beginning)
+# Please ensure to leave a space after the colon if a value is needed ("example-setting" "example-setting-with: value")
+# When your configuration is done, rename this file by removing the ".example" extension
+# A different config-files can be included directly in processes by "--config-file" or "-cf" and path
+# Value without # are needed for this script
+
+# MySql Settings
+######################
+
+# if you intend to use the priority queue functionality these settings are required
+#db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
+
+#dbip:                       # IP adress or hostname of the mysql server (needed for ocr mode)
+#dbusername:                 # Username of database (needed for ocr mode)
+#dbpassword:                 # Password of database (needed for ocr mode)
+#dbname:                     # Name of the database (needed for ocr mode)
+#dbport:                     # Port of the database (Default: 3306)
+#db_poolsize:                # Amount of connections to keep open to the DB. Default: 2
+
+# Websocket Settings (RGC receiver)
+######################
+
+#ws_ip:                     # IP for websockt to listen on (for RGC). Default: 0.0.0.0'
+#ws_port:                   # Port of the websocket to listen on. Default: 8080
+#websocket_command_timeout:         # The max time to wait for a command to return (in seconds). Default: 30 seconds.
+
+# MITM Receiver (Pogodroid data)
+######################
+
+#mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
+#mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
+#mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
+
+# Walk Settings
+######################
+
+#initial_restart:            # Initial Pogo restart when scanner starts. (Default: true)
+#delay_after_hatch:          # Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)
+
+# Runtype settings
+######################
+
+#only_scan                   # running this instance in scanning mode without OCR tracing
+#only_ocr                    # running this instance in ocr mode without Scanning
+#ocr_multitask               # running OCR as multiprocessing task
+#ocr_thread_count:           # amount of processes/threads to run analysis with
+
+# path settings
+######################
+
+pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
+#temp_path:                  # Path for generated files while detecting raids (Default: temp/)
+#raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
+#unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
+
+# other settings
+######################
+
+#cleanup_age:                # Delete Screenshots older than X minutes (Default: 1440. 0 to disable)
+#last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
+#npValue:                    # Matching Zoom - Max Value (Default: 0.5 [for width = 720px]. 1.5 for width = 1080px)
+#npFrom:                     # Matching Zoom - Start Value (Default: 0.2 [for width = 720px]. 0.5 for width = 1080px)
+#gym_scan_distance:          # Distance of scanned Gyms (Default: 6) - reduce if you scan an area with many gyms at one place
+#weather                     # Detect weather from captured Image and post to database - if your frontend support this!
+#route_file:                 # Filename for Route Cache without extension (Default: route)
+#home_lat:                   # Center Lat of your scan location (Default: 0.0)
+#home_lng:                   # Center Lng of your scan location (Default: 0.0)
+#use_media_projection        # Use Mediaprojection for transfering images (OCR)
+#language:                   # Language for quests (default:en - others: de (more soon))
+
+# MADmin
+######################
+#with_madmin                 # Start Madmin
+#madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
+#madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
+#madmin_port:                # MADmin web port (Default: 5000)
+#madmin_time:                # MADmin clock format (12/24) (Default: 24)
+#madmin_noresponsive         # MADmin deactivate responsive tables
+#unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
+#madmin_user: madmin         # MADmin username for login
+#madmin_password: MySecret   # MADmin password for login
+
+# webhook
+######################
+
+#webhook                     # Activate support for webhook
+#webhook_url:                # URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*
+#weather_webhook             # Activate support for weather webhook
+#pokemon_webhook             # Activate support for pokemon webhook
+#gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
+#quest_webhook               # Activate support for quest webhook
+
+# Auto Hatch
+######################
+#auto_hatch                  # Activate auto hatch of level 5 eggs
+#auto_hatch_number           # Auto hatch of level 5 Pokemon ID
+
+# Logging
+######################
+#no-file-logs                # Disable logging (Default: disable)
+#log-path:                   # Path for Logs (Default: logs/)
+#log-filename:               # Filename for logs (Default: Default: %%Y%%m%%d_%%H%%M_<SN>.log)
+#log-rotation                # Enable log rotation (Default: disable)
+#log-rotation-backup-count:  # Number of saved rotated log files (Default: 10)
+#log-rotation-file-size:     # Filesize of Log Files in bytes (Default: 10485760 = 10 MB)
+#cleanup-age:                # Delete logs older than X minutes (Default: 0. 0 = disable)

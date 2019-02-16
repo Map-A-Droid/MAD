@@ -83,12 +83,11 @@ class MITMBase(WorkerBase):
 
     def _clear_quests(self, delayadd):
         log.debug('{_clear_quests} called')
-        time.sleep(4 + int(delayadd))
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
 
-        time.sleep(2 + int(delayadd))
+        time.sleep(1 + int(delayadd))
 
         x, y = self._resocalc.get_delete_quest_coords(self)[0], \
                self._resocalc.get_delete_quest_coords(self)[1]
@@ -111,10 +110,10 @@ class MITMBase(WorkerBase):
 
     def _open_gym(self, delayadd):
         log.debug('{_open_gym} called')
-        time.sleep(1)
+        time.sleep(.5)
         x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        time.sleep(.5 + int(delayadd))
         log.debug('{_open_gym} called')
         return
 
