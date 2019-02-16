@@ -865,6 +865,7 @@ class MonocleWrapper(DbWrapperBase):
                     team = gym['gym_details']['owned_by_team']
                     slots = gym['gym_details']['slots_available']
                     is_in_battle = gym['gym_details'].get('is_in_battle', False)
+                    last_modified = gym['last_modified_timestamp_ms']/1000
                     if is_in_battle:
                         is_in_battle = 1
                     else:
@@ -875,7 +876,7 @@ class MonocleWrapper(DbWrapperBase):
                         raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
 
                     self.webhook_helper.send_gym_webhook(
-                        gym_id, raidendSec, 'unknown', team, slots, guardmon, lat, lon
+                        gym_id, raidendSec, 'unknown', team, slots, guardmon, lat, lon, last_modified
                     )
 
                     vals_forts.append(
@@ -895,13 +896,13 @@ class MonocleWrapper(DbWrapperBase):
                     if int(fort_sightings_exists) == 0:
                         vals_fort_sightings_insert.append(
                             (
-                                gym_id, now, team, guardmon, slots, is_in_battle, now
+                                gym_id, last_modified, team, guardmon, slots, is_in_battle, now
                             )
                         )
                     else:
                         vals_fort_sightings_update.append(
                             (
-                                team, guardmon, slots, now, now, is_in_battle, gym_id
+                                team, guardmon, slots, now, last_modified, is_in_battle, gym_id
                             )
                         )
         self.executemany(query_forts, vals_forts, commit=True)

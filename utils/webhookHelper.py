@@ -5,7 +5,7 @@ import os
 
 import logging
 from threading import current_thread, Event, Thread
-from utils.questGen import generate_quest 
+from utils.questGen import generate_quest
 from utils.language import open_json_file
 
 import requests
@@ -53,7 +53,7 @@ egg_webhook_payload = """[{{
       }},
       "type": "{type}"
    }} ]"""
-            
+
 quest_webhook_payload = """[{{
       "message": {{
                 "pokestop_id": "{pokestop_id}",
@@ -75,9 +75,9 @@ quest_webhook_payload = """[{{
                 "quest_condition": "{quest_condition}"
         }},
       "type": "quest"
-   }} ]"""            
-            
-            
+   }} ]"""
+
+
 weather_webhook_payload = """[{{
       "message": {{
                 "s2_cell_id": {0},
@@ -109,7 +109,8 @@ gym_webhook_payload = """[{{
     "total_cp": {total_cp},
     "enabled": "True",
     "latitude": {latitude},
-    "longitude": {longitude}
+    "longitude": {longitude},
+    "last_modified": {last_modified}
   }},
   "type": "gym"
 }}]"""
@@ -235,17 +236,17 @@ class WebhookHelper(object):
 
     def submit_quest_webhook(self, rawquest):
         if self.__application_args.webhook:
-            self.__add_task_to_loop(self._submit_quest_webhook(rawquest))                                                             
-    
+            self.__add_task_to_loop(self._submit_quest_webhook(rawquest))
+
 
     def send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id, slots_available, guard_pokemon_id,
-                         latitude, longitude):
+                         latitude, longitude, last_modified):
         if self.__application_args.webhook and self.__application_args.gym_webhook:
             self.__add_task_to_loop(self._send_gym_webhook(gym_id, raid_active_until, gym_name, team_id,
-                                    slots_available, guard_pokemon_id, latitude, longitude))
+                                    slots_available, guard_pokemon_id, latitude, longitude, last_modified))
 
     async def _send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id,
-                                slots_available, guard_pokemon_id, latitude, longitude):
+                                slots_available, guard_pokemon_id, latitude, longitude, last_modified):
         info_of_gym = self.gyminfo.get(gym_id, None)
         gym_url = 'unknown'
         gym_description = 'unknown'
@@ -269,7 +270,8 @@ class WebhookHelper(object):
             lowest_pokemon_motivation=0,
             total_cp=0,
             latitude=latitude,
-            longitude=longitude
+            longitude=longitude,
+            last_modified=last_modified
         )
 
         payload = json.loads(payload_raw)
@@ -477,17 +479,17 @@ class WebhookHelper(object):
 
         if weight is not None:
             mon_payload["weight"] = weight
-            
+
         entire_payload = {"type": "pokemon", "message": mon_payload}
         to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
         to_be_sent = plain_webhook.format(plain=to_be_sent)
         to_be_sent = json.loads(to_be_sent)
 
         self.__sendToWebhook(to_be_sent)
-        
+
     async def _submit_quest_webhook(self, rawquest):
         log.info('Sending Quest to webhook')
-        
+
         for pokestopid in rawquest:
             quest = generate_quest(rawquest[str(pokestopid)])
 
