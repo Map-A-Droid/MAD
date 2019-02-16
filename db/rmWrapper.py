@@ -740,7 +740,9 @@ class RmWrapper(DbWrapperBase):
             move_1=pokemon_data.get("move_1"),
             move_2=pokemon_data.get("move_2"),
             height=pokemon_data.get("height"),
-            weight=pokemon_data.get("weight")
+            weight=pokemon_data.get("weight"),
+            gender=pokemon_display.get("gender_value", None),
+            boosted_weather=pokemon_display.get('weather_boosted_value', None)
         )
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
@@ -796,7 +798,10 @@ class RmWrapper(DbWrapperBase):
                 if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
                     self.webhook_helper.send_pokemon_webhook(
                         str(encounter_id), mon_id, int(time.time()),
-                        spawnid, lat, lon, int(despawn_time_unix)
+                        spawnid, lat, lon, int(despawn_time_unix),
+                        form=wild_mon['pokemon_data']['display']['form_value'],
+                        gender=wild_mon['pokemon_data']['display']['gender_value'],
+                        boosted_weather=wild_mon['pokemon_data']['display']['weather_boosted_value']
                     )
 
                 mon_args.append(
