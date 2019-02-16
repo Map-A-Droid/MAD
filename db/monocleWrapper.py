@@ -613,12 +613,8 @@ class MonocleWrapper(DbWrapperBase):
                     pokemon_data.get("weight"),
                     encounter_id
             )
-
             self.execute(query_update, vals, commit=True)
-
-
         else:
-
             despawn_time = datetime.now() + timedelta(seconds=300)
             despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
             despawn_time = datetime.utcfromtimestamp(
@@ -646,13 +642,8 @@ class MonocleWrapper(DbWrapperBase):
                                                                                           pokemon_data["id"],
                                                                                           latitude, longitude,
                                                                                           despawn_time))
-            
-
 
             s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(latitude, longitude, level=10)
-
-
-
             vals = (
                 pokemon_data["id"],
                 int(wild_pokemon.get("spawnpoint_id"), 16),
@@ -672,8 +663,7 @@ class MonocleWrapper(DbWrapperBase):
                 pokemon_level,
                 pokemon_data.get("weight"),
             )
-
-            self.execute(query, vals, commit=True)
+            self.execute(query_insert, vals, commit=True)
 
         self.webhook_helper.send_pokemon_webhook(
             encounter_id=encounter_id,
