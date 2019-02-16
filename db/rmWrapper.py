@@ -646,11 +646,11 @@ class RmWrapper(DbWrapperBase):
             encounter_id = encounter_id + 2**64
 
         if init:
-            log.info("{0}: updating IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
+            log.info("{0}: updating mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
                 str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
             )
         else:
-            log.info("{0}: updating IV mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
+            log.info("{0}: updating mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
                 str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
             )
 
@@ -877,7 +877,7 @@ class RmWrapper(DbWrapperBase):
                     raidendSec = 0
                     last_modified_ts = gym['last_modified_timestamp_ms']/1000
                     last_modified = datetime.utcfromtimestamp(last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
-
+                    
                     if gym['gym_details']['has_raid']:
                         raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
 
