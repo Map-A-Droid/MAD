@@ -611,10 +611,10 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query_get_count, vals_get_count)
         mon_exists = res[0]
         mon_exists = ",".join(map(str, mon_exists))
-        log.info('Found %s mon entries' % str(mon_exists))
+        log.debug('Found %s mon entries' % str(mon_exists))
 
         if int(mon_exists) > 0:
-            log.info("{0}: updating mon with id #{1} at {2}, {3}"
+            log.info("{0}: updating IV mon with id #{1} at {2}, {3}"
                      .format(str(origin), pokemon_data['id'], latitude, longitude))
             vals = (
                     now,
@@ -631,13 +631,13 @@ class MonocleWrapper(DbWrapperBase):
             self.execute(query_update, vals, commit=True)
         else:
             if init:
-                log.info("{0}: adding mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
+                log.info("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
                                                                                       str(origin),
                                                                                       pokemon_data["id"],
                                                                                       latitude, longitude,
                                                                                       despawn_time))
             else:
-                log.info("{0}: adding mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
+                log.info("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
                                                                                           str(origin),
                                                                                           pokemon_data["id"],
                                                                                           latitude, longitude,
@@ -716,7 +716,7 @@ class MonocleWrapper(DbWrapperBase):
                 res = self.execute(query_get_count, vals_get_count)
                 mon_exists = res[0]
                 mon_exists = ",".join(map(str, mon_exists))
-                log.info('Found %s mon entries' % str(mon_exists))
+                log.debug('Found %s mon entries' % str(mon_exists))
 
                 if int(mon_exists) > 0:
                     log.info("{0}: updating mon with id #{1} at {2}, {3}"
