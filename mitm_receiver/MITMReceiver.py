@@ -164,4 +164,4 @@ class MITMReceiver(object):
             elif type == 4:
                 self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
             elif type == 2:
-                self.__mitm_mapper._playername[origin]._gen_player_name(data["payload"])
+                self.__mitm_mapper._playername[origin]._gen_player_data(data["payload"])
