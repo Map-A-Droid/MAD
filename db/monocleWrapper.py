@@ -591,6 +591,21 @@ class MonocleWrapper(DbWrapperBase):
         if pokemon_display is None:
             pokemon_display = {}
 
+        despawn_time = datetime.now() + timedelta(seconds=300)
+        despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
+        despawn_time = datetime.utcfromtimestamp(
+            time.mktime(despawn_time.timetuple())
+        ).strftime('%Y-%m-%d %H:%M:%S')
+        init = True
+        getdetspawntime = self.get_detected_endtime(int(str(wild_pokemon["spawnpoint_id"]), 16))
+
+        if getdetspawntime:
+            despawn_time_unix = self._gen_endtime(getdetspawntime)
+            despawn_time = datetime.utcfromtimestamp(
+                despawn_time_unix
+            ).strftime('%Y-%m-%d %H:%M:%S')
+            init = False
+
         query_get_count = "SELECT count(*) from sightings where encounter_id = %s"
         vals_get_count = (encounter_id,)
         res = self.execute(query_get_count, vals_get_count)
@@ -614,21 +629,6 @@ class MonocleWrapper(DbWrapperBase):
             )
             self.execute(query_update, vals, commit=True)
         else:
-            despawn_time = datetime.now() + timedelta(seconds=300)
-            despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
-            despawn_time = datetime.utcfromtimestamp(
-                time.mktime(despawn_time.timetuple())
-            ).strftime('%Y-%m-%d %H:%M:%S')
-            init = True
-            getdetspawntime = self.get_detected_endtime(int(str(wild_pokemon["spawnpoint_id"]), 16))
-
-            if getdetspawntime:
-                despawn_time_unix = self._gen_endtime(getdetspawntime)
-                despawn_time = datetime.utcfromtimestamp(
-                    despawn_time_unix
-                ).strftime('%Y-%m-%d %H:%M:%S')
-                init = False
-
             if init:
                 log.info("{0}: adding mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
                                                                                       str(origin),
