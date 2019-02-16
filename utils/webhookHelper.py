@@ -1,10 +1,12 @@
 import asyncio
 import functools
 import json
+import os
 
 import logging
 from threading import current_thread, Event, Thread
-from utils.questGen import generate_quest 
+from utils.questGen import generate_quest
+from utils.language import open_json_file
 
 import requests
 from s2sphere import Cell, CellId, LatLng
@@ -17,12 +19,12 @@ raid_webhook_payload = """[{{
         "longitude": {lon},
         "level": {lvl},
         "pokemon_id": "{poke_id}",
-        "team": {team},
+        "team_id": {team},
         "cp": "{cp}",
         "move_1": {move_1},
         "move_2": {move_2},
-        "raid_begin": {hatch_time},
-        "raid_end": {end},
+        "start": {hatch_time},
+        "end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
         "url": "{url}",
@@ -38,19 +40,20 @@ egg_webhook_payload = """[{{
         "latitude": {lat},
         "longitude": {lon},
         "level": {lvl},
-        "team": {team},
-        "raid_begin": {hatch_time},
-        "raid_end": {end},
+        "team_id": {team},
+        "start": {hatch_time},
+        "end": {end},
         "gym_id": "{ext_id}",
         "name": "{name_id}",
         "url": "{url}",
+        "pokemon_id": 0,
         "sponsor": "{sponsor}",
         "weather": "{weather}",
         "park": "{park}"
       }},
       "type": "{type}"
    }} ]"""
-            
+
 quest_webhook_payload = """[{{
       "message": {{
                 "pokestop_id": "{pokestop_id}",
@@ -67,13 +70,14 @@ quest_webhook_payload = """[{{
                 "timestamp": "{timestamp}",
                 "quest_reward_type": "{quest_reward_type}",
                 "quest_reward_type_raw": "{quest_reward_type_raw}",
-                "quest_target": "{quest_target}"
-                
+                "quest_target": "{quest_target}",
+                "quest_task": "{quest_task}",
+                "quest_condition": "{quest_condition}"
         }},
       "type": "quest"
-   }} ]"""            
-            
-            
+   }} ]"""
+
+
 weather_webhook_payload = """[{{
       "message": {{
                 "s2_cell_id": {0},
@@ -105,7 +109,8 @@ gym_webhook_payload = """[{{
     "total_cp": {total_cp},
     "enabled": "True",
     "latitude": {latitude},
-    "longitude": {longitude}
+    "longitude": {longitude},
+    "last_modified": {last_modified}
   }},
   "type": "gym"
 }}]"""
@@ -115,8 +120,7 @@ class WebhookHelper(object):
     def __init__(self, args):
         self.__application_args = args
         self.pokemon_file = None
-        with open('pokemon.json') as j:
-            self.pokemon_file = json.load(j)
+        self.pokemon_file = open_json_file('pokemon')
         self.gyminfo = None
 
         self.loop = None
@@ -232,17 +236,17 @@ class WebhookHelper(object):
 
     def submit_quest_webhook(self, rawquest):
         if self.__application_args.webhook:
-            self.__add_task_to_loop(self._submit_quest_webhook(rawquest))                                                             
-    
+            self.__add_task_to_loop(self._submit_quest_webhook(rawquest))
+
 
     def send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id, slots_available, guard_pokemon_id,
-                         latitude, longitude):
+                         latitude, longitude, last_modified):
         if self.__application_args.webhook and self.__application_args.gym_webhook:
             self.__add_task_to_loop(self._send_gym_webhook(gym_id, raid_active_until, gym_name, team_id,
-                                    slots_available, guard_pokemon_id, latitude, longitude))
+                                    slots_available, guard_pokemon_id, latitude, longitude, last_modified))
 
     async def _send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id,
-                                slots_available, guard_pokemon_id, latitude, longitude):
+                                slots_available, guard_pokemon_id, latitude, longitude, last_modified):
         info_of_gym = self.gyminfo.get(gym_id, None)
         gym_url = 'unknown'
         gym_description = 'unknown'
@@ -266,7 +270,8 @@ class WebhookHelper(object):
             lowest_pokemon_motivation=0,
             total_cp=0,
             latitude=latitude,
-            longitude=longitude
+            longitude=longitude,
+            last_modified=last_modified
         )
 
         payload = json.loads(payload_raw)
@@ -480,17 +485,17 @@ class WebhookHelper(object):
 
         if boosted_weather is not None:
             mon_payload["boosted_weather"] = boosted_weather
-            
+
         entire_payload = {"type": "pokemon", "message": mon_payload}
         to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
         to_be_sent = plain_webhook.format(plain=to_be_sent)
         to_be_sent = json.loads(to_be_sent)
 
         self.__sendToWebhook(to_be_sent)
-        
+
     async def _submit_quest_webhook(self, rawquest):
         log.info('Sending Quest to webhook')
-        
+
         for pokestopid in rawquest:
             quest = generate_quest(rawquest[str(pokestopid)])
 
@@ -509,7 +514,9 @@ class WebhookHelper(object):
             quest_target=quest['quest_target'],
             pokemon_id=quest['pokemon_id'],
             item_amount=quest['item_amount'],
-            item_id=quest['item_id'])
+            item_id=quest['item_id'],
+            quest_task=quest['quest_task'],
+            quest_condition=quest['quest_condition'])
 
         payload = json.loads(data)
         self.__sendToWebhook(payload)
