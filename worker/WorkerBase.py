@@ -298,8 +298,9 @@ class WorkerBase(ABC):
 
     async def _update_position_file(self):
         log.debug("Updating .position file")
-        with open(self._id + '.position', 'w') as outfile:
-            outfile.write(str(self.current_location.lat) + ", " + str(self.current_location.lng))
+        if self.current_location is not None:
+            with open(self._id + '.position', 'w') as outfile:
+                outfile.write(str(self.current_location.lat) + ", " + str(self.current_location.lng))
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
         try:
