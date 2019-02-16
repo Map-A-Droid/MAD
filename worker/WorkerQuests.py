@@ -61,8 +61,8 @@ class WorkerQuests(MITMBase):
         if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
             return False, False
 
-        distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(self.last_location.lng),
+        distance = get_distance_of_two_points_in_meters(float(self.last_processed_location.lat),
+                                                        float(self.last_processed_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
         log.info('main: Moving %s meters to the next position' % distance)
@@ -107,6 +107,7 @@ class WorkerQuests(MITMBase):
             delay_used = self._devicesettings.get('post_walk_delay', 7)
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
+        self.last_processed_location = self.current_location
         return cur_time, True
 
     def _post_move_location_routine(self, timestamp):

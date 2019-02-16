@@ -558,7 +558,6 @@ class MonocleWrapper(DbWrapperBase):
         if wild_pokemon is None:
             return
 
-
         query_insert = (
             "INSERT sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
             "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id, "
@@ -771,7 +770,7 @@ class MonocleWrapper(DbWrapperBase):
                         )
                     )
 
-        self.executemany(query_mons, mon_vals_update, commit=True)
+        self.executemany(query_mons_update, mon_vals_update, commit=True)
         self.executemany(query_mons_insert, mon_vals_insert, commit=True)
         return True
 

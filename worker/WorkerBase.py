@@ -55,6 +55,7 @@ class WorkerBase(ABC):
         if self.current_location is None:
             self.current_location = Location(0.0, 0.0)
         self.last_location = Location(0.0, 0.0)
+        self.last_processed_location = Location(0.0, 0.0)
         
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
@@ -363,15 +364,11 @@ class WorkerBase(ABC):
                     # TODO: stop after X attempts
 
     def _check_location_is_valid(self):
-        if self.current_location is None and not self._timer.get_switch:
-            log.info('Sleeping - Route is finished and no Switchtimer is set')
-            while True:
+        if self.current_location is None:
+            log.info('Current Location is None')
+            while self._timer.get_switch():
                 log.info('Sleeping - Route is finished')
-                time.sleep(120)
-        elif self.current_location is None and self._timer.get_switch:
-            log.info('Route is finished and Switchtimer is set - breakup switching')
-            self._timer.breakup_switch()
-            return False
+                time.sleep(30)
         elif self.current_location is not None:
             log.debug('Coords are valid')
             return True
