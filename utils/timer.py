@@ -63,7 +63,7 @@ class Timer(object):
                 log.info('[%s] - Switching Mode' % str(self._id))
                 self.set_switch(True)
 
-                while self.get_switch() and not self.__stop_switchtimer.is_set():
+                while self.get_switch():
                     tmNow = datetime.datetime.now()
                     log.info("[%s] - Currently in switchmode" % str(self._id))
                     if tmNow >= tmTil:
@@ -71,5 +71,7 @@ class Timer(object):
                             '[%s] - Switching back - here we go ...' % str(self._id))
                         self.set_switch(False)
                         break
+                    if self.__stop_switchtimer.is_set():
+                        return
                     time.sleep(30)
             time.sleep(30)
