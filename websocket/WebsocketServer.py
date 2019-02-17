@@ -340,7 +340,10 @@ class WebsocketServer(object):
             log.debug("Received answer in time, popping response")
             self.__reset_fail_counter(id)
             result = self.__pop_response(message_id)
-            log.debug("Response: %s" % str(result))
+            if isinstance(result, str):
+                log.debug("Response to %s: %s" % (str(id), str(result)))
+            else:
+                log.debug("Received binary data to %s, starting with %s" % (str(id), str(result[:10])))
         else:
             # timeout reached
             log.warning("Timeout, increasing timeout-counter")
@@ -352,7 +355,6 @@ class WebsocketServer(object):
                 self.clean_up_user(id)
                 raise WebsocketWorkerTimeoutException
 
-        log.debug("Returning response to %s: %s" % (str(id), str(result)))
         self.__remove_request(message_id)
         return result
 
