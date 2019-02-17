@@ -1020,9 +1020,10 @@ class RmWrapper(DbWrapperBase):
             "FROM pokemon "
             "WHERE individual_attack IS NULL AND individual_defense IS NULL AND individual_stamina IS NULL "
             "AND encounter_id != 0 "
-            "AND TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) >= %s "
+            "and (disappear_time BETWEEN UTC_TIMESTAMP() and DATE_ADD(UTC_TIMESTAMP(), INTERVAL %s SECOND)) "
             "ORDER BY expire ASC"
         )
+
         vals = (
             int(min_time_left_seconds),
         )
