@@ -1,7 +1,8 @@
 import logging
 from threading import Lock
-from utils.stats import PlayerStats
+
 from utils.stats import PlayerData
+from utils.stats import PlayerStats
 
 log = logging.getLogger(__name__)
 

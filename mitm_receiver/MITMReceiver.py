@@ -105,7 +105,7 @@ class MITMReceiver(object):
         timestamp = int(math.floor(time.time()))
         self.__mitm_mapper.update_latest(origin, timestamp=timestamp, key=type, values_dict=data)
         self._data_queue.put(
-                (timestamp, data, origin)
+            (timestamp, data, origin)
         )
         return None
 
