@@ -174,8 +174,9 @@ class WebhookHelper(object):
         if webhookType == "quest":
             webhooksType = self.__application_args.quest_webhook_url.split(',')
 
-        webhooks = webhooks + webhooksType
+        webhooks = webhooks + webhooksType            
         webhooks = list(set(webhooks))
+        webhooks = filter(None, webhooks)
 
         log.info(webhooks)
 
