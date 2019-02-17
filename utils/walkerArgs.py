@@ -155,19 +155,19 @@ def parseArgs():
                         help='URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
-    parser.add_argument('-pwhurl', '--pokemon_webhook_url', action='store_true', default=False,
+    parser.add_argument('-pwhurl', '--pokemon_webhook_url', default='',
                         help='URL endpoint/s for only pokemon webhooks (seperated by commas) - urls have to start with http*')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
                         help='Activate weather webhook support')
-    parser.add_argument('-wwhurl', '--weather_webhook_url', action='store_true', default=False,
+    parser.add_argument('-wwhurl', '--weather_webhook_url', default='',
                         help='URL endpoint/s for only weather webhooks (seperated by commas) - urls have to start with http*')
     parser.add_argument('-qwh', '--quest_webhook', action='store_true', default=False,
                         help='Activate quest webhook support')
-    parser.add_argument('-qwhurl', '--quest_webhook_url', action='store_true', default=False,
+    parser.add_argument('-qwhurl', '--quest_webhook_url', default='',
                         help='URL endpoint/s for only quest webhooks (seperated by commas) - urls have to start with http*')
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
                         help='Activate gym webhook support')    
-    parser.add_argument('-gwhurl', '--gym_webhook_url', action='store_true', default=False,
+    parser.add_argument('-gwhurl', '--gym_webhook_url', default='',
                         help='URL endpoint/s for only gym webhooks (seperated by commas) - urls have to start with http*')
 
     # weather

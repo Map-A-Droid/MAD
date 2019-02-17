@@ -177,6 +177,8 @@ class WebhookHelper(object):
         webhooks = webhooks + webhookType
         webhooks = list(set(webhooks))
 
+        log.info(webhooks)
+
         for webhook in webhooks:
             url = webhook.strip()
 
