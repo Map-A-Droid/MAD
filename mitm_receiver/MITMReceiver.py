@@ -148,7 +148,6 @@ class MITMReceiver(object):
                     self._db_wrapper.submit_mons_map_proto(origin, data["payload"], mon_ids_iv)
                 except Exception as e:
                     log.error("Issue updating DB: %s" % str(e))
-
             elif type == 102:
                 # process Encounter
                 playerlevel = self.__mitm_mapper._playerstats[origin].get_level()
@@ -170,3 +169,6 @@ class MITMReceiver(object):
                 # process GetPlayer
                 log.info("Processing GetPlayer received from %s at %s" % (str(origin), str(received_timestamp)))
                 self.__mitm_mapper._playerdata[origin]._gen_player_data(data["payload"])
+            else:
+                # Other received type
+                log.debug("Unknown received type: %s" % (str(type)))
