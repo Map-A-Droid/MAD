@@ -128,7 +128,8 @@ def merge_results(arr_original, arr_first, arr_second):
         return arr_first
 
 
-def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=1, init_temp=100, halt=120, markov_coefficient=10):
+def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=1, init_temp=100, halt=120,
+                 markov_coefficient=10):
     export_data = []
     if routefile is not None and os.path.isfile(routefile + '.calc'):
         log.info('Found existing Routefile')

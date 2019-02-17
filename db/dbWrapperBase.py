@@ -64,10 +64,10 @@ class DbWrapperBase(ABC):
         :param commit: whether to commit
         :return: if commit, return None, else, return result
         """
-        # get connection form connection pool instead of create one.
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
         cursor = conn.cursor()
+
         # TODO: consider catching OperationalError
         # try:
         #     cursor = conn.cursor()
@@ -75,21 +75,24 @@ class DbWrapperBase(ABC):
         #     log.error("OperationalError trying to acquire a DB cursor: %s" % str(e))
         #     conn.rollback()
         #     return None
-        if args:
-            cursor.execute(sql, args)
-        else:
-            cursor.execute(sql)
-        if commit is True:
-            affected_rows = cursor.rowcount
-            conn.commit()
+        try:
+            if args:
+                cursor.execute(sql, args)
+            else:
+                cursor.execute(sql)
+            if commit is True:
+                affected_rows = cursor.rowcount
+                conn.commit()
+                return affected_rows
+            else:
+                res = cursor.fetchall()
+                return res
+        except mysql.connector.Error as err:
+            log.error("Failed executing query: %s" % str(err))
+            return None
+        finally:
             self.close(conn, cursor)
             self.connection_semaphore.release()
-            return affected_rows
-        else:
-            res = cursor.fetchall()
-            self.close(conn, cursor)
-            self.connection_semaphore.release()
-            return res
 
     def executemany(self, sql, args, commit=False):
         """
@@ -104,18 +107,22 @@ class DbWrapperBase(ABC):
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
         cursor = conn.cursor()
-        cursor.executemany(sql, args)
 
-        if commit is True:
-            conn.commit()
-            self.close(conn, cursor)
-            self.connection_semaphore.release()
+        try:
+            cursor.executemany(sql, args)
+
+            if commit is True:
+                conn.commit()
+                return None
+            else:
+                res = cursor.fetchall()
+                return res
+        except mysql.connector.Error as err:
+            log.error("Failed executing query: %s" % str(err))
             return None
-        else:
-            res = cursor.fetchall()
+        finally:
             self.close(conn, cursor)
             self.connection_semaphore.release()
-            return res
 
     @abstractmethod
     def ensure_last_updated_column(self):
@@ -309,6 +316,10 @@ class DbWrapperBase(ABC):
 
     @abstractmethod
     def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
+        pass
+
+    @abstractmethod
+    def stop_from_db_without_quests(self, geofence_helper):
         pass
 
     def download_gym_infos(self):
@@ -863,14 +874,15 @@ class DbWrapperBase(ABC):
             task = questtask(int(quest_type), str(condition), int(target))
 
             query_quests = (
-                "INSERT into trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, quest_reward_type, "
-                "quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, quest_task) values "
-                "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+                "INSERT into trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
+                "quest_reward_type, quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, "
+                "quest_task) values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
                 "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
                 "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
                 "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
-                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), quest_condition=VALUES(quest_condition), "
-                "quest_reward=VALUES(quest_reward), quest_task=VALUES(quest_task)"
+                "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), "
+                "quest_condition=VALUES(quest_condition), quest_reward=VALUES(quest_reward), "
+                "quest_task=VALUES(quest_task)"
             )
             vals = (
                 fort_id, quest_type, time.time(), stardust, pokemon_id, rewardtype, item, itemamount, target,
@@ -888,6 +900,86 @@ class DbWrapperBase(ABC):
 
         return True
         
+    def create_status_database_if_not_exists(self):
+        log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
+
+        query = (' Create table if not exists trs_status (  '
+                 'origin VARCHAR(50) NOT NULL , '
+                 ' currentPos VARCHAR(50) NOT NULL, '
+                 ' lastPos VARCHAR(50) NOT NULL, '
+                 ' routePos INT(11) NOT NULL, '
+                 ' routeMax INT(11) NOT NULL, '
+                 ' routemanager VARCHAR(255) NOT NULL, '
+                 ' rebootCounter INT(11)  NOT NULL, '
+                 ' lastProtoDateTime VARCHAR(50) NOT NULL, '
+                 ' lastPogoRestart VARCHAR(50) NOT NULL, '
+                 ' init TEXT NOT NULL, '
+                 ' rebootingOption TEXT NOT NULL, '
+                 ' restartCounter TEXT NOT NULL, '
+                 ' PRIMARY KEY (origin))')
+
+
+        self.execute(query, commit=True)
+
+        return True
+
+    def save_status(self, data):
+        log.debug("dbWrapper::save_status")
+        log.debug(data)
+
+        query = (
+            "INSERT into trs_status (origin, currentPos, lastPos, routePos, routeMax, "
+            "routemanager, rebootCounter, lastProtoDateTime, lastPogoRestart, "
+            "init, rebootingOption, restartCounter) values "
+            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "ON DUPLICATE KEY UPDATE currentPos=VALUES(currentPos), "
+            "lastPos=VALUES(lastPos), routePos=VALUES(routePos), "
+            "routeMax=VALUES(routeMax), routemanager=VALUES(routemanager), "
+            "rebootCounter=VALUES(rebootCounter), lastProtoDateTime=VALUES(lastProtoDateTime), "
+            "lastPogoRestart=VALUES(lastPogoRestart), init=VALUES(init), "
+            "rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter)"
+        )
+        vals = (
+            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"], 
+            data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"], str(data["LastPogoRestart"]),
+            data["Init"], data["RebootingOption"], data["RestartCounter"]
+        )
+        self.execute(query, vals, commit=True)
+
+    def download_status(self):
+        log.debug("dbWrapper::download_status")
+        workerstatus = []
+
+        query = (
+            "SELECT origin, currentPos, lastPos, routePos, routeMax, "
+            "routemanager, rebootCounter, lastProtoDateTime, lastPogoRestart, "
+            "init, rebootingOption, restartCounter "
+            "FROM trs_status"
+        )
+
+        result = self.execute(query)
+        for (origin, currentPos, lastPos, routePos, routeMax, routemanager, \
+                rebootCounter, lastProtoDateTime, lastPogoRestart, init, rebootingOption, restartCounter) in result:
+            status = {
+                "origin": origin,
+                "currentPos": currentPos,
+                "lastPos": lastPos,
+                "routePos": routePos,
+                "routeMax": routeMax,
+                "routemanager": routemanager,
+                "rebootCounter": rebootCounter,
+                "lastProtoDateTime": str(lastProtoDateTime),
+                "lastPogoRestart": str(lastPogoRestart),
+                "init": init,
+                "rebootingOption": rebootingOption,
+                "restartCounter": restartCounter
+            }
+
+            workerstatus.append(status)
+
+        return str(json.dumps(workerstatus, indent=4, sort_keys=True))
+
+
     def check_column_exists(self, table, column):
         query = (
             "SELECT count(*) "

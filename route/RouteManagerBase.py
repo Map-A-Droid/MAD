@@ -6,7 +6,7 @@ import os
 import time
 import numpy as np
 from abc import ABC, abstractmethod
-from threading import Lock, Event, Thread
+from threading import Event, Thread, RLock
 from datetime import datetime
 
 from geofence.geofenceHelper import GeofenceHelper
@@ -34,7 +34,7 @@ class RouteManagerBase(ABC):
         self.mode = mode
 
         self._last_round_prio = False
-        self._manager_mutex = Lock()
+        self._manager_mutex = RLock()
         self._round_started_time = None
         if coords is not None:
             if init:
@@ -53,9 +53,9 @@ class RouteManagerBase(ABC):
         else:
             self.delay_after_timestamp_prio = None
             self.starve_route = False
-        if self.delay_after_timestamp_prio is not None or mode == "iv_mitm":
+        if (self.delay_after_timestamp_prio is not None or mode == "iv_mitm") and not mode == "pokestops":
             self._prio_queue = []
-            if mode != "iv_mitm":
+            if mode not in ["iv_mitm", "pokestops"]:
                 self.clustering_helper = ClusteringHelper(self._max_radius,
                                                           self._max_coords_within_radius,
                                                           self._cluster_priority_queue_criteria())
@@ -103,9 +103,12 @@ class RouteManagerBase(ABC):
                                  routefile=routefile)
         return new_route
 
-    def recalc_route(self, max_radius, max_coords_within_radius, num_procs=1, delete_old_route=False):
+    def recalc_route(self, max_radius, max_coords_within_radius, num_procs=1, delete_old_route=False, nofile=False):
         current_coords = self._coords_unstructured
-        routefile = self._routefile
+        if nofile:
+            routefile = None
+        else:
+            routefile = self._routefile
         new_route = RouteManagerBase.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
                                                          routefile, delete_old_route, num_procs)
         self._manager_mutex.acquire()
@@ -114,6 +117,8 @@ class RouteManagerBase(ABC):
         self._manager_mutex.release()
 
     def _update_priority_queue_loop(self):
+        if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:
+            return
         while not self._stop_update_thread.is_set():
             # retrieve the latest hatches from DB
             # newQueue = self._db_wrapper.get_next_raid_hatches(self._delayAfterHatch, self._geofenceHelper)
@@ -165,6 +170,22 @@ class RouteManagerBase(ABC):
     def _get_coords_post_init(self):
         """
         Return list of coords to be fetched and used for routecalc
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def _recalc_route_workertype(self):
+        """
+        Return a new route for worker
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def _get_coords_after_finish_route(self):
+        """
+        Return list of coords to be fetched after finish a route
         :return:
         """
         pass
@@ -247,12 +268,14 @@ class RouteManagerBase(ABC):
                     log.info("Round of route %s reached the first spot again. It took %s"
                              % (str(self.name), str(self._get_round_finished_string())))
                 self._round_started_time = datetime.now()
+                if len(self._route) == 0: return None
                 log.info("Round of route %s started at %s" % (str(self.name), str(self._round_started_time)))
 
             # continue as usual
-            log.info("Moving on with location %s" % self._route[self._current_index_of_route])
-            next_lat = self._route[self._current_index_of_route]['lat']
-            next_lng = self._route[self._current_index_of_route]['lng']
+            if self._current_index_of_route < len(self._route):
+                log.info("Moving on with location %s" % self._route[self._current_index_of_route])
+                next_lat = self._route[self._current_index_of_route]['lat']
+                next_lng = self._route[self._current_index_of_route]['lng']
             self._current_index_of_route += 1
             if self.init and self._current_index_of_route >= len(self._route):
                 self._init_mode_rounds += 1
@@ -261,19 +284,29 @@ class RouteManagerBase(ABC):
                 # we are done with init, let's calculate a new route
                 log.warning("Init of %s done, it took %s, calculating new route..."
                             % (str(self.name), self._get_round_finished_string()))
-                self._manager_mutex.release()
                 self.clear_coords()
                 coords = self._get_coords_post_init()
                 log.debug("Setting %s coords to as new points in route of %s"
                           % (str(len(coords)), str(self.name)))
                 self.add_coords_list(coords)
                 log.debug("Route of %s is being calculated" % str(self.name))
-                self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
+                self._recalc_route_workertype()
                 self.init = False
                 self.change_init_mapping(self.name)
+                self._manager_mutex.release()
                 return self.get_next_location()
-            elif self._current_index_of_route >= len(self._route):
+            elif self._current_index_of_route > len(self._route):
                 self._current_index_of_route = 0
+                coords_after_round = self._get_coords_after_finish_route()
+                # TODO: check isinstance list?
+                if coords_after_round is not None:
+                    self.clear_coords()
+                    coords = coords_after_round
+                    self.add_coords_list(coords)
+                    self._recalc_route_workertype()
+                    if len(self._route) == 0: return None
+                self._manager_mutex.release()
+                return self.get_next_location()
             self._last_round_prio = False
         log.info("%s done grabbing next coord, releasing lock and returning location: %s, %s"
                  % (str(self.name), str(next_lat), str(next_lng)))
@@ -291,7 +324,7 @@ class RouteManagerBase(ABC):
         self._manager_mutex.release()
 
     def change_init_mapping(self, name_area):
-        with open('mappings.json') as f:
+        with open('config/mappings.json') as f:
             vars = json.load(f)
 
         for var in vars['areas']:
@@ -302,4 +335,6 @@ class RouteManagerBase(ABC):
             json.dump(vars, outfile, indent=4, sort_keys=True)
             
     def get_route_status(self):
-        return self._current_index_of_route, len(self._route)
+        if self._route:
+            return self._current_index_of_route, len(self._route)
+        return self._current_index_of_route, self._current_index_of_route

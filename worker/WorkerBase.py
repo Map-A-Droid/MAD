@@ -8,13 +8,11 @@ import datetime
 from abc import ABC, abstractmethod
 from multiprocessing.pool import ThreadPool
 from threading import Event, Thread, current_thread, Lock
-import json
 
 from utils.hamming import hamming_distance as hamming_dist
 from utils.madGlobals import WebsocketWorkerRemovedException, InternalStopWorkerException, \
     WebsocketWorkerTimeoutException
 from utils.resolution import Resocalculator
-from utils.status import set_status
 from websocket.communicator import Communicator
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -37,11 +35,8 @@ class WorkerBase(ABC):
         self.loop = None
         self.loop_started = Event()
         self.loop_tid = None
+        self._async_io_looper_thread = None
         self._location_count = 0
-        self._data_error_counter = 0
-        self._reboot_count = 0
-        self._restart_count = 0
-        self._rec_data_time = ""
         self._timer = timer
 
         self._lastScreenshotTaken = 0
@@ -54,12 +49,13 @@ class WorkerBase(ABC):
         self._resocalc = Resocalculator
         self._screen_x = 0
         self._screen_y = 0
-        self._lastStart = 0
+        self._lastStart = ""
 
         self.current_location = self._last_known_state.get("last_location", None)
         if self.current_location is None:
             self.current_location = Location(0.0, 0.0)
         self.last_location = Location(0.0, 0.0)
+        self.last_processed_location = Location(0.0, 0.0)
         
         if not NoOcr:
             from ocr.pogoWindows import PogoWindows
@@ -162,6 +158,7 @@ class WorkerBase(ABC):
         while not self._stop_worker_event.isSet():
             time.sleep(1)
         t_main_work.join()
+        log.info("Worker %s stopping gracefully" % str(self._id))
         # async_result.get()
         return self._last_known_state
 
@@ -182,9 +179,9 @@ class WorkerBase(ABC):
             return
         self._work_mutex.release()
 
-        t_asyncio_loop = Thread(name=str(self._id) + '_asyncio_' + self._id, target=self._start_asyncio_loop)
-        t_asyncio_loop.daemon = True
-        t_asyncio_loop.start()
+        self._async_io_looper_thread = Thread(name=str(self._id) + '_asyncio_' + self._id, target=self._start_asyncio_loop)
+        self._async_io_looper_thread.daemon = False
+        self._async_io_looper_thread.start()
 
         self.loop_started.wait()
         self._pre_work_loop()
@@ -199,7 +196,6 @@ class WorkerBase(ABC):
         if self._devicesettings.get("restart_pogo", 80) > 0:
             # log.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
             # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
-            self._location_count += 1
             if self._location_count > self._devicesettings.get("restart_pogo", 80):
                 log.error(
                     "scanned " + str(self._devicesettings.get("restart_pogo", 80)) + " locations, restarting pogo")
@@ -214,10 +210,21 @@ class WorkerBase(ABC):
         return pogo_started
 
     def _internal_cleanup(self):
+        # set the event just to make sure - in case of exceptions for example
+        self._stop_worker_event.set()
+        log.info("Internal cleanup of %s started" % str(self._id))
         self._cleanup()
+        log.info("Internal cleanup of %s signalling end to websocketserver" % str(self._id))
         self._communicator.cleanup_websocket()
         # self.stop_worker()
-        self.loop.call_soon_threadsafe(self.loop.stop)
+        if self._async_io_looper_thread is not None:
+            log.info("Stopping worker's asyncio loop")
+            self.loop.call_soon_threadsafe(self.loop.stop)
+            self._async_io_looper_thread.join()
+        if self._timer is not None:
+            log.info("Stopping switch timer")
+            self._timer.stop_switch()
+        log.info("Internal cleanup of %s finished" % str(self._id))
 
     def _main_work_thread(self):
         # TODO: signal websocketserver the removal
@@ -256,6 +263,16 @@ class WorkerBase(ABC):
                 break
 
             try:
+                log.debug('Checking if new location is valid')
+                valid = self._check_location_is_valid()
+                if not valid:
+                    break
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
+                    as e:
+                log.warning("Worker %s get non valid coords!" % str(self._id))
+                break
+
+            try:
                 self._pre_location_update()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
@@ -277,7 +294,7 @@ class WorkerBase(ABC):
                 break
                 
             if process_location:
-
+                self._location_count += 1
                 if self._applicationArgs.last_scanned:
                     log.info('main: Set new scannedlocation in Database')
                     # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
@@ -297,8 +314,9 @@ class WorkerBase(ABC):
 
     async def _update_position_file(self):
         log.debug("Updating .position file")
-        with open(self._id + '.position', 'w') as outfile:
-            outfile.write(str(self.current_location.lat) + ", " + str(self.current_location.lng))
+        if self.current_location is not None:
+            with open(self._id + '.position', 'w') as outfile:
+                outfile.write(str(self.current_location.lat) + ", " + str(self.current_location.lng))
 
     async def update_scanned_location(self, latitude, longitude, timestamp):
         try:
@@ -344,6 +362,16 @@ class WorkerBase(ABC):
                 while not self._restart_pogo():
                     log.warning("failed starting pogo")
                     # TODO: stop after X attempts
+
+    def _check_location_is_valid(self):
+        if self.current_location is None:
+            log.info('Current Location is None')
+            while self._timer.get_switch():
+                log.info('Sleeping - Route is finished')
+                time.sleep(30)
+        elif self.current_location is not None:
+            log.debug('Coords are valid')
+            return True
 
     def _turn_screen_on_and_start_pogo(self):
         if not self._communicator.isScreenOn():
@@ -666,53 +694,7 @@ class WorkerBase(ABC):
             attempts += 1
         log.debug("getToRaidscreen: done")
         return True
-        
-    def _open_gym(self, delayadd):
-        log.debug('{_open_gym} called')
-        time.sleep(1)
-        x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
-        log.debug('{_open_gym} called')
-        return
-        
-    def _spin_wheel(self, delayadd):
-        log.debug('{_spin_wheel} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
-        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
-        return 
-        
-    def _close_gym(self, delayadd):
-        log.debug('{_close_gym} called')
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
-        log.debug('{_close_gym} called')
-        
-    def _turn_map(self, delayadd):
-        log.debug('{_turn_map} called')
-        x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], self._resocalc.get_gym_spin_coords(self)[2]
-        self._communicator.swipe(int(x1), int(y), int(x2), int(y))
-        time.sleep(int(delayadd))
-        log.debug('{_turn_map} called')
-        return
-        
-    def _clear_quests(self, delayadd):
-        log.debug('{_clear_quests} called')
-        time.sleep(4 + int(delayadd))
-        x, y = self._resocalc.get_coords_quest_menu(self)[0], self._resocalc.get_coords_quest_menu(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(2 + int(delayadd))
-        x, y = self._resocalc.get_delete_quest_coords(self)[0], self._resocalc.get_delete_quest_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
-        x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], self._resocalc.get_confirm_delete_quest_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(.5 + int(delayadd))
-        x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        log.debug('{_clear_quests} finished')
-        return
+
 
     def _get_screen_size(self):
         screen = self._communicator.getscreensize().split(' ')
@@ -720,32 +702,3 @@ class WorkerBase(ABC):
         self._screen_y = screen[1]
         log.debug('Get Screensize of %s: X: %s, Y: %s' % (str(self._id), str(self._screen_x), str(self._screen_y)))
         self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y)
-        
-    def worker_stats(self):
-        routemanager = self._get_currently_valid_routemanager()
-        log.debug('===============================')
-        log.debug('Worker Stats')
-        log.debug('Origin: %s' % str(self._id))
-        log.debug('Routemanager: %s' % str(routemanager.name))
-        log.debug('Error Counter: %s' % str(self._data_error_counter))
-        log.debug('Re-start/boot Counter: %s' % str(self._restart_count))
-        log.debug('Reboot Option: %s' % str(self._devicesettings.get("reboot", False)))
-        log.debug('Current Pos: %s %s' % (str(self.current_location.lat),
-                                                        str(self.current_location.lng)))
-        log.debug('Last Pos: %s %s' % (str(self.last_location.lat),
-                                                        str(self.last_location.lng)))
-        log.debug('Route Pos: %s - Route Length: %s ' % (str(routemanager.get_route_status()[0]),
-                                                        str(routemanager.get_route_status()[1])))
-        log.debug('Init Mode: %s' % str(routemanager.init))
-        log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
-        log.debug('Last Restart: %s' % str(self._lastStart))
-        log.debug('===============================')
-        try:        
-            set_status(self._id, {'Routemanager': str(routemanager.name), 'ErrorCounter': str(self._data_error_counter) , 'RestartCounter': str(self._restart_count),
-                              'RebootingOption': str(self._devicesettings.get("reboot", False)),'CurrentPos': (str(self.last_location.lat),
-                               str(self.last_location.lng)), 'RoutePos': str(routemanager.get_route_status()[0]) , 
-                               'RouteMax': str(routemanager.get_route_status()[1]), 'Init': str(routemanager.init), 
-                               'LastProtoDateTime': str(self._rec_data_time), 'lastPogoRestart': str(self._lastStart)})
-        except:
-            log.info('Json error')
-    

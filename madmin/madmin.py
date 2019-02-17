@@ -995,6 +995,20 @@ def addnew():
     return render_template('sel_type.html', line=line, title="Type selector")
 
 
+@app.route('/status', methods=['GET'])
+@auth_required
+def status():
+    return render_template('status.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="Worker status")
+
+
+@app.route('/get_status', methods=['GET'])
+@auth_required
+def get_status():
+    data = json.loads(db_wrapper.download_status())
+
+    return jsonify(data)
+
+
 def decodeHashJson(hashJson):
     data = json.loads(hashJson)
     raidGym = data['gym']
