@@ -158,10 +158,15 @@ class MITMReceiver(object):
                 else:
                     log.error('Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
+                # process FortSearch
                 self._db_wrapper.submit_quest_proto(data["payload"])
             elif type == 104:
+                # process FortDetails
                 self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
             elif type == 4:
+                # process GetHoloInventory
                 self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
             elif type == 2:
+                # process GetPlayer
+                log.info("Processing GetPlayer received from %s at %s" % (str(origin), str(received_timestamp)))
                 self.__mitm_mapper._playerdata[origin]._gen_player_data(data["payload"])
