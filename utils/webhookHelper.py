@@ -159,8 +159,23 @@ class WebhookHelper(object):
     def __stop_loop(self):
         self.loop.call_soon_threadsafe(self.loop.stop)
 
-    def __sendToWebhook(self, payload):
+    def __sendToWebhook(self, payload, webhookType):
         webhooks = self.__application_args.webhook_url.split(',')
+        webhooksType = []
+
+        if webhookType == "gym":
+            webhooksType = self.__application_args.gym_webhook_url.split(',')
+        #if webhookType == "raid":
+        #    webhooksType = self.__application_args.webhook_url.split(',')
+        if webhookType == "weather":
+            webhooksType = self.__application_args.weather_webhook_url.split(',')
+        if webhookType == "pokemon":
+            webhooksType = self.__application_args.pokemon_webhook_url.split(',')
+        if webhookType == "quest":
+            webhooksType = self.__application_args.quest_webhook_url.split(',')
+
+        webhooks = webhooks + webhookType
+        webhooks = list(set(webhooks))
 
         for webhook in webhooks:
             url = webhook.strip()
@@ -275,7 +290,7 @@ class WebhookHelper(object):
         )
 
         payload = json.loads(payload_raw)
-        self.__sendToWebhook(payload)
+        self.__sendToWebhook(payload, "gym")
 
     async def _send_raid_webhook(self, gymid, type, start, end, lvl, mon,
                                  team_param=None, cp_param=None, move1_param=None, move2_param=None,
@@ -410,7 +425,7 @@ class WebhookHelper(object):
             )
 
         payload = json.loads(payload_raw)
-        self.__sendToWebhook(payload)
+        self.__sendToWebhook(payload, "raid")
 
     async def _send_weather_webhook(self, s2cellId, weatherId, severe, warn, day, time):
         if self.__application_args.weather_webhook:
@@ -430,7 +445,7 @@ class WebhookHelper(object):
 
             log.debug(data)
             payload = json.loads(data)
-            self.__sendToWebhook(payload)
+            self.__sendToWebhook(payload, "weather")
         else:
             log.debug("Weather Webhook Disabled")
 
@@ -485,7 +500,7 @@ class WebhookHelper(object):
         to_be_sent = plain_webhook.format(plain=to_be_sent)
         to_be_sent = json.loads(to_be_sent)
 
-        self.__sendToWebhook(to_be_sent)
+        self.__sendToWebhook(to_be_sent, "pokemon")
 
     async def _submit_quest_webhook(self, rawquest):
         log.info('Sending Quest to webhook')
@@ -513,5 +528,5 @@ class WebhookHelper(object):
             quest_condition=quest['quest_condition'])
 
         payload = json.loads(data)
-        self.__sendToWebhook(payload)
+        self.__sendToWebhook(payload, "quest")
 
