@@ -50,7 +50,7 @@ def madmin_start(arg_args, arg_db_wrapper):
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(arg_db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
-    routemanagers = mapping_parser.get_routemanagers()
+    #routemanagers = mapping_parser.get_routemanagers()
     areas = mapping_parser.get_areas()
     app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
 
