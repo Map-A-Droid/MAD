@@ -7,7 +7,7 @@ import sys
 
 log = logging.getLogger(__name__)
 
-current_version = 2
+current_version = 3
 
 class MADVersion(object):
     def __init__(self, args, dbwrapper):
@@ -85,7 +85,73 @@ class MADVersion(object):
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
                 log.info("Unexpected error: %s" % e)
+        if self._version < 3:
+            if self._application_args.db_method == "monocle":
+                # Add Weather Index
+                alter_query = (
+                    "ALTER TABLE weather ADD UNIQUE s2_cell_id (s2_cell_id) USING BTREE"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
 
+                # Change Mon Unique Index
+                alter_query = (
+                    "ALTER TABLE sightings DROP INDEX timestamp_encounter_id_unique"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "ALTER TABLE sightings DROP INDEX encounter_id;"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "CREATE TABLE sightings_temp LIKE sightings;"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "ALTER TABLE sightings_temp ADD UNIQUE(encounter_id);"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "INSERT IGNORE INTO sightings_temp SELECT * FROM sightings ORDER BY id;"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "RENAME TABLE sightings TO backup_sightings, sightings_temp TO sightings;"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "DROP TABLE backup_sightings;"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
 
         self.set_version(current_version)
 
