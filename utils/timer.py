@@ -17,9 +17,8 @@ class Timer(object):
         self.__t_switchtimer = None
         log.info('[%s] - check for Switchtimer' % str(self._id))
 
-        self.__t_switchtimer = None
         if self._switch:
-            self.__t_switchtimer = Thread(name='switchtimer_%s' % str(self._id),
+            self.__t_switchtimer = Thread(name='switchtimer',
                                           target=self.switchtimer)
             self.__t_switchtimer.daemon = False
             self.__t_switchtimer.start()
@@ -31,10 +30,8 @@ class Timer(object):
 
     def stop_switch(self):
         if not self.__stop_switchtimer.is_set() and self.__t_switchtimer is not None:
-            log.info("[%s] stopping switchtimer" % str(self._id))
             self.__stop_switchtimer.set()
             self.__t_switchtimer.join()
-            log.info("[%s] switchtimer stopped" % str(self._id))
 
     def get_switch(self):
         return self._switchmode
@@ -75,8 +72,6 @@ class Timer(object):
                         self.set_switch(False)
                         break
                     if self.__stop_switchtimer.is_set():
-                        log.info("[%s] switchtimer stopping in switchmode" % str(self._id))
                         return
                     time.sleep(30)
             time.sleep(30)
-        log.info("[%s] switchtimer stopping" % str(self._id))
