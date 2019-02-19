@@ -324,7 +324,7 @@ class RouteManagerBase(ABC):
         self._manager_mutex.release()
 
     def change_init_mapping(self, name_area):
-        with open('config/mappings.json') as f:
+        with open('configs/mappings.json') as f:
             vars = json.load(f)
 
         for var in vars['areas']:
