@@ -14,6 +14,7 @@ from watchdog.observers import Observer
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
 from mitm_receiver.MitmMapper import MitmMapper
+from mitm_receiver.MITMReceiver import MITMReceiver
 from utils.mappingParser import MappingParser
 from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
@@ -112,13 +113,6 @@ def set_log_and_verbosity(log):
         log.setLevel(logging.INFO)
 
 
-def start_scan(mitm_mapper, db_wrapper, routemanagers, device_mappings, auths):
-    # wsRunning = WebsocketServerBase(args, args.ws_ip, int(args.ws_port), mitm_mapper, db_wrapper, routemanagers,
-    #                                 device_mappings, auths)
-    wsRunning = WebsocketServer(args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths)
-    wsRunning.start_server()
-
-
 def start_ocr_observer(args, db_helper):
     from ocr.fileObserver import checkScreenshot
     observer = Observer()
@@ -127,7 +121,7 @@ def start_ocr_observer(args, db_helper):
     observer.start()
 
 def delete_old_logs(minutes):
-    if minutes == "0":
+    if minutes == 0:
         log.info('delete_old_logs: Search/Delete logs is disabled')
         return
 
@@ -156,14 +150,6 @@ def start_madmin(args, db_wrapper):
     madmin_start(args, db_wrapper)
 
 
-# TODO: IP and port for receiver from args...
-def start_mitm_receiver(mitm_mapper, auths, db_wrapper):
-    from mitm_receiver.MITMReceiver import MITMReceiver
-    mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                 mitm_mapper, args, auths, db_wrapper)
-    mitm_receiver.run_receiver()
-
-
 def generate_mappingjson():
     import json
     newfile = {}
@@ -172,6 +158,45 @@ def generate_mappingjson():
     newfile['devices'] = []
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
+
+
+def file_watcher(db_wrapper, mitm_mapper, ws_server):
+    # We're on a 60-second timer.
+    refresh_time_sec = 60
+    filename = 'configs/mappings.json'
+
+    while True:
+        # Wait (x-1) seconds before refresh, min. 1s.
+        time.sleep(max(1, refresh_time_sec - 1))
+        try:
+            # Only refresh if the file has changed.
+            current_time_sec = time.time()
+            file_modified_time_sec = os.path.getmtime(filename)
+            time_diff_sec = current_time_sec - file_modified_time_sec
+
+            # File has changed in the last refresh_time_sec seconds.
+            if time_diff_sec < refresh_time_sec:
+                log.info(
+                    'Change found in %s. Updating device mappings.', filename)
+                (device_mappings, routemanagers, auths) = load_mappings(db_wrapper)
+                mitm_mapper._device_mappings = device_mappings
+                log.info('Propagating new mappings to all clients.')
+                ws_server.update_settings(
+                    routemanagers, device_mappings, auths)
+            else:
+                log.debug('No change found in %s.', filename)
+        except Exception as e:
+            log.exception(
+                'Exception occurred while updating device mappings: %s.', e)
+
+
+def load_mappings(db_wrapper):
+    mapping_parser = MappingParser(db_wrapper)
+    device_mappings = mapping_parser.get_devicemappings()
+    routemanagers = mapping_parser.get_routemanagers()
+    auths = mapping_parser.get_auths()
+    return (device_mappings, routemanagers, auths)
+
 
 if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
@@ -188,6 +213,7 @@ if __name__ == "__main__":
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
+    db_wrapper.create_status_database_if_not_exists()
     webhook_helper.set_gyminfo(db_wrapper)
     version = MADVersion(args, db_wrapper)
     version.get_version()
@@ -228,13 +254,14 @@ if __name__ == "__main__":
         else:
 
             try:
-                mapping_parser = MappingParser(db_wrapper)
-                device_mappings = mapping_parser.get_devicemappings()
-                routemanagers = mapping_parser.get_routemanagers()
-                auths = mapping_parser.get_auths()
+                (device_mappings, routemanagers, auths) = load_mappings(db_wrapper)
             except KeyError as e:
                 log.fatal("Could not parse mappings. Please check those. Description: %s" % str(e))
                 sys.exit(1)
+            except RuntimeError as e:
+                log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
+                sys.exit(1)
+
 
             mitm_mapper = MitmMapper(device_mappings)
             ocr_enabled = False
@@ -248,16 +275,25 @@ if __name__ == "__main__":
                 from ocr.copyMons import MonRaidImages
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
-            t_flask = Thread(name='mitm_receiver', target=start_mitm_receiver,
-                             args=(mitm_mapper, auths, db_wrapper))
-            t_flask.daemon = False
-            t_flask.start()
+            mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
+                                         mitm_mapper, args, auths, db_wrapper)
+            t_mitm = Thread(name='mitm_receiver',
+                            target=mitm_receiver.run_receiver)
+            t_mitm.daemon = False
+            t_mitm.start()
 
             log.info('Starting scanner....')
-            t = Thread(target=start_scan, name='scanner', args=(mitm_mapper, db_wrapper, routemanagers,
-                                                                device_mappings, auths,))
-            t.daemon = True
-            t.start()
+            ws_server = WebsocketServer(args, mitm_mapper, db_wrapper,
+                                        routemanagers, device_mappings, auths)
+            t_ws = Thread(name='scanner', target=ws_server.start_server)
+            t_ws.daemon = True
+            t_ws.start()
+
+            log.info("Starting file watcher for mappings.json changes.")
+            t_file_watcher = Thread(name='file_watcher', target=file_watcher,
+                                    args=(db_wrapper, mitm_mapper, ws_server))
+            t_file_watcher.daemon = False
+            t_file_watcher.start()
 
     if args.only_ocr:
         from ocr.copyMons import MonRaidImages
@@ -278,7 +314,6 @@ if __name__ == "__main__":
     log.info('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
                       target=delete_old_logs(args.cleanup_age))
-    t_cleanup.join()
     t_cleanup.daemon = True
     t_cleanup.start()
 

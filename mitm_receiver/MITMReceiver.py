@@ -6,7 +6,7 @@ import threading
 import time
 from queue import Queue
 
-from flask import (Flask, request, Response)
+from flask import (Flask, Response, request)
 
 from utils.authHelper import check_auth
 
@@ -34,7 +34,7 @@ class EndpointAction(object):
         elif allowed_origins is not None and (origin is None or origin not in allowed_origins):
             self.response = Response(status=403, headers={})
             abort = True
-        elif auths is not None: # TODO check auth properly...
+        elif auths is not None:  # TODO check auth properly...
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(auth, application_args, auths):
                 log.warning("Unauthorized attempt to POST from %s" % str(request.remote_addr))
@@ -52,7 +52,7 @@ class EndpointAction(object):
                     response_payload = ""
                 self.response = Response(status=200, headers={})
                 self.response.data = response_payload
-            except Exception as e: # TODO: catch exact exception
+            except Exception as e:  # TODO: catch exact exception
                 log.warning("Could not get JSON data from request: %s" % str(e))
                 self.response = Response(status=500, headers={})
         return self.response
@@ -105,7 +105,7 @@ class MITMReceiver(object):
         timestamp = int(math.floor(time.time()))
         self.__mitm_mapper.update_latest(origin, timestamp=timestamp, key=type, values_dict=data)
         self._data_queue.put(
-            (timestamp, data, origin)
+                (timestamp, data, origin)
         )
         return None
 

@@ -126,7 +126,7 @@ def questtask(typeid, condition, target):
                     for ty in pt:
                         arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + ('' if last == cur else ', ')
                         cur += 1
-                text = _('Catch a {poke}.')
+                text = _('Catch {0} {poke}.')
     elif typeid == 5:
         text = _("Spin {0} Pokestops or Gyms.")
     elif typeid == 6:
@@ -180,7 +180,7 @@ def questtask(typeid, condition, target):
     elif typeid == 24:
         text = _('Send {0} gifts to friends.')
 
-    if str(target) == str(1):
+    if int(target) == int(1):
         text = text.replace(_(' Eggs'),_('n Egg'))
         text = text.replace(_(' Raids'),_(' Raid'))
         text = text.replace(_(' Battles'),_(' Battle'))

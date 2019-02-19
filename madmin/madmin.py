@@ -128,7 +128,7 @@ def unknown():
 @app.route('/map', methods=['GET'])
 @auth_required
 def map():
-    return render_template('map.html')
+    return render_template('map.html', lat=conf_args.home_lat,lng=conf_args.home_lng)
     
 @app.route('/quests', methods=['GET'])
 def quest():
@@ -993,6 +993,20 @@ def addnew():
         line = line + '<h3><a href=config?type=' + str(output['name']) + '&area=' + str(area) + '&block=fields>'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
 
     return render_template('sel_type.html', line=line, title="Type selector")
+
+
+@app.route('/status', methods=['GET'])
+@auth_required
+def status():
+    return render_template('status.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="Worker status")
+
+
+@app.route('/get_status', methods=['GET'])
+@auth_required
+def get_status():
+    data = json.loads(db_wrapper.download_status())
+
+    return jsonify(data)
 
 
 def decodeHashJson(hashJson):

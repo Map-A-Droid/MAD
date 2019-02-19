@@ -48,6 +48,13 @@ new Vue({
 						map.removeLayer(leaflet_data["layers"][k]);
 					}
 				}
+
+				// make sure certain layers are always on top
+				for (layer in leaflet_data['layers']) {
+					if (layer.startsWith('Worker') || layer.startsWith('Gyms')) {
+						leaflet_data['layers'][layer].bringToFront();
+					}
+				}
 			}
 		},
 		'settings.routes.coordinateRadius': {
@@ -395,8 +402,8 @@ new Vue({
 		// generate the map
 		initMap() {
 			// get stored center and zoom level if they exists
-			const storedZoom = this.getStoredSetting('zoomlevel', 13);
-			const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
+			const storedZoom = this.getStoredSetting('zoomlevel', (({{lat}} == 0 || {{lng}} == 0) ? 3 : 12));
+			const storedCenter = this.getStoredSetting('center', '{{lat}},{{lng}}');
 			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
 
 			// TODO find a proper place for this
