@@ -138,7 +138,7 @@ class RmWrapper(DbWrapperBase):
                       % (str(raid_no), str(unique_hash), str(type)))
             log.debug("{RmWrapper::submit_raid} done")
             return False
-            
+
 
         if start is not None:
             start_db = datetime.utcfromtimestamp(float(start)).strftime("%Y-%m-%d %H:%M:%S")
@@ -825,12 +825,13 @@ class RmWrapper(DbWrapperBase):
         if cells is None:
             return False
         pokestop_args = []
-        
+
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
             "last_updated) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration)"
+            "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
+            "last_modified=VALUES(last_modified)"
         )
 
         for cell in cells:
@@ -1081,9 +1082,10 @@ class RmWrapper(DbWrapperBase):
             log.warning("%s is not a pokestop" % str(stop_data))
             return None
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        last_modified = datetime.utcfromtimestamp(stop_data['last_modified_timestamp_ms']/1000).strftime("%Y-%m-%d %H:%M:%S")
         # lure isn't present anymore...
         lure = '1970-01-01 00:00:00'
-        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], now, lure, now
+        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
         now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -1097,7 +1099,7 @@ class RmWrapper(DbWrapperBase):
             gameplay_weather = 13
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
-            
+
         now_timestamp = time.mktime(datetime.utcfromtimestamp(float(received_timestamp)).timetuple())
         self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
                                                  time_of_day, now_timestamp)
@@ -1168,7 +1170,7 @@ class RmWrapper(DbWrapperBase):
     def quests_from_db(self, GUID = False):
         log.debug("{RmWrapper::quests_from_db} called")
         questinfo = {}
-        
+
         if not GUID:
             query = (
                 "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
@@ -1211,31 +1213,32 @@ class RmWrapper(DbWrapperBase):
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
                 'task': quest_task})
         return questinfo
-        
+
     def submit_pokestops_details_map_proto(self, map_proto):
         log.debug("{RmWrapper::submit_pokestops_details_map_proto} called")
         pokestop_args = []
-        # now = datetime.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, "
             "last_updated, name, image) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
-            "latitude=VALUES(latitude), longitude=VALUES(longitude), name=VALUES(name), image=VALUES(image)"
+            "latitude=VALUES(latitude), longitude=VALUES(longitude), name=VALUES(name), image=VALUES(image), "
+            "last_modified=VALUES(last_modified)"
         )
-        
+
         pokestop_args = self.__extract_args_single_pokestop_details(map_proto)
-        
+
         if pokestop_args is not None:
             self.execute(query_pokestops, pokestop_args, commit=True)
         return True
-        
+
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        last_modified = datetime.utcfromtimestamp(stop_data["last_modified_timestamp_ms"]/1000).strftime("%Y-%m-%d %H:%M:%S")
 
-        return stop_data['fort_id'], 1, stop_data['latitude'], stop_data['longitude'], now, now, name, image[0]
+        return stop_data['fort_id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, now, name, image[0]
