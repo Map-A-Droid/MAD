@@ -188,12 +188,13 @@ class WebsocketServer(object):
         return True
 
     async def __unregister(self, websocket_client_connection):
-        id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
+        worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
         self.__current_users_mutex.acquire()
-        worker = self.__current_users.get(id, None)
+        worker = self.__current_users.get(worker_id, None)
         if worker is not None:
-            self.__current_users.pop(id)
+            self.__current_users.pop(worker_id)
         self.__current_users_mutex.release()
+        log.info("Worker %s unregistered" % str(worker_id))
 
     async def __producer_handler(self, websocket_client_connection):
         while websocket_client_connection.open:
@@ -228,8 +229,8 @@ class WebsocketServer(object):
     async def __consumer_handler(self, websocket_client_connection):
         if websocket_client_connection is None:
             return
-        id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
-        log.warning("Consumer handler of %s starting" % str(id))
+        worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
+        log.warning("Consumer handler of %s starting" % str(worker_id))
         while websocket_client_connection.open:
             message = None
             try:
@@ -237,28 +238,29 @@ class WebsocketServer(object):
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
-                log.warning("Connection to %s was closed, stopping worker" % str(id))
+                log.warning("Connection to %s was closed, stopping worker" % str(worker_id))
                 self.__current_users_mutex.acquire()
-                worker = self.__current_users.get(id, None)
+                worker = self.__current_users.get(worker_id, None)
                 self.__current_users_mutex.release()
                 if worker is not None:
                     # TODO: do it abruptly in the worker, maybe set a flag to be checked for in send_and_wait to
                     # TODO: throw an exception
                     worker[1].stop_worker()
-                self.clean_up_user(id)
+                self.clean_up_user(worker_id)
                 return
 
             if message is not None:
                 await self.__on_message(message)
-        log.warning("Connection closed in consumer_handler")
+        log.warning("Connection of %s closed in consumer_handler" % str(worker_id))
 
-    def clean_up_user(self, id):
+    def clean_up_user(self, worker_id):
         self.__current_users_mutex.acquire()
-        if id in self.__current_users.keys():
-            if self.__current_users[id][2].open:
-                log.debug("Calling close for %s..." % str(id))
-                asyncio.ensure_future(self.__current_users[id][2].close(), loop=self.__loop)
-            self.__current_users.pop(id)
+        if worker_id in self.__current_users.keys():
+            if self.__current_users[worker_id][2].open:
+                log.info("Calling close for %s..." % str(worker_id))
+                asyncio.ensure_future(self.__current_users[worker_id][2].close(), loop=self.__loop)
+            self.__current_users.pop(worker_id)
+            log.info("Info of %s removed in websocket" % str(worker_id))
         self.__current_users_mutex.release()
 
     async def __on_message(self, message):
