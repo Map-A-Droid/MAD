@@ -267,7 +267,7 @@ class WebsocketServer(object):
         id = -1
         response = None
         if isinstance(message, str):
-            log.debug("Receiving message: %s" % str(message))
+            log.debug("Receiving message: %s" % str(message.strip()))
             splitup = message.split(";")
             id = int(splitup[0])
             response = splitup[1]
@@ -318,7 +318,7 @@ class WebsocketServer(object):
         self.__send_queue.put(next_message)
 
     def send_and_wait(self, id, message, timeout):
-        log.debug("%s sending command: %s" % (str(id), message))
+        log.debug("%s sending command: %s" % (str(id), message.strip()))
         self.__current_users_mutex.acquire()
         user_entry = self.__current_users.get(id, None)
         self.__current_users_mutex.release()
@@ -332,7 +332,7 @@ class WebsocketServer(object):
         self.__set_request(message_id, message_event)
 
         to_be_sent = u"%s;%s" % (str(message_id), message)
-        log.debug("To be sent: %s" % to_be_sent)
+        log.debug("To be sent: %s" % to_be_sent.strip())
         self.__send(id, to_be_sent)
 
         # now wait for the response!
@@ -343,7 +343,7 @@ class WebsocketServer(object):
             self.__reset_fail_counter(id)
             result = self.__pop_response(message_id)
             if isinstance(result, str):
-                log.debug("Response to %s: %s" % (str(id), str(result)))
+                log.debug("Response to %s: %s" % (str(id), str(result.strip())))
             else:
                 log.debug("Received binary data to %s, starting with %s" % (str(id), str(result[:10])))
         else:

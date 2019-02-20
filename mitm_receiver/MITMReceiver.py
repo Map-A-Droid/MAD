@@ -121,6 +121,10 @@ class MITMReceiver(object):
     def received_data_worker(self):
         while True:
             item = self._data_queue.get()
+            items_left = self._data_queue.qsize()
+            log.debug("MITM data processing worker retrieved data. Queue length left afterwards: %s" % str(items_left))
+            if items_left > 50: # TODO: no magic number
+                log.warning("MITM data processing workers are falling behind!")
             if item is None:
                 log.warning("Received none from queue of data")
                 break
