@@ -295,7 +295,7 @@ class RouteManagerBase(ABC):
                 self.change_init_mapping(self.name)
                 self._manager_mutex.release()
                 return self.get_next_location()
-            elif self._current_index_of_route > len(self._route):
+            elif self._current_index_of_route >= len(self._route):
                 self._current_index_of_route = 0
                 coords_after_round = self._get_coords_after_finish_route()
                 # TODO: check isinstance list?
