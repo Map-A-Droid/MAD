@@ -15,6 +15,7 @@
     <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
     <link rel="icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
     {% block header %}{% endblock %}
+    {% if not pub %}
     <style>
         body {
           padding-top: 56px;
@@ -23,9 +24,11 @@
             max-height: 20px;
         }
     </style>
+    {% endif %}
 </head>
 
 <body>
+    {% if not pub %}
     <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
         <div class="container">
           <a class="navbar-brand" href=".">
@@ -72,6 +75,7 @@
           </div>
         </div>
     </nav>
+    {% endif %}
     <div class="container" role="main">
         {% block content %}{% endblock %}
     </div>

@@ -27,7 +27,8 @@ class path(object):
             ("/raids", self.raids),
             ("/gyms", self.gyms),
             ("/unknown", self.unknown),
-            ("/quests", self.quest)
+            ("/quests", self.quest),
+            ("/quests_pub", self.quest_pub)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -85,5 +86,12 @@ class path(object):
 
     @auth_required
     def quest(self):
-        return render_template('quests.html', responsive=str(self._args.madmin_noresponsive).lower(),
+        return render_template('quests.html', pub=False,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", running_ocr=(self._args.only_ocr))
+
+    def quest_pub(self):
+        return render_template('quests.html', pub=True,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="show daily Quests", running_ocr=(self._args.only_ocr))
+
