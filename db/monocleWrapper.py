@@ -835,12 +835,12 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, last_updated, cp, move_1, move_2, form) "
+            "time_end, cp, move_1, move_2, form) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
-            "last_updated=VALUES(last_updated), cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
+            "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
             "form=VALUES(form)"
         )
 
@@ -889,7 +889,6 @@ class MonocleWrapper(DbWrapperBase):
                             raidspawnSec,
                             raidbattleSec,
                             raidendSec,
-                            now,
                             cp, move_1, move_2, 
                             form
                         )
