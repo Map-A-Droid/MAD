@@ -1223,8 +1223,7 @@ class RmWrapper(DbWrapperBase):
             "last_updated, name, image) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
-            "latitude=VALUES(latitude), longitude=VALUES(longitude), name=VALUES(name), image=VALUES(image), "
-            "last_modified=VALUES(last_modified)"
+            "latitude=VALUES(latitude), longitude=VALUES(longitude), name=VALUES(name), image=VALUES(image)"
         )
 
         pokestop_args = self.__extract_args_single_pokestop_details(map_proto)
@@ -1239,6 +1238,6 @@ class RmWrapper(DbWrapperBase):
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
-        last_modified = datetime.utcfromtimestamp(stop_data["last_modified_timestamp_ms"]/1000).strftime("%Y-%m-%d %H:%M:%S")
+        last_modified = '1970-01-01 00:00:00'
 
         return stop_data['fort_id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, now, name, image[0]
