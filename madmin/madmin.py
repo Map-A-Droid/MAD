@@ -28,7 +28,6 @@ import datetime
 from functools import wraps
 from shutil import copyfile
 from math import floor
-import numbers
 from utils.questGen import generate_quest
 
 app = Flask(__name__)
@@ -39,18 +38,15 @@ log = logging.getLogger(__name__)
 conf_args = None
 db_wrapper = None
 device_mappings = None
-routemanagers = None
 areas = None
 
 
 def madmin_start(arg_args, arg_db_wrapper):
-    import json
-    global conf_args, device_mappings, db_wrapper, routemanagers, areas
+    global conf_args, device_mappings, db_wrapper, areas
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(arg_db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
-    routemanagers = mapping_parser.get_routemanagers()
     areas = mapping_parser.get_areas()
     app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
 
@@ -128,8 +124,9 @@ def unknown():
 @app.route('/map', methods=['GET'])
 @auth_required
 def map():
-    return render_template('map.html', lat=conf_args.home_lat,lng=conf_args.home_lng)
-    
+    return render_template('map.html', lat=conf_args.home_lat, lng=conf_args.home_lng)
+
+
 @app.route('/quests', methods=['GET'])
 def quest():
     return render_template('quests.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="show daily Quests")
@@ -316,6 +313,7 @@ def get_gyms():
             continue
 
     return jsonify(gyms)
+
 
 @app.route("/get_raids")
 @auth_required
@@ -550,19 +548,21 @@ def get_gymcoords():
             })
 
     return jsonify(coords)
-    
+
+
 @app.route("/get_quests")
 def get_quests():
     coords = []
     monName= ''
 
     data = db_wrapper.quests_from_db()
-    
+
     for pokestopid in data:
         quest = data[str(pokestopid)]
         coords.append(generate_quest(quest))
-        
+
     return jsonify(coords)
+
 
 @app.route('/gym_img/<path:path>', methods=['GET'])
 @auth_required
@@ -582,7 +582,6 @@ def pushScreens(path):
     return send_from_directory('../' + conf_args.raidscreen_path, path)
 
 
-
 @app.route('/match_unknows', methods=['GET'])
 @auth_required
 def match_unknows():
@@ -600,7 +599,7 @@ def modify_raid():
     lon = request.args.get('lon')
     lvl = request.args.get('lvl')
     mon = request.args.get('mon')
-    return render_template('change_raid.html', hash = hash, lat = lat, lon = lon, lvl = lvl, mon = mon, responsive = str(conf_args.madmin_noresponsive).lower(), title = "change Raid")
+    return render_template('change_raid.html', hash=hash, lat=lat, lon=lon, lvl=lvl, mon=mon, responsive=str(conf_args.madmin_noresponsive).lower(), title="change Raid")
 
 
 @app.route('/modify_gym', methods=['GET'])
@@ -609,7 +608,7 @@ def modify_gym():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('change_gym.html', hash = hash, lat = lat, lon = lon, responsive = str(conf_args.madmin_noresponsive).lower(), title = "change Gym")
+    return render_template('change_gym.html', hash=hash, lat=lat, lon=lon, responsive=str(conf_args.madmin_noresponsive).lower(), title="change Gym")
 
 
 @app.route('/modify_mon', methods=['GET'])
@@ -618,14 +617,13 @@ def modify_mon():
     hash = request.args.get('hash')
     gym = request.args.get('gym')
     lvl = request.args.get('lvl')
-    return render_template('change_mon.html', hash = hash, gym = gym, lvl = lvl, responsive = str(conf_args.madmin_noresponsive).lower(), title = "change Mon")
+    return render_template('change_mon.html', hash=hash, gym=gym, lvl=lvl, responsive=str(conf_args.madmin_noresponsive).lower(), title="change Mon")
 
 
 @app.route('/asset/<path:path>', methods=['GET'])
 @auth_required
 def pushAssets(path):
     return send_from_directory(conf_args.pogoasset, path)
-
 
 
 @app.route('/config')
@@ -783,11 +781,11 @@ def delsetting():
     i = 0
     for asd in mapping[area]:
         if 'name' in mapping[area][i]:
-                _checkfield = 'name'
+            _checkfield = 'name'
         if 'origin' in mapping[area][i]:
-                _checkfield = 'origin'
+            _checkfield = 'origin'
         if 'username' in mapping[area][i]:
-                _checkfield = 'username'
+            _checkfield = 'username'
 
         if str(edit) in str(mapping[area][i][_checkfield]):
             del mapping[area][i]
@@ -798,6 +796,7 @@ def delsetting():
         json.dump(mapping, outfile, indent=4, sort_keys=True)
 
     return redirect("/showsettings", code=302)
+
 
 def check_float(number):
     try:
@@ -833,11 +832,11 @@ def addedit():
         i = 0
         for asd in mapping[area]:
             if 'name' in mapping[area][i]:
-                    _checkfield = 'name'
+                _checkfield = 'name'
             if 'origin' in mapping[area][i]:
-                    _checkfield = 'origin'
+                _checkfield = 'origin'
             if 'username' in mapping[area][i]:
-                    _checkfield = 'username'
+                _checkfield = 'username'
 
             if str(edit) == str(mapping[area][i][_checkfield]):
                 if str(block) == str("settings"):
@@ -894,6 +893,7 @@ def addedit():
 
     return redirect("/showsettings", code=302)
 
+
 def match_typ(key):
     if '[' in key and ']' in key:
         if ':' in key:
@@ -916,13 +916,14 @@ def match_typ(key):
     elif key == "None":
         key = None
     else:
-        key = key.replace(' ','_')
+        key = key.replace(' ', '_')
     return key
+
 
 @app.route('/showsettings', methods=['GET', 'POST'])
 @auth_required
 def showsettings():
-    table=''
+    table = ''
     with open('configs/mappings.json') as f:
         mapping = json.load(f)
     with open('madmin/static/vars/settings.json') as f:
@@ -955,7 +956,7 @@ def showsettings():
             delete = '<td><a href=/delsetting?type=' + str(mode) + '&area=' + str(_typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true>[Delete]</a></td>'
 
             line = line + '<tr><td><b>' + str(output[_field]) + '</b></td>' + str(edit) + str(editsettings) + str(delete) + '</tr>'
-            
+
             if _quick:
                 for quickfield in _quick.split('|'):
                     if output.get(quickfield, False):
@@ -968,10 +969,10 @@ def showsettings():
                         quickadd = quickadd + str(quickfield) + ': ' + str(output['settings'].get(quickfield, '')) + '<br>'
                 quickline = quickline + '<td colspan="2" class=quick>' + str(quickadd) + '</td></tr>'
 
-                
+
             line = line + quickline
 
-            
+
         table = table + header + subheader + line
 
     return render_template('settings.html', settings='<table>' + table + '</table>', title="Mapping Editor")
@@ -1071,5 +1072,3 @@ if __name__ == "__main__":
         sys.exit(1)
 
     app.run()
-    # host='0.0.0.0', port=int(conf_args.madmin_port), threaded=False)
-
