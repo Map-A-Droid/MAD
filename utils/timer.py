@@ -73,10 +73,9 @@ class Timer(object):
                         log.warning(
                             '[%s] - Switching back - here we go ...' % str(self._id))
                         self.set_switch(False)
-                        break
                     if self.__stop_switchtimer.is_set():
                         log.info("[%s] switchtimer stopping in switchmode" % str(self._id))
-                        return
+                        self.set_switch(False)
                     time.sleep(30)
             time.sleep(30)
         log.info("[%s] switchtimer stopping" % str(self._id))

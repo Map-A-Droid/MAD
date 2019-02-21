@@ -305,6 +305,8 @@ class RouteManagerBase(ABC):
                     self.add_coords_list(coords)
                     self._recalc_route_workertype()
                     if len(self._route) == 0: return None
+                    next_lat = self._route[self._current_index_of_route]['lat']
+                    next_lng = self._route[self._current_index_of_route]['lng']
                 self._manager_mutex.release()
                 return self.get_next_location()
             self._last_round_prio = False
