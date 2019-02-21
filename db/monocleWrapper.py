@@ -563,7 +563,7 @@ class MonocleWrapper(DbWrapperBase):
             "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id, "
             "atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight) "
             "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), atk_iv=VALUES(atk_iv), def_iv==VALUES(def_iv), "
+            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), atk_iv=VALUES(atk_iv), def_iv=VALUES(def_iv), "
             "sta_iv=VALUES(sta_iv), move_1=VALUES(move_1), move_2=VALUES(move_2), cp=VALUES(cp), "
             "level=VALUES(level), weight=VALUES(weight)"
         )
