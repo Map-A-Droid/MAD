@@ -161,26 +161,26 @@ class WebhookHelper(object):
 
     def __sendToWebhook(self, payload, webhookType):
         webhooks = self.__application_args.webhook_url.split(',')
-        webhooksType = []
 
-        if webhookType == "gym":
-            webhooksType = self.__application_args.gym_webhook_url.split(',')
-        #if webhookType == "raid":
-        #    webhooksType = self.__application_args.webhook_url.split(',')
-        if webhookType == "weather":
-            webhooksType = self.__application_args.weather_webhook_url.split(',')
-        if webhookType == "pokemon":
-            webhooksType = self.__application_args.pokemon_webhook_url.split(',')
-        if webhookType == "quest":
-            webhooksType = self.__application_args.quest_webhook_url.split(',')
+        webHooksToSend = []
 
-        webhooks = webhooks + webhooksType
-        webhooks = list(set(webhooks))
-        webhooks = list(filter(None, webhooks))
+        for item in webhooks:
+            webhook = str(item)
 
-        log.debug("Webhooks URL's to send with type %s and endpoitns: %s ", webhookType, webhooks)
+            if webhook.startswith("["):
+                endIndex = webhook.rindex("]")
+                endIndex += 1
+                subTypes = webhook[:endIndex]
 
-        for webhook in webhooks:
+                if webhookType in subTypes:
+                    webHooksToSend.append(webhook[endIndex:])
+
+            else:
+                webHooksToSend.append(webhook)
+
+        log.debug("Webhooks URL's to send with type %s and endpoitns: %s ", webhookType, webHooksToSend)
+
+        for webhook in webHooksToSend:
             url = webhook.strip()
 
             log.debug("Sending to webhook %s", url)

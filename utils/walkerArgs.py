@@ -152,23 +152,15 @@ def parseArgs():
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
-                        help='URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*')
+                        help='URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
-    parser.add_argument('-pwhurl', '--pokemon_webhook_url', default='',
-                        help='URL endpoint/s for only pokemon webhooks (seperated by commas) - urls have to start with http*')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
                         help='Activate weather webhook support')
-    parser.add_argument('-wwhurl', '--weather_webhook_url', default='',
-                        help='URL endpoint/s for only weather webhooks (seperated by commas) - urls have to start with http*')
     parser.add_argument('-qwh', '--quest_webhook', action='store_true', default=False,
-                        help='Activate quest webhook support')
-    parser.add_argument('-qwhurl', '--quest_webhook_url', default='',
-                        help='URL endpoint/s for only quest webhooks (seperated by commas) - urls have to start with http*')
+                        help='Activate quest webhook support')                        
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
-                        help='Activate gym webhook support')    
-    parser.add_argument('-gwhurl', '--gym_webhook_url', default='',
-                        help='URL endpoint/s for only gym webhooks (seperated by commas) - urls have to start with http*')
+                        help='Activate gym webhook support')
 
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,

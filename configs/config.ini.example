@@ -85,15 +85,11 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 ######################
 
 #webhook                     # Activate support for webhook
-#webhook_url:                # URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*
+#webhook_url:                # URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*
 #weather_webhook             # Activate support for weather webhook
-#weather_webhook_url:        # URL endpoint/s for only weather webhooks (seperated by commas) - urls have to start with http*
 #pokemon_webhook             # Activate support for pokemon webhook
-#pokemon_webhook_url:        # URL endpoint/s for only pokemon webhooks (seperated by commas) - urls have to start with http*
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
-#gym_webhook_url:            # URL endpoint/s for only gym webhooks (seperated by commas) - urls have to start with http*
 #quest_webhook               # Activate support for quest webhook
-#quest_webhook_url:          # URL endpoint/s for only quest webhooks (seperated by commas) - urls have to start with http*
 
 # Auto Hatch
 ######################
