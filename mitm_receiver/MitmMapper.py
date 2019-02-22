@@ -1,5 +1,7 @@
 import logging
 from threading import Lock
+
+from utils.playerdata import PlayerData
 from utils.stats import PlayerStats
 
 log = logging.getLogger(__name__)
@@ -9,6 +11,7 @@ class MitmMapper(object):
     def __init__(self, device_mappings):
         self.__mapping = {}
         self._playerstats = {}
+        self._playerdata = {}
         self.__mapping_mutex = Lock()
         self._device_mappings = device_mappings
         if device_mappings is not None:
@@ -16,6 +19,8 @@ class MitmMapper(object):
                 self.__mapping[origin] = {}
                 self._playerstats[origin] = PlayerStats(origin)
                 self._playerstats[origin]._open_player_stats()
+                self._playerdata[origin] = PlayerData(origin)
+                self._playerdata[origin]._open_player_data()
 
     def get_mon_ids_iv(self, origin):
         if self._device_mappings is None or origin not in self._device_mappings.keys():

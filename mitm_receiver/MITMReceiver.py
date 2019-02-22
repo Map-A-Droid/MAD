@@ -105,7 +105,7 @@ class MITMReceiver(object):
         timestamp = int(math.floor(time.time()))
         self.__mitm_mapper.update_latest(origin, timestamp=timestamp, key=type, values_dict=data)
         self._data_queue.put(
-                (timestamp, data, origin)
+            (timestamp, data, origin)
         )
         return None
 
@@ -148,7 +148,6 @@ class MITMReceiver(object):
                     self._db_wrapper.submit_mons_map_proto(origin, data["payload"], mon_ids_iv)
                 except Exception as e:
                     log.error("Issue updating DB: %s" % str(e))
-
             elif type == 102:
                 # process Encounter
                 playerlevel = self.__mitm_mapper._playerstats[origin].get_level()
@@ -158,8 +157,18 @@ class MITMReceiver(object):
                 else:
                     log.error('Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
+                # process FortSearch
                 self._db_wrapper.submit_quest_proto(data["payload"])
             elif type == 104:
+                # process FortDetails
                 self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
             elif type == 4:
+                # process GetHoloInventory
                 self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
+            elif type == 2:
+                # process GetPlayer
+                log.info("Processing GetPlayer received from %s at %s" % (str(origin), str(received_timestamp)))
+                self.__mitm_mapper._playerdata[origin]._gen_player_data(data["payload"])
+            else:
+                # Other received type
+                log.debug("Unknown received type: %s" % (str(type)))
