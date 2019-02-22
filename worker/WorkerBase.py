@@ -215,6 +215,14 @@ class WorkerBase(ABC):
             time.sleep(1)
             self._takeScreenshot()
             log.warning("checkPogoMainScreen: GPS signal error")
+            try:
+                log.warning('Moving Worker %s back to Location: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
+                          (str(self._id), self.last_location.lat, self.last_location.lng,
+                           self.current_location.lat, self.current_location.lng))
+                time_snapshot, process_location = self._move_to_location()
+            except Exception as e:
+                log.warning("Worker %s failed moving to new location, stopping worker, "
+                            "connection terminated exceptionally" % str(self._id))
             self._redErrorCount += 1
             if self._redErrorCount > 3:
                 log.error("checkPogoMainScreen: Red error multiple times in a row, restarting")
