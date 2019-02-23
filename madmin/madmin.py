@@ -1234,17 +1234,17 @@ def delsetting():
         if 'walker' not in mapping:
             mapping['walker'] = []
 
-    for key, value in mapping[area]:
-        if 'name' in value:
+    for key, entry in enumerate(mapping[area]):
+        if 'name' in entry:
             _checkfield = 'name'
-        if 'origin' in value:
+        if 'origin' in entry:
             _checkfield = 'origin'
-        if 'username' in value:
+        if 'username' in entry:
             _checkfield = 'username'
         if 'walkername' in mapping[area][i]:
             _checkfield = 'walkername'
 
-        if str(edit) in str(value[_checkfield]):
+        if str(edit) in str(entry[_checkfield]):
             del mapping[area][key]
 
     with open('configs/mappings.json', 'w') as outfile:
