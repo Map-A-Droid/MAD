@@ -290,7 +290,7 @@ new Vue({
 				res.data.forEach(function (geofence) {
 					var group = L.layerGroup();
 					var geojson = {
-						"type": "Polygon",
+						"type": "MultiPolygon",
 						"coordinates": geofence.coordinates
 					}
 					// add geofence to layergroup
