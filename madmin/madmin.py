@@ -46,7 +46,7 @@ def madmin_start(arg_args, arg_db_wrapper):
     global conf_args, device_mappings, db_wrapper, areas
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
-    mapping_parser = MappingParser(arg_db_wrapper)
+    mapping_parser = MappingParser(db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
     app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
@@ -872,6 +872,7 @@ def check_float(number):
 @app.route('/addedit', methods=['GET', 'POST'])
 @auth_required
 def addedit():
+    global device_mappings, areas
     data = request.args
     datavalue = {}
 
@@ -953,6 +954,10 @@ def addedit():
 
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
+
+    mapping_parser = MappingParser(db_wrapper)
+    device_mappings = mapping_parser.get_devicemappings()
+    areas = mapping_parser.get_areas()
 
     return redirect("/showsettings", code=302)
 
