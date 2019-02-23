@@ -132,10 +132,11 @@ class WebhookHelper(object):
         self.t_asyncio_loop.start()
 
     def __set_gyminfo(self):
+        if self.db_wrapper is None:
+            raise Exception("Something went wrong. DB access has not been set yet. This should not have happened.")
+
         # to reduce load, we only pull data from DB every 15 minutes
         if self.gyminfo is None or self.gyminfo_refresh < time.time()-900:
-            if self.gym_wrapper is None:
-                raise Exception("Something went wrong. DB access has not been set yet. This should not have happened.")
             self.gyminfo = self.db_wrapper.get_gym_infos()
             self.gyminfo_refresh = time.time()
 
