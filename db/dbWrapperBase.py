@@ -322,19 +322,6 @@ class DbWrapperBase(ABC):
     def stop_from_db_without_quests(self, geofence_helper):
         pass
 
-    def download_gym_infos(self):
-        """
-        Download gym images (populated in DB) and store the images in /ocr/gym_img/
-        """
-        log.debug("{DbWrapperBase::download_gym_infos} called")
-        import json
-        import io
-
-        gym_infos = self.get_gym_infos()
-
-        with io.open('gym_info.json', 'w') as outfile:
-            outfile.write(str(json.dumps(gym_infos, indent=4, sort_keys=True)))
-
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes

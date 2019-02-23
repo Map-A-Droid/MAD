@@ -432,17 +432,9 @@ class RmWrapper(DbWrapperBase):
 
     def get_near_gyms(self, lat, lng, hash, raid_no, dist, unique_hash="123"):
         log.debug("{RmWrapper::get_near_gyms} called")
-        # if dist == 99:
-        #     distance = str(9999)
-        #     lat = self.application_args.home_lat
-        #     lng = self.application_args.home_lng
-        # else:
-        #     distance = str(self.application_args.gym_scan_distance)
-
-        # dist = float(dist) * 1000
 
         query = (
-            "SELECT gym_id, "
+            "SELECT gym.gym_id, "
             "( 6371 * "
             "acos( cos(radians(%s)) "
             "* cos(radians(latitude)) "
@@ -451,10 +443,10 @@ class RmWrapper(DbWrapperBase):
             "* sin(radians(latitude))"
             ")"
             ") "
-            "AS distance "
+            "AS distance, latitude, longitude, name, description, url "
             "FROM gym "
-            "HAVING distance <= %s "
-            "OR distance IS NULL "
+            "LEFT JOIN gym_details ON gym.gym_id = gym_details.gym_id "
+            "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
         )
 
@@ -463,8 +455,8 @@ class RmWrapper(DbWrapperBase):
         )
         data = []
         res = self.execute(query, vals)
-        for (gym_id, distance) in res:
-            data.append([gym_id, distance])
+        for (gym_id, distance, latitude, longitude, name, description, url) in res:
+            data.append([gym_id, distance, latitude, longitude, name, description, url])
         log.debug("{RmWrapper::get_near_gyms} done")
         return data
 
@@ -515,8 +507,6 @@ class RmWrapper(DbWrapperBase):
                     self.__download_img(str(url), str(filename))
                 gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, str(name).replace('"', '\\"').replace('\n', '\\n'), description, url)
 
-        with io.open('gym_info.json', 'w') as outfile:
-            outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
         log.debug('Finished downloading gym images...')
 
         return True

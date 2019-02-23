@@ -193,8 +193,9 @@ def modify_gym_hash():
 @auth_required
 def near_gym():
     nearGym = []
-    with open('gym_info.json') as f:
-        data = json.load(f)
+
+    data = db_wrapper.get_gym_infos()
+
     lat = request.conf_args.get('lat')
     lon = request.conf_args.get('lon')
     if lat == "9999":

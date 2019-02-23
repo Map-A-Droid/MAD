@@ -201,6 +201,7 @@ def load_mappings(db_wrapper):
 if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     set_log_and_verbosity(log)
+
     webhook_helper = WebhookHelper(args)
 
     if args.db_method == "rm":
@@ -210,11 +211,11 @@ if __name__ == "__main__":
     else:
         log.error("Invalid db_method in config. Exiting")
         sys.exit(1)
+    webhook_helper.set_db_wrapper(db_wrapper)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
-    webhook_helper.set_gyminfo(db_wrapper)
     version = MADVersion(args, db_wrapper)
     version.get_version()
 

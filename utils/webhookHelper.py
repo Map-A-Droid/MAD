@@ -2,6 +2,7 @@ import asyncio
 import functools
 import json
 import os
+import time
 
 import logging
 from threading import current_thread, Event, Thread
@@ -119,9 +120,9 @@ gym_webhook_payload = """[{{
 class WebhookHelper(object):
     def __init__(self, args):
         self.__application_args = args
-        self.pokemon_file = None
         self.pokemon_file = open_json_file('pokemon')
         self.gyminfo = None
+        self.gyminfo_refresh = None
 
         self.loop = None
         self.loop_started = Event()
@@ -130,17 +131,13 @@ class WebhookHelper(object):
         self.t_asyncio_loop.daemon = True
         self.t_asyncio_loop.start()
 
-    def set_gyminfo(self, db_wrapper):
-        try:
-            with open('gym_info.json') as f:
-                self.gyminfo = json.load(f)
-        except FileNotFoundError as e:
-            log.warning("gym_info.json not found")
-            if db_wrapper is not None:
-                log.info("Trying to create gym_info.json")
-                db_wrapper.download_gym_infos()
-                with open('gym_info.json') as f:
-                    self.gyminfo = json.load(f)
+    def __set_gyminfo(self):
+        # to reduce load, we only pull data from DB every 15 minutes
+        if self.gyminfo is None or self.gyminfo_refresh < time.time()-900:
+            if self.gym_wrapper is None:
+                raise Exception("Something went wrong. DB access has not been set yet. This should not have happened.")
+            self.gyminfo = self.db_wrapper.get_gym_infos()
+            self.gyminfo_refresh = time.time()
 
     def __start_asyncio_loop(self):
         self.loop = asyncio.new_event_loop()
@@ -181,6 +178,13 @@ class WebhookHelper(object):
             except Exception as e:
                 log.warning("Exception occured while sending webhook: %s" % str(e))
 
+    # TODO well yeah, this is kinda stupid actually.
+    # better solution: actually pass all the information to
+    # te webhook helper directly without it accessing the db
+    # to retrieve correct DB data like gym name etc
+    def set_db_wrapper(self, dbwrapper):
+        self.db_wrapper = dbwrapper
+
     def get_raid_boss_cp(self, mon_id):
         if self.pokemon_file is not None and int(mon_id) > 0:
             log.debug("Removing leading zero from string where necessary")
@@ -202,6 +206,8 @@ class WebhookHelper(object):
                           name_param="unknown", lat_param=None, lng_param=None, weather_param=None,
                           image_url=None):
         if self.__application_args.webhook:
+            self.__set_gyminfo()
+
             self.__add_task_to_loop(self._send_raid_webhook(gymid, type, start, end, lvl, mon,
                                                             team_param=team_param, cp_param=cp_param,
                                                             move1_param=move1_param, move2_param=move2_param,
@@ -238,10 +244,11 @@ class WebhookHelper(object):
         if self.__application_args.webhook:
             self.__add_task_to_loop(self._submit_quest_webhook(rawquest))
 
-
     def send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id, slots_available, guard_pokemon_id,
                          latitude, longitude, last_modified):
         if self.__application_args.webhook and self.__application_args.gym_webhook:
+            self.__set_gyminfo()
+
             self.__add_task_to_loop(self._send_gym_webhook(gym_id, raid_active_until, gym_name, team_id,
                                     slots_available, guard_pokemon_id, latitude, longitude, last_modified))
 

@@ -144,10 +144,6 @@ def parseArgs():
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
 
-    # download coords
-    parser.add_argument('-jj', '--justjson', action='store_true', default=False,
-                        help='just generate the gym_info.json')
-
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
