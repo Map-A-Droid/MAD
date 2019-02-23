@@ -291,7 +291,7 @@ new Vue({
 					var group = L.layerGroup();
 					var geojson = {
 						"type": "Polygon",
-						"coordinates": [$this.convertToLonLat(geofence.coordinates)]
+						"coordinates": geofence.coordinates
 					}
 					// add geofence to layergroup
 					L.geoJSON(geojson, { style: { "color": $this.getRandomColor(), "weight": 2, "opacity": 0.25 } }).addTo(group);
