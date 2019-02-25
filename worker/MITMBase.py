@@ -160,7 +160,6 @@ class MITMBase(WorkerBase):
                                                          str(routemanager.get_route_status()[1])))
         log.debug('Init Mode: %s' % str(routemanager.init))
         log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
-        log.debug('Last Restart: %s' % str(self._lastStart))
         log.debug('===============================')
 
         dataToSave = {
@@ -174,8 +173,7 @@ class MITMBase(WorkerBase):
             'RoutePos':          str(routemanager.get_route_status()[0]),
             'RouteMax':          str(routemanager.get_route_status()[1]),
             'Init':              str(routemanager.init),
-            'LastProtoDateTime': str(self._rec_data_time),
-            'LastPogoRestart':   str(self._lastStart)
+            'LastProtoDateTime': str(self._rec_data_time)
         }
 
         self._db_wrapper.save_status(dataToSave)

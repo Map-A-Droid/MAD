@@ -898,8 +898,8 @@ class DbWrapperBase(ABC):
                  ' routeMax INT(11) NOT NULL, '
                  ' routemanager VARCHAR(255) NOT NULL, '
                  ' rebootCounter INT(11)  NOT NULL, '
-                 ' lastProtoDateTime VARCHAR(50) NOT NULL, '
-                 ' lastPogoRestart VARCHAR(50) NOT NULL, '
+                 ' lastProtoDateTime VARCHAR(50) NULL DEFAULT NULL, '
+                 ' lastPogoRestart VARCHAR(50) NULL DEFAULT NULL, '
                  ' init TEXT NOT NULL, '
                  ' rebootingOption TEXT NOT NULL, '
                  ' restartCounter TEXT NOT NULL, '
@@ -912,7 +912,6 @@ class DbWrapperBase(ABC):
 
     def save_status(self, data):
         log.debug("dbWrapper::save_status")
-        log.debug(data)
 
         query = (
             "INSERT into trs_status (origin, currentPos, lastPos, routePos, routeMax, "
