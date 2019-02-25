@@ -346,7 +346,8 @@ class WorkerBase(ABC):
             return None
         elif not switch_mode and self._route_manager_daytime.mode in valid_modes:
             if self._route_manager_last_time != self._route_manager_daytime:
-                self._route_manager_nighttime.unregister_worker(self._id)
+                if self._route_manager_nighttime is not None:
+                    self._route_manager_nighttime.unregister_worker(self._id)
                 self._route_manager_daytime.register_worker(self._id)
                 self._route_manager_last_time = self._route_manager_daytime
             return self._route_manager_daytime
