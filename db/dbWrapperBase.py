@@ -335,7 +335,7 @@ class DbWrapperBase(ABC):
                  ' type VARCHAR(10) NOT NULL, ' +
                  ' id VARCHAR(255) NOT NULL, ' +
                  ' count INT(10) NOT NULL DEFAULT 1, ' +
-                 ' modify TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
+                 ' modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
                  ' PRIMARY KEY (hashid))')
         self.execute(query, commit=True)
 
@@ -753,7 +753,7 @@ class DbWrapperBase(ABC):
                            '`spawndef` int(11) NOT NULL DEFAULT "240", '
                            '`earliest_unseen` int(6) NOT NULL, '
                            '`last_scanned` datetime DEFAULT NULL, '
-                           '`first_detection` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, '
+                           '`first_detection` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, '
                            '`last_non_scanned` datetime DEFAULT NULL, '
                            '`calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL, '
                            'UNIQUE KEY `spawnpoint_2` (`spawnpoint`), '
@@ -765,7 +765,7 @@ class DbWrapperBase(ABC):
                                     '`id` int(11) NOT NULL AUTO_INCREMENT, '
                                     '`encounter_id` bigint(20) UNSIGNED NOT NULL, '
                                     '`spawnpoint_id` bigint(20) UNSIGNED NOT NULL, '
-                                    '`scan_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, '
+                                    '`scan_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, '
                                     '`tth_secs` int(11) DEFAULT NULL, '
                                     'PRIMARY KEY (`id`), '
                                     'KEY `trs_spawnpointdd_spawnpoint_id` (`spawnpoint_id`) '
@@ -783,7 +783,7 @@ class DbWrapperBase(ABC):
                  '`latitude` double NOT NULL, '
                  '`longitude` double NOT NULL, '
                  '`mode` varchar(32) NOT NULL, '
-                 '`logdate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP '
+                 '`logdate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP '
                  ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;'
                  )
 
