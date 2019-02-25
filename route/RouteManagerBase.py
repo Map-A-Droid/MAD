@@ -234,8 +234,10 @@ class RouteManagerBase(ABC):
         log.debug("get_next_location of %s called" % str(self.name))
         next_lat, next_lng = 0, 0
 
+        injection = self.db_wrapper.get_location_injection(self.mode)
+
         # first check if a location is available, if not, block until we have one...
-        got_location = False
+        got_location = injection is not None
         while not got_location:
             log.debug("%s: Checking if a location is available..." % str(self.name))
             self._manager_mutex.acquire()
@@ -250,10 +252,14 @@ class RouteManagerBase(ABC):
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route
 
-        # determine whether we move to the next location or the prio queue top's item
-        if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
-                                                             and self._prio_queue and len(self._prio_queue) > 0
-                                                             and self._prio_queue[0][0] < time.time())):
+        # determine whether we move to the next location, an injected location, or the prio queue top's item
+        if injection:
+            log.info("Injecting location: %s, %s" % (str(injection[1]), str(injection[2])))
+            next_lat = injection[1]
+            next_lng = injection[2]
+        elif (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
+                                                               and self._prio_queue and len(self._prio_queue) > 0
+                                                               and self._prio_queue[0][0] < time.time())):
             log.debug("%s: Priority event" % str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]
             next_lat = next_stop.lat
@@ -314,7 +320,7 @@ class RouteManagerBase(ABC):
                  % (str(self.name), str(next_lat), str(next_lng)))
         self._manager_mutex.release()
         return Location(next_lat, next_lng)
-        
+
     def del_from_route(self):
         log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
         self._manager_mutex.acquire()
@@ -335,7 +341,7 @@ class RouteManagerBase(ABC):
 
         with open('mappings.json', 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
-            
+
     def get_route_status(self):
         if self._route:
             return self._current_index_of_route, len(self._route)

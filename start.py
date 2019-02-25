@@ -95,7 +95,7 @@ def set_log_and_verbosity(log):
     if not os.path.exists(args.log_path):
         os.mkdir(args.log_path)
     if not args.no_file_logs:
-        
+
         filename = os.path.join(args.log_path, args.log_filename)
         if not args.log_rotation:
             filelog = logging.FileHandler(filename)
@@ -130,7 +130,7 @@ def delete_old_logs(minutes):
 
         now = time.time()
         only_files = []
-        
+
         logpath = args.log_path
 
         log.debug('delete_old_logs: Log Folder: ' + str(logpath))
@@ -214,6 +214,7 @@ if __name__ == "__main__":
     webhook_helper.set_db_wrapper(db_wrapper)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
+    db_wrapper.create_location_injection_table()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
     version = MADVersion(args, db_wrapper)
@@ -242,13 +243,13 @@ if __name__ == "__main__":
         sys.exit(1)
 
     if args.only_scan:
-        
+
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
             if not args.with_madmin:
                 log.fatal("No mappings.json found - start madmin with with_madmin in config or copy example")
                 sys.exit(1)
-                
+
             log.fatal("No mappings.json found - starting setup mode with madmin.")
             log.fatal("Open Madmin (ServerIP with Port " + str(args.madmin_port) + ") - 'Mapping Editor' and restart.")
             generate_mappingjson()
@@ -311,7 +312,7 @@ if __name__ == "__main__":
         t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper,))
         t_flask.daemon = False
         t_flask.start()
-        
+
     log.info('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
                       target=delete_old_logs(args.cleanup_age))

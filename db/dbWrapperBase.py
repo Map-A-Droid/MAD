@@ -335,7 +335,7 @@ class DbWrapperBase(ABC):
                  ' type VARCHAR(10) NOT NULL, ' +
                  ' id VARCHAR(255) NOT NULL, ' +
                  ' count INT(10) NOT NULL DEFAULT 1, ' +
-                 ' modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
+                 ' modify TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
                  ' PRIMARY KEY (hashid))')
         self.execute(query, commit=True)
 
@@ -753,7 +753,7 @@ class DbWrapperBase(ABC):
                            '`spawndef` int(11) NOT NULL DEFAULT "240", '
                            '`earliest_unseen` int(6) NOT NULL, '
                            '`last_scanned` datetime DEFAULT NULL, '
-                           '`first_detection` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, '
+                           '`first_detection` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, '
                            '`last_non_scanned` datetime DEFAULT NULL, '
                            '`calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL, '
                            'UNIQUE KEY `spawnpoint_2` (`spawnpoint`), '
@@ -765,7 +765,7 @@ class DbWrapperBase(ABC):
                                     '`id` int(11) NOT NULL AUTO_INCREMENT, '
                                     '`encounter_id` bigint(20) UNSIGNED NOT NULL, '
                                     '`spawnpoint_id` bigint(20) UNSIGNED NOT NULL, '
-                                    '`scan_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, '
+                                    '`scan_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP, '
                                     '`tth_secs` int(11) DEFAULT NULL, '
                                     'PRIMARY KEY (`id`), '
                                     'KEY `trs_spawnpointdd_spawnpoint_id` (`spawnpoint_id`) '
@@ -774,6 +774,20 @@ class DbWrapperBase(ABC):
 
         self.execute(query_trs_spawn, commit=True)
         self.execute(query_trs_spawnsightings, commit=True)
+
+    def create_location_injection_table(self):
+        log.debug("{DbWrapperBase::create_location_injection_table} called")
+
+        query = ('CREATE TABLE IF NOT EXISTS `trs_location_injection` ('
+                 '`id` int AUTO_INCREMENT PRIMARY KEY, '
+                 '`latitude` double NOT NULL, '
+                 '`longitude` double NOT NULL, '
+                 '`mode` varchar(32) NOT NULL, '
+                 '`logdate` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP '
+                 ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;'
+                 )
+
+        self.execute(query, commit=True)
 
     def download_spawns(self):
         log.debug("dbWrapper::download_spawns")
@@ -857,7 +871,7 @@ class DbWrapperBase(ABC):
                 "pokemon_id", None)
             target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
             condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
-            
+
             task = questtask(int(quest_type), str(condition), int(target))
 
             query_quests = (
@@ -886,7 +900,7 @@ class DbWrapperBase(ABC):
                 log.debug('Sending Webhook is disabled')
 
         return True
-        
+
     def create_status_database_if_not_exists(self):
         log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
 
@@ -927,7 +941,7 @@ class DbWrapperBase(ABC):
             "rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter)"
         )
         vals = (
-            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"], 
+            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"],
             data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"], str(data["LastPogoRestart"]),
             data["Init"], data["RebootingOption"], data["RestartCounter"]
         )
@@ -980,3 +994,34 @@ class DbWrapperBase(ABC):
         )
 
         return int(self.execute(query, vals)[0][0])
+
+    def inject_location(self, latitude, longitude, mode):
+        query = (
+            "INSERT INTO trs_location_injection (latitude, longitude, mode) "
+            "VALUES (%s, %s, %s)"
+        )
+        vals = (str(latitude), str(longitude), mode)
+
+        self.execute(query, vals, commit=True)
+
+    def get_location_injection(self, mode):
+        query = (
+            "SELECT id, latitude, longitude "
+            "FROM trs_location_injection "
+            "WHERE mode=%s OR mode IS NULL "
+            "LIMIT 1 "
+        )
+        vals = (str(mode),)
+        res = self.execute(query, vals)
+
+        if len(res) == 0:
+            return None
+
+        injection = res[0]
+        query = (
+            "DELETE FROM trs_location_injection WHERE id=%s"
+        )
+        vals = (str(injection[0]),)
+        self.execute(query, vals, commit=True)
+
+        return injection
