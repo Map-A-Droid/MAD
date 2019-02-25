@@ -12,18 +12,20 @@ log = logging.getLogger(__name__)
 
 class MITMBase(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                 route_manager_nighttime, devicesettings, db_wrapper, timer, mitm_mapper, NoOcr=False):
+                 route_manager_nighttime, devicesettings, db_wrapper, timer, mitm_mapper, pogoWindowManager,
+                 NoOcr=False):
         WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer)
+                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer,
+                            pogoWindowManager=pogoWindowManager)
 
         self._reboot_count = 0
         self._restart_count = 0
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
 
-        if not NoOcr:
-            from ocr.pogoWindows import PogoWindows
-            self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
+        #if not NoOcr:
+        #    from ocr.pogoWindows import PogoWindows
+        #    self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
 
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
         if not timeout:
@@ -99,7 +101,7 @@ class MITMBase(WorkerBase):
                self._resocalc.get_confirm_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
 
-        time.sleep(.5 + int(delayadd))
+        time.sleep(1 + int(delayadd))
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                self._resocalc.get_close_main_button_coords(self)[1]
@@ -114,7 +116,7 @@ class MITMBase(WorkerBase):
         x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(.5 + int(delayadd))
-        log.debug('{_open_gym} called')
+        log.debug('{_open_gym} finished')
         return
 
     def _spin_wheel(self, delayadd):

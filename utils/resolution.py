@@ -21,10 +21,10 @@ class Resocalculator(object):
             
     def get_gym_click_coords(self):
         click_x = int(self._screen_x) / 2
-        if float(self._xyratio) > 2:
-            click_y = int(self._screen_y) - (int(self._screen_x) / 1.4)
+        if float(self._xyratio) >= 2:
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.35)
         elif float(self._xyratio) >= 1.7:
-            click_y = int(self._screen_y) - (int(self._screen_x) / 1.5)
+            click_y = int(self._screen_y) - (int(self._screen_x) / 1.55)
         elif float(self._xyratio) < 1.7:
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.6)
         return click_x, click_y
@@ -105,6 +105,29 @@ class Resocalculator(object):
             click_x = int(self._screen_x) / 1.09
             click_y = int(self._screen_y) - (int(self._screen_x) / 0.77)
         return click_x, click_y
+
+    def get_delete_item_text(self):
+        if float(self._xyratio) > 2:
+            x1 = int(self._screen_x) / 1.3
+            x2 = int(self._screen_x) / 3.3
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.58)
+            y2 = int(self._screen_y) - (int(self._screen_x) / 0.55)
+        elif float(self._xyratio) >= 1.9:
+            x1 = int(self._screen_x) / 1.3
+            x2 = int(self._screen_x) / 3.3
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.62)
+            y2 = int(self._screen_y) - (int(self._screen_x) / 0.59)
+        elif float(self._xyratio) >= 1.7:
+            x1 = int(self._screen_x) / 1.3
+            x2 = int(self._screen_x) / 3.3
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.715)
+            y2 = int(self._screen_y) - (int(self._screen_x) / 0.68)
+        elif float(self._xyratio) < 1.7:
+            x1 = int(self._screen_x) / 1.3
+            x2 = int(self._screen_x) / 3.3
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.82)
+            y2 = int(self._screen_y) - (int(self._screen_x) / 0.77)
+        return x1, x2, y1, y2
         
     def get_next_item_coord(self):
         y = int(self._screen_x) / 2.84

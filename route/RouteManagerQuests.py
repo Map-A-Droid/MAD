@@ -31,6 +31,36 @@ class RouteManagerQuests(RouteManagerBase):
                                   name=name, settings=settings, mode=mode
                                   )
         self.starve_route = False
+        self._stoplist = []
 
     def _get_coords_after_finish_route(self):
         return self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
+
+    def _start_routemanager(self):
+        self._manager_mutex.acquire()
+        try:
+            if not self._is_started:
+                log.info("Starting routemanager %s" % str(self.name))
+                stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
+                log.info('Detected stops without quests: %s' % str(stops))
+                for stop in stops:
+                    self._stoplist.append(str(stop[0]) + '-' + str(stop[1]))
+                self._prio_queue = None
+                self.delay_after_timestamp_prio = None
+                self.starve_route = False
+                self._is_started = True
+        finally:
+            self._manager_mutex.release()
+
+    def _quit_route(self):
+        log.info('Shutdown Route %s' % str(self.name))
+        self._is_started = False
+
+    def _check_coords_before_returning(self, lat, lng):
+        check_stop = str(lat) + '-' + str(lng)
+        log.info('Checking Stop with ID %s' % str(check_stop))
+        if check_stop not in self._stoplist:
+            log.info('Already got this Stop')
+            return False
+        return True
+

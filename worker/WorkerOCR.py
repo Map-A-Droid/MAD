@@ -102,7 +102,7 @@ class WorkerOCR(WorkerBase):
         # curTime = time.time()
         log.info("main: Checking raidcount and copying raidscreen if raids present")
         count_of_raids = self._pogoWindowManager.readRaidCircles(os.path.join(
-            self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id)
+            self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, self._communicator)
         if count_of_raids == -1:
             log.debug("Worker: Count present but no raid shown")
             log.warning("main: Count present but no raid shown, reopening raidTab")
@@ -221,8 +221,9 @@ class WorkerOCR(WorkerBase):
             time.sleep(1)
 
     def __init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime, route_manager_nighttime,
-                 devicesettings, db_wrapper, timer):
+                 devicesettings, db_wrapper, timer, pogoWindowManager):
         WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, timer=timer)
+                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, timer=timer,
+                            pogoWindowManager=pogoWindowManager)
         self.__speed_weather_check_thread = None
         self.__start_speed_weather_check_event = Event()

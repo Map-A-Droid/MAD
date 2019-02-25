@@ -1,9 +1,10 @@
 import logging
 import math
 import time
+import os
 from threading import Thread, Event
 
-from utils.geo import get_distance_of_two_points_in_meters
+from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
 from utils.madGlobals import InternalStopWorkerException, WebsocketWorkerRemovedException
 from worker.MITMBase import MITMBase
 
@@ -15,10 +16,10 @@ class WorkerQuests(MITMBase):
         return ["pokestops"]
 
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 mitm_mapper, devicesettings, db_wrapper, timer):
+                 mitm_mapper, devicesettings, db_wrapper, timer, pogoWindowManager):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                           route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False, timer=timer,
-                          mitm_mapper=mitm_mapper)
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogoWindowManager)
         self.first_round = True
         self.clear_thread = None
         # 0 => None
@@ -27,6 +28,7 @@ class WorkerQuests(MITMBase):
         self.clear_thread_task = 0
         self._start_inventory_clear = Event()
         self._delay_add = int(self._devicesettings.get("vps_delay", 0))
+        self._stop_process_time = 0
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -105,6 +107,32 @@ class WorkerQuests(MITMBase):
                                           self.current_location.lat, self.current_location.lng, speed)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             delay_used = self._devicesettings.get('post_walk_delay', 7)
+
+        walk_distance_post_teleport = self._devicesettings.get('walk_after_teleport_distance', 0)
+        if 0 < walk_distance_post_teleport < distance:
+            # TODO: actually use to_walk for distance
+            lat_offset, lng_offset = get_lat_lng_offsets_by_distance(walk_distance_post_teleport)
+
+            to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
+                                                           float(self.current_location.lng),
+                                                           float(self.current_location.lat) + lat_offset,
+                                                           float(self.current_location.lng) + lng_offset)
+            log.info("Walking roughly: %s" % str(to_walk))
+            time.sleep(0.3)
+            self._communicator.walkFromTo(self.current_location.lat,
+                                          self.current_location.lng,
+                                          self.current_location.lat + lat_offset,
+                                          self.current_location.lng + lng_offset,
+                                          11)
+            log.debug("Walking back")
+            time.sleep(0.3)
+            self._communicator.walkFromTo(self.current_location.lat + lat_offset,
+                                          self.current_location.lng + lng_offset,
+                                          self.current_location.lat,
+                                          self.current_location.lng,
+                                          11)
+            log.debug("Done walking")
+            time.sleep(1)
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
         self.last_processed_location = self.current_location
@@ -187,6 +215,8 @@ class WorkerQuests(MITMBase):
 
     def clear_box(self, delayadd):
         log.info('Cleanup Box')
+        not_allow = ('Gift', 'Raid Pass', 'Camera', 'Lucky Egg', 'Geschenk', 'Raidpass', 'Kamera', 'Glücks-Ei',
+                     'Cadeau', 'Passe de Raid', 'Appareil photo')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
@@ -196,38 +226,55 @@ class WorkerQuests(MITMBase):
         time.sleep(1 + int(delayadd))
         data_received = '-'
         _data_err_counter = 0
+        text_x1, text_x2, text_y1, text_y2 = self._resocalc.get_delete_item_text(self)
         x, y = self._resocalc.get_delete_item_coords(self)[0], self._resocalc.get_delete_item_coords(self)[1]
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], \
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
-        while int(to) <= 4:
+        while int(to) <= 7 and int(y) <= 4:
+            self._takeScreenshot()
+            # filename, hash, x1, x2, y1, y2
+            item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
+                                                                                'screenshot%s.png' % str(self._id)),
+                                                                   self._id, text_x1, text_x2, text_y1, text_y2)
+            log.info('Found item text: %s' % str(item_text))
+            if item_text in not_allow:
+                log.info('Dont delete that!!!')
+                y += self._resocalc.get_next_item_coord(self)
+                text_y1 += self._resocalc.get_next_item_coord(self)
+                text_y2 += self._resocalc.get_next_item_coord(self)
+            else:
 
-            self._communicator.click(int(x), int(y))
-            time.sleep(.5 + int(delayadd))
+                self._communicator.click(int(x), int(y))
+                time.sleep(1 + int(delayadd))
 
-            self._communicator.touchandhold(click_x1, click_y, click_x2, click_y)
-            time.sleep(1)
-            delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
-                         self._resocalc.get_confirm_delete_item_coords(self)[1]
-            curTime = time.time()
-            self._communicator.click(int(delx), int(dely))
+                self._communicator.touchandhold(click_x1, click_y, click_x2, click_y)
+                time.sleep(.5)
+                delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
+                             self._resocalc.get_confirm_delete_item_coords(self)[1]
+                curTime = time.time()
+                self._communicator.click(int(delx), int(dely))
 
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=15)
+                data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=15)
 
-            if data_received is not None:
-                if 'Clear' in data_received:
-                    to += 1
+                if data_received is not None:
+                    if 'Clear' in data_received:
+                        to += 1
+                    else:
+                        self._communicator.backButton()
+                        data_received = '-'
+                        y += self._resocalc.get_next_item_coord(self)
+                        text_y1 += self._resocalc.get_next_item_coord(self)
+                        text_y2 += self._resocalc.get_next_item_coord(self)
                 else:
-                    self._communicator.backButton()
+                    log.info('Click Gift / Raidpass')
+                    if not self._checkPogoButton():
+                        self._checkPogoClose()
                     data_received = '-'
                     y += self._resocalc.get_next_item_coord(self)
-            else:
-                log.info('Click Gift / Raidpass')
-                if not self._checkPogoButton():
-                    self._checkPogoClose()
-                data_received = '-'
-                y += self._resocalc.get_next_item_coord(self)
+                    text_y1 += self._resocalc.get_next_item_coord(self)
+                    text_y2 += self._resocalc.get_next_item_coord(self)
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
@@ -250,9 +297,9 @@ class WorkerQuests(MITMBase):
         to = 0
         data_received = '-'
         while 'Stop' not in data_received and int(to) < 3:
-            curTime = time.time()
+            self._stop_process_time = time.time()
             self._open_gym(self._delay_add)
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=104, timeout=25)
+            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=25)
             if data_received is not None:
                 if 'Gym' in data_received:
                     log.info('Clicking GYM')
@@ -277,33 +324,27 @@ class WorkerQuests(MITMBase):
                 data_received = '-'
 
             to += 1
-            time.sleep(0.5)
         return data_received
 
     def _handle_stop(self, data_received):
         to = 0
         while not 'Quest' in data_received and int(to) < 3:
-            curTime = time.time()
             log.info('Spin Stop')
-            self._spin_wheel(self._delay_add)
-            data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=101, timeout=20)
+            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=20)
             if data_received is not None:
 
                 if 'Box' in data_received:
                     log.error('Box is full ... Next round!')
-                    self._close_gym(self._delay_add)
                     self.clear_thread_task = 1
                     break
 
                 if 'Quest' in data_received:
                     log.info('Getting new Quest')
-                    self._close_gym(self._delay_add)
                     self.clear_thread_task = 2
                     break
 
                 if 'SB' in data_received or 'Time' in data_received:
                     log.error('Softban - waiting...')
-                    self._close_gym(self._delay_add)
                     time.sleep(10)
                     self._open_pokestop()
                 else:
@@ -312,11 +353,11 @@ class WorkerQuests(MITMBase):
 
             else:
                 data_received = '-'
-                log.error('Did not get any data ... Maybe already spinned or softban.')
+                log.info('Did not get any data ... Maybe already spinned or softban.')
+                self._close_gym(self._delay_add)
+                time.sleep(5)
+                self._open_pokestop()
                 to += 1
-
-        if to >= 3:
-            self._close_gym(self._delay_add)
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None

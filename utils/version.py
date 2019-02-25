@@ -7,7 +7,7 @@ import sys
 
 log = logging.getLogger(__name__)
 
-current_version = 3
+current_version = 4
 
 class MADVersion(object):
     def __init__(self, args, dbwrapper):
@@ -152,6 +152,41 @@ class MADVersion(object):
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
                     log.info("Unexpected error: %s" % e)
+
+            if self._version < 3:
+                alter_query = (
+                    "ALTER TABLE trs_status "
+                    "ADD lastPogoReboot varchar(50) DEFAULT NULL"
+                )
+                column_exist = self._dbwrapper.check_column_exists('trs_status', 'lastPogoReboot')
+                if column_exist == 0:
+                    try:
+                        self._dbwrapper.execute(alter_query, commit=True)
+                    except Exception as e:
+                        log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "ALTER TABLE trs_status "
+                    "ADD globalrebootcount int(11) NULL DEFAULT '0'"
+                )
+                column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrebootcount')
+                if column_exist == 0:
+                    try:
+                        self._dbwrapper.execute(alter_query, commit=True)
+                    except Exception as e:
+                        log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "ALTER TABLE trs_status "
+                    "ADD globalrestartcount int(11) NULL DEFAULT '0'"
+                )
+                column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrestartcount')
+                if column_exist == 0:
+                    try:
+                        self._dbwrapper.execute(alter_query, commit=True)
+                    except Exception as e:
+                        log.info("Unexpected error: %s" % e)
+
 
         self.set_version(current_version)
 
