@@ -1,5 +1,3 @@
-import asyncio
-import functools
 import json
 import logging
 import requests
@@ -8,6 +6,7 @@ import sys
 log = logging.getLogger(__name__)
 
 current_version = 4
+
 
 class MADVersion(object):
     def __init__(self, args, dbwrapper):
@@ -20,7 +19,7 @@ class MADVersion(object):
             with open('version.json') as f:
                 versio = json.load(f)
             self._version = versio['version']
-            if  self._version< current_version:
+            if self._version< current_version:
                 log.error('New Update found')
                 self.start_update()
         except FileNotFoundError as e:
@@ -156,7 +155,7 @@ class MADVersion(object):
             if self._version < 3:
                 alter_query = (
                     "ALTER TABLE trs_status "
-                    "ADD lastPogoReboot varchar(50) DEFAULT NULL"
+                    "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
                 )
                 column_exist = self._dbwrapper.check_column_exists('trs_status', 'lastPogoReboot')
                 if column_exist == 0:
@@ -186,7 +185,6 @@ class MADVersion(object):
                         self._dbwrapper.execute(alter_query, commit=True)
                     except Exception as e:
                         log.info("Unexpected error: %s" % e)
-
 
         self.set_version(current_version)
 
