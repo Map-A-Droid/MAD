@@ -193,8 +193,3 @@ class MADVersion(object):
         output ={'version': version}
         with open('version.json', 'w') as outfile:  
             json.dump(output, outfile)
-    
-            
-
-
-   
