@@ -265,15 +265,25 @@ if __name__ == "__main__":
                 log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
                 sys.exit(1)
 
-            pogoWindowManager = PogoWindows(args.temp_path)
+            pogoWindowManager = None
+
             mitm_mapper = MitmMapper(device_mappings)
             ocr_enabled = False
+
             for routemanager in routemanagers.keys():
                 area = routemanagers.get(routemanager, None)
                 if area is None:
                     continue
                 if "ocr" in area.get("mode", ""):
                     ocr_enabled = True
+                if ("ocr" in area.get("mode", "") or "pokestop" in area.get("mode", "")) and args.no_ocr:
+                    log.error('No-OCR Mode is activated - No OCR Mode possible.')
+                    log.error('Check your config.ini and be sure that CV2 and Tesseract is installed')
+                    sys.exit(1)
+
+            if not args.no_ocr:
+                pogoWindowManager = PogoWindows(args.temp_path)
+
             if ocr_enabled:
                 from ocr.copyMons import MonRaidImages
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
@@ -317,7 +327,7 @@ if __name__ == "__main__":
     log.info('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
                       target=delete_old_logs(args.cleanup_age))
-    t_cleanup.daemon = True
+    t_cleanup.daemon = False
     t_cleanup.start()
 
     while True:

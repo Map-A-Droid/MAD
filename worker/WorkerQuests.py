@@ -1,7 +1,7 @@
 import logging
 import math
 import time
-import os
+import os, sys
 from threading import Thread, Event
 
 from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
@@ -415,6 +415,3 @@ class WorkerQuests(MITMBase):
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
         return data_requested
-
-
-

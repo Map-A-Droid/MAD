@@ -90,6 +90,9 @@ def parseArgs():
                         help='Amount of threads/processes to be used for screenshot-analysis.')
     parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
                         help='Start madmin as instance.')
+    parser.add_argument('-nocr', '--no_ocr', action='store_true', default=False,
+                        help='Activate if you not using OCR for Quest or Raidscanning.')
+
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',

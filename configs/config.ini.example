@@ -45,6 +45,7 @@
 #only_ocr                    # running this instance in ocr mode without Scanning
 #ocr_multitask               # running OCR as multiprocessing task
 #ocr_thread_count:           # amount of processes/threads to run analysis with
+#no_ocr                      # activate this if you dont want to use mode ocr_raid or questscanner
 
 # path settings
 ######################
