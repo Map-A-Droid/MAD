@@ -232,7 +232,7 @@ class WorkerQuests(MITMBase):
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
-        while int(to) <= 7 and int(y) <= 4:
+        while int(to) <= 7 and int(y) <= int(self._screen_y):
             self._takeScreenshot()
             # filename, hash, x1, x2, y1, y2
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,

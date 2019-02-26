@@ -152,7 +152,7 @@ class MADVersion(object):
                 except Exception as e:
                     log.info("Unexpected error: %s" % e)
 
-            if self._version < 3:
+            if self._version < 4:
                 alter_query = (
                     "ALTER TABLE trs_status "
                     "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
