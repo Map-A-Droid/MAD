@@ -25,7 +25,6 @@ opencv-python==3.4.4.19
 pathtools==0.1.2
 Pillow==5.3.0
 pyparsing==2.3.0
-pytesseract==0.2.5
 python-dateutil==2.7.5
 PyWavelets==1.0.1
 pyyaml>=4.2b1
