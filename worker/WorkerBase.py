@@ -678,7 +678,8 @@ class WorkerBase(ABC):
         self._redErrorCount = 0
         log.debug("getToRaidscreen: checking raidscreen")
         while not self._pogoWindowManager.checkRaidscreen(os.path.join(self._applicationArgs.temp_path,
-                                                                       'screenshot%s.png' % str(self._id)), self._id):
+                                                                       'screenshot%s.png' % str(self._id)), self._id,
+                                                          self._communicator):
             log.debug("getToRaidscreen: not on raidscreen...")
             if attempts > maxAttempts:
                 # could not reach raidtab in given maxAttempts
@@ -707,7 +708,8 @@ class WorkerBase(ABC):
             if not found:
                 log.info("getToRaidscreen: Previous checks found nothing. Checking nearby open")
                 if self._pogoWindowManager.checkNearby(os.path.join(self._applicationArgs.temp_path,
-                                                                    'screenshot%s.png' % str(self._id)), self._id):
+                                                                    'screenshot%s.png' % str(self._id)), self._id,
+                                                       self._communicator):
                     return self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay)
 
             if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
