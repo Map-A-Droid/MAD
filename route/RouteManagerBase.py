@@ -6,7 +6,7 @@ import os
 import time
 import numpy as np
 from abc import ABC, abstractmethod
-from threading import Event, Thread, RLock
+from threading import RLock, Event, Thread, Lock
 from datetime import datetime
 
 from geofence.geofenceHelper import GeofenceHelper
@@ -32,6 +32,11 @@ class RouteManagerBase(ABC):
         self._max_coords_within_radius = max_coords_within_radius
         self.settings = settings
         self.mode = mode
+        self._is_started = False
+
+        # we want to store the workers using the routemanager
+        self._workers_registered = []
+        self._workers_registered_mutex = Lock()
 
         self._last_round_prio = False
         self._manager_mutex = RLock()
@@ -46,29 +51,21 @@ class RouteManagerBase(ABC):
             self._route = None
         self._current_index_of_route = 0
         self._init_mode_rounds = 0
-        if settings is not None:
-            self.delay_after_timestamp_prio = settings.get("delay_after_prio_event", None)
-            if self.delay_after_timestamp_prio == 0 : self.delay_after_timestamp_prio = None
-            self.starve_route = settings.get("starve_route", False)
+
+        if self.settings is not None:
+            self.delay_after_timestamp_prio = self.settings.get("delay_after_prio_event", None)
+            self.starve_route = self.settings.get("starve_route", False)
         else:
             self.delay_after_timestamp_prio = None
             self.starve_route = False
-        if (self.delay_after_timestamp_prio is not None or mode == "iv_mitm") and not mode == "pokestops":
-            self._prio_queue = []
-            if mode not in ["iv_mitm", "pokestops"]:
-                self.clustering_helper = ClusteringHelper(self._max_radius,
-                                                          self._max_coords_within_radius,
-                                                          self._cluster_priority_queue_criteria())
-            self._stop_update_thread = Event()
-            self._update_prio_queue_thread = Thread(name="prio_queue_update_" + name,
-                                                    target=self._update_priority_queue_loop)
-            self._update_prio_queue_thread.daemon = True
-            self._update_prio_queue_thread.start()
-        else:
-            self._prio_queue = None
+
+        # initialize priority queue variables
+        self._prio_queue = None
+        self._update_prio_queue_thread = None
+        self._stop_update_thread = Event()
 
     def __del__(self):
-        if self.delay_after_timestamp_prio:
+        if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
             self._update_prio_queue_thread.join()
 
@@ -76,6 +73,51 @@ class RouteManagerBase(ABC):
         self._manager_mutex.acquire()
         self._coords_unstructured = None
         self._manager_mutex.release()
+
+    def register_worker(self, worker_name):
+        self._workers_registered_mutex.acquire()
+        try:
+            if worker_name in self._workers_registered:
+                log.info("Worker %s already registered to routemanager %s" % (str(worker_name), str(self.name)))
+                return False
+            else:
+                log.info("Worker %s registering to routemanager %s" % (str(worker_name), str(self.name)))
+                self._workers_registered.append(worker_name)
+                return True
+        finally:
+            self._workers_registered_mutex.release()
+
+    def unregister_worker(self, worker_name):
+        self._workers_registered_mutex.acquire()
+        try:
+            if worker_name in self._workers_registered:
+                log.info("Worker %s unregistering from routemanager %s" % (str(worker_name), str(self.name)))
+                self._workers_registered.remove(worker_name)
+            else:
+                # TODO: handle differently?
+                log.info("Worker %s failed unregistering from routemanager %s since subscription was previously "
+                         "lifted" % (str(worker_name), str(self.name)))
+            if len(self._workers_registered) == 0 and self._is_started:
+                log.info("Routemanager %s does not have any subscribing workers anymore, calling stop" % str(self.name))
+                self._quit_route()
+        finally:
+            self._workers_registered_mutex.release()
+
+    def _check_started(self):
+        return self._is_started
+
+    def _start_priority_queue(self):
+        if (self._update_prio_queue_thread is None and (self.delay_after_timestamp_prio is not None or self.mode ==
+                                                        "iv_mitm") and not self.mode == "pokestops"):
+            self._prio_queue = []
+            if self.mode not in ["iv_mitm", "pokestops"]:
+                self.clustering_helper = ClusteringHelper(self._max_radius,
+                                                          self._max_coords_within_radius,
+                                                          self._cluster_priority_queue_criteria())
+            self._update_prio_queue_thread = Thread(name="prio_queue_update_" + self.name,
+                                                    target=self._update_priority_queue_loop)
+            self._update_prio_queue_thread.daemon = False
+            self._update_prio_queue_thread.start()
 
     # list_coords is a numpy array of arrays!
     def add_coords_numpy(self, list_coords):
@@ -167,7 +209,31 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
+    def _start_routemanager(self):
+        """
+        Starts priority queue or whatever the implementations require
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def _quit_route(self):
+        """
+        Killing the Route Thread
+        :return:
+        """
+        pass
+
+    @abstractmethod
     def _get_coords_post_init(self):
+        """
+        Return list of coords to be fetched and used for routecalc
+        :return:
+        """
+        pass
+
+    @abstractmethod
+    def _check_coords_before_returning(self, lat, lng):
         """
         Return list of coords to be fetched and used for routecalc
         :return:
@@ -232,6 +298,9 @@ class RouteManagerBase(ABC):
 
     def get_next_location(self):
         log.debug("get_next_location of %s called" % str(self.name))
+        if not self._is_started:
+            log.info("Starting routemanager %s in get_next_location" % str(self.name))
+            self._start_routemanager()
         next_lat, next_lng = 0, 0
 
         injection = self.db_wrapper.get_location_injection(self.mode)
@@ -301,7 +370,9 @@ class RouteManagerBase(ABC):
                 self.change_init_mapping(self.name)
                 self._manager_mutex.release()
                 return self.get_next_location()
-            elif self._current_index_of_route >= len(self._route):
+            elif self._current_index_of_route == len(self._route):
+                log.info('Reaching last coord of route')
+            elif self._current_index_of_route > len(self._route):
                 self._current_index_of_route = 0
                 coords_after_round = self._get_coords_after_finish_route()
                 # TODO: check isinstance list?
@@ -313,13 +384,18 @@ class RouteManagerBase(ABC):
                     if len(self._route) == 0: return None
                     next_lat = self._route[self._current_index_of_route]['lat']
                     next_lng = self._route[self._current_index_of_route]['lng']
+                    self._manager_mutex.release()
+                    return Location(next_lat, next_lng)
                 self._manager_mutex.release()
                 return self.get_next_location()
             self._last_round_prio = False
         log.info("%s done grabbing next coord, releasing lock and returning location: %s, %s"
                  % (str(self.name), str(next_lat), str(next_lng)))
         self._manager_mutex.release()
-        return Location(next_lat, next_lng)
+        if self._check_coords_before_returning(next_lat, next_lng):
+            return Location(next_lat, next_lng)
+        else:
+            return self.get_next_location()
 
     def del_from_route(self):
         log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))

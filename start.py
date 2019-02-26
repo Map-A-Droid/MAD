@@ -21,6 +21,8 @@ from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 
+from ocr.pogoWindows import PogoWindows
+
 
 class LogFilter(logging.Filter):
 
@@ -264,7 +266,7 @@ if __name__ == "__main__":
                 log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
                 sys.exit(1)
 
-
+            pogoWindowManager = PogoWindows(args.temp_path)
             mitm_mapper = MitmMapper(device_mappings)
             ocr_enabled = False
             for routemanager in routemanagers.keys():
@@ -286,7 +288,7 @@ if __name__ == "__main__":
 
             log.info('Starting scanner....')
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper,
-                                        routemanagers, device_mappings, auths)
+                                        routemanagers, device_mappings, auths, pogoWindowManager)
             t_ws = Thread(name='scanner', target=ws_server.start_server)
             t_ws.daemon = True
             t_ws.start()

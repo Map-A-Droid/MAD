@@ -1,5 +1,3 @@
-import asyncio
-import functools
 import json
 import logging
 import requests
@@ -7,7 +5,8 @@ import sys
 
 log = logging.getLogger(__name__)
 
-current_version = 3
+current_version = 5
+
 
 class MADVersion(object):
     def __init__(self, args, dbwrapper):
@@ -20,7 +19,7 @@ class MADVersion(object):
             with open('version.json') as f:
                 versio = json.load(f)
             self._version = versio['version']
-            if  self._version< current_version:
+            if self._version< current_version:
                 log.error('New Update found')
                 self.start_update()
         except FileNotFoundError as e:
@@ -153,6 +152,50 @@ class MADVersion(object):
                 except Exception as e:
                     log.info("Unexpected error: %s" % e)
 
+            if self._version < 4:
+                alter_query = (
+                    "ALTER TABLE trs_status "
+                    "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
+                )
+                column_exist = self._dbwrapper.check_column_exists('trs_status', 'lastPogoReboot')
+                if column_exist == 0:
+                    try:
+                        self._dbwrapper.execute(alter_query, commit=True)
+                    except Exception as e:
+                        log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "ALTER TABLE trs_status "
+                    "ADD globalrebootcount int(11) NULL DEFAULT '0'"
+                )
+                column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrebootcount')
+                if column_exist == 0:
+                    try:
+                        self._dbwrapper.execute(alter_query, commit=True)
+                    except Exception as e:
+                        log.info("Unexpected error: %s" % e)
+
+                alter_query = (
+                    "ALTER TABLE trs_status "
+                    "ADD globalrestartcount int(11) NULL DEFAULT '0'"
+                )
+                column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrestartcount')
+                if column_exist == 0:
+                    try:
+                        self._dbwrapper.execute(alter_query, commit=True)
+                    except Exception as e:
+                        log.info("Unexpected error: %s" % e)
+
+            if self._version < 5:
+                alter_query = (
+                    "ALTER TABLE trs_status CHANGE lastPogoRestart "
+                    "lastPogoRestart VARCHAR(50) NULL DEFAULT NULL"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
         self.set_version(current_version)
 
     def set_version(self, version):
@@ -160,8 +203,3 @@ class MADVersion(object):
         output ={'version': version}
         with open('version.json', 'w') as outfile:  
             json.dump(output, outfile)
-    
-            
-
-
-   

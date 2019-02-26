@@ -51,3 +51,26 @@ class RouteManagerIV(RouteManagerBase):
             # just set a value to enable the queue
             self.delay_after_timestamp_prio = 5
 
+    def _start_routemanager(self):
+        self._manager_mutex.acquire()
+        try:
+            if not self._is_started:
+                log.info("Starting routemanager %s" % str(self.name))
+                self._start_priority_queue()
+                self._is_started = True
+        finally:
+            self._manager_mutex.release()
+
+    def _quit_route(self):
+        log.info('Shutdown Route %s' % str(self.name))
+        if self._update_prio_queue_thread is not None:
+            self._stop_update_thread.set()
+            self._update_prio_queue_thread.join()
+            self._update_prio_queue_thread = None
+            self._stop_update_thread.clear()
+        self._is_started = False
+
+    def _check_coords_before_returning(self, lat, lng):
+        return True
+
+

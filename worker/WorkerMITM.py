@@ -3,7 +3,7 @@ import math
 import time
 
 from route.RouteManagerIV import RouteManagerIV
-from utils.geo import get_distance_of_two_points_in_meters
+from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
 from utils.madGlobals import InternalStopWorkerException
 from worker.MITMBase import MITMBase
 
@@ -58,23 +58,31 @@ class WorkerMITM(MITMBase):
                     delay_used = 15
                 log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
-
-            if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
+            walk_distance_post_teleport = self._devicesettings.get('walk_after_teleport_distance', 0)
+            if 0 < walk_distance_post_teleport < distance:
                 # TODO: actually use to_walk for distance
+                lat_offset, lng_offset = get_lat_lng_offsets_by_distance(walk_distance_post_teleport)
+
                 to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
                                                                float(self.current_location.lng),
-                                                               float(self.current_location.lat) + 0.0001,
-                                                               float(self.current_location.lng) + 0.0001)
-                log.info("Walking a bit: %s" % str(to_walk))
+                                                               float(self.current_location.lat) + lat_offset,
+                                                               float(self.current_location.lng) + lng_offset)
+                log.info("Walking roughly: %s" % str(to_walk))
                 time.sleep(0.3)
-                self._communicator.walkFromTo(self.current_location.lat, self.current_location.lng,
-                                              self.current_location.lat + 0.0001, self.current_location.lng + 0.0001,
+                self._communicator.walkFromTo(self.current_location.lat,
+                                              self.current_location.lng,
+                                              self.current_location.lat + lat_offset,
+                                              self.current_location.lng + lng_offset,
                                               11)
                 log.debug("Walking back")
                 time.sleep(0.3)
-                self._communicator.walkFromTo(self.current_location.lat + 0.0001, self.current_location.lng + 0.0001,
-                                              self.current_location.lat, self.current_location.lng, 11)
+                self._communicator.walkFromTo(self.current_location.lat + lat_offset,
+                                              self.current_location.lng + lng_offset,
+                                              self.current_location.lat,
+                                              self.current_location.lng,
+                                              11)
                 log.debug("Done walking")
+                time.sleep(1)
         else:
             log.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
@@ -120,10 +128,10 @@ class WorkerMITM(MITMBase):
         return reached_raidtab
 
     def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 mitm_mapper, devicesettings, db_wrapper, timer):
+                 mitm_mapper, devicesettings, db_wrapper, timer, pogoWindowManager):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
                           route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer,
-                          mitm_mapper=mitm_mapper)
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogoWindowManager)
 
         # TODO: own InjectionSettings class
         self._injection_settings = {}

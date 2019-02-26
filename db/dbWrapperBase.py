@@ -912,8 +912,8 @@ class DbWrapperBase(ABC):
                  ' routeMax INT(11) NOT NULL, '
                  ' routemanager VARCHAR(255) NOT NULL, '
                  ' rebootCounter INT(11)  NOT NULL, '
-                 ' lastProtoDateTime VARCHAR(50) NOT NULL, '
-                 ' lastPogoRestart VARCHAR(50) NOT NULL, '
+                 ' lastProtoDateTime VARCHAR(50) NULL DEFAULT NULL, '
+                 ' lastPogoRestart VARCHAR(50) NULL DEFAULT NULL, '
                  ' init TEXT NOT NULL, '
                  ' rebootingOption TEXT NOT NULL, '
                  ' restartCounter TEXT NOT NULL, '
@@ -926,25 +926,57 @@ class DbWrapperBase(ABC):
 
     def save_status(self, data):
         log.debug("dbWrapper::save_status")
-        log.debug(data)
 
         query = (
             "INSERT into trs_status (origin, currentPos, lastPos, routePos, routeMax, "
-            "routemanager, rebootCounter, lastProtoDateTime, lastPogoRestart, "
+            "routemanager, rebootCounter, lastProtoDateTime, "
             "init, rebootingOption, restartCounter) values "
-            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE currentPos=VALUES(currentPos), "
             "lastPos=VALUES(lastPos), routePos=VALUES(routePos), "
             "routeMax=VALUES(routeMax), routemanager=VALUES(routemanager), "
             "rebootCounter=VALUES(rebootCounter), lastProtoDateTime=VALUES(lastProtoDateTime), "
-            "lastPogoRestart=VALUES(lastPogoRestart), init=VALUES(init), "
-            "rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter)"
+            "init=VALUES(init), rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter)"
         )
         vals = (
-            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"],
-            data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"], str(data["LastPogoRestart"]),
+            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"], 
+            data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"],
             data["Init"], data["RebootingOption"], data["RestartCounter"]
         )
+        self.execute(query, vals, commit=True)
+
+    def save_last_reboot(self, origin):
+        log.debug("dbWrapper::save_last_reboot")
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        query = (
+
+            "insert into trs_status(origin, lastPogoReboot, globalrebootcount) "
+            "values (%s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE lastPogoReboot=VALUES(lastPogoReboot), globalrebootcount=(globalrebootcount+1)"
+
+        )
+
+        vals = (
+            origin,  now, 1
+        )
+
+        self.execute(query, vals, commit=True)
+
+    def save_last_restart(self, origin):
+        log.debug("dbWrapper::save_last_restart")
+        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        query = (
+
+            "insert into trs_status(origin, lastPogoRestart, globalrestartcount) "
+            "values (%s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE lastPogoRestart=VALUES(lastPogoRestart), globalrestartcount=(globalrestartcount+1)"
+
+        )
+
+        vals = (
+            origin,  now, 1
+        )
+
         self.execute(query, vals, commit=True)
 
     def download_status(self):
@@ -954,13 +986,14 @@ class DbWrapperBase(ABC):
         query = (
             "SELECT origin, currentPos, lastPos, routePos, routeMax, "
             "routemanager, rebootCounter, lastProtoDateTime, lastPogoRestart, "
-            "init, rebootingOption, restartCounter "
+            "init, rebootingOption, restartCounter, globalrebootcount, globalrestartcount, lastPogoReboot "
             "FROM trs_status"
         )
 
         result = self.execute(query)
         for (origin, currentPos, lastPos, routePos, routeMax, routemanager, \
-                rebootCounter, lastProtoDateTime, lastPogoRestart, init, rebootingOption, restartCounter) in result:
+                rebootCounter, lastProtoDateTime, lastPogoRestart, init, rebootingOption, restartCounter,
+                globalrebootcount, globalrestartcount, lastPogoReboot) in result:
             status = {
                 "origin": origin,
                 "currentPos": currentPos,
@@ -973,7 +1006,11 @@ class DbWrapperBase(ABC):
                 "lastPogoRestart": str(lastPogoRestart),
                 "init": init,
                 "rebootingOption": rebootingOption,
-                "restartCounter": restartCounter
+                "restartCounter": restartCounter,
+                "lastPogoReboot": lastPogoReboot,
+                "globalrebootcount": globalrebootcount,
+                "globalrestartcount": globalrestartcount
+
             }
 
             workerstatus.append(status)
