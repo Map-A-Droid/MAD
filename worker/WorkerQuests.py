@@ -34,7 +34,7 @@ class WorkerQuests(MITMBase):
         if self.clear_thread is not None:
             return
         self.clear_thread = Thread(name="clear_thread_%s" % str(self._id), target=self._clear_thread)
-        self.clear_thread.daemon = True
+        self.clear_thread.daemon = False
         self.clear_thread.start()
         self._get_screen_size()
 
@@ -184,13 +184,16 @@ class WorkerQuests(MITMBase):
         return reached_raidtab
 
     def _cleanup(self):
-        pass
+        if self.clear_thread is not None:
+            self.clear_thread.join()
 
     def _clear_thread(self):
         log.info('Starting clear Quest Thread')
         while not self._stop_worker_event.is_set():
             # wait for event signal
             while not self._start_inventory_clear.is_set():
+                if self._stop_worker_event.is_set():
+                    return
                 time.sleep(0.5)
             if self.clear_thread_task > 0:
                 self._work_mutex.acquire()
