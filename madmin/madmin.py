@@ -894,6 +894,16 @@ def addedit():
 
     return redirect("/showsettings", code=302)
 
+@app.route("/inject_location")
+@auth_required
+def inject_location():
+    lat = request.args['lat']
+    lng = request.args['lng']
+    mode = request.args['mode']
+
+    db_wrapper.inject_location(lat, lng, mode)
+
+    return 'OK'
 
 def match_typ(key):
     if '[' in key and ']' in key:

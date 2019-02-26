@@ -775,6 +775,20 @@ class DbWrapperBase(ABC):
         self.execute(query_trs_spawn, commit=True)
         self.execute(query_trs_spawnsightings, commit=True)
 
+    def create_location_injection_table(self):
+        log.debug("{DbWrapperBase::create_location_injection_table} called")
+
+        query = ('CREATE TABLE IF NOT EXISTS `trs_location_injection` ('
+                 '`id` int AUTO_INCREMENT PRIMARY KEY, '
+                 '`latitude` double NOT NULL, '
+                 '`longitude` double NOT NULL, '
+                 '`mode` varchar(32) NOT NULL, '
+                 '`logdate` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP '
+                 ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;'
+                 )
+
+        self.execute(query, commit=True)
+
     def download_spawns(self):
         log.debug("dbWrapper::download_spawns")
         spawn = {}
@@ -1017,3 +1031,34 @@ class DbWrapperBase(ABC):
         )
 
         return int(self.execute(query, vals)[0][0])
+
+    def inject_location(self, latitude, longitude, mode):
+        query = (
+            "INSERT INTO trs_location_injection (latitude, longitude, mode) "
+            "VALUES (%s, %s, %s)"
+        )
+        vals = (str(latitude), str(longitude), mode)
+
+        self.execute(query, vals, commit=True)
+
+    def get_location_injection(self, mode):
+        query = (
+            "SELECT id, latitude, longitude "
+            "FROM trs_location_injection "
+            "WHERE mode=%s OR mode IS NULL "
+            "LIMIT 1 "
+        )
+        vals = (str(mode),)
+        res = self.execute(query, vals)
+
+        if len(res) == 0:
+            return None
+
+        injection = res[0]
+        query = (
+            "DELETE FROM trs_location_injection WHERE id=%s"
+        )
+        vals = (str(injection[0]),)
+        self.execute(query, vals, commit=True)
+
+        return injection

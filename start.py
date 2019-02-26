@@ -216,6 +216,7 @@ if __name__ == "__main__":
     webhook_helper.set_db_wrapper(db_wrapper)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
+    db_wrapper.create_location_injection_table()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
     version = MADVersion(args, db_wrapper)
