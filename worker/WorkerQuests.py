@@ -1,7 +1,7 @@
 import logging
 import math
 import time
-import os, sys
+import os
 from threading import Thread, Event
 
 from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
