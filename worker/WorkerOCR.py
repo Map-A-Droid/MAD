@@ -1,5 +1,5 @@
 import logging
-import os, sys
+import os
 import time
 from shutil import copyfile
 from threading import Thread, Event
