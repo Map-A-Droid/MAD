@@ -793,7 +793,6 @@ class RmWrapper(DbWrapperBase):
                     self.webhook_helper.send_pokemon_webhook(
                         str(encounter_id), mon_id, int(time.time()),
                         spawnid, lat, lon, int(despawn_time_unix),
-                        spawnid, lat, lon, int(despawn_time_unix),
                         form=wild_mon['pokemon_data']['display']['form_value'],
                         gender=wild_mon['pokemon_data']['display']['gender_value'],
                         boosted_weather=wild_mon['pokemon_data']['display']['weather_boosted_value']
