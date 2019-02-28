@@ -236,11 +236,12 @@ if __name__ == "__main__":
         log.info('Raidscreen directory created')
         os.makedirs(args.raidscreen_path)
 
-    if not args.only_scan and not args.with_madmin and not args.only_ocr:
-        log.error("No runmode selected. \nAllowed modes: "
-                  " -wm    ---- start madmin (browserbased monitoring/configuration) "
-                  " -os    ---- start scanner/devicecontroller "
-                  "-oo     ---- start OCR analysis of screenshots\nExiting")
+    if not args.only_scan and not args.with_madmin and not args.only_ocr and not args.only_routes:
+        log.error("No runmode selected. \nAllowed modes:\n"
+                  " -wm    ---- start madmin (browserbased monitoring/configuration)\n"
+                  " -os    ---- start scanner/devicecontroller\n"
+                  " -oo    ---- start OCR analysis of screenshots\n"
+                  " -or    ---- only calculate routes\nExiting")
         sys.exit(1)
 
     if args.only_scan or args.only_routes:
