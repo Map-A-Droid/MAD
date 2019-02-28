@@ -243,7 +243,7 @@ if __name__ == "__main__":
                   "-oo     ---- start OCR analysis of screenshots\nExiting")
         sys.exit(1)
 
-    if args.only_scan:
+    if args.only_scan or args.only_routes:
         
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
@@ -264,6 +264,10 @@ if __name__ == "__main__":
             except RuntimeError as e:
                 log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
                 sys.exit(1)
+
+            if args.only_routes:
+                log.info("Done calculating routes!")
+                sys.exit(0)
 
             pogoWindowManager = PogoWindows(args.temp_path)
             mitm_mapper = MitmMapper(device_mappings)
