@@ -90,6 +90,8 @@ def parseArgs():
                         help='Amount of threads/processes to be used for screenshot-analysis.')
     parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
                         help='Start madmin as instance.')
+    parser.add_argument('-or', '--only_routes', action='store_true', default=False,
+                        help='Only calculate routes, then exit the program. No scanning.')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
