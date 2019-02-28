@@ -1041,24 +1041,17 @@ class DbWrapperBase(ABC):
 
         self.execute(query, vals, commit=True)
 
-    def get_location_injection(self, mode):
+    def get_location_injections(self):
         query = (
-            "SELECT id, latitude, longitude "
+            "SELECT id, latitude, longitude, mode "
             "FROM trs_location_injection "
-            "WHERE mode=%s OR mode IS NULL "
             "LIMIT 1 "
         )
-        vals = (str(mode),)
-        res = self.execute(query, vals)
+        return self.execute(query)
 
-        if len(res) == 0:
-            return None
-
-        injection = res[0]
+    def remove_location_injection(self, id):
         query = (
             "DELETE FROM trs_location_injection WHERE id=%s"
         )
-        vals = (str(injection[0]),)
+        vals = (str(id),)
         self.execute(query, vals, commit=True)
-
-        return injection

@@ -8,6 +8,7 @@ from route.RouteManagerIV import RouteManagerIV
 from route.RouteManagerMon import RouteManagerMon
 from route.RouteManagerQuests import RouteManagerQuests
 from route.RouteManagerRaids import RouteManagerRaids
+from utils.locationInjection import LocationInjection
 from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
@@ -50,6 +51,8 @@ class MappingParser(object):
         areas = {}
         area_arr = self.__raw_json["areas"]
 
+        location_injection = LocationInjection(self.db_wrapper)
+
         thread_pool = ThreadPool(processes=4)
 
         areas_procs = {}
@@ -86,7 +89,8 @@ class MappingParser(object):
                                                   area["routecalc"],
                                                   mode=area["mode"], settings=area.get("settings", None),
                                                   init=area.get("init", False),
-                                                  name=area.get("name", "unknown")
+                                                  name=area.get("name", "unknown"),
+                                                  location_injection=location_injection
                                                   )
             elif mode == "mon_mitm":
                 route_manager = RouteManagerMon(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
@@ -96,14 +100,15 @@ class MappingParser(object):
                                                 coords_spawns_known=area.get("coords_spawns_known", False),
                                                 init=area.get("init", False),
                                                 name=area.get("name", "unknown"),
-                                                settings=area.get("settings", None)
+                                                settings=area.get("settings", None),
+                                                location_injection=location_injection
                                                 )
             elif mode == "iv_mitm":
                 route_manager = RouteManagerIV(self.db_wrapper, None, 0, 999999,
                                                area["geofence_included"], area.get("geofence_excluded", None),
                                                area["routecalc"], name=area.get("name", "unknown"),
                                                settings=area.get("settings", None),
-                                               mode=mode
+                                               mode=mode, location_injection=location_injection
                                                )
             elif mode == "pokestops":
                 route_manager = RouteManagerQuests(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
@@ -112,7 +117,8 @@ class MappingParser(object):
                                                    area["routecalc"], mode=area["mode"],
                                                    init=area.get("init", False),
                                                    name=area.get("name", "unknown"),
-                                                   settings=area.get("settings", None)
+                                                   settings=area.get("settings", None),
+                                                   location_injection=location_injection
                                                    )
             else:
                 raise RuntimeError("Invalid mode found in mapping parser.")

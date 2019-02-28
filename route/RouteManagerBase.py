@@ -21,7 +21,7 @@ Relation = collections.namedtuple('Relation', ['other_event', 'distance', 'timed
 class RouteManagerBase(ABC):
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, init=False,
-                 name="unknown", settings=None):
+                 name="unknown", settings=None, location_injection=None):
         self.db_wrapper = db_wrapper
         self.init = init
         self.name = name
@@ -31,6 +31,7 @@ class RouteManagerBase(ABC):
         self._max_radius = max_radius
         self._max_coords_within_radius = max_coords_within_radius
         self.settings = settings
+        self._location_injection=location_injection
         self.mode = mode
         self._is_started = False
 
@@ -303,7 +304,9 @@ class RouteManagerBase(ABC):
             self._start_routemanager()
         next_lat, next_lng = 0, 0
 
-        injection = self.db_wrapper.get_location_injection(self.mode)
+        injection = None
+        if self._location_injection:
+            injection = self._location_injection.get_injection(self.mode)
 
         # first check if a location is available, if not, block until we have one...
         got_location = injection is not None
@@ -323,9 +326,9 @@ class RouteManagerBase(ABC):
 
         # determine whether we move to the next location, an injected location, or the prio queue top's item
         if injection:
-            log.info("Injecting location: %s, %s" % (str(injection[1]), str(injection[2])))
-            next_lat = injection[1]
-            next_lng = injection[2]
+            log.info("Injecting location: %s, %s" % (str(injection[0]), str(injection[1])))
+            next_lat = injection[0]
+            next_lng = injection[1]
         elif (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
                                                                and self._prio_queue and len(self._prio_queue) > 0
                                                                and self._prio_queue[0][0] < time.time())):
