@@ -420,7 +420,7 @@ class RouteManagerBase(ABC):
 
         with open('mappings.json', 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
-            
+
     def get_route_status(self):
         if self._route:
             return self._current_index_of_route, len(self._route)

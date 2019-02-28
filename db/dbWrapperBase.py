@@ -871,7 +871,7 @@ class DbWrapperBase(ABC):
                 "pokemon_id", None)
             target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
             condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
-            
+
             task = questtask(int(quest_type), str(condition), int(target))
 
             query_quests = (
@@ -900,7 +900,7 @@ class DbWrapperBase(ABC):
                 log.debug('Sending Webhook is disabled')
 
         return True
-        
+
     def create_status_database_if_not_exists(self):
         log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
 
