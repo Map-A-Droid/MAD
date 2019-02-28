@@ -711,7 +711,7 @@ class MonocleWrapper(DbWrapperBase):
                         spawnid, lat, lon, despawn_time_unix,
                         form=wild_mon['pokemon_data']['display']['form_value'],
                         gender=wild_mon['pokemon_data']['display']['gender_value'],
-                        boosted_weather=wild_mon['pokemon_data']['display']
+                        boosted_weather=wild_mon['pokemon_data']['display']['weather_boosted_value']
                     )
 
                 mon_vals_insert.append(
