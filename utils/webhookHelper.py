@@ -31,7 +31,7 @@ raid_webhook_payload = """[{{
         "url": "{url}",
         "sponsor": "{sponsor}",
         "weather": "{weather}",
-        "park": "{park}"
+        "is_ex_raid_eligible": "{is_ex_raid_eligible}"
       }},
       "type": "{type}"
    }} ]"""
@@ -50,7 +50,7 @@ egg_webhook_payload = """[{{
         "pokemon_id": 0,
         "sponsor": "{sponsor}",
         "weather": "{weather}",
-        "park": "{park}"
+        "is_ex_raid_eligible": "{is_ex_raid_eligible}"
       }},
       "type": "{type}"
    }} ]"""
@@ -111,7 +111,8 @@ gym_webhook_payload = """[{{
     "enabled": "True",
     "latitude": {latitude},
     "longitude": {longitude},
-    "last_modified": {last_modified}
+    "last_modified": {last_modified},
+    "is_ex_raid_eligible": {is_ex_raid_eligible}
   }},
   "type": "gym"
 }}]"""
@@ -205,7 +206,7 @@ class WebhookHelper(object):
     def send_raid_webhook(self, gymid, type, start, end, lvl, mon,
                           team_param=None, cp_param=None, move1_param=None, move2_param=None,
                           name_param="unknown", lat_param=None, lng_param=None, weather_param=None,
-                          image_url=None):
+                          image_url=None, ex_eligible_param=None):
         if self.__application_args.webhook:
             self.__set_gyminfo()
 
@@ -215,7 +216,8 @@ class WebhookHelper(object):
                                                             name_param=name_param,
                                                             lat_param=lat_param, lng_param=lng_param,
                                                             weather_param=weather_param,
-                                                            image_url=image_url))
+                                                            image_url=image_url,
+                                                            ex_eligible_param=ex_eligible_param))
 
     def send_weather_webhook(self, s2_cell_id, weather_id, severe, warn, day, time):
         if self.__application_args.webhook and self.__application_args.weather_webhook:
@@ -246,15 +248,18 @@ class WebhookHelper(object):
             self.__add_task_to_loop(self._submit_quest_webhook(rawquest))
 
     def send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id, slots_available, guard_pokemon_id,
-                         latitude, longitude, last_modified):
+                         latitude, longitude, last_modified, is_ex_raid_eligible):
         if self.__application_args.webhook and self.__application_args.gym_webhook:
             self.__set_gyminfo()
 
             self.__add_task_to_loop(self._send_gym_webhook(gym_id, raid_active_until, gym_name, team_id,
-                                    slots_available, guard_pokemon_id, latitude, longitude, last_modified))
+                                    slots_available, guard_pokemon_id, latitude, longitude, last_modified,
+                                    is_ex_raid_eligible))
+                                    
 
     async def _send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id,
-                                slots_available, guard_pokemon_id, latitude, longitude, last_modified):
+                                slots_available, guard_pokemon_id, latitude, longitude, last_modified,
+                                is_ex_raid_eligible):
         info_of_gym = self.gyminfo.get(gym_id, None)
         gym_url = 'unknown'
         gym_description = 'unknown'
@@ -265,6 +270,7 @@ class WebhookHelper(object):
                 .replace('\\', r'\\').replace('"', '')
             gym_url = info_of_gym.get('url', 'unknown')\
                 .replace('\\', r'\\').replace('"', '')
+
 
         payload_raw = gym_webhook_payload.format(
             raid_active_until=raid_active_until,
@@ -279,7 +285,8 @@ class WebhookHelper(object):
             total_cp=0,
             latitude=latitude,
             longitude=longitude,
-            last_modified=last_modified
+            last_modified=last_modified,
+            is_ex_raid_eligible=is_ex_raid_eligible
         )
 
         payload = json.loads(payload_raw)
@@ -288,7 +295,7 @@ class WebhookHelper(object):
     async def _send_raid_webhook(self, gymid, type, start, end, lvl, mon,
                                  team_param=None, cp_param=None, move1_param=None, move2_param=None,
                                  name_param="unknown", lat_param=None, lng_param=None, weather_param=None,
-                                 image_url=None):
+                                 image_url=None, ex_eligible_param=None):
         log.info('Start preparing values for webhook')
         if mon is None:
             poke_id = 0
@@ -296,7 +303,6 @@ class WebhookHelper(object):
             poke_id = mon
 
         form = 0
-        park = 0
         description = ""
         sponsor = 0
 
@@ -342,7 +348,7 @@ class WebhookHelper(object):
             weather = weather_param
         else:
             weather = 0
-
+        
         if image_url is None:
             image_url = "0"
 
@@ -363,11 +369,7 @@ class WebhookHelper(object):
                             .replace("\\", r"\\").replace('"', '').replace("\n", "")
                     except (ValueError, TypeError) as e:
                         description = ""
-                if 'park' in self.gyminfo[str(gymid)]:
-                    try:
-                        park = int(info_of_gym.get("park", 0))
-                    except (ValueError, TypeError) as e:
-                        park = None
+
                 if 'sponsor' in self.gyminfo[str(gymid)]:
                     try:
                         sponsor = int(info_of_gym.get("sponsor", 0))
@@ -376,6 +378,7 @@ class WebhookHelper(object):
 
         hatch_time = int(start)
         end = int(end)
+        is_ex_raid_eligible = ex_eligible_param
 
         if poke_id == 0 or poke_id is None:
             payload_raw = egg_webhook_payload.format(
@@ -391,8 +394,8 @@ class WebhookHelper(object):
                 type=wtype,
                 url=image_url,
                 description=description,
-                park=park,
-                weather=weather
+                weather=weather,
+                is_ex_raid_eligible=is_ex_raid_eligible
             )
         else:
             payload_raw = raid_webhook_payload.format(
@@ -413,8 +416,8 @@ class WebhookHelper(object):
                 type=wtype,
                 url=image_url,
                 description=description,
-                park=park,
-                weather=weather
+                weather=weather,
+                is_ex_raid_eligible=is_ex_raid_eligible
             )
 
         payload = json.loads(payload_raw)
