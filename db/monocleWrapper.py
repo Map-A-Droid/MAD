@@ -839,13 +839,13 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form) "
+            "time_end, cp, move_1, move_2, form, weather_boosted_condition) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
-            "form=VALUES(form)"
+            "form=VALUES(form), weather_boosted_condition=VALUES(weather_boosted_condition)"
         )
 
         for cell in cells:
@@ -857,12 +857,14 @@ class MonocleWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
+						weather_boosted_condition = gym['gym_details']['raid_info']['raid_pokemon']['display']['weather_boosted_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
                         form = None
+						weather_boosted_condition = 0
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
@@ -878,7 +880,7 @@ class MonocleWrapper(DbWrapperBase):
                         gymid=gymid, type='RAID', start=raidbattleSec, end=raidendSec, lvl=level,
                         mon=pokemon_id, team_param=team, cp_param=cp, move1_param=move_1,
                         move2_param=move_2, lat_param=gym['latitude'], lng_param=gym['longitude'],
-                        image_url=gym['image_url']
+                        image_url=gym['image_url'], weather_param=weather_boosted_condition
                     )
 
                     log.info("%s: adding/Updating gym at gym %s with level %s ending at %s"
@@ -894,7 +896,7 @@ class MonocleWrapper(DbWrapperBase):
                             raidbattleSec,
                             raidendSec,
                             cp, move_1, move_2, 
-                            form
+                            form, weather_boosted_condition
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
