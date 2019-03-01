@@ -857,14 +857,14 @@ class MonocleWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
-						weather_boosted_condition = gym['gym_details']['raid_info']['raid_pokemon']['display']['weather_boosted_value']
+			weather_boosted_condition = gym['gym_details']['raid_info']['raid_pokemon']['display']['weather_boosted_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
                         form = None
-						weather_boosted_condition = 0
+			weather_boosted_condition = 0
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
