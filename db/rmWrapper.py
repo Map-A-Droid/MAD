@@ -445,7 +445,7 @@ class RmWrapper(DbWrapperBase):
             ") "
             "AS distance, latitude, longitude, name, description, url "
             "FROM gym "
-            "LEFT JOIN gym_details ON gym.gym_id = gym_details.gym_id "
+            "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
         )
