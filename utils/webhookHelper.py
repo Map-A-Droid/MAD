@@ -234,7 +234,7 @@ class WebhookHelper(object):
                              move_1=None, move_2=None, height=None, weight=None, gender=None, boosted_weather=None):
         if self.__application_args.webhook and self.__application_args.pokemon_webhook:
             # Get Pokemon Rarity
-            pokemon_rarity = Rarity.rarity_by_id(pokemon_id)
+            pokemon_rarity = self.rarity.rarity_by_id(pokemonid=pokemon_id)
             self.__add_task_to_loop(self._submit_pokemon_webhook(encounter_id=encounter_id, pokemon_id=pokemon_id,
                                                                  last_modified_time=last_modified_time,
                                                                  spawnpoint_id=spawnpoint_id, lat=lat, lon=lon,

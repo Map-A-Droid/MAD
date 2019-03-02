@@ -68,8 +68,7 @@ class Rarity(object):
             time.sleep(refresh_time_sec)
 
     def rarity_by_id(self, pokemonid):
-
-        if id in self._rarity:
+        if pokemonid in self._rarity:
             return self._rarity[pokemonid]
         else:
             return "New Spawn"
