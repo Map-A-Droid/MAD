@@ -221,7 +221,9 @@ class WebsocketServer(object):
 
             log.debug("Starting worker for %s" % str(id))
             new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
+
             new_worker_thread.daemon = False
+
             self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
         finally:
             self.__current_users_mutex.release()

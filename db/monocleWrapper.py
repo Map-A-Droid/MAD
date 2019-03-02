@@ -558,9 +558,9 @@ class MonocleWrapper(DbWrapperBase):
 
         query_insert = (
             "INSERT sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
-            "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id, "
+            "lat, lon, updated, gender, form, costume, weather_boosted_condition, weather_cell_id, "
             "atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight) "
-            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), atk_iv=VALUES(atk_iv), def_iv=VALUES(def_iv), "
             "sta_iv=VALUES(sta_iv), move_1=VALUES(move_1), move_2=VALUES(move_2), cp=VALUES(cp), "
             "level=VALUES(level), weight=VALUES(weight), costume=VALUES(costume)"
@@ -623,6 +623,7 @@ class MonocleWrapper(DbWrapperBase):
             latitude, longitude, timestamp,
             pokemon_display.get("gender_value", None),
             pokemon_display.get("form_value", None),
+            pokemon_display.get("costume_value", None),
             pokemon_display.get("weather_boosted_value", None),
             s2_weather_cell_id,
             pokemon_data.get("individual_attack"),
@@ -665,8 +666,8 @@ class MonocleWrapper(DbWrapperBase):
             return False
         query_mons_insert = (
             "INSERT IGNORE INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
-            "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "lat, lon, updated, gender, form, weather_boosted_condition, costume, weather_cell_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
 
         mon_vals_insert = []
@@ -725,6 +726,7 @@ class MonocleWrapper(DbWrapperBase):
                         wild_mon['pokemon_data']['display']['gender_value'],
                         wild_mon['pokemon_data']['display']['form_value'],
                         wild_mon['pokemon_data']['display']['weather_boosted_value'],
+                        wild_mon['pokemon_data']['display']['costume_value'],
                         s2_weather_cell_id
                     )
                 )

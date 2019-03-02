@@ -238,6 +238,7 @@ class WorkerQuests(MITMBase):
 
         while int(to) <= 7 and int(_pos) <= int(4):
             self._takeScreenshot()
+
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)

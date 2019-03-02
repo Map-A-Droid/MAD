@@ -92,7 +92,6 @@ def parseArgs():
                         help='Start madmin as instance.')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
-
     parser.add_argument('-nocr', '--no_ocr', action='store_true', default=False,
                         help='Activate if you not using OCR for Quest or Raidscanning.')
 
