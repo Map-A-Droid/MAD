@@ -506,8 +506,8 @@ class WebhookHelper(object):
             mon_payload["boosted_weather"] = boosted_weather
 
         if pokemon_rarity_name is not None:
-            mon_payload["rarity"] = pokemon_rarity_name
-            mon_payload["rarity_id"] = pokemon_rarity_id
+            mon_payload["rarity"] = pokemon_rarity_id
+            # mon_payload["rarity_id"] = pokemon_rarity_id
 
         entire_payload = {"type": "pokemon", "message": mon_payload}
         to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
