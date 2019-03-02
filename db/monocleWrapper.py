@@ -6,7 +6,9 @@ import requests
 
 from db.dbWrapperBase import DbWrapperBase
 import logging
+import calendar
 from datetime import datetime, timedelta
+from functools import reduce
 
 from utils.collections import Location
 from utils.s2Helper import S2Helper
@@ -1177,3 +1179,21 @@ class MonocleWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
+
+    def get_pokemon_spawns(self, hours):
+        log.debug('Fetching pokemon spawns from db')
+        query_where = ''
+        if hours:
+            zero = datetime.datetime.now()
+            hours = calendar.timegm(zero.timetuple()) - hours*60*60
+            query_where = ' where expire_timestamp > %s ' % str(hours)
+
+        query = (
+            "SELECT pokemon_id, count(pokemon_id) from sightings %s group by pokemon_id" % str(query_where)
+        )
+
+        res = self.execute(query)
+
+        total = reduce(lambda x, y: x + y[1], res, 0)
+
+        return {'pokemon': res, 'total': total}

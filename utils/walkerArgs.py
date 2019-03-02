@@ -148,6 +148,12 @@ def parseArgs():
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
 
+    # rarity
+    parser.add_argument('-rh', '--rarity_hours', type=int, default=72,
+                        help='Set the number of hours for the calculation of pokemon rarity (Default: 72)')
+    parser.add_argument('-ruf', '--rarity_update_frequency', type=int, default=60,
+                        help='Update frequency for dynamic rarity in minutes (Default: 60)')
+
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')

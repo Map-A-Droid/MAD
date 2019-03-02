@@ -273,7 +273,6 @@ if __name__ == "__main__":
                 log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
                 sys.exit(1)
 
-
             if args.only_routes:
                 log.info("Done calculating routes!")
                 sys.exit(0)

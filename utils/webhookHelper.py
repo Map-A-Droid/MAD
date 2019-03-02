@@ -8,11 +8,15 @@ import logging
 from threading import current_thread, Event, Thread
 from utils.questGen import generate_quest
 from utils.language import open_json_file
+from utils.rarity import Rarity
 
 import requests
 from s2sphere import Cell, CellId, LatLng
 
 log = logging.getLogger(__name__)
+
+rarity_list = {'New Spawn': 0, 'Common': 1, 'Uncommon': 2, 'Rare': 3,
+               'Very Rare': 4, 'Ultra Rare': 5}
 
 raid_webhook_payload = """[{{
       "message": {{
@@ -130,6 +134,7 @@ class WebhookHelper(object):
         self.t_asyncio_loop = Thread(name='webhook_asyncio_loop', target=self.__start_asyncio_loop)
         self.t_asyncio_loop.daemon = False
         self.t_asyncio_loop.start()
+        self.rarity = Rarity(self.__application_args)
 
     def __set_gyminfo(self):
         if self.db_wrapper is None:
@@ -185,6 +190,7 @@ class WebhookHelper(object):
     # to retrieve correct DB data like gym name etc
     def set_db_wrapper(self, dbwrapper):
         self.db_wrapper = dbwrapper
+        self.rarity.start_dynamic_rarity(self.db_wrapper)
 
     def get_raid_boss_cp(self, mon_id):
         if self.pokemon_file is not None and int(mon_id) > 0:
@@ -227,6 +233,8 @@ class WebhookHelper(object):
                              individual_attack=None, individual_defense=None, individual_stamina=None,
                              move_1=None, move_2=None, height=None, weight=None, gender=None, boosted_weather=None):
         if self.__application_args.webhook and self.__application_args.pokemon_webhook:
+            # Get Pokemon Rarity
+            pokemon_rarity = Rarity.rarity_by_id(pokemon_id)
             self.__add_task_to_loop(self._submit_pokemon_webhook(encounter_id=encounter_id, pokemon_id=pokemon_id,
                                                                  last_modified_time=last_modified_time,
                                                                  spawnpoint_id=spawnpoint_id, lat=lat, lon=lon,
@@ -238,7 +246,9 @@ class WebhookHelper(object):
                                                                  individual_defense=individual_defense,
                                                                  individual_stamina=individual_stamina,
                                                                  move_1=move_1, move_2=move_2,
-                                                                 height=height, weight=weight, gender=gender, boosted_weather=boosted_weather)
+                                                                 height=height, weight=weight, gender=gender,
+                                                                 boosted_weather=boosted_weather,
+                                                                 rarity=pokemon_rarity)
                                     )
 
     def submit_quest_webhook(self, rawquest):
@@ -446,7 +456,8 @@ class WebhookHelper(object):
                                       despawn_time_unix,
                                       pokemon_level=None, cp_multiplier=None, form=None, cp=None,
                                       individual_attack=None, individual_defense=None, individual_stamina=None,
-                                      move_1=None, move_2=None, height=None, weight=None, gender=None, boosted_weather=None):
+                                      move_1=None, move_2=None, height=None, weight=None, gender=None,
+                                      boosted_weather=None, rarity=None):
         log.info('Sending Pokemon %s (#%s) to webhook', pokemon_id, id)
 
         mon_payload = {"encounter_id": encounter_id, "pokemon_id": pokemon_id, "last_modified_time": last_modified_time,
@@ -493,6 +504,9 @@ class WebhookHelper(object):
 
         if boosted_weather is not None:
             mon_payload["boosted_weather"] = boosted_weather
+
+        if rarity is not None:
+            mon_payload["rarity"] = rarity
 
         entire_payload = {"type": "pokemon", "message": mon_payload}
         to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)

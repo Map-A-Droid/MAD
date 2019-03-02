@@ -7,6 +7,7 @@ import requests
 
 from db.dbWrapperBase import DbWrapperBase
 import logging
+from functools import reduce
 from datetime import datetime, timedelta
 
 from utils.collections import Location
@@ -673,7 +674,7 @@ class RmWrapper(DbWrapperBase):
 
         vals = (
             encounter_id,
-            wild_pokemon.get("spawnpoint_id"),
+            spawnid,
             pokemon_data.get('id'),
             latitude, longitude, despawn_time,
             pokemon_data.get("individual_attack"),
@@ -720,7 +721,7 @@ class RmWrapper(DbWrapperBase):
             encounter_id=encounter_id,
             pokemon_id=pokemon_data.get("id"),
             last_modified_time=timestamp,
-            spawnpoint_id=wild_pokemon.get("spawnpoint_id"),
+            spawnpoint_id=spawnid,
             lat=latitude, lon=longitude,
             despawn_time_unix=despawn_time_unix,
             pokemon_level=pokemon_level,
@@ -1236,3 +1237,22 @@ class RmWrapper(DbWrapperBase):
         last_modified = '1970-01-01 00:00:00'
 
         return stop_data['fort_id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, now, name, image[0]
+
+    def get_pokemon_spawns(self, hours):
+        log.debug('Fetching pokemon spawns from db')
+        query_where = ''
+        if hours:
+            hours = datetime.utcnow() - timedelta(hours=hours)
+            query_where = ' where disappear_time > \'%s\' ' % str(hours)
+
+        query = (
+            "SELECT pokemon_id, count(pokemon_id) from pokemon %s group by pokemon_id" % str(query_where)
+        )
+
+        res = self.execute(query)
+
+        total = reduce(lambda x, y: x + y[1], res, 0)
+
+        return {'pokemon': res, 'total': total}
+
+
