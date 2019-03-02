@@ -177,3 +177,4 @@ class MITMBase(WorkerBase):
         }
 
         self._db_wrapper.save_status(dataToSave)
+

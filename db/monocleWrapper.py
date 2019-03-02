@@ -563,7 +563,7 @@ class MonocleWrapper(DbWrapperBase):
             "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), atk_iv=VALUES(atk_iv), def_iv=VALUES(def_iv), "
             "sta_iv=VALUES(sta_iv), move_1=VALUES(move_1), move_2=VALUES(move_2), cp=VALUES(cp), "
-            "level=VALUES(level), weight=VALUES(weight)"
+            "level=VALUES(level), weight=VALUES(weight), costume=VALUES(costume)"
         )
 
         encounter_id = wild_pokemon['encounter_id']

@@ -494,7 +494,7 @@ class PogoWindows:
         log.debug("checkpogomainscreen: Checking close except nearby with: file %s, hash %s" % (filename, hash))
         mainscreen = 0
         try:
-            screenshotRead = cv2.imread(filename, 0)
+            screenshotRead = cv2.imread(filename)
         except:
             log.error("Screenshot corrupted :(")
             log.debug("checkCloseExceptNearbyButton: Screenshot corrupted...")
@@ -504,12 +504,12 @@ class PogoWindows:
             return False
 
 
-        height, width = screenshotRead.shape
+        height, width,_ = screenshotRead.shape
         gray = screenshotRead[int(height) - int(round(height / 6)):int(height),
                              0: int(int(width) / 4)]
-        height_, width_ = gray.shape
-        radMin = int((width / float(7.5) - 3) / 2)
-        radMax = int((width / float(6.5) + 3) / 2)
+        height_, width_,_ = gray.shape
+        radMin = int((width / float(6.8) - 3) / 2)
+        radMax = int((width / float(6) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         gray = cv2.Canny(gray, 100, 50, apertureSize=3)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,

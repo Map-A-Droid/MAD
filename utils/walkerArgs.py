@@ -93,6 +93,9 @@ def parseArgs():
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
 
+    parser.add_argument('-nocr', '--no_ocr', action='store_true', default=False,
+                        help='Activate if you not using OCR for Quest or Raidscanning.')
+
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
                         help='Temp Folder for OCR Scanning. Default: temp')

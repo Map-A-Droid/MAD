@@ -1,7 +1,7 @@
 import logging
 import math
 import time
-import os
+import os, sys
 from threading import Thread, Event
 
 from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
@@ -92,14 +92,14 @@ class WorkerQuests(MITMBase):
                     delay_used = 15
                 elif distance < 1000:
                     delay_used = 30
-                elif distance > 1000:
+                elif distance < 2000:
                     delay_used = 100
-                elif distance > 5000:
-                    delay_used = 200
-                elif distance > 10000:
-                    delay_used = 400
-                elif distance > 20000:
-                    delay_used = 800
+                elif distance < 5000:
+                    delay_used = 300
+                elif distance < 10000:
+                    delay_used = 500
+                elif distance < 20000:
+                    delay_used = 1000
                 log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
         else:
             log.info("main: Walking...")
@@ -227,17 +227,17 @@ class WorkerQuests(MITMBase):
         x, y = self._resocalc.get_item_menu_coords(self)[0], self._resocalc.get_item_menu_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
-        data_received = '-'
         _data_err_counter = 0
+        _pos = 1
         text_x1, text_x2, text_y1, text_y2 = self._resocalc.get_delete_item_text(self)
         x, y = self._resocalc.get_delete_item_coords(self)[0], self._resocalc.get_delete_item_coords(self)[1]
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], \
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
-        while int(to) <= 7 and int(y) <= int(self._screen_y):
+
+        while int(to) <= 7 and int(_pos) <= int(4):
             self._takeScreenshot()
-            # filename, hash, x1, x2, y1, y2
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)
@@ -247,6 +247,7 @@ class WorkerQuests(MITMBase):
                 y += self._resocalc.get_next_item_coord(self)
                 text_y1 += self._resocalc.get_next_item_coord(self)
                 text_y2 += self._resocalc.get_next_item_coord(self)
+                _pos += 1
             else:
 
                 self._communicator.click(int(x), int(y))
@@ -259,25 +260,19 @@ class WorkerQuests(MITMBase):
                 curTime = time.time()
                 self._communicator.click(int(delx), int(dely))
 
-                data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=15)
+                data_received = self._wait_for_data(timestamp=curTime, proto_to_wait_for=4, timeout=25)
 
                 if data_received is not None:
                     if 'Clear' in data_received:
                         to += 1
                     else:
-                        self._communicator.backButton()
-                        data_received = '-'
                         y += self._resocalc.get_next_item_coord(self)
                         text_y1 += self._resocalc.get_next_item_coord(self)
                         text_y2 += self._resocalc.get_next_item_coord(self)
+                        _pos += 1
                 else:
-                    log.info('Click Gift / Raidpass')
-                    if not self._checkPogoButton():
-                        self._checkPogoClose()
-                    data_received = '-'
-                    y += self._resocalc.get_next_item_coord(self)
-                    text_y1 += self._resocalc.get_next_item_coord(self)
-                    text_y2 += self._resocalc.get_next_item_coord(self)
+                    log.info('Unknown error')
+                    to = 8
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
@@ -415,6 +410,3 @@ class WorkerQuests(MITMBase):
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
         return data_requested
-
-
-

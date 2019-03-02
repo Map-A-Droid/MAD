@@ -443,7 +443,7 @@ class RmWrapper(DbWrapperBase):
             "* sin(radians(latitude))"
             ")"
             ") "
-            "AS distance, latitude, longitude, name, description, url "
+            "AS distance, gym.latitude, gym.longitude, gymdetails.name, gymdetails.description, gymdetails.url "
             "FROM gym "
             "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
             "HAVING distance <= %s OR distance IS NULL "
