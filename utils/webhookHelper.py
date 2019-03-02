@@ -58,22 +58,22 @@ egg_webhook_payload = """[{{
 quest_webhook_payload = """[{{
       "message": {{
                 "pokestop_id": "{pokestop_id}",
-                "latitude": "{latitude}",
-                "longitude": "{longitude}",
+                "latitude": {latitude},
+                "longitude": {longitude},
                 "quest_type": "{quest_type}",
-                "quest_type_raw": "{quest_type_raw}",
+                "quest_type_raw": {quest_type_raw},
                 "item_type": "{item_type}",
-                "item_amount": "{item_amount}",
-                "item_id": "{item_id}",
-                "pokemon_id": "{pokemon_id}",
+                "item_amount": {item_amount},
+                "item_id": {item_id},
+                "pokemon_id": {pokemon_id},
                 "name": "{name}",
                 "url": "{url}",
-                "timestamp": "{timestamp}",
+                "timestamp": {timestamp},
                 "quest_reward_type": "{quest_reward_type}",
-                "quest_reward_type_raw": "{quest_reward_type_raw}",
-                "quest_target": "{quest_target}",
+                "quest_reward_type_raw": {quest_reward_type_raw},
+                "quest_target": {quest_target},
                 "quest_task": "{quest_task}",
-                "quest_condition": "{quest_condition}"
+                "quest_condition": {quest_condition}
         }},
       "type": "quest"
    }} ]"""
@@ -163,8 +163,13 @@ class WebhookHelper(object):
         for webhook in webhooks:
             url = webhook.strip()
 
+            if 'bookofquests' in url and 'quest_type' not in payload[0]['message']:
+                log.debug("Do not send non-quest webhook to bookofquests")
+                return
+
             log.debug("Sending to webhook %s", url)
-            log.debug("Payload: %s" % str(payload))
+            log.debug("Payload: %s" % json.dumps(payload))
+
             try:
                 response = requests.post(
                     url, data=json.dumps(payload),
@@ -520,12 +525,12 @@ class WebhookHelper(object):
             quest_reward_type=quest['quest_reward_type'],
             quest_reward_type_raw=quest['quest_reward_type_raw'],
             quest_target=quest['quest_target'],
-            pokemon_id=quest['pokemon_id'],
+            pokemon_id=int(quest['pokemon_id']),
             item_amount=quest['item_amount'],
             item_id=quest['item_id'],
             quest_task=quest['quest_task'],
-            quest_condition=quest['quest_condition'])
+            quest_condition=quest['quest_condition'].replace('\'', '"').lower(),
+            quest_template=quest['quest_template'])
 
         payload = json.loads(data)
         self.__sendToWebhook(payload)
-

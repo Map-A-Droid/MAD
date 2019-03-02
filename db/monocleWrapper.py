@@ -1101,7 +1101,7 @@ class MonocleWrapper(DbWrapperBase):
                 to_return[i][1] = list_of_coords[i][1]
             return to_return
 
-    def quests_from_db(self, GUID = False):
+    def quests_from_db(self, GUID=False):
         log.debug("{MonocleWrapper::quests_from_db} called")
         questinfo = {}
 
@@ -1111,7 +1111,7 @@ class MonocleWrapper(DbWrapperBase):
                 "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
                 "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
                 "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
-                "trs_quest.quest_timestamp,trs_quest.quest_task "
+                "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
                 "FROM pokestops inner join trs_quest on "
                 "pokestops.external_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
@@ -1123,7 +1123,7 @@ class MonocleWrapper(DbWrapperBase):
                 "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
                 "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
                 "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
-                "trs_quest.quest_timestamp,trs_quest.quest_task "
+                "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
                 "FROM pokestops inner join trs_quest on "
                 "pokestops.external_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
@@ -1135,7 +1135,7 @@ class MonocleWrapper(DbWrapperBase):
 
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
-             quest_timestamp, quest_task) in res:
+             quest_timestamp, quest_task, quest_template) in res:
             mon = "%03d" % quest_pokemon_id
             questinfo[pokestop_id] = ({
                 'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,
@@ -1145,7 +1145,7 @@ class MonocleWrapper(DbWrapperBase):
                 'quest_item_amount': quest_item_amount, 'name': name, 'image': image,
                 'quest_target': quest_target,
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
-                'task': quest_task})
+                'task': quest_task, 'quest_template': quest_template})
         return questinfo
         
     def submit_pokestops_details_map_proto(self, map_proto):

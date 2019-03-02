@@ -5,7 +5,7 @@ import sys
 
 log = logging.getLogger(__name__)
 
-current_version = 6
+current_version = 7
 
 
 class MADVersion(object):
@@ -207,6 +207,17 @@ class MADVersion(object):
                             self._dbwrapper.execute(alter_query, commit=True)
                         except Exception as e:
                             log.info("Unexpected error: %s" % e)
+
+            if self._version < 7:
+                alter_query = (
+                    "ALTER TABLE trs_quest "
+                    "ADD quest_template VARCHAR(100) NULL DEFAULT NULL "
+                    "AFTER quest_reward"
+                )
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
 
         self.set_version(current_version)
 
