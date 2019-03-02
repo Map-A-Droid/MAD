@@ -20,6 +20,7 @@ from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
+from utils.rarity import Rarity
 
 from ocr.pogoWindows import PogoWindows
 
@@ -222,6 +223,9 @@ if __name__ == "__main__":
     db_wrapper.create_status_database_if_not_exists()
     version = MADVersion(args, db_wrapper)
     version.get_version()
+    rarity = Rarity(args, db_wrapper)
+    rarity.start_dynamic_rarity()
+    webhook_helper.set_rarity(rarity)
 
     if not db_wrapper.ensure_last_updated_column():
         log.fatal("Missing raids.last_updated column and couldn't create it")
