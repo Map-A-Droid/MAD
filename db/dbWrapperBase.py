@@ -342,6 +342,10 @@ class DbWrapperBase(ABC):
     def statistics_get_pokemon_count(self, days):
         pass
 
+    @abstractmethod
+    def statistics_get_gym_count(self, days):
+        pass
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes

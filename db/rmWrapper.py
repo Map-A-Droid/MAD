@@ -1253,3 +1253,16 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query)
 
         return res
+
+    def statistics_get_gym_count(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT if (team_id=0, 'WHITE', if (team_id=1, 'BLUE', if (team_id=2, 'RED', 'YELLOW'))) "
+                "as Color, count(team_id) as Count FROM `gym` group by team_id"
+
+        )
+        res = self.execute(query)
+
+        return res
+

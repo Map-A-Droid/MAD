@@ -7,6 +7,7 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.selection.min.js"></script>
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.pie.min.js"></script>
 <script>
 $(function(){
 
@@ -27,9 +28,9 @@ $(function(){
              }
         },
         grid: {
-                hoverable: true,
-                borderWidth: 1,
-                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            hoverable: true,
+            borderWidth: 1,
+            backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
         },
         legend:{
             container:$("#legendContainer_spawn"),
@@ -54,13 +55,40 @@ $(function(){
             barWidth: 60 * 40 * 1000
         },
         grid: {
-                hoverable: true,
-                borderWidth: 2,
-                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            hoverable: true,
+            borderWidth: 2,
+            backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
         },
         legend:{
             container:$("#legendContainer_quest"),
             noColumns: 0
+        }
+        }
+
+        var options_pie = {
+        series: {
+        pie: {
+            show: true,
+            radius: 1,
+            tilt: 0.5,
+            label: {
+                show:true,
+                radius: 0.8,
+                formatter: function (label, series) {
+                    return '<div style="border:1px solid grey;font-size:8pt;text-align:center;padding:5px;color:white;">' +
+                    label + ' : ' +
+                    (series.data[0][1]) +
+                    '</div>';
+                },
+                background: {
+                    opacity: 0.8,
+                    color: '#000'
+                }
+            }
+        }
+        },
+        legend:{
+            show: false
         }
         }
 
@@ -110,6 +138,19 @@ $(function(){
                 }
             ],  options_bars);
             $("#flot_quest").UseTooltip();
+
+            }
+        })
+        $.ajax({
+            "url": "/get_gym_stats",
+            "type": "GET",
+            "cache": false,
+            "dataType": "json",
+            success: function(result) {
+            data = result
+
+            var plot = $.plot($("#flot_gym"), data,  options_pie);
+
 
             }
         })
@@ -177,6 +218,7 @@ $(function(){
 <style type="text/css">
         #flot_spawn{width:100%;height:300px;}
         #flot_quest{width:100%;height:300px;}
+        #flot_gym{width:100%;height:300px;}
 </style>
 <style type="text/css">
 #legendContainer {
@@ -206,4 +248,9 @@ $(function(){
 <h2>Today Quest Statistics</h2>
 <div id="legendContainer_quest"></div>
 <div id="flot_quest"></div>
+<br>
+<h2>Live Gym Statistics</h2>
+<div id="legendContainer_gym"></div>
+<div id="flot_gym"></div>
+<br>
 {% endblock %}

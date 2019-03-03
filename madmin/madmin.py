@@ -1040,6 +1040,29 @@ def pokemon_stats():
 
     return jsonify(data)
 
+@app.route('/get_gym_stats', methods=['GET'])
+@auth_required
+def gym_stats():
+    stats = []
+    data = db_wrapper.statistics_get_gym_count()
+    for dat in data:
+        if dat[0] == 'WHITE':
+            color = '#999999'
+            text = 'Uncontested'
+        elif dat[0] == 'BLUE':
+            color = '#0051CF'
+            text = 'Mystic'
+        elif dat[0] == 'RED':
+            color = '#FF260E'
+            text = 'Valor'
+        elif dat[0] == 'YELLOW':
+            color = '#FECC23'
+            text = 'Instinct'
+        stats.append({'label': text, 'data': dat[1], 'color':  color})
+
+    return jsonify(stats)
+
+
 def datetime_from_utc_to_local(utc_datetime):
     now_timestamp = time.time()
     offset = datetime.datetime.fromtimestamp(now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)

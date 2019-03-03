@@ -1197,3 +1197,15 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         return res
+
+    def statistics_get_gym_count(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT if (team=0, 'WHITE', if (team=1, 'BLUE', if (team=2, 'RED', 'YELLOW'))) "
+                "as Color, count(team) as Count FROM `fort_sightings` group by team"
+
+        )
+        res = self.execute(query)
+
+        return res
