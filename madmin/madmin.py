@@ -1016,8 +1016,28 @@ def get_status():
 @app.route('/get_pokemon_stats', methods=['GET'])
 @auth_required
 def pokemon_stats():
+    iv = []
+    noniv = []
+    sum = []
+    sumup = {}
+
     data = db_wrapper.statistics_get_pokemon_count(1)
-    data = {'data': data}
+    for dat in data:
+        if dat[2] == 1:
+            iv.append([dat[0], dat[1]])
+        else:
+            noniv.append([dat[0], dat[1]])
+
+        if dat[0] in sumup:
+            sumup[dat[0]] += dat[1]
+        else:
+            sumup[dat[0]] = dat[1]
+
+    for dat in sumup:
+        sum.append([dat, sumup[dat]])
+
+    data = {'iv': iv, 'noniv': noniv, 'sum': sum}
+
     return jsonify(data)
 
 @app.route('/get_quest_stats', methods=['GET'])

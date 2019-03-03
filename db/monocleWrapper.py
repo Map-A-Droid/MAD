@@ -1188,8 +1188,8 @@ class MonocleWrapper(DbWrapperBase):
             query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(days)
 
         query = (
-                "SELECT  %s, count(pokemon_id) as Count FROM pokemon %s "
-                "group by day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
+                "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon %s "
+                "group by IV, day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
                 "order by timestamp" %
                 (str(query_date), str(query_where))
         )

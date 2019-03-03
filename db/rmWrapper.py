@@ -1246,8 +1246,8 @@ class RmWrapper(DbWrapperBase):
             query_where = ' where disappear_time > \'%s\' ' % str(days)
 
         query = (
-                "SELECT  %s, count(pokemon_id) as Count FROM pokemon %s "
-                "group by day(disappear_time), hour(disappear_time) order by timestamp" %
+                "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon %s "
+                "group by IV, day(disappear_time), hour(disappear_time) order by timestamp" %
                 (str(query_date), str(query_where))
         )
 
