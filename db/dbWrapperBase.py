@@ -37,8 +37,6 @@ class DbWrapperBase(ABC):
                          "port": self.port}
         self._init_pool()
 
-    def __del__(self):
-        self.shutdown_pool()
 
     def _init_pool(self):
         log.info("Connecting pool to DB")
@@ -46,13 +44,6 @@ class DbWrapperBase(ABC):
         self.pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="db_wrapper_pool",
                                                                 pool_size=self.application_args.db_poolsize,
                                                                 **self.dbconfig)
-        self.pool_mutex.release()
-
-    def shutdown_pool(self):
-        log.info("Closing pool to DB")
-        self.pool_mutex.acquire()
-        if self.pool is not None:
-            self.pool.close()
         self.pool_mutex.release()
 
     def close(self, conn, cursor):

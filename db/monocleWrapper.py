@@ -448,13 +448,8 @@ class MonocleWrapper(DbWrapperBase):
 
         for (id, lat, lon, name, url, park, sponsor, team) in res:
             if url is not None:
-                if not self.application_args.justjson:
-                    filename = url_image_path + '_' + str(id) + '_.jpg'
-                    log.debug('Downloading', filename)
-                    self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encode_hash_json(team, float(lat), float(lon),
-                                                      str(name).replace('"', '\\"')
-                                                      .replace('\n', '\\n'), url, park, sponsor)
+                filename = url_image_path + '_' + str(id) + '_.jpg'
+                self.__download_img(str(url), str(filename))
 
         log.info('Finished downloading gym images...')
 
