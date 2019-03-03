@@ -64,7 +64,7 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._stop_update_thread = Event()
 
-    def __del__(self):
+    def stop_routemanager(self):
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
             self._update_prio_queue_thread.join()
