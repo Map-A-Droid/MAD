@@ -41,7 +41,8 @@ $(function(){
         xaxis: {
             mode: "time",
             timeformat: "%d.%m<br>%H:00:00",
-            minTickSize: [1, "hour"]
+            minTickSize: [1, "hour"],
+            timezone: "browser"
         },
         series: {
              bars: {
@@ -129,7 +130,7 @@ $(function(){
                         showTooltip(item.pageX,
                         item.pageY,
                         color,
-                        "<strong>" + item.series.label + "</strong><br><strong>Amount: " + y + "<br>Despawn Hour: "+ timeConverter(x) + "</strong>");
+                        "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: "+ timeConverter(x) + "</strong>");
                     }
                 } else {
                     $("#tooltip").remove();
