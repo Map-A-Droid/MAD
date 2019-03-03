@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js"></script>
+<script>
+$(function(){
+
+        var options_dots = {
+        xaxis: {
+            mode: "time",
+            timeformat: "%d.%m<br>%H:00:00",
+            minTickSize: [1, "hour"]
+        },
+        series: {
+             lines: {
+                 show: true,
+                 color: '#ffa500'
+             },
+                 points: {
+                 show: true
+             }
+        },
+        grid: {
+                hoverable: true,
+                borderWidth: 2,
+                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+        }
+        }
+
+        var options_bars = {
+        xaxis: {
+            mode: "time",
+            timeformat: "%d.%m<br>%H:00:00",
+            minTickSize: [1, "hour"]
+        },
+        series: {
+             bars: {
+                 show: true
+             }
+        },
+        bars: {
+            align: "center",
+            barWidth: 60 * 40 * 1000
+        },
+        grid: {
+                hoverable: true,
+                borderWidth: 2,
+                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+        }
+        }
+
+
+
+
+        $.ajax({
+            "url": "/get_pokemon_stats",
+            "type": "GET",
+            "cache": false,
+            "dataType": "json",
+            success: function(result) {
+            data = result.data
+
+            var plot = $.plot($("#flot_spawn"), [
+                {
+                    data: data,
+                    label: "Spawns / Hour"
+                }
+            ],  options_dots);
+            $("#flot_spawn").UseTooltip();
+
+            }
+        })
+        $.ajax({
+            "url": "/get_quest_stats",
+            "type": "GET",
+            "cache": false,
+            "dataType": "json",
+            success: function(result) {
+            data = result.data
+
+            var plot = $.plot($("#flot_quest"), [
+                {
+                    data: data,
+                    color: "#5482FF",
+                    label: "Quest / Hour"
+                }
+            ],  options_bars);
+            $("#flot_quest").UseTooltip();
+
+            }
+        })
+
+        var previousPoint = null, previousLabel = null;
+
+        $.fn.UseTooltip = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                        item.pageY,
+                        color,
+                        "<strong>" + item.series.label + "</strong><br><strong>Amount: " + y + "<br>Date: "+ timeConverter(x) + "</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+        function timeConverter(timestamp){
+          var a = new Date(timestamp);
+          var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          var year = a.getFullYear();
+          var month = months[a.getMonth()];
+          var date =  a.getDate();
+          var hour = a.getHours();
+          var min = a.getMinutes();
+          var sec = a.getSeconds();
+          var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+          return time;
+        }
+
+        function showTooltip(x, y, color, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css({
+                position: 'absolute',
+                display: 'none',
+                top: y - 40,
+                left: x - 120,
+                border: '2px solid ' + color,
+                padding: '3px',
+                'font-size': '9px',
+                'border-radius': '5px',
+                'background-color': '#fff',
+                'font-family': 'Verdana, Arial, Helvetica, Tahoma, sans-serif',
+                opacity: 0.9
+            }).appendTo("body").fadeIn(200);
+        }
+
+
+})
+
+</script>
+
+<style type="text/css">
+        #flot_spawn{width:100%;height:300px;}
+        #flot_quest{width:100%;height:300px;}
+    </style>
+
+{% endblock %}
+
+{% block content %}
+<h2>Spawn Statistics last 24h</h2>
+<div id="flot_spawn"></div>
+<br>
+<h2>Today Quest Statistics</h2>
+<div id="flot_quest"></div>
+{% endblock %}

@@ -50,7 +50,6 @@ def madmin_start(arg_args, arg_db_wrapper):
     areas = mapping_parser.get_areas()
     app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
 
-
 def auth_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
@@ -1002,6 +1001,10 @@ def addnew():
 def status():
     return render_template('status.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="Worker status")
 
+@app.route('/statistics', methods=['GET'])
+@auth_required
+def statistics():
+    return render_template('statistics.html', title="Worker status")
 
 @app.route('/get_status', methods=['GET'])
 @auth_required
@@ -1009,6 +1012,21 @@ def get_status():
     data = json.loads(db_wrapper.download_status())
 
     return jsonify(data)
+
+@app.route('/get_pokemon_stats', methods=['GET'])
+@auth_required
+def pokemon_stats():
+    data = db_wrapper.statistics_get_pokemon_count(1)
+    data = {'data': data}
+    return jsonify(data)
+
+@app.route('/get_quest_stats', methods=['GET'])
+@auth_required
+def quest_stats():
+    data = db_wrapper.statistics_get_quests_count(1)
+    data = {'data': data}
+    return jsonify(data)
+
 
 
 def decodeHashJson(hashJson):

@@ -1177,3 +1177,23 @@ class MonocleWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
+
+    def statistics_get_pokemon_count(self, days):
+        log.debug('Fetching pokemon spawns count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %H:00:00')) * 1000 " \
+                     "as timestamp"
+        if days:
+            days = datetime.utcnow() - timedelta(days=days)
+            query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(days)
+
+        query = (
+                "SELECT  %s, count(pokemon_id) as Count FROM pokemon %s "
+                "group by day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
+                "order by timestamp" %
+                (str(query_date), str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res

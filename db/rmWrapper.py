@@ -1236,3 +1236,21 @@ class RmWrapper(DbWrapperBase):
         last_modified = '1970-01-01 00:00:00'
 
         return stop_data['fort_id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, now, name, image[0]
+
+    def statistics_get_pokemon_count(self, days):
+        log.debug('Fetching pokemon spawns count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %H:00:00')) * 1000 as timestamp"
+        if days:
+            days = datetime.utcnow() - timedelta(days=days)
+            query_where = ' where disappear_time > \'%s\' ' % str(days)
+
+        query = (
+                "SELECT  %s, count(pokemon_id) as Count FROM pokemon %s "
+                "group by day(disappear_time), hour(disappear_time) order by timestamp" %
+                (str(query_date), str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res

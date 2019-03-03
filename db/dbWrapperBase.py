@@ -338,6 +338,10 @@ class DbWrapperBase(ABC):
     def stop_from_db_without_quests(self, geofence_helper):
         pass
 
+    @abstractmethod
+    def statistics_get_pokemon_count(self, days):
+        pass
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -1033,3 +1037,24 @@ class DbWrapperBase(ABC):
         )
 
         return int(self.execute(query, vals)[0][0])
+
+    def statistics_get_quests_count(self, days):
+        log.debug('Fetching quests count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %h:00:00') ) *1000 " \
+                                                                                                   "as Timestamp"
+        if days:
+            days = datetime.utcnow() - timedelta(days=days)
+            query_where = ' WHERE FROM_UNIXTIME(quest_timestamp) > \'%s\' ' % str(days)
+
+        query = (
+                "SELECT %s, count(GUID) as Count  FROM trs_quest %s "
+                "group by day(FROM_UNIXTIME(quest_timestamp)), hour(FROM_UNIXTIME(quest_timestamp))"
+                "order by quest_timestamp" %
+                (str(query_date), str(query_where))
+        )
+        print (query)
+
+        res = self.execute(query)
+
+        return res
