@@ -1240,7 +1240,7 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, days):
         log.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %H:00:00')) * 1000 as timestamp"
+        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %H:00:00')) as timestamp"
         if days:
             days = datetime.utcnow() - timedelta(days=days)
             query_where = ' where disappear_time > \'%s\' ' % str(days)
@@ -1250,7 +1250,6 @@ class RmWrapper(DbWrapperBase):
                 "group by IV, day(disappear_time), hour(disappear_time) order by timestamp" %
                 (str(query_date), str(query_where))
         )
-
         res = self.execute(query)
 
         return res

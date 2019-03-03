@@ -1053,7 +1053,6 @@ class DbWrapperBase(ABC):
                 "order by quest_timestamp" %
                 (str(query_date), str(query_where))
         )
-        print (query)
 
         res = self.execute(query)
 

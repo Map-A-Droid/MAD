@@ -13,8 +13,9 @@ $(function(){
         var options_dots = {
         xaxis: {
             mode: "time",
-            timeformat: "%d.%m<br>%H:00:00",
-            minTickSize: [1, "hour"]
+            timeformat: "%d.%m<br>%H:00 - ",
+            minTickSize: [1, "hour"],
+            timezone: "browser"
         },
         series: {
              lines: {
@@ -128,7 +129,7 @@ $(function(){
                         showTooltip(item.pageX,
                         item.pageY,
                         color,
-                        "<strong>" + item.series.label + "</strong><br><strong>Amount: " + y + "<br>Date: "+ timeConverter(x) + "</strong>");
+                        "<strong>" + item.series.label + "</strong><br><strong>Amount: " + y + "<br>Despawn Hour: "+ timeConverter(x) + "</strong>");
                     }
                 } else {
                     $("#tooltip").remove();
@@ -144,9 +145,10 @@ $(function(){
           var month = months[a.getMonth()];
           var date =  a.getDate();
           var hour = a.getHours();
+          var hour_till = a.getHours() + 1;
           var min = a.getMinutes();
           var sec = a.getSeconds();
-          var time = date + ' ' + month + ' ' + year + ' ' + hour + ':' + min + ':' + sec ;
+          var time = hour + ' - ' + hour_till
           return time;
         }
 

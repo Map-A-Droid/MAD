@@ -1024,14 +1024,14 @@ def pokemon_stats():
     data = db_wrapper.statistics_get_pokemon_count(1)
     for dat in data:
         if dat[2] == 1:
-            iv.append([dat[0], dat[1]])
+            iv.append([datetime_from_utc_to_local(dat[0]), dat[1]])
         else:
-            noniv.append([dat[0], dat[1]])
+            noniv.append([datetime_from_utc_to_local(dat[0]), dat[1]])
 
-        if dat[0] in sumup:
-            sumup[dat[0]] += dat[1]
+        if datetime_from_utc_to_local(dat[0]) in sumup:
+            sumup[datetime_from_utc_to_local(dat[0])] += dat[1]
         else:
-            sumup[dat[0]] = dat[1]
+            sumup[datetime_from_utc_to_local(dat[0])] = dat[1]
 
     for dat in sumup:
         sum.append([dat, sumup[dat]])
@@ -1039,6 +1039,11 @@ def pokemon_stats():
     data = {'iv': iv, 'noniv': noniv, 'sum': sum}
 
     return jsonify(data)
+
+def datetime_from_utc_to_local(utc_datetime):
+    now_timestamp = time.time()
+    offset = datetime.datetime.fromtimestamp(now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
+    return int(utc_datetime + offset.total_seconds()) * 1000
 
 @app.route('/get_quest_stats', methods=['GET'])
 @auth_required
