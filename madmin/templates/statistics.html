@@ -130,10 +130,7 @@ $(function(){
             $("#flot_quest").UseTooltip();
 
             var plot_stop = $.plot($("#flot_stop"), stop,  options_pie);
-
             var plot_gym = $.plot($("#flot_gym"), gym,  options_pie);
-
-
 
             },
             complete: function(){
@@ -141,9 +138,6 @@ $(function(){
             }
 
         })
-
-
-
 
         var previousPoint = null, previousLabel = null;
 
@@ -199,8 +193,6 @@ $(function(){
                 opacity: 0.9
             }).appendTo("body").fadeIn(200);
         }
-
-
 })
 
 </script>
