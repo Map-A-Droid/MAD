@@ -21,7 +21,7 @@ def generate_quest(quest):
     quest_reward_type = questreward(quest['quest_reward_type'])
     quest_type = questtype(quest['quest_type'])
     if '{0}' in quest_type:
-        quest_type_text = quest_type.replace('{0}', str(quest['quest_target']))
+        quest_type = quest_type.replace('{0}', str(quest['quest_target']))
 
     item_id = 0
     item_amount = 1
@@ -57,7 +57,7 @@ def generate_quest(quest):
         'item_type': item_type,
         'pokemon_id': pokemon_id,
         'pokemon_name': pokemon_name,
-        'quest_type': quest_type_text,
+        'quest_type': quest_type,
         'quest_type_raw': quest['quest_type'],
         'quest_reward_type': quest_reward_type,
         'quest_reward_type_raw': quest['quest_reward_type'],
