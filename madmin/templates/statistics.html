@@ -74,21 +74,19 @@ $(function(){
             label: {
                 show:true,
                 radius: 0.8,
-                formatter: function (label, series) {
-                    return '<div style="border:1px solid grey;font-size:8pt;text-align:center;padding:5px;color:white;">' +
-                    label + ' : ' +
-                    (series.data[0][1]) +
-                    '</div>';
-                },
-                background: {
-                    opacity: 0.8,
-                    color: '#000'
-                }
+                threshold: 0.1
+
             }
         }
         },
         legend:{
-            show: false
+            show: true,
+            labelFormatter: function (label, series) {
+                    return '<div id="legendContainer" style="color:black;">' +
+                    label + ' : ' +
+                    (series.data[0][1]) +
+                    '</div>';
+                }
         }
         }
 
@@ -141,6 +139,20 @@ $(function(){
 
             }
         })
+        $.ajax({
+            "url": "/get_stop_stats",
+            "type": "GET",
+            "cache": false,
+            "dataType": "json",
+            success: function(result) {
+            data = result
+
+            var plot = $.plot($("#flot_stop"), data,  options_pie);
+
+
+            }
+        })
+
         $.ajax({
             "url": "/get_gym_stats",
             "type": "GET",
@@ -219,6 +231,7 @@ $(function(){
         #flot_spawn{width:100%;height:300px;}
         #flot_quest{width:100%;height:300px;}
         #flot_gym{width:100%;height:300px;}
+        #flot_stop{width:100%;height:300px;}
 </style>
 <style type="text/css">
 #legendContainer {
@@ -241,7 +254,7 @@ $(function(){
 {% endblock %}
 
 {% block content %}
-<h2>Spawn Statistics last 24h</h2>
+<h2>Spawn Statistics last day</h2>
 <div id="legendContainer_spawn"></div>
 <div id="flot_spawn"></div>
 <br>
@@ -249,8 +262,10 @@ $(function(){
 <div id="legendContainer_quest"></div>
 <div id="flot_quest"></div>
 <br>
-<h2>Live Gym Statistics</h2>
-<div id="legendContainer_gym"></div>
-<div id="flot_gym"></div>
+<h2>Stop / Quest Statistics</h2>
+<div id="flot_stop"></div>
 <br>
+<h2>Live Gym Statistics</h2>
+<div id="flot_gym"></div>
+<br><br>
 {% endblock %}

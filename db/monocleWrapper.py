@@ -1209,3 +1209,19 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         return res
+
+    def statistics_get_stop_quest(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT "
+                "if(FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d') is NULL,'NO QUEST',"
+                "FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')) as Quest, "
+                "count(pokestops.external_id) as Count FROM pokestops left join trs_quest "
+                "on pokestops.external_id = trs_quest.GUID "
+                "group by FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
+
+        )
+        res = self.execute(query)
+
+        return res

@@ -346,6 +346,10 @@ class DbWrapperBase(ABC):
     def statistics_get_gym_count(self, days):
         pass
 
+    @abstractmethod
+    def statistics_get_stop_quest(self, days):
+        pass
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -881,7 +885,7 @@ class DbWrapperBase(ABC):
                 "pokemon_id", None)
             target = map_proto['challenge_quest']['quest']['goal'].get("target", None)
             condition = map_proto['challenge_quest']['quest']['goal'].get("condition", None)
-            
+
             task = questtask(int(quest_type), str(condition), int(target))
 
             query_quests = (
@@ -910,7 +914,7 @@ class DbWrapperBase(ABC):
                 log.debug('Sending Webhook is disabled')
 
         return True
-        
+
     def create_status_database_if_not_exists(self):
         log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
 
@@ -949,7 +953,7 @@ class DbWrapperBase(ABC):
             "init=VALUES(init), rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter)"
         )
         vals = (
-            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"], 
+            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"],
             data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"],
             data["Init"], data["RebootingOption"], data["RestartCounter"]
         )
@@ -1045,7 +1049,7 @@ class DbWrapperBase(ABC):
     def statistics_get_quests_count(self, days):
         log.debug('Fetching quests count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %h:00:00') ) *1000 " \
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %k:00:00')) * 1000 " \
                                                                                                    "as Timestamp"
         if days:
             days = datetime.utcnow() - timedelta(days=days)
@@ -1057,6 +1061,7 @@ class DbWrapperBase(ABC):
                 "order by quest_timestamp" %
                 (str(query_date), str(query_where))
         )
+        print (query)
 
         res = self.execute(query)
 

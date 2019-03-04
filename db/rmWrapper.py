@@ -1240,7 +1240,7 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, days):
         log.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %H:00:00')) as timestamp"
+        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %k:00:00')) as timestamp"
         if days:
             days = datetime.utcnow() - timedelta(days=days)
             query_where = ' where disappear_time > \'%s\' ' % str(days)
@@ -1260,6 +1260,22 @@ class RmWrapper(DbWrapperBase):
         query = (
                 "SELECT if (team_id=0, 'WHITE', if (team_id=1, 'BLUE', if (team_id=2, 'RED', 'YELLOW'))) "
                 "as Color, count(team_id) as Count FROM `gym` group by team_id"
+
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_stop_quest(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT "
+                "if(FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d') is NULL,'NO QUEST',"
+                "FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')) as Quest, "
+                "count(pokestop.pokestop_id) as Count FROM pokestop left join trs_quest "
+                "on pokestop.pokestop_id = trs_quest.GUID "
+                "group by FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
 
         )
         res = self.execute(query)

@@ -1075,6 +1075,16 @@ def quest_stats():
     data = {'data': data}
     return jsonify(data)
 
+@app.route('/get_stop_stats', methods=['GET'])
+@auth_required
+def stop_stats():
+    stats = []
+    data = db_wrapper.statistics_get_stop_quest()
+    for dat in data:
+        stats.append({'label': dat[0], 'data': dat[1]})
+    data = {'data': data}
+    return jsonify(stats)
+
 
 
 def decodeHashJson(hashJson):
