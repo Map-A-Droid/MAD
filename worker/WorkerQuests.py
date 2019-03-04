@@ -219,7 +219,7 @@ class WorkerQuests(MITMBase):
     def clear_box(self, delayadd):
         log.info('Cleanup Box')
         not_allow = ('Gift', 'Raid Pass', 'Camera', 'Lucky Egg', 'Geschenk', 'Raidpass', 'Kamera', 'Glücks-Ei',
-                     'Cadeau', 'Passe de Raid', 'Appareil photo')
+                     'Cadeau', 'Passe de Raid', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
