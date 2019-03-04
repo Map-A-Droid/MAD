@@ -94,77 +94,47 @@ $(function(){
 
 
         $.ajax({
-            "url": "/get_pokemon_stats",
+            "url": "/get_game_stats",
             "type": "GET",
             "cache": false,
             "dataType": "json",
             success: function(result) {
-            data = result
+            spawn = result.spawn
+            quest = result.quest
+            gym = result.gym
+            stop = result.stop
 
-            var plot = $.plot($("#flot_spawn"), [
+            var plot_spawn = $.plot($("#flot_spawn"), [
                 {
-                    data: result.iv,
+                    data: spawn.iv,
                     label: "IV Spawns / Hour"
                 },
                 {
-                    data: result.noniv,
+                    data: spawn.noniv,
                     label: "NonIV Spawns / Hour"
                 },
                 {
-                    data: result.sum,
+                    data: spawn.sum,
                     label: "Sum Spawns / Hour"
                 }
-
             ],  options_dots);
             $("#flot_spawn").UseTooltip();
 
-            }
-        })
-        $.ajax({
-            "url": "/get_quest_stats",
-            "type": "GET",
-            "cache": false,
-            "dataType": "json",
-            success: function(result) {
-            data = result.data
-
-            var plot = $.plot($("#flot_quest"), [
+            var plot_quest = $.plot($("#flot_quest"), [
                 {
-                    data: data,
+                    data: quest,
                     color: "#5482FF",
                     label: "Quest / Hour"
                 }
             ],  options_bars);
             $("#flot_quest").UseTooltip();
 
-            }
-        })
-        $.ajax({
-            "url": "/get_stop_stats",
-            "type": "GET",
-            "cache": false,
-            "dataType": "json",
-            success: function(result) {
-            data = result
+            var plot_stop = $.plot($("#flot_stop"), stop,  options_pie);
 
-            var plot = $.plot($("#flot_stop"), data,  options_pie);
-
+            var plot_gym = $.plot($("#flot_gym"), gym,  options_pie);
 
             }
-        })
 
-        $.ajax({
-            "url": "/get_gym_stats",
-            "type": "GET",
-            "cache": false,
-            "dataType": "json",
-            success: function(result) {
-            data = result
-
-            var plot = $.plot($("#flot_gym"), data,  options_pie);
-
-
-            }
         })
 
         var previousPoint = null, previousLabel = null;

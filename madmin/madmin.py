@@ -1010,12 +1010,44 @@ def statistics():
 @auth_required
 def get_status():
     data = json.loads(db_wrapper.download_status())
-
     return jsonify(data)
 
-@app.route('/get_pokemon_stats', methods=['GET'])
+def datetime_from_utc_to_local(utc_datetime):
+    now_timestamp = time.time()
+    offset = datetime.datetime.fromtimestamp(now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
+    return int(utc_datetime + offset.total_seconds()) * 1000
+
+@app.route('/get_game_stats', methods=['GET'])
 @auth_required
-def pokemon_stats():
+def game_stats():
+    # Stop
+    stop = []
+    data = db_wrapper.statistics_get_stop_quest()
+    for dat in data:
+        stop.append({'label': dat[0], 'data': dat[1]})
+
+    # Quest
+    quest = db_wrapper.statistics_get_quests_count(1)
+
+    # Gym
+    gym = []
+    data = db_wrapper.statistics_get_gym_count()
+    for dat in data:
+        if dat[0] == 'WHITE':
+            color = '#999999'
+            text = 'Uncontested'
+        elif dat[0] == 'BLUE':
+            color = '#0051CF'
+            text = 'Mystic'
+        elif dat[0] == 'RED':
+            color = '#FF260E'
+            text = 'Valor'
+        elif dat[0] == 'YELLOW':
+            color = '#FECC23'
+            text = 'Instinct'
+        gym.append({'label': text, 'data': dat[1], 'color': color})
+
+    # Spawn
     iv = []
     noniv = []
     sum = []
@@ -1036,55 +1068,10 @@ def pokemon_stats():
     for dat in sumup:
         sum.append([dat, sumup[dat]])
 
-    data = {'iv': iv, 'noniv': noniv, 'sum': sum}
+    spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
 
-    return jsonify(data)
-
-@app.route('/get_gym_stats', methods=['GET'])
-@auth_required
-def gym_stats():
-    stats = []
-    data = db_wrapper.statistics_get_gym_count()
-    for dat in data:
-        if dat[0] == 'WHITE':
-            color = '#999999'
-            text = 'Uncontested'
-        elif dat[0] == 'BLUE':
-            color = '#0051CF'
-            text = 'Mystic'
-        elif dat[0] == 'RED':
-            color = '#FF260E'
-            text = 'Valor'
-        elif dat[0] == 'YELLOW':
-            color = '#FECC23'
-            text = 'Instinct'
-        stats.append({'label': text, 'data': dat[1], 'color':  color})
-
+    stats = {'spawn': spawn, 'gym': gym, 'quest': quest, 'stop': stop, }
     return jsonify(stats)
-
-
-def datetime_from_utc_to_local(utc_datetime):
-    now_timestamp = time.time()
-    offset = datetime.datetime.fromtimestamp(now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
-    return int(utc_datetime + offset.total_seconds()) * 1000
-
-@app.route('/get_quest_stats', methods=['GET'])
-@auth_required
-def quest_stats():
-    data = db_wrapper.statistics_get_quests_count(1)
-    data = {'data': data}
-    return jsonify(data)
-
-@app.route('/get_stop_stats', methods=['GET'])
-@auth_required
-def stop_stats():
-    stats = []
-    data = db_wrapper.statistics_get_stop_quest()
-    for dat in data:
-        stats.append({'label': dat[0], 'data': dat[1]})
-    data = {'data': data}
-    return jsonify(stats)
-
 
 
 def decodeHashJson(hashJson):
