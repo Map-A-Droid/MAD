@@ -90,9 +90,9 @@ $(function(){
         }
         }
 
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width=100px /><br><h2>Load...</h2>' });
 
-
-
+        // $('#ajax-loader').show();
         $.ajax({
             "url": "/get_game_stats",
             "type": "GET",
@@ -133,9 +133,17 @@ $(function(){
 
             var plot_gym = $.plot($("#flot_gym"), gym,  options_pie);
 
+
+
+            },
+            complete: function(){
+                setTimeout($.unblockUI, 500);
             }
 
         })
+
+
+
 
         var previousPoint = null, previousLabel = null;
 
@@ -198,12 +206,11 @@ $(function(){
 </script>
 
 <style type="text/css">
-        #flot_spawn{width:100%;height:300px;}
-        #flot_quest{width:100%;height:300px;}
-        #flot_gym{width:100%;height:300px;}
-        #flot_stop{width:100%;height:300px;}
-</style>
-<style type="text/css">
+    #flot_spawn{width:100%;height:300px;}
+    #flot_quest{width:100%;height:300px;}
+    #flot_gym{width:100%;height:300px;}
+    #flot_stop{width:100%;height:300px;}
+
 #legendContainer {
     background-color: #fff;
     padding: 2px;
@@ -220,6 +227,7 @@ $(function(){
     text-align: left;
 }
 </style>
+
 
 {% endblock %}
 
