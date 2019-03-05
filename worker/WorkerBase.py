@@ -543,6 +543,12 @@ class WorkerBase(ABC):
             return False
 
         log.info("_check_pogo_main_screen: checking mainscreen")
+        buttoncheck = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path,
+                                                           'screenshot%s.png' % str(self._id)),
+                                              2.20, 3.01, self._communicator)
+        if buttoncheck:
+            log.info('Found button on screen')
+            self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay)
         while not self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path,
                                                                            'screenshot%s.png' % str(self._id)),
                                                               self._id):

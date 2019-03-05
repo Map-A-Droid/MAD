@@ -278,7 +278,7 @@ class WebsocketServer(object):
         while websocket_client_connection.open:
             message = None
             try:
-                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.02)
+                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.05)
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
