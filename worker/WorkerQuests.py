@@ -331,10 +331,7 @@ class WorkerQuests(MITMBase):
                 if 'Box' in data_received:
                     log.error('Box is full ... Next round!')
                     self.clear_thread_task = 1
-                    while self.clear_thread_task == 1:
-                        log.info('Waiting for empty Box...')
-                        time.sleep(20)
-                    self._open_pokestop()
+                    break
 
                 if 'Quest' in data_received:
                     log.info('Getting new Quest')

@@ -255,7 +255,7 @@ class PogoWindows:
             for x1, y1, x2, y2 in line:
 
                 if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and y1 > height / 2 \
-                        and (x2-x1)/2 + x1 < width/2+100 and x2 - (x1/2+x1) > width/2-100:
+                        and (x2-x1)/2 + x1 < width/2+100 and (x2 - x1)/2+x1 > width/2-100:
 
                     lineCount += 1
                     __y = y2
