@@ -329,6 +329,22 @@ class DbWrapperBase(ABC):
     def stop_from_db_without_quests(self, geofence_helper):
         pass
 
+    @abstractmethod
+    def get_raids_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_mon_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_quests_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_weather_changed_since(self, timestamp):
+        pass
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -893,7 +909,7 @@ class DbWrapperBase(ABC):
                 log.debug('Sending Webhook is disabled')
 
         return True
-        
+
     def create_status_database_if_not_exists(self):
         log.debug("{DbWrapperBase::create_status_database_if_not_exists} called")
 
@@ -1009,7 +1025,6 @@ class DbWrapperBase(ABC):
             workerstatus.append(status)
 
         return str(json.dumps(workerstatus, indent=4, sort_keys=True))
-
 
     def check_column_exists(self, table, column):
         query = (

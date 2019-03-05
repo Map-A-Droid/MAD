@@ -2,12 +2,11 @@ import shutil
 import sys
 import time
 
-import numpy
 import requests
 
 from db.dbWrapperBase import DbWrapperBase
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from utils.collections import Location
 from utils.s2Helper import S2Helper
@@ -578,7 +577,6 @@ class RmWrapper(DbWrapperBase):
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
                               snow_level=0, fog_level=0, wind_direction=0, weather_daytime=0):
         log.debug("{RmWrapper::update_insert_weather} called")
-        now_timestamp = time.mktime(datetime.utcfromtimestamp(float(capture_time)).timetuple())
         now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
         real_lat, real_lng = S2Helper.middle_of_cell(cell_id)
@@ -597,10 +595,6 @@ class RmWrapper(DbWrapperBase):
                 gameplay_weather, str(now))
 
         self.execute(query, data, commit=True)
-
-        self.webhook_helper.send_weather_webhook(
-            cell_id, gameplay_weather, 0, 0, weather_daytime, now_timestamp
-        )
 
     def submit_mon_iv(self, origin, timestamp, encounter_proto):
         log.debug("Updating IV sent by %s" % str(origin))
@@ -947,15 +941,6 @@ class RmWrapper(DbWrapperBase):
 
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
-                    team = gym['gym_details']['owned_by_team']
-
-                    # TODO: get matching weather...
-                    self.webhook_helper.send_raid_webhook(
-                        gymid=gymid, type='RAID', start=raidbattleSec, end=raidendSec, lvl=level,
-                        mon=pokemon_id, team_param=team, cp_param=cp, move1_param=move_1,
-                        move2_param=move_2, lat_param=gym['latitude'], lng_param=gym['longitude'],
-                        image_url=gym['image_url']
-                    )
 
                     log.info("Adding/Updating gym at gym %s with level %s ending at %s"
                              % (str(gymid), str(level), str(raidend_date)))
@@ -1093,10 +1078,6 @@ class RmWrapper(DbWrapperBase):
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
 
-        now_timestamp = time.mktime(datetime.utcfromtimestamp(float(received_timestamp)).timetuple())
-        self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
-                                                 time_of_day, now_timestamp)
-
         return (
             cell_id, real_lat, real_lng,
             display_weather_data.get("cloud_level", 0),
@@ -1224,6 +1205,132 @@ class RmWrapper(DbWrapperBase):
         if pokestop_args is not None:
             self.execute(query_pokestops, pokestop_args, commit=True)
         return True
+
+    def get_raids_changed_since(self, timestamp):
+        log.debug("{RmWrapper::get_raids_changed_since} called")
+
+        query = (
+            "SELECT raid.*, gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
+            "gym.team_id, weather_boosted_condition "
+            "FROM raid "
+            "LEFT JOIN gymdetails ON gymdetails.gym_id = raid.gym_id "
+            "LEFT JOIN gym ON gym.gym_id = raid.gym_id "
+            "WHERE raid.last_scanned >= %s"
+        )
+
+        tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+        res = self.execute(query, (tsdt, ))
+        ret = []
+
+        for (gym_id, level, spawn, start, end, pokemon_id,
+                cp, move_1, move_2, last_scanned, form, name,
+                url, latitude, longitude, team_id,
+                weather_boosted_condition) in res:
+            ret.append({
+                    "gym_id": gym_id,
+                    "level": level,
+                    "spawn": int(spawn.replace(tzinfo=timezone.utc).timestamp()),
+                    "start": int(start.replace(tzinfo=timezone.utc).timestamp()),
+                    "end": int(end.replace(tzinfo=timezone.utc).timestamp()),
+                    "pokemon_id": pokemon_id,
+                    "cp": cp,
+                    "move_1": move_1,
+                    "move_2": move_2,
+                    "last_scanned": int(last_scanned.replace(tzinfo=timezone.utc).timestamp()),
+                    "form": form,
+                    "name": name,
+                    "url": url,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "team_id": team_id,
+                    "weather_boosted_condition": weather_boosted_condition
+                })
+
+        return ret
+
+    def get_mon_changed_since(self, timestamp):
+        log.debug("{RmWrapper::get_mon_changed_since} called")
+
+        query = (
+            "SELECT encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, "
+            "disappear_time, individual_attack, individual_defense, individual_stamina, "
+            "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
+            "weather_boosted_condition, last_modified "
+            "FROM pokemon "
+            "WHERE last_modified >= %s"
+        )
+
+        tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+        res = self.execute(query, (tsdt, ))
+        ret = []
+
+        for (encounter_id, spawnpoint_id, pokemon_id, latitude,
+                longitude, disappear_time, individual_attack,
+                individual_defense, individual_stamina, move_1, move_2,
+                cp, cp_multiplier, weight, height, gender, form, costume,
+                weather_boosted_condition, last_modified) in res:
+            ret.append({
+                "encounter_id": encounter_id,
+                "pokemon_id": pokemon_id,
+                "last_modified": last_modified,
+                "spawnpoint_id": spawnpoint_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "disappear_time": disappear_time,
+                "individual_attack": individual_attack,
+                "individual_defense": individual_defense,
+                "individual_stamina": individual_stamina,
+                "move_1": move_1,
+                "move_2": move_2,
+                "cp": cp,
+                "cp_multiplier": cp_multiplier,
+                "gender": gender,
+                "form": form,
+                "costume": costume,
+                "height": height,
+                "weight": weight,
+                "weather_boosted_condition": weather_boosted_condition
+            })
+
+        return ret
+
+    def get_quests_changed_since(self, timestamp):
+        pass
+
+    def get_weather_changed_since(self, timestamp):
+        log.debug("{RmWrapper::get_weather_changed_since} called")
+
+        query = (
+            "SELECT * "
+            "FROM weather "
+            "WHERE last_updated >= %s"
+        )
+
+        tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+        res = self.execute(query, (tsdt, ))
+        ret = []
+
+        for (s2_cell_id, latitude, longitude, cloud_level, rain_level, wind_level,
+                snow_level, fog_level, wind_direction, gameplay_weather, severity,
+                warn_weather, world_time, last_updated) in res:
+            ret.append({
+                "s2_cell_id": s2_cell_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "cloud_level": cloud_level,
+                "rain_level": rain_level,
+                "wind_level": wind_level,
+                "snow_level": snow_level,
+                "fog_level": fog_level,
+                "wind_direction": wind_direction,
+                "gameplay_weather": gameplay_weather,
+                "severity": severity,
+                "warn_weather": warn_weather,
+                "world_time": world_time,
+                "last_updated": last_updated
+            })
+
+        return ret
 
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:

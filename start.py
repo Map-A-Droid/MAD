@@ -353,6 +353,14 @@ if __name__ == "__main__":
             t_file_watcher.daemon = False
             t_file_watcher.start()
 
+    if args.webhook:
+        from webhook.webhookworker import WebhookWorker
+
+        webhook_worker = WebhookWorker(args, db_wrapper)
+        t_whw = Thread(name="webhook_worker", target=webhook_worker.run_worker)
+        t_whw.daemon = False
+        t_whw.start()
+
     if args.only_ocr:
         from ocr.copyMons import MonRaidImages
 
