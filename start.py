@@ -4,7 +4,11 @@ import os
 #os.environ['PYTHONASYNCIODEBUG'] = '1'
 import sys
 import time
+import psutil
 from threading import Thread
+import datetime
+import calendar
+import gc
 
 from colorlog import ColoredFormatter
 from logging.handlers import RotatingFileHandler
@@ -39,6 +43,7 @@ os.environ['LANGUAGE']=args.language
 
 console = logging.StreamHandler()
 nextRaidQueue = []
+usage = {}
 
 if not args.verbose:
     console.setLevel(logging.INFO)
@@ -150,8 +155,9 @@ def delete_old_logs(minutes):
 
 
 def start_madmin(args, db_wrapper):
+    global usage
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper)
+    madmin_start(args, db_wrapper, usage)
 
 
 def generate_mappingjson():
@@ -192,6 +198,28 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server):
         except Exception as e:
             log.exception(
                 'Exception occurred while updating device mappings: %s.', e)
+
+def get_system_infos():
+    cpu = []
+    mem = []
+    pid = os.getpid()
+    py = psutil.Process(pid)
+    global usage
+    while not terminate_mad.is_set():
+        memoryUse = py.memory_info()[0] / 2. ** 30
+        cpuUse = py.cpu_percent()
+        zero = datetime.datetime.utcnow()
+        unixnow = calendar.timegm(zero.utctimetuple()) * 1000
+        log.info('Memory Usage: %s' % str(memoryUse))
+        log.info('CPU Usage: %s' % str(cpuUse))
+        #with open("usage.info", "a") as myfile:
+        #    myfile.write(str(unixnow) + ';' + str(cpuUse) + ';' + str(memoryUse) + '\n')
+        cpu.append([unixnow, cpuUse])
+        mem.append([unixnow, memoryUse])
+        usage = {'cpu': cpu, 'mem': mem}
+        collected = gc.collect()
+        log.info("Garbage collector: collected %d objects." % (collected))
+        time.sleep(10)
 
 
 def load_mappings(db_wrapper):
@@ -336,12 +364,21 @@ if __name__ == "__main__":
         t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper,))
         t_flask.daemon = True
         t_flask.start()
+
+    t_system = Thread(name='system',
+                      target=get_system_infos())
+    t_system.daemon = True
+    t_system.start()
         
-    log.info('Starting Log Cleanup Thread....')
+    log.error('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
                        target=delete_old_logs(args.cleanup_age))
     t_cleanup.daemon = True
     t_cleanup.start()
+
+
+
+
 
     try:
         while True:

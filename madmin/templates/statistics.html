@@ -103,6 +103,7 @@ $(function(){
             quest = result.quest
             gym = result.gym
             stop = result.stop
+            usage = result.usage
 
             var plot_spawn = $.plot($("#flot_spawn"), [
                 {
@@ -119,6 +120,45 @@ $(function(){
                 }
             ],  options_dots);
             $("#flot_spawn").UseTooltip();
+
+            var plot_usage = $.plot($("#flot_usage"), [
+                {
+                    data: usage.cpu,
+                    label: "CPU in %"
+                },
+                {
+                    data: usage.mem,
+                    label: "Memory in GB",
+                    yaxis: 2
+                }
+            ],
+            {
+            grid: {
+                hoverable: true,
+                borderWidth: 2,
+                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            },
+            xaxis: {
+                mode: "time",
+                timeformat: "%d.%m<br>%H:%M",
+                tickSize: [1, "hour"],
+                timezone: "browser"
+            },
+            yaxes: [
+            {
+                //[First axis]
+            },{
+                 position: "right"  //set this axis to appear on the right of chart
+            }
+            ],
+
+            legend:{
+                container:$("#legendContainer_usage"),
+                noColumns: 0
+            }
+            }
+            );
+            $("#flot_usage").UseTooltip();
 
             var plot_quest = $.plot($("#flot_quest"), [
                 {
@@ -198,6 +238,7 @@ $(function(){
 </script>
 
 <style type="text/css">
+    #flot_usage{width:100%;height:300px;}
     #flot_spawn{width:100%;height:300px;}
     #flot_quest{width:100%;height:300px;}
     #flot_gym{width:100%;height:300px;}
@@ -222,6 +263,10 @@ $(function(){
 {% endblock %}
 
 {% block content %}
+<h2>CPU / Memory Usage</h2>
+<div id="legendContainer_usage"></div>
+<div id="flot_usage"></div>
+<br>
 <h2>Spawn Statistics last day</h2>
 <div id="legendContainer_spawn"></div>
 <div id="flot_spawn"></div>

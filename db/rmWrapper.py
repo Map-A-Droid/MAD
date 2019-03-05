@@ -604,6 +604,8 @@ class RmWrapper(DbWrapperBase):
             cell_id, gameplay_weather, 0, 0, weather_daytime, now_timestamp
         )
 
+        return True
+
     def submit_mon_iv(self, origin, timestamp, encounter_proto):
         log.debug("Updating IV sent by %s" % str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
@@ -738,6 +740,8 @@ class RmWrapper(DbWrapperBase):
             boosted_weather=pokemon_display.get('weather_boosted_value', None)
         )
         log.debug("Done submitting encounter data to DB")
+
+        return True
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
         log.debug("{RmWrapper::submit_mons_map_proto} called with data received from %s" % str(origin))

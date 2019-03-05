@@ -39,10 +39,12 @@ conf_args = None
 db_wrapper = None
 device_mappings = None
 areas = None
+usa = None
 
 
-def madmin_start(arg_args, arg_db_wrapper):
-    global conf_args, device_mappings, db_wrapper, areas
+def madmin_start(arg_args, arg_db_wrapper, usage):
+    global conf_args, device_mappings, db_wrapper, areas, usa
+    usa = usage
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(arg_db_wrapper)
@@ -1020,6 +1022,7 @@ def datetime_from_utc_to_local(utc_datetime):
 @app.route('/get_game_stats', methods=['GET'])
 @auth_required
 def game_stats():
+    global usa
     # Stop
     stop = []
     data = db_wrapper.statistics_get_stop_quest()
@@ -1070,7 +1073,7 @@ def game_stats():
 
     spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
 
-    stats = {'spawn': spawn, 'gym': gym, 'quest': quest, 'stop': stop, }
+    stats = {'spawn': spawn, 'gym': gym, 'quest': quest, 'stop': stop, 'usage': usa}
     return jsonify(stats)
 
 
