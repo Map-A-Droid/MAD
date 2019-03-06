@@ -205,11 +205,11 @@ class WebhookWorker:
                     full_payload += weather
 
                 # fetch, prepare and add mon
-                if self._args.pokemon_webhook:
-                    mon = self.__prepare_mon_data(
-                        self._db_wrapper.get_mon_changed_since(self._last_check)
-                    )
-                    full_payload += mon
+                # if self._args.pokemon_webhook:
+                #    mon = self.__prepare_mon_data(
+                #        self._db_wrapper.get_mon_changed_since(self._last_check)
+                #    )
+                #    full_payload += mon
 
                 # send our payload
                 self.__send_webhook(full_payload)
