@@ -37,6 +37,7 @@ class DbWrapperBase(ABC):
                          "port": self.port}
         self._init_pool()
 
+
     def _init_pool(self):
         log.info("Connecting pool to DB")
         self.pool_mutex.acquire()
@@ -90,6 +91,9 @@ class DbWrapperBase(ABC):
         except mysql.connector.Error as err:
             log.error("Failed executing query: %s" % str(err))
             return None
+        except Exception as e:
+            log.error("Unspecified exception in dbWrapper: %s" % str(e))
+            return None
         finally:
             self.close(conn, cursor)
             self.connection_semaphore.release()
@@ -119,6 +123,9 @@ class DbWrapperBase(ABC):
                 return res
         except mysql.connector.Error as err:
             log.error("Failed executing query: %s" % str(err))
+            return None
+        except Exception as e:
+            log.error("Unspecified exception in dbWrapper: %s" % str(e))
             return None
         finally:
             self.close(conn, cursor)

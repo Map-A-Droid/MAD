@@ -21,10 +21,12 @@ class Communicator:
         self.__commandTimeout = commandTimeout
         self.__sendMutex = Lock()
 
-    def cleanup_websocket(self):
+    def cleanup_websocket(self, worker_instance):
+        log.info("Communicator of %s acquiring lock to cleanup worker in websocket" % str(self.id))
         self.__sendMutex.acquire()
         try:
-            self.websocketHandler.clean_up_user(self.id)
+            log.info("Communicator of %s calling cleanup" % str(self.id))
+            self.websocketHandler.clean_up_user(self.id, worker_instance)
         finally:
             self.__sendMutex.release()
 

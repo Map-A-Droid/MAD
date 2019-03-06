@@ -80,12 +80,20 @@ class MITMReceiver(object):
             self.worker_threads.append(t)
 
     def __del__(self):
+        self.stop_receiver()
+
+    def stop_receiver(self):
         global application_args
         self._data_queue.join()
         for i in range(application_args.mitmreceiver_data_workers):
             self._data_queue.put(None)
         for t in self.worker_threads:
             t.join()
+
+        # func = self.app.get('werkzeug.server.shutdown')
+        # if func is None:
+        #     log.error('Not running with the Werkzeug Server')
+        # func()
 
     def run_receiver(self):
         self.app.run(host=self.__listen_ip, port=int(self.__listen_port), threaded=True, use_reloader=False)

@@ -1,3 +1,6 @@
+from threading import Event
+
+terminate_mad = Event()
 
 
 class WebsocketWorkerRemovedException(Exception):

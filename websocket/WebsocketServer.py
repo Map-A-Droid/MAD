@@ -4,6 +4,7 @@ import logging
 import math
 import queue
 import sys
+import time
 from threading import Event, Lock, Thread
 
 import websockets
@@ -26,6 +27,7 @@ class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths, pogoWindowManager):
         self.__current_users = {}
         self.__current_users_mutex = Lock()
+        self.__stop_server = Event()
 
         self.args = args
         self.__listen_address = args.ws_ip
@@ -62,10 +64,32 @@ class WebsocketServer(object):
         log.info("Allowed origins derived: %s" % str(allowed_origins))
 
         asyncio.set_event_loop(self.__loop)
-        asyncio.get_event_loop().run_until_complete(
+        self.__loop.run_until_complete(
                 websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
                                  origins=allowed_origins, ping_timeout=10, ping_interval=15))
-        asyncio.get_event_loop().run_forever()
+        self.__loop.run_forever()
+
+    def stop_server(self):
+        # TODO: cleanup workers...
+        self.__stop_server.set()
+        self.__current_users_mutex.acquire()
+        for id, worker in self.__current_users.items():
+            log.info('Stopping worker %s to apply new mappings.', id)
+            worker[1].stop_worker()
+        self.__current_users_mutex.release()
+
+        # wait for all workers to be stopped...
+        while True:
+            self.__current_users_mutex.acquire()
+            if len(self.__current_users) == 0:
+                self.__current_users_mutex.release()
+                break
+            else:
+                self.__current_users_mutex.release()
+                time.sleep(1)
+
+        if self.__loop is not None:
+            self.__loop.call_soon_threadsafe(self.__loop.stop)
 
     async def handler(self, websocket_client_connection, path):
         log.info("Waiting for connection...")
@@ -94,6 +118,10 @@ class WebsocketServer(object):
 
     async def __register(self, websocket_client_connection):
         log.info("Client %s registering" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        if self.__stop_server.is_set():
+            log.info("MAD is set to shut down, not accepting new connection")
+            return False
+
         try:
             id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
         except IndexError:
@@ -110,88 +138,95 @@ class WebsocketServer(object):
                 return False
 
         self.__current_users_mutex.acquire()
-        user_present = self.__current_users.get(id)
-        if user_present is not None:
-            log.warning("Worker with origin %s is already running, killing the running one and have client reconnect"
-                        % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
-            user_present[1].stop_worker()
-            self.__current_users_mutex.release()
-            return False
-        elif self.__auths and authBase64 and not check_auth(authBase64, self.args, self.__auths):
-            log.warning("Invalid auth details received from %s"
-                        % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
-            self.__current_users_mutex.release()
-            return False
-        self.__current_users_mutex.release()
+        try:
+            log.debug("Checking if %s is already present" % str(id))
+            user_present = self.__current_users.get(id)
+            if user_present is not None:
+                log.warning("Worker with origin %s is already running, "
+                            "killing the running one and have client reconnect"
+                            % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+                user_present[1].stop_worker()
+                return False
+            elif self.__auths and authBase64 and not check_auth(authBase64, self.args, self.__auths):
+                log.warning("Invalid auth details received from %s"
+                            % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+                return False
 
-        last_known_state = {}
-        client_mapping = self.__device_mappings[id]
-        timer = Timer(client_mapping["switch"], id, client_mapping["switch_interval"])
-        await asyncio.sleep(0.8)
-        daytime_routemanager = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager")
-        if client_mapping.get("nighttime_area", None) is not None:
-            nightime_routemanager = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
-        else:
-            nightime_routemanager = None
-        devicesettings = client_mapping["settings"]
-
-        started = False
-        if timer.get_switch() is True and client_mapping.get("nighttime_area", None) is not None:
-            # set global mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get(
-                    "routemanager").settings.get("mon_ids_iv", [])
-            # start the appropriate nighttime manager if set
-            if nightime_routemanager is None:
-                pass
-            elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                    pogoWindowManager=self.__pogoWindowManager)
-                started = True
-            elif nightime_routemanager.mode in ["raids_ocr"]:
-                from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                   pogoWindowManager=self.__pogoWindowManager)
-                started = True
-            elif nightime_routemanager.mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
-                                      nightime_routemanager,
-                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                      pogoWindowManager=self.__pogoWindowManager)
-                started = True
+            log.debug("Setting up switchtimer for %s" % str(id))
+            last_known_state = {}
+            client_mapping = self.__device_mappings[id]
+            timer = Timer(client_mapping["switch"], id, client_mapping["switch_interval"])
+            log.debug("Switchtime for %s all set up, brief delay" % str(id))
+            time.sleep(0.8)
+            log.debug("Setting up routemanagers for %s" % str(id))
+            daytime_routemanager = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager")
+            if client_mapping.get("nighttime_area", None) is not None:
+                nightime_routemanager = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
             else:
-                log.fatal("Mode not implemented")
-                sys.exit(1)
+                nightime_routemanager = None
+            devicesettings = client_mapping["settings"]
 
-        if not timer.get_switch() or not started:
-            # set mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get(
-                    "routemanager").settings.get("mon_ids_iv", [])
-            # we either gotta run daytime mode OR nighttime routemanager not set
-            if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                    pogoWindowManager=self.__pogoWindowManager)
-            elif daytime_routemanager.mode in ["raids_ocr"]:
-                from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                   pogoWindowManager=self.__pogoWindowManager)
-            elif daytime_routemanager.mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
-                                      nightime_routemanager,
-                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                      pogoWindowManager=self.__pogoWindowManager)
-            else:
-                log.fatal("Mode not implemented")
-                sys.exit(1)
+            log.debug("Setting up worker for %s" % str(id))
+            started = False
+            if timer.get_switch() is True and client_mapping.get("nighttime_area", None) is not None:
+                # set global mon_iv
+                client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get(
+                        "routemanager").settings.get("mon_ids_iv", [])
+                # start the appropriate nighttime manager if set
+                if nightime_routemanager is None:
+                    pass
+                elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+                    worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                                        self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
+                                        pogoWindowManager=self.__pogoWindowManager)
+                    started = True
+                elif nightime_routemanager.mode in ["raids_ocr"]:
+                    from worker.WorkerOCR import WorkerOCR
+                    worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                                       devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
+                                       pogoWindowManager=self.__pogoWindowManager)
+                    started = True
+                elif nightime_routemanager.mode in ["pokestops"]:
+                    worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
+                                          nightime_routemanager,
+                                          self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
+                                          pogoWindowManager=self.__pogoWindowManager)
+                    started = True
+                else:
+                    log.fatal("Mode not implemented")
+                    sys.exit(1)
 
-        new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
-        new_worker_thread.daemon = True
-        self.__current_users_mutex.acquire()
-        self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
-        self.__current_users_mutex.release()
+            if not timer.get_switch() or not started:
+                # set mon_iv
+                client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get(
+                        "routemanager").settings.get("mon_ids_iv", [])
+                # we either gotta run daytime mode OR nighttime routemanager not set
+                if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+                    worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                                        self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
+                                        pogoWindowManager=self.__pogoWindowManager)
+                elif daytime_routemanager.mode in ["raids_ocr"]:
+                    from worker.WorkerOCR import WorkerOCR
+                    worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
+                                       devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
+                                       pogoWindowManager=self.__pogoWindowManager)
+                elif daytime_routemanager.mode in ["pokestops"]:
+                    worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
+                                          nightime_routemanager,
+                                          self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
+                                          pogoWindowManager=self.__pogoWindowManager)
+                else:
+                    log.fatal("Mode not implemented")
+                    sys.exit(1)
+
+            log.debug("Starting worker for %s" % str(id))
+            new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
+
+            new_worker_thread.daemon = False
+
+            self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
+        finally:
+            self.__current_users_mutex.release()
         new_worker_thread.start()
 
         return True
@@ -243,7 +278,7 @@ class WebsocketServer(object):
         while websocket_client_connection.open:
             message = None
             try:
-                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.02)
+                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.05)
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
@@ -255,16 +290,22 @@ class WebsocketServer(object):
                     # TODO: do it abruptly in the worker, maybe set a flag to be checked for in send_and_wait to
                     # TODO: throw an exception
                     worker[1].stop_worker()
-                self.clean_up_user(worker_id)
+                self.clean_up_user(worker_id, None)
                 return
 
             if message is not None:
                 await self.__on_message(message)
         log.warning("Connection of %s closed in consumer_handler" % str(worker_id))
 
-    def clean_up_user(self, worker_id):
+    def clean_up_user(self, worker_id, worker_instance):
+        """
+        :param worker_id: The ID/Origin of the worker
+        :param worker_instance: None if the cleanup is called from within the websocket server
+        :return:
+        """
         self.__current_users_mutex.acquire()
-        if worker_id in self.__current_users.keys():
+        if worker_id in self.__current_users.keys() and (worker_instance is None
+                                                         or self.__current_users[worker_id][1] == worker_instance):
             if self.__current_users[worker_id][2].open:
                 log.info("Calling close for %s..." % str(worker_id))
                 asyncio.ensure_future(self.__current_users[worker_id][2].close(), loop=self.__loop)
@@ -363,7 +404,7 @@ class WebsocketServer(object):
             if new_count > 5:
                 log.error("5 consecutive timeouts to %s, cleanup" % str(id))
                 # TODO: signal worker to stop and NOT cleanup the websocket by itself!
-                self.clean_up_user(id)
+                self.clean_up_user(id, None)
                 raise WebsocketWorkerTimeoutException
 
         self.__remove_request(message_id)

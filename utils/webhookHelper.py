@@ -128,7 +128,7 @@ class WebhookHelper(object):
         self.loop_started = Event()
         self.loop_tid = None
         self.t_asyncio_loop = Thread(name='webhook_asyncio_loop', target=self.__start_asyncio_loop)
-        self.t_asyncio_loop.daemon = True
+        self.t_asyncio_loop.daemon = False
         self.t_asyncio_loop.start()
 
     def __set_gyminfo(self):
@@ -154,7 +154,7 @@ class WebhookHelper(object):
         else:
             return self.loop.call_soon_threadsafe(f)
 
-    def __stop_loop(self):
+    def stop_helper(self):
         self.loop.call_soon_threadsafe(self.loop.stop)
 
     def __sendToWebhook(self, payload):

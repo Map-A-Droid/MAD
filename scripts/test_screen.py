@@ -152,7 +152,7 @@ class testimage(object):
         original = gray
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
-        radMax = int((width / float(6.5) + 3) / 2)
+        radMax = int((width / float(6) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         gray = cv2.Canny(gray, 100, 50, apertureSize=3)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,

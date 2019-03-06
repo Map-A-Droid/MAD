@@ -1,4 +1,3 @@
-import datetime
 import glob
 import logging
 import os
@@ -15,6 +14,7 @@ from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
 from mitm_receiver.MitmMapper import MitmMapper
 from mitm_receiver.MITMReceiver import MITMReceiver
+from utils.madGlobals import terminate_mad
 from utils.mappingParser import MappingParser
 from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
@@ -115,6 +115,37 @@ def set_log_and_verbosity(log):
         log.setLevel(logging.INFO)
 
 
+# Patch to make exceptions in threads cause an exception.
+def install_thread_excepthook():
+    """
+    Workaround for sys.excepthook thread bug
+    (https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1230540&group_id=5470).
+    Call once from __main__ before creating any threads.
+    If using psyco, call psycho.cannotcompile(threading.Thread.run)
+    since this replaces a new-style class method.
+    """
+    import sys
+    run_old = Thread.run
+
+    def run(*args, **kwargs):
+        try:
+            run_old(*args, **kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception:
+            exc_type, exc_value, exc_trace = sys.exc_info()
+            print(repr(sys.exc_info()))
+
+            # Handle Flask's broken pipe when a client prematurely ends
+            # the connection.
+            if str(exc_value) == '[Errno 32] Broken pipe':
+                pass
+            else:
+                log.critical('Unhandled patched exception (%s): "%s".',
+                             exc_type, exc_value)
+                sys.excepthook(exc_type, exc_value, exc_trace)
+    Thread.run = run
+
 def start_ocr_observer(args, db_helper):
     from ocr.fileObserver import checkScreenshot
     observer = Observer()
@@ -122,12 +153,13 @@ def start_ocr_observer(args, db_helper):
     observer.schedule(checkScreenshot(args, db_helper), path=args.raidscreen_path)
     observer.start()
 
+
 def delete_old_logs(minutes):
     if minutes == 0:
         log.info('delete_old_logs: Search/Delete logs is disabled')
         return
 
-    while True:
+    while not terminate_mad.is_set():
         log.info('delete_old_logs: Search/Delete logs older than ' + str(minutes) + ' minutes')
 
         now = time.time()
@@ -146,6 +178,7 @@ def delete_old_logs(minutes):
 
         log.info('delete_old_logs: Search/Delete logs finished')
         time.sleep(3600)
+
 
 def start_madmin(args, db_wrapper):
     from madmin.madmin import madmin_start
@@ -167,7 +200,7 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server):
     refresh_time_sec = 60
     filename = 'configs/mappings.json'
 
-    while True:
+    while not terminate_mad.is_set():
         # Wait (x-1) seconds before refresh, min. 1s.
         time.sleep(max(1, refresh_time_sec - 1))
         try:
@@ -203,6 +236,7 @@ def load_mappings(db_wrapper):
 if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     set_log_and_verbosity(log)
+    install_thread_excepthook()
 
     webhook_helper = WebhookHelper(args)
 
@@ -245,6 +279,11 @@ if __name__ == "__main__":
                   " -or    ---- only calculate routes\nExiting")
         sys.exit(1)
 
+    t_mitm = None
+    mitm_receiver = None
+    ws_server = None
+    t_ws = None
+    t_file_watcher = None
     if args.only_scan or args.only_routes:
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
@@ -266,19 +305,30 @@ if __name__ == "__main__":
                 log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
                 sys.exit(1)
 
+
             if args.only_routes:
                 log.info("Done calculating routes!")
                 sys.exit(0)
 
-            pogoWindowManager = PogoWindows(args.temp_path)
+            pogoWindowManager = None
+
             mitm_mapper = MitmMapper(device_mappings)
             ocr_enabled = False
+
             for routemanager in routemanagers.keys():
                 area = routemanagers.get(routemanager, None)
                 if area is None:
                     continue
                 if "ocr" in area.get("mode", ""):
                     ocr_enabled = True
+                if ("ocr" in area.get("mode", "") or "pokestop" in area.get("mode", "")) and args.no_ocr:
+                    log.error('No-OCR Mode is activated - No OCR Mode possible.')
+                    log.error('Check your config.ini and be sure that CV2 and Tesseract is installed')
+                    sys.exit(1)
+
+            if not args.no_ocr:
+                pogoWindowManager = PogoWindows(args.temp_path)
+
             if ocr_enabled:
                 from ocr.copyMons import MonRaidImages
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
@@ -287,14 +337,14 @@ if __name__ == "__main__":
                                          mitm_mapper, args, auths, db_wrapper)
             t_mitm = Thread(name='mitm_receiver',
                             target=mitm_receiver.run_receiver)
-            t_mitm.daemon = False
+            t_mitm.daemon = True
             t_mitm.start()
 
             log.info('Starting scanner....')
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper,
                                         routemanagers, device_mappings, auths, pogoWindowManager)
             t_ws = Thread(name='scanner', target=ws_server.start_server)
-            t_ws.daemon = True
+            t_ws.daemon = False
             t_ws.start()
 
             log.info("Starting file watcher for mappings.json changes.")
@@ -316,14 +366,30 @@ if __name__ == "__main__":
     if args.with_madmin:
         log.info('Starting Madmin on Port: %s' % str(args.madmin_port))
         t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper,))
-        t_flask.daemon = False
+        t_flask.daemon = True
         t_flask.start()
 
     log.info('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
-                      target=delete_old_logs(args.cleanup_age))
+                       target=delete_old_logs(args.cleanup_age))
     t_cleanup.daemon = True
     t_cleanup.start()
 
-    while True:
-        time.sleep(10)
+    try:
+        while True:
+            time.sleep(10)
+    finally:
+        db_wrapper = None
+        log.fatal("Stop called")
+        terminate_mad.set()
+        # now cleanup all threads...
+        webhook_helper.stop_helper()
+        # TODO: check against args or init variables to None...
+        if t_mitm is not None and mitm_receiver is not None:
+            mitm_receiver.stop_receiver()
+        if ws_server is not None:
+            ws_server.stop_server()
+            t_ws.join()
+        if t_file_watcher is not None:
+            t_file_watcher.join()
+        sys.exit(0)

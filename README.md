@@ -37,7 +37,7 @@ Make sure you're in the directory of MAD and run:
 ```bash
 pip3 install -r requirements.txt
 ```
-If you want to use OCR to scan raids, run with `requirements_ocr.txt` and install additional packages: `apt-get install tesseract-ocr python-opencv`
+If you want to use OCR to scan raids or scanning for Quests, run with `requirements_ocr.txt` and install additional packages: `apt-get install tesseract-ocr python-opencv`
 
 
 ## MAD concept

@@ -443,9 +443,9 @@ class RmWrapper(DbWrapperBase):
             "* sin(radians(latitude))"
             ")"
             ") "
-            "AS distance, latitude, longitude, name, description, url "
+            "AS distance, gym.latitude, gym.longitude, gymdetails.name, gymdetails.description, gymdetails.url "
             "FROM gym "
-            "LEFT JOIN gym_details ON gym.gym_id = gym_details.gym_id "
+            "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
         )
@@ -501,11 +501,9 @@ class RmWrapper(DbWrapperBase):
 
         for (gym_id, team_id, latitude, longitude, name, description, url) in res:
             if url is not None:
-                if not self.application_args.justjson:
-                    filename = url_image_path + '_' + str(gym_id) + '_.jpg'
-                    log.debug('Downloading', filename)
-                    self.__download_img(str(url), str(filename))
-                gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, str(name).replace('"', '\\"').replace('\n', '\\n'), description, url)
+                filename = url_image_path + '_' + str(gym_id) + '_.jpg'
+                log.debug('Downloading', filename)
+                self.__download_img(str(url), str(filename))
 
         log.debug('Finished downloading gym images...')
 
@@ -792,7 +790,6 @@ class RmWrapper(DbWrapperBase):
                 if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
                     self.webhook_helper.send_pokemon_webhook(
                         str(encounter_id), mon_id, int(time.time()),
-                        spawnid, lat, lon, int(despawn_time_unix),
                         spawnid, lat, lon, int(despawn_time_unix),
                         form=wild_mon['pokemon_data']['display']['form_value'],
                         gender=wild_mon['pokemon_data']['display']['gender_value'],
