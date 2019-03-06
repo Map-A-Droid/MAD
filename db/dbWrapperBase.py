@@ -342,6 +342,10 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def get_gyms_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
     def get_weather_changed_since(self, timestamp):
         pass
 

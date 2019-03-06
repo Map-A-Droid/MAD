@@ -14,25 +14,6 @@ from s2sphere import Cell, CellId, LatLng
 
 log = logging.getLogger(__name__)
 
-egg_webhook_payload = """[{{
-      "message": {{
-        "latitude": {lat},
-        "longitude": {lon},
-        "level": {lvl},
-        "team_id": {team},
-        "start": {hatch_time},
-        "end": {end},
-        "gym_id": "{ext_id}",
-        "name": "{name_id}",
-        "url": "{url}",
-        "pokemon_id": 0,
-        "sponsor": "{sponsor}",
-        "weather": "{weather}",
-        "park": "{park}"
-      }},
-      "type": "{type}"
-   }} ]"""
-
 quest_webhook_payload = """[{{
       "message": {{
                 "pokestop_id": "{pokestop_id}",
@@ -59,26 +40,6 @@ quest_webhook_payload = """[{{
 
 plain_webhook = """[{plain}]"""
 
-gym_webhook_payload = """[{{
-  "message": {{
-    "raid_active_until": {raid_active_until},
-    "gym_id": "{gym_id}",
-    "name": "{gym_name}",
-    "description": "{gym_description}",
-    "url": "{gym_url}",
-    "team_id": {team_id},
-    "slots_available": {slots_available},
-    "guard_pokemon_id": {guard_pokemon_id},
-    "lowest_pokemon_motivation": {lowest_pokemon_motivation},
-    "total_cp": {total_cp},
-    "enabled": "True",
-    "latitude": {latitude},
-    "longitude": {longitude},
-    "last_modified": {last_modified}
-  }},
-  "type": "gym"
-}}]"""
-
 
 class WebhookHelper(object):
     def __init__(self, args):
@@ -93,15 +54,6 @@ class WebhookHelper(object):
         self.t_asyncio_loop = Thread(name='webhook_asyncio_loop', target=self.__start_asyncio_loop)
         self.t_asyncio_loop.daemon = False
         self.t_asyncio_loop.start()
-
-    def __set_gyminfo(self):
-        if self.db_wrapper is None:
-            raise Exception("Something went wrong. DB access has not been set yet. This should not have happened.")
-
-        # to reduce load, we only pull data from DB every 15 minutes
-        if self.gyminfo is None or self.gyminfo_refresh < time.time()-900:
-            self.gyminfo = self.db_wrapper.get_gym_infos()
-            self.gyminfo_refresh = time.time()
 
     def __start_asyncio_loop(self):
         self.loop = asyncio.new_event_loop()
@@ -149,170 +101,9 @@ class WebhookHelper(object):
     def set_db_wrapper(self, dbwrapper):
         self.db_wrapper = dbwrapper
 
-    def get_raid_boss_cp(self, mon_id):
-        if self.pokemon_file is not None and int(mon_id) > 0:
-            log.debug("Removing leading zero from string where necessary")
-            mon_id = int(mon_id)
-
-            if 'cp' in self.pokemon_file[str(mon_id)]:
-                log.debug("CP found for pokemon_id: " + str(mon_id) + " with the value of " + str(
-                    self.pokemon_file[str(mon_id)]["cp"]))
-                return self.pokemon_file[str(mon_id)]["cp"]
-            else:
-                log.warning("No raid cp found for " + str(mon_id))
-                return '0'
-        else:
-            log.debug("No CP returns as its an egg!")
-            return '0'
-
-    def send_weather_webhook(self, s2_cell_id, weather_id, severe, warn, day, time):
-        if self.__application_args.webhook and self.__application_args.weather_webhook:
-            self.__add_task_to_loop(self._send_weather_webhook(s2_cell_id, weather_id, severe, warn, day, time))
-
-    def send_pokemon_webhook(self, encounter_id, pokemon_id, last_modified_time, spawnpoint_id, lat, lon,
-                             despawn_time_unix,
-                             pokemon_level=None, cp_multiplier=None, form=None, cp=None,
-                             individual_attack=None, individual_defense=None, individual_stamina=None,
-                             move_1=None, move_2=None, height=None, weight=None, gender=None, boosted_weather=None):
-        if self.__application_args.webhook and self.__application_args.pokemon_webhook:
-            self.__add_task_to_loop(self._submit_pokemon_webhook(encounter_id=encounter_id, pokemon_id=pokemon_id,
-                                                                 last_modified_time=last_modified_time,
-                                                                 spawnpoint_id=spawnpoint_id, lat=lat, lon=lon,
-                                                                 despawn_time_unix=despawn_time_unix,
-                                                                 pokemon_level=pokemon_level,
-                                                                 cp_multiplier=cp_multiplier,
-                                                                 form=form, cp=cp,
-                                                                 individual_attack=individual_attack,
-                                                                 individual_defense=individual_defense,
-                                                                 individual_stamina=individual_stamina,
-                                                                 move_1=move_1, move_2=move_2,
-                                                                 height=height, weight=weight, gender=gender, boosted_weather=boosted_weather)
-                                    )
-
     def submit_quest_webhook(self, rawquest):
         if self.__application_args.webhook:
             self.__add_task_to_loop(self._submit_quest_webhook(rawquest))
-
-    def send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id, slots_available, guard_pokemon_id,
-                         latitude, longitude, last_modified):
-        if self.__application_args.webhook and self.__application_args.gym_webhook:
-            self.__set_gyminfo()
-
-            self.__add_task_to_loop(self._send_gym_webhook(gym_id, raid_active_until, gym_name, team_id,
-                                    slots_available, guard_pokemon_id, latitude, longitude, last_modified))
-
-    async def _send_gym_webhook(self, gym_id, raid_active_until, gym_name, team_id,
-                                slots_available, guard_pokemon_id, latitude, longitude, last_modified):
-        info_of_gym = self.gyminfo.get(gym_id, None)
-        gym_url = 'unknown'
-        gym_description = 'unknown'
-        if info_of_gym is not None and gym_name == 'unknown':
-            name = info_of_gym.get("name", "unknown")
-            gym_name = name.replace("\\", r"\\").replace('"', '')
-            gym_description = info_of_gym.get('description', 'unknown')\
-                .replace('\\', r'\\').replace('"', '')
-            gym_url = info_of_gym.get('url', 'unknown')\
-                .replace('\\', r'\\').replace('"', '')
-
-        payload_raw = gym_webhook_payload.format(
-            raid_active_until=raid_active_until,
-            gym_id=gym_id,
-            gym_name=gym_name,
-            gym_description=gym_description,
-            gym_url=gym_url,
-            team_id=team_id,
-            slots_available=slots_available,
-            guard_pokemon_id=guard_pokemon_id,
-            lowest_pokemon_motivation=0,
-            total_cp=0,
-            latitude=latitude,
-            longitude=longitude,
-            last_modified=last_modified
-        )
-
-        payload = json.loads(payload_raw)
-        self.__sendToWebhook(payload)
-
-    async def _send_weather_webhook(self, s2cellId, weatherId, severe, warn, day, time):
-        if self.__application_args.weather_webhook:
-            log.debug("Send Weather Webhook")
-
-            ll = CellId(s2cellId).to_lat_lng()
-            latitude = ll.lat().degrees
-            longitude = ll.lng().degrees
-
-            cell = Cell(CellId(s2cellId))
-            coords = []
-            for v in range(0, 4):
-                vertex = LatLng.from_point(cell.get_vertex(v))
-                coords.append([vertex.lat().degrees, vertex.lng().degrees])
-
-            data = weather_webhook_payload.format(s2cellId, coords, weatherId, severe, warn, day, time, latitude, longitude)
-
-            log.debug(data)
-            payload = json.loads(data)
-            self.__sendToWebhook(payload)
-        else:
-            log.debug("Weather Webhook Disabled")
-
-    async def _submit_pokemon_webhook(self, encounter_id, pokemon_id, last_modified_time, spawnpoint_id, lat, lon,
-                                      despawn_time_unix,
-                                      pokemon_level=None, cp_multiplier=None, form=None, cp=None,
-                                      individual_attack=None, individual_defense=None, individual_stamina=None,
-                                      move_1=None, move_2=None, height=None, weight=None, gender=None, boosted_weather=None):
-        log.info('Sending Pokemon %s (#%s) to webhook', pokemon_id, id)
-
-        mon_payload = {"encounter_id": encounter_id, "pokemon_id": pokemon_id, "last_modified_time": last_modified_time,
-                       "spawnpoint_id": spawnpoint_id, "latitude": lat, "longitude": lon,
-                       "disappear_time": despawn_time_unix}
-        tth = despawn_time_unix - last_modified_time
-        mon_payload["time_until_hidden_ms"] = tth
-
-        if pokemon_level is not None:
-            mon_payload["pokemon_level"] = pokemon_level
-
-        if cp_multiplier is not None:
-            mon_payload["cp_multiplier"] = cp_multiplier
-
-        if form is not None:
-            mon_payload["form"] = form
-
-        if cp is not None:
-            mon_payload["cp"] = cp
-
-        if individual_attack is not None:
-            mon_payload["individual_attack"] = individual_attack
-
-        if individual_defense is not None:
-            mon_payload["individual_defense"] = individual_defense
-
-        if individual_stamina is not None:
-            mon_payload["individual_stamina"] = individual_stamina
-
-        if move_1 is not None:
-            mon_payload["move_1"] = move_1
-
-        if move_2 is not None:
-            mon_payload["move_2"] = move_2
-
-        if height is not None:
-            mon_payload["height"] = height
-
-        if weight is not None:
-            mon_payload["weight"] = weight
-        
-        if gender is not None:
-            mon_payload["gender"] = gender
-
-        if boosted_weather is not None:
-            mon_payload["boosted_weather"] = boosted_weather
-
-        entire_payload = {"type": "pokemon", "message": mon_payload}
-        to_be_sent = json.dumps(entire_payload, indent=4, sort_keys=True)
-        to_be_sent = plain_webhook.format(plain=to_be_sent)
-        to_be_sent = json.loads(to_be_sent)
-
-        self.__sendToWebhook(to_be_sent)
 
     async def _submit_quest_webhook(self, rawquest):
         log.info('Sending Quest to webhook')

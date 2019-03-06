@@ -670,28 +670,6 @@ class RmWrapper(DbWrapperBase):
 
             pokemon_level = round(pokemon_level) * 2 / 2
 
-        log.debug("Sending webhook")
-        self.webhook_helper.send_pokemon_webhook(
-            encounter_id=encounter_id,
-            pokemon_id=pokemon_data.get("id"),
-            last_modified_time=timestamp,
-            spawnpoint_id=wild_pokemon.get("spawnpoint_id"),
-            lat=latitude, lon=longitude,
-            despawn_time_unix=despawn_time_unix,
-            pokemon_level=pokemon_level,
-            cp_multiplier=pokemon_data.get("cp_multiplier"),
-            form=pokemon_display.get("form_value", None),
-            cp=pokemon_data.get("cp"),
-            individual_attack=pokemon_data.get("individual_attack"),
-            individual_defense=pokemon_data.get("individual_defense"),
-            individual_stamina=pokemon_data.get("individual_stamina"),
-            move_1=pokemon_data.get("move_1"),
-            move_2=pokemon_data.get("move_2"),
-            height=pokemon_data.get("height"),
-            weight=pokemon_data.get("weight"),
-            gender=pokemon_display.get("gender_value", None),
-            boosted_weather=pokemon_display.get('weather_boosted_value', None)
-        )
         log.debug("Done submitting encounter data to DB")
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
@@ -743,15 +721,6 @@ class RmWrapper(DbWrapperBase):
                 else:
                     log.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (non-init) ({5})"
                              .format(str(origin), mon_id, lat, lon, despawn_time, spawnid))
-
-                if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
-                    self.webhook_helper.send_pokemon_webhook(
-                        str(encounter_id), mon_id, int(time.time()),
-                        spawnid, lat, lon, int(despawn_time_unix),
-                        form=wild_mon['pokemon_data']['display']['form_value'],
-                        gender=wild_mon['pokemon_data']['display']['gender_value'],
-                        boosted_weather=wild_mon['pokemon_data']['display']['weather_boosted_value']
-                    )
 
                 mon_args.append(
                     (
@@ -825,17 +794,8 @@ class RmWrapper(DbWrapperBase):
                     latitude = gym['latitude']
                     longitude = gym['longitude']
                     slots_available = gym['gym_details']['slots_available']
-                    raidendSec = 0
                     last_modified_ts = gym['last_modified_timestamp_ms']/1000
                     last_modified = datetime.utcfromtimestamp(last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
-
-                    if gym['gym_details']['has_raid']:
-                        raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
-
-                    self.webhook_helper.send_gym_webhook(
-                        gymid, raidendSec, 'unknown', team_id, slots_available, guard_pokemon_id,
-                        latitude, longitude, last_modified_ts
-                    )
 
                     gym_args.append(
                         (
@@ -1291,6 +1251,49 @@ class RmWrapper(DbWrapperBase):
                 "warn_weather": warn_weather,
                 "world_time": world_time,
                 "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp())
+            })
+
+        return ret
+
+    def get_gyms_changed_since(self, timestamp):
+        log.debug("{RmWrapper::get_gyms_changed_since} called")
+
+        query = (
+            "SELECT name, description, url, gym.gym_id, team_id, "
+            "guard_pokemon_id, slots_available, latitude, longitude, "
+            "total_cp, is_in_battle, gender, form, costume, "
+            "weather_boosted_condition, last_modified, gym.last_scanned "
+            "FROM gym "
+            "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
+            "WHERE last_modified >= %s"
+        )
+
+        tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+        res = self.execute(query, (tsdt, ))
+        ret = []
+
+        for (gym_id, team_id, guard_pokemon_id, slots_available, latitude,
+                longitude, total_cp, is_in_battle, gender, form, costume,
+                weather_boosted_condition, last_modified, last_scanned, name,
+                url, description) in res:
+            ret.append({
+                "gym_id": gym_id,
+                "team_id": team_id,
+                "guard_pokemon_id": guard_pokemon_id,
+                "slots_available": slots_available,
+                "latitude": latitude,
+                "longitude": longitude,
+                "total_cp": total_cp,
+                "is_in_battle": is_in_battle,
+                "gender": gender,
+                "form": form,
+                "costume": costume,
+                "weather_boosted_condition": weather_boosted_condition,
+                "last_scanned": int(last_scanned.replace(tzinfo=timezone.utc).timestamp()),
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
+                "name": name,
+                "url": url,
+                "description": description
             })
 
         return ret
