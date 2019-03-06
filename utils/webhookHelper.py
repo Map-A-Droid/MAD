@@ -271,7 +271,6 @@ class WebhookHelper(object):
             gym_url = info_of_gym.get('url', 'unknown')\
                 .replace('\\', r'\\').replace('"', '')
 
-
         payload_raw = gym_webhook_payload.format(
             raid_active_until=raid_active_until,
             gym_id=gym_id,
@@ -348,7 +347,7 @@ class WebhookHelper(object):
             weather = weather_param
         else:
             weather = 0
-        
+
         if image_url is None:
             image_url = "0"
 
