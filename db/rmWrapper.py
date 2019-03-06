@@ -211,8 +211,7 @@ class RmWrapper(DbWrapperBase):
                 "WHERE gym_id = %s"
             )
             vals = (
-                lvl, now_timestamp, start_db, end_db, pkm, int(time.time()), '999', '1', '1', 
-                gym
+                lvl, now_timestamp, start_db, end_db, pkm, int(time.time()), '999', '1', '1', gym
             )
             wh_send = True
             wh_start = start
@@ -936,7 +935,7 @@ class RmWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
-                   else:
+                    else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
