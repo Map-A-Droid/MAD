@@ -210,8 +210,8 @@ def near_gym():
 
     data = db_wrapper.get_gym_infos()
 
-    lat = request.conf_args.get('lat')
-    lon = request.conf_args.get('lon')
+    lat = request.args.get('lat')
+    lon = request.args.get('lon')
     if lat == "9999":
         distance = int(9999)
         lat = conf_args.home_lat
@@ -1253,7 +1253,6 @@ def delsetting():
     return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
-
 def check_float(number):
     try:
         float(number)
@@ -1437,7 +1436,6 @@ def match_type(value):
     return value
 
 
-
 @app.route('/showsettings', methods=['GET', 'POST'])
 @auth_required
 def showsettings():
@@ -1533,10 +1531,6 @@ def addnew():
     return render_template('sel_type.html', line=line, title="Type selector")
 
 
-def getBasePath(request):
-    if request.referrer:
-        return '/'.join(request.referrer.split('/')[:-1])
-    return ''
 @app.route('/status', methods=['GET'])
 @auth_required
 def status():
@@ -1655,6 +1649,12 @@ def game_stats():
     return jsonify(stats)
 
 
+def getBasePath(request):
+    if request.referrer:
+        return '/'.join(request.referrer.split('/')[:-1])
+    return ''
+
+
 def decodeHashJson(hashJson):
     data = json.loads(hashJson)
     raidGym = data['gym']
@@ -1717,4 +1717,3 @@ if __name__ == "__main__":
         sys.exit(1)
 
     app.run()
-    # host='0.0.0.0', port=int(conf_args.madmin_port), threaded=False)
