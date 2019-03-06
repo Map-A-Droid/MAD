@@ -43,7 +43,6 @@ os.environ['LANGUAGE']=args.language
 
 console = logging.StreamHandler()
 nextRaidQueue = []
-usage = {}
 
 if not args.verbose:
     console.setLevel(logging.INFO)
@@ -155,9 +154,8 @@ def delete_old_logs(minutes):
 
 
 def start_madmin(args, db_wrapper):
-    global usage
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, usage)
+    madmin_start(args, db_wrapper)
 
 
 def generate_mappingjson():
@@ -199,26 +197,19 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server):
             log.exception(
                 'Exception occurred while updating device mappings: %s.', e)
 
-def get_system_infos():
-    cpu = []
-    mem = []
+def get_system_infos(db_wrapper):
     pid = os.getpid()
     py = psutil.Process(pid)
-    global usage
     while not terminate_mad.is_set():
         memoryUse = py.memory_info()[0] / 2. ** 30
         cpuUse = py.cpu_percent()
+        collected = gc.collect()
         zero = datetime.datetime.utcnow()
-        unixnow = calendar.timegm(zero.utctimetuple()) * 1000
+        unixnow = calendar.timegm(zero.utctimetuple())
         log.info('Memory Usage: %s' % str(memoryUse))
         log.info('CPU Usage: %s' % str(cpuUse))
-        #with open("usage.info", "a") as myfile:
-        #    myfile.write(str(unixnow) + ';' + str(cpuUse) + ';' + str(memoryUse) + '\n')
-        cpu.append([unixnow, cpuUse])
-        mem.append([unixnow, memoryUse])
-        usage = {'cpu': cpu, 'mem': mem}
-        collected = gc.collect()
         log.info("Garbage collector: collected %d objects." % (collected))
+        db_wrapper.insert_usage(cpuUse, memoryUse, collected, unixnow)
         time.sleep(10)
 
 
@@ -248,6 +239,7 @@ if __name__ == "__main__":
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
+    db_wrapper.create_usage_database_if_not_exists()
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
@@ -366,7 +358,7 @@ if __name__ == "__main__":
         t_flask.start()
 
     t_system = Thread(name='system',
-                      target=get_system_infos())
+                      target=get_system_infos(db_wrapper))
     t_system.daemon = True
     t_system.start()
         

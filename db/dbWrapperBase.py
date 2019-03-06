@@ -938,6 +938,36 @@ class DbWrapperBase(ABC):
 
         return True
 
+    def create_usage_database_if_not_exists(self):
+        log.debug("{DbWrapperBase::create_usage_database_if_not_exists} called")
+
+        query = ('CREATE TABLE if not exists trs_usage ( '
+                 'usage_id INT(10) NULL AUTO_INCREMENT , '
+                 'cpu FLOAT NULL DEFAULT NULL , '
+                 'memory FLOAT NULL DEFAULT NULL , '
+                 'garbage INT(5) NULL DEFAULT NULL , '
+                 'timestamp INT(11) NULL DEFAULT NULL, '
+                 'PRIMARY KEY (usage_id))'
+                 )
+
+        self.execute(query, commit=True)
+
+        return True
+
+    def insert_usage(self, cpu, mem, garbage, timestamp):
+        log.debug("dbWrapper::insert_usage")
+
+        query = (
+            "INSERT into trs_usage (cpu, memory, garbage, timestamp) VALUES "
+            "(%s, %s, %s, %s)"
+        )
+        vals = (
+           cpu, mem, garbage, timestamp
+        )
+        self.execute(query, vals, commit=True)
+
+        return
+
     def save_status(self, data):
         log.debug("dbWrapper::save_status")
 
@@ -958,6 +988,7 @@ class DbWrapperBase(ABC):
             data["Init"], data["RebootingOption"], data["RestartCounter"]
         )
         self.execute(query, vals, commit=True)
+        return
 
     def save_last_reboot(self, origin):
         log.debug("dbWrapper::save_last_reboot")
@@ -975,6 +1006,7 @@ class DbWrapperBase(ABC):
         )
 
         self.execute(query, vals, commit=True)
+        return
 
     def save_last_restart(self, origin):
         log.debug("dbWrapper::save_last_restart")
@@ -992,6 +1024,7 @@ class DbWrapperBase(ABC):
         )
 
         self.execute(query, vals, commit=True)
+        return
 
     def download_status(self):
         log.debug("dbWrapper::download_status")
@@ -1060,6 +1093,23 @@ class DbWrapperBase(ABC):
                 "group by day(FROM_UNIXTIME(quest_timestamp)), hour(FROM_UNIXTIME(quest_timestamp))"
                 "order by quest_timestamp" %
                 (str(query_date), str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_usage_count(self, minutes):
+        log.debug('Fetching usage from db')
+        query_where = ''
+
+        if minutes:
+            days = datetime.now() - timedelta(minutes=int(minutes))
+            query_where = ' WHERE FROM_UNIXTIME(timestamp) > \'%s\' ' % str(days)
+
+        query = (
+                "SELECT cpu, memory, garbage, timestamp FROM trs_usage %s " %
+                (str(query_where))
         )
 
         res = self.execute(query)

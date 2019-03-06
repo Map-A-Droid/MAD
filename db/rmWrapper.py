@@ -1241,13 +1241,13 @@ class RmWrapper(DbWrapperBase):
 
         return stop_data['fort_id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, now, name, image[0]
 
-    def statistics_get_pokemon_count(self, days):
+    def statistics_get_pokemon_count(self, minutes):
         log.debug('Fetching pokemon spawns count from db')
         query_where = ''
         query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %k:00:00')) as timestamp"
-        if days:
-            days = datetime.utcnow() - timedelta(days=days)
-            query_where = ' where disappear_time > \'%s\' ' % str(days)
+        if minutes:
+            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
+            query_where = ' where disappear_time > \'%s\' ' % str(minutes)
 
         query = (
                 "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon %s "

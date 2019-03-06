@@ -39,12 +39,10 @@ conf_args = None
 db_wrapper = None
 device_mappings = None
 areas = None
-usa = None
 
 
-def madmin_start(arg_args, arg_db_wrapper, usage):
-    global conf_args, device_mappings, db_wrapper, areas, usa
-    usa = usage
+def madmin_start(arg_args, arg_db_wrapper):
+    global conf_args, device_mappings, db_wrapper, areas
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(arg_db_wrapper)
@@ -1006,7 +1004,15 @@ def status():
 @app.route('/statistics', methods=['GET'])
 @auth_required
 def statistics():
-    return render_template('statistics.html', title="Worker status")
+    minutes_usage = request.args.get('minutes_usage')
+    if not minutes_usage:
+        minutes_usage = 120
+    minutes_spawn = request.args.get('minutes_spawn')
+    if not minutes_spawn:
+        minutes_spawn = 120
+
+    return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
+                           minutes_usage=minutes_usage)
 
 @app.route('/get_status', methods=['GET'])
 @auth_required
@@ -1022,7 +1028,8 @@ def datetime_from_utc_to_local(utc_datetime):
 @app.route('/get_game_stats', methods=['GET'])
 @auth_required
 def game_stats():
-    global usa
+    minutes_usage = request.args.get('minutes_usage')
+    minutes_spawn = request.args.get('minutes_spawn')
     # Stop
     stop = []
     data = db_wrapper.statistics_get_stop_quest()
@@ -1031,6 +1038,20 @@ def game_stats():
 
     # Quest
     quest = db_wrapper.statistics_get_quests_count(1)
+
+    # Usage
+    cpu = []
+    mem = []
+    garbage = []
+    usa = db_wrapper.statistics_get_usage_count(minutes_usage)
+    for dat in usa:
+        cpu.append([dat[3]*1000, dat[0]])
+        mem.append([dat[3]*1000, dat[1]])
+        garbage.append([dat[3]*1000, dat[2]])
+
+    usage = {'mem': mem, 'cpu': cpu, 'garbage': garbage}
+
+
 
     # Gym
     gym = []
@@ -1056,24 +1077,24 @@ def game_stats():
     sum = []
     sumup = {}
 
-    data = db_wrapper.statistics_get_pokemon_count(1)
+    data = db_wrapper.statistics_get_pokemon_count(minutes_spawn)
     for dat in data:
         if dat[2] == 1:
-            iv.append([datetime_from_utc_to_local(dat[0]), dat[1]])
+            iv.append([(dat[0]*1000), dat[1]])
         else:
-            noniv.append([datetime_from_utc_to_local(dat[0]), dat[1]])
+            noniv.append([(dat[0]*1000), dat[1]])
 
-        if datetime_from_utc_to_local(dat[0]) in sumup:
-            sumup[datetime_from_utc_to_local(dat[0])] += dat[1]
+        if (dat[0]*1000) in sumup:
+            sumup[(dat[0]*1000)] += dat[1]
         else:
-            sumup[datetime_from_utc_to_local(dat[0])] = dat[1]
+            sumup[(dat[0]*1000)] = dat[1]
 
     for dat in sumup:
         sum.append([dat, sumup[dat]])
 
     spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
 
-    stats = {'spawn': spawn, 'gym': gym, 'quest': quest, 'stop': stop, 'usage': usa}
+    stats = {'spawn': spawn, 'gym': gym, 'quest': quest, 'stop': stop, 'usage': usage}
     return jsonify(stats)
 
 

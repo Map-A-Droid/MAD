@@ -94,7 +94,7 @@ $(function(){
 
         // $('#ajax-loader').show();
         $.ajax({
-            "url": "/get_game_stats",
+            "url": "/get_game_stats?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
             "type": "GET",
             "cache": false,
             "dataType": "json",
@@ -124,12 +124,19 @@ $(function(){
             var plot_usage = $.plot($("#flot_usage"), [
                 {
                     data: usage.cpu,
-                    label: "CPU in %"
+                    label: "CPU in %",
+                    color: "#123123"
+                },
+                {
+                    data: usage.garbage,
+                    label: "Collected objects",
+                    yaxis: 1
                 },
                 {
                     data: usage.mem,
                     label: "Memory in GB",
-                    yaxis: 2
+                    yaxis: 2,
+                    color: "red"
                 }
             ],
             {
@@ -141,14 +148,15 @@ $(function(){
             xaxis: {
                 mode: "time",
                 timeformat: "%d.%m<br>%H:%M",
-                tickSize: [1, "hour"],
-                timezone: "browser"
+                tickSize: [15, "minute"],
+                timezone: "browser",
+                show: usage.garbage.length > 0
             },
             yaxes: [
             {
                 //[First axis]
             },{
-                 position: "right"  //set this axis to appear on the right of chart
+                 position: "right"
             }
             ],
 
@@ -257,6 +265,11 @@ $(function(){
     height: 200px;
     text-align: left;
 }
+
+#selector {
+    font-size: 1.5em;
+    margin: 10px;
+}
 </style>
 
 
@@ -264,10 +277,30 @@ $(function(){
 
 {% block content %}
 <h2>CPU / Memory Usage</h2>
+<div id="selector">
+    View {{ minutes_spawn }} minutes - Set:
+    <a href="/statistics?minutes_spawn={{ minutes_spawn }}&minutes_usage=10">10</a>
+    <a href="/statistics?minutes_spawn={{ minutes_spawn }}&minutes_usage=60">60</a>
+    <a href="/statistics?minutes_spawn={{ minutes_spawn }}&minutes_usage=120">120</a>
+    <a href="/statistics?minutes_spawn={{ minutes_spawn }}&minutes_usage=240">240</a>
+    <a href="/statistics?minutes_spawn={{ minutes_spawn }}&minutes_usage=480">480</a>
+    <a href="/statistics?minutes_spawn={{ minutes_spawn }}&minutes_usage=1440">1440</a>
+    <a href="/statistics?minutes_spawn={{ minutes_spawn }}&minutes_usage=999999999">all</a>
+    <img src="{{ url_for('static', filename='warning.png') }}" width="20px"></div>
 <div id="legendContainer_usage"></div>
 <div id="flot_usage"></div>
 <br>
 <h2>Spawn Statistics last day</h2>
+<div id="selector">
+    View {{ minutes_usage }} minutes - Set:
+    <a href="/statistics?minutes_spawn=10&minutes_usage={{ minutes_usage }}">10</a>
+    <a href="/statistics?minutes_spawn=60&minutes_usage={{ minutes_usage }}">60</a>
+    <a href="/statistics?minutes_spawn=120&minutes_usage={{ minutes_usage }}">120</a>
+    <a href="/statistics?minutes_spawn=240&minutes_usage={{ minutes_usage }}">240</a>
+    <a href="/statistics?minutes_spawn=480&minutes_usage={{ minutes_usage }}">480</a>
+    <a href="/statistics?minutes_spawn=1440&minutes_usage={{ minutes_usage }}">1440</a>
+    <a href="/statistics?minutes_spawn=999999999&minutes_usage={{ minutes_usage }}">all</a>
+    <img src="{{ url_for('static', filename='warning.png') }}" width="20px"></div>
 <div id="legendContainer_spawn"></div>
 <div id="flot_spawn"></div>
 <br>

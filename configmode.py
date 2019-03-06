@@ -21,8 +21,7 @@ def generate_mappingjson():
 
 def start_madmin(args, db_wrapper):
     from madmin.madmin import madmin_start
-    usage = {'cpu': 0, 'mem': 0}
-    madmin_start(args, db_wrapper, usage)
+    madmin_start(args, db_wrapper)
     
 if __name__ == "__main__":
     filename = os.path.join('configs', 'config.ini')
