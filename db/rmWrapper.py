@@ -65,13 +65,6 @@ class RmWrapper(DbWrapperBase):
 
                 if affected_rows == 1:
                     counter = counter + 1
-                    if self.application_args.webhook:
-                        log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
-                        self.webhook_helper.send_raid_webhook(
-                            row[0], 'MON', row[1], row[2], 5, mon_id
-                        )
-                    else:
-                        log.debug('Sending Webhook is disabled')
                 elif affected_rows > 1:
                     log.error('Something is wrong with the indexing on your table you raids on this id {0}'
                               .format(row[0]))
@@ -138,7 +131,6 @@ class RmWrapper(DbWrapperBase):
             log.debug("{RmWrapper::submit_raid} done")
             return False
 
-
         if start is not None:
             start_db = datetime.utcfromtimestamp(float(start)).strftime("%Y-%m-%d %H:%M:%S")
             start = time.mktime(datetime.utcfromtimestamp(float(start)).timetuple())
@@ -147,9 +139,6 @@ class RmWrapper(DbWrapperBase):
             end_db = datetime.utcfromtimestamp(float(end)).strftime("%Y-%m-%d %H:%M:%S")
             end = time.mktime(datetime.utcfromtimestamp(float(end)).timetuple())
 
-        wh_send = False
-        wh_start = 0
-        wh_end = 0
         egg_hatched = False
 
         now_timestamp = time.mktime(datetime.utcfromtimestamp(float(capture_time)).timetuple())
@@ -175,10 +164,6 @@ class RmWrapper(DbWrapperBase):
             vals = (
                 lvl, now_timestamp, start_db, end_db, pkm, int(time.time()), '999', '1', '1', gym
             )
-            # send out a webhook - this case should only occur once...
-            wh_send = True
-            wh_start = start
-            wh_end = end
         elif end is None or start is None:
             # no end or start time given, just update anything there is
             log.info("Updating without end- or starttime - we should've seen the egg before")
@@ -193,12 +178,7 @@ class RmWrapper(DbWrapperBase):
             )
             found_end_time, end_time = self.get_raid_endtime(gym, raid_no, unique_hash=unique_hash)
             if found_end_time:
-                wh_send = True
-                wh_start = int(end_time) - 2700
-                wh_end = end_time
                 egg_hatched = True
-            else:
-                wh_send = False
         else:
             log.info("Updating everything")
             query = (
@@ -211,9 +191,6 @@ class RmWrapper(DbWrapperBase):
             vals = (
                 lvl, now_timestamp, start_db, end_db, pkm, int(time.time()), '999', '1', '1', gym
             )
-            wh_send = True
-            wh_start = start
-            wh_end = end
 
         affected_rows = self.execute(query, vals, commit=True)
 
@@ -251,24 +228,10 @@ class RmWrapper(DbWrapperBase):
 
             self.execute(query, vals, commit=True)
 
-            wh_send = True
-            if MonWithNoEgg:
-                wh_start = int(end) - 2700
-            else:
-                wh_start = start
-            wh_end = end
-            if pkm is None:
-                pkm = 0
-
         log.info("[Crop: %s (%s) ] submit_raid: Submit finished"
                  % (str(raid_no), str(unique_hash)))
         self.refresh_times(gym, raid_no, capture_time)
 
-        if self.application_args.webhook and wh_send:
-            log.info('[Crop: ' + str(raid_no) + ' (' + str(unique_hash) + ') ] ' + 'submitRaid: Send webhook')
-            self.webhook_helper.send_raid_webhook(
-                gym, 'RAID', wh_start, wh_end, lvl, pkm
-            )
         log.debug("{RmWrapper::submit_raid} done")
         return True
 
@@ -1327,7 +1290,7 @@ class RmWrapper(DbWrapperBase):
                 "severity": severity,
                 "warn_weather": warn_weather,
                 "world_time": world_time,
-                "last_updated": last_updated
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp())
             })
 
         return ret

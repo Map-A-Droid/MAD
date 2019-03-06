@@ -14,28 +14,6 @@ from s2sphere import Cell, CellId, LatLng
 
 log = logging.getLogger(__name__)
 
-raid_webhook_payload = """[{{
-      "message": {{
-        "latitude": {lat},
-        "longitude": {lon},
-        "level": {lvl},
-        "pokemon_id": "{poke_id}",
-        "team_id": {team},
-        "cp": "{cp}",
-        "move_1": {move_1},
-        "move_2": {move_2},
-        "start": {hatch_time},
-        "end": {end},
-        "gym_id": "{ext_id}",
-        "name": "{name_id}",
-        "url": "{url}",
-        "sponsor": "{sponsor}",
-        "weather": "{weather}",
-        "park": "{park}"
-      }},
-      "type": "{type}"
-   }} ]"""
-
 egg_webhook_payload = """[{{
       "message": {{
         "latitude": {lat},
@@ -78,21 +56,6 @@ quest_webhook_payload = """[{{
       "type": "quest"
    }} ]"""
 
-
-weather_webhook_payload = """[{{
-      "message": {{
-                "s2_cell_id": {0},
-                "coords": {1},
-                "condition": {2},
-                "alert_severity": {3},
-                "warn": {4},
-                "day": {5},
-                "time_changed": {6},
-                "latitude": {7},
-                "longitude": {8}
-        }},
-      "type": "weather"
-   }} ]"""
 
 plain_webhook = """[{plain}]"""
 
@@ -202,21 +165,6 @@ class WebhookHelper(object):
             log.debug("No CP returns as its an egg!")
             return '0'
 
-    def send_raid_webhook(self, gymid, type, start, end, lvl, mon,
-                          team_param=None, cp_param=None, move1_param=None, move2_param=None,
-                          name_param="unknown", lat_param=None, lng_param=None, weather_param=None,
-                          image_url=None):
-        if self.__application_args.webhook:
-            self.__set_gyminfo()
-
-            self.__add_task_to_loop(self._send_raid_webhook(gymid, type, start, end, lvl, mon,
-                                                            team_param=team_param, cp_param=cp_param,
-                                                            move1_param=move1_param, move2_param=move2_param,
-                                                            name_param=name_param,
-                                                            lat_param=lat_param, lng_param=lng_param,
-                                                            weather_param=weather_param,
-                                                            image_url=image_url))
-
     def send_weather_webhook(self, s2_cell_id, weather_id, severe, warn, day, time):
         if self.__application_args.webhook and self.__application_args.weather_webhook:
             self.__add_task_to_loop(self._send_weather_webhook(s2_cell_id, weather_id, severe, warn, day, time))
@@ -281,141 +229,6 @@ class WebhookHelper(object):
             longitude=longitude,
             last_modified=last_modified
         )
-
-        payload = json.loads(payload_raw)
-        self.__sendToWebhook(payload)
-
-    async def _send_raid_webhook(self, gymid, type, start, end, lvl, mon,
-                                 team_param=None, cp_param=None, move1_param=None, move2_param=None,
-                                 name_param="unknown", lat_param=None, lng_param=None, weather_param=None,
-                                 image_url=None):
-        log.info('Start preparing values for webhook')
-        if mon is None:
-            poke_id = 0
-        else:
-            poke_id = mon
-
-        form = 0
-        park = 0
-        description = ""
-        sponsor = 0
-
-        wtype = "raid"
-
-        if team_param is not None:
-            team = str(team_param)
-        else:
-            team = '0'
-
-        if cp_param is not None:
-            cp = str(cp_param)
-        else:
-            cp = self.get_raid_boss_cp(poke_id)
-
-        if move1_param is not None:
-            move_1 = str(move1_param)
-        else:
-            move_1 = '1'
-
-        if move2_param is not None:
-            move_2 = str(move2_param)
-        else:
-            move_2 = '1'
-
-        if name_param is not None and name_param != "unknown":
-            # gym name cleanup
-            name = name_param.replace('"', r'\"')
-        else:
-            name = "unknown"
-
-        if lat_param is not None:
-            lat = str(lat_param)
-        else:
-            lat = '0'
-
-        if lng_param is not None:
-            lng = str(lng_param)
-        else:
-            lng = '0'
-
-        if weather_param is not None:
-            weather = weather_param
-        else:
-            weather = 0
-
-        if image_url is None:
-            image_url = "0"
-
-        if self.gyminfo is not None:
-            info_of_gym = self.gyminfo.get(gymid, None)
-            if info_of_gym is not None:
-                name = info_of_gym.get("name", "unknown")
-                if name is not None:
-                    name = name.replace("\\", r"\\").replace('"', '')
-                else:
-                    name = "unknown"
-                lat = info_of_gym["latitude"]
-                lng = info_of_gym["longitude"]
-                image_url = info_of_gym["url"]
-                if info_of_gym["description"]:
-                    try:
-                        description = info_of_gym["description"] \
-                            .replace("\\", r"\\").replace('"', '').replace("\n", "")
-                    except (ValueError, TypeError) as e:
-                        description = ""
-                if 'park' in self.gyminfo[str(gymid)]:
-                    try:
-                        park = int(info_of_gym.get("park", 0))
-                    except (ValueError, TypeError) as e:
-                        park = None
-                if 'sponsor' in self.gyminfo[str(gymid)]:
-                    try:
-                        sponsor = int(info_of_gym.get("sponsor", 0))
-                    except (ValueError, TypeError) as e:
-                        sponsor = 0
-
-        hatch_time = int(start)
-        end = int(end)
-
-        if poke_id == 0 or poke_id is None:
-            payload_raw = egg_webhook_payload.format(
-                ext_id=gymid,
-                lat=lat,
-                lon=lng,
-                name_id=name,
-                sponsor=sponsor,
-                lvl=lvl,
-                end=end,
-                hatch_time=hatch_time,
-                team=team,
-                type=wtype,
-                url=image_url,
-                description=description,
-                park=park,
-                weather=weather
-            )
-        else:
-            payload_raw = raid_webhook_payload.format(
-                ext_id=gymid,
-                lat=lat,
-                lon=lng,
-                name_id=name,
-                sponsor=sponsor,
-                poke_id=poke_id,
-                lvl=lvl,
-                end=end,
-                hatch_time=hatch_time,
-                move_1=move_1,
-                move_2=move_2,
-                cp=cp,
-                form=form,
-                team=team,
-                type=wtype,
-                url=image_url,
-                description=description,
-                park=park,
-                weather=weather
-            )
 
         payload = json.loads(payload_raw)
         self.__sendToWebhook(payload)
@@ -528,4 +341,3 @@ class WebhookHelper(object):
 
         payload = json.loads(data)
         self.__sendToWebhook(payload)
-

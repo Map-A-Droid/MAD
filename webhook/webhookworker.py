@@ -57,6 +57,26 @@ class WebhookWorker:
             except Exception as e:
                 log.warning("Exception occured while sending webhook: %s" % str(e))
 
+    def __prepare_weather_data(self, weather_data):
+        ret = []
+
+        for weather in weather_data:
+            weather_payload = {
+                "s2_cell_id": weather["s2_cell_id"],
+                "condition": weather["gameplay_weather"],
+                "alert_severity": weather["severity"],
+                "day": weather["world_time"],
+                "time_changed": weather["last_updated"],
+                "latitude": weather["latitude"],
+                "longitude": weather["longitude"],
+            }
+
+            entire_payload = {"type": "weather", "message": weather_payload}
+
+            ret.append(entire_payload)
+
+        return ret
+
     def __prepare_raid_data(self, raid_data):
         ret = []
 
@@ -162,17 +182,37 @@ class WebhookWorker:
 
         return ret
 
+    def __prepare_gym_data(self, gym_data):
+        pass
+
     def run_worker(self):
         try:
             while True:
+                # the payload that is about to be sent
+                full_payload = []
+
+                # fetch, prepare and add raids
                 raids = self.__prepare_raid_data(
                     self._db_wrapper.get_raids_changed_since(self._last_check)
                 )
-                # mon = self._db_wrapper.get_mon_changed_since(self._last_check)
-                # weather = self._db_wrapper.get_weather_changed_since(self._last_check)
+                full_payload += raids
 
-                # self.__send_webhook(raids + mon + weather)
-                self.__send_webhook(raids)
+                # fetch, prepare and add weather
+                if self._args.weather_webhook:
+                    weather = self.__prepare_weather_data(
+                        self._db_wrapper.get_weather_changed_since(self._last_check)
+                    )
+                    full_payload += weather
+
+                # fetch, prepare and add mon
+                if self._args.pokemon_webhook:
+                    mon = self.__prepare_mon_data(
+                        self._db_wrapper.get_mon_changed_since(self._last_check)
+                    )
+                    full_payload += mon
+
+                # send our payload
+                self.__send_webhook(full_payload)
 
                 self._last_check = int(time.time())
                 time.sleep(self._worker_interval_sec)
