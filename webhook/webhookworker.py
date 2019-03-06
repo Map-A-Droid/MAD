@@ -24,6 +24,9 @@ class WebhookWorker:
         return count
 
     def __send_webhook(self, payload):
+        if len(payload) == 0:
+            pass
+
         # get list of urls
         webhooks = self._args.webhook_url.replace(" ", "").split(",")
 
@@ -162,7 +165,9 @@ class WebhookWorker:
     def run_worker(self):
         try:
             while True:
-                raids = self._db_wrapper.get_raids_changed_since(self._last_check)
+                raids = self.__prepare_raid_data(
+                    self._db_wrapper.get_raids_changed_since(self._last_check)
+                )
                 # mon = self._db_wrapper.get_mon_changed_since(self._last_check)
                 # weather = self._db_wrapper.get_weather_changed_since(self._last_check)
 
