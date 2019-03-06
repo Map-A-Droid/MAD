@@ -15,7 +15,7 @@
     var dataTable;
 
     function setGrid(tableGridHtmlId, gridData) {
-        if ($.fn.dataTable.isDataTable(tableGridHtmlId) ) {
+        if ($.fn.dataTable.isDataTable(tableGridHtmlId)) {
             dataTable.destroy();
         }
 
@@ -33,8 +33,8 @@
                 { data: 'rebootCounter', title: 'Reboot Counter' },
                 { data: 'lastPogoRestart', title: 'Last Restart' },
                 { data: 'lastPogoReboot', title: 'Last Reboot' },
-                { data: 'globalrestartcount' , title: 'Total Restarts'},
-                { data: 'globalrebootcount' , title: 'Total Reboots'},
+                { data: 'globalrestartcount', title: 'Total Restarts' },
+                { data: 'globalrebootcount', title: 'Total Reboots' },
                 { data: 'currentPos', title: 'Current Pos' },
                 { data: 'lastPos', title: 'Last Pos' }
             ],
@@ -53,7 +53,7 @@
                     "targets": [5],
                     "render": function (data, type, row) {
                         var dateToShow = moment(data);
-                        if(dateToShow.isValid()) {
+                        if (dateToShow.isValid()) {
                             return dateToShow.fromNow();
                         }
 
@@ -66,12 +66,12 @@
             "autoWidth": true,
             "stateSave": true
         });
-	}
+    }
 
     function getStatusData() {
         return $.ajax({
             type: "GET",
-            url: "/get_status",
+            url: "get_status",
             success: function (result) {
                 return result;
             }
@@ -79,8 +79,8 @@
     }
 
     function reloadGrid() {
-        getStatusData().then(function(result) {
-                setGrid('#show-data', result);
+        getStatusData().then(function (result) {
+            setGrid('#show-data', result);
         });
     }
 
@@ -88,9 +88,8 @@
         $("#navstatus").addClass("active");
 
         getStatusData().then(function (result) {
-                setGrid('#show-data', result);
-
-                setInterval(reloadGrid, 10000);
+            setGrid('#show-data', result);
+            setInterval(reloadGrid, 10000);
         });
     });
 </script>
