@@ -170,12 +170,12 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = %s, end = %s, "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s, weather_boosted_condition = %s "
+                "move_1 = %s, move_2 = %s"
                 "WHERE gym_id = %s"
             )
             vals = (
                 lvl, now_timestamp, start_db, end_db, pkm, int(time.time()), '999', '1', '1', 
-                weather_boosted_condition, gym
+                gym
             )
             # send out a webhook - this case should only occur once...
             wh_send = True
@@ -187,11 +187,11 @@ class RmWrapper(DbWrapperBase):
             query = (
                 "UPDATE raid "
                 "SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s, weather_boosted_condition = %s "
+                "move_1 = %s, move_2 = %s"
                 "WHERE gym_id = %s"
             )
             vals = (
-                lvl, pkm, int(time.time()), '999', '1', '1', weather_boosted_condition, gym
+                lvl, pkm, int(time.time()), '999', '1', '1', gym
             )
             found_end_time, end_time = self.get_raid_endtime(gym, raid_no, unique_hash=unique_hash)
             if found_end_time:
@@ -207,12 +207,12 @@ class RmWrapper(DbWrapperBase):
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = %s, end = %s, "
                 "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s, weather_boosted_condition = %s "
+                "move_1 = %s, move_2 = %s"
                 "WHERE gym_id = %s"
             )
             vals = (
                 lvl, now_timestamp, start_db, end_db, pkm, int(time.time()), '999', '1', '1', 
-                weather_boosted_condition, gym
+                gym
             )
             wh_send = True
             wh_start = start
@@ -228,9 +228,9 @@ class RmWrapper(DbWrapperBase):
                 start = end - (int(self.application_args.raid_time) * 60)
                 query = (
                     "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, "
-                    "move_1, move_2, weather_boosted_condition) "
+                    "move_1, move_2) "
                     "VALUES(%s, %s, FROM_UNIXTIME(%s), %s, %s, %s, "
-                    "FROM_UNIXTIME(%s), 999, 1, 1, %s)"
+                    "FROM_UNIXTIME(%s), 999, 1, 1)"
                 )
                 vals = (
                     gym, lvl, now_timestamp, start_db, end_db, pkm, int(time.time())
@@ -919,12 +919,11 @@ class RmWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, weather_boosted_condition) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
-            "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned), "
-            "weather_boosted_condition=VALUES(weather_boosted_condition)"
+            "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned)"
         )
 
         for cell in cells:
@@ -937,14 +936,12 @@ class RmWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
-                        weather_boosted_condition = gym['gym_details']['raid_info']['raid_pokemon']['display']['weather_boosted_value']
-                    else:
+                   else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
                         form = None
-                        weather_boosted_condition = 0
 
                     raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
@@ -966,8 +963,7 @@ class RmWrapper(DbWrapperBase):
                         gymid=gymid, type='RAID', start=raidbattleSec, end=raidendSec, lvl=level,
                         mon=pokemon_id, team_param=team, cp_param=cp, move1_param=move_1,
                         move2_param=move_2, lat_param=gym['latitude'], lng_param=gym['longitude'],
-                        image_url=gym['image_url'], ex_eligible_param=is_ex_raid_eligible,
-                        weather_param=weather_boosted_condition
+                        image_url=gym['image_url'], ex_eligible_param=is_ex_raid_eligible
                     )
 
                     log.info("Adding/Updating gym at gym %s with level %s ending at %s"
@@ -981,7 +977,7 @@ class RmWrapper(DbWrapperBase):
                             raidstart_date,
                             raidend_date,
                             pokemon_id, cp, move_1, move_2, now,
-                            form, weather_boosted_condition
+                            form
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)
