@@ -161,7 +161,7 @@ def parseArgs():
                         help='Activate quest webhook support')
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
                         help='Activate gym webhook support')
-    parser.add_argument('-whser', '--webhook_submit_exraids', action='store_true', default=False,
+    parser.add_argument('-whser', '--webhook_send_exraids', action='store_true', default=False,
                         help='Send Ex-raids to the webhook if detected')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
