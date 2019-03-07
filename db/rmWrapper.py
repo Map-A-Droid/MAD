@@ -1272,10 +1272,9 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query, (tsdt, ))
         ret = []
 
-        for (gym_id, team_id, guard_pokemon_id, slots_available, latitude,
-                longitude, total_cp, is_in_battle, gender, form, costume,
-                weather_boosted_condition, last_modified, last_scanned, name,
-                url, description) in res:
+        for (name, description, url, gym_id, team_id, guard_pokemon_id, slots_available,
+                latitude, longitude, total_cp, is_in_battle, gender, form, costume,
+                weather_boosted_condition, last_modified, last_scanned) in res:
             ret.append({
                 "gym_id": gym_id,
                 "team_id": team_id,
