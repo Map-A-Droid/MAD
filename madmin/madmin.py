@@ -3,7 +3,6 @@ import datetime
 import glob
 import json
 import logging
-import numbers
 import os
 import platform
 import re
@@ -716,7 +715,7 @@ def modify_mon():
     return render_template('change_mon.html', hash=hash, gym=gym, lvl=lvl, responsive=str(conf_args.madmin_noresponsive).lower(), title="change Mon")
 
 
-@app.route('asset/<path:path>', methods=['GET'])
+@app.route('/asset/<path:path>', methods=['GET'])
 @auth_required
 def pushAssets(path):
     return send_from_directory(conf_args.pogoasset, path)
@@ -1388,6 +1387,10 @@ def addedit():
                 new['settings'] = {}
             mapping[area].append(new)
 
+        mapping_parser = MappingParser(db_wrapper)
+        device_mappings = mapping_parser.get_devicemappings()
+        areas = mapping_parser.get_areas()
+
     except:
         log.info('Invalid data')
         return redirect(getBasePath(request) + '/config?type='+mode+'&area='+area+'&block='+block+'&edit='+edit, code=302)
@@ -1465,17 +1468,17 @@ def showsettings():
             quickadd, quickline = '', ''
             mode = output.get('mode', _typearea)
             if settings[var]['could_edit']:
-                edit = '<td><a href=/config?type=' + str(mode) + '&area=' + str(
-                    _typearea) + '&block=fields&edit=' + str(output[_field]) + '>[Edit]</a></td>'
+                edit = '<td><a href="config?type=' + str(mode) + '&area=' + str(
+                    _typearea) + '&block=fields&edit=' + str(output[_field]) + '">[Edit]</a></td>'
             else:
                 edit = '<td></td>'
             if settings[var]['has_settings'] in ('true'):
-                editsettings = '<td><a href=/config?type=' + str(mode) + '&area=' + str(
-                    _typearea) + '&block=settings&edit=' + str(output[_field]) + '>[Edit Settings]</a></td>'
+                editsettings = '<td><a href="config?type=' + str(mode) + '&area=' + str(
+                    _typearea) + '&block=settings&edit=' + str(output[_field]) + '">[Edit Settings]</a></td>'
             else:
                 editsettings = '<td></td>'
-            delete = '<td><a href=/delsetting?type=' + str(mode) + '&area=' + str(
-                _typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true>[Delete]</a></td>'
+            delete = '<td><a href="delsetting?type=' + str(mode) + '&area=' + str(
+                _typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true">[Delete]</a></td>'
 
             line = line + '<tr><td><b>' + \
                 str(output[_field]) + '</b></td>' + str(edit) + \
@@ -1525,8 +1528,8 @@ def addnew():
         return redirect(getBasePath(request) + '/config?type=' + area + '&area=' + area + '&block=fields', code=302)
 
     for output in settings[area]:
-        line = line + '<h3><a href=config?type=' + str(output['name']) + '&area=' + str(
-            area) + '&block=fields>'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
+        line = line + '<h3><a href="config?type=' + str(output['name']) + '&area=' + str(
+            area) + '&block=fields">'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
 
     return render_template('sel_type.html', line=line, title="Type selector")
 
