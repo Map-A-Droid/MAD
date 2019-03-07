@@ -353,7 +353,7 @@ if __name__ == "__main__":
             t_file_watcher.daemon = False
             t_file_watcher.start()
 
-    if args.webhook:
+    if args.webhook and args.only_scan:
         from webhook.webhookworker import WebhookWorker
 
         webhook_worker = WebhookWorker(args, db_wrapper)

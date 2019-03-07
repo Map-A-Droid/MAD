@@ -27,34 +27,36 @@ def get_raid_boss_cp(mon_id):
 
 def gen_desapwn_timestamp(known_despawn):
     despawn_time = datetime.now() + timedelta(seconds=300)
-    despawn_time = datetime.utcfromtimestamp(time.mktime(despawn_time.timetuple())).strftime('%Y-%m-%d %H:%M:%S')
+    despawn_time = datetime.utcfromtimestamp(
+        time.mktime(despawn_time.timetuple())
+    ).strftime("%Y-%m-%d %H:%M:%S")
 
     if known_despawn is None:
-        despawn_time_unix = int(time.time()) + 3 * 60
-    else:
-        hrmi = known_despawn.split(":")
-        known_despawn = datetime.now().replace(
-            hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0
+        return int(time.time()) + 3 * 60
+
+    hrmi = known_despawn.split(":")
+    known_despawn = datetime.now().replace(
+        hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0
+    )
+    now = datetime.now()
+    if now.minute <= known_despawn.minute:
+        despawn = now + timedelta(
+            minutes=known_despawn.minute - now.minute,
+            seconds=known_despawn.second - now.second,
         )
-        now = datetime.now()
-        if now.minute <= known_despawn.minute:
-            despawn = now + timedelta(
-                minutes=known_despawn.minute - now.minute,
-                seconds=known_despawn.second - now.second,
+    elif now.minute > known_despawn.minute:
+        despawn = (
+            now
+            + timedelta(hours=1)
+            - timedelta(
+                minutes=(now.minute - known_despawn.minute),
+                seconds=now.second - known_despawn.second,
             )
-        elif now.minute > known_despawn.minute:
-            despawn = (
-                now
-                + timedelta(hours=1)
-                - timedelta(
-                    minutes=(now.minute - known_despawn.minute),
-                    seconds=now.second - known_despawn.second,
-                )
-            )
-        else:
-            return None
+        )
+    else:
+        return None
 
-        despawn_uts = int(time.mktime(despawn.timetuple()))
-        despawn_time = datetime.utcfromtimestamp(despawn_uts).strftime('%Y-%m-%d %H:%M:%S')
+    despawn_uts = int(time.mktime(despawn.timetuple()))
+    despawn_time = datetime.utcfromtimestamp(despawn_uts).strftime("%Y-%m-%d %H:%M:%S")
 
-        return despawn_time
+    return despawn_time
