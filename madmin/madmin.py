@@ -1043,14 +1043,46 @@ def game_stats():
     cpu = []
     mem = []
     garbage = []
+    insta = {}
+    usage = []
     usa = db_wrapper.statistics_get_usage_count(minutes_usage)
+    print (usa)
     for dat in usa:
-        cpu.append([dat[3]*1000, dat[0]])
-        mem.append([dat[3]*1000, dat[1]])
-        garbage.append([dat[3]*1000, dat[2]])
+        if dat[4]+'_CPU' not in insta:
+            insta[str(dat[4])+'_CPU'] = {}
+            insta[str(dat[4]) + '_CPU']["axis"] = 1
+            insta[str(dat[4]) + '_CPU']["data"] = []
+        if dat[4]+'_MEM' not in insta:
+            insta[str(dat[4])+'_MEM'] = {}
+            insta[str(dat[4]) + '_MEM']['axis'] = 2
+            insta[str(dat[4]) + '_MEM']["data"] = []
+        if dat[4] + '_GC' not in insta:
+            insta[str(dat[4]) + '_GO'] = {}
+            insta[str(dat[4]) + '_GO']['axis'] = 3
+            insta[str(dat[4]) + '_GO']["data"] = []
+        #if dat[3] * 1000 not in insta[str(dat[4])]:
+        #    insta[str(dat[4])][dat[3] * 1000] = {}
 
-    usage = {'mem': mem, 'cpu': cpu, 'garbage': garbage}
+        insta[str(dat[4])+'_CPU']['data'].append([dat[3] * 1000, dat[0]])
+        insta[str(dat[4])+'_MEM']['data'].append([dat[3] * 1000, dat[1]])
+        insta[str(dat[4])+'_GO']['data'].append([dat[3] * 1000, dat[2]])
 
+    print(insta)
+
+    for label in insta:
+        usage.append({'label': label, 'data': insta[label]['data'], 'yaxis': insta[label]['axis']})
+
+
+
+        #insta[str(dat[4])][dat[3] * 1000]['CPU'] = dat[0]
+        #insta[str(dat[4])][dat[3] * 1000]['MEM'] = dat[1]
+        #insta[str(dat[4])][dat[3] * 1000]['garbage'] = dat[2]
+        #cpu.append([dat[3]*1000, dat[0]])
+        #mem.append([dat[3]*1000, dat[1]])
+        #garbage.append([dat[3]*1000, dat[2]])
+
+    #usage = {'mem': mem, 'cpu': cpu, 'garbage': garbage}
+    print(usage)
 
 
     # Gym

@@ -25,9 +25,6 @@ from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 
-from ocr.pogoWindows import PogoWindows
-
-
 class LogFilter(logging.Filter):
 
     def __init__(self, level):
@@ -200,16 +197,18 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server):
 def get_system_infos(db_wrapper):
     pid = os.getpid()
     py = psutil.Process(pid)
+
     while not terminate_mad.is_set():
         memoryUse = py.memory_info()[0] / 2. ** 30
         cpuUse = py.cpu_percent()
         collected = gc.collect()
         zero = datetime.datetime.utcnow()
         unixnow = calendar.timegm(zero.utctimetuple())
+        log.info('Instance Name: %s' % str(args.status_name))
         log.info('Memory Usage: %s' % str(memoryUse))
         log.info('CPU Usage: %s' % str(cpuUse))
-        log.info("Garbage collector: collected %d objects." % (collected))
-        db_wrapper.insert_usage(cpuUse, memoryUse, collected, unixnow)
+        log.info("Garbage collector: collected %d objects." % collected)
+        db_wrapper.insert_usage(args.status_name, cpuUse, memoryUse, collected, unixnow)
         time.sleep(10)
 
 
@@ -315,6 +314,7 @@ if __name__ == "__main__":
                     sys.exit(1)
 
             if not args.no_ocr:
+                from ocr.pogoWindows import PogoWindows
                 pogoWindowManager = PogoWindows(args.temp_path)
 
             if ocr_enabled:

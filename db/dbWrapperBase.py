@@ -942,7 +942,8 @@ class DbWrapperBase(ABC):
         log.debug("{DbWrapperBase::create_usage_database_if_not_exists} called")
 
         query = ('CREATE TABLE if not exists trs_usage ( '
-                 'usage_id INT(10) NULL AUTO_INCREMENT , '
+                 'usage_id INT(10) AUTO_INCREMENT , '
+                 'instance varchar(100) NULL DEFAULT NULL, '
                  'cpu FLOAT NULL DEFAULT NULL , '
                  'memory FLOAT NULL DEFAULT NULL , '
                  'garbage INT(5) NULL DEFAULT NULL , '
@@ -954,15 +955,15 @@ class DbWrapperBase(ABC):
 
         return True
 
-    def insert_usage(self, cpu, mem, garbage, timestamp):
+    def insert_usage(self, instance, cpu, mem, garbage, timestamp):
         log.debug("dbWrapper::insert_usage")
 
         query = (
-            "INSERT into trs_usage (cpu, memory, garbage, timestamp) VALUES "
-            "(%s, %s, %s, %s)"
+            "INSERT into trs_usage (instance, cpu, memory, garbage, timestamp) VALUES "
+            "(%s, %s, %s, %s, %s)"
         )
         vals = (
-           cpu, mem, garbage, timestamp
+            instance, cpu, mem, garbage, timestamp
         )
         self.execute(query, vals, commit=True)
 
@@ -1099,7 +1100,7 @@ class DbWrapperBase(ABC):
 
         return res
 
-    def statistics_get_usage_count(self, minutes):
+    def statistics_get_usage_count(self, minutes=120, instance=None):
         log.debug('Fetching usage from db')
         query_where = ''
 
@@ -1107,10 +1108,16 @@ class DbWrapperBase(ABC):
             days = datetime.now() - timedelta(minutes=int(minutes))
             query_where = ' WHERE FROM_UNIXTIME(timestamp) > \'%s\' ' % str(days)
 
+        if instance is not None:
+            query_where = query_where + ' and instance = \'%s\' ' % str(instance)
+
         query = (
-                "SELECT cpu, memory, garbage, timestamp FROM trs_usage %s " %
+                "SELECT cpu, memory, garbage, timestamp, instance FROM trs_usage %s "
+                "order by timestamp" %
                 (str(query_where))
         )
+
+        print (query)
 
         res = self.execute(query)
 

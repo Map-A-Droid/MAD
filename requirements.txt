@@ -35,3 +35,8 @@ urllib3==1.24.1
 watchdog==0.9.0
 websockets==7.0
 Werkzeug==0.14.1
+requests
+geopy
+s2sphere
+psutil
+watchdog
