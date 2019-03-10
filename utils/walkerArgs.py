@@ -168,7 +168,7 @@ def parseArgs():
     # Statistics
     parser.add_argument('-stco', '--stat_gc', action='store_true', default=False,
                         help='Store collected objects (garbage collector) (Default: False)')
-    parser.add_argument('-stiv', '--stat_interval', default=10, type=int,
+    parser.add_argument('-stiv', '--stat_interval', default=60, type=int,
                         help='Store new local stats every N seconds (Default: 60)')
 
     # MADmin
