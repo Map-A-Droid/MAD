@@ -1199,7 +1199,7 @@ class RmWrapper(DbWrapperBase):
                 "spawnpoint_id": spawnpoint_id,
                 "latitude": latitude,
                 "longitude": longitude,
-                "disappear_time": disappear_time,
+                "disappear_time": int(disappear_time.replace(tzinfo=timezone.utc).timestamp()),
                 "individual_attack": individual_attack,
                 "individual_defense": individual_defense,
                 "individual_stamina": individual_stamina,

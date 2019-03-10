@@ -3,6 +3,7 @@ import logging
 import requests
 import time
 
+from utils.gamemechanicutil import calculate_mon_level
 from utils.gamemechanicutil import get_raid_boss_cp
 
 log = logging.getLogger(__name__)
@@ -17,6 +18,9 @@ class WebhookWorker:
         self._args = args
         self._db_wrapper = db_wrapper
         self._last_check = int(time.time())
+
+        if self._args.webhook_start_time != 0:
+            self._last_check = int(self._args.webhook_start_time)
 
     def __payload_type_count(self, payload):
         count = {}
@@ -87,8 +91,8 @@ class WebhookWorker:
             # skip ex raid mon if disabled
             if (
                 not self._args.webhook_send_exraids
-                and raid.get('pokemon_id') is not None
-                and raid.get('pokemon_id') == self.EXRAID_MON_ID
+                and raid.get("pokemon_id") is not None
+                and raid.get("pokemon_id") == self.EXRAID_MON_ID
             ):
                 continue
 
@@ -136,23 +140,17 @@ class WebhookWorker:
             mon_payload = {
                 "encounter_id": mon["encounter_id"],
                 "pokemon_id": mon["pokemon_id"],
-                "last_modified_time": mon["last_modified"],
                 "spawnpoint_id": mon["spawnpoint_id"],
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
                 "disappear_time": mon["disappear_time"],
             }
 
-            tth = despawn_time_unix - last_modified_time
-            mon_payload["time_until_hidden_ms"] = tth
-
-            if mon["pokemon_level"] is not None:
-                mon_payload["pokemon_level"] = mon["pokemon_level"]
-
             if mon["cp_multiplier"] is not None:
                 mon_payload["cp_multiplier"] = mon["cp_multiplier"]
+                mon_payload["pokemon_level"] = calculate_mon_level(mon["cp_multiplier"])
 
-            if mon["form"] is not None:
+            if mon["form"] is not None and mon["form"] > 0:
                 mon_payload["form"] = mon["form"]
 
             if mon["cp"] is not None:
@@ -182,7 +180,10 @@ class WebhookWorker:
             if mon["gender"] is not None:
                 mon_payload["gender"] = mon["gender"]
 
-            if mon["weather_boosted_condition"] is not None:
+            if (
+                mon["weather_boosted_condition"] is not None
+                and mon["weather_boosted_condition"] > 0
+            ):
                 mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
 
             # create finale message
@@ -247,12 +248,11 @@ class WebhookWorker:
                     )
                     full_payload += gyms
 
-                # fetch, prepare and add mon
-                # if self._args.pokemon_webhook:
-                #    mon = self.__prepare_mon_data(
-                #        self._db_wrapper.get_mon_changed_since(self._last_check)
-                #    )
-                #    full_payload += mon
+                if self._args.pokemon_webhook:
+                    mon = self.__prepare_mon_data(
+                        self._db_wrapper.get_mon_changed_since(self._last_check)
+                    )
+                    full_payload += mon
 
                 # send our payload
                 self.__send_webhook(full_payload)

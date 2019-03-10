@@ -163,6 +163,8 @@ def parseArgs():
                         help='Activate gym webhook support')
     parser.add_argument('-whser', '--webhook_send_exraids', action='store_true', default=False,
                         help='Send Ex-raids to the webhook if detected')
+    parser.add_argument('-whst', '--webhook_start_time', default=0,
+                        help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
