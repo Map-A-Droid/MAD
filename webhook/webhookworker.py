@@ -86,11 +86,11 @@ class WebhookWorker:
         for raid in raid_data:
             # skip ex raid mon if disabled
             if (
-                self._args.webhook_send_exraids
+                not self._args.webhook_send_exraids
                 and raid.get('pokemon_id') is not None
                 and raid.get('pokemon_id') == self.EXRAID_MON_ID
             ):
-                break
+                continue
 
             raid_payload = {
                 "latitude": raid["latitude"],
