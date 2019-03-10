@@ -575,7 +575,7 @@ class MonocleWrapper(DbWrapperBase):
         else:
             pokemon_level = 171.0112688 * pokemon_data.get("cp_multiplier") - 95.20425243
 
-            pokemon_level = round(pokemon_level) * 2 / 2
+        pokemon_level = round(pokemon_level) * 2 / 2
 
         pokemon_display = pokemon_data.get("display")
         if pokemon_display is None:
