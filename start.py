@@ -41,6 +41,8 @@ os.environ['LANGUAGE']=args.language
 console = logging.StreamHandler()
 nextRaidQueue = []
 
+REFERRERS_TO_IGNORE = [ locals(), globals(), gc.garbage ]
+
 if not args.verbose:
     console.setLevel(logging.INFO)
 
@@ -194,22 +196,54 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server):
             log.exception(
                 'Exception occurred while updating device mappings: %s.', e)
 
+def find_referring_graphs(obj):
+    print ('Looking for references to %s' % repr(obj))
+    referrers = (r for r in gc.get_referrers(obj)
+                 if r not in REFERRERS_TO_IGNORE)
+    for ref in referrers:
+        if isinstance(ref, Graph):
+            # A graph node
+            yield ref
+        elif isinstance(ref, dict):
+            # An instance or other namespace dictionary
+            for parent in find_referring_graphs(ref):
+                yield parent
+
 def get_system_infos(db_wrapper):
     pid = os.getpid()
     py = psutil.Process(pid)
+    gc.set_threshold(5, 1, 1)
 
     while not terminate_mad.is_set():
+        log.info('Starting internal Cleanup')
+        log.debug('Collecting...')
+        n = gc.collect()
+        log.info('Unreachable objects: %s' % str(n))
+        log.info('Remaining Garbage: %s ' % str(gc.garbage))
+        log.info('Clearing referrers:')
+        for obj in gc.garbage:
+            for ref in find_referring_graphs(obj):
+                ref.set_next(None)
+                del ref  # remove local reference so the node can be deleted
+            del obj  # remove local reference so the node can be deleted
+
+        # Clear references held by gc.garbage
+        log.debug('Clearing gc garbage')
+        del gc.garbage[:]
+
         memoryUse = py.memory_info()[0] / 2. ** 30
         cpuUse = py.cpu_percent()
-        collected = gc.collect()
-        zero = datetime.datetime.utcnow()
-        unixnow = calendar.timegm(zero.utctimetuple())
         log.info('Instance Name: %s' % str(args.status_name))
         log.info('Memory Usage: %s' % str(memoryUse))
         log.info('CPU Usage: %s' % str(cpuUse))
-        log.info("Garbage collector: collected %d objects." % collected)
+        collected = None
+        if args.stat_gc:
+            collected = gc.collect()
+            log.info("Garbage collector: collected %d objects." % collected)
+        zero = datetime.datetime.utcnow()
+        unixnow = calendar.timegm(zero.utctimetuple())
         db_wrapper.insert_usage(args.status_name, cpuUse, memoryUse, collected, unixnow)
-        time.sleep(10)
+        time.sleep(args.stat_interval)
 
 
 def load_mappings(db_wrapper):
@@ -292,7 +326,6 @@ if __name__ == "__main__":
                 log.fatal("There is something wrong with your mappings. Description: %s" % str(e))
                 sys.exit(1)
 
-
             if args.only_routes:
                 log.info("Done calculating routes!")
                 sys.exit(0)
@@ -358,13 +391,13 @@ if __name__ == "__main__":
         t_flask.start()
 
     t_system = Thread(name='system',
-                      target=get_system_infos(db_wrapper))
-    t_system.daemon = True
+                      target=get_system_infos, args=(db_wrapper,))
+    t_system.daemon = False
     t_system.start()
         
     log.error('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
-                       target=delete_old_logs(args.cleanup_age))
+                       target=delete_old_logs, args=(args.cleanup_age,))
     t_cleanup.daemon = True
     t_cleanup.start()
 

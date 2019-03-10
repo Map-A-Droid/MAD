@@ -123,7 +123,7 @@ $(function(){
             ],  options_dots);
             $("#flot_spawn").UseTooltip();
 
-            var plot_usage = $.plot($("#flot_usage"), usage,
+            plot_usage = $.plot($("#flot_usage"), usage,
             {
             grid: {
                 hoverable: true,
@@ -155,7 +155,7 @@ $(function(){
                 axisLabelPadding: 3
             },{
                 position: "right",
-                axisLabel: "Collected Obj",
+                axisLabel: "Collected Objects",
                 color: "black",
                 axisLabelUseCanvas: true,
                 axisLabelFontSizePixels: 12,
@@ -186,7 +186,7 @@ $(function(){
 
             },
             complete: function(){
-                setTimeout($.unblockUI, 500);
+                setTimeout($.unblockUI, 100);
             }
 
         })

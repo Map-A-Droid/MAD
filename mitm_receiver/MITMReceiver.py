@@ -163,7 +163,7 @@ class MITMReceiver(object):
 
             elif type == 102:
                 # process Encounter
-                playerlevel = self.__mitm_mapper._playerstats[origin].get_level()
+                playerlevel = self.__mitm_mapper.playerstats[origin].get_level()
                 if playerlevel >= 30:
                     log.info("Processing Encounter received from %s at %s" % (str(origin), str(received_timestamp)))
                     self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])
@@ -174,6 +174,6 @@ class MITMReceiver(object):
             elif type == 104:
                 self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
             elif type == 4:
-                self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
+                self.__mitm_mapper.playerstats[origin].gen_player_stats(data["payload"])
 
         return True

@@ -165,6 +165,12 @@ def parseArgs():
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
 
+    # Statistics
+    parser.add_argument('-stco', '--stat_gc', action='store_true', default=False,
+                        help='Store collected objects (garbage collector) (Default: False)')
+    parser.add_argument('-stiv', '--stat_interval', default=10, type=int,
+                        help='Store new local stats every N seconds (Default: 60)')
+
     # MADmin
     parser.add_argument('-mmt', '--madmin_time', default='24',
                         help='MADmin clock format (12/24) (Default: 24)')

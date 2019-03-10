@@ -1117,8 +1117,6 @@ class DbWrapperBase(ABC):
                 (str(query_where))
         )
 
-        print (query)
-
         res = self.execute(query)
 
         return res
