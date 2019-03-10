@@ -711,7 +711,7 @@ class RmWrapper(DbWrapperBase):
         else:
             pokemon_level = 171.0112688 * pokemon_data.get("cp_multiplier") - 95.20425243
 
-            pokemon_level = round(pokemon_level) * 2 / 2
+        pokemon_level = round(pokemon_level) * 2 / 2
 
         log.debug("Sending webhook")
         self.webhook_helper.send_pokemon_webhook(
