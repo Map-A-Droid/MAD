@@ -8,7 +8,7 @@ log = logging.getLogger(__name__)
 
 class RouteManagerMon(RouteManagerBase):
     def _priority_queue_update_interval(self):
-        return 180
+        return 300
 
     def _get_coords_after_finish_route(self):
         return None

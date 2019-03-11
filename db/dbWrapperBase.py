@@ -37,8 +37,6 @@ class DbWrapperBase(ABC):
                          "port": self.port}
         self._init_pool()
 
-    def __del__(self):
-        self.shutdown_pool()
 
     def _init_pool(self):
         log.info("Connecting pool to DB")
@@ -46,13 +44,6 @@ class DbWrapperBase(ABC):
         self.pool = mysql.connector.pooling.MySQLConnectionPool(pool_name="db_wrapper_pool",
                                                                 pool_size=self.application_args.db_poolsize,
                                                                 **self.dbconfig)
-        self.pool_mutex.release()
-
-    def shutdown_pool(self):
-        log.info("Closing pool to DB")
-        self.pool_mutex.acquire()
-        if self.pool is not None:
-            self.pool.close()
         self.pool_mutex.release()
 
     def close(self, conn, cursor):
@@ -828,10 +819,11 @@ class DbWrapperBase(ABC):
         current_time_of_day = datetime.now().replace(microsecond=0)
 
         log.debug("DbWrapperBase::retrieve_next_spawns called")
-        query = (
-            "SELECT latitude, longitude, spawndef, calc_endminsec "
-            "FROM `trs_spawn`"
-            "WHERE calc_endminsec IS NOT NULL"
+        query =(
+            "SELECT latitude, longitude, spawndef, calc_endminsec FROM trs_spawn WHERE calc_endminsec IS NOT NULL and "
+            "DATE_FORMAT(STR_TO_DATE(calc_endminsec,'%i:%s'),'%i:%s') between DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,60,30) MINUTE),'%i:%s') and DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,70,40) MINUTE),'%i:%s')"
         )
         res = self.execute(query)
         next_up = []
@@ -843,8 +835,9 @@ class DbWrapperBase(ABC):
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
             temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
-            if math.floor(minutes / 10) == 0:
+            if minutes < datetime.now().minute:
                 temp_date = temp_date + timedelta(hours=1)
+
 
             if temp_date < current_time_of_day:
                 # spawn has already happened, we should've added it in the past, let's move on

@@ -57,9 +57,10 @@ class MITMBase(WorkerBase):
 
             restart_thresh = self._devicesettings.get("restart_thresh", 5)
             reboot_thresh = self._devicesettings.get("reboot_thresh", 3)
-            if current_routemanager.init:
-                restart_thresh = self._devicesettings.get("restart_thresh", 5) * 2
-                reboot_thresh = self._devicesettings.get("reboot_thresh", 3) * 2
+            if current_routemanager is not None:
+                if current_routemanager.init:
+                    restart_thresh = self._devicesettings.get("restart_thresh", 5) * 2
+                    reboot_thresh = self._devicesettings.get("reboot_thresh", 3) * 2
 
             if self._restart_count > restart_thresh:
                 self._reboot_count += 1

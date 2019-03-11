@@ -118,6 +118,37 @@ def set_log_and_verbosity(log):
         log.setLevel(logging.INFO)
 
 
+# Patch to make exceptions in threads cause an exception.
+def install_thread_excepthook():
+    """
+    Workaround for sys.excepthook thread bug
+    (https://sourceforge.net/tracker/?func=detail&atid=105470&aid=1230540&group_id=5470).
+    Call once from __main__ before creating any threads.
+    If using psyco, call psycho.cannotcompile(threading.Thread.run)
+    since this replaces a new-style class method.
+    """
+    import sys
+    run_old = Thread.run
+
+    def run(*args, **kwargs):
+        try:
+            run_old(*args, **kwargs)
+        except (KeyboardInterrupt, SystemExit):
+            raise
+        except Exception:
+            exc_type, exc_value, exc_trace = sys.exc_info()
+            print(repr(sys.exc_info()))
+
+            # Handle Flask's broken pipe when a client prematurely ends
+            # the connection.
+            if str(exc_value) == '[Errno 32] Broken pipe':
+                pass
+            else:
+                log.critical('Unhandled patched exception (%s): "%s".',
+                             exc_type, exc_value)
+                sys.excepthook(exc_type, exc_value, exc_trace)
+    Thread.run = run
+
 def start_ocr_observer(args, db_helper):
     from ocr.fileObserver import checkScreenshot
     observer = Observer()
@@ -257,6 +288,7 @@ def load_mappings(db_wrapper):
 if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     set_log_and_verbosity(log)
+    install_thread_excepthook()
 
     webhook_helper = WebhookHelper(args)
 

@@ -501,11 +501,9 @@ class RmWrapper(DbWrapperBase):
 
         for (gym_id, team_id, latitude, longitude, name, description, url) in res:
             if url is not None:
-                if not self.application_args.justjson:
-                    filename = url_image_path + '_' + str(gym_id) + '_.jpg'
-                    log.debug('Downloading', filename)
-                    self.__download_img(str(url), str(filename))
-                gyminfo[gym_id] = self.__encode_hash_json(team_id, latitude, longitude, str(name).replace('"', '\\"').replace('\n', '\\n'), description, url)
+                filename = url_image_path + '_' + str(gym_id) + '_.jpg'
+                log.debug('Downloading', filename)
+                self.__download_img(str(url), str(filename))
 
         log.debug('Finished downloading gym images...')
 

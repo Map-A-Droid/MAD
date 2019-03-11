@@ -124,13 +124,16 @@ class MappingParser(object):
                     if mode == "raids_ocr" or mode == "raids_mitm":
                         coords = self.db_wrapper.gyms_from_db(geofence_helper)
                     elif mode == "mon_mitm":
-                        spawn_known = area.get("coords_spawns_known", False)
-                        if spawn_known:
-                            log.info("Reading known Spawnpoints from DB")
-                            coords = self.db_wrapper.get_detected_spawns(geofence_helper)
-                        else:
-                            log.info("Reading unknown Spawnpoints from DB")
-                            coords = self.db_wrapper.get_undetected_spawns(geofence_helper)
+                        if area["routecalc"] is not None:
+                            routefile = area["routecalc"]
+                            if not os.path.isfile(routefile + '.calc'):
+                                spawn_known = area.get("coords_spawns_known", False)
+                                if spawn_known:
+                                    log.info("Reading known Spawnpoints from DB")
+                                    coords = self.db_wrapper.get_detected_spawns(geofence_helper)
+                                else:
+                                    log.info("Reading unknown Spawnpoints from DB")
+                                    coords = self.db_wrapper.get_undetected_spawns(geofence_helper)
                     elif mode == "pokestops":
                         coords = self.db_wrapper.stops_from_db(geofence_helper)
                     else:

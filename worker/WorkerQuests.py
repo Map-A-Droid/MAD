@@ -218,8 +218,8 @@ class WorkerQuests(MITMBase):
 
     def clear_box(self, delayadd):
         log.info('Cleanup Box')
-        not_allow = ('Gift', 'Raid Pass', 'Camera', 'Lucky Egg', 'Geschenk', 'Raidpass', 'Kamera', 'Glücks-Ei',
-                     'Cadeau', 'Passe de Raid', 'Appareil photo')
+        not_allow = ('Gift', 'Raid Pass', 'Camera', 'Lucky Egg', 'Geschenk', 'Raid-Pass', 'Kamera', 'Glücks-Ei',
+                     'Cadeau', 'Passe de Raid', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
@@ -237,7 +237,7 @@ class WorkerQuests(MITMBase):
         to = 0
 
         while int(to) <= 7 and int(_pos) <= int(4):
-            self._takeScreenshot()
+            self._takeScreenshot(delayBefore=1)
 
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
@@ -313,11 +313,7 @@ class WorkerQuests(MITMBase):
                 if 'Mon' in data_received:
                     time.sleep(1)
                     log.info('Clicking MON')
-                    x, y = self._resocalc.get_leave_mon_coords(self)[0], self._resocalc.get_leave_mon_coords(self)[1]
-                    self._communicator.click(int(x), int(y))
                     time.sleep(.5)
-                    if not self._checkPogoButton():
-                        self._checkPogoClose()
                     self._turn_map(self._delay_add)
             if data_received is None:
                 data_received = '-'
