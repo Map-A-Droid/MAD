@@ -5,7 +5,7 @@ import time
 
 from utils.gamemechanicutil import calculate_mon_level
 from utils.gamemechanicutil import get_raid_boss_cp
-from utils.s2Helper import middle_of_cell
+from utils.s2Helper import S2Helper
 
 log = logging.getLogger(__name__)
 
@@ -79,12 +79,12 @@ class WebhookWorker:
 
             # required by PA but not provided by Monocle
             if weather.get("latitude", None) is None:
-                weather_payload["latitude"] = middle_of_cell(weather["s2_cell_id"])[0]
+                weather_payload["latitude"] = S2Helper.middle_of_cell(weather["s2_cell_id"])[0]
             else:
                 weather_payload["latitude"] = weather["latitude"]
 
             if weather.get("longitude", None) is None:
-                weather_payload["longitude"] = middle_of_cell(weather["s2_cell_id"])[1]
+                weather_payload["longitude"] = S2Helper.middle_of_cell(weather["s2_cell_id"])[1]
             else:
                 weather_payload["longitude"] = weather["longitude"]
 
