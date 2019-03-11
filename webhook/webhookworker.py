@@ -5,6 +5,7 @@ import time
 
 from utils.gamemechanicutil import calculate_mon_level
 from utils.gamemechanicutil import get_raid_boss_cp
+from utils.s2Helper import middle_of_cell
 
 log = logging.getLogger(__name__)
 
@@ -74,9 +75,18 @@ class WebhookWorker:
                 "alert_severity": weather["severity"],
                 "day": weather["world_time"],
                 "time_changed": weather["last_updated"],
-                "latitude": weather["latitude"],
-                "longitude": weather["longitude"],
             }
+
+            # required by PA but not provided by Monocle
+            if weather.get("latitude", None) is None:
+                weather_payload["latitude"] = middle_of_cell(weather["s2_cell_id"])[0]
+            else:
+                weather_payload["latitude"] = weather["latitude"]
+
+            if weather.get("longitude", None) is None:
+                weather_payload["longitude"] = middle_of_cell(weather["s2_cell_id"])[1]
+            else:
+                weather_payload["longitude"] = weather["longitude"]
 
             entire_payload = {"type": "weather", "message": weather_payload}
 
@@ -146,9 +156,14 @@ class WebhookWorker:
                 "disappear_time": mon["disappear_time"],
             }
 
-            if mon["cp_multiplier"] is not None:
+            # used by RM
+            if mon.get("cp_multiplier", None) is not None:
                 mon_payload["cp_multiplier"] = mon["cp_multiplier"]
                 mon_payload["pokemon_level"] = calculate_mon_level(mon["cp_multiplier"])
+
+            # used by Monocle
+            if mon.get("level", None) is not None:
+                mon_payload["pokemon_level"] = mon["level"]
 
             if mon["form"] is not None and mon["form"] > 0:
                 mon_payload["form"] = mon["form"]
@@ -171,7 +186,7 @@ class WebhookWorker:
             if mon["move_2"] is not None:
                 mon_payload["move_2"] = mon["move_2"]
 
-            if mon["height"] is not None:
+            if mon.get("height", None) is not None:
                 mon_payload["height"] = mon["height"]
 
             if mon["weight"] is not None:

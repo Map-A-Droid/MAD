@@ -6,7 +6,7 @@ import requests
 
 from db.dbWrapperBase import DbWrapperBase
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 
 from utils.collections import Location
 from utils.s2Helper import S2Helper
