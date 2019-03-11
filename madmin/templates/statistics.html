@@ -44,7 +44,7 @@ $(function(){
         xaxis: {
             mode: "time",
             timeformat: "%d.%m<br>%H:00:00",
-            minTickSize: [1, "hour"],
+            minTickSize: [3, "hour"],
             timezone: "browser"
         },
         series: {
@@ -133,7 +133,7 @@ $(function(){
             xaxis: {
                 mode: "time",
                 timeformat: "%d.%m<br>%H:%M",
-                tickSize: [15, "minute"],
+                tickSize: [1, "hour"],
                 timezone: "browser"
             },
             yaxes: [
@@ -160,7 +160,8 @@ $(function(){
                 axisLabelUseCanvas: true,
                 axisLabelFontSizePixels: 12,
                 axisLabelFontFamily: 'Verdana, Arial',
-                axisLabelPadding: 3
+                axisLabelPadding: 3,
+                min: 1
             }
             ],
 
@@ -170,7 +171,7 @@ $(function(){
             }
             }
             );
-            $("#flot_usage").UseTooltip();
+            $("#flot_usage").UseTooltipFull();
 
             var plot_quest = $.plot($("#flot_quest"), [
                 {
@@ -207,7 +208,7 @@ $(function(){
                         showTooltip(item.pageX,
                         item.pageY,
                         color,
-                        "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: "+ timeConverter(x) + "</strong>");
+                        "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: "+ timeConverter(x, 'hour') + "</strong>");
                     }
                 } else {
                     $("#tooltip").remove();
@@ -216,7 +217,30 @@ $(function(){
             });
         };
 
-        function timeConverter(timestamp){
+        $.fn.UseTooltipFull = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                        item.pageY,
+                        color,
+                        "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Time</strong>: "+ timeConverter(x, 'full') + "</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+        function timeConverter(timestamp, mode){
           var a = new Date(timestamp);
           var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
           var year = a.getFullYear();
@@ -226,7 +250,11 @@ $(function(){
           var hour_till = a.getHours() + 1;
           var min = a.getMinutes();
           var sec = a.getSeconds();
-          var time = hour + ' - ' + hour_till
+          if (mode == 'hour') {
+              var time = hour + ' - ' + hour_till
+          } else {
+              var time = hour + ':' + min + ':' + sec
+          }
           return time;
         }
 

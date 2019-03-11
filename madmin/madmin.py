@@ -1054,14 +1054,16 @@ def game_stats():
             insta['MEM-' + dat[4]] = {}
             insta['MEM-' + dat[4]]['axis'] = 2
             insta['MEM-' + dat[4]]["data"] = []
-        if 'CO-' + dat[4] not in insta:
-            insta['CO-' + dat[4]] = {}
-            insta['CO-' + dat[4]]['axis'] = 3
-            insta['CO-' + dat[4]]["data"] = []
+        if conf_args.stat_gc:
+            if 'CO-' + dat[4] not in insta:
+                insta['CO-' + dat[4]] = {}
+                insta['CO-' + dat[4]]['axis'] = 3
+                insta['CO-' + dat[4]]["data"] = []
 
         insta['CPU-' + dat[4]]['data'].append([dat[3] * 1000, dat[0]])
         insta['MEM-' + dat[4]]['data'].append([dat[3] * 1000, dat[1]])
-        insta['CO-' + dat[4]]['data'].append([dat[3] * 1000, dat[2]])
+        if conf_args.stat_gc:
+            insta['CO-' + dat[4]]['data'].append([dat[3] * 1000, dat[2]])
 
     for label in insta:
         usage.append({'label': label, 'data': insta[label]['data'], 'yaxis': insta[label]['axis'], 'idx': idx})
