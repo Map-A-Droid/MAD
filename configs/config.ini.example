@@ -70,6 +70,11 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #use_media_projection        # Use Mediaprojection for transfering images (OCR)
 #language:                   # Language for quests (default:en - others: de (more soon))
 
+# MADmin statistics
+######################
+#status-name:                # Setup name for this instance - if not set: PID of the process will be used
+#stat-gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
+
 # MADmin
 ######################
 #with_madmin                 # Start Madmin
