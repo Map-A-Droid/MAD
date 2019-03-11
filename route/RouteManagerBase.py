@@ -342,7 +342,7 @@ class RouteManagerBase(ABC):
 
             # continue as usual
             if self._current_index_of_route < len(self._route):
-                log.info("Moving on with location %s" % self._route[self._current_index_of_route])
+                log.info("%s: Moving on with location %s [%s/%s]" % (str(self.name), self._route[self._current_index_of_route], self._current_index_of_route+1, len(self._route)))
                 next_lat = self._route[self._current_index_of_route]['lat']
                 next_lng = self._route[self._current_index_of_route]['lng']
             self._current_index_of_route += 1

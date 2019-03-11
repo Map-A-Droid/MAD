@@ -99,7 +99,7 @@ def screens():
 @app.route('/', methods=['GET'])
 @auth_required
 def root():
-    return render_template('index.html')
+    return render_template('index.html', running_ocr=(conf_args.only_ocr))
 
 
 @app.route('/raids', methods=['GET'])
