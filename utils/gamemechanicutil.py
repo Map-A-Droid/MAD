@@ -31,7 +31,7 @@ def gen_despawn_timestamp(known_despawn):
         time.mktime(despawn_time.timetuple())
     ).strftime("%Y-%m-%d %H:%M:%S")
 
-    if known_despawn is None:
+    if known_despawn is False:
         return int(time.time()) + 3 * 60
 
     hrmi = known_despawn.split(":")
