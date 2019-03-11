@@ -158,11 +158,11 @@ class MonocleWrapper(DbWrapperBase):
             query = (
                 "UPDATE raids "
                 "SET level = %s, time_spawn = %s, time_battle = %s, time_end = FROM_UNIXTIME(%s), "
-                "pokemon_id = %s, last_updated = %s, "
-                "WHERE fort_id = %s AND time_end >= %s"
+                "pokemon_id = %s, last_updated = %s "
+                "WHERE fort_id = %s"
             )
             vals = (
-                lvl, int(float(capture_time)), start, end, pkm, int(time.time()), gym, int(time.time())
+                lvl, int(float(capture_time)), start, end, pkm, int(time.time()), gym
             )
             # send out a webhook - this case should only occur once...
             # wh_send = True
@@ -173,11 +173,11 @@ class MonocleWrapper(DbWrapperBase):
             log.info("Updating without end- or starttime - we should've seen the egg before")
             query = (
                 "UPDATE raids "
-                "SET level = %s, pokemon_id = %s, last_updated = %s, "
-                "WHERE gym_id = %s AND time_end >= %s"
+                "SET level = %s, pokemon_id = %s, last_updated = %s "
+                "WHERE fort_id = %s"
             )
             vals = (
-                lvl, pkm, int(time.time()), gym, int(time.time())
+                lvl, pkm, int(time.time()), gym
             )
 
             found_end_time, end_time = self.get_raid_endtime(gym, raid_no, unique_hash=unique_hash)
@@ -193,11 +193,11 @@ class MonocleWrapper(DbWrapperBase):
             query = (
                 "UPDATE raids "
                 "SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, "
-                "pokemon_id = %s, last_updated = %s, "
-                "WHERE gym_id = %s AND time_end >= %s"
+                "pokemon_id = %s, last_updated = %s "
+                "WHERE fort_id = %s"
             )
             vals = (
-                lvl, int(float(capture_time)), start, end, pkm, int(time.time()), gym, int(time.time())
+                lvl, int(float(capture_time)), start, end, pkm, int(time.time()), gym
             )
             # wh_send = True
             # wh_start = start
@@ -213,8 +213,8 @@ class MonocleWrapper(DbWrapperBase):
                 start = end - 45 * 60
                 query = (
                     "INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, "
-                    "pokemon_id "
-                    "VALUES(%s, %s, %s, %s, %s, %s)"
+                    "pokemon_id, last_updated) "
+                    "VALUES(%s, %s, %s, %s, %s, %s, %s)"
                 )
                 vals = (
                     gym, lvl, int(float(capture_time)), start, end, pkm, int(time.time())
@@ -229,8 +229,8 @@ class MonocleWrapper(DbWrapperBase):
                 log.info("Inserting everything")
                 query = (
                     "INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, "
-                    "pokemon_id "
-                    "VALUES (%s, %s, %s, %s, %s, %s)"
+                    "pokemon_id, last_updated) "
+                    "VALUES (%s, %s, %s, %s, %s, %s, %s)"
                 )
                 vals = (gym, lvl, int(float(capture_time)), start, end, pkm, int(time.time()))
 
@@ -407,7 +407,7 @@ class MonocleWrapper(DbWrapperBase):
             "+ sin(radians(%s)) "
             "* sin(radians(lat))"
             ")"
-            ") "
+            ") AS distance "
             "FROM forts "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
@@ -418,7 +418,7 @@ class MonocleWrapper(DbWrapperBase):
         data = []
         res = self.execute(query, vals)
         for (id, distance) in res:
-            data.append(id)
+            data.append([id, distance])
         return data
 
     def set_scanned_location(self, lat, lng, capture_time):
