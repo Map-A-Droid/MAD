@@ -25,7 +25,7 @@ def get_raid_boss_cp(mon_id):
     return cp
 
 
-def gen_desapwn_timestamp(known_despawn):
+def gen_despawn_timestamp(known_despawn):
     despawn_time = datetime.now() + timedelta(seconds=300)
     despawn_time = datetime.utcfromtimestamp(
         time.mktime(despawn_time.timetuple())
@@ -53,10 +53,7 @@ def gen_desapwn_timestamp(known_despawn):
                 seconds=now.second - known_despawn.second,
             )
         )
-    else:
-        return None
 
     despawn_uts = int(time.mktime(despawn.timetuple()))
-    despawn_time = datetime.utcfromtimestamp(despawn_uts).strftime("%Y-%m-%d %H:%M:%S")
 
-    return despawn_time
+    return despawn_uts

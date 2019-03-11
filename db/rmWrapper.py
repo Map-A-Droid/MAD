@@ -10,6 +10,7 @@ from datetime import datetime, timedelta, timezone
 
 from utils.collections import Location
 from utils.s2Helper import S2Helper
+from utils.gamemechanicutil import gen_despawn_timestamp
 
 log = logging.getLogger(__name__)
 
@@ -566,21 +567,12 @@ class RmWrapper(DbWrapperBase):
             return
 
         now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-        despawn_time = datetime.now() + timedelta(seconds=300)
-        despawn_time = datetime.utcfromtimestamp(time.mktime(despawn_time.timetuple())).strftime(
-            '%Y-%m-%d %H:%M:%S')
-        init = True
 
         spawnid = int(str(wild_pokemon['spawnpoint_id']), 16)
-        getdetspawntime = self.get_detected_endtime(str(spawnid))
-        if getdetspawntime:
-            despawn_time_unix = self._gen_endtime(getdetspawntime)
-        else:
-            despawn_time_unix = int(time.time()) + 3 * 60
 
-        if getdetspawntime:
-            despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime('%Y-%m-%d %H:%M:%S')
-            init = False
+        getdetspawntime = self.get_detected_endtime(str(spawnid))
+        despawn_time_unix = gen_despawn_timestamp(getdetspawntime)
+        despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime('%Y-%m-%d %H:%M:%S')
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
@@ -590,7 +582,7 @@ class RmWrapper(DbWrapperBase):
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
-        if init:
+        if getdetspawntime is None:
             log.info("{0}: updating IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
                 str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
             )
@@ -654,23 +646,6 @@ class RmWrapper(DbWrapperBase):
         log.debug("Placing query to update mon")
         self.execute(query, vals, commit=True)
         log.debug("Done updating mon in DB")
-        # TODO: check above vs this...
-        despawn_time = datetime.now() + timedelta(seconds=300)
-        despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
-        if getdetspawntime:
-            log.debug("Retrieving endtime")
-            despawn_time = self._gen_endtime(getdetspawntime)
-            despawn_time_unix = despawn_time
-
-        # calculating level
-        if pokemon_data.get("cp_multiplier") < 0.734:
-            pokemon_level = (58.35178527 * pokemon_data.get("cp_multiplier") * pokemon_data.get("cp_multiplier") - 2.838007664 * pokemon_data.get("cp_multiplier") + 0.8539209906)
-        else:
-            pokemon_level = 171.0112688 * pokemon_data.get("cp_multiplier") - 95.20425243
-
-            pokemon_level = round(pokemon_level) * 2 / 2
-
-        log.debug("Done submitting encounter data to DB")
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
         log.debug("{RmWrapper::submit_mons_map_proto} called with data received from %s" % str(origin))
@@ -700,22 +675,13 @@ class RmWrapper(DbWrapperBase):
                     encounter_id = encounter_id + 2**64
 
                 now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
-                despawn_time = datetime.now() + timedelta(seconds=300)
-                despawn_time = datetime.utcfromtimestamp(time.mktime(despawn_time.timetuple())).strftime(
-                    '%Y-%m-%d %H:%M:%S')
-                init = True
 
+                # get known spawn end time and feed into despawn time calculation
                 getdetspawntime = self.get_detected_endtime(str(spawnid))
-                if getdetspawntime:
-                    despawn_time_unix = self._gen_endtime(getdetspawntime)
-                else:
-                    despawn_time_unix = int(time.time()) + 3 * 60
+                despawn_time_unix = gen_despawn_timestamp(getdetspawntime)
+                despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime('%Y-%m-%d %H:%M:%S')
 
-                if getdetspawntime:
-                    despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime('%Y-%m-%d %H:%M:%S')
-                    init = False
-
-                if init:
+                if getdetspawntime is None:
                     log.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (init) ({5})"
                              .format(str(origin), mon_id, lat, lon, despawn_time, spawnid))
                 else:
