@@ -11,13 +11,31 @@
     td {
         font-size: x-small;
     }
-    div.container {
-        width: 80%;
-    }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
-    var dataTable;
+    var dataTable,
+        detailRows = [];
+
+    $('#show-data').on('click', 'td', function () {
+        console.log("clicked");
+        var tr = $(this).closest('tr');
+        var row = dataTable.row(tr);
+        var idx = $.inArray(tr.attr('id'), detailRows);
+        if (row.child.isShown()) {
+            // Add to the 'open' array
+            if (idx === -1) {
+                detailRows.push(tr.attr('id'));
+                console.log("add");
+            }
+        } else {
+            // Remove from the 'open' array
+            detailRows.splice(idx, 1);
+            console.log("remove");
+        }
+    });
+
+
     function setGrid(tableGridHtmlId, gridData) {
         if ($.fn.dataTable.isDataTable(tableGridHtmlId) ) {
             dataTable.destroy();
@@ -44,6 +62,11 @@
             ],
             "columnDefs": [
                 {
+                    "className": 'control',
+                    "orderable": false,
+                    "targets":   0
+                },
+                {
                     "targets": [3],
                     "visible": false
                 },
@@ -67,7 +90,16 @@
             ],
             "order": [[5, "asc"]],
             "responsive": {{ responsive }},
-            "autoWidth": true
+            "autoWidth": true,
+            "stateSave": true
+        });
+
+        dataTable.on('draw', function () {
+            console.log("draw");
+            $.each(detailRows, function (i, id) {
+                console.log("trigger click");
+                $('#' + id + ' td:before').trigger('click');
+            });
         });
 	}
 
