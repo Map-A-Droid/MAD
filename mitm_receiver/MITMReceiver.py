@@ -75,7 +75,8 @@ class MITMReceiver(object):
         self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            t = threading.Thread(target=self.received_data_worker)
+            t = threading.Thread(name='MITMReceiver-%s' % str(i),
+                                 target=self.received_data_worker)
             t.start()
             self.worker_threads.append(t)
 
