@@ -7,7 +7,6 @@ import secrets
 
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
-# from .util import *
 
 log = logging.getLogger(__name__)
 
@@ -127,6 +126,15 @@ def merge_results(arr_original, arr_first, arr_second):
     else:
         return arr_first
 
+def get_distmat(p):
+    num_location = p.shape[0]
+    # 1 degree of lat/lon ~ 111km = 111000m in Taiwan
+    p *= 111000
+    distmat = np.zeros((num_location, num_location))
+    for i in range(num_location):
+        for j in range(i, num_location):
+            distmat[i][j] = distmat[j][i] = np.linalg.norm(p[i] - p[j])
+    return distmat
 
 def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=1, init_temp=100, halt=120,
                  markov_coefficient=10):

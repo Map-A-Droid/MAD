@@ -31,15 +31,7 @@ def sum_distmat(p, distmat):
     dist += distmat[p[0]][p[num_location-1]]
     return dist
 
-def get_distmat(p):
-    num_location = p.shape[0]
-    # 1 degree of lat/lon ~ 111km = 111000m in Taiwan
-    p *= 111000
-    distmat = np.zeros((num_location, num_location))
-    for i in range(num_location):
-        for j in range(i, num_location):
-            distmat[i][j] = distmat[j][i] = np.linalg.norm(p[i] - p[j])
-    return distmat
+
 
 def swap(sol_new):
     while True:
