@@ -49,6 +49,7 @@ class WebhookWorker:
                 endIndex = webhook.rindex("]")
                 endIndex += 1
                 subTypes = webhook[:endIndex]
+                url = url[endIndex:]
 
                 for payloadData in payload:
                     if payloadData["type"] in subTypes:
