@@ -778,7 +778,7 @@ class MonocleWrapper(DbWrapperBase):
         query_fort_sightings = (
             "INSERT IGNORE INTO fort_sightings (fort_id, last_modified, team, guard_pokemon_id, "
             "slots_available, is_in_battle) "
-            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s, %s)"
+            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s)"
         )
 
         for cell in cells:
@@ -1163,6 +1163,6 @@ class MonocleWrapper(DbWrapperBase):
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        now = datetime.utcfromtimestamp(time.time())
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
