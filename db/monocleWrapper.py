@@ -408,6 +408,7 @@ class MonocleWrapper(DbWrapperBase):
             "* sin(radians(lat))"
             ")"
             ") "
+            "AS distance, fort.lat, fort.lon, fort.name, fort.url "
             "FROM forts "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
