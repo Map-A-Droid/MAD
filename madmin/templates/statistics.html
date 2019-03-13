@@ -16,7 +16,12 @@ $(function(){
         var options_dots = {
         xaxis: {
             mode: "time",
+            {% if time == "12" %}
+            timeformat: "%d.%m<br>%I:00 %p - ",
+            {% else %}
             timeformat: "%d.%m<br>%H:00 - ",
+            {% endif %}
+
             minTickSize: [1, "hour"],
             timezone: "browser"
         },
@@ -43,7 +48,12 @@ $(function(){
         var options_bars = {
         xaxis: {
             mode: "time",
+            {% if time == "12" %}
+            timeformat: "%d.%m<br>%I:00:00 %p",
+            {% else %}
             timeformat: "%d.%m<br>%H:00:00",
+            {% endif %}
+
             minTickSize: [3, "hour"],
             timezone: "browser"
         },
@@ -132,8 +142,12 @@ $(function(){
             },
             xaxis: {
                 mode: "time",
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:%M %p",
+                {% else %}
                 timeformat: "%d.%m<br>%H:%M",
-                tickSize: [1, "hour"],
+                {% endif %}
+                tickSize: [3, "hour"],
                 timezone: "browser"
             },
             yaxes: [
@@ -249,7 +263,20 @@ $(function(){
           var hour = a.getHours();
           var hour_till = a.getHours() + 1;
           var min = a.getMinutes();
+          min = min < 10 ? '0'+min : min;
           var sec = a.getSeconds();
+          sec = sec < 10 ? '0'+sec : sec;
+
+          {% if time == "12" %}
+          var ampm = hour >= 12 ? 'pm' : 'am';
+          hour = hour % 12;
+          hour = hour ? hour : 12;
+          hour_till = hour_till % 12;
+          hour_till = hour_till ? hour_till : 12;
+          hour_till + ' ' + ampm;
+          sec = sec + ' ' + ampm;
+          {% endif %}
+
           if (mode == 'hour') {
               var time = hour + ' - ' + hour_till
           } else {

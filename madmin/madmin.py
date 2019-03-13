@@ -1012,7 +1012,7 @@ def statistics():
         minutes_spawn = 120
 
     return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
-                           minutes_usage=minutes_usage)
+                           minutes_usage=minutes_usage, time=conf_args.madmin_time)
 
 @app.route('/get_status', methods=['GET'])
 @auth_required

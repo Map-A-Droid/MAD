@@ -274,7 +274,7 @@ def get_system_infos(db_wrapper):
         zero = datetime.datetime.utcnow()
         unixnow = calendar.timegm(zero.utctimetuple())
         db_wrapper.insert_usage(args.status_name, cpuUse, memoryUse, collected, unixnow)
-        time.sleep(args.stat_interval)
+        time.sleep(args.statistic_interval)
 
 
 def load_mappings(db_wrapper):
