@@ -51,7 +51,7 @@ class WebhookWorker:
                 subTypes = webhook[:endIndex]
 
                 for payloadData in payload:
-                    if payloadData["type"] in subTypes
+                    if payloadData["type"] in subTypes:
                         payloadToSend.append(payloadData)
             else
                 payloadToSend = payload
