@@ -620,7 +620,7 @@ class RmWrapper(DbWrapperBase):
 
         vals = (
             encounter_id,
-            wild_pokemon.get("spawnpoint_id"),
+            spawnid,
             pokemon_data.get('id'),
             latitude, longitude, despawn_time,
             pokemon_data.get("individual_attack"),

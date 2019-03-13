@@ -7,7 +7,7 @@ import secrets
 
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
-from .util import *
+# from .util import *
 
 log = logging.getLogger(__name__)
 

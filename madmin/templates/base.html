@@ -47,6 +47,7 @@
                   <li class="nav-item">
                     <a href="/status" class="nav-link">Status</a>
                   </li>
+                  {% if running_ocr %}
                   <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         OCR Settings
@@ -58,6 +59,7 @@
                       <a href="/screens" class="dropdown-item">Processed Screens</a>
                     </div>
                   </li>
+                  {% endif %}
               </ul>
           </div>
         </div>

@@ -2,7 +2,7 @@
 # Uncomment a line when you want to change its default value (Remove # at the beginning)
 # Please ensure to leave a space after the colon if a value is needed ("example-setting" "example-setting-with: value")
 # When your configuration is done, rename this file by removing the ".example" extension
-# A different config-files can be included directly in processes by "--config-file" or "-cf" and path
+# A different config-files can be included directly in processes by "--config" or "-cf" and path
 # Value without # are needed for this script
 
 # MySql Settings
