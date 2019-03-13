@@ -36,6 +36,8 @@ class WebhookWorker:
             log.info("Payload empty. Skip sending to webhook.")
             return
 
+        payloadToSend = []
+
         # get list of urls
         webhooks = self._args.webhook_url.replace(" ", "").split(",")
 
@@ -43,12 +45,24 @@ class WebhookWorker:
             # url cleanup
             url = webhook.strip()
 
+            if url.startswith("["):
+                endIndex = webhook.rindex("]")
+                endIndex += 1
+                subTypes = webhook[:endIndex]
+
+                for payloadData in payload:
+                    if payloadData["type"] in subTypes
+                        payloadToSend.append(payloadData)
+            else
+                payloadToSend = payload
+
+
             log.debug("Sending to webhook %s", url)
-            log.debug("Payload: %s" % str(payload))
+            log.debug("Payload: %s" % str(payloadToSend))
             try:
                 response = requests.post(
                     url,
-                    data=json.dumps(payload),
+                    data=json.dumps(payloadToSend),
                     headers={"Content-Type": "application/json"},
                     timeout=5,
                 )
@@ -60,7 +74,7 @@ class WebhookWorker:
                 else:
                     log.info(
                         "Successfully sent payload to webhook. Stats: %s",
-                        json.dumps(self.__payload_type_count(payload)),
+                        json.dumps(self.__payload_type_count(payloadToSend)),
                     )
             except Exception as e:
                 log.warning("Exception occured while sending webhook: %s" % str(e))
