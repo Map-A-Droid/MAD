@@ -531,7 +531,6 @@ class WorkerBase(ABC):
         if not pogoTopmost:
             return False
 
-        self._checkPogoFreeze()
         if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
             if again:
                 log.error("_check_pogo_main_screen: failed getting a screenshot again")

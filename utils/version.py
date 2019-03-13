@@ -5,7 +5,7 @@ import sys
 
 log = logging.getLogger(__name__)
 
-current_version = 6
+current_version = 7
 
 
 class MADVersion(object):
@@ -18,8 +18,8 @@ class MADVersion(object):
         try:
             with open('version.json') as f:
                 versio = json.load(f)
-            self._version = versio['version']
-            if self._version< current_version:
+            self._version = int(versio['version'])
+            if int(self._version) < int(current_version):
                 log.error('New Update found')
                 self.start_update()
         except FileNotFoundError as e:
@@ -152,61 +152,81 @@ class MADVersion(object):
                 except Exception as e:
                     log.info("Unexpected error: %s" % e)
 
-            if self._version < 4:
-                alter_query = (
-                    "ALTER TABLE trs_status "
-                    "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
-                )
-                column_exist = self._dbwrapper.check_column_exists('trs_status', 'lastPogoReboot')
-                if column_exist == 0:
-                    try:
-                        self._dbwrapper.execute(alter_query, commit=True)
-                    except Exception as e:
-                        log.info("Unexpected error: %s" % e)
-
-                alter_query = (
-                    "ALTER TABLE trs_status "
-                    "ADD globalrebootcount int(11) NULL DEFAULT '0'"
-                )
-                column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrebootcount')
-                if column_exist == 0:
-                    try:
-                        self._dbwrapper.execute(alter_query, commit=True)
-                    except Exception as e:
-                        log.info("Unexpected error: %s" % e)
-
-                alter_query = (
-                    "ALTER TABLE trs_status "
-                    "ADD globalrestartcount int(11) NULL DEFAULT '0'"
-                )
-                column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrestartcount')
-                if column_exist == 0:
-                    try:
-                        self._dbwrapper.execute(alter_query, commit=True)
-                    except Exception as e:
-                        log.info("Unexpected error: %s" % e)
-
-            if self._version < 5:
-                alter_query = (
-                    "ALTER TABLE trs_status CHANGE lastPogoRestart "
-                    "lastPogoRestart VARCHAR(50) NULL DEFAULT NULL"
-                )
+        if self._version < 7:
+            alter_query = (
+                "ALTER TABLE trs_status "
+                "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
+            )
+            column_exist = self._dbwrapper.check_column_exists('trs_status', 'lastPogoReboot')
+            if column_exist == 0:
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
                     log.info("Unexpected error: %s" % e)
 
-            if self._version < 6:
-                if self._application_args.db_method == "monocle":
-                    alter_query = (
-                        "alter table sightings add column costume smallint(6) default 0"
-                    )
-                    column_exist = self._dbwrapper.check_column_exists('sightings', 'costume')
-                    if column_exist == 0:
-                        try:
-                            self._dbwrapper.execute(alter_query, commit=True)
-                        except Exception as e:
-                            log.info("Unexpected error: %s" % e)
+            alter_query = (
+                "ALTER TABLE trs_status "
+                "ADD globalrebootcount int(11) NULL DEFAULT '0'"
+            )
+            column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrebootcount')
+            if column_exist == 0:
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+            alter_query = (
+                "ALTER TABLE trs_status "
+                "ADD globalrestartcount int(11) NULL DEFAULT '0'"
+            )
+            column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrestartcount')
+            if column_exist == 0:
+                try:
+                    self._dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    log.info("Unexpected error: %s" % e)
+
+            alter_query = (
+                "ALTER TABLE trs_status CHANGE lastPogoRestart "
+                "lastPogoRestart VARCHAR(50) NULL DEFAULT NULL"
+            )
+            try:
+                self._dbwrapper.execute(alter_query, commit=True)
+            except Exception as e:
+                log.info("Unexpected error: %s" % e)
+
+            if self._application_args.db_method == "monocle":
+                alter_query = (
+                    "alter table sightings add column costume smallint(6) default 0"
+                )
+                column_exist = self._dbwrapper.check_column_exists('sightings', 'costume')
+                if column_exist == 0:
+                    try:
+                        self._dbwrapper.execute(alter_query, commit=True)
+                    except Exception as e:
+                        log.info("Unexpected error: %s" % e)
+
+            alter_query = (
+                "ALTER TABLE trs_status "
+                "CHANGE currentPos "
+                "currentPos VARCHAR(50) NULL DEFAULT NULL"
+            )
+            column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrestartcount')
+            try:
+                self._dbwrapper.execute(alter_query, commit=True)
+            except Exception as e:
+                log.info("Unexpected error: %s" % e)
+
+            alter_query = (
+                "ALTER TABLE trs_status "
+                "CHANGE lastPos "
+                "lastPos VARCHAR(50) NULL DEFAULT NULL"
+            )
+
+            try:
+                self._dbwrapper.execute(alter_query, commit=True)
+            except Exception as e:
+                log.info("Unexpected error: %s" % e)
 
         self.set_version(current_version)
 
