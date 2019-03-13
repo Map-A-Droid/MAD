@@ -208,38 +208,17 @@ class MADVersion(object):
 
             alter_query = (
                 "ALTER TABLE trs_status "
-                "CHANGE currentPos "
-                "currentPos VARCHAR(50) NULL DEFAULT NULL"
-            )
-            try:
-                self._dbwrapper.execute(alter_query, commit=True)
-            except Exception as e:
-                log.info("Unexpected error: %s" % e)
-
-            alter_query = (
-                "ALTER TABLE trs_status "
-                "CHANGE lastPos "
-                "lastPos VARCHAR(50) NULL DEFAULT NULL"
-            )
-            try:
-                self._dbwrapper.execute(alter_query, commit=True)
-            except Exception as e:
-                log.info("Unexpected error: %s" % e)
-
-            alter_query = (
-                "ALTER TABLE trs_status "
-                "CHANGE routePos "
-                "routePos INT(11) NULL DEFAULT NULL"
-            )
-            try:
-                self._dbwrapper.execute(alter_query, commit=True)
-            except Exception as e:
-                log.info("Unexpected error: %s" % e)
-
-            alter_query = (
-                "ALTER TABLE trs_status "
-                "CHANGE routeMax "
-                "routeMax INT(11) NULL DEFAULT NULL"
+                "CHANGE currentPos currentPos VARCHAR(50) NULL DEFAULT NULL, "
+                "CHANGE lastPos lastPos VARCHAR(50) NULL DEFAULT NULL, "
+                "CHANGE routePos routePos INT(11) NULL DEFAULT NULL, "
+                "CHANGE routeMax routeMax INT(11) NULL DEFAULT NULL, "
+                "CHANGE rebootingOption rebootingOption TEXT NULL, "
+                "CHANGE rebootCounter rebootCounter INT(11) NULL DEFAULT NULL, "
+                "CHANGE routemanager routemanager VARCHAR(255) NULL DEFAULT NULL, "
+                "CHANGE lastProtoDateTime lastProtoDateTime VARCHAR(50), "
+                "CHANGE lastPogoRestart lastPogoRestart VARCHAR(50), "
+                "CHANGE init init TEXT NULL, "
+                "CHANGE restartCounter restartCounter TEXT NULL"
             )
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
