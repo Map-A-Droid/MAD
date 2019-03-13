@@ -211,7 +211,6 @@ class MADVersion(object):
                 "CHANGE currentPos "
                 "currentPos VARCHAR(50) NULL DEFAULT NULL"
             )
-            column_exist = self._dbwrapper.check_column_exists('trs_status', 'globalrestartcount')
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
@@ -222,7 +221,26 @@ class MADVersion(object):
                 "CHANGE lastPos "
                 "lastPos VARCHAR(50) NULL DEFAULT NULL"
             )
+            try:
+                self._dbwrapper.execute(alter_query, commit=True)
+            except Exception as e:
+                log.info("Unexpected error: %s" % e)
 
+            alter_query = (
+                "ALTER TABLE trs_status "
+                "CHANGE routePos "
+                "routePos INT(11) NULL DEFAULT NULL"
+            )
+            try:
+                self._dbwrapper.execute(alter_query, commit=True)
+            except Exception as e:
+                log.info("Unexpected error: %s" % e)
+
+            alter_query = (
+                "ALTER TABLE trs_status "
+                "CHANGE routeMax "
+                "routeMax INT(11) NULL DEFAULT NULL"
+            )
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
