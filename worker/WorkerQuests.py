@@ -235,15 +235,18 @@ class WorkerQuests(MITMBase):
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
         to = 0
+        delete_allowed = True
 
         while int(to) <= 7 and int(_pos) <= int(4):
-            self._takeScreenshot(delayBefore=1)
+            if delete_allowed:
+                self._takeScreenshot(delayBefore=1)
 
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)
             log.info('Found item text: %s' % str(item_text))
             if item_text in not_allow:
+                delete_allowed = False
                 log.info('Dont delete that!!!')
                 y += self._resocalc.get_next_item_coord(self)
                 text_y1 += self._resocalc.get_next_item_coord(self)
@@ -251,6 +254,7 @@ class WorkerQuests(MITMBase):
                 _pos += 1
             else:
 
+                delete_allowed = True
                 self._communicator.click(int(x), int(y))
                 time.sleep(1 + int(delayadd))
 

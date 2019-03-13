@@ -408,6 +408,7 @@ class MonocleWrapper(DbWrapperBase):
             "* sin(radians(lat))"
             ")"
             ") "
+            "AS distance, forts.lat, forts.lon, forts.name, forts.url "
             "FROM forts "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
@@ -767,7 +768,6 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
         now = int(time.time())
-
         vals_forts = []
         vals_fort_sightings = []
 
@@ -780,7 +780,7 @@ class MonocleWrapper(DbWrapperBase):
         query_fort_sightings = (
             "INSERT INTO fort_sightings (fort_id, last_modified, team, guard_pokemon_id, "
             "slots_available, is_in_battle, updated) "
-            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s, %s)"
+            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE  last_modified=VALUES(last_modified), team=VALUES(team),"
             "guard_pokemon_id=VALUES(guard_pokemon_id),slots_available=VALUES(slots_available),"
             "is_in_battle=VALUES(is_in_battle), updated=VALUES(updated)"
@@ -1012,7 +1012,6 @@ class MonocleWrapper(DbWrapperBase):
             gym_json['sponsor'] = sponsor
         else:
             gym_json['sponsor'] = 0
-        log.debug(gym_json)
 
         return gym_json
 
@@ -1169,7 +1168,7 @@ class MonocleWrapper(DbWrapperBase):
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        now = int(time.time())
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
 
