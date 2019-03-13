@@ -51,11 +51,11 @@ class WebhookWorker:
                 subTypes = webhook[:endIndex]
                 url = url[endIndex:]
 
-                log.debug("webhook types: %s", % str(subTypes))
+                log.debug("webhook types: %s", subTypes)
 
                 for payloadData in payload:
                     if payloadData["type"] in subTypes:
-                        log.debug("Payload to add: %s", % str(payloadData))
+                        log.debug("Payload to add: %s" % str(payloadData))
                         payloadToSend.append(payloadData)
             else:
                 payloadToSend = payload
