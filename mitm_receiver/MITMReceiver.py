@@ -168,4 +168,7 @@ class MITMReceiver(object):
             elif type == 104:
                 self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
             elif type == 4:
-                self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
+                if origin in self.__mitm_mapper._playerstats:
+                    self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
+                else:
+                    log.warning("Not updating playerstats of %s since origin is unknown" % str(origin))
