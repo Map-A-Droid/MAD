@@ -422,10 +422,11 @@ if __name__ == "__main__":
         t_flask.daemon = True
         t_flask.start()
 
-    t_system = Thread(name='system',
-                      target=get_system_infos, args=(db_wrapper,))
-    t_system.daemon = False
-    t_system.start()
+    if args.statistic:
+        t_usage = Thread(name='system',
+                          target=get_system_infos, args=(db_wrapper,))
+        t_usage.daemon = False
+        t_usage.start()
         
     log.error('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
