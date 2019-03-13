@@ -53,7 +53,7 @@ class WebhookWorker:
                 for payloadData in payload:
                     if payloadData["type"] in subTypes:
                         payloadToSend.append(payloadData)
-            else
+            else:
                 payloadToSend = payload
 
 
