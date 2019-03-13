@@ -767,6 +767,7 @@ class MonocleWrapper(DbWrapperBase):
         if cells is None:
             return False
 
+        now = int(time.time())
         vals_forts = []
         vals_fort_sightings = []
 
@@ -778,11 +779,11 @@ class MonocleWrapper(DbWrapperBase):
 
         query_fort_sightings = (
             "INSERT INTO fort_sightings (fort_id, last_modified, team, guard_pokemon_id, "
-            "slots_available, is_in_battle) "
+            "slots_available, is_in_battle, updated) "
             "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE  last_modified=VALUES(last_modified), team=VALUES(team),"
             "guard_pokemon_id=VALUES(guard_pokemon_id),slots_available=VALUES(slots_available),"
-            "is_in_battle=VALUES(is_in_battle)"
+            "is_in_battle=VALUES(is_in_battle), updated=VALUES(updated)"
         )
 
         for cell in cells:
@@ -819,7 +820,7 @@ class MonocleWrapper(DbWrapperBase):
 
                     vals_fort_sightings.append(
                         (
-                               gym_id, last_modified, team, guardmon, slots, is_in_battle
+                               gym_id, last_modified, team, guardmon, slots, is_in_battle, now
                         )
                     )
 
