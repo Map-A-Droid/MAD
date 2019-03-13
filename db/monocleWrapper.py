@@ -1163,6 +1163,6 @@ class MonocleWrapper(DbWrapperBase):
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
-        now = datetime.utcfromtimestamp(time.time())
+        now = int(time.time())
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
