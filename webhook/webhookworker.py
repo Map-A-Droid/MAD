@@ -36,12 +36,12 @@ class WebhookWorker:
             log.info("Payload empty. Skip sending to webhook.")
             return
 
-        payloadToSend = []
 
         # get list of urls
         webhooks = self._args.webhook_url.replace(" ", "").split(",")
 
         for webhook in webhooks:
+            payloadToSend = []
             # url cleanup
             url = webhook.strip()
 
@@ -60,6 +60,9 @@ class WebhookWorker:
             else:
                 payloadToSend = payload
 
+            if len(payloadToSend) == 0:
+                log.debug("Payload is empty")
+                continue
 
             log.debug("Sending to webhook %s", url)
             log.debug("Payload: %s" % str(payloadToSend))
