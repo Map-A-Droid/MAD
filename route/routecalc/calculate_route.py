@@ -4,11 +4,11 @@ import math
 import multiprocessing
 import os
 import secrets
+import numpy as np
 
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
-# from .util import *
-
+from .util import *
 log = logging.getLogger(__name__)
 
 
@@ -126,7 +126,6 @@ def merge_results(arr_original, arr_first, arr_second):
         return merged_arr
     else:
         return arr_first
-
 
 def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=1, init_temp=100, halt=120,
                  markov_coefficient=10):
