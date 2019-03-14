@@ -151,8 +151,9 @@ class WorkerQuests(MITMBase):
             self._restart_pogo()
             
         log.info('Open Stop')
+        self._stop_process_time = time.time()
         data_received = self._open_pokestop()
-        if data_received == 'Stop' : self._handle_stop(data_received)
+        if data_received == 'Stop' : self._handle_stop()
         log.debug("Releasing lock")
         self._work_mutex.release()
 
@@ -300,7 +301,6 @@ class WorkerQuests(MITMBase):
         to = 0
         data_received = '-'
         while 'Stop' not in data_received and int(to) < 3:
-            self._stop_process_time = time.time()
             self._open_gym(self._delay_add)
             data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=25)
             if data_received is not None:
@@ -325,11 +325,12 @@ class WorkerQuests(MITMBase):
             to += 1
         return data_received
 
-    def _handle_stop(self, data_received):
+    def _handle_stop(self):
         to = 0
+        data_received = '-'
         while not 'Quest' in data_received and int(to) < 3:
             log.info('Spin Stop')
-            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=20)
+            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=40)
             if data_received is not None:
 
                 if 'Box' in data_received:
