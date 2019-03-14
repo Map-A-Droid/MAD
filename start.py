@@ -5,7 +5,7 @@ import os
 import sys
 import time
 import psutil
-from threading import Thread
+from threading import Thread, active_count
 import datetime
 import calendar
 import gc
@@ -251,7 +251,7 @@ def get_system_infos(db_wrapper):
         n = gc.collect()
         log.info('Unreachable objects: %s' % str(n))
         log.info('Remaining Garbage: %s ' % str(gc.garbage))
-        log.info('Clearing referrers:')
+        log.info('Running Threads: %s' % str(active_count()))
         for obj in gc.garbage:
             for ref in find_referring_graphs(obj):
                 ref.set_next(None)
@@ -423,10 +423,13 @@ if __name__ == "__main__":
         t_flask.start()
 
     if args.statistic:
-        t_usage = Thread(name='system',
-                          target=get_system_infos, args=(db_wrapper,))
-        t_usage.daemon = False
-        t_usage.start()
+        if args.only_ocr or args.only_scan:
+            t_usage = Thread(name='system',
+                             target=get_system_infos, args=(db_wrapper,))
+            t_usage.daemon = False
+            t_usage.start()
+        else:
+            log.warning("Dont collect system usage just for MADmin")
         
     log.error('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
