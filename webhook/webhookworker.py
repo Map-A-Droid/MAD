@@ -12,16 +12,22 @@ log = logging.getLogger(__name__)
 
 class WebhookWorker:
     # currently active ex raid mon id
-    EXRAID_MON_ID = 386
+    __EXRAID_MON_ID = 386
+    __IV_MON = []
 
-    def __init__(self, args, db_wrapper):
-        self._worker_interval_sec = 10
-        self._args = args
-        self._db_wrapper = db_wrapper
-        self._last_check = int(time.time())
+    def __init__(self, args, db_wrapper, routemanagers):
+        self.__worker_interval_sec = 10
+        self.__args = args
+        self.__db_wrapper = db_wrapper
+        self.__last_check = int(time.time())
 
-        if self._args.webhook_start_time != 0:
-            self._last_check = int(self._args.webhook_start_time)
+        self.__build_ivmon_list(routemanagers)
+
+        if self.__args.webhook_start_time != 0:
+            self.__last_check = int(self.__args.webhook_start_time)
+
+    def update_settings(self, routemanagers):
+        self.__build_ivmon_list(routemanagers)
 
     def __payload_type_count(self, payload):
         count = {}
@@ -36,9 +42,8 @@ class WebhookWorker:
             log.info("Payload empty. Skip sending to webhook.")
             return
 
-
         # get list of urls
-        webhooks = self._args.webhook_url.replace(" ", "").split(",")
+        webhooks = self.__args.webhook_url.replace(" ", "").split(",")
 
         for webhook in webhooks:
             payloadToSend = []
@@ -100,17 +105,20 @@ class WebhookWorker:
 
             # required by PA but not provided by Monocle
             if weather.get("latitude", None) is None:
-                weather_payload["latitude"] = S2Helper.middle_of_cell(weather["s2_cell_id"])[0]
+                weather_payload["latitude"] = S2Helper.middle_of_cell(
+                    weather["s2_cell_id"]
+                )[0]
             else:
                 weather_payload["latitude"] = weather["latitude"]
 
             if weather.get("longitude", None) is None:
-                weather_payload["longitude"] = S2Helper.middle_of_cell(weather["s2_cell_id"])[1]
+                weather_payload["longitude"] = S2Helper.middle_of_cell(
+                    weather["s2_cell_id"]
+                )[1]
             else:
                 weather_payload["longitude"] = weather["longitude"]
 
             entire_payload = {"type": "weather", "message": weather_payload}
-
             ret.append(entire_payload)
 
         return ret
@@ -121,9 +129,9 @@ class WebhookWorker:
         for raid in raid_data:
             # skip ex raid mon if disabled
             if (
-                not self._args.webhook_send_exraids
+                not self.__args.webhook_send_exraids
                 and raid.get("pokemon_id") is not None
-                and raid.get("pokemon_id") == self.EXRAID_MON_ID
+                and raid.get("pokemon_id") == self.__EXRAID_MON_ID
             ):
                 continue
 
@@ -168,6 +176,14 @@ class WebhookWorker:
         ret = []
 
         for mon in mon_data:
+            if mon["pokemon_id"] in self.__IV_MON and (
+                mon["individual_attack"] is None
+                and mon["individual_defense"] is None
+                and mon["individual_stamina"] is None
+            ):
+                # skipping this mon since IV has not been scanned yet
+                continue
+
             mon_payload = {
                 "encounter_id": mon["encounter_id"],
                 "pokemon_id": mon["pokemon_id"],
@@ -222,10 +238,7 @@ class WebhookWorker:
             ):
                 mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
 
-            # create finale message
             entire_payload = {"type": "pokemon", "message": mon_payload}
-
-            # add to payload
             ret.append(entire_payload)
 
         return ret
@@ -249,13 +262,22 @@ class WebhookWorker:
             if gym["url"] is not None:
                 gym_payload["url"] = gym["url"]
 
-            # create final message
             entire_payload = {"type": "gym", "message": gym_payload}
-
-            # add to payload
             ret.append(entire_payload)
 
         return ret
+
+    def __build_ivmon_list(self, routemanagers):
+        self.__IV_MON = []
+
+        for routemanager in routemanagers:
+            manager = routemanagers[routemanager].get("routemanager", None)
+
+            if manager is not None:
+                ivlist = manager.settings.get("mon_ids_iv", [])
+
+                # TODO check if area/routemanager is actually active before adding the IDs
+                self.__IV_MON = self.__IV_MON + list(set(ivlist) - set(self.__IV_MON))
 
     def run_worker(self):
         log.info("Starting webhook worker thread")
@@ -266,27 +288,27 @@ class WebhookWorker:
 
                 # raids
                 raids = self.__prepare_raid_data(
-                    self._db_wrapper.get_raids_changed_since(self._last_check)
+                    self.__db_wrapper.get_raids_changed_since(self.__last_check)
                 )
                 full_payload += raids
 
                 # weather
-                if self._args.weather_webhook:
+                if self.__args.weather_webhook:
                     weather = self.__prepare_weather_data(
-                        self._db_wrapper.get_weather_changed_since(self._last_check)
+                        self.__db_wrapper.get_weather_changed_since(self.__last_check)
                     )
                     full_payload += weather
 
                 # gyms
-                if self._args.gym_webhook:
+                if self.__args.gym_webhook:
                     gyms = self.__prepare_gyms_data(
-                        self._db_wrapper.get_gyms_changed_since(self._last_check)
+                        self.__db_wrapper.get_gyms_changed_since(self.__last_check)
                     )
                     full_payload += gyms
 
-                if self._args.pokemon_webhook:
+                if self.__args.pokemon_webhook:
                     mon = self.__prepare_mon_data(
-                        self._db_wrapper.get_mon_changed_since(self._last_check)
+                        self.__db_wrapper.get_mon_changed_since(self.__last_check)
                     )
                     full_payload += mon
 
@@ -294,7 +316,7 @@ class WebhookWorker:
                 self.__send_webhook(full_payload)
 
                 self._last_check = int(time.time())
-                time.sleep(self._worker_interval_sec)
+                time.sleep(self.__worker_interval_sec)
         except KeyboardInterrupt:
             # graceful exit
             pass
