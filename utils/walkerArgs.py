@@ -152,7 +152,7 @@ def parseArgs():
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
-                        help='URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*')
+                        help='URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
