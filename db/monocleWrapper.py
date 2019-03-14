@@ -766,8 +766,6 @@ class MonocleWrapper(DbWrapperBase):
         if cells is None:
             return False
 
-        now = int(time.time())
-
         vals_forts = []
         vals_fort_sightings = []
 
@@ -778,12 +776,9 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         query_fort_sightings = (
-            "INSERT INTO fort_sightings (fort_id, last_modified, team, guard_pokemon_id, "
-            "slots_available, is_in_battle, updated) "
-            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s, %s)"
-            "ON DUPLICATE KEY UPDATE  last_modified=VALUES(last_modified), team=VALUES(team),"
-            "guard_pokemon_id=VALUES(guard_pokemon_id),slots_available=VALUES(slots_available),"
-            "is_in_battle=VALUES(is_in_battle), updated=VALUES(updated)"
+            "INSERT IGNORE INTO fort_sightings (fort_id, last_modified, team, guard_pokemon_id, "
+            "slots_available, is_in_battle) "
+            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s)"
         )
 
         for cell in cells:
@@ -820,7 +815,7 @@ class MonocleWrapper(DbWrapperBase):
 
                     vals_fort_sightings.append(
                         (
-                               gym_id, last_modified, team, guardmon, slots, is_in_battle, now
+                               gym_id, last_modified, team, guardmon, slots, is_in_battle
                         )
                     )
 
@@ -1012,7 +1007,6 @@ class MonocleWrapper(DbWrapperBase):
             gym_json['sponsor'] = sponsor
         else:
             gym_json['sponsor'] = 0
-        log.debug(gym_json)
 
         return gym_json
 
@@ -1169,6 +1163,6 @@ class MonocleWrapper(DbWrapperBase):
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        now = int(time.time())
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']

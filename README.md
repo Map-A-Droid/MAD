@@ -3,7 +3,7 @@
 
 ![MAD-Banner](static/banner_small_web.png)
 
-Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devices.
+Map'A'Droid is a scanner for PoGo based on Android devices.
 
 ## Information
 * [Website](https://www.maddev.de/) - For general information
@@ -43,9 +43,9 @@ If you want to use OCR to scan raids or scanning for Quests, run with `requireme
 ## MAD concept
 ![MAD concept graphic](static/concept.jpg)
 
-**RGC (Remote GPS Controller)** is responsible for receiving the GPS commands from your server, taking screenshots (if OCR is enabled) and managing Pokémon Go on the phone (restarting, detecting if POGO is opened, etc)
+**RGC (Remote GPS Controller)** is responsible for receiving the GPS commands from your server, taking screenshots (if OCR is enabled) and managing PoGo on the phone (restarting, detecting if PoGo is opened, etc)
 
-**PogoDroid** is the MITM (Man in the middle) App for reading the data from Pokémon Go and send it to your server. If you use the OCR method, you don’t need this app.
+**PogoDroid** is the MITM (Man in the middle) App for reading the data from the game and send it to your server. If you use the OCR method, you don’t need this app.
 
 ## Configuration
 Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
@@ -55,7 +55,7 @@ In order to map devices to areas, do the same with `mappings_example.json` and r
 Refer to mappings_example.json for examples or run `python3 start.py -wm` and open the MADMIN mappings editor (http://localhost:5000).
 
 #### IV
-MAD can scan for IVs with two different modes: `iv_mitm` scans already scanned Pokémon specified by `mon_ids_iv`. A typical usecase is to just IV check rare spawns with it. The second mode is `mon_mitm`. That is just like regular Pokémon scanning but every encounter defined in `mon_ids_iv` gets IV checked automatically with the same scanner - one encounter per location. Every other config parameter is explained in MADmin. 
+MAD can scan for IVs with two different modes: `iv_mitm` scans already scanned mon specified by `mon_ids_iv`. A typical usecase is to just IV check rare spawns with it. The second mode is `mon_mitm`. That is just like regular mon scanning but every encounter defined in `mon_ids_iv` gets IV checked automatically with the same scanner - one encounter per location. Every other config parameter is explained in MADmin. 
 
 ### Geofence
 Each area *requires* `geofence_included`. A geofence can easily be created with [geo.jesparke.net](http://geo.jasparke.net/)
@@ -64,8 +64,8 @@ Each area *requires* `geofence_included`. A geofence can easily be created with 
 ## Phone Setup
 #### Rooting
 1. Ensure your phone has an unlocked bootloader and is able to support root. [Lineage OS](https://lineageos.org/) is a good place to start for a custom ROM and they have good installation instruction for each device.  
-2. Install [Magisk](https://www.xda-developers.com/how-to-install-magisk/) to root the phone via recovery. Repackage the MagiskManager App and add Pokémon Go to Magisk Hide. Make sure to delete the folder `/sdcard/MagiskManager` after repackaging.
->It's necessary to pass the Safetynet check to run Pokémon Go on rooted phones. Check the Safetynet status in the MagiskManager App.
+2. Install [Magisk](https://www.xda-developers.com/how-to-install-magisk/) to root the phone via recovery. Repackage the MagiskManager App and add PoGo to Magisk Hide. Make sure to delete the folder `/sdcard/MagiskManager` after repackaging.
+>It's necessary to pass the Safetynet check to run the game on rooted phones. Check the Safetynet status in the MagiskManager App.
 
 #### Applications
 Install [RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) (only necessary for MITM mode) on the phone. RGC must be installed as a system app. Best practice is to convert it to a system app with [link2sd](https://play.google.com/store/apps/details?id=com.buak.Link2SD).

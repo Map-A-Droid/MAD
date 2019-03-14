@@ -75,7 +75,8 @@ class MITMReceiver(object):
         self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            t = threading.Thread(target=self.received_data_worker)
+            t = threading.Thread(name='MITMReceiver-%s' % str(i),
+                                 target=self.received_data_worker)
             t.start()
             self.worker_threads.append(t)
 
@@ -90,11 +91,6 @@ class MITMReceiver(object):
         for t in self.worker_threads:
             t.join()
 
-        # func = self.app.get('werkzeug.server.shutdown')
-        # if func is None:
-        #     log.error('Not running with the Werkzeug Server')
-        # func()
-
     def run_receiver(self):
         self.app.run(host=self.__listen_ip, port=int(self.__listen_port), threaded=True, use_reloader=False)
 
@@ -105,7 +101,6 @@ class MITMReceiver(object):
         self.app.add_url_rule(endpoint, endpoint_name, EndpointAction(handler), methods=methods_passed)
 
     def proto_endpoint(self, origin, data):
-        # data = json.loads(request.data)
         type = data.get("type", None)
         if type is None:
             log.warning("Could not read method ID. Stopping processing of proto")
@@ -131,8 +126,8 @@ class MITMReceiver(object):
             item = self._data_queue.get()
             items_left = self._data_queue.qsize()
             log.debug("MITM data processing worker retrieved data. Queue length left afterwards: %s" % str(items_left))
-            if items_left > 50: # TODO: no magic number
-                log.warning("MITM data processing workers are falling behind!")
+            if items_left > 50:  # TODO: no magic number
+                log.warning("MITM data processing workers are falling behind! Queue length: %s" % str(items_left))
             if item is None:
                 log.warning("Received none from queue of data")
                 break
@@ -155,7 +150,6 @@ class MITMReceiver(object):
                     self._db_wrapper.submit_raids_map_proto(origin, data["payload"])
 
                     self._db_wrapper.submit_spawnpoints_map_proto(origin, data["payload"])
-                    # mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
                     mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
                     self._db_wrapper.submit_mons_map_proto(origin, data["payload"], mon_ids_iv)
                 except Exception as e:
