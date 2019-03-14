@@ -74,7 +74,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 ######################
 #statistic                   # Activate system statistics
 #status-name:                # Setup name for this instance - if not set: PID of the process will be used
-#stat-gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
+#stat_gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
 #statistic_interval:         # Update interval for the usage generator in seconds (Default: 60)
 
 # MADmin
