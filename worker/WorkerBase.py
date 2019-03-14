@@ -556,7 +556,7 @@ class WorkerBase(ABC):
                 # could not reach raidtab in given maxAttempts
                 log.error("_check_pogo_main_screen: Could not get to Mainscreen within %s attempts" % str(maxAttempts))
                 return False
-            self._checkPogoFreeze()
+
             # not using continue since we need to get a screen before the next round...
             found = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path,
                                                                        'screenshot%s.png' % str(self._id)),
