@@ -315,7 +315,7 @@ class WebhookWorker:
                 # send our payload
                 self.__send_webhook(full_payload)
 
-                self._last_check = int(time.time())
+                self.__last_check = int(time.time())
                 time.sleep(self.__worker_interval_sec)
         except KeyboardInterrupt:
             # graceful exit
