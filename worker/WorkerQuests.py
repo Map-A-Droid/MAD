@@ -351,6 +351,7 @@ class WorkerQuests(MITMBase):
                 if 'SB' in data_received or 'Time' in data_received:
                     log.error('Softban - waiting...')
                     time.sleep(10)
+                    self._stop_process_time = time.time()
                     self._open_pokestop()
                 else:
                     log.error('Other Return: %s' % str(data_received))
