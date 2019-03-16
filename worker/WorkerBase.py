@@ -237,6 +237,7 @@ class WorkerBase(ABC):
         except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                 as e:
             log.error("Failed initializing worker %s, connection terminated exceptionally" % str(self._id))
+            self._internal_cleanup()
             return
 
         while not self._stop_worker_event.isSet():
