@@ -326,6 +326,9 @@ class WorkerQuests(MITMBase):
                     self._stop_process_time = time.time()
             if data_received is None:
                 data_received = '-'
+                if not self._checkPogoButton():
+                    self._checkPogoClose()
+                    self._stop_process_time = time.time()
 
             to += 1
         return data_received
@@ -335,7 +338,7 @@ class WorkerQuests(MITMBase):
         data_received = '-'
         while not 'Quest' in data_received and int(to) < 3:
             log.info('Spin Stop')
-            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
+            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=25)
             if data_received is not None:
 
                 if 'Box' in data_received:
