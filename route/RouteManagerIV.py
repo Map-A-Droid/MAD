@@ -11,8 +11,9 @@ class RouteManagerIV(RouteManagerBase):
     def _get_coords_after_finish_route(self):
         return None
 
-    def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
+    def _recalc_route_workertype(self, delfile=False):
+        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=delfile,
+                          nofile=False)
 
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info

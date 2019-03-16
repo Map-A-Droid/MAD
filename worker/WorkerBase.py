@@ -39,6 +39,7 @@ class WorkerBase(ABC):
         self._async_io_looper_thread = None
         self._location_count = 0
         self._timer = timer
+        self._init = False
 
         self._lastScreenshotTaken = 0
         self._stop_worker_event = Event()
@@ -339,6 +340,7 @@ class WorkerBase(ABC):
                 # TODO: check if result is positive/negative?
                 self._route_manager_nighttime.register_worker(self._id)
                 self._route_manager_last_time = self._route_manager_nighttime
+            self._init = self._route_manager_nighttime.init
             return self._route_manager_nighttime
         elif switch_mode is True and self._route_manager_nighttime is None:
             if self._route_manager_last_time is not None:
@@ -351,6 +353,7 @@ class WorkerBase(ABC):
                     self._route_manager_nighttime.unregister_worker(self._id)
                 self._route_manager_daytime.register_worker(self._id)
                 self._route_manager_last_time = self._route_manager_daytime
+                self._init = self._route_manager_daytime.init
             return self._route_manager_daytime
         else:
             # log.fatal("Raising internal worker exception")
@@ -578,8 +581,8 @@ class WorkerBase(ABC):
                 found = True
 
             log.info("_check_pogo_main_screen: Previous checks found popups: %s" % str(found))
-            if not found:
-                self._takeScreenshot()
+            if found:
+                self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
 
             attempts += 1
         log.info("_check_pogo_main_screen: done")

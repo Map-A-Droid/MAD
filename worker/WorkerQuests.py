@@ -145,18 +145,21 @@ class WorkerQuests(MITMBase):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         self._work_mutex.acquire()
-        log.info("Processing Stop / Quest...")
+        if not self._init:
+            log.info("Processing Stop / Quest...")
 
-        data_received = '-'
+            data_received = '-'
 
-        reachedMainMenu = self._check_pogo_main_screen(10, True)
-        if not reachedMainMenu:
-            self._restart_pogo()
+            reachedMainMenu = self._check_pogo_main_screen(10, True)
+            if not reachedMainMenu:
+                self._restart_pogo()
             
-        log.info('Open Stop')
-        self._stop_process_time = time.time()
-        data_received = self._open_pokestop()
-        if data_received == 'Stop' : self._handle_stop()
+            log.info('Open Stop')
+            self._stop_process_time = time.time()
+            data_received = self._open_pokestop()
+            if data_received == 'Stop' : self._handle_stop()
+        else:
+            log.info('Currently in INIT Mode - no Stop processing')
         log.debug("Releasing lock")
         self._work_mutex.release()
 

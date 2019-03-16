@@ -9,7 +9,11 @@ class RouteManagerQuests(RouteManagerBase):
         return None
 
     def _get_coords_post_init(self):
-        return self.db_wrapper.stops_from_db(self.geofence_helper)
+        stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
+        log.info('Detected stops without quests: %s' % str(stops))
+        for stop in stops:
+            self._stoplist.append(str(stop[0]) + '-' + str(stop[1]))
+        return stops
 
     def _cluster_priority_queue_criteria(self):
         pass
@@ -17,8 +21,9 @@ class RouteManagerQuests(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 0
 
-    def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, False, nofile=True)
+    def _recalc_route_workertype(self, delfile=False):
+        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=delfile,
+                          nofile=False)
 
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, init=False,
@@ -34,7 +39,11 @@ class RouteManagerQuests(RouteManagerBase):
         self._stoplist = []
 
     def _get_coords_after_finish_route(self):
-        return self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
+        stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
+        log.info('Detected stops without quests: %s' % str(stops))
+        for stop in stops:
+            self._stoplist.append(str(stop[0]) + '-' + str(stop[1]))
+        return stops
 
     def _start_routemanager(self):
         self._manager_mutex.acquire()
@@ -57,6 +66,9 @@ class RouteManagerQuests(RouteManagerBase):
         self._is_started = False
 
     def _check_coords_before_returning(self, lat, lng):
+        if self.init:
+            log.info('Init Mode - coord is valid')
+            return True
         check_stop = str(lat) + '-' + str(lng)
         log.info('Checking Stop with ID %s' % str(check_stop))
         if check_stop not in self._stoplist:

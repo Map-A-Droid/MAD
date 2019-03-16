@@ -241,7 +241,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _recalc_route_workertype(self):
+    def _recalc_route_workertype(self, delfile):
         """
         Return a new route for worker
         :return:
@@ -359,7 +359,7 @@ class RouteManagerBase(ABC):
                           % (str(len(coords)), str(self.name)))
                 self.add_coords_list(coords)
                 log.debug("Route of %s is being calculated" % str(self.name))
-                self._recalc_route_workertype()
+                self._recalc_route_workertype(True)
                 self.init = False
                 self.change_init_mapping(self.name)
                 self._manager_mutex.release()
@@ -374,7 +374,7 @@ class RouteManagerBase(ABC):
                     self.clear_coords()
                     coords = coords_after_round
                     self.add_coords_list(coords)
-                    self._recalc_route_workertype()
+                    self._recalc_route_workertype(False)
                     if len(self._route) == 0: return None
                     next_lat = self._route[self._current_index_of_route]['lat']
                     next_lng = self._route[self._current_index_of_route]['lng']
@@ -409,7 +409,7 @@ class RouteManagerBase(ABC):
             if (var['name']) == name_area:
                 var['init'] = bool(False)
 
-        with open('mappings.json', 'w') as outfile:
+        with open('configs/mappings.json', 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
             
     def get_route_status(self):
