@@ -38,7 +38,7 @@ class WorkerQuests(MITMBase):
         self.clear_thread.start()
         self._get_screen_size()
 
-        reached_main_menu = self._check_pogo_main_screen(5, True)
+        reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
             if not self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
@@ -149,7 +149,7 @@ class WorkerQuests(MITMBase):
 
         data_received = '-'
 
-        reachedMainMenu = self._check_pogo_main_screen(5, True)
+        reachedMainMenu = self._check_pogo_main_screen(10, True)
         if not reachedMainMenu:
             self._restart_pogo()
             
@@ -184,8 +184,8 @@ class WorkerQuests(MITMBase):
             time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
             self._check_pogo_main_screen(15, True)
-            reached_raidtab = True
-        return reached_raidtab
+            reached_mainscreen = True
+        return reached_mainscreen
 
     def _cleanup(self):
         if self.clear_thread is not None:
