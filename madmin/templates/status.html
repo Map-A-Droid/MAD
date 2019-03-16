@@ -13,6 +13,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
     var dataTable;
+
     function setGrid(tableGridHtmlId, gridData) {
         if ($.fn.dataTable.isDataTable(tableGridHtmlId) ) {
             dataTable.destroy();
@@ -62,7 +63,8 @@
             ],
             "order": [[5, "asc"]],
             "responsive": {{ responsive }},
-            "autoWidth": true
+            "autoWidth": true,
+            "stateSave": true
         });
 	}
 

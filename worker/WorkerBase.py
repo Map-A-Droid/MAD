@@ -237,6 +237,7 @@ class WorkerBase(ABC):
         except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                 as e:
             log.error("Failed initializing worker %s, connection terminated exceptionally" % str(self._id))
+            self._internal_cleanup()
             return
 
         while not self._stop_worker_event.isSet():
@@ -531,7 +532,7 @@ class WorkerBase(ABC):
         if not pogoTopmost:
             return False
 
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             if again:
                 log.error("_check_pogo_main_screen: failed getting a screenshot again")
                 return False
@@ -547,7 +548,7 @@ class WorkerBase(ABC):
                                               2.20, 3.01, self._communicator)
         if buttoncheck:
             log.info('Found button on screen')
-            self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay)
+            self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
         while not self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path,
                                                                            'screenshot%s.png' % str(self._id)),
                                                               self._id):
@@ -556,7 +557,7 @@ class WorkerBase(ABC):
                 # could not reach raidtab in given maxAttempts
                 log.error("_check_pogo_main_screen: Could not get to Mainscreen within %s attempts" % str(maxAttempts))
                 return False
-            self._checkPogoFreeze()
+
             # not using continue since we need to get a screen before the next round...
             found = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path,
                                                                        'screenshot%s.png' % str(self._id)),
@@ -591,7 +592,7 @@ class WorkerBase(ABC):
             return False
 
         self._checkPogoFreeze()
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             # TODO: again?
             # if again:
             #     log.error("checkPogoButton: failed getting a screenshot again")
@@ -623,7 +624,7 @@ class WorkerBase(ABC):
             return False
 
         self._checkPogoFreeze()
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             # TODO: go again?
             # if again:
             #     log.error("checkPogoClose: failed getting a screenshot again")
@@ -656,7 +657,7 @@ class WorkerBase(ABC):
             return False
 
         self._checkPogoFreeze()
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             if again:
                 log.error("getToRaidscreen: failed getting a screenshot again")
                 return False
@@ -716,9 +717,9 @@ class WorkerBase(ABC):
                 if self._pogoWindowManager.checkNearby(os.path.join(self._applicationArgs.temp_path,
                                                                     'screenshot%s.png' % str(self._id)), self._id,
                                                        self._communicator):
-                    return self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay)
+                    return self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
 
-            if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
                 return False
 
             attempts += 1

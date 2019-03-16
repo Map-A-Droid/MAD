@@ -38,7 +38,7 @@ class WorkerQuests(MITMBase):
         self.clear_thread.start()
         self._get_screen_size()
 
-        reached_main_menu = self._check_pogo_main_screen(5, True)
+        reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
             if not self._restart_pogo():
                 # TODO: put in loop, count up for a reboot ;)
@@ -100,6 +100,8 @@ class WorkerQuests(MITMBase):
                     delay_used = 500
                 elif distance < 20000:
                     delay_used = 1000
+                else:
+                    delay_used = 2000
                 log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
         else:
             log.info("main: Walking...")
@@ -133,6 +135,7 @@ class WorkerQuests(MITMBase):
                                           11)
             log.debug("Done walking")
             time.sleep(1)
+        delay_used += 1
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
         self.last_processed_location = self.current_location
@@ -146,7 +149,7 @@ class WorkerQuests(MITMBase):
 
         data_received = '-'
 
-        reachedMainMenu = self._check_pogo_main_screen(5, True)
+        reachedMainMenu = self._check_pogo_main_screen(10, True)
         if not reachedMainMenu:
             self._restart_pogo()
             
@@ -181,8 +184,8 @@ class WorkerQuests(MITMBase):
             time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
             self._check_pogo_main_screen(15, True)
-            reached_raidtab = True
-        return reached_raidtab
+            reached_mainscreen = True
+        return reached_mainscreen
 
     def _cleanup(self):
         if self.clear_thread is not None:
@@ -219,7 +222,7 @@ class WorkerQuests(MITMBase):
 
     def clear_box(self, delayadd):
         log.info('Cleanup Box')
-        not_allow = ('Gift', 'Raid Pass', 'Camera', 'Lucky Egg', 'Geschenk', 'Raid-Pass', 'Kamera', 'Glücks-Ei',
+        not_allow = ('Gift', 'Raid Pass', 'Camera', 'Geschenk', 'Raid-Pass', 'Kamera',
                      'Cadeau', 'Passe de Raid', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
@@ -314,13 +317,18 @@ class WorkerQuests(MITMBase):
                     if not self._checkPogoButton():
                         self._checkPogoClose()
                     self._turn_map(self._delay_add)
+                    self._stop_process_time = time.time()
                 if 'Mon' in data_received:
                     time.sleep(1)
                     log.info('Clicking MON')
                     time.sleep(.5)
                     self._turn_map(self._delay_add)
+                    self._stop_process_time = time.time()
             if data_received is None:
                 data_received = '-'
+                if not self._checkPogoButton():
+                    self._checkPogoClose()
+                    self._stop_process_time = time.time()
 
             to += 1
         return data_received
@@ -330,7 +338,7 @@ class WorkerQuests(MITMBase):
         data_received = '-'
         while not 'Quest' in data_received and int(to) < 3:
             log.info('Spin Stop')
-            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=40)
+            data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=25)
             if data_received is not None:
 
                 if 'Box' in data_received:
@@ -346,6 +354,7 @@ class WorkerQuests(MITMBase):
                 if 'SB' in data_received or 'Time' in data_received:
                     log.error('Softban - waiting...')
                     time.sleep(10)
+                    self._stop_process_time = time.time()
                     self._open_pokestop()
                 else:
                     log.error('Other Return: %s' % str(data_received))
@@ -356,6 +365,7 @@ class WorkerQuests(MITMBase):
                 log.info('Did not get any data ... Maybe already spinned or softban.')
                 self._close_gym(self._delay_add)
                 time.sleep(5)
+                self._stop_process_time = time.time()
                 self._open_pokestop()
                 to += 1
 
