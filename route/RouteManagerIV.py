@@ -5,14 +5,17 @@ log = logging.getLogger(__name__)
 
 
 class RouteManagerIV(RouteManagerBase):
+    def _accept_empty_route(self):
+        return True
+
     def _priority_queue_update_interval(self):
         return 60
 
     def _get_coords_after_finish_route(self):
         return None
 
-    def _recalc_route_workertype(self, delfile=False):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=delfile,
+    def _recalc_route_workertype(self, del_route_file=False):
+        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=del_route_file,
                           nofile=False)
 
     def _retrieve_latest_priority_queue(self):

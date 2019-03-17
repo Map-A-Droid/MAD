@@ -136,6 +136,8 @@ class WorkerQuests(MITMBase):
             log.debug("Done walking")
             time.sleep(1)
         delay_used += 1
+        if self._init:
+            delay_used = 5
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
         self.last_processed_location = self.current_location

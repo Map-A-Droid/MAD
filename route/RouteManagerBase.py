@@ -241,7 +241,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _recalc_route_workertype(self, delfile):
+    def _recalc_route_workertype(self, del_route_file):
         """
         Return a new route for worker
         :return:
@@ -266,6 +266,13 @@ class RouteManagerBase(ABC):
 
     @abstractmethod
     def _priority_queue_update_interval(self):
+        """
+        The time to sleep in between consecutive updates of the priority queue
+        :return:
+        """
+
+    @abstractmethod
+    def _accept_empty_route(self):
         """
         The time to sleep in between consecutive updates of the priority queue
         :return:
@@ -309,11 +316,14 @@ class RouteManagerBase(ABC):
             log.debug("%s: Checking if a location is available..." % str(self.name))
             self._manager_mutex.acquire()
             got_location = (self._prio_queue is not None and len(self._prio_queue) > 0
-                            or (self._route is not None and len(self._route) > 0))
+                            or (self._route is not None and len(self._route) > 0)
+                            or (len(self._get_coords_after_finish_route()) > 0))
             self._manager_mutex.release()
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))
                 time.sleep(0.5)
+                if not self._accept_empty_route():
+                    return None
         log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
         self._manager_mutex.acquire()
         # check priority queue for items of priority that are past our time...
