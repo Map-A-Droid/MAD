@@ -614,6 +614,7 @@ class WorkerBase(ABC):
                                                                    'screenshot%s.png' % str(self._id)), 2.20, 3.01,
                                                       self._communicator)
         if found:
+            time.sleep(1)
             log.info("checkPogoButton: Found button (small)")
             log.info("checkPogoButton: done")
             return True
@@ -646,6 +647,7 @@ class WorkerBase(ABC):
                             os.path.join(self._applicationArgs.temp_path,
                                          'screenshot%s.png' % str(self._id)), self._id, self._communicator)
         if found:
+            time.sleep(1)
             log.info("checkPogoClose: Found (X) button (except nearby)")
             log.info("checkPogoClose: done")
             return True
