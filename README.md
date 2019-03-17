@@ -48,7 +48,7 @@ If you want to use OCR to scan raids or scanning for Quests, run with `requireme
 **PogoDroid** is the MITM (Man in the middle) App for reading the data from the game and send it to your server. If you use the OCR method, you don’t need this app.
 
 ## Configuration
-Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
+Inside the `configs` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
 
 ### Mappings.json
 In order to map devices to areas, do the same with `mappings_example.json` and rename it to `mappings.json`
@@ -90,7 +90,6 @@ If you are experiencing weird and quick GPS jumps to the actual location from th
  - Set the device to GPS only
  - Disable Wi-Fi location (same settings tab as GPS)
  - Try flightmode with only Wi-Fi enabled
- - Disable FusedLocation inside Google Play Services via [Service Disabler](https://play.google.com/store/apps/details?id=com.kunkunsoft.rootservicedisabler)
 
 ## Launching MAD
 Make sure you're in the directory of MAD and run:
