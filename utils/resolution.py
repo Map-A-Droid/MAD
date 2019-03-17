@@ -107,11 +107,16 @@ class Resocalculator(object):
         return click_x, click_y
 
     def get_delete_item_text(self):
-        if float(self._xyratio) > 2:
+        if float(self._xyratio) > 2.1:
             x1 = int(self._screen_x) / 1.3
             x2 = int(self._screen_x) / 3.3
-            y1 = int(self._screen_y) - (int(self._screen_x) / 0.58)
-            y2 = int(self._screen_y) - (int(self._screen_x) / 0.55)
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.61)
+            y2 = int(self._screen_y) - (int(self._screen_x) / 0.58)
+        elif float(self._xyratio) > 2:
+            x1 = int(self._screen_x) / 1.3
+            x2 = int(self._screen_x) / 3.3
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.60)
+            y2 = int(self._screen_y) - (int(self._screen_x) / 0.57)
         elif float(self._xyratio) >= 1.9:
             x1 = int(self._screen_x) / 1.3
             x2 = int(self._screen_x) / 3.3

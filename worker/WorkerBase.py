@@ -581,8 +581,8 @@ class WorkerBase(ABC):
                 found = True
 
             log.info("_check_pogo_main_screen: Previous checks found popups: %s" % str(found))
-            if found:
-                self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
+
+            self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
 
             attempts += 1
         log.info("_check_pogo_main_screen: done")
@@ -594,7 +594,6 @@ class WorkerBase(ABC):
         if not pogoTopmost:
             return False
 
-        self._checkPogoFreeze()
         if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             # TODO: again?
             # if again:
@@ -627,7 +626,6 @@ class WorkerBase(ABC):
         if not pogoTopmost:
             return False
 
-        self._checkPogoFreeze()
         if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             # TODO: go again?
             # if again:

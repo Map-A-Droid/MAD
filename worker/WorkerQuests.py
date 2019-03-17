@@ -135,7 +135,6 @@ class WorkerQuests(MITMBase):
                                           11)
             log.debug("Done walking")
             time.sleep(1)
-        delay_used += 1
         if self._init:
             delay_used = 5
         log.info("Sleeping %s" % str(delay_used))
