@@ -16,21 +16,25 @@ mode_mapping = {
     "raids_mitm": {
         "s2_cell_level": 13,
         "range":         490,
+        "range_init":    490,
         "max_count":     100000
 
     },
     "mon_mitm":   {
         "s2_cell_level": 17,
         "range":         67,
+        "range_init":    67,
         "max_count":     100000
     },
     "raids_ocr": {
         "range":         490,
+        "range_init":    490,
         "max_count":     7
     },
     "pokestops":  {
         "s2_cell_level": 13,
         "range":         1,
+        "range_init":    490,
         "max_count":     100000
     }
 }
@@ -140,7 +144,7 @@ class MappingParser(object):
                     # calculate all level N cells (mapping back from mapping above linked to mode)
                     # coords = S2Helper.get_s2_cells_from_fence(geofence=geofence_helper,
                     #                                           cell_size=mode_mapping[mode]["s2_cell_level"])
-                    coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
+                    coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range_init"],
                                                           geofence_helper)
 
                 route_manager.add_coords_list(coords)

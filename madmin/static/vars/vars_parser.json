@@ -157,6 +157,14 @@
 						"require":"false",
 						"description":"Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
 					}
+				},
+				{
+					"name":"post_screenshot_delay",
+					"settings":{
+						"type":"text",
+						"require":"false",
+						"description":"The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
+					}
 				}
 			]
 		}
@@ -457,6 +465,15 @@
 						"type":"text",
 						"require":"true",
 						"description":"Name of routefile"
+					}
+				},
+				{
+					"name":"init",
+					"settings":{
+						"type":"option",
+						"require":"true",
+						"values":"false|true",
+						"description":"Set this open true, if you scan the area for gyms / spawnpoints the first time"
 					}
 				}
 			],

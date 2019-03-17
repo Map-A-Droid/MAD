@@ -7,14 +7,18 @@ log = logging.getLogger(__name__)
 
 
 class RouteManagerRaids(RouteManagerBase):
+    def _accept_empty_route(self):
+        return False
+
     def _priority_queue_update_interval(self):
         return 300
 
     def _get_coords_after_finish_route(self):
         return None
 
-    def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
+    def _recalc_route_workertype(self, del_route_file=False):
+        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=del_route_file,
+                          nofile=False)
 
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, settings=None, init=False,

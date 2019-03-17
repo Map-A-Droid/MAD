@@ -58,7 +58,7 @@ class MITMBase(WorkerBase):
             restart_thresh = self._devicesettings.get("restart_thresh", 5)
             reboot_thresh = self._devicesettings.get("reboot_thresh", 3)
             if current_routemanager is not None:
-                if current_routemanager.init:
+                if self._init:
                     restart_thresh = self._devicesettings.get("restart_thresh", 5) * 2
                     reboot_thresh = self._devicesettings.get("reboot_thresh", 3) * 2
 
@@ -108,6 +108,8 @@ class MITMBase(WorkerBase):
                self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
 
+        time.sleep(2)
+
         log.debug('{_clear_quests} finished')
         return
 
@@ -137,6 +139,7 @@ class MITMBase(WorkerBase):
 
     def _turn_map(self, delayadd):
         log.debug('{_turn_map} called')
+        log.info('Turning map')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
                     self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))

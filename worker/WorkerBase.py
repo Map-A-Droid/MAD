@@ -39,6 +39,7 @@ class WorkerBase(ABC):
         self._async_io_looper_thread = None
         self._location_count = 0
         self._timer = timer
+        self._init = False
 
         self._lastScreenshotTaken = 0
         self._stop_worker_event = Event()
@@ -237,6 +238,7 @@ class WorkerBase(ABC):
         except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                 as e:
             log.error("Failed initializing worker %s, connection terminated exceptionally" % str(self._id))
+            self._internal_cleanup()
             return
 
         while not self._stop_worker_event.isSet():
@@ -338,6 +340,7 @@ class WorkerBase(ABC):
                 # TODO: check if result is positive/negative?
                 self._route_manager_nighttime.register_worker(self._id)
                 self._route_manager_last_time = self._route_manager_nighttime
+            self._init = self._route_manager_nighttime.init
             return self._route_manager_nighttime
         elif switch_mode is True and self._route_manager_nighttime is None:
             if self._route_manager_last_time is not None:
@@ -350,6 +353,7 @@ class WorkerBase(ABC):
                     self._route_manager_nighttime.unregister_worker(self._id)
                 self._route_manager_daytime.register_worker(self._id)
                 self._route_manager_last_time = self._route_manager_daytime
+                self._init = self._route_manager_daytime.init
             return self._route_manager_daytime
         else:
             # log.fatal("Raising internal worker exception")
@@ -531,7 +535,7 @@ class WorkerBase(ABC):
         if not pogoTopmost:
             return False
 
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             if again:
                 log.error("_check_pogo_main_screen: failed getting a screenshot again")
                 return False
@@ -547,7 +551,7 @@ class WorkerBase(ABC):
                                               2.20, 3.01, self._communicator)
         if buttoncheck:
             log.info('Found button on screen')
-            self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay)
+            self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
         while not self._pogoWindowManager.checkpogomainscreen(os.path.join(self._applicationArgs.temp_path,
                                                                            'screenshot%s.png' % str(self._id)),
                                                               self._id):
@@ -577,8 +581,8 @@ class WorkerBase(ABC):
                 found = True
 
             log.info("_check_pogo_main_screen: Previous checks found popups: %s" % str(found))
-            if not found:
-                self._takeScreenshot()
+
+            self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
 
             attempts += 1
         log.info("_check_pogo_main_screen: done")
@@ -590,8 +594,7 @@ class WorkerBase(ABC):
         if not pogoTopmost:
             return False
 
-        self._checkPogoFreeze()
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             # TODO: again?
             # if again:
             #     log.error("checkPogoButton: failed getting a screenshot again")
@@ -610,6 +613,7 @@ class WorkerBase(ABC):
                                                                    'screenshot%s.png' % str(self._id)), 2.20, 3.01,
                                                       self._communicator)
         if found:
+            time.sleep(1)
             log.info("checkPogoButton: Found button (small)")
             log.info("checkPogoButton: done")
             return True
@@ -622,8 +626,7 @@ class WorkerBase(ABC):
         if not pogoTopmost:
             return False
 
-        self._checkPogoFreeze()
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             # TODO: go again?
             # if again:
             #     log.error("checkPogoClose: failed getting a screenshot again")
@@ -642,6 +645,7 @@ class WorkerBase(ABC):
                             os.path.join(self._applicationArgs.temp_path,
                                          'screenshot%s.png' % str(self._id)), self._id, self._communicator)
         if found:
+            time.sleep(1)
             log.info("checkPogoClose: Found (X) button (except nearby)")
             log.info("checkPogoClose: done")
             return True
@@ -656,7 +660,7 @@ class WorkerBase(ABC):
             return False
 
         self._checkPogoFreeze()
-        if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+        if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             if again:
                 log.error("getToRaidscreen: failed getting a screenshot again")
                 return False
@@ -716,9 +720,9 @@ class WorkerBase(ABC):
                 if self._pogoWindowManager.checkNearby(os.path.join(self._applicationArgs.temp_path,
                                                                     'screenshot%s.png' % str(self._id)), self._id,
                                                        self._communicator):
-                    return self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay)
+                    return self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
 
-            if not self._takeScreenshot(delayBefore=self._applicationArgs.post_screenshot_delay):
+            if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
                 return False
 
             attempts += 1
