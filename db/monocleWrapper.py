@@ -978,8 +978,6 @@ class MonocleWrapper(DbWrapperBase):
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
 
-        self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
-                                                 time_of_day, float(received_timestamp))
         return (
                 cell_id,
                 gameplay_weather,
