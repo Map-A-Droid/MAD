@@ -169,7 +169,7 @@ class MITMReceiver(object):
                 elif type == 104:
                     self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
                 elif type == 4:
-                     self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
+                    self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
 
             except Exception as e:
                 log.error("Issue updating DB: %s" % str(e))

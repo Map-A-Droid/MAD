@@ -1038,13 +1038,11 @@ class MonocleWrapper(DbWrapperBase):
         display_weather_data = client_weather_data.get("display_weather", None)
         if display_weather_data is None:
             return None
-        elif time_of_day == 2 and client_weather_data["gameplay_weather"]["gameplay_condition"] == 3:
-            gameplay_weather = 13
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
 
         self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
-                                                                  time_of_day, float(received_timestamp))
+                                                 time_of_day, float(received_timestamp))
         return (
                 cell_id,
                 gameplay_weather,
