@@ -138,9 +138,9 @@ class RouteManagerBase(ABC):
 
     @staticmethod
     def calculate_new_route(coords, max_radius, max_coords_within_radius, routefile, delete_old_route, num_procs=0):
-        if delete_old_route and os.path.exists(routefile + ".calc"):
+        if delete_old_route and os.path.exists(str(routefile) + ".calc"):
             log.debug("Deleting routefile...")
-            os.remove(routefile + ".calc")
+            os.remove(str(routefile) + ".calc")
         new_route = getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
                                  routefile=routefile)
         return new_route
@@ -241,7 +241,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _recalc_route_workertype(self, del_route_file):
+    def _recalc_route_workertype(self):
         """
         Return a new route for worker
         :return:
@@ -317,7 +317,8 @@ class RouteManagerBase(ABC):
             self._manager_mutex.acquire()
             got_location = (self._prio_queue is not None and len(self._prio_queue) > 0
                             or (self._route is not None and len(self._route) > 0)
-                            or (len(self._get_coords_after_finish_route()) > 0))
+                            or (self._get_coords_after_finish_route() is not None and
+                                len(self._get_coords_after_finish_route()) > 0))
             self._manager_mutex.release()
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))
@@ -356,9 +357,11 @@ class RouteManagerBase(ABC):
                 next_lat = self._route[self._current_index_of_route]['lat']
                 next_lng = self._route[self._current_index_of_route]['lng']
             self._current_index_of_route += 1
-            if self.init and self._current_index_of_route >= len(self._route):
+            if self.init and self._current_index_of_route == len(self._route):
+                log.info('Reaching last coord of init route')
+            if self.init and self._current_index_of_route > len(self._route):
                 self._init_mode_rounds += 1
-            if self.init and self._current_index_of_route >= len(self._route) and \
+            if self.init and self._current_index_of_route > len(self._route) and \
                     self._init_mode_rounds >= int(self.settings.get("init_mode_rounds", 1)):
                 # we are done with init, let's calculate a new route
                 log.warning("Init of %s done, it took %s, calculating new route..."
@@ -369,7 +372,7 @@ class RouteManagerBase(ABC):
                           % (str(len(coords)), str(self.name)))
                 self.add_coords_list(coords)
                 log.debug("Route of %s is being calculated" % str(self.name))
-                self._recalc_route_workertype(True)
+                self._recalc_route_workertype()
                 self.init = False
                 self.change_init_mapping(self.name)
                 self._manager_mutex.release()
@@ -384,7 +387,7 @@ class RouteManagerBase(ABC):
                     self.clear_coords()
                     coords = coords_after_round
                     self.add_coords_list(coords)
-                    self._recalc_route_workertype(False)
+                    self._recalc_route_workertype()
                     if len(self._route) == 0: return None
                     next_lat = self._route[self._current_index_of_route]['lat']
                     next_lng = self._route[self._current_index_of_route]['lng']

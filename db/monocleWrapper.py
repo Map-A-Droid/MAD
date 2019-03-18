@@ -782,13 +782,13 @@ class MonocleWrapper(DbWrapperBase):
         raid_vals = []
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form) "
+            "time_end, cp, move_1, move_2, form, last_updated) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
-            "form=VALUES(form)"
+            "form=VALUES(form), last_updated=VALUES(last_updated)"
         )
 
         for cell in cells:
@@ -826,8 +826,9 @@ class MonocleWrapper(DbWrapperBase):
                             raidspawnSec,
                             raidbattleSec,
                             raidendSec,
-                            cp, move_1, move_2, 
-                            form
+                            cp, move_1, move_2,
+                            form,
+                            int(now)
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -974,11 +975,11 @@ class MonocleWrapper(DbWrapperBase):
         display_weather_data = client_weather_data.get("display_weather", None)
         if display_weather_data is None:
             return None
-        elif time_of_day == 2 and client_weather_data["gameplay_weather"]["gameplay_condition"] == 3:
-            gameplay_weather = 13
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
 
+        self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
+                                                 time_of_day, float(received_timestamp))
         return (
                 cell_id,
                 gameplay_weather,

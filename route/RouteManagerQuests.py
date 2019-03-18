@@ -30,9 +30,13 @@ class RouteManagerQuests(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 0
 
-    def _recalc_route_workertype(self, del_route_file=False):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=del_route_file,
-                          nofile=True)
+    def _recalc_route_workertype(self):
+        if self.init:
+            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
+                              nofile=False)
+        else:
+            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
+                              nofile=True)
 
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, init=False,
