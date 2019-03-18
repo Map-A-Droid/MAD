@@ -54,10 +54,9 @@ class WorkerBase(ABC):
         self._lastStart = ""
         self._pogoWindowManager = pogoWindowManager
 
-        self.current_location = self._last_known_state.get("last_location", None)
+        self.current_location = self._devicesettings.get("last_location", None)
         if self.current_location is None:
             self.current_location = Location(0.0, 0.0)
-        self.last_location = Location(0.0, 0.0)
         self.last_processed_location = Location(0.0, 0.0)
 
     @abstractmethod
@@ -288,8 +287,9 @@ class WorkerBase(ABC):
 
             try:
                 log.debug('main worker %s: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
-                          (str(self._id), self.last_location.lat, self.last_location.lng,
-                           self.current_location.lat, self.current_location.lng))
+                          (str(self._id), self._devicesettings["last_location"].lat,
+                           self._devicesettings["last_location"].lng, self.current_location.lat,
+                           self.current_location.lng))
                 time_snapshot, process_location = self._move_to_location()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
