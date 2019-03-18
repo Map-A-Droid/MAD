@@ -80,8 +80,7 @@
                 "cool_down_sleep": false,
                 "post_turn_screen_on_delay": 10,
                 "post_pogo_start_delay": 60,
-                "restart_pogo": 100,
-                "max_data_err_counter": 90
+                "restart_pogo": 100
             }
         },
         {
@@ -101,7 +100,6 @@
                 "post_turn_screen_on_delay": 10,
                 "post_pogo_start_delay": 60,
                 "restart_pogo": 0,
-                "max_data_err_counter": 60,
                 "reboot": false
             }
         },
@@ -117,7 +115,6 @@
                 "post_turn_screen_on_delay": 10,
                 "post_pogo_start_delay": 60,
                 "restart_pogo": 0,
-                "max_data_err_counter": 60,
                 "reboot": true,
                 "reboot_thresh": 10
             }
