@@ -1184,7 +1184,7 @@ class MonocleWrapper(DbWrapperBase):
 
     def get_weather_changed_since(self, timestamp):
         query = (
-            "SELECT s2_cell_id, condition, alert_severity, warn, day, updated "
+            "SELECT s2_cell_id, weather.condition, alert_severity, warn, day, updated "
             "FROM weather "
             "WHERE updated >= %s"
         )
