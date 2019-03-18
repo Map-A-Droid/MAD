@@ -836,13 +836,13 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form) "
+            "time_end, cp, move_1, move_2, form, last_updated) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
-            "form=VALUES(form)"
+            "form=VALUES(form), last_updated=VALUES(last_updated)"
         )
 
         for cell in cells:
@@ -890,8 +890,9 @@ class MonocleWrapper(DbWrapperBase):
                             raidspawnSec,
                             raidbattleSec,
                             raidendSec,
-                            cp, move_1, move_2, 
-                            form
+                            cp, move_1, move_2,
+                            form,
+                            int(now)
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -1144,7 +1145,7 @@ class MonocleWrapper(DbWrapperBase):
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
                 'task': quest_task})
         return questinfo
-        
+
     def submit_pokestops_details_map_proto(self, map_proto):
         log.debug("{MonocleWrapper::submit_pokestops_details_map_proto} called")
         pokestop_args = []
@@ -1160,7 +1161,7 @@ class MonocleWrapper(DbWrapperBase):
         if pokestop_args is not None:
             self.execute(query_pokestops, pokestop_args, commit=True)
         return True
-        
+
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
             return None
