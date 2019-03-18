@@ -88,20 +88,30 @@ class WorkerQuests(MITMBase):
             else:
                 if distance < 200:
                     delay_used = 5
-                elif distance < 500:
-                    delay_used = 15
-                elif distance < 1000:
-                    delay_used = 30
-                elif distance < 2000:
-                    delay_used = 100
                 elif distance < 5000:
-                    delay_used = 300
+                    delay_used = 30 
                 elif distance < 10000:
-                    delay_used = 500
-                elif distance < 20000:
-                    delay_used = 1000
+                    delay_used = 120
+                elif distance < 25000:
+                    delay_used = 360
+                elif distance < 30000:
+                    delay_used = 660 
+                elif distance < 65000:
+                    delay_used = 840
+                elif distance < 81000:
+                    delay_used = 1500
+                elif distance < 100000:
+                    delay_used = 2100
+                elif distance < 250000:
+                    delay_used = 2700 
+                elif distance < 500000:
+                    delay_used = 3600 
+                elif distance < 750000:
+                    delay_used = 4680 
+                elif distance < 1000000:
+                    delay_used = 5400
                 else:
-                    delay_used = 2000
+                    delay_used = 7200 
                 log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
         else:
             log.info("main: Walking...")
