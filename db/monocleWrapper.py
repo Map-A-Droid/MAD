@@ -6,7 +6,7 @@ import requests
 
 from db.dbWrapperBase import DbWrapperBase
 import logging
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timedelta
 
 from utils.collections import Location
 from utils.s2Helper import S2Helper
@@ -813,6 +813,8 @@ class MonocleWrapper(DbWrapperBase):
 
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
+
+                    now = time.time()
 
                     log.info("%s: adding/Updating gym at gym %s with level %s ending at %s"
                              % (str(origin), str(gymid), str(level), str(raidendSec)))
