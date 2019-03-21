@@ -15,13 +15,17 @@ log = logging.getLogger(__name__)
 
 
 class MonocleWrapper(DbWrapperBase):
-    def ensure_last_updated_column(self):
-        log.info("Checking if last_updated column exists in raids table and creating it if necessary")
+    def __init__(self, args, webhook_helper):
+        super().__init__(args, webhook_helper)
 
-        result = self.__check_last_updated_column_exists()
-        if result == 1:
-            log.info("raids.last_updated already present")
-            return True
+        self.__ensure_last_updated_column_exists()
+
+    def __ensure_last_updated_column_exists(self):
+        table = "raids"
+        column = "last_updated"
+
+        if self._check_column_exists(table, column) == 1:
+            return
 
         alter_query = (
             "ALTER TABLE raids "
@@ -30,12 +34,12 @@ class MonocleWrapper(DbWrapperBase):
 
         self.execute(alter_query, commit=True)
 
-        if self.__check_last_updated_column_exists() == 1:
-            log.info("Successfully added last_updated column")
-            return True
+        if self._check_column_exists(table, column) == 1:
+            log.info("Successfully added '%s.%s' column".format(table, column))
+            return
         else:
-            log.warning("Could not add last_updated column, fallback to time_spawn")
-            return False
+            log.fatal("Couldn't create required column '%s.%s'".format(table, column))
+            sys.exit(1)
 
     def auto_hatch_eggs(self):
         log.info("{MonocleWrapper::auto_hatch_eggs} called")
@@ -867,20 +871,6 @@ class MonocleWrapper(DbWrapperBase):
 
             self.executemany(query_weather, list_of_weather, commit=True)
             return True
-
-    def __check_last_updated_column_exists(self):
-        query = (
-            "SELECT count(*) "
-            "FROM information_schema.columns "
-            "WHERE table_name = 'raids' "
-            "AND column_name = 'last_updated' "
-            "AND table_schema = %s"
-        )
-        vals = (
-            self.database,
-        )
-
-        return int(self.execute(query, vals)[0][0])
 
     def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
         if min_time_left_seconds is None or eligible_mon_ids is None:

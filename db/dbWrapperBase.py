@@ -37,7 +37,6 @@ class DbWrapperBase(ABC):
                          "port": self.port}
         self._init_pool()
 
-
     def _init_pool(self):
         log.info("Connecting pool to DB")
         self.pool_mutex.acquire()
@@ -45,6 +44,22 @@ class DbWrapperBase(ABC):
                                                                 pool_size=self.application_args.db_poolsize,
                                                                 **self.dbconfig)
         self.pool_mutex.release()
+
+    def _check_column_exists(self, table, column):
+        query = (
+            "SELECT count(*) "
+            "FROM information_schema.columns "
+            "WHERE table_name = %s "
+            "AND column_name = %s "
+            "AND table_schema = %s"
+        )
+        vals = (
+            table,
+            column,
+            self.database,
+        )
+
+        return int(self.execute(query, vals)[0][0])
 
     def close(self, conn, cursor):
         """
@@ -130,13 +145,6 @@ class DbWrapperBase(ABC):
         finally:
             self.close(conn, cursor)
             self.connection_semaphore.release()
-
-    @abstractmethod
-    def ensure_last_updated_column(self):
-        """
-        We add a last_updated column to monocle
-        """
-        pass
 
     @abstractmethod
     def auto_hatch_eggs(self):
@@ -1077,20 +1085,6 @@ class DbWrapperBase(ABC):
 
         return str(json.dumps(workerstatus, indent=4, sort_keys=True))
 
-    def check_column_exists(self, table, column):
-        query = (
-            "SELECT count(*) "
-            "FROM information_schema.columns "
-            "WHERE table_name = %s "
-            "AND column_name = %s "
-            "AND table_schema = %s"
-        )
-        vals = (
-            table, column, self.database,
-        )
-
-        return int(self.execute(query, vals)[0][0])
-
     def statistics_get_quests_count(self, days):
         log.debug('Fetching quests count from db')
         query_where = ''
@@ -1131,3 +1125,4 @@ class DbWrapperBase(ABC):
         res = self.execute(query)
 
         return res
+
