@@ -1216,3 +1216,51 @@ class MonocleWrapper(DbWrapperBase):
         now = int(time.time())
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
+
+    def statistics_get_pokemon_count(self, minutes):
+        log.debug('Fetching pokemon spawns count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %k:00:00'))" \
+                     "as timestamp"
+        if minutes:
+            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
+            query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(minutes)
+
+        query = (
+                "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings %s "
+                "group by IV, day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
+                "order by timestamp" %
+                (str(query_date), str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_gym_count(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT if (team=0, 'WHITE', if (team=1, 'BLUE', if (team=2, 'RED', 'YELLOW'))) "
+                "as Color, count(team) as Count FROM `fort_sightings` group by team"
+
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_stop_quest(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT "
+                "if(FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d') is NULL,'NO QUEST',"
+                "FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')) as Quest, "
+                "count(pokestops.external_id) as Count FROM pokestops left join trs_quest "
+                "on pokestops.external_id = trs_quest.GUID "
+                "group by FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
+
+        )
+        res = self.execute(query)
+
+        return res

@@ -50,7 +50,6 @@ def madmin_start(arg_args, arg_db_wrapper):
     areas = mapping_parser.get_areas()
     app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
 
-
 def auth_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
@@ -1002,13 +1001,117 @@ def addnew():
 def status():
     return render_template('status.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="Worker status")
 
+@app.route('/statistics', methods=['GET'])
+@auth_required
+def statistics():
+    minutes_usage = request.args.get('minutes_usage')
+    if not minutes_usage:
+        minutes_usage = 120
+    minutes_spawn = request.args.get('minutes_spawn')
+    if not minutes_spawn:
+        minutes_spawn = 120
+
+    return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
+                           minutes_usage=minutes_usage, time=conf_args.madmin_time)
 
 @app.route('/get_status', methods=['GET'])
 @auth_required
 def get_status():
     data = json.loads(db_wrapper.download_status())
-
     return jsonify(data)
+
+def datetime_from_utc_to_local(utc_datetime):
+    now_timestamp = time.time()
+    offset = datetime.datetime.fromtimestamp(now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
+    return int(utc_datetime + offset.total_seconds()) * 1000
+
+@app.route('/get_game_stats', methods=['GET'])
+@auth_required
+def game_stats():
+    minutes_usage = request.args.get('minutes_usage')
+    minutes_spawn = request.args.get('minutes_spawn')
+    # Stop
+    stop = []
+    data = db_wrapper.statistics_get_stop_quest()
+    for dat in data:
+        stop.append({'label': dat[0], 'data': dat[1]})
+
+    # Quest
+    quest = db_wrapper.statistics_get_quests_count(1)
+
+    # Usage
+    insta = {}
+    usage = []
+    idx = 0
+    usa = db_wrapper.statistics_get_usage_count(minutes_usage)
+
+    for dat in usa:
+        if 'CPU-' + dat[4] not in insta:
+            insta['CPU-' + dat[4]] = {}
+            insta['CPU-' + dat[4]]["axis"] = 1
+            insta['CPU-' + dat[4]]["data"] = []
+        if 'MEM-' + dat[4] not in insta:
+            insta['MEM-' + dat[4]] = {}
+            insta['MEM-' + dat[4]]['axis'] = 2
+            insta['MEM-' + dat[4]]["data"] = []
+        if conf_args.stat_gc:
+            if 'CO-' + dat[4] not in insta:
+                insta['CO-' + dat[4]] = {}
+                insta['CO-' + dat[4]]['axis'] = 3
+                insta['CO-' + dat[4]]["data"] = []
+
+        insta['CPU-' + dat[4]]['data'].append([dat[3] * 1000, dat[0]])
+        insta['MEM-' + dat[4]]['data'].append([dat[3] * 1000, dat[1]])
+        if conf_args.stat_gc:
+            insta['CO-' + dat[4]]['data'].append([dat[3] * 1000, dat[2]])
+
+    for label in insta:
+        usage.append({'label': label, 'data': insta[label]['data'], 'yaxis': insta[label]['axis'], 'idx': idx})
+        idx += 1
+
+    # Gym
+    gym = []
+    data = db_wrapper.statistics_get_gym_count()
+    for dat in data:
+        if dat[0] == 'WHITE':
+            color = '#999999'
+            text = 'Uncontested'
+        elif dat[0] == 'BLUE':
+            color = '#0051CF'
+            text = 'Mystic'
+        elif dat[0] == 'RED':
+            color = '#FF260E'
+            text = 'Valor'
+        elif dat[0] == 'YELLOW':
+            color = '#FECC23'
+            text = 'Instinct'
+        gym.append({'label': text, 'data': dat[1], 'color': color})
+
+    # Spawn
+    iv = []
+    noniv = []
+    sum = []
+    sumup = {}
+
+    data = db_wrapper.statistics_get_pokemon_count(minutes_spawn)
+    for dat in data:
+        if dat[2] == 1:
+            iv.append([(dat[0]*1000), dat[1]])
+        else:
+            noniv.append([(dat[0]*1000), dat[1]])
+
+        if (dat[0]*1000) in sumup:
+            sumup[(dat[0]*1000)] += dat[1]
+        else:
+            sumup[(dat[0]*1000)] = dat[1]
+
+    for dat in sumup:
+        sum.append([dat, sumup[dat]])
+
+    spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
+
+    stats = {'spawn': spawn, 'gym': gym, 'quest': quest, 'stop': stop, 'usage': usage}
+    return jsonify(stats)
 
 
 def decodeHashJson(hashJson):

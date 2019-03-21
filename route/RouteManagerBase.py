@@ -312,7 +312,7 @@ class RouteManagerBase(ABC):
 
         # first check if a location is available, if not, block until we have one...
         got_location = False
-        while not got_location:
+        while not got_location and self._is_started:
             log.debug("%s: Checking if a location is available..." % str(self.name))
             self._manager_mutex.acquire()
             got_location = (self._prio_queue is not None and len(self._prio_queue) > 0

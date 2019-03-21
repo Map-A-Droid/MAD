@@ -4,7 +4,11 @@ import os
 #os.environ['PYTHONASYNCIODEBUG'] = '1'
 import sys
 import time
-from threading import Thread
+import psutil
+from threading import Thread, active_count
+import datetime
+import calendar
+import gc
 
 from colorlog import ColoredFormatter
 from logging.handlers import RotatingFileHandler
@@ -21,9 +25,6 @@ from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 
-from ocr.pogoWindows import PogoWindows
-
-
 class LogFilter(logging.Filter):
 
     def __init__(self, level):
@@ -39,6 +40,8 @@ os.environ['LANGUAGE']=args.language
 
 console = logging.StreamHandler()
 nextRaidQueue = []
+
+REFERRERS_TO_IGNORE = [ locals(), globals(), gc.garbage ]
 
 if not args.verbose:
     console.setLevel(logging.INFO)
@@ -227,6 +230,55 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server, webhook_worker):
             log.exception(
                 'Exception occurred while updating device mappings: %s.', e)
 
+def find_referring_graphs(obj):
+    print ('Looking for references to %s' % repr(obj))
+    referrers = (r for r in gc.get_referrers(obj)
+                 if r not in REFERRERS_TO_IGNORE)
+    for ref in referrers:
+        if isinstance(ref, Graph):
+            # A graph node
+            yield ref
+        elif isinstance(ref, dict):
+            # An instance or other namespace dictionary
+            for parent in find_referring_graphs(ref):
+                yield parent
+
+def get_system_infos(db_wrapper):
+    pid = os.getpid()
+    py = psutil.Process(pid)
+    gc.set_threshold(5, 1, 1)
+
+    while not terminate_mad.is_set():
+        log.info('Starting internal Cleanup')
+        log.debug('Collecting...')
+        n = gc.collect()
+        log.info('Unreachable objects: %s' % str(n))
+        log.info('Remaining Garbage: %s ' % str(gc.garbage))
+        log.info('Running Threads: %s' % str(active_count()))
+        for obj in gc.garbage:
+            for ref in find_referring_graphs(obj):
+                ref.set_next(None)
+                del ref  # remove local reference so the node can be deleted
+            del obj  # remove local reference so the node can be deleted
+
+        # Clear references held by gc.garbage
+        log.debug('Clearing gc garbage')
+        del gc.garbage[:]
+
+        memoryUse = py.memory_info()[0] / 2. ** 30
+        cpuUse = py.cpu_percent()
+        log.info('Instance Name: %s' % str(args.status_name))
+        log.info('Memory Usage: %s' % str(memoryUse))
+        log.info('CPU Usage: %s' % str(cpuUse))
+        collected = None
+        if args.stat_gc:
+            collected = gc.collect()
+            log.info("Garbage collector: collected %d objects." % collected)
+        zero = datetime.datetime.utcnow()
+        unixnow = calendar.timegm(zero.utctimetuple())
+        db_wrapper.insert_usage(args.status_name, cpuUse, memoryUse, collected, unixnow)
+        time.sleep(args.statistic_interval)
+
 
 def load_mappings(db_wrapper):
     mapping_parser = MappingParser(db_wrapper)
@@ -255,6 +307,7 @@ if __name__ == "__main__":
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
+    db_wrapper.create_usage_database_if_not_exists()
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
@@ -329,6 +382,7 @@ if __name__ == "__main__":
                     sys.exit(1)
 
             if not args.no_ocr:
+                from ocr.pogoWindows import PogoWindows
                 pogoWindowManager = PogoWindows(args.temp_path)
 
             if ocr_enabled:
@@ -379,12 +433,25 @@ if __name__ == "__main__":
         t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper,))
         t_flask.daemon = True
         t_flask.start()
+
+    if args.statistic:
+        if args.only_ocr or args.only_scan:
+            t_usage = Thread(name='system',
+                             target=get_system_infos, args=(db_wrapper,))
+            t_usage.daemon = False
+            t_usage.start()
+        else:
+            log.warning("Dont collect system usage just for MADmin")
         
-    log.info('Starting Log Cleanup Thread....')
+    log.error('Starting Log Cleanup Thread....')
     t_cleanup = Thread(name='cleanuplogs',
-                       target=delete_old_logs(args.cleanup_age))
+                       target=delete_old_logs, args=(args.cleanup_age,))
     t_cleanup.daemon = True
     t_cleanup.start()
+
+
+
+
 
     try:
         while True:

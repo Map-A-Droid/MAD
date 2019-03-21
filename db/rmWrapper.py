@@ -560,6 +560,12 @@ class RmWrapper(DbWrapperBase):
 
         self.execute(query, data, commit=True)
 
+        self.webhook_helper.send_weather_webhook(
+            cell_id, gameplay_weather, 0, 0, weather_daytime, now_timestamp
+        )
+
+        return True
+
     def submit_mon_iv(self, origin, timestamp, encounter_proto):
         log.debug("Updating IV sent by %s" % str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
@@ -646,6 +652,8 @@ class RmWrapper(DbWrapperBase):
         log.debug("Placing query to update mon")
         self.execute(query, vals, commit=True)
         log.debug("Done updating mon in DB")
+
+        return True
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
         log.debug("{RmWrapper::submit_mons_map_proto} called with data received from %s" % str(origin))
@@ -1270,3 +1278,49 @@ class RmWrapper(DbWrapperBase):
         last_modified = '1970-01-01 00:00:00'
 
         return stop_data['fort_id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, now, name, image[0]
+
+    def statistics_get_pokemon_count(self, minutes):
+        log.debug('Fetching pokemon spawns count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %k:00:00')) as timestamp"
+        if minutes:
+            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
+            query_where = ' where disappear_time > \'%s\' ' % str(minutes)
+
+        query = (
+                "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon %s "
+                "group by IV, day(disappear_time), hour(disappear_time) order by timestamp" %
+                (str(query_date), str(query_where))
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_gym_count(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT if (team_id=0, 'WHITE', if (team_id=1, 'BLUE', if (team_id=2, 'RED', 'YELLOW'))) "
+                "as Color, count(team_id) as Count FROM `gym` group by team_id"
+
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_stop_quest(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT "
+                "if(FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d') is NULL,'NO QUEST',"
+                "FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')) as Quest, "
+                "count(pokestop.pokestop_id) as Count FROM pokestop left join trs_quest "
+                "on pokestop.pokestop_id = trs_quest.GUID "
+                "group by FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
+
+        )
+        res = self.execute(query)
+
+        return res
+

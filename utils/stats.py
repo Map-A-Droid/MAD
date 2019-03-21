@@ -5,12 +5,12 @@ import json
 
 log = logging.getLogger(__name__)
 
+
 class PlayerStats(object):
     def __init__(self, id):
         self._id = id
         self._level = 0
-        
-        
+
     def set_level(self, level):
         log.info('[%s] - set level %s' % (str(self._id), str(level)))
         self._level = int(level)
@@ -19,7 +19,7 @@ class PlayerStats(object):
     def get_level(self):
         return self._level
             
-    def _gen_player_stats(self, data):
+    def gen_player_stats(self, data):
         if 'inventory_delta' not in data:
             log.debug('{{gen_player_stats}} cannot generate new stats')
             return True
@@ -43,7 +43,7 @@ class PlayerStats(object):
                     with open(self._id + '.stats', 'w') as outfile:  
                         json.dump(data, outfile, indent=4, sort_keys=True)
                         
-    def _open_player_stats(self):
+    def open_player_stats(self):
         statsfile = Path(str(self._id) + '.stats')
         if not statsfile.is_file():
             log.error('[%s] - no Statsfile found' % (str(self._id)))
