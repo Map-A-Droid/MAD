@@ -93,6 +93,9 @@ msgstr ""
 msgid "Evolve {0} Pokemon."
 msgstr ""
 
+msgid "Evolve {0} {poke}."
+msgstr ""
+
 msgid "Use an item to evolve a Pokemon."
 msgstr ""
 

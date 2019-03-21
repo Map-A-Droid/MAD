@@ -159,8 +159,26 @@ def questtask(typeid, condition, target):
         text = _('Power up Pokemon {0} times.')
     elif typeid == 15:
         text = _("Evolve {0} Pokemon.")
-        if re.search(r"'type': 11",condition) is not None:
+        if re.search(r"'type': 11", condition) is not None:
             text = _("Use an item to evolve a Pokemon.")
+        elif re.search(r"'type': 2", condition) is not None:
+            arr['wb'] = ""
+            arr['type'] = ""
+            arr['poke'] = ""
+
+            match_object = re.search(r"'pokemon_ids': \[([0-9, ]+)\]", condition)
+            if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['poke'] = i8ln(pokemonname(pt[0]))
+                else:
+                    for ty in pt:
+                        arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
+                            '' if last == cur else ', ')
+                        cur += 1
+                text = _('Evolve {0} {poke}.')
     elif typeid == 16:
         arr['inrow'] = ""
         arr['curve'] = ""

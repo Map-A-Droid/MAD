@@ -5,6 +5,9 @@ log = logging.getLogger(__name__)
 
 
 class RouteManagerIV(RouteManagerBase):
+    def _accept_empty_route(self):
+        return True
+
     def _priority_queue_update_interval(self):
         return 60
 
@@ -12,7 +15,8 @@ class RouteManagerIV(RouteManagerBase):
         return None
 
     def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, True)
+        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
+                          nofile=False)
 
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info

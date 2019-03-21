@@ -22,6 +22,7 @@ OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 logging.getLogger('websockets.server').setLevel(logging.INFO)
 logging.getLogger('websockets.protocol').setLevel(logging.INFO)
 
+Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths, pogoWindowManager):
@@ -165,6 +166,8 @@ class WebsocketServer(object):
             else:
                 nightime_routemanager = None
             devicesettings = client_mapping["settings"]
+            if "last_location" not in devicesettings:
+                devicesettings['last_location'] = Location(0.0, 0.0)
 
             log.debug("Setting up worker for %s" % str(id))
             started = False
@@ -278,7 +281,7 @@ class WebsocketServer(object):
         while websocket_client_connection.open:
             message = None
             try:
-                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.05)
+                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.2)
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
@@ -437,6 +440,10 @@ class WebsocketServer(object):
         self.__requests_mutex.release()
 
     def update_settings(self, routemanagers, device_mappings, auths):
+        for loc in self.__device_mappings:
+            if "last_location" in self.__device_mappings[loc]['settings']:
+                device_mappings[loc]['settings']["last_location"] = \
+                    self.__device_mappings[loc]['settings']["last_location"]
         self.__current_users_mutex.acquire()
         self.__device_mappings = device_mappings
         self.__routemanagers = routemanagers

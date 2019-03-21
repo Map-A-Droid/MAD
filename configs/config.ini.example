@@ -2,7 +2,7 @@
 # Uncomment a line when you want to change its default value (Remove # at the beginning)
 # Please ensure to leave a space after the colon if a value is needed ("example-setting" "example-setting-with: value")
 # When your configuration is done, rename this file by removing the ".example" extension
-# A different config-files can be included directly in processes by "--config-file" or "-cf" and path
+# A different config-files can be included directly in processes by "--config" or "-cf" and path
 # Value without # are needed for this script
 
 # MySql Settings
@@ -69,6 +69,13 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #use_media_projection        # Use Mediaprojection for transfering images (OCR)
 #language:                   # Language for quests (default:en - others: de (more soon))
+
+# MADmin statistics
+######################
+#statistic                   # Activate system statistics
+#status-name:                # Setup name for this instance - if not set: PID of the process will be used
+#stat_gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
+#statistic_interval:         # Update interval for the usage generator in seconds (Default: 60)
 
 # MADmin
 ######################

@@ -329,6 +329,18 @@ class DbWrapperBase(ABC):
     def stop_from_db_without_quests(self, geofence_helper):
         pass
 
+    @abstractmethod
+    def statistics_get_pokemon_count(self, days):
+        pass
+
+    @abstractmethod
+    def statistics_get_gym_count(self, days):
+        pass
+
+    @abstractmethod
+    def statistics_get_stop_quest(self, days):
+        pass
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -821,10 +833,11 @@ class DbWrapperBase(ABC):
         current_time_of_day = datetime.now().replace(microsecond=0)
 
         log.debug("DbWrapperBase::retrieve_next_spawns called")
-        query = (
-            "SELECT latitude, longitude, spawndef, calc_endminsec "
-            "FROM `trs_spawn`"
-            "WHERE calc_endminsec IS NOT NULL"
+        query =(
+            "SELECT latitude, longitude, spawndef, calc_endminsec FROM trs_spawn WHERE calc_endminsec IS NOT NULL and "
+            "DATE_FORMAT(STR_TO_DATE(calc_endminsec,'%i:%s'),'%i:%s') between DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,60,30) MINUTE),'%i:%s') and DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,70,40) MINUTE),'%i:%s')"
         )
         res = self.execute(query)
         next_up = []
@@ -836,8 +849,9 @@ class DbWrapperBase(ABC):
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
             temp_date = current_time_of_day.replace(minute=minutes, second=seconds)
-            if math.floor(minutes / 10) == 0:
+            if minutes < datetime.now().minute:
                 temp_date = temp_date + timedelta(hours=1)
+
 
             if temp_date < current_time_of_day:
                 # spawn has already happened, we should've added it in the past, let's move on
@@ -913,12 +927,12 @@ class DbWrapperBase(ABC):
 
         query = (' Create table if not exists trs_status (  '
                  'origin VARCHAR(50) NOT NULL , '
-                 ' currentPos VARCHAR(50) NOT NULL, '
-                 ' lastPos VARCHAR(50) NOT NULL, '
-                 ' routePos INT(11) NOT NULL, '
-                 ' routeMax INT(11) NOT NULL, '
-                 ' routemanager VARCHAR(255) NOT NULL, '
-                 ' rebootCounter INT(11)  NOT NULL, '
+                 ' currentPos VARCHAR(50) NULL DEFAULT NULL, '
+                 ' lastPos VARCHAR(50) NULL DEFAULT NULL, '
+                 ' routePos INT(11) NULL DEFAULT NULL, '
+                 ' routeMax INT(11) NULL DEFAULT NULL, '
+                 ' routemanager VARCHAR(255) NULL DEFAULT NULL, '
+                 ' rebootCounter INT(11) NULL DEFAULT NULL, '
                  ' lastProtoDateTime VARCHAR(50) NULL DEFAULT NULL, '
                  ' lastPogoRestart VARCHAR(50) NULL DEFAULT NULL, '
                  ' init TEXT NOT NULL, '
@@ -930,6 +944,37 @@ class DbWrapperBase(ABC):
         self.execute(query, commit=True)
 
         return True
+
+    def create_usage_database_if_not_exists(self):
+        log.debug("{DbWrapperBase::create_usage_database_if_not_exists} called")
+
+        query = ('CREATE TABLE if not exists trs_usage ( '
+                 'usage_id INT(10) AUTO_INCREMENT , '
+                 'instance varchar(100) NULL DEFAULT NULL, '
+                 'cpu FLOAT NULL DEFAULT NULL , '
+                 'memory FLOAT NULL DEFAULT NULL , '
+                 'garbage INT(5) NULL DEFAULT NULL , '
+                 'timestamp INT(11) NULL DEFAULT NULL, '
+                 'PRIMARY KEY (usage_id))'
+                 )
+
+        self.execute(query, commit=True)
+
+        return True
+
+    def insert_usage(self, instance, cpu, mem, garbage, timestamp):
+        log.debug("dbWrapper::insert_usage")
+
+        query = (
+            "INSERT into trs_usage (instance, cpu, memory, garbage, timestamp) VALUES "
+            "(%s, %s, %s, %s, %s)"
+        )
+        vals = (
+            instance, cpu, mem, garbage, timestamp
+        )
+        self.execute(query, vals, commit=True)
+
+        return
 
     def save_status(self, data):
         log.debug("dbWrapper::save_status")
@@ -946,11 +991,12 @@ class DbWrapperBase(ABC):
             "init=VALUES(init), rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter)"
         )
         vals = (
-            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"], 
+            data["Origin"], str(data["CurrentPos"]), str(data["LastPos"]), data["RoutePos"], data["RouteMax"],
             data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"],
             data["Init"], data["RebootingOption"], data["RestartCounter"]
         )
         self.execute(query, vals, commit=True)
+        return
 
     def save_last_reboot(self, origin):
         log.debug("dbWrapper::save_last_reboot")
@@ -968,6 +1014,7 @@ class DbWrapperBase(ABC):
         )
 
         self.execute(query, vals, commit=True)
+        return
 
     def save_last_restart(self, origin):
         log.debug("dbWrapper::save_last_restart")
@@ -985,6 +1032,7 @@ class DbWrapperBase(ABC):
         )
 
         self.execute(query, vals, commit=True)
+        return
 
     def download_status(self):
         log.debug("dbWrapper::download_status")
@@ -1062,3 +1110,44 @@ class DbWrapperBase(ABC):
         )
         vals = (str(id),)
         self.execute(query, vals, commit=True)
+
+    def statistics_get_quests_count(self, days):
+        log.debug('Fetching quests count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %k:00:00')) * 1000 " \
+                                                                                                   "as Timestamp"
+        if days:
+            days = datetime.utcnow() - timedelta(days=days)
+            query_where = ' WHERE FROM_UNIXTIME(quest_timestamp) > \'%s\' ' % str(days)
+
+        query = (
+                "SELECT %s, count(GUID) as Count  FROM trs_quest %s "
+                "group by day(FROM_UNIXTIME(quest_timestamp)), hour(FROM_UNIXTIME(quest_timestamp))"
+                "order by quest_timestamp" %
+                (str(query_date), str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_usage_count(self, minutes=120, instance=None):
+        log.debug('Fetching usage from db')
+        query_where = ''
+
+        if minutes:
+            days = datetime.now() - timedelta(minutes=int(minutes))
+            query_where = ' WHERE FROM_UNIXTIME(timestamp) > \'%s\' ' % str(days)
+
+        if instance is not None:
+            query_where = query_where + ' and instance = \'%s\' ' % str(instance)
+
+        query = (
+                "SELECT cpu, memory, garbage, timestamp, instance FROM trs_usage %s "
+                "order by timestamp" %
+                (str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res

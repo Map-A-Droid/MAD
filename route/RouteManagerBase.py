@@ -139,9 +139,9 @@ class RouteManagerBase(ABC):
 
     @staticmethod
     def calculate_new_route(coords, max_radius, max_coords_within_radius, routefile, delete_old_route, num_procs=0):
-        if delete_old_route and os.path.exists(routefile + ".calc"):
+        if delete_old_route and os.path.exists(str(routefile) + ".calc"):
             log.debug("Deleting routefile...")
-            os.remove(routefile + ".calc")
+            os.remove(str(routefile) + ".calc")
         new_route = getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
                                  routefile=routefile)
         return new_route
@@ -272,6 +272,13 @@ class RouteManagerBase(ABC):
         :return:
         """
 
+    @abstractmethod
+    def _accept_empty_route(self):
+        """
+        The time to sleep in between consecutive updates of the priority queue
+        :return:
+        """
+
     def _filter_priority_queue_internal(self, latest):
         """
         Filter through the internal priority queue and cluster events within the timedelta and distance returned by
@@ -309,16 +316,21 @@ class RouteManagerBase(ABC):
             injection = self._location_injection.get_injection(self.mode)
 
         # first check if a location is available, if not, block until we have one...
+
         got_location = injection is not None
-        while not got_location:
+        while not got_location and self._is_started:
             log.debug("%s: Checking if a location is available..." % str(self.name))
             self._manager_mutex.acquire()
             got_location = (self._prio_queue is not None and len(self._prio_queue) > 0
-                            or (self._route is not None and len(self._route) > 0))
+                            or (self._route is not None and len(self._route) > 0)
+                            or (self._get_coords_after_finish_route() is not None and
+                                len(self._get_coords_after_finish_route()) > 0))
             self._manager_mutex.release()
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))
                 time.sleep(0.5)
+                if not self._accept_empty_route():
+                    return None
         log.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
         self._manager_mutex.acquire()
         # check priority queue for items of priority that are past our time...
@@ -351,13 +363,15 @@ class RouteManagerBase(ABC):
 
             # continue as usual
             if self._current_index_of_route < len(self._route):
-                log.info("Moving on with location %s" % self._route[self._current_index_of_route])
+                log.info("%s: Moving on with location %s [%s/%s]" % (str(self.name), self._route[self._current_index_of_route], self._current_index_of_route+1, len(self._route)))
                 next_lat = self._route[self._current_index_of_route]['lat']
                 next_lng = self._route[self._current_index_of_route]['lng']
             self._current_index_of_route += 1
-            if self.init and self._current_index_of_route >= len(self._route):
+            if self.init and self._current_index_of_route == len(self._route):
+                log.info('Reaching last coord of init route')
+            if self.init and self._current_index_of_route > len(self._route):
                 self._init_mode_rounds += 1
-            if self.init and self._current_index_of_route >= len(self._route) and \
+            if self.init and self._current_index_of_route > len(self._route) and \
                     self._init_mode_rounds >= int(self.settings.get("init_mode_rounds", 1)):
                 # we are done with init, let's calculate a new route
                 log.warning("Init of %s done, it took %s, calculating new route..."
@@ -418,7 +432,7 @@ class RouteManagerBase(ABC):
             if (var['name']) == name_area:
                 var['init'] = bool(False)
 
-        with open('mappings.json', 'w') as outfile:
+        with open('configs/mappings.json', 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
 
     def get_route_status(self):

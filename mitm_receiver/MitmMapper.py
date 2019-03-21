@@ -8,14 +8,14 @@ log = logging.getLogger(__name__)
 class MitmMapper(object):
     def __init__(self, device_mappings):
         self.__mapping = {}
-        self._playerstats = {}
+        self.playerstats = {}
         self.__mapping_mutex = Lock()
         self._device_mappings = device_mappings
         if device_mappings is not None:
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}
-                self._playerstats[origin] = PlayerStats(origin)
-                self._playerstats[origin]._open_player_stats()
+                self.playerstats[origin] = PlayerStats(origin)
+                self.playerstats[origin].open_player_stats()
 
     def get_mon_ids_iv(self, origin):
         if self._device_mappings is None or origin not in self._device_mappings.keys():

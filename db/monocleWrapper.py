@@ -408,6 +408,7 @@ class MonocleWrapper(DbWrapperBase):
             "* sin(radians(lat))"
             ")"
             ") "
+            "AS distance, forts.lat, forts.lon, forts.name, forts.url "
             "FROM forts "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
@@ -767,7 +768,6 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
         now = int(time.time())
-
         vals_forts = []
         vals_fort_sightings = []
 
@@ -836,13 +836,13 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form) "
+            "time_end, cp, move_1, move_2, form, last_updated) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
-            "form=VALUES(form)"
+            "form=VALUES(form), last_updated=VALUES(last_updated)"
         )
 
         for cell in cells:
@@ -890,8 +890,9 @@ class MonocleWrapper(DbWrapperBase):
                             raidspawnSec,
                             raidbattleSec,
                             raidendSec,
-                            cp, move_1, move_2, 
-                            form
+                            cp, move_1, move_2,
+                            form,
+                            int(now)
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -1012,7 +1013,6 @@ class MonocleWrapper(DbWrapperBase):
             gym_json['sponsor'] = sponsor
         else:
             gym_json['sponsor'] = 0
-        log.debug(gym_json)
 
         return gym_json
 
@@ -1039,13 +1039,11 @@ class MonocleWrapper(DbWrapperBase):
         display_weather_data = client_weather_data.get("display_weather", None)
         if display_weather_data is None:
             return None
-        elif time_of_day == 2 and client_weather_data["gameplay_weather"]["gameplay_condition"] == 3:
-            gameplay_weather = 13
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
 
         self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
-                                                                  time_of_day, float(received_timestamp))
+                                                 time_of_day, float(received_timestamp))
         return (
                 cell_id,
                 gameplay_weather,
@@ -1147,7 +1145,7 @@ class MonocleWrapper(DbWrapperBase):
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
                 'task': quest_task})
         return questinfo
-        
+
     def submit_pokestops_details_map_proto(self, map_proto):
         log.debug("{MonocleWrapper::submit_pokestops_details_map_proto} called")
         pokestop_args = []
@@ -1163,12 +1161,60 @@ class MonocleWrapper(DbWrapperBase):
         if pokestop_args is not None:
             self.execute(query_pokestops, pokestop_args, commit=True)
         return True
-        
+
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        now = int(time.time())
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
+
+    def statistics_get_pokemon_count(self, minutes):
+        log.debug('Fetching pokemon spawns count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %k:00:00'))" \
+                     "as timestamp"
+        if minutes:
+            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
+            query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(minutes)
+
+        query = (
+                "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings %s "
+                "group by IV, day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
+                "order by timestamp" %
+                (str(query_date), str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_gym_count(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT if (team=0, 'WHITE', if (team=1, 'BLUE', if (team=2, 'RED', 'YELLOW'))) "
+                "as Color, count(team) as Count FROM `fort_sightings` group by team"
+
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_stop_quest(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT "
+                "if(FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d') is NULL,'NO QUEST',"
+                "FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')) as Quest, "
+                "count(pokestops.external_id) as Count FROM pokestops left join trs_quest "
+                "on pokestops.external_id = trs_quest.GUID "
+                "group by FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
+
+        )
+        res = self.execute(query)
+
+        return res
