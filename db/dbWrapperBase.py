@@ -1066,21 +1066,6 @@ class DbWrapperBase(ABC):
 
         return str(json.dumps(workerstatus, indent=4, sort_keys=True))
 
-
-    def check_column_exists(self, table, column):
-        query = (
-            "SELECT count(*) "
-            "FROM information_schema.columns "
-            "WHERE table_name = %s "
-            "AND column_name = %s "
-            "AND table_schema = %s"
-        )
-        vals = (
-            table, column, self.database,
-        )
-
-        return int(self.execute(query, vals)[0][0])
-
     def statistics_get_quests_count(self, days):
         log.debug('Fetching quests count from db')
         query_where = ''
