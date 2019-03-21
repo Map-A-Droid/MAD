@@ -16,9 +16,32 @@ log = logging.getLogger(__name__)
 
 
 class RmWrapper(DbWrapperBase):
-    def ensure_last_updated_column(self):
-        log.info("{RmWrapper::ensure_last_updated_column} called, returning True since RM doesn't need it")
-        return True
+
+    def __init__(self, args, webhook_helper):
+        super().__init__(args, webhook_helper)
+
+        self.__ensure_park_column_exists()
+
+    def __ensure_park_column_exists(self):
+        table = "gym"
+        column = "park"
+
+        if self._check_column_exists(table, column) == 1:
+            return
+
+        alter_query = (
+            "ALTER TABLE gym "
+            "ADD COLUMN park tinyint(1) NULL AFTER enabled"
+        )
+
+        self.execute(alter_query, commit=True)
+
+        if self._check_column_exists(table, column) == 1:
+            log.info("Successfully added '{}.{}' column".format(table, column))
+            return
+        else:
+            log.fatal("Couldn't create required column '%s.%s'".format(table, column))
+            sys.exit(1)
 
     def auto_hatch_eggs(self):
         log.debug("{RmWrapper::auto_hatch_eggs} called")
