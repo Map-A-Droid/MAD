@@ -11,13 +11,11 @@
             "data": gridData,
             "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
             "columns": [
-				{ data: 'url', title: 'Pokestop Pic' },
-                { data: 'name', title: 'Pokestop Name' },
-				{ data: 'reward', title: 'Reward' },
-				{ data: 'reward_amount', title: ''},
-				{ data: 'quest_task', title: 'Quest'}
-                
-
+				{ data: 'url', title: 'Pic', responsivePriority: 10001 },
+                { data: 'name', title: 'Pokestop', responsivePriority: 1 },
+				{ data: 'reward', title: '', responsivePriority: 10003 },
+				{ data: 'reward_amount', title: 'Reward', responsivePriority: 2 },
+				{ data: 'quest_task', title: 'Quest', responsivePriority: 3}
             ],
             "columnDefs": [
                 {
@@ -45,10 +43,10 @@
                 $("img.lazy").lazyload();
             },
             "responsive": {{ responsive }},
-            "autoWidth": true
+            "autoWidth": false
         });
 	}
-	
+
     $(document).ready(function () {
         $("#navgyms").addClass("active");
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width=100px /><br><h2>Load..</h2>' });
