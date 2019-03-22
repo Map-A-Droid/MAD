@@ -309,10 +309,6 @@ if __name__ == "__main__":
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
-    if not db_wrapper.ensure_last_updated_column():
-        log.fatal("Missing raids.last_updated column and couldn't create it")
-        sys.exit(1)
-
     if args.clean_hash_database:
         log.info('Cleanup Hash Database and www_hash folder')
         db_wrapper.delete_hash_table('999', '')
