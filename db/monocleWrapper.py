@@ -18,7 +18,7 @@ class MonocleWrapper(DbWrapperBase):
     def __init__(self, args, webhook_helper):
         super().__init__(args, webhook_helper)
 
-        self.__ensure_last_updated_column_exists()
+        self.__ensure_columns_exist()
 
     def __ensure_columns_exist(self):
         fields = [
