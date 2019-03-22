@@ -20,26 +20,22 @@ class MonocleWrapper(DbWrapperBase):
 
         self.__ensure_last_updated_column_exists()
 
-    def __ensure_last_updated_column_exists(self):
-        table = "raids"
-        column = "last_updated"
+    def __ensure_columns_exist(self):
+        fields = [
+            {
+                "table": "raids",
+                "column": "last_updated",
+                "ctype": "int(11) NULL"
+            },
+            {
+                "table": "raids",
+                "column": "is_exclusive",
+                "ctype": "tinyint(1) NULL"
+            }
+        ]
 
-        if self._check_column_exists(table, column) == 1:
-            return
-
-        alter_query = (
-            "ALTER TABLE raids "
-            "ADD COLUMN last_updated int(11) NULL AFTER time_end"
-        )
-
-        self.execute(alter_query, commit=True)
-
-        if self._check_column_exists(table, column) == 1:
-            log.info("Successfully added '%s.%s' column".format(table, column))
-            return
-        else:
-            log.fatal("Couldn't create required column '%s.%s'".format(table, column))
-            sys.exit(1)
+        for field in fields:
+            self._check_create_column(field)
 
     def auto_hatch_eggs(self):
         log.info("{MonocleWrapper::auto_hatch_eggs} called")

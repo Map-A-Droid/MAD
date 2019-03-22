@@ -20,28 +20,24 @@ class RmWrapper(DbWrapperBase):
     def __init__(self, args, webhook_helper):
         super().__init__(args, webhook_helper)
 
-        self.__ensure_park_column_exists()
+        self.__ensure_columns_exist()
 
-    def __ensure_park_column_exists(self):
-        table = "gym"
-        column = "park"
+    def __ensure_columns_exist(self):
+        fields = [
+            {
+                "table": "raid",
+                "column": "is_exclusive",
+                "ctype": "tinyint(1) NULL"
+            },
+            {
+                "table": "gym",
+                "column": "is_ex_raid_eligible",
+                "ctype": "tinyint(1) NULL"
+            }
+        ]
 
-        if self._check_column_exists(table, column) == 1:
-            return
-
-        alter_query = (
-            "ALTER TABLE gym "
-            "ADD COLUMN park tinyint(1) NULL AFTER enabled"
-        )
-
-        self.execute(alter_query, commit=True)
-
-        if self._check_column_exists(table, column) == 1:
-            log.info("Successfully added '{}.{}' column".format(table, column))
-            return
-        else:
-            log.fatal("Couldn't create required column '%s.%s'".format(table, column))
-            sys.exit(1)
+        for field in fields:
+            self._check_create_column(field)
 
     def auto_hatch_eggs(self):
         log.debug("{RmWrapper::auto_hatch_eggs} called")
