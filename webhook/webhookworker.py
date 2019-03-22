@@ -11,8 +11,6 @@ log = logging.getLogger(__name__)
 
 
 class WebhookWorker:
-    # currently active ex raid mon id
-    __EXRAID_MON_ID = 386
     __IV_MON = []
 
     def __init__(self, args, db_wrapper, routemanagers):
@@ -128,11 +126,8 @@ class WebhookWorker:
 
         for raid in raid_data:
             # skip ex raid mon if disabled
-            if (
-                not self.__args.webhook_send_exraids
-                and raid.get("pokemon_id") is not None
-                and raid.get("pokemon_id") == self.__EXRAID_MON_ID
-            ):
+            is_exclusive = raid["is_exclusive"] is not None and raid["is_exlusive"] != 0
+            if not self.__args.webhook_send_exraids and is_exclusive:
                 continue
 
             raid_payload = {
