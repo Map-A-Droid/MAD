@@ -159,6 +159,9 @@ class WebhookWorker:
             if raid["weather_boosted_condition"] is not None:
                 raid_payload["weather"] = raid["weather_boosted_condition"]
 
+            if raid["form"] is not None:
+                raid_payload["form"] = raid["form"]
+
             # create final message
             entire_payload = {"type": "raid", "message": raid_payload}
 
