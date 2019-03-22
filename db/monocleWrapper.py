@@ -782,7 +782,7 @@ class MonocleWrapper(DbWrapperBase):
         raid_vals = []
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form, last_updated) "
+            "time_end, cp, move_1, move_2, form, last_updated, is_exclusive) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
             "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
@@ -811,6 +811,7 @@ class MonocleWrapper(DbWrapperBase):
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
                     raidbattleSec = int(gym['gym_details']['raid_info']['raid_battle'] / 1000)
 
+                    is_exclusive = gym['gym_details']['raid_info']['is_exclusive']
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
 
@@ -830,7 +831,8 @@ class MonocleWrapper(DbWrapperBase):
                             raidendSec,
                             cp, move_1, move_2,
                             form,
-                            int(now)
+                            int(now),
+                            is_exclusive
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -1087,8 +1089,8 @@ class MonocleWrapper(DbWrapperBase):
     def get_raids_changed_since(self, timestamp):
         query = (
             "SELECT forts.external_id, level, time_spawn, time_battle, time_end, "
-            "pokemon_id, cp, move_1, move_2, last_updated, form, name, url, lat, "
-            "lon, team, weather.condition "
+            "pokemon_id, cp, move_1, move_2, last_updated, form, is_exclusive, name, url, "
+            "lat, lon, team, weather.condition "
             "FROM raids "
             "LEFT JOIN fort_sightings ON raids.fort_id = fort_sightings.fort_id "
             "LEFT JOIN forts ON raids.fort_id = forts.id "
@@ -1100,8 +1102,8 @@ class MonocleWrapper(DbWrapperBase):
         ret = []
 
         for (gym_id, level, spawn, start, end, pokemon_id,
-                cp, move_1, move_2, last_scanned, form, name,
-                url, latitude, longitude, team_id,
+                cp, move_1, move_2, last_scanned, form, is_exclusive,
+                name, url, latitude, longitude, team_id,
                 weather_boosted_condition) in res:
             ret.append({
                     "gym_id": gym_id,
@@ -1120,7 +1122,8 @@ class MonocleWrapper(DbWrapperBase):
                     "latitude": latitude,
                     "longitude": longitude,
                     "team_id": team_id,
-                    "weather_boosted_condition": weather_boosted_condition
+                    "weather_boosted_condition": weather_boosted_condition,
+                    "is_exclusive": is_exclusive
                 })
 
         return ret

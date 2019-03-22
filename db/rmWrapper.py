@@ -821,11 +821,11 @@ class RmWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
-            "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned)"
+            "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned), is_exclusive=VALUES(is_exclusive)"
         )
 
         for cell in cells:
@@ -855,6 +855,7 @@ class RmWrapper(DbWrapperBase):
                     raidstart_date = datetime.utcfromtimestamp(float(raidbattleSec)).strftime(
                         "%Y-%m-%d %H:%M:%S")
 
+                    is_exclusive = gym['gym_details']['raid_info']['is_exclusive']
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
 
@@ -869,7 +870,8 @@ class RmWrapper(DbWrapperBase):
                             raidstart_date,
                             raidend_date,
                             pokemon_id, cp, move_1, move_2, now,
-                            form
+                            form,
+                            is_exclusive
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)
@@ -1137,8 +1139,8 @@ class RmWrapper(DbWrapperBase):
         ret = []
 
         for (gym_id, level, spawn, start, end, pokemon_id,
-                cp, move_1, move_2, last_scanned, form, name,
-                url, latitude, longitude, team_id,
+                cp, move_1, move_2, last_scanned, form, is_exclusive,
+                name, url, latitude, longitude, team_id,
                 weather_boosted_condition) in res:
             ret.append({
                     "gym_id": gym_id,
@@ -1157,7 +1159,8 @@ class RmWrapper(DbWrapperBase):
                     "latitude": latitude,
                     "longitude": longitude,
                     "team_id": team_id,
-                    "weather_boosted_condition": weather_boosted_condition
+                    "weather_boosted_condition": weather_boosted_condition,
+                    "is_exclusive": is_exclusive
                 })
 
         return ret
