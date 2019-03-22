@@ -9,6 +9,7 @@
     function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
             "data": gridData,
+            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
             "columns": [
 				{ data: 'url', title: 'Pokestop Pic' },
                 { data: 'name', title: 'Pokestop Name' },
