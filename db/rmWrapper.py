@@ -1124,8 +1124,6 @@ class RmWrapper(DbWrapperBase):
         return True
 
     def get_raids_changed_since(self, timestamp):
-        log.debug("{RmWrapper::get_raids_changed_since} called")
-
         query = (
             "SELECT raid.*, gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
             "gym.team_id, weather_boosted_condition "
@@ -1167,8 +1165,6 @@ class RmWrapper(DbWrapperBase):
         return ret
 
     def get_mon_changed_since(self, timestamp):
-        log.debug("{RmWrapper::get_mon_changed_since} called")
-
         query = (
             "SELECT encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, "
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
@@ -1216,8 +1212,6 @@ class RmWrapper(DbWrapperBase):
         pass
 
     def get_weather_changed_since(self, timestamp):
-        log.debug("{RmWrapper::get_weather_changed_since} called")
-
         query = (
             "SELECT * "
             "FROM weather "
@@ -1251,13 +1245,11 @@ class RmWrapper(DbWrapperBase):
         return ret
 
     def get_gyms_changed_since(self, timestamp):
-        log.debug("{RmWrapper::get_gyms_changed_since} called")
-
         query = (
             "SELECT name, description, url, gym.gym_id, team_id, "
             "guard_pokemon_id, slots_available, latitude, longitude, "
-            "total_cp, is_in_battle, gender, form, costume, "
-            "weather_boosted_condition, last_modified, gym.last_scanned "
+            "total_cp, is_in_battle, weather_boosted_condition, "
+            "last_modified, gym.last_scanned "
             "FROM gym "
             "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
             "WHERE last_modified >= %s"
@@ -1268,7 +1260,7 @@ class RmWrapper(DbWrapperBase):
         ret = []
 
         for (name, description, url, gym_id, team_id, guard_pokemon_id, slots_available,
-                latitude, longitude, total_cp, is_in_battle, gender, form, costume,
+                latitude, longitude, total_cp, is_in_battle,
                 weather_boosted_condition, last_modified, last_scanned) in res:
             ret.append({
                 "gym_id": gym_id,
@@ -1279,9 +1271,6 @@ class RmWrapper(DbWrapperBase):
                 "longitude": longitude,
                 "total_cp": total_cp,
                 "is_in_battle": is_in_battle,
-                "gender": gender,
-                "form": form,
-                "costume": costume,
                 "weather_boosted_condition": weather_boosted_condition,
                 "last_scanned": int(last_scanned.replace(tzinfo=timezone.utc).timestamp()),
                 "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),

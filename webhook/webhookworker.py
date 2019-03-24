@@ -254,8 +254,8 @@ class WebhookWorker:
                 "slots_available": gym["slots_available"],
             }
 
-            if gym["description"] is not None:
-                gym_payload["description"] = gym["description"]
+            if gym.get("description", None) is not None:
+                gym_payload["description"] = gym.get("description")
 
             if gym["url"] is not None:
                 gym_payload["url"] = gym["url"]

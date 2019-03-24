@@ -1195,7 +1195,33 @@ class MonocleWrapper(DbWrapperBase):
         return ret
 
     def get_gyms_changed_since(self, timestamp):
-        pass
+        query = (
+            "SELECT name, url, external_id, team, guard_pokemon_id, slots_available, "
+            "lat, lon, is_in_battle, updated "
+            "FROM forts "
+            "LEFT JOIN forts_sightings ON forts.id = fort_sightings.fort_id "
+            "WHERE updaterd >= %s"
+        )
+
+        res = self.execute(query, (timestamp, ))
+        ret = []
+
+        for (name, url, external_id, team, guard_pokemon_id, slots_available,
+                lat, lon, is_in_battle, updated) in res:
+            ret.append({
+                "gym_id": external_id,
+                "team_id": team,
+                "guard_pokemon_id": guard_pokemon_id,
+                "slots_available": slots_available,
+                "latitude": lat,
+                "longitude": lon,
+                "is_in_battle": is_in_battle,
+                "last_modified": updated,
+                "name": name,
+                "url": url,
+            })
+
+        return ret
 
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
