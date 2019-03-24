@@ -358,6 +358,25 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def get_raids_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_mon_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_quests_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_gyms_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_weather_changed_since(self, timestamp):
+        pass
+
     def statistics_get_pokemon_count(self, days):
         pass
 

@@ -198,7 +198,7 @@ def generate_mappingjson():
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 
-def file_watcher(db_wrapper, mitm_mapper, ws_server):
+def file_watcher(db_wrapper, mitm_mapper, ws_server, webhook_worker):
     # We're on a 60-second timer.
     refresh_time_sec = 60
     filename = 'configs/mappings.json'
@@ -221,6 +221,9 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server):
                 log.info('Propagating new mappings to all clients.')
                 ws_server.update_settings(
                     routemanagers, device_mappings, auths)
+
+                if webhook_worker is not None:
+                    webhook_worker.update_settings(routemanagers)
             else:
                 log.debug('No change found in %s.', filename)
         except Exception as e:
@@ -396,9 +399,18 @@ if __name__ == "__main__":
             t_ws.daemon = False
             t_ws.start()
 
+            webhook_worker = None
+            if args.webhook:
+                from webhook.webhookworker import WebhookWorker
+
+                webhook_worker = WebhookWorker(args, db_wrapper, routemanagers)
+                t_whw = Thread(name="webhook_worker", target=webhook_worker.run_worker)
+                t_whw.daemon = False
+                t_whw.start()
+
             log.info("Starting file watcher for mappings.json changes.")
             t_file_watcher = Thread(name='file_watcher', target=file_watcher,
-                                    args=(db_wrapper, mitm_mapper, ws_server))
+                                    args=(db_wrapper, mitm_mapper, ws_server, webhook_worker))
             t_file_watcher.daemon = False
             t_file_watcher.start()
 
