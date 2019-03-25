@@ -161,7 +161,7 @@ def parseArgs():
                         help='Activate quest webhook support')
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
                         help='Activate gym webhook support')
-    parser.add_argument('-whser', '--webhook_send_exraids', action='store_true', default=False,
+    parser.add_argument('-whser', '--webhook_submit_exraids', action='store_true', default=False,
                         help='Send Ex-raids to the webhook if detected')
     parser.add_argument('-whst', '--webhook_start_time', default=0,
                         help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
