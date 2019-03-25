@@ -552,7 +552,8 @@ class RmWrapper(DbWrapperBase):
         if geofence_helper is None:
             log.error("No geofence_helper! Not fetching gyms.")
             return []
-            #(maxLat, minLat, maxLon, minLon)
+
+        #(maxLat, minLat, maxLon, minLon)
         log.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
         query = (
@@ -563,9 +564,6 @@ class RmWrapper(DbWrapperBase):
             "longitude <= %s AND longitude >= %s"
         )
         res = self.execute(query, rectangle)
-
-
-
         list_of_coords = []
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
