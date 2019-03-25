@@ -1200,7 +1200,7 @@ class MonocleWrapper(DbWrapperBase):
             "lat, lon, is_in_battle, updated "
             "FROM forts "
             "LEFT JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
-            "WHERE updaterd >= %s"
+            "WHERE updated >= %s"
         )
 
         res = self.execute(query, (timestamp, ))
