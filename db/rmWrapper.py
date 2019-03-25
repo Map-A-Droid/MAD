@@ -572,7 +572,7 @@ class RmWrapper(DbWrapperBase):
         list_of_coords = []
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
-
+        log.debug("Got ", len(list_of_coords), " coordinates")
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
             return geofenced_coords
