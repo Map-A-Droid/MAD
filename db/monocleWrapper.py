@@ -1199,7 +1199,7 @@ class MonocleWrapper(DbWrapperBase):
             "SELECT name, url, external_id, team, guard_pokemon_id, slots_available, "
             "lat, lon, is_in_battle, updated "
             "FROM forts "
-            "LEFT JOIN forts_sightings ON forts.id = fort_sightings.fort_id "
+            "LEFT JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
             "WHERE updaterd >= %s"
         )
 
