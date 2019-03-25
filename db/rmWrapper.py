@@ -1125,7 +1125,9 @@ class RmWrapper(DbWrapperBase):
 
     def get_raids_changed_since(self, timestamp):
         query = (
-            "SELECT raid.*, gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
+            "SELECT raid.gym_id, raid.level, raid.spawn, raid.start, raid.end, raid.pokemon_id, "
+            "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, "
+            "gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
             "gym.team_id, weather_boosted_condition "
             "FROM raid "
             "LEFT JOIN gymdetails ON gymdetails.gym_id = raid.gym_id "
