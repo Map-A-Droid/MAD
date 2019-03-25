@@ -127,7 +127,7 @@ class WebhookWorker:
         for raid in raid_data:
             # skip ex raid mon if disabled
             is_exclusive = raid["is_exclusive"] is not None and raid["is_exclusive"] != 0
-            if not self.__args.webhook_send_exraids and is_exclusive:
+            if not self.__args.webhook_submit_exraids and is_exclusive:
                 continue
 
             raid_payload = {
