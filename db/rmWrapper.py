@@ -549,40 +549,31 @@ class RmWrapper(DbWrapperBase):
 
     def gyms_from_db(self, geofence_helper):
         log.debug("{RmWrapper::gyms_from_db} called")
-        if geofence_helper is not None:
+        if geofence_helper is None:
+            log.error("No geofence_helper! Not fetching gyms.")
+            return []
             #(maxLat, minLat, maxLon, minLon)
-            log.debug("Filtering with rectangle")
-            rectangle = geofence_helper.get_polygon_from_fence()
-            query = (
-                "SELECT latitude, longitude "
-                "FROM gym "
-                "WHERE "
-                "latitude <= %s AND latitude >= %s AND "
-                "longitude <= %s AND longitude >= %s"
-            )
-            res = self.execute(query, rectangle)
-        else:
-            query = (
-                "SELECT latitude, longitude "
-                "FROM gym "
-            )
-            res = self.execute(query)
+        log.debug("Filtering with rectangle")
+        rectangle = geofence_helper.get_polygon_from_fence()
+        query = (
+            "SELECT latitude, longitude "
+            "FROM gym "
+            "WHERE "
+            "latitude <= %s AND latitude >= %s AND "
+            "longitude <= %s AND longitude >= %s"
+        )
+        res = self.execute(query, rectangle)
+
 
 
         list_of_coords = []
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
         log.debug("Got ", len(list_of_coords), " coordinates")
-        if geofence_helper is not None:
-            geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
-            return geofenced_coords
-        else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+
+        geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
+        return geofenced_coords
+
 
     def stops_from_db(self, geofence_helper):
         log.debug("{RmWrapper::stops_from_db} called")
