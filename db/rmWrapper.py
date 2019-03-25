@@ -860,7 +860,7 @@ class RmWrapper(DbWrapperBase):
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
 
-                    log.info("Adding/Updating gym at gym %s with level %s ending at %s"
+                    log.info("Adding/Updating gym %s with level %s ending at %s"
                              % (str(gymid), str(level), str(raidend_date)))
 
                     raid_args.append(

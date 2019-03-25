@@ -784,7 +784,7 @@ class MonocleWrapper(DbWrapperBase):
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
             "time_end, cp, move_1, move_2, form, last_updated, is_exclusive) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
@@ -817,7 +817,7 @@ class MonocleWrapper(DbWrapperBase):
 
                     now = time.time()
 
-                    log.info("%s: adding/Updating gym at gym %s with level %s ending at %s"
+                    log.info("%s: adding/Updating gym %s with level %s ending at %s"
                              % (str(origin), str(gymid), str(level), str(raidendSec)))
 
                     raid_vals.append(
