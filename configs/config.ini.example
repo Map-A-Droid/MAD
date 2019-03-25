@@ -93,7 +93,9 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 ######################
 
 #webhook                     # Activate support for webhook
-#webhook_url:                # URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*
+#webhook_url:                # webhook endpoint (multiple seperated by comma)
+                             #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
+                             #  possible types are: pokemon, raid, gym, weather
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
 #weather_webhook             # Activate support for weather webhook
 #pokemon_webhook             # Activate support for pokemon webhook
