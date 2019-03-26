@@ -23,6 +23,9 @@ class MITMBase(WorkerBase):
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
 
+        self._latest_encounter_update = 0
+        self._encounter_ids = {}
+
         #if not NoOcr:
         #    from ocr.pogoWindows import PogoWindows
         #    self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)

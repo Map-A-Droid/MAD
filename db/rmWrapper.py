@@ -594,8 +594,7 @@ class RmWrapper(DbWrapperBase):
             "UNIX_TIMESTAMP(last_modified) > %s "
 
         )
-        #"disappear_time > CONVERT_TZ(NOW(), 'US/Pacific', 'UTC') "
-        #            "last_modified > %s "
+
         params = rectangle
         params = params + (latest, )
         res = self.execute(query, params)    
@@ -604,10 +603,8 @@ class RmWrapper(DbWrapperBase):
             list_of_coords.append([latitude, longitude, encounter_id, disappear_time, last_modified])
             latest = max(latest, last_modified)
 
-        log.debug("Got %d coordinates in this rect (minLat, minLon, maxLat, maxLon, last_modified): %s", len(list_of_coords), str(params))
-
         encounter_id_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
-        log.debug("Got %d coordinates in this rect (minLat, minLon, maxLat, maxLon, last_modified): %s", len(encounter_id_coords), str(params))
+        log.debug("Got %d encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, last_modified): %s", len(encounter_id_coords), str(params))
         encounter_id_infos = {}
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time
