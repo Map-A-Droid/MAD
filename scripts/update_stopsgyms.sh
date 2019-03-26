@@ -46,11 +46,11 @@ update_rm(){
 while read -r eid ;do # delete pokestops that are now gyms
  query "delete from pokestop where pokestop_id='$eid'"
  echo "deleted pokestop with external_id $eid"
-done < <(query "select pokestop_id from pokestop as p join gym as g on p.pokestop_id=g.gym_id where g.last_scanned > p.last_updated)")
+done < <(query "select pokestop_id from pokestop as p join gym as g on p.pokestop_id=g.gym_id where g.last_scanned > p.last_updated")
 while read -r eid ;do # delete gyms that are now pokestops
  query "delete from gym where gym_id='$eid'"
  echo "deleted gym with external_id $eid"
-done < <(query "select gym_id from gym as g join pokestop as p on p.pokestop_id=g.gym_id where g.last_scanned < p.last_updated)")
+done < <(query "select gym_id from gym as g join pokestop as p on p.pokestop_id=g.gym_id where g.last_scanned < p.last_updated")
 }
 
 case "$dbtype" in
