@@ -6,6 +6,7 @@ import time
 from utils.gamemechanicutil import calculate_mon_level
 from utils.gamemechanicutil import get_raid_boss_cp
 from utils.s2Helper import S2Helper
+from utils.madGlobals import terminate_mad
 
 log = logging.getLogger(__name__)
 
@@ -278,42 +279,41 @@ class WebhookWorker:
 
     def run_worker(self):
         log.info("Starting webhook worker thread")
-        try:
-            while True:
-                # the payload that is about to be sent
-                full_payload = []
 
-                # raids
-                raids = self.__prepare_raid_data(
-                    self.__db_wrapper.get_raids_changed_since(self.__last_check)
+        while not terminate_mad.is_set():
+            # the payload that is about to be sent
+            full_payload = []
+
+            # raids
+            raids = self.__prepare_raid_data(
+                self.__db_wrapper.get_raids_changed_since(self.__last_check)
+            )
+            full_payload += raids
+
+            # weather
+            if self.__args.weather_webhook:
+                weather = self.__prepare_weather_data(
+                    self.__db_wrapper.get_weather_changed_since(self.__last_check)
                 )
-                full_payload += raids
+                full_payload += weather
 
-                # weather
-                if self.__args.weather_webhook:
-                    weather = self.__prepare_weather_data(
-                        self.__db_wrapper.get_weather_changed_since(self.__last_check)
-                    )
-                    full_payload += weather
+            # gyms
+            if self.__args.gym_webhook:
+                gyms = self.__prepare_gyms_data(
+                    self.__db_wrapper.get_gyms_changed_since(self.__last_check)
+                )
+                full_payload += gyms
 
-                # gyms
-                if self.__args.gym_webhook:
-                    gyms = self.__prepare_gyms_data(
-                        self.__db_wrapper.get_gyms_changed_since(self.__last_check)
-                    )
-                    full_payload += gyms
+            if self.__args.pokemon_webhook:
+                mon = self.__prepare_mon_data(
+                    self.__db_wrapper.get_mon_changed_since(self.__last_check)
+                )
+                full_payload += mon
 
-                if self.__args.pokemon_webhook:
-                    mon = self.__prepare_mon_data(
-                        self.__db_wrapper.get_mon_changed_since(self.__last_check)
-                    )
-                    full_payload += mon
+            # send our payload
+            self.__send_webhook(full_payload)
 
-                # send our payload
-                self.__send_webhook(full_payload)
+            self.__last_check = int(time.time())
+            time.sleep(self.__worker_interval_sec)
 
-                self.__last_check = int(time.time())
-                time.sleep(self.__worker_interval_sec)
-        except KeyboardInterrupt:
-            # graceful exit
-            pass
+        log.info("Stopping webhook worker thread")
