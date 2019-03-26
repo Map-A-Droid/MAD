@@ -488,6 +488,10 @@ class MonocleWrapper(DbWrapperBase):
                 to_return[i][1] = list_of_coords[i][1]
             return to_return
 
+    def update_encounters_from_db(self, geofence_helper, latest=0):
+        #TODO: only dummy implementation
+        return 0, {}
+        
     def stops_from_db(self, geofence_helper):
         log.info('Downloading pokestop coords from DB')
 
