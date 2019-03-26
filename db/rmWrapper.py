@@ -553,25 +553,66 @@ class RmWrapper(DbWrapperBase):
             log.error("No geofence_helper! Not fetching gyms.")
             return []
 
-        #(maxLat, minLat, maxLon, minLon)
+        #(minLat, minLon, maxLat, maxLon)
         log.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
         query = (
             "SELECT latitude, longitude "
             "FROM gym "
             "WHERE "
-            "latitude <= %s AND latitude >= %s AND "
-            "longitude <= %s AND longitude >= %s"
+            "latitude >= %s AND longitude >= %s AND "
+            "latitude <= %s AND longitude <= %s"
         )
         res = self.execute(query, rectangle)
         list_of_coords = []
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
-        log.debug("Got ", len(list_of_coords), " coordinates")
+        log.debug("Got %d coordinates in this rect (minLat, minLon, maxLat, maxLon): %s", len(list_of_coords), str(rectangle))
 
         geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
         return geofenced_coords
 
+
+    def update_encounters_from_db(self, geofence_helper, latest=0):
+        log.debug("{RmWrapper::update_encounters_from_db} called")
+        if geofence_helper is None:
+            log.error("No geofence_helper! Not fetching gyms.")
+            return 0, []
+        
+        log.debug("Filtering with rectangle")
+        rectangle = geofence_helper.get_polygon_from_fence()
+        query = (
+            "SELECT latitude, longitude, encounter_id, "
+            "UNIX_TIMESTAMP(CONVERT_TZ(disappear_time, '+00:00', @@global.time_zone)), "
+            "UNIX_TIMESTAMP(CONVERT_TZ(last_modified, '+00:00', @@global.time_zone)) "
+            "FROM pokemon "
+            "WHERE "
+            "latitude >= %s AND longitude >= %s AND "
+            "latitude <= %s AND longitude <= %s AND "
+            "cp IS NOT NULL AND "
+            "disappear_time > UTC_TIMESTAMP() AND "
+            "UNIX_TIMESTAMP(last_modified) > %s "
+
+        )
+        #"disappear_time > CONVERT_TZ(NOW(), 'US/Pacific', 'UTC') "
+        #            "last_modified > %s "
+        params = rectangle
+        params = params + (latest, )
+        res = self.execute(query, params)    
+        list_of_coords = []
+        for (latitude, longitude, encounter_id, disappear_time, last_modified) in res:
+            list_of_coords.append([latitude, longitude, encounter_id, disappear_time, last_modified])
+            latest = max(latest, last_modified)
+
+        log.debug("Got %d coordinates in this rect (minLat, minLon, maxLat, maxLon, last_modified): %s", len(list_of_coords), str(params))
+
+        encounter_id_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
+        log.debug("Got %d coordinates in this rect (minLat, minLon, maxLat, maxLon, last_modified): %s", len(encounter_id_coords), str(params))
+        encounter_id_infos = {}
+        for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
+            encounter_id_infos[encounter_id] = disappear_time
+            
+        return latest, encounter_id_infos
 
     def stops_from_db(self, geofence_helper):
         log.debug("{RmWrapper::stops_from_db} called")

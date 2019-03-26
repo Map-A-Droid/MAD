@@ -19,6 +19,8 @@ class WorkerMITM(MITMBase):
         pass
 
     def _cleanup(self):
+        self._latest_encounter_update = 0
+        self._encounter_ids = []
         # no additional cleanup in MITM yet
         pass
 
@@ -163,6 +165,34 @@ class WorkerMITM(MITMBase):
             ids_iv = {}
             scanmode = "nothing"
         injected_settings["scanmode"] = scanmode
+        
+        #if iv ids are specified we will sync the workers encountered ids to newest time.
+        if ids_iv:
+            encounter_ids = {}
+            (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(routemanager.geofence_helper, self._latest_encounter_update)
+            if encounter_ids:
+                log.debug("Found %d new encounter_ids", len(encounter_ids))
+                for encounter_id, disappear in encounter_ids.items():
+                    log.debug("id: %d, despawn: %d", encounter_id, disappear)
+                    #disappear.("%B %d, %Y %H:%M:%S"))
+            self._encounter_ids = {**encounter_ids, **self._encounter_ids}
+            max_age = time.time()
+
+            remove = []
+            for key, value in self._encounter_ids.items():
+                log.debug("##################################################### disapear time: %d removing: %d", value, max_age)
+                if (value < max_age):
+                    remove.append(key)
+                    log.debug("##################################################### removing encounterid: %d ###################################################################", key)
+
+            for key in remove:
+                del self._encounter_ids[key]
+            
+            log.debug("Encounter list len: %d", len(self._encounter_ids))
+            #TODO: here we have the latest update of encountered mons.
+            #self._encounter_ids contains the complete dict.
+            #encounter_ids only contains the newest update.
+                
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="ids_iv",
                                         values_dict=ids_iv)
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",

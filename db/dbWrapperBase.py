@@ -269,6 +269,14 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def update_encounters_from_db(self, geofence_helper, latest=0):
+        """
+        Retrieve all encountered ids inside the geofence.
+        :return: the new value of latest and a dict like encounter_id: disappear_time
+        """
+        pass
+
+    @abstractmethod
     def stops_from_db(self, geofence_helper):
         """
         Retrieve all the pokestops valid within the area set by geofence_helper

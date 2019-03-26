@@ -53,6 +53,9 @@ class WorkerBase(ABC):
         self._screen_y = 0
         self._lastStart = ""
         self._pogoWindowManager = pogoWindowManager
+        
+        self._latest_encounter_update = 0
+        self._encounter_ids = {}
 
         self.current_location = self._devicesettings.get("last_location", None)
         if self.current_location is None:
