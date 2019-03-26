@@ -58,7 +58,6 @@ class WebhookWorker:
 
                 for payloadData in payload:
                     if payloadData["type"] in subTypes:
-                        log.debug("Payload to add: %s" % str(payloadData))
                         payloadToSend.append(payloadData)
             else:
                 payloadToSend = payload

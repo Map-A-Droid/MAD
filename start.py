@@ -25,6 +25,7 @@ from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 
+
 class LogFilter(logging.Filter):
 
     def __init__(self, level):
@@ -36,12 +37,12 @@ class LogFilter(logging.Filter):
 
 
 args = parseArgs()
-os.environ['LANGUAGE']=args.language
+os.environ['LANGUAGE'] = args.language
 
 console = logging.StreamHandler()
 nextRaidQueue = []
 
-REFERRERS_TO_IGNORE = [ locals(), globals(), gc.garbage ]
+REFERRERS_TO_IGNORE = [locals(), globals(), gc.garbage]
 
 if not args.verbose:
     console.setLevel(logging.INFO)
@@ -100,7 +101,7 @@ def set_log_and_verbosity(log):
     if not os.path.exists(args.log_path):
         os.mkdir(args.log_path)
     if not args.no_file_logs:
-        
+
         filename = os.path.join(args.log_path, args.log_filename)
         if not args.log_rotation:
             filelog = logging.FileHandler(filename)
@@ -149,6 +150,7 @@ def install_thread_excepthook():
                 sys.excepthook(exc_type, exc_value, exc_trace)
     Thread.run = run
 
+
 def start_ocr_observer(args, db_helper):
     from ocr.fileObserver import checkScreenshot
     observer = Observer()
@@ -166,8 +168,7 @@ def delete_old_logs(minutes):
         log.info('delete_old_logs: Search/Delete logs older than ' + str(minutes) + ' minutes')
 
         now = time.time()
-        only_files = []
-        
+
         logpath = args.log_path
 
         log.debug('delete_old_logs: Log Folder: ' + str(logpath))
@@ -230,8 +231,9 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server, webhook_worker):
             log.exception(
                 'Exception occurred while updating device mappings: %s.', e)
 
+
 def find_referring_graphs(obj):
-    print ('Looking for references to %s' % repr(obj))
+    print('Looking for references to %s' % repr(obj))
     referrers = (r for r in gc.get_referrers(obj)
                  if r not in REFERRERS_TO_IGNORE)
     for ref in referrers:
@@ -243,6 +245,7 @@ def find_referring_graphs(obj):
             for parent in find_referring_graphs(ref):
                 yield parent
 
+
 def get_system_infos(db_wrapper):
     pid = os.getpid()
     py = psutil.Process(pid)
@@ -252,9 +255,8 @@ def get_system_infos(db_wrapper):
         log.info('Starting internal Cleanup')
         log.debug('Collecting...')
         n = gc.collect()
-        log.info('Unreachable objects: %s' % str(n))
-        log.info('Remaining Garbage: %s ' % str(gc.garbage))
-        log.info('Running Threads: %s' % str(active_count()))
+        log.info('Unreachable objects: %s - Remaining garbage: %s - Running threads: %s' % (str(n), str(gc.garbage), str(active_count())))
+
         for obj in gc.garbage:
             for ref in find_referring_graphs(obj):
                 ref.set_next(None)
@@ -267,9 +269,7 @@ def get_system_infos(db_wrapper):
 
         memoryUse = py.memory_info()[0] / 2. ** 30
         cpuUse = py.cpu_percent()
-        log.info('Instance Name: %s' % str(args.status_name))
-        log.info('Memory Usage: %s' % str(memoryUse))
-        log.info('CPU Usage: %s' % str(cpuUse))
+        log.info('Instance Name: "%s" - Memory usage: %s - CPU usage: %s' % (str(args.status_name), str(memoryUse), str(cpuUse)))
         collected = None
         if args.stat_gc:
             collected = gc.collect()
@@ -342,7 +342,7 @@ if __name__ == "__main__":
             if not args.with_madmin:
                 log.fatal("No mappings.json found - start madmin with with_madmin in config or copy example")
                 sys.exit(1)
-                
+
             log.fatal("No mappings.json found - starting setup mode with madmin.")
             log.fatal("Open Madmin (ServerIP with Port " + str(args.madmin_port) + ") - 'Mapping Editor' and restart.")
             generate_mappingjson()
@@ -392,7 +392,7 @@ if __name__ == "__main__":
             t_mitm.daemon = True
             t_mitm.start()
 
-            log.info('Starting scanner....')
+            log.info('Starting scanner')
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper,
                                         routemanagers, device_mappings, auths, pogoWindowManager)
             t_ws = Thread(name='scanner', target=ws_server.start_server)
@@ -419,7 +419,7 @@ if __name__ == "__main__":
 
         MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
-        log.info('Starting OCR Thread....')
+        log.info('Starting OCR worker')
         t_observ = Thread(name='observer', target=start_ocr_observer, args=(args, db_wrapper,))
         t_observ.daemon = True
         t_observ.start()
@@ -438,13 +438,12 @@ if __name__ == "__main__":
             t_usage.start()
         else:
             log.warning("Dont collect system usage just for MADmin")
-        
-    log.error('Starting Log Cleanup Thread....')
+
+    log.info('Starting log cleanup worker')
     t_cleanup = Thread(name='cleanuplogs',
                        target=delete_old_logs, args=(args.cleanup_age,))
     t_cleanup.daemon = True
     t_cleanup.start()
-
 
     try:
         while True:

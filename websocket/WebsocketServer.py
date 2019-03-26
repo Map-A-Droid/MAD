@@ -24,6 +24,7 @@ logging.getLogger('websockets.protocol').setLevel(logging.INFO)
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
+
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths, pogoWindowManager):
         self.__current_users = {}
@@ -61,8 +62,8 @@ class WebsocketServer(object):
         for device in self.__device_mappings.keys():
             allowed_origins.append(device)
 
-        log.info("Device mappings: %s" % str(self.__device_mappings))
-        log.info("Allowed origins derived: %s" % str(allowed_origins))
+        log.debug("Device mappings: %s" % str(self.__device_mappings))
+        log.debug("Allowed origins derived: %s" % str(allowed_origins))
 
         asyncio.set_event_loop(self.__loop)
         self.__loop.run_until_complete(
