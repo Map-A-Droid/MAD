@@ -152,7 +152,7 @@ def parseArgs():
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
-                        help='URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*')
+                        help='URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
@@ -161,6 +161,10 @@ def parseArgs():
                         help='Activate quest webhook support')
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
                         help='Activate gym webhook support')
+    parser.add_argument('-whser', '--webhook_submit_exraids', action='store_true', default=False,
+                        help='Send Ex-raids to the webhook if detected')
+    parser.add_argument('-whst', '--webhook_start_time', default=0,
+                        help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
