@@ -1,7 +1,6 @@
 import glob
 import logging
 import os
-#os.environ['PYTHONASYNCIODEBUG'] = '1'
 import sys
 import time
 import psutil
@@ -25,62 +24,18 @@ from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 
+log = logging.getLogger()
+args = parseArgs()
+os.environ['LANGUAGE'] = args.language
+
 
 class LogFilter(logging.Filter):
-
     def __init__(self, level):
         super().__init__()
         self.level = level
 
     def filter(self, record):
         return record.levelno < self.level
-
-
-args = parseArgs()
-os.environ['LANGUAGE'] = args.language
-
-console = logging.StreamHandler()
-nextRaidQueue = []
-
-REFERRERS_TO_IGNORE = [locals(), globals(), gc.garbage]
-
-if not args.verbose:
-    console.setLevel(logging.INFO)
-
-formatter = ColoredFormatter(
-    '%(log_color)s [%(asctime)s] [%(threadName)16s] [%(module)14s:%(lineno)d]' +
-    ' [%(levelname)8s] %(message)s',
-    datefmt='%m-%d %H:%M:%S',
-    reset=True,
-    log_colors={
-        'DEBUG': 'purple',
-        'INFO': 'cyan',
-        'WARNING': 'yellow',
-        'ERROR': 'red',
-        'CRITICAL': 'red,bg_white',
-    },
-    secondary_log_colors={},
-    style='%'
-)
-
-console.setFormatter(formatter)
-
-# Redirect messages lower than WARNING to stdout
-stdout_hdlr = logging.StreamHandler(sys.stdout)
-stdout_hdlr.setFormatter(formatter)
-log_filter = LogFilter(logging.WARNING)
-stdout_hdlr.addFilter(log_filter)
-stdout_hdlr.setLevel(5)
-
-# Redirect messages equal or higher than WARNING to stderr
-stderr_hdlr = logging.StreamHandler(sys.stderr)
-stderr_hdlr.setFormatter(formatter)
-stderr_hdlr.setLevel(logging.WARNING)
-
-log = logging.getLogger()
-
-log.addHandler(stdout_hdlr)
-log.addHandler(stderr_hdlr)
 
 
 def handle_exception(exc_type, exc_value, exc_traceback):
@@ -95,12 +50,41 @@ sys.excepthook = handle_exception
 
 
 def set_log_and_verbosity(log):
-    # Always write to log file.
-    args = parseArgs()
-    # Create directory for log files.
-    if not os.path.exists(args.log_path):
-        os.mkdir(args.log_path)
+    formatter = ColoredFormatter(
+        '%(log_color)s [%(asctime)s] [%(threadName)16s] [%(module)14s:%(lineno)d]' +
+        ' [%(levelname)8s] %(message)s',
+        datefmt='%m-%d %H:%M:%S',
+        reset=True,
+        log_colors={
+            'DEBUG': 'purple',
+            'INFO': 'cyan',
+            'WARNING': 'yellow',
+            'ERROR': 'red',
+            'CRITICAL': 'red,bg_white',
+        },
+        secondary_log_colors={},
+        style='%'
+    )
+
+    # Redirect messages lower than WARNING to stdout
+    stdout_hdlr = logging.StreamHandler(sys.stdout)
+    stdout_hdlr.setFormatter(formatter)
+    log_filter = LogFilter(logging.WARNING)
+    stdout_hdlr.addFilter(log_filter)
+    stdout_hdlr.setLevel(5)
+
+    # Redirect messages equal or higher than WARNING to stderr
+    stderr_hdlr = logging.StreamHandler(sys.stderr)
+    stderr_hdlr.setFormatter(formatter)
+    stderr_hdlr.setLevel(logging.WARNING)
+
+    log.addHandler(stdout_hdlr)
+    log.addHandler(stderr_hdlr)
+
     if not args.no_file_logs:
+        # Create directory for log files.
+        if not os.path.exists(args.log_path):
+            os.mkdir(args.log_path)
 
         filename = os.path.join(args.log_path, args.log_filename)
         if not args.log_rotation:
@@ -109,7 +93,7 @@ def set_log_and_verbosity(log):
             filelog = RotatingFileHandler(filename, maxBytes=args.log_rotation_file_size,
                                           backupCount=args.log_rotation_backup_count)
         filelog.setFormatter(logging.Formatter(
-            '%(asctime)s [%(threadName)18s][%(module)14s][%(levelname)8s] ' +
+            '%(asctime)s [%(threadName)18s][%(module)14s:%(lineno)d][%(levelname)8s] ' +
             '%(message)s'))
         log.addHandler(filelog)
 
@@ -233,6 +217,8 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server, webhook_worker):
 
 
 def find_referring_graphs(obj):
+    REFERRERS_TO_IGNORE = [locals(), globals(), gc.garbage]
+
     print('Looking for references to %s' % repr(obj))
     referrers = (r for r in gc.get_referrers(obj)
                  if r not in REFERRERS_TO_IGNORE)
