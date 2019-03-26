@@ -88,11 +88,6 @@ class WebsocketServer(object):
             else:
                 self.__current_users_mutex.release()
                 time.sleep(1)
-        for routemanager in self.__routemanagers.keys():
-            area = self.__routemanagers.get(routemanager, None)
-            if area is None:
-                continue
-            area["routemanager"].stop_routemanager()
 
         if self.__loop is not None:
             self.__loop.call_soon_threadsafe(self.__loop.stop)
@@ -375,12 +370,12 @@ class WebsocketServer(object):
         next_message = OutgoingMessage(id, to_be_sent)
         self.__send_queue.put(next_message)
 
-    def send_and_wait(self, id, worker_instance, message, timeout):
+    def send_and_wait(self, id, message, timeout):
         log.debug("%s sending command: %s" % (str(id), message.strip()))
         self.__current_users_mutex.acquire()
         user_entry = self.__current_users.get(id, None)
         self.__current_users_mutex.release()
-        if user_entry is None or user_entry[1] != worker_instance:
+        if user_entry is None:
             raise WebsocketWorkerRemovedException
 
         message_id = self.__get_new_message_id()
@@ -450,8 +445,6 @@ class WebsocketServer(object):
                 device_mappings[loc]['settings']["last_location"] = \
                     self.__device_mappings[loc]['settings']["last_location"]
         self.__current_users_mutex.acquire()
-        # save reference to old routemanagers to stop them
-        old_routemanagers = routemanagers
         self.__device_mappings = device_mappings
         self.__routemanagers = routemanagers
         self.__auths = auths
@@ -459,8 +452,3 @@ class WebsocketServer(object):
             log.info('Stopping worker %s to apply new mappings.', id)
             worker[1].stop_worker()
         self.__current_users_mutex.release()
-        for routemanager in old_routemanagers.keys():
-            area = routemanagers.get(routemanager, None)
-            if area is None:
-                continue
-            area["routemanager"].stop_routemanager()

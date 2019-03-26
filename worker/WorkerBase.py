@@ -28,7 +28,7 @@ class WorkerBase(ABC):
         self._route_manager_nighttime = route_manager_nighttime
         self._route_manager_last_time = None
         self._websocket_handler = websocket_handler
-        self._communicator = Communicator(websocket_handler, id, self, args.websocket_command_timeout)
+        self._communicator = Communicator(websocket_handler, id, args.websocket_command_timeout)
         self._id = id
         self._applicationArgs = args
         self._last_known_state = last_known_state
@@ -227,7 +227,7 @@ class WorkerBase(ABC):
         if self._timer is not None:
             log.info("Stopping switch timer")
             self._timer.stop_switch()
-        self._communicator.cleanup_websocket()
+        self._communicator.cleanup_websocket(self)
         log.info("Internal cleanup of %s finished" % str(self._id))
 
     def _main_work_thread(self):

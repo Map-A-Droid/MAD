@@ -80,6 +80,9 @@ class MITMReceiver(object):
             t.start()
             self.worker_threads.append(t)
 
+    def __del__(self):
+        self.stop_receiver()
+
     def stop_receiver(self):
         global application_args
         self._data_queue.join()
