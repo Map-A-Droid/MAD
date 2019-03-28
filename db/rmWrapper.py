@@ -546,16 +546,15 @@ class RmWrapper(DbWrapperBase):
         rectangle = geofence_helper.get_polygon_from_fence()
         query = (
             "SELECT latitude, longitude, encounter_id, "
-            "UNIX_TIMESTAMP(CONVERT_TZ(disappear_time, '+00:00', @@global.time_zone)), "
+            "UNIX_TIMESTAMP(CONVERT_TZ(disappear_time + INTERVAL 1 HOUR, '+00:00', @@global.time_zone)), "
             "UNIX_TIMESTAMP(CONVERT_TZ(last_modified, '+00:00', @@global.time_zone)) "
             "FROM pokemon "
             "WHERE "
             "latitude >= %s AND longitude >= %s AND "
             "latitude <= %s AND longitude <= %s AND "
             "cp IS NOT NULL AND "
-            "disappear_time > UTC_TIMESTAMP() AND "
+            "disappear_time > UTC_TIMESTAMP() - INTERVAL 1 HOUR AND "
             "UNIX_TIMESTAMP(last_modified) > %s "
-
         )
 
         params = rectangle
