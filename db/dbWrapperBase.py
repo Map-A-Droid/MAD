@@ -1,3 +1,4 @@
+import sys
 import json
 import math
 import time
@@ -60,6 +61,25 @@ class DbWrapperBase(ABC):
         )
 
         return int(self.execute(query, vals)[0][0])
+
+    def _check_create_column(self, field):
+        if self._check_column_exists(field["table"], field["column"]) == 1:
+            return
+
+        alter_query = (
+            "ALTER TABLE {} "
+            "ADD COLUMN {} {}"
+            .format(field["table"], field["column"], field["ctype"])
+        )
+
+        self.execute(alter_query, commit=True)
+
+        if self._check_column_exists(field["table"], field["column"]) == 1:
+            log.info("Successfully added '{}.{}' column".format(field["table"], field["column"]))
+            return
+        else:
+            log.fatal("Couldn't create required column {}.{}'".format(field["table"], field["column"]))
+            sys.exit(1)
 
     def close(self, conn, cursor):
         """
@@ -338,6 +358,25 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def get_raids_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_mon_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_quests_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_gyms_changed_since(self, timestamp):
+        pass
+
+    @abstractmethod
+    def get_weather_changed_since(self, timestamp):
+        pass
+
     def statistics_get_pokemon_count(self, days):
         pass
 

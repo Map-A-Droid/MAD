@@ -65,7 +65,7 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._stop_update_thread = Event()
 
-    def __del__(self):
+    def stop_routemanager(self):
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
             self._update_prio_queue_thread.join()
@@ -178,7 +178,8 @@ class RouteManagerBase(ABC):
             heapq.heapify(merged)
             self._prio_queue = merged
             self._manager_mutex.release()
-            log.info("New priorityqueue: %s" % merged)
+            log.info("New priority queue with %s entries" % len(merged))
+            log.debug("Priority queue entries: %s" % str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
