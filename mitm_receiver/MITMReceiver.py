@@ -115,7 +115,11 @@ class MITMReceiver(object):
         ids_iv = self.__mitm_mapper.request_latest(origin, "ids_iv")
         if ids_iv is not None:
             ids_iv = ids_iv.get("values", None)
-        response = {"ids_iv": ids_iv, "injected_settings": injected_settings}
+
+        ids_encountered = self.__mitm_mapper.request_latest(origin, "ids_encountered")
+        if ids_encountered is not None:
+            ids_encountered = ids_encountered.get("values", None)
+        response = {"ids_iv": ids_iv, "injected_settings": injected_settings, "ids_encountered": ids_encountered}
         return json.dumps(response)
 
     def received_data_worker(self):
