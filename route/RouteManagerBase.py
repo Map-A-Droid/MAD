@@ -178,7 +178,7 @@ class RouteManagerBase(ABC):
             self._prio_queue = merged
             self._manager_mutex.release()
             log.info("New priority queue with %s entries" % len(merged))
-            log.debug("Priority queue entries: " % merged)
+            log.debug("Priority queue entries: %s" % str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
