@@ -539,8 +539,8 @@ class RmWrapper(DbWrapperBase):
     def update_encounters_from_db(self, geofence_helper, latest=0):
         log.debug("{RmWrapper::update_encounters_from_db} called")
         if geofence_helper is None:
-            log.error("No geofence_helper! Not fetching gyms.")
-            return 0, []
+            log.error("No geofence_helper! Not fetching encounters.")
+            return 0, {}
         
         log.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()

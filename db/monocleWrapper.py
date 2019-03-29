@@ -489,8 +489,40 @@ class MonocleWrapper(DbWrapperBase):
             return to_return
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
-        #TODO: only dummy implementation
-        return 0, {}
+        log.debug("{monocleWrapper::update_encounters_from_db} called")
+        if geofence_helper is None:
+            log.error("No geofence_helper! Not fetching encounters.")
+            return 0, {}
+        
+        log.debug("Filtering with rectangle")
+        rectangle = geofence_helper.get_polygon_from_fence()
+        query = (
+            "SELECT lat, lon, encounter_id, "
+            "(expire_timestamp + (60 * 60)), "
+            "updated "
+            "FROM sightings "
+            "WHERE "
+            "lat >= %s AND lon >= %s AND "
+            "lat <= %s AND lon <= %s AND "
+            "cp IS NOT NULL AND "
+            "expire_timestamp + (60 * 60) > UNIX_TIMESTAMP(NOW()) AND "
+            "updated > %s "
+        )
+
+        params = rectangle
+        params = params + (latest, )
+        res = self.execute(query, params)    
+        list_of_coords = []
+        for (latitude, longitude, encounter_id, disappear_time, last_modified) in res:
+            list_of_coords.append([latitude, longitude, encounter_id, disappear_time, last_modified])
+            latest = max(latest, last_modified)
+
+        encounter_id_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
+        log.debug("Got %d encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, last_modified): %s", len(encounter_id_coords), str(params))
+        encounter_id_infos = {}
+        for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
+            encounter_id_infos[encounter_id] = disappear_time
+        return latest, encounter_id_infos
         
     def stops_from_db(self, geofence_helper):
         log.info('Downloading pokestop coords from DB')
