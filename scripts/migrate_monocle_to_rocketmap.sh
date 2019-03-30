@@ -45,8 +45,9 @@ mysql -NB -h "$newdbip" -u "$newuser" -p"$newpass" -P "$newport" "$newdbname" -e
 }
 
 gymquery="select external_id, lat, lon, replace(name,'\'',''), url, park from forts"
-stopquery="select external_id, lat, lon, replace(name,'\'',''), url, park from pokestops"
+stopquery="select external_id, lat, lon, replace(name,'\'',''), url from pokestops"
 
+query "SET GLOBAL sql_mode=''"  # some people had strict mode hating on me not filling every field.
 while IFS=';' read -r eid lat lon name url park ;do
  [[ $(newquery "select gym_id from gym where gym_id='$eid'") == "$eid" ]] && continue
  newquery "insert into gym set gym_id='$eid', latitude='$lat', longitude='$lon'" && \
