@@ -187,7 +187,7 @@ class WebsocketServer(object):
                 # preckeck walker setting
                 while not pre_check_value(walker_settings) and walker_index-1 <= len(walker_area_array):
                     walker_area_name = walker_area_array[walker_index]['walkerarea']
-                    log.info('Dont using this area %s - Walkervalue out of range' % str(walker_area_name))
+                    log.info('%s dont using area %s - Walkervalue out of range' % (str(id), str(walker_area_name)))
                     if walker_index >= len(walker_area_array) - 1:
                         log.error('Dont find any working area - check your config')
                         walker_index = 0

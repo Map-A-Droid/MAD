@@ -366,7 +366,7 @@ class WorkerBase(ABC):
             if not exittime or ':' not in exittime:
                 log.error("No or wrong Value for Mode - check your settings! - kill Worker")
                 return False
-            return check_time_till_end(exittime)
+            return check_walker_value_type(exittime)
         elif mode == "round":
             log.info("Checking Walker Mode Round")
             rounds = self._walker['walkervalue']
