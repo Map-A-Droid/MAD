@@ -1,133 +1,220 @@
 {
     "areas": [
         {
-            "name": "test123",
-            "mode": "mon_mitm",
-            "init": false,
-            "geofence_included": "configs/geofences/ND_mon.txt",
-            "geofence_excluded": null,
-            "routecalc": "test123",
             "coords_spawns_known": true,
+            "geofence_excluded": null,
+            "geofence_included": "configs/geofences/ND_mon.txt",
+            "init": false,
+            "mode": "mon_mitm",
+            "name": "test123",
+            "routecalc": "test123",
             "settings": {
-                "speed": 70,
-                "max_distance": 200,
                 "delay_after_prio_event": null,
-                "starve_route": false,
+                "max_distance": 200,
                 "priority_queue_clustering_timedelta": 300,
-                "remove_from_queue_backlog": 500
+                "remove_from_queue_backlog": 500,
+                "speed": 70,
+                "starve_route": false
             }
         },
         {
-            "name": "huehuedurr",
-            "mode": "raids_mitm",
-            "init": false,
-            "geofence_included": "configs/geofences/ND_raid.txt",
             "geofence_excluded": null,
+            "geofence_included": "configs/geofences/ND_raid.txt",
+            "init": false,
+            "mode": "raids_mitm",
+            "name": "huehuedurr",
             "routecalc": "nd_raid",
             "settings": {
-                "speed": 70,
-                "max_distance": 200,
                 "delay_after_prio_event": 50,
-                "starve_route": true,
+                "max_distance": 200,
                 "priority_queue_clustering_timedelta": 600,
-                "remove_from_queue_backlog": 1200
+                "remove_from_queue_backlog": 1200,
+                "speed": 70,
+                "starve_route": true
             }
         },
         {
-            "name": "iv_total",
-            "mode": "iv_mitm",
-            "init": false,
-            "geofence_included": "configs/geofences/iv_total.txt",
-            "geofence_excluded": null,
-            "routecalc": "iv_total",
             "coords_spawns_known": true,
+            "geofence_excluded": null,
+            "geofence_included": "configs/geofences/iv_total.txt",
+            "init": false,
+            "mode": "iv_mitm",
+            "name": "iv_total",
+            "routecalc": "iv_total",
             "settings": {
-                "speed": 28,
-                "max_distance": 500,
                 "delay_after_prio_event": 0,
-                "starve_route": true,
-                "priority_queue_clustering_timedelta": 50,
-                "remove_from_queue_backlog": 300,
+                "max_distance": 500,
+                "min_time_left_seconds": 600,
                 "mon_ids_iv": [
                     122,
                     200,
                     363
                 ],
-                "min_time_left_seconds": 600
+                "priority_queue_clustering_timedelta": 50,
+                "remove_from_queue_backlog": 300,
+                "speed": 28,
+                "starve_route": true
             }
         },
         {
-            "name": "quests",
-            "mode": "pokestops",
-            "geofence_included": "configs/geofences/iv_total.txt",
             "geofence_excluded": null,
+            "geofence_included": "configs/geofences/iv_total.txt",
+            "mode": "pokestops",
+            "name": "quests",
             "routecalc": "superduperquest",
             "settings": {
-                "speed": 30,
-                "max_distance": 400
+                "max_distance": 400,
+                "speed": 30
             }
+        },
+        {
+            "geofence_included": "configs/geofences/quest_small.txt",
+            "init": false,
+            "mode": "pokestops",
+            "name": "quest_small",
+            "routecalc": "quest_small",
+            "settings": {}
+        }
+    ],
+    "auth": [
+        {
+            "password": "12345",
+            "username": "grennith"
+        },
+        {
+            "password": "test123",
+            "username": "cec"
         }
     ],
     "devices": [
         {
             "origin": "redmi",
-            "daytime_area": "test123",
-            "nighttime_area": "huehuedurr",
             "settings": {
-                "post_walk_delay": 0,
-                "post_teleport_delay": 7,
-                "walk_after_teleport_distance": 0,
                 "cool_down_sleep": false,
-                "post_turn_screen_on_delay": 10,
                 "post_pogo_start_delay": 60,
-                "restart_pogo": 100
-            }
+                "post_teleport_delay": 7,
+                "post_turn_screen_on_delay": 10,
+                "post_walk_delay": 0,
+                "restart_pogo": 100,
+                "walk_after_teleport_distance": 0
+            },
+            "walker": "huehuedurr"
         },
         {
             "origin": "samsung",
-            "daytime_area": "test123",
-            "nighttime_area": "test123",
-			"switch": true,
-			"switch_interval": [
-			    "22:30",
-			    "5:30"
-			],
             "settings": {
-                "post_walk_delay": 0,
-                "post_teleport_delay": 7,
-                "walk_after_teleport_distance": 1,
                 "cool_down_sleep": false,
-                "post_turn_screen_on_delay": 10,
                 "post_pogo_start_delay": 60,
+                "post_teleport_delay": 7,
+                "post_turn_screen_on_delay": 10,
+                "post_walk_delay": 0,
+                "reboot": false,
                 "restart_pogo": 0,
-                "reboot": false
-            }
+                "walk_after_teleport_distance": 1
+            },
+            "walker": "test123"
         },
         {
             "origin": "samsung_iv",
-            "daytime_area": "iv_total",
-            "nighttime_area": "iv_total",
             "settings": {
-                "post_walk_delay": 0,
-                "post_teleport_delay": 7,
-                "walk_after_teleport_distance": 1,
                 "cool_down_sleep": false,
-                "post_turn_screen_on_delay": 10,
                 "post_pogo_start_delay": 60,
-                "restart_pogo": 0,
+                "post_teleport_delay": 7,
+                "post_turn_screen_on_delay": 10,
+                "post_walk_delay": 0,
                 "reboot": true,
-                "reboot_thresh": 10
-            }
+                "reboot_thresh": 10,
+                "restart_pogo": 0,
+                "walk_after_teleport_distance": 1
+            },
+            "walker": "iv_total"
         }
     ],
-    "auth": [
+    "walker": [
         {
-            "username": "grennith",
-            "password": "12345"
+            "setup": [
+                {
+                    "walkerarea": "quest_small",
+                    "walkermax": "1",
+                    "walkertext": "Small_Quest_Area_-_just_max._1_walker_-_from_1:00_till_6:00_or_end_of_coords",
+                    "walkertype": "coords",
+                    "walkervalue": "1:00-6:00"
+                },
+                {
+                    "walkerarea": "test123",
+                    "walkermax": "",
+                    "walkertext": "Daymode_-_starts_with_end_of_Quest_areas_-_till_1:00",
+                    "walkertype": "timer",
+                    "walkervalue": "1:00"
+                },
+                {
+                    "walkerarea": "quests",
+                    "walkermax": "",
+                    "walkertext": "Bigger_Questarea_-_infinitely_walker_-_from_1:00_-_6:00_or_end_of_coords",
+                    "walkertype": "coords",
+                    "walkervalue": "1:00-6:00"
+                }
+            ],
+            "walkername": "quest_example"
         },
         {
-            "username": "cec",
-            "password": "test123"
+            "setup": [
+                {
+                    "walkerarea": "huehuedurr",
+                    "walkermax": "",
+                    "walkertext": "One_Round_of_this_area",
+                    "walkertype": "round",
+                    "walkervalue": "1"
+                },
+                {
+                    "walkerarea": "test123",
+                    "walkermax": "1",
+                    "walkertext": "One_Walker_-_one_Round_f.e._Raid_checking",
+                    "walkertype": "round",
+                    "walkervalue": "1"
+                },
+                {
+                    "walkerarea": "huehuedurr",
+                    "walkermax": "",
+                    "walkertext": "Only_Mon_checking_from_21:00_till_6:00",
+                    "walkertype": "timer",
+                    "walkervalue": "21:00-3:00"
+                },
+                {
+                    "walkerarea": "test123",
+                    "walkermax": "",
+                    "walkertext": "Idle_between_3:00_and_6:00",
+                    "walkertype": "idle",
+                    "walkervalue": "3:00-5:00"
+                },
+                {
+                    "walkerarea": "quest_small",
+                    "walkermax": "1",
+                    "walkertext": "Check_quests_with_one_device",
+                    "walkertype": "coords",
+                    "walkervalue": "5:00-6:00"
+                }
+            ],
+            "walkername": "raid_mon_example"
+        },
+        {
+            "setup": [
+                {
+                    "walkerarea": "iv_total",
+                    "walkermax": "",
+                    "walkertext": "Check_one_hour_for_IVs",
+                    "walkertype": "countdown",
+                    "walkervalue": "3600"
+                },
+                {
+                    "walkerarea": "huehuedurr",
+                    "walkermax": "1",
+                    "walkertext": "Check_one_round_with_one_device_for_raids",
+                    "walkertype": "round",
+                    "walkervalue": "1"
+                }
+            ],
+            "walkername": "iv_checker"
         }
     ]
 }

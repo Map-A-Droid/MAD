@@ -726,7 +726,8 @@ class MonocleWrapper(DbWrapperBase):
         query_pokestops = (
             "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires)"
+            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires), "
+            "lat=VALUES(lat), lon=VALUES(lon)"
         )
 
         list_of_pokestops = []

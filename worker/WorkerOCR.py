@@ -28,12 +28,12 @@ class WorkerOCR(WorkerBase):
         self.__start_speed_weather_check_event.set()
 
     def _move_to_location(self):
-        routemanager = self._get_currently_valid_routemanager()
+        routemanager = self._walker_routemanager
         if routemanager is None:
             raise InternalStopWorkerException
         # get the distance from our current position (last) to the next gym (cur)
-        distance = get_distance_of_two_points_in_meters(float(self._devicesettings["last_location"].lat),
-                                                        float(self._devicesettings["last_location"].lng),
+        distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
+                                                        float(self.last_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
         log.info('main: Moving %s meters to the next position' % distance)
@@ -41,8 +41,7 @@ class WorkerOCR(WorkerBase):
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
-                or (self._devicesettings["last_location"].lat == 0.0 and
-                    self._devicesettings["last_location"].lng == 0.0)):
+                or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             log.info("main: Teleporting...")
             self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
@@ -77,8 +76,8 @@ class WorkerOCR(WorkerBase):
                 log.debug("Done walking")
         else:
             log.info("main: Walking...")
-            self._communicator.walkFromTo(self._devicesettings["last_location"].lat,
-                                          self._devicesettings["last_location"].lng,
+            self._communicator.walkFromTo(self.last_location.lat,
+                                          self.last_location.lng,
                                           self.current_location.lat,
                                           self.current_location.lng, speed)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
@@ -86,6 +85,8 @@ class WorkerOCR(WorkerBase):
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
         cur_time = time.time()
+        self._devicesettings["last_location"] = self.current_location
+        self.last_location = self.current_location
         return cur_time, True
 
     def _post_move_location_routine(self, timestamp):
@@ -223,10 +224,10 @@ class WorkerOCR(WorkerBase):
             log.debug("Speedweather: released lock")
             time.sleep(1)
 
-    def __init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime, route_manager_nighttime,
-                 devicesettings, db_wrapper, timer, pogoWindowManager):
-        WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, timer=timer,
-                            pogoWindowManager=pogoWindowManager)
+    def __init__(self, args, id, lastKnownState, websocketHandler, walker_routemanager,
+                 devicesettings, db_wrapper, pogoWindowManager, walker):
+        WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler,
+                            walker_routemanager, devicesettings, db_wrapper=db_wrapper,
+                            pogoWindowManager=pogoWindowManager, walker=walker)
         self.__speed_weather_check_thread = None
         self.__start_speed_weather_check_event = Event()

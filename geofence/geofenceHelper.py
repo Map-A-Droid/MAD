@@ -66,8 +66,8 @@ class GeofenceHelper:
     def get_geofenced_coordinates(self, coordinates):
         #Import: We are working with n-tuples in some functions be carefull
         #and do not break compatibility
-        log.info('Using matplotlib: %s.', self.use_matplotlib)
-        log.info('Found %d coordinates to geofence.', len(coordinates))
+        log.debug('Using matplotlib: %s.', self.use_matplotlib)
+        log.debug('Found %d coordinates to geofence.', len(coordinates))
         geofenced_coordinates = []
         for c in coordinates:
             # Coordinate is not valid if in one excluded area.

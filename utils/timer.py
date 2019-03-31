@@ -78,4 +78,5 @@ class Timer(object):
                         self.set_switch(False)
                     time.sleep(30)
             time.sleep(30)
+
         log.info("[%s] switchtimer stopping" % str(self._id))

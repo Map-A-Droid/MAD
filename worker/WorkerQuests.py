@@ -15,12 +15,12 @@ class WorkerQuests(MITMBase):
     def _valid_modes(self):
         return ["pokestops"]
 
-    def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime, route_manager_nighttime,
-                 mitm_mapper, devicesettings, db_wrapper, timer, pogoWindowManager):
-        MITMBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                          route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=False, timer=timer,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogoWindowManager)
-        self.first_round = True
+    def __init__(self, args, id, last_known_state, websocket_handler, walker_routemanager,
+                 mitm_mapper, devicesettings, db_wrapper, pogoWindowManager, walker):
+        MITMBase.__init__(self, args, id, last_known_state, websocket_handler,
+                          walker_routemanager, devicesettings, db_wrapper=db_wrapper, NoOcr=False,
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogoWindowManager, walker=walker)
+
         self.clear_thread = None
         # 0 => None
         # 1 => clear box
@@ -56,15 +56,14 @@ class WorkerQuests(MITMBase):
         self._update_injection_settings()
 
     def _move_to_location(self):
-        routemanager = self._get_currently_valid_routemanager()
+        routemanager = self._walker_routemanager
         if routemanager is None:
             raise InternalStopWorkerException
-            
         if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
             return False, False
 
-        distance = get_distance_of_two_points_in_meters(float(self._devicesettings["last_location"].lat),
-                                                        float(self._devicesettings["last_location"].lng),
+        distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
+                                                        float(self.last_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
         log.info('main: Moving %s meters to the next position' % distance)
@@ -75,39 +74,109 @@ class WorkerQuests(MITMBase):
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
-                or (self._devicesettings["last_location"].lat == 0.0 and
-                    self._devicesettings["last_location"].lng == 0.0)):
+                or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             log.info("main: Teleporting...")
             self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
             delay_used = self._devicesettings.get('post_teleport_delay', 7)
-            # Test for cooldown / teleported distance TODO: check this block...
-            if self.first_round:
-                delay_used = 3
-                self.first_round = False
+            speed = 16.67  # Speed can be 60 km/h up to distances of 3km
+
+            if self.last_location.lat == 0.0 and self.last_location.lng == 0.0:
+                log.info('Starting fresh round - using lower delay')
+                delay_used = self._devicesettings.get('post_teleport_delay', 7)
             else:
-                if distance < 200:
-                    delay_used = 5
-                elif distance < 500:
-                    delay_used = 15
-                elif distance < 1000:
-                    delay_used = 30
-                elif distance < 2000:
-                    delay_used = 100
-                elif distance < 5000:
-                    delay_used = 300
-                elif distance < 10000:
-                    delay_used = 500
-                elif distance < 20000:
-                    delay_used = 1000
-                else:
-                    delay_used = 2000
-                log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+                if distance >= 1335000:
+                    speed = 180.43  # Speed can be abt 650 km/h
+                elif distance >= 1100000:
+                    speed = 176.2820513
+                elif distance >= 1020000:
+                    speed = 168.3168317
+                elif distance >= 1007000:
+                    speed = 171.2585034
+                elif distance >= 948000:
+                    speed = 166.3157895
+                elif distance >= 900000:
+                    speed = 164.8351648
+                elif distance >= 897000:
+                    speed = 166.1111111
+                elif distance >= 839000:
+                    speed = 158.9015152
+                elif distance >= 802000:
+                    speed = 159.1269841
+                elif distance >= 751000:
+                    speed = 152.6422764
+                elif distance >= 700000:
+                    speed = 151.5151515
+                elif distance >= 650000:
+                    speed = 146.3963964
+                elif distance >= 600000:
+                    speed = 142.8571429
+                elif distance >= 550000:
+                    speed = 138.8888889
+                elif distance >= 500000:
+                    speed = 134.4086022
+                elif distance >= 450000:
+                    speed = 129.3103448
+                elif distance >= 400000:
+                    speed = 123.4567901
+                elif distance >= 350000:
+                    speed = 116.6666667
+                elif distance >= 328000:
+                    speed = 113.8888889
+                elif distance >= 300000:
+                    speed = 108.6956522
+                elif distance >= 250000:
+                    speed = 101.6260163
+                elif distance >= 201000:
+                    speed = 90.54054054
+                elif distance >= 175000:
+                    speed = 85.78431373
+                elif distance >= 150000:
+                    speed = 78.125
+                elif distance >= 125000:
+                    speed = 71.83908046
+                elif distance >= 100000:
+                    speed = 64.1025641
+                elif distance >= 90000:
+                    speed = 60
+                elif distance >= 80000:
+                    speed = 55.55555556
+                elif distance >= 70000:
+                    speed = 50.72463768
+                elif distance >= 60000:
+                    speed = 47.61904762
+                elif distance >= 45000:
+                    speed = 39.47368421
+                elif distance >= 40000:
+                    speed = 35.0877193
+                elif distance >= 35000:
+                    speed = 32.40740741
+                elif distance >= 30000:
+                    speed = 29.41176471
+                elif distance >= 25000:
+                    speed = 27.77777778
+                elif distance >= 20000:
+                    speed = 27.77777778
+                elif distance >= 15000:
+                    speed = 27.77777778
+                elif distance >= 10000:
+                    speed = 23.80952381
+                elif distance >= 8000:
+                    speed = 26.66666667
+                elif distance >= 5000:
+                    speed = 22.34137623
+                elif distance >= 4000:
+                    speed = 22.22222222
+
+                delay_used = distance / speed
+
+                if delay_used > 7200:  # There's a maximum of 2 hours wait time
+                    delay_used = 7200
+            log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
         else:
             log.info("main: Walking...")
-            self._communicator.walkFromTo(self._devicesettings["last_location"].lat,
-                                          self._devicesettings["last_location"].lng,
+            self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat,
                                           self.current_location.lng, speed)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
@@ -140,9 +209,32 @@ class WorkerQuests(MITMBase):
             time.sleep(1)
         if self._init:
             delay_used = 5
-        log.info("Sleeping %s" % str(delay_used))
-        time.sleep(float(delay_used))
+
+        if self._devicesettings.get('last_action_time', None) is not None:
+            timediff = time.time() - self._devicesettings['last_action_time']
+            log.info("Timediff between now and last action time: %s" % str(float(timediff)))
+            delay_used = delay_used - timediff
+        else:
+            log.info("No last action time found - no calulation")
+
+        if delay_used < 0:
+            log.info('No more cooldowntime - start over')
+        else:
+            log.info("Real sleep time: %s seconds!" % str(delay_used))
+            cleanupbox = False
+            lastcleanupbox = self._devicesettings.get('last_cleanup_time', None)
+            if lastcleanupbox is not None:
+                if time.time() - lastcleanupbox > 900:
+                    # just cleanup if last cleanup time > 15 minutes ago
+                    cleanupbox = True
+            while time.time() <= int(cur_time) + int(delay_used):
+                if delay_used > 200 and cleanupbox:
+                    self.clear_thread_task = 1
+                    cleanupbox = False
+                time.sleep(1)
+
         self._devicesettings["last_location"] = self.current_location
+        self.last_location = self.current_location
         return cur_time, True
 
     def _post_move_location_routine(self, timestamp):
@@ -154,7 +246,7 @@ class WorkerQuests(MITMBase):
 
             data_received = '-'
 
-            reachedMainMenu = self._check_pogo_main_screen(10, True)
+            reachedMainMenu = self._check_pogo_main_screen(10, False)
             if not reachedMainMenu:
                 self._restart_pogo()
             
@@ -215,6 +307,7 @@ class WorkerQuests(MITMBase):
                         log.info("Clearing box")
                         self.clear_box(self._delay_add)
                         self.clear_thread_task = 0
+                        self._devicesettings['last_cleanup_time'] = time.time()
                     elif self.clear_thread_task == 2:
                         log.info("Clearing quest")
                         self._clear_quests(self._delay_add)
@@ -270,7 +363,8 @@ class WorkerQuests(MITMBase):
                 time.sleep(1 + int(delayadd))
 
                 self._communicator.touchandhold(click_x1, click_y, click_x2, click_y)
-                time.sleep(.5)
+                time.sleep(1)
+
                 delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
                              self._resocalc.get_confirm_delete_item_coords(self)[1]
                 curTime = time.time()
@@ -289,6 +383,7 @@ class WorkerQuests(MITMBase):
                 else:
                     log.info('Unknown error')
                     to = 8
+                time.sleep(1)
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
@@ -366,15 +461,18 @@ class WorkerQuests(MITMBase):
                 else:
                     log.error('Other Return: %s' % str(data_received))
                 to += 1
-
             else:
                 data_received = '-'
-                log.info('Did not get any data ... Maybe already spinned or softban.')
+                log.info('Did not get any data ... Maybe already turned or softban.')
                 self._close_gym(self._delay_add)
-                time.sleep(5)
+                self._turn_map(self._delay_add)
+                time.sleep(3)
                 self._stop_process_time = time.time()
                 self._open_pokestop()
                 to += 1
+
+        if data_received == 'Quest':
+            self._devicesettings['last_action_time'] = time.time()
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None
@@ -392,15 +490,6 @@ class WorkerQuests(MITMBase):
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?
             latest_proto = latest.get(proto_to_wait_for, None)
-            try:
-                current_routemanager = self._get_currently_valid_routemanager()
-            except InternalStopWorkerException as e:
-                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
-                raise InternalStopWorkerException
-            if current_routemanager is None:
-                # we should be sleeping...
-                log.warning("%s should be sleeping ;)" % str(self._id))
-                return None
             latest_timestamp = latest_proto.get("timestamp", 0)
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING

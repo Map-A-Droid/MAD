@@ -783,7 +783,7 @@ class RmWrapper(DbWrapperBase):
             "last_updated) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
-            "last_modified=VALUES(last_modified)"
+            "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude)"
         )
 
         for cell in cells:
@@ -810,7 +810,7 @@ class RmWrapper(DbWrapperBase):
             "ON DUPLICATE KEY UPDATE "
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
-            "last_modified=VALUES(last_modified)"
+            "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "

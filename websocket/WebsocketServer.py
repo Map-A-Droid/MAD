@@ -10,8 +10,9 @@ from threading import Event, Lock, Thread
 import websockets
 
 from utils.authHelper import check_auth
-from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
-from utils.timer import Timer
+from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException, WrongAreaInWalker
+from utils.routeutil import pre_check_value
+
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
 
@@ -159,74 +160,96 @@ class WebsocketServer(object):
                             % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
-            log.debug("Setting up switchtimer for %s" % str(id))
             last_known_state = {}
             client_mapping = self.__device_mappings[id]
-            timer = Timer(client_mapping["switch"], id, client_mapping["switch_interval"])
-            log.debug("Switchtime for %s all set up, brief delay" % str(id))
-            time.sleep(0.8)
-            log.debug("Setting up routemanagers for %s" % str(id))
-            daytime_routemanager = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager")
-            if client_mapping.get("nighttime_area", None) is not None:
-                nightime_routemanager = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
-            else:
-                nightime_routemanager = None
             devicesettings = client_mapping["settings"]
+            log.debug("Setting up routemanagers for %s" % str(id))
+
+            if client_mapping.get("walker", None) is not None:
+                if "walker_area_index" not in devicesettings:
+                    devicesettings['walker_area_index'] = 0
+                    devicesettings['finished'] = False
+                    devicesettings['last_action_time'] = None
+                    devicesettings['last_cleanup_time'] = None
+
+                walker_index = devicesettings.get('walker_area_index', 0)
+
+                if walker_index > 0:
+                    # check status of last area
+                    if not devicesettings.get('finished', False):
+                        log.info('Something wrong with last round - get back to old area')
+                        walker_index -= 1
+                        devicesettings['walker_area_index'] = walker_index
+
+                walker_area_array = client_mapping["walker"]
+                walker_settings = walker_area_array[walker_index]
+
+                # preckeck walker setting
+                while not pre_check_value(walker_settings) and walker_index-1 <= len(walker_area_array):
+                    walker_area_name = walker_area_array[walker_index]['walkerarea']
+                    log.info('%s dont using area %s - Walkervalue out of range' % (str(id), str(walker_area_name)))
+                    if walker_index >= len(walker_area_array) - 1:
+                        log.error('Dont find any working area - check your config')
+                        walker_index = 0
+                        devicesettings['walker_area_index'] = walker_index
+                        walker_settings = walker_area_array[walker_index]
+                        break
+                    walker_index += 1
+                    devicesettings['walker_area_index'] = walker_index
+                    walker_settings = walker_area_array[walker_index]
+
+                if devicesettings['walker_area_index'] >= len(walker_area_array):
+                    # check if array is smaller then expected - f.e. on the fly changes in mappings.json
+                    devicesettings['walker_area_index'] = 0
+                    devicesettings['finished'] = False
+                    walker_index = devicesettings.get('walker_area_index', 0)
+
+                walker_area_name = walker_area_array[walker_index]['walkerarea']
+
+                if walker_area_name not in self.__routemanagers:
+                    raise WrongAreaInWalker()
+
+                log.info('%s using walker area %s [%s/%s]' % (str(id), str(walker_area_name),
+                                                                 str(walker_index+1),
+                                                                 str(len(walker_area_array))))
+                walker_routemanager = \
+                    self.__routemanagers[walker_area_name].get("routemanager", None)
+                devicesettings['walker_area_index'] += 1
+                devicesettings['finished'] = False
+                if walker_index >= len(walker_area_array) - 1:
+                        devicesettings['walker_area_index'] = 0
+
+                # set global mon_iv
+                client_mapping['mon_ids_iv'] = \
+                    self.__routemanagers[walker_area_name].get(
+                        "routemanager").settings.get("mon_ids_iv", [])
+
+            else:
+                walker_routemanager = None
+
             if "last_location" not in devicesettings:
                 devicesettings['last_location'] = Location(0.0, 0.0)
 
             log.debug("Setting up worker for %s" % str(id))
-            started = False
-            if timer.get_switch() is True and client_mapping.get("nighttime_area", None) is not None:
-                # set global mon_iv
-                client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get(
-                        "routemanager").settings.get("mon_ids_iv", [])
-                # start the appropriate nighttime manager if set
-                if nightime_routemanager is None:
-                    pass
-                elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                    worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                        self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                        pogoWindowManager=self.__pogoWindowManager)
-                    started = True
-                elif nightime_routemanager.mode in ["raids_ocr"]:
-                    from worker.WorkerOCR import WorkerOCR
-                    worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                       devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                       pogoWindowManager=self.__pogoWindowManager)
-                    started = True
-                elif nightime_routemanager.mode in ["pokestops"]:
-                    worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
-                                          nightime_routemanager,
-                                          self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                          pogoWindowManager=self.__pogoWindowManager)
-                    started = True
-                else:
-                    log.fatal("Mode not implemented")
-                    sys.exit(1)
 
-            if not timer.get_switch() or not started:
-                # set mon_iv
-                client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get(
-                        "routemanager").settings.get("mon_ids_iv", [])
-                # we either gotta run daytime mode OR nighttime routemanager not set
-                if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                    worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                        self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                        pogoWindowManager=self.__pogoWindowManager)
-                elif daytime_routemanager.mode in ["raids_ocr"]:
-                    from worker.WorkerOCR import WorkerOCR
-                    worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                       devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                       pogoWindowManager=self.__pogoWindowManager)
-                elif daytime_routemanager.mode in ["pokestops"]:
-                    worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
-                                          nightime_routemanager,
-                                          self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer,
-                                          pogoWindowManager=self.__pogoWindowManager)
-                else:
-                    log.fatal("Mode not implemented")
-                    sys.exit(1)
+            if walker_routemanager is None:
+                pass
+            elif walker_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+                worker = WorkerMITM(self.args, id, last_known_state, self, walker_routemanager,
+                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper,
+                                    pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
+            elif walker_routemanager.mode in ["raids_ocr"]:
+                from worker.WorkerOCR import WorkerOCR
+                worker = WorkerOCR(self.args, id, last_known_state, self, walker_routemanager,
+                                   devicesettings, db_wrapper=self.__db_wrapper,
+                                   pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
+            elif walker_routemanager.mode in ["pokestops"]:
+                worker = WorkerQuests(self.args, id, last_known_state, self, walker_routemanager,
+                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper,
+                                      pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
+            else:
+                log.fatal("Mode not implemented")
+                sys.exit(1)
 
             log.debug("Starting worker for %s" % str(id))
             new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
@@ -234,9 +257,11 @@ class WebsocketServer(object):
             new_worker_thread.daemon = False
 
             self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
+            new_worker_thread.start()
+        except WrongAreaInWalker:
+            log.error('Unknown Area in Walker settings - check config')
         finally:
             self.__current_users_mutex.release()
-        new_worker_thread.start()
 
         return True
 
@@ -276,18 +301,18 @@ class WebsocketServer(object):
             except Exception as e:
                 await asyncio.sleep(0.02)
         if not websocket_client_connection.open:
-            log.error("retrieve_next_send: connection closed, returning None")
+            log.warning("retrieve_next_send: connection closed, returning None")
         return found
 
     async def __consumer_handler(self, websocket_client_connection):
         if websocket_client_connection is None:
             return
         worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
-        log.warning("Consumer handler of %s starting" % str(worker_id))
+        log.info("Consumer handler of %s starting" % str(worker_id))
         while websocket_client_connection.open:
             message = None
             try:
-                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.2)
+                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=2.0)
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
@@ -381,6 +406,7 @@ class WebsocketServer(object):
         self.__current_users_mutex.acquire()
         user_entry = self.__current_users.get(id, None)
         self.__current_users_mutex.release()
+
         if user_entry is None or user_entry[1] != worker_instance:
             raise WebsocketWorkerRemovedException
 
@@ -450,6 +476,9 @@ class WebsocketServer(object):
             if "last_location" in self.__device_mappings[loc]['settings']:
                 device_mappings[loc]['settings']["last_location"] = \
                     self.__device_mappings[loc]['settings']["last_location"]
+            if "walker_area_index" in self.__device_mappings[loc]['settings']:
+                device_mappings[loc]['settings']["walker_area_index"] = \
+                    self.__device_mappings[loc]['settings']["walker_area_index"]
         self.__current_users_mutex.acquire()
         # save reference to old routemanagers to stop them
         old_routemanagers = routemanagers
