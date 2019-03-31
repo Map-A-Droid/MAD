@@ -1096,7 +1096,7 @@ class MonocleWrapper(DbWrapperBase):
         query = (
             "SELECT forts.external_id, level, time_spawn, time_battle, time_end, "
             "pokemon_id, cp, move_1, move_2, last_updated, form, is_exclusive, name, url, "
-            "lat, lon, team, weather.condition "
+            "lat, lon, team, weather.condition, is_ex_raid_eligible "
             "FROM raids "
             "LEFT JOIN fort_sightings ON raids.fort_id = fort_sightings.fort_id "
             "LEFT JOIN forts ON raids.fort_id = forts.id "
@@ -1129,7 +1129,8 @@ class MonocleWrapper(DbWrapperBase):
                     "longitude": longitude,
                     "team_id": team_id,
                     "weather_boosted_condition": weather_boosted_condition,
-                    "is_exclusive": is_exclusive
+                    "is_exclusive": is_exclusive,
+                    "is_ex_raid_eligible": is_ex_raid_eligible
                 })
 
         return ret
@@ -1203,7 +1204,7 @@ class MonocleWrapper(DbWrapperBase):
     def get_gyms_changed_since(self, timestamp):
         query = (
             "SELECT name, url, external_id, team, guard_pokemon_id, slots_available, "
-            "lat, lon, is_in_battle, updated "
+            "lat, lon, is_in_battle, updated, is_ex_raid_eligible "
             "FROM forts "
             "LEFT JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
             "WHERE updated >= %s"
@@ -1213,7 +1214,7 @@ class MonocleWrapper(DbWrapperBase):
         ret = []
 
         for (name, url, external_id, team, guard_pokemon_id, slots_available,
-                lat, lon, is_in_battle, updated) in res:
+                lat, lon, is_in_battle, updated, is_ex_raid_eligible) in res:
             ret.append({
                 "gym_id": external_id,
                 "team_id": team,
@@ -1225,6 +1226,7 @@ class MonocleWrapper(DbWrapperBase):
                 "last_modified": updated,
                 "name": name,
                 "url": url,
+                "is_ex_raid_eligible": is_ex_raid_eligible
             })
 
         return ret

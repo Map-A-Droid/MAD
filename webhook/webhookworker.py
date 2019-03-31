@@ -141,7 +141,7 @@ class WebhookWorker:
                 "move_2": raid["move_2"],
                 "start": raid["start"],
                 "end": raid["end"],
-                "name": raid["name"],
+                "name": raid["name"]
             }
 
             if raid["cp"] is None:
@@ -161,6 +161,9 @@ class WebhookWorker:
 
             if raid["form"] is not None:
                 raid_payload["form"] = raid["form"]
+
+            if raid["is_ex_raid_eligible"] is not None:
+                raid_payload["is_ex_raid_eligible"] = raid["is_ex_raid_eligible"]
 
             # create final message
             entire_payload = {"type": "raid", "message": raid_payload}
@@ -259,6 +262,9 @@ class WebhookWorker:
 
             if gym["url"] is not None:
                 gym_payload["url"] = gym["url"]
+
+            if gym["is_ex_raid_eligible"] is not None:
+                gym_payload["is_ex_raid_eligible"] = gym["is_ex_raid_eligible"]
 
             entire_payload = {"type": "gym", "message": gym_payload}
             ret.append(entire_payload)
