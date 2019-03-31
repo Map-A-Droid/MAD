@@ -1258,7 +1258,7 @@ class RmWrapper(DbWrapperBase):
             "last_modified, gym.last_scanned, gym.is_ex_raid_eligible "
             "FROM gym "
             "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
-            "WHERE last_scanned >= %s"
+            "WHERE gym.last_scanned >= %s"
         )
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
