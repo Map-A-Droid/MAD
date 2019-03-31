@@ -93,12 +93,6 @@ msgstr ""
 msgid "Evolve {0} Pokemon."
 msgstr ""
 
-<<<<<<< HEAD
-msgid "Evolve {0} {poke}."
-msgstr ""
-
-msgid "Use an item to evolve a Pokemon."
-=======
 msgid "Use an item to evolve a Pokemon."
 msgstr ""
 
@@ -106,7 +100,6 @@ msgid "Evolve {0} {type}Pokemon"
 msgstr ""
 
 msgid "Evolve {0} {poke}."
->>>>>>> multiselect_nightarea
 msgstr ""
 
 msgid " in a row"
