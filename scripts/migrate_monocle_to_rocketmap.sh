@@ -7,6 +7,10 @@
 # database. Your spawnpoint info is in MAD format so it does not change, but I dump that table from    #
 # your monocle db and import it to your rocketmap db for you. I remove all single quotes from gym      #
 # names, sorry but not sorry.                                                                          #
+#                                                                                                      #
+# If you get an error like:                                                                            #
+#  "ERROR 1364 (HY000) at line 1: Field 'enabled' doesn't have a default value                         #
+# Then run this in mysql: SET GLOBAL sql_mode='' and run this script again.                            #
 ########################################################################################################
 # Old database, Monocle format:
 # Monocle database IP:
@@ -47,7 +51,6 @@ mysql -NB -h "$newdbip" -u "$newuser" -p"$newpass" -P "$newport" "$newdbname" -e
 gymquery="select external_id, lat, lon, replace(name,'\'',''), url, park from forts"
 stopquery="select external_id, lat, lon, replace(name,'\'',''), url from pokestops"
 
-query "SET GLOBAL sql_mode=''"  # some people had strict mode hating on me not filling every field.
 while IFS=';' read -r eid lat lon name url park ;do
  [[ $(newquery "select gym_id from gym where gym_id='$eid'") == "$eid" ]] && continue
  newquery "insert into gym set gym_id='$eid', latitude='$lat', longitude='$lon'" && \
