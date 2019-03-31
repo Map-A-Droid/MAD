@@ -16,6 +16,7 @@ def generate_mappingjson():
     newfile['areas'] = []
     newfile['auth'] = []
     newfile['devices'] = []
+    newfile['walker'] = []
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 

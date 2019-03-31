@@ -11,12 +11,12 @@ log = logging.getLogger(__name__)
 
 
 class MITMBase(WorkerBase):
-    def __init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                 route_manager_nighttime, devicesettings, db_wrapper, timer, mitm_mapper, pogoWindowManager,
-                 NoOcr=False):
-        WorkerBase.__init__(self, args, id, last_known_state, websocket_handler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, NoOcr=True, timer=timer,
-                            pogoWindowManager=pogoWindowManager)
+    def __init__(self, args, id, last_known_state, websocket_handler,
+                 walker_routemanager, devicesettings, db_wrapper, mitm_mapper, pogoWindowManager,
+                 NoOcr=False, walker=None):
+        WorkerBase.__init__(self, args, id, last_known_state, websocket_handler,
+                            walker_routemanager, devicesettings, db_wrapper=db_wrapper, NoOcr=True,
+                            pogoWindowManager=pogoWindowManager, walker=walker)
 
         self._reboot_count = 0
         self._restart_count = 0
@@ -48,11 +48,8 @@ class MITMBase(WorkerBase):
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
             log.warning("Timeout waiting for data")
-            try:
-                current_routemanager = self._get_currently_valid_routemanager()
-            except InternalStopWorkerException as e:
-                log.info("Worker %s is to be stopped due to invalid routemanager/mode switch" % str(self._id))
-                raise InternalStopWorkerException
+
+            current_routemanager = self._walker_routemanager
             self._restart_count += 1
 
             restart_thresh = self._devicesettings.get("restart_thresh", 5)
@@ -89,20 +86,18 @@ class MITMBase(WorkerBase):
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-
         time.sleep(1 + int(delayadd))
 
         x, y = self._resocalc.get_delete_quest_coords(self)[0], \
                self._resocalc.get_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
-
         time.sleep(1 + int(delayadd))
 
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
                self._resocalc.get_confirm_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
-
         time.sleep(1 + int(delayadd))
+
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                self._resocalc.get_close_main_button_coords(self)[1]
@@ -148,7 +143,7 @@ class MITMBase(WorkerBase):
         return
 
     def worker_stats(self):
-        routemanager = self._get_currently_valid_routemanager()
+        routemanager = self._walker_routemanager
         log.debug('===============================')
         log.debug('Worker Stats')
         log.debug('Origin: %s' % str(self._id))

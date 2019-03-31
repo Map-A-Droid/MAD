@@ -2,6 +2,8 @@ import json
 import logging
 import requests
 import sys
+import os
+from .convert_mapping import convert_mappings
 
 log = logging.getLogger(__name__)
 
@@ -16,6 +18,8 @@ class MADVersion(object):
 
     def get_version(self):
         try:
+            # checking mappings.json
+            convert_mappings()
             with open('version.json') as f:
                 versio = json.load(f)
             self._version = int(versio['version'])
@@ -27,6 +31,7 @@ class MADVersion(object):
             self.start_update()
 
     def start_update(self):
+
         if self._version < 1:
             log.info('Execute Update for Version 1')
             # Adding quest_reward for PMSF ALT
@@ -228,7 +233,6 @@ class MADVersion(object):
         self.set_version(current_version)
 
     def set_version(self, version):
-
         output ={'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)

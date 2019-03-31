@@ -151,16 +151,33 @@ def questtask(typeid, condition, target):
         test = _("Favourite {0} Pokemon.")
     elif typeid == 13:
         text = _('Use {0} {type}Berries to help catch Pokemon.')
-        arr['type'] = "";
+        arr['type'] = ""
         match_object = re.search(r"'item': ([0-9]+)",condition)
         if match_object is not None:
-            arr['type'] = items[match_object.group(1)]['name'].replace(_(' Berry'),'')+" ";
+            arr['type'] = items[match_object.group(1)]['name'].replace(_(' Berry'),'')+" "
     elif typeid == 14:
         text = _('Power up Pokemon {0} times.')
     elif typeid == 15:
         text = _("Evolve {0} Pokemon.")
         if re.search(r"'type': 11", condition) is not None:
             text = _("Use an item to evolve a Pokemon.")
+        elif re.search(r"'type': 1", condition) is not None:
+            text = _("Evolve {0} {type}Pokemon")
+            arr['wb'] = ""
+            arr['type'] = ""
+            arr['poke'] = ""
+            match_object = re.search(r"'pokemon_type': \[([0-9, ]+)\]", condition)
+            if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['type'] = pokemonTypes[pt[0]].title() + _('-type ')
+                else:
+                    for ty in pt:
+                        arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
+                            _('-type ') if last == cur else '-, ')
+                        cur += 1
         elif re.search(r"'type': 2", condition) is not None:
             arr['wb'] = ""
             arr['type'] = ""
@@ -206,13 +223,10 @@ def questtask(typeid, condition, target):
         text = text.replace(_(' gifts'),_(' gift'))
         text = text.replace(_(' {0} times'),'')
         arr['0'] = _("a");
-        
-    
 
     for key, val in arr.items():
             text = text.replace('{'+key+'}', str(val))
     
     text = text.replace(' .', '.')
     text = text.replace('  ', ' ')
-
     return text

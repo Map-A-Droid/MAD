@@ -13,41 +13,13 @@
 						"lockonedit":"true"
 					}
 				},
-				{  
-					"name":"daytime_area",
+				{
+					"name":"walker",
 					"settings":{  
-						"type":"areaselect",
+						"type":"walkerselect",
 						"require":"true",
 						"empty":null,
-						"description":"Area of daytime_area"
-					}
-				},
-				{  
-					"name":"nighttime_area",
-					"settings":{  
-						"type":"areaselect",
-						"require":"true",
-						"empty":null,
-						"description":"Area of nighttime_area"
-					}
-				},
-				{  
-					"name":"switch",
-					"settings":{  
-						"type":"option",
-						"require":"true",
-						"values":"false|true",
-						"empty":null,
-						"description":"Activate timer for Area Switch"
-					}
-				},
-				{  
-					"name":"switch_interval",
-					"settings":{  
-						"type":"text",
-						"require":"false",
-						"empty":null,
-						"description":"Time for nightmode - Put in brakets ['21:00', '5:00'])"
+						"description":"Walker of this area"
 					}
 				}
 			],
@@ -165,7 +137,53 @@
 						"require":"false",
 						"description":"The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
 					}
+				},
+				{
+					"name":"screenshot_x_offset",
+					"settings":{
+						"type":"text",
+						"require":"false",
+						"description":"Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
+					}
+				},
+				{
+					"name":"screenshot_y_offset",
+					"settings":{
+						"type":"text",
+						"require":"false",
+						"description":"Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
+					}
 				}
+			]
+		}
+	],
+	"walker": [
+		{
+			"name":"walker",
+			"fields":[
+				{
+					"name":"walkername",
+					"settings":{
+						"type":"text",
+						"require":"true",
+						"empty":"null",
+						"description":"Name of walker",
+						"lockonedit":"true"
+					}
+				},
+				{
+					"name":"setup",
+					"settings":{
+						"type":"list",
+						"require":"false",
+						"empty":"null",
+						"description":"Order of areas",
+						"lockonedit":"false"
+					}
+				}
+			],
+			"settings":[
+
 			]
 		}
 	],
@@ -711,7 +729,7 @@
 	"auth":[  
 		{  
 			"name":"auth",
-			"fields":[  
+			"fields":[
 				{  
 					"name":"username",
 					"settings":{  

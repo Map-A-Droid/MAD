@@ -45,6 +45,9 @@ class MappingParser(object):
         self.db_wrapper = db_wrapper
         with open('configs/mappings.json') as f:
             self.__raw_json = json.load(f)
+            if 'walker' not in self.__raw_json:
+                self.__raw_json['walker'] = []
+
 
     def get_routemanagers(self):
         from multiprocessing.pool import ThreadPool
@@ -188,17 +191,18 @@ class MappingParser(object):
         # returns mapping of devises to areas
         devices = {}
         device_arr = self.__raw_json["devices"]
+        walker_arr = self.__raw_json["walker"]
         for device in device_arr:
             device_dict = {}
-            daytime_area = device["daytime_area"]
-            nighttime_area = device.get("nighttime_area", None)
-            switch = device.get("switch", False)
-            switch_interval = device.get("switch_interval", False)
+            walker = device["walker"]
             settings = device.get("settings", None)
-            device_dict["daytime_area"] = daytime_area
-            device_dict["nighttime_area"] = nighttime_area
-            device_dict["switch"] = switch
-            device_dict["switch_interval"] = switch_interval
+            if walker:
+                walker_settings = 0
+                while walker_settings < len(walker_arr):
+                    if walker_arr[walker_settings]['walkername'] == walker:
+                        device_dict["walker"] = walker_arr[walker_settings].get('setup',[])
+                        break
+                    walker_settings += 1
             device_dict["settings"] = settings
             devices[device["origin"]] = device_dict
         return devices

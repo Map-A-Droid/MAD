@@ -64,8 +64,8 @@ class GeofenceHelper:
         return False
 
     def get_geofenced_coordinates(self, coordinates):
-        log.info('Using matplotlib: %s.', self.use_matplotlib)
-        log.info('Found %d coordinates to geofence.', len(coordinates))
+        log.debug('Using matplotlib: %s.', self.use_matplotlib)
+        log.debug('Found %d coordinates to geofence.', len(coordinates))
         geofenced_coordinates = []
         for c in coordinates:
             # Coordinate is not valid if in one excluded area.
