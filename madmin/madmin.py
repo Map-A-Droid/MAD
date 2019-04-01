@@ -25,6 +25,7 @@ import datetime
 from functools import wraps
 from shutil import copyfile
 from math import floor
+from pathlib import Path
 from utils.questGen import generate_quest
 
 app = Flask(__name__)
@@ -42,7 +43,7 @@ def madmin_start(arg_args, arg_db_wrapper):
     global conf_args, device_mappings, db_wrapper, areas
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
-    mapping_parser = MappingParser(arg_db_wrapper)
+    mapping_parser = MappingParser(db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
     app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
@@ -483,6 +484,68 @@ def get_position():
     return jsonify(positions)
 
 
+@cache.cached()
+@app.route("/get_geofence")
+@auth_required
+def get_geofence():
+    geofences = {}
+
+    for name, area in areas.items():
+        geofence_include = {}
+        geofence_exclude = {}
+        geofence_name = 'Unknown'
+        geofence_included = Path(area["geofence_included"])
+        if not geofence_included.is_file():
+            continue
+        with geofence_included.open() as gf:
+            for line in gf:
+                line = line.strip()
+                if not line:  # Empty line.
+                    continue
+                elif line.startswith("["):  # Name line.
+                    geofence_name = line.replace("[", "").replace("]", "")
+                    geofence_include[geofence_name] = []
+                else:  # Coordinate line.
+                    lat, lon = line.split(",")
+                    geofence_include[geofence_name].append([
+                        getCoordFloat(lon),
+                        getCoordFloat(lat)
+                    ])
+
+        if area['geofence_excluded']:
+            geofence_name = 'Unknown'
+            geofence_excluded = Path(area["geofence_excluded"])
+            if not geofence_excluded.is_file():
+                continue
+            with geofence_excluded.open() as gf:
+                for line in gf:
+                    line = line.strip()
+                    if not line:  # Empty line.
+                        continue
+                    elif line.startswith("["):  # Name line.
+                        geofence_name = line.replace("[", "").replace("]", "")
+                        geofence_exclude[geofence_name] = []
+                    else:  # Coordinate line.
+                        lat, lon = line.split(",")
+                        geofence_exclude[geofence_name].append([
+                            getCoordFloat(lon),
+                            getCoordFloat(lat)
+                        ])
+
+        geofences[name] = {'include': geofence_include,
+                           'exclude': geofence_exclude}
+
+    geofencexport = []
+    for name, fences in geofences.items():
+        coordinates = []
+        for fname, coords in fences.get('include').items():
+            coordinates.append([coords, fences.get('exclude').get(fname, [])])
+        geofencexport.append({'name': name, 'coordinates': coordinates})
+
+    return jsonify(geofencexport)
+
+
+@cache.cached()
 @app.route("/get_route")
 @auth_required
 def get_route():
@@ -1228,6 +1291,10 @@ def addedit():
 
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
+
+    mapping_parser = MappingParser(db_wrapper)
+    device_mappings = mapping_parser.get_devicemappings()
+    areas = mapping_parser.get_areas()
 
     return redirect("/showsettings", code=302)
 
