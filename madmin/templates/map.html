@@ -277,7 +277,7 @@ new Vue({
 
 				res.data.forEach(function(quest) {
 					L.marker([quest['latitude'], quest['longitude']], {icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])})
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+quest['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+quest['name']+'</div><div id="gymID"></strong>'+quest['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+quest['latitude']+','+quest['longitude']+'">'+quest['latitude']+', '+quest['longitude']+'</a><br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_type'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', {'className': 'questpopup'})
+						.bindPopup('<div id="gymImage" style="background: url(&quot;'+quest['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+quest['name']+'</div><div id="gymID"></strong>'+quest['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+quest['latitude']+','+quest['longitude']+'">'+quest['latitude']+', '+quest['longitude']+'</a><br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_task'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', {'className': 'questpopup'})
 						.addTo(l_quests);
 				});
 

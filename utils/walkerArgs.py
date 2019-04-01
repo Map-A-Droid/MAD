@@ -90,6 +90,10 @@ def parseArgs():
                         help='Amount of threads/processes to be used for screenshot-analysis.')
     parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
                         help='Start madmin as instance.')
+    parser.add_argument('-or', '--only_routes', action='store_true', default=False,
+                        help='Only calculate routes, then exit the program. No scanning.')
+    parser.add_argument('-nocr', '--no_ocr', action='store_true', default=False,
+                        help='Activate if you not using OCR for Quest or Raidscanning.')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
@@ -144,15 +148,11 @@ def parseArgs():
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
 
-    # download coords
-    parser.add_argument('-jj', '--justjson', action='store_true', default=False,
-                        help='just generate the gym_info.json')
-
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
-                        help='URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*')
+                        help='URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
@@ -161,9 +161,21 @@ def parseArgs():
                         help='Activate quest webhook support')
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
                         help='Activate gym webhook support')
+    parser.add_argument('-whser', '--webhook_submit_exraids', action='store_true', default=False,
+                        help='Send Ex-raids to the webhook if detected')
+    parser.add_argument('-whst', '--webhook_start_time', default=0,
+                        help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
+
+    # Statistics
+    parser.add_argument('-stco', '--stat_gc', action='store_true', default=False,
+                        help='Store collected objects (garbage collector) (Default: False)')
+    parser.add_argument('-stiv', '--statistic_interval', default=60, type=int,
+                        help='Store new local stats every N seconds (Default: 60)')
+    parser.add_argument('-stat', '--statistic', action='store_true', default=False,
+                        help='Activate system statistics (Default: False)')
 
     # MADmin
     parser.add_argument('-mmt', '--madmin_time', default='24',

@@ -1,5 +1,5 @@
 import logging
-import os
+import os, sys
 import time
 from shutil import copyfile
 from threading import Thread, Event
@@ -28,7 +28,7 @@ class WorkerOCR(WorkerBase):
         self.__start_speed_weather_check_event.set()
 
     def _move_to_location(self):
-        routemanager = self._get_currently_valid_routemanager()
+        routemanager = self._walker_routemanager
         if routemanager is None:
             raise InternalStopWorkerException
         # get the distance from our current position (last) to the next gym (cur)
@@ -76,14 +76,18 @@ class WorkerOCR(WorkerBase):
                 log.debug("Done walking")
         else:
             log.info("main: Walking...")
-            self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
-                                          self.current_location.lat, self.current_location.lng, speed)
+            self._communicator.walkFromTo(self.last_location.lat,
+                                          self.last_location.lng,
+                                          self.current_location.lat,
+                                          self.current_location.lng, speed)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             delay_used = self._devicesettings.get('post_walk_delay', 7)
         log.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
         cur_time = time.time()
-        return cur_time
+        self._devicesettings["last_location"] = self.current_location
+        self.last_location = self.current_location
+        return cur_time, True
 
     def _post_move_location_routine(self, timestamp):
         # check if the speed_weather_check_thread signalled an abort by setting the stop_worker_event
@@ -102,7 +106,7 @@ class WorkerOCR(WorkerBase):
         # curTime = time.time()
         log.info("main: Checking raidcount and copying raidscreen if raids present")
         count_of_raids = self._pogoWindowManager.readRaidCircles(os.path.join(
-            self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id)
+            self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, self._communicator)
         if count_of_raids == -1:
             log.debug("Worker: Count present but no raid shown")
             log.warning("main: Count present but no raid shown, reopening raidTab")
@@ -113,7 +117,7 @@ class WorkerOCR(WorkerBase):
                 log.debug("Worker: couldn't take screenshot after opening raidtab, lock released")
                 return
             count_of_raids = self._pogoWindowManager.readRaidCircles(os.path.join(
-                self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id)
+                self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, self._communicator)
         #    elif countOfRaids == 0:
         #        emptycount += 1
         #        if emptycount > 30:
@@ -220,9 +224,10 @@ class WorkerOCR(WorkerBase):
             log.debug("Speedweather: released lock")
             time.sleep(1)
 
-    def __init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime, route_manager_nighttime,
-                 devicesettings, db_wrapper, timer):
-        WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler, route_manager_daytime,
-                            route_manager_nighttime, devicesettings, db_wrapper=db_wrapper, timer=timer)
+    def __init__(self, args, id, lastKnownState, websocketHandler, walker_routemanager,
+                 devicesettings, db_wrapper, pogoWindowManager, walker):
+        WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler,
+                            walker_routemanager, devicesettings, db_wrapper=db_wrapper,
+                            pogoWindowManager=pogoWindowManager, walker=walker)
         self.__speed_weather_check_thread = None
         self.__start_speed_weather_check_event = Event()

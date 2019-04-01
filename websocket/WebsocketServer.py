@@ -4,13 +4,15 @@ import logging
 import math
 import queue
 import sys
+import time
 from threading import Event, Lock, Thread
 
 import websockets
 
 from utils.authHelper import check_auth
-from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException
-from utils.timer import Timer
+from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException, WrongAreaInWalker
+from utils.routeutil import pre_check_value
+
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
 
@@ -21,10 +23,14 @@ OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 logging.getLogger('websockets.server').setLevel(logging.INFO)
 logging.getLogger('websockets.protocol').setLevel(logging.INFO)
 
+Location = collections.namedtuple('Location', ['lat', 'lng'])
+
+
 class WebsocketServer(object):
-    def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths):
+    def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths, pogoWindowManager):
         self.__current_users = {}
         self.__current_users_mutex = Lock()
+        self.__stop_server = Event()
 
         self.args = args
         self.__listen_address = args.ws_ip
@@ -41,6 +47,7 @@ class WebsocketServer(object):
         self.__device_mappings = device_mappings
         self.__routemanagers = routemanagers
         self.__auths = auths
+        self.__pogoWindowManager = pogoWindowManager
         self.__mitm_mapper = mitm_mapper
 
         self.__next_id = 0
@@ -56,14 +63,41 @@ class WebsocketServer(object):
         for device in self.__device_mappings.keys():
             allowed_origins.append(device)
 
-        log.info("Device mappings: %s" % str(self.__device_mappings))
-        log.info("Allowed origins derived: %s" % str(allowed_origins))
+        log.debug("Device mappings: %s" % str(self.__device_mappings))
+        log.debug("Allowed origins derived: %s" % str(allowed_origins))
 
         asyncio.set_event_loop(self.__loop)
-        asyncio.get_event_loop().run_until_complete(
+        self.__loop.run_until_complete(
                 websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
                                  origins=allowed_origins, ping_timeout=10, ping_interval=15))
-        asyncio.get_event_loop().run_forever()
+        self.__loop.run_forever()
+
+    def stop_server(self):
+        # TODO: cleanup workers...
+        self.__stop_server.set()
+        self.__current_users_mutex.acquire()
+        for id, worker in self.__current_users.items():
+            log.info('Stopping worker %s to apply new mappings.', id)
+            worker[1].stop_worker()
+        self.__current_users_mutex.release()
+
+        # wait for all workers to be stopped...
+        while True:
+            self.__current_users_mutex.acquire()
+            if len(self.__current_users) == 0:
+                self.__current_users_mutex.release()
+                break
+            else:
+                self.__current_users_mutex.release()
+                time.sleep(1)
+        for routemanager in self.__routemanagers.keys():
+            area = self.__routemanagers.get(routemanager, None)
+            if area is None:
+                continue
+            area["routemanager"].stop_routemanager()
+
+        if self.__loop is not None:
+            self.__loop.call_soon_threadsafe(self.__loop.stop)
 
     async def handler(self, websocket_client_connection, path):
         log.info("Waiting for connection...")
@@ -92,6 +126,10 @@ class WebsocketServer(object):
 
     async def __register(self, websocket_client_connection):
         log.info("Client %s registering" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        if self.__stop_server.is_set():
+            log.info("MAD is set to shut down, not accepting new connection")
+            return False
+
         try:
             id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
         except IndexError:
@@ -108,82 +146,122 @@ class WebsocketServer(object):
                 return False
 
         self.__current_users_mutex.acquire()
-        user_present = self.__current_users.get(id)
-        if user_present is not None:
-            log.warning("Worker with origin %s is already running, killing the running one and have client reconnect"
-                        % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
-            user_present[1].stop_worker()
-            self.__current_users_mutex.release()
-            return False
-        elif self.__auths and authBase64 and not check_auth(authBase64, self.args, self.__auths):
-            log.warning("Invalid auth details received from %s"
-                        % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
-            self.__current_users_mutex.release()
-            return False
-        self.__current_users_mutex.release()
+        try:
+            log.debug("Checking if %s is already present" % str(id))
+            user_present = self.__current_users.get(id)
+            if user_present is not None:
+                log.warning("Worker with origin %s is already running, "
+                            "killing the running one and have client reconnect"
+                            % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+                user_present[1].stop_worker()
+                return False
+            elif self.__auths and authBase64 and not check_auth(authBase64, self.args, self.__auths):
+                log.warning("Invalid auth details received from %s"
+                            % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+                return False
 
-        last_known_state = {}
-        client_mapping = self.__device_mappings[id]
-        timer = Timer(client_mapping["switch"], id, client_mapping["switch_interval"])
-        await asyncio.sleep(0.8)
-        daytime_routemanager = self.__routemanagers[client_mapping["daytime_area"]].get("routemanager")
-        if client_mapping.get("nighttime_area", None) is not None:
-            nightime_routemanager = self.__routemanagers[client_mapping["nighttime_area"]].get("routemanager", None)
-        else:
-            nightime_routemanager = None
-        devicesettings = client_mapping["settings"]
+            last_known_state = {}
+            client_mapping = self.__device_mappings[id]
+            devicesettings = client_mapping["settings"]
+            log.debug("Setting up routemanagers for %s" % str(id))
 
-        started = False
-        if timer.get_switch() is True and client_mapping.get("nighttime_area", None) is not None:
-            # set global mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["nighttime_area"]].get(
-                "routemanager").settings.get("mon_ids_iv", [])
-            # start the appropriate nighttime manager if set
-            if nightime_routemanager is None:
+            if client_mapping.get("walker", None) is not None:
+                if "walker_area_index" not in devicesettings:
+                    devicesettings['walker_area_index'] = 0
+                    devicesettings['finished'] = False
+                    devicesettings['last_action_time'] = None
+                    devicesettings['last_cleanup_time'] = None
+
+                walker_index = devicesettings.get('walker_area_index', 0)
+
+                if walker_index > 0:
+                    # check status of last area
+                    if not devicesettings.get('finished', False):
+                        log.info('Something wrong with last round - get back to old area')
+                        walker_index -= 1
+                        devicesettings['walker_area_index'] = walker_index
+
+                walker_area_array = client_mapping["walker"]
+                walker_settings = walker_area_array[walker_index]
+
+                # preckeck walker setting
+                while not pre_check_value(walker_settings) and walker_index-1 <= len(walker_area_array):
+                    walker_area_name = walker_area_array[walker_index]['walkerarea']
+                    log.info('%s dont using area %s - Walkervalue out of range' % (str(id), str(walker_area_name)))
+                    if walker_index >= len(walker_area_array) - 1:
+                        log.error('Dont find any working area - check your config')
+                        walker_index = 0
+                        devicesettings['walker_area_index'] = walker_index
+                        walker_settings = walker_area_array[walker_index]
+                        break
+                    walker_index += 1
+                    devicesettings['walker_area_index'] = walker_index
+                    walker_settings = walker_area_array[walker_index]
+
+                if devicesettings['walker_area_index'] >= len(walker_area_array):
+                    # check if array is smaller then expected - f.e. on the fly changes in mappings.json
+                    devicesettings['walker_area_index'] = 0
+                    devicesettings['finished'] = False
+                    walker_index = devicesettings.get('walker_area_index', 0)
+
+                walker_area_name = walker_area_array[walker_index]['walkerarea']
+
+                if walker_area_name not in self.__routemanagers:
+                    raise WrongAreaInWalker()
+
+                log.info('%s using walker area %s [%s/%s]' % (str(id), str(walker_area_name),
+                                                                 str(walker_index+1),
+                                                                 str(len(walker_area_array))))
+                walker_routemanager = \
+                    self.__routemanagers[walker_area_name].get("routemanager", None)
+                devicesettings['walker_area_index'] += 1
+                devicesettings['finished'] = False
+                if walker_index >= len(walker_area_array) - 1:
+                        devicesettings['walker_area_index'] = 0
+
+                # set global mon_iv
+                client_mapping['mon_ids_iv'] = \
+                    self.__routemanagers[walker_area_name].get(
+                        "routemanager").settings.get("mon_ids_iv", [])
+
+            else:
+                walker_routemanager = None
+
+            if "last_location" not in devicesettings:
+                devicesettings['last_location'] = Location(0.0, 0.0)
+
+            log.debug("Setting up worker for %s" % str(id))
+
+            if walker_routemanager is None:
                 pass
-            elif nightime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
-                started = True
-            elif nightime_routemanager.mode in ["raids_ocr"]:
+            elif walker_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+                worker = WorkerMITM(self.args, id, last_known_state, self, walker_routemanager,
+                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper,
+                                    pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
+            elif walker_routemanager.mode in ["raids_ocr"]:
                 from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
-                started = True
-            elif nightime_routemanager.mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
-                                      nightime_routemanager,
-                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
-                started = True
-            else:
-                log.fatal("Mode not implemented")
-                sys.exit(1)
-        if not timer.get_switch() or not started:
-            # set mon_iv
-            client_mapping['mon_ids_iv'] = self.__routemanagers[client_mapping["daytime_area"]].get(
-                "routemanager").settings.get("mon_ids_iv", [])
-            # we either gotta run daytime mode OR nighttime routemanager not set
-            if daytime_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                worker = WorkerMITM(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
-            elif daytime_routemanager.mode in ["raids_ocr"]:
-                from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, id, last_known_state, self, daytime_routemanager, nightime_routemanager,
-                                   devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
-            elif daytime_routemanager.mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, daytime_routemanager,
-                                      nightime_routemanager,
-                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper, timer=timer)
+                worker = WorkerOCR(self.args, id, last_known_state, self, walker_routemanager,
+                                   devicesettings, db_wrapper=self.__db_wrapper,
+                                   pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
+            elif walker_routemanager.mode in ["pokestops"]:
+                worker = WorkerQuests(self.args, id, last_known_state, self, walker_routemanager,
+                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper,
+                                      pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
             else:
                 log.fatal("Mode not implemented")
                 sys.exit(1)
 
-        new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
-        new_worker_thread.daemon = True
-        self.__current_users_mutex.acquire()
-        self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
-        self.__current_users_mutex.release()
-        new_worker_thread.start()
+            log.debug("Starting worker for %s" % str(id))
+            new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
+
+            new_worker_thread.daemon = False
+
+            self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
+            new_worker_thread.start()
+        except WrongAreaInWalker:
+            log.error('Unknown Area in Walker settings - check config')
+        finally:
+            self.__current_users_mutex.release()
 
         return True
 
@@ -223,18 +301,18 @@ class WebsocketServer(object):
             except Exception as e:
                 await asyncio.sleep(0.02)
         if not websocket_client_connection.open:
-            log.error("retrieve_next_send: connection closed, returning None")
+            log.warning("retrieve_next_send: connection closed, returning None")
         return found
 
     async def __consumer_handler(self, websocket_client_connection):
         if websocket_client_connection is None:
             return
         worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
-        log.warning("Consumer handler of %s starting" % str(worker_id))
+        log.info("Consumer handler of %s starting" % str(worker_id))
         while websocket_client_connection.open:
             message = None
             try:
-                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=0.02)
+                message = await asyncio.wait_for(websocket_client_connection.recv(), timeout=2.0)
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
@@ -246,16 +324,22 @@ class WebsocketServer(object):
                     # TODO: do it abruptly in the worker, maybe set a flag to be checked for in send_and_wait to
                     # TODO: throw an exception
                     worker[1].stop_worker()
-                self.clean_up_user(worker_id)
+                self.clean_up_user(worker_id, None)
                 return
 
             if message is not None:
                 await self.__on_message(message)
         log.warning("Connection of %s closed in consumer_handler" % str(worker_id))
 
-    def clean_up_user(self, worker_id):
+    def clean_up_user(self, worker_id, worker_instance):
+        """
+        :param worker_id: The ID/Origin of the worker
+        :param worker_instance: None if the cleanup is called from within the websocket server
+        :return:
+        """
         self.__current_users_mutex.acquire()
-        if worker_id in self.__current_users.keys():
+        if worker_id in self.__current_users.keys() and (worker_instance is None
+                                                         or self.__current_users[worker_id][1] == worker_instance):
             if self.__current_users[worker_id][2].open:
                 log.info("Calling close for %s..." % str(worker_id))
                 asyncio.ensure_future(self.__current_users[worker_id][2].close(), loop=self.__loop)
@@ -317,12 +401,13 @@ class WebsocketServer(object):
         next_message = OutgoingMessage(id, to_be_sent)
         self.__send_queue.put(next_message)
 
-    def send_and_wait(self, id, message, timeout):
+    def send_and_wait(self, id, worker_instance, message, timeout):
         log.debug("%s sending command: %s" % (str(id), message.strip()))
         self.__current_users_mutex.acquire()
         user_entry = self.__current_users.get(id, None)
         self.__current_users_mutex.release()
-        if user_entry is None:
+
+        if user_entry is None or user_entry[1] != worker_instance:
             raise WebsocketWorkerRemovedException
 
         message_id = self.__get_new_message_id()
@@ -354,7 +439,7 @@ class WebsocketServer(object):
             if new_count > 5:
                 log.error("5 consecutive timeouts to %s, cleanup" % str(id))
                 # TODO: signal worker to stop and NOT cleanup the websocket by itself!
-                self.clean_up_user(id)
+                self.clean_up_user(id, None)
                 raise WebsocketWorkerTimeoutException
 
         self.__remove_request(message_id)
@@ -387,7 +472,16 @@ class WebsocketServer(object):
         self.__requests_mutex.release()
 
     def update_settings(self, routemanagers, device_mappings, auths):
+        for loc in self.__device_mappings:
+            if "last_location" in self.__device_mappings[loc]['settings']:
+                device_mappings[loc]['settings']["last_location"] = \
+                    self.__device_mappings[loc]['settings']["last_location"]
+            if "walker_area_index" in self.__device_mappings[loc]['settings']:
+                device_mappings[loc]['settings']["walker_area_index"] = \
+                    self.__device_mappings[loc]['settings']["walker_area_index"]
         self.__current_users_mutex.acquire()
+        # save reference to old routemanagers to stop them
+        old_routemanagers = routemanagers
         self.__device_mappings = device_mappings
         self.__routemanagers = routemanagers
         self.__auths = auths
@@ -395,3 +489,8 @@ class WebsocketServer(object):
             log.info('Stopping worker %s to apply new mappings.', id)
             worker[1].stop_worker()
         self.__current_users_mutex.release()
+        for routemanager in old_routemanagers.keys():
+            area = routemanagers.get(routemanager, None)
+            if area is None:
+                continue
+            area["routemanager"].stop_routemanager()

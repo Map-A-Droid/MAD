@@ -16,21 +16,25 @@ mode_mapping = {
     "raids_mitm": {
         "s2_cell_level": 13,
         "range":         490,
+        "range_init":    490,
         "max_count":     100000
 
     },
     "mon_mitm":   {
         "s2_cell_level": 17,
         "range":         67,
+        "range_init":    67,
         "max_count":     100000
     },
     "raids_ocr": {
         "range":         490,
+        "range_init":    490,
         "max_count":     7
     },
     "pokestops":  {
         "s2_cell_level": 13,
         "range":         1,
+        "range_init":    490,
         "max_count":     100000
     }
 }
@@ -41,6 +45,9 @@ class MappingParser(object):
         self.db_wrapper = db_wrapper
         with open('configs/mappings.json') as f:
             self.__raw_json = json.load(f)
+            if 'walker' not in self.__raw_json:
+                self.__raw_json['walker'] = []
+
 
     def get_routemanagers(self):
         from multiprocessing.pool import ThreadPool
@@ -140,7 +147,7 @@ class MappingParser(object):
                     # calculate all level N cells (mapping back from mapping above linked to mode)
                     # coords = S2Helper.get_s2_cells_from_fence(geofence=geofence_helper,
                     #                                           cell_size=mode_mapping[mode]["s2_cell_level"])
-                    coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range"],
+                    coords = S2Helper._generate_locations(mode_mapping[area["mode"]]["range_init"],
                                                           geofence_helper)
 
                 route_manager.add_coords_list(coords)
@@ -184,17 +191,18 @@ class MappingParser(object):
         # returns mapping of devises to areas
         devices = {}
         device_arr = self.__raw_json["devices"]
+        walker_arr = self.__raw_json["walker"]
         for device in device_arr:
             device_dict = {}
-            daytime_area = device["daytime_area"]
-            nighttime_area = device.get("nighttime_area", None)
-            switch = device.get("switch", False)
-            switch_interval = device.get("switch_interval", False)
+            walker = device["walker"]
             settings = device.get("settings", None)
-            device_dict["daytime_area"] = daytime_area
-            device_dict["nighttime_area"] = nighttime_area
-            device_dict["switch"] = switch
-            device_dict["switch_interval"] = switch_interval
+            if walker:
+                walker_settings = 0
+                while walker_settings < len(walker_arr):
+                    if walker_arr[walker_settings]['walkername'] == walker:
+                        device_dict["walker"] = walker_arr[walker_settings].get('setup',[])
+                        break
+                    walker_settings += 1
             device_dict["settings"] = settings
             devices[device["origin"]] = device_dict
         return devices

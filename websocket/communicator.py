@@ -13,25 +13,28 @@ log = logging.getLogger(__name__)
 class Communicator:
     UPDATE_INTERVAL = 0.4
 
-    def __init__(self, websocketHandler, id, commandTimeout):
+    def __init__(self, websocketHandler, id, worker_instance_ref, commandTimeout):
         # Throws ValueError if unable to connect!
         # catch in code using this class
         self.id = id
+        self.worker_instance_ref = worker_instance_ref
         self.websocketHandler = websocketHandler
         self.__commandTimeout = commandTimeout
         self.__sendMutex = Lock()
 
     def cleanup_websocket(self):
+        log.info("Communicator of %s acquiring lock to cleanup worker in websocket" % str(self.id))
         self.__sendMutex.acquire()
         try:
-            self.websocketHandler.clean_up_user(self.id)
+            log.info("Communicator of %s calling cleanup" % str(self.id))
+            self.websocketHandler.clean_up_user(self.id, self.worker_instance_ref)
         finally:
             self.__sendMutex.release()
 
     def __runAndOk(self, command, timeout):
         self.__sendMutex.acquire()
         try:
-            result = self.websocketHandler.send_and_wait(self.id, command, timeout)
+            result = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, command, timeout)
             return result is not None and "OK" in result
         finally:
             self.__sendMutex.release()
@@ -62,22 +65,27 @@ class Communicator:
         return self.__runAndOk("more screen on\r\n", self.__commandTimeout)
 
     def click(self, x, y):
-        return self.__runAndOk("screen click %s %s\r\n" % (str(int(round(x))), str(int(round(y)))), self.__commandTimeout)
+        return self.__runAndOk("screen click %s %s\r\n" % (str(int(round(x))), str(int(round(y)))),
+                               self.__commandTimeout)
 
     def swipe(self, x1, y1, x2, y2):
-        return self.websocketHandler.send_and_wait(self.id, "touch swipe %s %s %s %s\r\n" % (str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
+        return self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "touch swipe %s %s %s %s\r\n" % (
+        str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def touchandhold(self, x1, y1, x2, y2):
-        return self.__runAndOk("touch swipe %s %s %s %s 3000" % (str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
+        return self.__runAndOk("touch swipe %s %s %s %s 3000" % (
+        str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def getscreensize(self):
-        response = self.websocketHandler.send_and_wait(self.id, "screen size", self.__commandTimeout)
+        response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "screen size",
+                                                       self.__commandTimeout)
         return response
 
     def get_screenshot_single(self, path):
         self.__sendMutex.acquire()
         try:
-            encoded = self.websocketHandler.send_and_wait(self.id, "screen single\r\n", self.__commandTimeout)
+            encoded = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "screen single\r\n",
+                                                          self.__commandTimeout)
         finally:
             self.__sendMutex.release()
         if encoded is None:
@@ -103,7 +111,8 @@ class Communicator:
     def getScreenshot(self, path):
         self.__sendMutex.acquire()
         try:
-            encoded = self.websocketHandler.send_and_wait(self.id, "screen capture\r\n", self.__commandTimeout)
+            encoded = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "screen capture\r\n",
+                                                          self.__commandTimeout)
         finally:
             self.__sendMutex.release()
         if encoded is None:
@@ -132,7 +141,8 @@ class Communicator:
     def isScreenOn(self):
         self.__sendMutex.acquire()
         try:
-            state = self.websocketHandler.send_and_wait(self.id, "more state screen\r\n", self.__commandTimeout)
+            state = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "more state screen\r\n",
+                                                        self.__commandTimeout)
             if state is None:
                 return False
             return "on" in state
@@ -142,7 +152,8 @@ class Communicator:
     def isPogoTopmost(self):
         self.__sendMutex.acquire()
         try:
-            topmost = self.websocketHandler.send_and_wait(self.id, "more topmost app\r\n", self.__commandTimeout)
+            topmost = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "more topmost app\r\n",
+                                                          self.__commandTimeout)
             if topmost is None:
 
                 return False
@@ -153,7 +164,9 @@ class Communicator:
     def setLocation(self, lat, lng, alt):
         self.__sendMutex.acquire()
         try:
-            response = self.websocketHandler.send_and_wait(self.id, "geo fix %s %s %s\r\n" % (lat, lng, alt), self.__commandTimeout)
+            response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref,
+                                                           "geo fix %s %s %s\r\n" % (lat, lng, alt),
+                                                           self.__commandTimeout)
             return response
         finally:
             self.__sendMutex.release()
@@ -161,7 +174,7 @@ class Communicator:
     def terminate_connection(self):
         self.__sendMutex.acquire()
         try:
-            response = self.websocketHandler.send_and_wait(self.id, "exit\r\n", 5)
+            response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "exit\r\n", 5)
             return response
         finally:
             self.__sendMutex.release()
@@ -180,9 +193,10 @@ class Communicator:
         speed_meters = speed / 3.6
         seconds_traveltime = distance / speed_meters
         try:
-            response = self.websocketHandler.send_and_wait(self.id, "geo walk %s %s %s %s %s\r\n"
-                                                         % (startLat, startLng, destLat, destLng, speed),
-                                                         self.__commandTimeout + seconds_traveltime)
+            response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref,
+                                                           "geo walk %s %s %s %s %s\r\n"
+                                                           % (startLat, startLng, destLat, destLng, speed),
+                                                           self.__commandTimeout + seconds_traveltime)
             return response
         finally:
             self.__sendMutex.release()

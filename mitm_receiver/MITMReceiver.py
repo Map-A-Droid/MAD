@@ -75,11 +75,12 @@ class MITMReceiver(object):
         self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            t = threading.Thread(target=self.received_data_worker)
+            t = threading.Thread(name='MITMReceiver-%s' % str(i),
+                                 target=self.received_data_worker)
             t.start()
             self.worker_threads.append(t)
 
-    def __del__(self):
+    def stop_receiver(self):
         global application_args
         self._data_queue.join()
         for i in range(application_args.mitmreceiver_data_workers):
@@ -97,9 +98,8 @@ class MITMReceiver(object):
         self.app.add_url_rule(endpoint, endpoint_name, EndpointAction(handler), methods=methods_passed)
 
     def proto_endpoint(self, origin, data):
-        # data = json.loads(request.data)
         type = data.get("type", None)
-        if type is None:
+        if type is None or type == 0:
             log.warning("Could not read method ID. Stopping processing of proto")
             return None
         timestamp = int(math.floor(time.time()))
@@ -123,8 +123,8 @@ class MITMReceiver(object):
             item = self._data_queue.get()
             items_left = self._data_queue.qsize()
             log.debug("MITM data processing worker retrieved data. Queue length left afterwards: %s" % str(items_left))
-            if items_left > 50: # TODO: no magic number
-                log.warning("MITM data processing workers are falling behind!")
+            if items_left > 50:  # TODO: no magic number
+                log.warning("MITM data processing workers are falling behind! Queue length: %s" % str(items_left))
             if item is None:
                 log.warning("Received none from queue of data")
                 break
@@ -133,12 +133,16 @@ class MITMReceiver(object):
 
     def process_data(self, received_timestamp, data, origin):
         global application_args
+        if origin not in self.__mitm_mapper.playerstats:
+            log.warning("Not processing data of %s since origin is unknown" % str(origin))
+            return
         type = data.get("type", None)
         if type:
-            if type == 106:
-                # process GetMapObject
-                log.info("Processing GMO received from %s at %s" % (str(origin), str(received_timestamp)))
-                try:
+            try:
+                if type == 106:
+                    # process GetMapObject
+                    log.info("Processing GMO received from %s at %s" % (str(origin), str(received_timestamp)))
+
                     if application_args.weather:
                         self._db_wrapper.submit_weather_map_proto(origin, data["payload"], received_timestamp)
 
@@ -147,23 +151,21 @@ class MITMReceiver(object):
                     self._db_wrapper.submit_raids_map_proto(origin, data["payload"])
 
                     self._db_wrapper.submit_spawnpoints_map_proto(origin, data["payload"])
-                    # mon_ids_iv = self.__mitm_mapper.request_latest(origin, "mon_ids_iv")
                     mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
                     self._db_wrapper.submit_mons_map_proto(origin, data["payload"], mon_ids_iv)
-                except Exception as e:
-                    log.error("Issue updating DB: %s" % str(e))
+                elif type == 102:
+                    playerlevel = self.__mitm_mapper.playerstats[origin].get_level()
+                    if playerlevel >= 30:
+                        log.info("Processing Encounter received from %s at %s" % (str(origin), str(received_timestamp)))
+                        self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])
+                    else:
+                        log.warning('Playerlevel lower than 30 - not processing encounter Data')
+                elif type == 101:
+                    self._db_wrapper.submit_quest_proto(data["payload"])
+                elif type == 104:
+                    self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
+                elif type == 4:
+                     self.__mitm_mapper.playerstats[origin].gen_player_stats(data["payload"])
 
-            elif type == 102:
-                # process Encounter
-                playerlevel = self.__mitm_mapper._playerstats[origin].get_level()
-                if playerlevel >= 30:
-                    log.info("Processing Encounter received from %s at %s" % (str(origin), str(received_timestamp)))
-                    self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])
-                else:
-                    log.error('Playerlevel lower than 30 - not processing encounter Data')
-            elif type == 101:
-                self._db_wrapper.submit_quest_proto(data["payload"])
-            elif type == 104:
-                self._db_wrapper.submit_pokestops_details_map_proto(data["payload"])
-            elif type == 4:
-                self.__mitm_mapper._playerstats[origin]._gen_player_stats(data["payload"])
+            except Exception as e:
+                log.error("Issue updating DB: %s" % str(e))

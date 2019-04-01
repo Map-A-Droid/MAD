@@ -16,6 +16,7 @@ def generate_mappingjson():
     newfile['areas'] = []
     newfile['auth'] = []
     newfile['devices'] = []
+    newfile['walker'] = []
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
@@ -47,6 +48,6 @@ if __name__ == "__main__":
     version.get_version()
     
     print('Starting MADmin with Port {} - open browser  and click "Mapping Editor"'.format(int(args.madmin_port)))
-    t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper,))
+    t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper))
     t_flask.daemon = False
     t_flask.start()

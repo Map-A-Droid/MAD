@@ -9,6 +9,7 @@
     function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
             "data": gridData,
+            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
             "columns": [
 				{ data: 'url', title: 'Pokestop Pic' },
                 { data: 'name', title: 'Pokestop Name' },
@@ -50,11 +51,15 @@
 	
     $(document).ready(function () {
         $("#navgyms").addClass("active");
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width=100px /><br><h2>Load..</h2>' });
         $.ajax({
             type: "GET",
             url: "/get_quests",
             success: function (result) {
                 setGrid('#show-data', result);
+            },
+            complete: function(){
+                setTimeout($.unblockUI, 500);
             }
         });
     });

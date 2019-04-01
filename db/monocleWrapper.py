@@ -15,27 +15,27 @@ log = logging.getLogger(__name__)
 
 
 class MonocleWrapper(DbWrapperBase):
-    def ensure_last_updated_column(self):
-        log.info("Checking if last_updated column exists in raids table and creating it if necessary")
+    def __init__(self, args, webhook_helper):
+        super().__init__(args, webhook_helper)
 
-        result = self.__check_last_updated_column_exists()
-        if result == 1:
-            log.info("raids.last_updated already present")
-            return True
+        self.__ensure_columns_exist()
 
-        alter_query = (
-            "ALTER TABLE raids "
-            "ADD COLUMN last_updated int(11) NULL AFTER time_end"
-        )
+    def __ensure_columns_exist(self):
+        fields = [
+            {
+                "table": "raids",
+                "column": "last_updated",
+                "ctype": "int(11) NULL"
+            },
+            {
+                "table": "raids",
+                "column": "is_exclusive",
+                "ctype": "tinyint(1) NULL"
+            }
+        ]
 
-        self.execute(alter_query, commit=True)
-
-        if self.__check_last_updated_column_exists() == 1:
-            log.info("Successfully added last_updated column")
-            return True
-        else:
-            log.warning("Could not add last_updated column, fallback to time_spawn")
-            return False
+        for field in fields:
+            self._check_create_column(field)
 
     def auto_hatch_eggs(self):
         log.info("{MonocleWrapper::auto_hatch_eggs} called")
@@ -78,13 +78,6 @@ class MonocleWrapper(DbWrapperBase):
 
                 if affected_rows == 1:
                     counter = counter + 1
-                    if self.application_args.webhook:
-                        log.debug('Sending auto hatched raid for raid id {0}'.format(row[0]))
-                        self.webhook_helper.send_raid_webhook(
-                            row[1], 'MON', row[2], row[3], 5, mon_id
-                        )
-                    else:
-                        log.debug('Sending Webhook is disabled')
                 elif affected_rows > 1:
                     log.error('Something is wrong with the indexing on your table you raids on this id {0}'
                               .format(row[0]))
@@ -249,12 +242,6 @@ class MonocleWrapper(DbWrapperBase):
                  % (str(raid_no), str(unique_hash)))
         self.refresh_times(gym, raid_no, capture_time)
 
-        if self.application_args.webhook and wh_send:
-            log.info('[Crop: ' + str(raid_no) + ' (' + str(unique_hash) + ') ] ' + 'submitRaid: Send webhook')
-            self.webhook_helper.send_raid_webhook(
-                gym, 'RAID', wh_start, wh_end, lvl, pkm
-            )
-
         return True
 
     def read_raid_endtime(self, gym, raid_no, unique_hash="123"):
@@ -408,6 +395,7 @@ class MonocleWrapper(DbWrapperBase):
             "* sin(radians(lat))"
             ")"
             ") "
+            "AS distance, forts.lat, forts.lon, forts.name, forts.url "
             "FROM forts "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
@@ -448,18 +436,11 @@ class MonocleWrapper(DbWrapperBase):
 
         for (id, lat, lon, name, url, park, sponsor, team) in res:
             if url is not None:
-                if not self.application_args.justjson:
-                    filename = url_image_path + '_' + str(id) + '_.jpg'
-                    log.debug('Downloading', filename)
-                    self.__download_img(str(url), str(filename))
-                gyminfo[id] = self.__encode_hash_json(team, float(lat), float(lon),
-                                                      str(name).replace('"', '\\"')
-                                                      .replace('\n', '\\n'), url, park, sponsor)
+                filename = url_image_path + '_' + str(id) + '_.jpg'
+                self.__download_img(str(url), str(filename))
 
-        with io.open('gym_info.json', 'w') as outfile:
-            outfile.write(str(json.dumps(gyminfo, indent=4, sort_keys=True)))
         log.info('Finished downloading gym images...')
-        
+
         return True
 
     def get_gym_infos(self, id=False):
@@ -548,10 +529,6 @@ class MonocleWrapper(DbWrapperBase):
 
         self.execute(query, vals, commit=True)
 
-        self.webhook_helper.send_weather_webhook(
-            cell_id, gameplay_weather, 0, 0, 2, float(now)
-        )
-
     def submit_mon_iv(self, origin, timestamp, encounter_proto):
         log.debug("Updating IV sent by %s" % str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
@@ -560,12 +537,12 @@ class MonocleWrapper(DbWrapperBase):
 
         query_insert = (
             "INSERT sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
-            "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id, "
+            "lat, lon, updated, gender, form, costume, weather_boosted_condition, weather_cell_id, "
             "atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight) "
-            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), atk_iv=VALUES(atk_iv), def_iv=VALUES(def_iv), "
             "sta_iv=VALUES(sta_iv), move_1=VALUES(move_1), move_2=VALUES(move_2), cp=VALUES(cp), "
-            "level=VALUES(level), weight=VALUES(weight)"
+            "level=VALUES(level), weight=VALUES(weight), costume=VALUES(costume)"
         )
 
         encounter_id = wild_pokemon['encounter_id']
@@ -625,6 +602,7 @@ class MonocleWrapper(DbWrapperBase):
             latitude, longitude, timestamp,
             pokemon_display.get("gender_value", None),
             pokemon_display.get("form_value", None),
+            pokemon_display.get("costume_value", None),
             pokemon_display.get("weather_boosted_value", None),
             s2_weather_cell_id,
             pokemon_data.get("individual_attack"),
@@ -638,34 +616,14 @@ class MonocleWrapper(DbWrapperBase):
         )
         self.execute(query_insert, vals, commit=True)
 
-        self.webhook_helper.send_pokemon_webhook(
-            encounter_id=encounter_id,
-            pokemon_id=pokemon_data.get("id"),
-            last_modified_time=timestamp,
-            spawnpoint_id=int(wild_pokemon.get("spawnpoint_id"), 16),
-            lat=latitude, lon=longitude,
-            despawn_time_unix=despawn_time_unix,
-            pokemon_level=pokemon_level,
-            cp_multiplier=pokemon_data.get("cp_multiplier"),
-            form=pokemon_display.get("form_value", None),
-            cp=pokemon_data.get("cp"),
-            individual_attack=pokemon_data.get("individual_attack"),
-            individual_defense=pokemon_data.get("individual_defense"),
-            individual_stamina=pokemon_data.get("individual_stamina"),
-            move_1=pokemon_data.get("move_1"),
-            move_2=pokemon_data.get("move_2"),
-            height=pokemon_data.get("height"),
-            weight=pokemon_data.get("weight")
-        )
-
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
         query_mons_insert = (
             "INSERT IGNORE INTO sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
-            "lat, lon, updated, gender, form, weather_boosted_condition, weather_cell_id) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "lat, lon, updated, gender, form, weather_boosted_condition, costume, weather_cell_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
         )
 
         mon_vals_insert = []
@@ -704,12 +662,6 @@ class MonocleWrapper(DbWrapperBase):
 
                 mon_id = wild_mon['pokemon_data']['id']
 
-                if mon_ids_iv is not None and mon_id not in mon_ids_iv or mon_ids_iv is None:
-                    self.webhook_helper.send_pokemon_webhook(
-                        encounter_id, mon_id, time.time(),
-                        spawnid, lat, lon, despawn_time_unix
-                    )
-
                 mon_vals_insert.append(
                     (
                         mon_id,
@@ -721,6 +673,7 @@ class MonocleWrapper(DbWrapperBase):
                         wild_mon['pokemon_data']['display']['gender_value'],
                         wild_mon['pokemon_data']['display']['form_value'],
                         wild_mon['pokemon_data']['display']['weather_boosted_value'],
+                        wild_mon['pokemon_data']['display']['costume_value'],
                         s2_weather_cell_id
                     )
                 )
@@ -737,7 +690,8 @@ class MonocleWrapper(DbWrapperBase):
         query_pokestops = (
             "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s)"
-            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires)"
+            "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires), "
+            "lat=VALUES(lat), lon=VALUES(lon)"
         )
 
         list_of_pokestops = []
@@ -766,7 +720,6 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
         now = int(time.time())
-
         vals_forts = []
         vals_fort_sightings = []
 
@@ -807,10 +760,6 @@ class MonocleWrapper(DbWrapperBase):
                     if gym['gym_details']['has_raid']:
                         raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
 
-                    self.webhook_helper.send_gym_webhook(
-                        gym_id, raidendSec, 'unknown', team, slots, guardmon, lat, lon, last_modified
-                    )
-
                     vals_forts.append(
                         (
                             gym_id, lat, lon, None, image_uri, None, s2_cell_id, None, None
@@ -832,16 +781,15 @@ class MonocleWrapper(DbWrapperBase):
         if cells is None:
             return False
         raid_vals = []
-        now = time.time()
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form) "
+            "time_end, cp, move_1, move_2, form, last_updated, is_exclusive) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
-            "form=VALUES(form)"
+            "form=VALUES(form), last_updated=VALUES(last_updated)"
         )
 
         for cell in cells:
@@ -864,20 +812,13 @@ class MonocleWrapper(DbWrapperBase):
                     raidspawnSec = int(gym['gym_details']['raid_info']['raid_spawn'] / 1000)
                     raidbattleSec = int(gym['gym_details']['raid_info']['raid_battle'] / 1000)
 
+                    is_exclusive = gym['gym_details']['raid_info']['is_exclusive']
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
-                    team = gym['gym_details']['owned_by_team']
 
-                    # gymid, type, start, end, lvl, mon, gyminfos
-                    # TODO: get matching weather...
-                    self.webhook_helper.send_raid_webhook(
-                        gymid=gymid, type='RAID', start=raidbattleSec, end=raidendSec, lvl=level,
-                        mon=pokemon_id, team_param=team, cp_param=cp, move1_param=move_1,
-                        move2_param=move_2, lat_param=gym['latitude'], lng_param=gym['longitude'],
-                        image_url=gym['image_url']
-                    )
+                    now = time.time()
 
-                    log.info("%s: adding/Updating gym at gym %s with level %s ending at %s"
+                    log.info("%s: adding/Updating gym %s with level %s ending at %s"
                              % (str(origin), str(gymid), str(level), str(raidendSec)))
 
                     raid_vals.append(
@@ -889,8 +830,10 @@ class MonocleWrapper(DbWrapperBase):
                             raidspawnSec,
                             raidbattleSec,
                             raidendSec,
-                            cp, move_1, move_2, 
-                            form
+                            cp, move_1, move_2,
+                            form,
+                            int(now),
+                            is_exclusive
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -912,35 +855,21 @@ class MonocleWrapper(DbWrapperBase):
 
             list_of_weather_vals = []
             list_of_weather = []
-        
+
             for client_weather in map_proto['client_weather']:
                 # lat, lng, alt = S2Helper.get_position_from_cell(weather_extract['cell_id'])
                 time_of_day = map_proto.get("time_of_day_value", 0)
                 list_of_weather_vals.append(
                     self.__extract_args_single_weather(client_weather, time_of_day, received_timestamp)
                 )
-            
+
             for weather_data in list_of_weather_vals:
 
                 list_of_weather.append((weather_data[0], weather_data[1], weather_data[2],
                                         weather_data[3], weather_data[4], weather_data[5]))
-        
+
             self.executemany(query_weather, list_of_weather, commit=True)
             return True
-
-    def __check_last_updated_column_exists(self):
-        query = (
-            "SELECT count(*) "
-            "FROM information_schema.columns "
-            "WHERE table_name = 'raids' "
-            "AND column_name = 'last_updated' "
-            "AND table_schema = %s"
-        )
-        vals = (
-            self.database,
-        )
-
-        return int(self.execute(query, vals)[0][0])
 
     def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
         if min_time_left_seconds is None or eligible_mon_ids is None:
@@ -1011,7 +940,6 @@ class MonocleWrapper(DbWrapperBase):
             gym_json['sponsor'] = sponsor
         else:
             gym_json['sponsor'] = 0
-        log.debug(gym_json)
 
         return gym_json
 
@@ -1038,13 +966,9 @@ class MonocleWrapper(DbWrapperBase):
         display_weather_data = client_weather_data.get("display_weather", None)
         if display_weather_data is None:
             return None
-        elif time_of_day == 2 and client_weather_data["gameplay_weather"]["gameplay_condition"] == 3:
-            gameplay_weather = 13
         else:
             gameplay_weather = client_weather_data["gameplay_weather"]["gameplay_condition"]
 
-        self.webhook_helper.send_weather_webhook(cell_id, gameplay_weather, 0, 0,
-                                                                  time_of_day, float(received_timestamp))
         return (
                 cell_id,
                 gameplay_weather,
@@ -1112,7 +1036,7 @@ class MonocleWrapper(DbWrapperBase):
                 "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
                 "trs_quest.quest_timestamp,trs_quest.quest_task "
                 "FROM pokestops inner join trs_quest on "
-                "(pokestops.external_id COLLATE utf8mb4_general_ci) = trs_quest.GUID where "
+                "pokestops.external_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
             )
             data = ()
@@ -1124,7 +1048,7 @@ class MonocleWrapper(DbWrapperBase):
                 "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
                 "trs_quest.quest_timestamp,trs_quest.quest_task "
                 "FROM pokestops inner join trs_quest on "
-                "(pokestops.external_id COLLATE utf8mb4_general_ci)= trs_quest.GUID where "
+                "pokestops.external_id = trs_quest.GUID where "
                 "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
                 "trs_quest.GUID = %s"
             )
@@ -1146,7 +1070,7 @@ class MonocleWrapper(DbWrapperBase):
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
                 'task': quest_task})
         return questinfo
-        
+
     def submit_pokestops_details_map_proto(self, map_proto):
         log.debug("{MonocleWrapper::submit_pokestops_details_map_proto} called")
         pokestop_args = []
@@ -1156,18 +1080,203 @@ class MonocleWrapper(DbWrapperBase):
             "UPDATE pokestops set name = %s, url= %s, updated = %s, lat = %s, lon = %s "
             "where external_id = %s"
         )
-        
+
         pokestop_args = self.__extract_args_single_pokestop_details(map_proto)
-        
+
         if pokestop_args is not None:
             self.execute(query_pokestops, pokestop_args, commit=True)
         return True
-        
+
+    def get_raids_changed_since(self, timestamp):
+        query = (
+            "SELECT forts.external_id, level, time_spawn, time_battle, time_end, "
+            "pokemon_id, cp, move_1, move_2, last_updated, form, is_exclusive, name, url, "
+            "lat, lon, team, weather.condition "
+            "FROM raids "
+            "LEFT JOIN fort_sightings ON raids.fort_id = fort_sightings.fort_id "
+            "LEFT JOIN forts ON raids.fort_id = forts.id "
+            "LEFT JOIN weather ON forts.weather_cell_id = weather.s2_cell_id "
+            "WHERE last_updated >= %s"
+        )
+
+        res = self.execute(query, (timestamp, ))
+        ret = []
+
+        for (gym_id, level, spawn, start, end, pokemon_id,
+                cp, move_1, move_2, last_scanned, form, is_exclusive,
+                name, url, latitude, longitude, team_id,
+                weather_boosted_condition) in res:
+            ret.append({
+                    "gym_id": gym_id,
+                    "level": level,
+                    "spawn": spawn,
+                    "start": start,
+                    "end": end,
+                    "pokemon_id": pokemon_id,
+                    "cp": cp,
+                    "move_1": move_1,
+                    "move_2": move_2,
+                    "last_scanned": last_scanned,
+                    "form": form,
+                    "name": name,
+                    "url": url,
+                    "latitude": latitude,
+                    "longitude": longitude,
+                    "team_id": team_id,
+                    "weather_boosted_condition": weather_boosted_condition,
+                    "is_exclusive": is_exclusive
+                })
+
+        return ret
+
+    def get_mon_changed_since(self, timestamp):
+        query = (
+            "SELECT encounter_id, spawn_id, pokemon_id, lat, lon, expire_timestamp, "
+            "atk_iv, def_iv, sta_iv, move_1, move_2, cp, weight, gender, form, costume, "
+            "weather_boosted_condition, updated, level "
+            "FROM sightings "
+            "WHERE updated >= %s"
+        )
+
+        res = self.execute(query, (timestamp, ))
+        ret = []
+
+        for (encounter_id, spawnpoint_id, pokemon_id, latitude,
+                longitude, disappear_time, individual_attack,
+                individual_defense, individual_stamina, move_1, move_2,
+                cp, weight, gender, form, costume,
+                weather_boosted_condition, last_modified, level) in res:
+            ret.append({
+                "encounter_id": encounter_id,
+                "pokemon_id": pokemon_id,
+                "last_modified": last_modified,
+                "spawnpoint_id": spawnpoint_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "disappear_time": disappear_time,
+                "individual_attack": individual_attack,
+                "individual_defense": individual_defense,
+                "individual_stamina": individual_stamina,
+                "move_1": move_1,
+                "move_2": move_2,
+                "cp": cp,
+                "gender": gender,
+                "form": form,
+                "costume": costume,
+                "weight": weight,
+                "weather_boosted_condition": weather_boosted_condition,
+                "level": level
+            })
+
+        return ret
+
+    def get_quests_changed_since(self, timestamp):
+        pass
+
+    def get_weather_changed_since(self, timestamp):
+        query = (
+            "SELECT s2_cell_id, weather.condition, alert_severity, warn, day, updated "
+            "FROM weather "
+            "WHERE updated >= %s"
+        )
+
+        res = self.execute(query, (timestamp, ))
+        ret = []
+
+        for (s2_cell_id, condition, alert_severity, warn, day, updated) in res:
+            ret.append({
+                "s2_cell_id": s2_cell_id,
+                "gameplay_weather": condition,
+                "severity": alert_severity,
+                "warn_weather": warn,
+                "world_time": day,
+                "last_updated": updated
+            })
+
+        return ret
+
+    def get_gyms_changed_since(self, timestamp):
+        query = (
+            "SELECT name, url, external_id, team, guard_pokemon_id, slots_available, "
+            "lat, lon, is_in_battle, updated "
+            "FROM forts "
+            "LEFT JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
+            "WHERE updated >= %s"
+        )
+
+        res = self.execute(query, (timestamp, ))
+        ret = []
+
+        for (name, url, external_id, team, guard_pokemon_id, slots_available,
+                lat, lon, is_in_battle, updated) in res:
+            ret.append({
+                "gym_id": external_id,
+                "team_id": team,
+                "guard_pokemon_id": guard_pokemon_id,
+                "slots_available": slots_available,
+                "latitude": lat,
+                "longitude": lon,
+                "is_in_battle": is_in_battle,
+                "last_modified": updated,
+                "name": name,
+                "url": url,
+            })
+
+        return ret
+
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
             return None
         image = stop_data.get('image_urls', None)
         name = stop_data.get('name', None)
-        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        now = int(time.time())
 
         return name, image[0], now, stop_data['latitude'], stop_data['longitude'], stop_data['fort_id']
+
+    def statistics_get_pokemon_count(self, minutes):
+        log.debug('Fetching pokemon spawns count from db')
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %k:00:00'))" \
+                     "as timestamp"
+        if minutes:
+            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
+            query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(minutes)
+
+        query = (
+                "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings %s "
+                "group by IV, day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
+                "order by timestamp" %
+                (str(query_date), str(query_where))
+        )
+
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_gym_count(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT if (team=0, 'WHITE', if (team=1, 'BLUE', if (team=2, 'RED', 'YELLOW'))) "
+                "as Color, count(team) as Count FROM `fort_sightings` group by team"
+
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_stop_quest(self):
+        log.debug('Fetching gym count from db')
+
+        query = (
+                "SELECT "
+                "if(FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d') is NULL,'NO QUEST',"
+                "FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')) as Quest, "
+                "count(pokestops.external_id) as Count FROM pokestops left join trs_quest "
+                "on pokestops.external_id = trs_quest.GUID "
+                "group by FROM_UNIXTIME(trs_quest.quest_timestamp, '%y-%m-%d')"
+
+        )
+        res = self.execute(query)
+
+        return res

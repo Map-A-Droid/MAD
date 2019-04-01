@@ -1,3 +1,6 @@
+from threading import Event
+
+terminate_mad = Event()
 
 
 class WebsocketWorkerRemovedException(Exception):
@@ -5,6 +8,10 @@ class WebsocketWorkerRemovedException(Exception):
 
 
 class WebsocketWorkerTimeoutException(Exception):
+    pass
+
+
+class WrongAreaInWalker(Exception):
     pass
 
 
