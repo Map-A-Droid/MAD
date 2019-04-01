@@ -1110,7 +1110,7 @@ class MonocleWrapper(DbWrapperBase):
         for (gym_id, level, spawn, start, end, pokemon_id,
                 cp, move_1, move_2, last_scanned, form, is_exclusive,
                 name, url, latitude, longitude, team_id,
-                weather_boosted_condition) in res:
+                weather_boosted_condition, is_ex_raid_eligible) in res:
             ret.append({
                     "gym_id": gym_id,
                     "level": level,
