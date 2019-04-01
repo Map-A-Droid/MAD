@@ -20,7 +20,6 @@ from mitm_receiver.MITMReceiver import MITMReceiver
 from utils.madGlobals import terminate_mad
 from utils.mappingParser import MappingParser
 from utils.walkerArgs import parseArgs
-from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 from utils.rarity import Rarity
@@ -280,16 +279,13 @@ if __name__ == "__main__":
     set_log_and_verbosity(log)
     install_thread_excepthook()
 
-    webhook_helper = WebhookHelper(args)
-
     if args.db_method == "rm":
-        db_wrapper = RmWrapper(args, webhook_helper)
+        db_wrapper = RmWrapper(args)
     elif args.db_method == "monocle":
-        db_wrapper = MonocleWrapper(args, webhook_helper)
+        db_wrapper = MonocleWrapper(args)
     else:
         log.error("Invalid db_method in config. Exiting")
         sys.exit(1)
-    webhook_helper.set_db_wrapper(db_wrapper)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
@@ -322,6 +318,8 @@ if __name__ == "__main__":
     ws_server = None
     t_ws = None
     t_file_watcher = None
+    t_whw = None
+
     if args.only_scan or args.only_routes:
 
         filename = os.path.join('configs', 'mappings.json')
@@ -443,8 +441,9 @@ if __name__ == "__main__":
         log.fatal("Stop called")
         terminate_mad.set()
         # now cleanup all threads...
-        webhook_helper.stop_helper()
         # TODO: check against args or init variables to None...
+        if t_whw is not None:
+            t_whw.join()
         if t_mitm is not None and mitm_receiver is not None:
             mitm_receiver.stop_receiver()
         if ws_server is not None:

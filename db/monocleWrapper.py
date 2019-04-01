@@ -17,8 +17,8 @@ log = logging.getLogger(__name__)
 
 
 class MonocleWrapper(DbWrapperBase):
-    def __init__(self, args, webhook_helper):
-        super().__init__(args, webhook_helper)
+    def __init__(self, args):
+        super().__init__(args)
 
         self.__ensure_columns_exist()
 
@@ -1026,35 +1026,30 @@ class MonocleWrapper(DbWrapperBase):
                 to_return[i][1] = list_of_coords[i][1]
             return to_return
 
-    def quests_from_db(self, GUID=False):
+    def quests_from_db(self, GUID=None, timestamp=None):
         log.debug("{MonocleWrapper::quests_from_db} called")
         questinfo = {}
+        data = ()
 
-        if not GUID:
-            query = (
-                "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
-                "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
-                "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
-                "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
-                "FROM pokestops inner join trs_quest on "
-                "pokestops.external_id = trs_quest.GUID where "
-                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
-            )
-            data = ()
-        else:
-            query = (
-                "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
-                "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
-                "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
-                "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
-                "FROM pokestops inner join trs_quest on "
-                "pokestops.external_id = trs_quest.GUID where "
-                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
-                "trs_quest.GUID = %s"
-            )
-            data = (GUID, )
+        query = (
+            "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
+            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
+            "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
+            "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
+            "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
+            "FROM pokestops inner join trs_quest on "
+            "pokestops.external_id = trs_quest.GUID where "
+            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
+        )
+
+        if GUID is not None:
+            add_query = " and trs_quest.GUID = %s"
+            query = query + add_query
+            data = (GUID,)
+        elif timestamp is not None:
+            add_query = " and trs_quest.quest_timestamp > %s"
+            query = query + add_query
+            data = (timestamp,)
 
         res = self.execute(query, data)
 

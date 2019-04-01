@@ -18,8 +18,8 @@ log = logging.getLogger(__name__)
 
 class RmWrapper(DbWrapperBase):
 
-    def __init__(self, args, webhook_helper):
-        super().__init__(args, webhook_helper)
+    def __init__(self, args):
+        super().__init__(args)
 
         self.__ensure_columns_exist()
 
@@ -580,10 +580,6 @@ class RmWrapper(DbWrapperBase):
 
         self.execute(query, data, commit=True)
 
-        self.webhook_helper.send_weather_webhook(
-            cell_id, gameplay_weather, 0, 0, weather_daytime, now_timestamp
-        )
-
         return True
 
     def submit_mon_iv(self, origin, timestamp, encounter_proto):
@@ -1059,35 +1055,30 @@ class RmWrapper(DbWrapperBase):
                 to_return[i][1] = list_of_coords[i][1]
             return to_return
 
-    def quests_from_db(self, GUID=False):
+    def quests_from_db(self, GUID=None, timestamp=None):
         log.debug("{RmWrapper::quests_from_db} called")
         questinfo = {}
+        data = ()
 
-        if not GUID:
-            query = (
-                "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
-                "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
-                "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, "
-                "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
-                "FROM pokestop inner join trs_quest on "
-                "pokestop.pokestop_id = trs_quest.GUID where "
-                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
-            )
-            data = ()
-        else:
-            query = (
-                "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
-                "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
-                "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
-                "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, "
-                "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
-                "FROM pokestop inner join trs_quest on "
-                "pokestop.pokestop_id = trs_quest.GUID where "
-                "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() and "
-                "trs_quest.GUID = %s"
-            )
-            data = (GUID, )
+        query = (
+            "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
+            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
+            "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
+            "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, "
+            "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
+            "FROM pokestop inner join trs_quest on "
+            "pokestop.pokestop_id = trs_quest.GUID where "
+            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
+        )
+
+        if GUID is not None:
+            add_query = " and trs_quest.GUID = %s"
+            query = query + add_query
+            data = (GUID,)
+        elif timestamp is not None:
+            add_query = " and trs_quest.quest_timestamp > %s"
+            query = query + add_query
+            data = (timestamp,)
 
         res = self.execute(query, data)
 
@@ -1104,6 +1095,7 @@ class RmWrapper(DbWrapperBase):
                 'quest_target': quest_target,
                 'quest_condition': quest_condition, 'quest_timestamp': quest_timestamp,
                 'task': quest_task, 'quest_template': quest_template})
+
         return questinfo
 
     def submit_pokestops_details_map_proto(self, map_proto):

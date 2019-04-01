@@ -23,7 +23,7 @@ log = logging.getLogger(__name__)
 class DbWrapperBase(ABC):
     def_spawn = 240
 
-    def __init__(self, args, webhook_helper):
+    def __init__(self, args):
         self.application_args = args
         self.host = args.dbip
         self.port = args.dbport
@@ -33,7 +33,6 @@ class DbWrapperBase(ABC):
         self.pool = None
         self.pool_mutex = Lock()
         self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
-        self.webhook_helper = webhook_helper
         self.dbconfig = {"database": self.database, "user": self.user, "host": self.host, "password": self.password,
                          "port": self.port}
         self._init_pool()
@@ -277,7 +276,7 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def quests_from_db(self, GUID=False):
+    def quests_from_db(self, GUID=None, timestamp=None):
         """
         Retrieve all the pokestops valid within the area set by geofence_helper
         :return: numpy array with coords
@@ -954,12 +953,6 @@ class DbWrapperBase(ABC):
             log.debug("{DbWrapperBase::submit_quest_proto} submitted quest typ %s at stop %s" % (
                 str(quest_type), str(fort_id)))
             self.execute(query_quests, vals, commit=True)
-
-            if self.application_args.webhook and self.application_args.quest_webhook:
-                log.debug('Sending quest webhook for pokestop {0}'.format(str(fort_id)))
-                self.webhook_helper.submit_quest_webhook(self.quests_from_db(GUID=fort_id))
-            else:
-                log.debug('Sending Webhook is disabled')
 
         return True
 

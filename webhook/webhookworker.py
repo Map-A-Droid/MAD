@@ -7,6 +7,7 @@ from utils.gamemechanicutil import calculate_mon_level
 from utils.gamemechanicutil import get_raid_boss_cp
 from utils.s2Helper import S2Helper
 from utils.madGlobals import terminate_mad
+from utils.questGen import generate_quest
 
 log = logging.getLogger(__name__)
 
@@ -89,6 +90,37 @@ class WebhookWorker:
                     )
             except Exception as e:
                 log.warning("Exception occured while sending webhook: %s" % str(e))
+
+    def __prepare_quest_data(self, quest_data):
+        ret = []
+
+        for pokestopid in quest_data:
+            quest = generate_quest(quest_data[str(pokestopid)])
+            quest_payload = {
+                "pokestop_id": quest['pokestop_id'],
+                "latitude": quest['latitude'],
+                "longitude": quest['longitude'],
+                "quest_type": quest['quest_type'],
+                "quest_type_raw": quest['quest_type_raw'],
+                "item_type": quest['item_type'],
+                "name": quest['name'].replace('"', '\\"').replace('\n', '\\n'),
+                "url": quest['url'],
+                "timestamp": quest['timestamp'],
+                "quest_reward_type": quest['quest_reward_type'],
+                "quest_reward_type_raw": quest['quest_reward_type_raw'],
+                "quest_target": quest['quest_target'],
+                "pokemon_id": int(quest['pokemon_id']),
+                "item_amount": quest['item_amount'],
+                "item_id": quest['item_id'],
+                "quest_task": quest['quest_task'],
+                "quest_condition": quest['quest_condition'].replace('\'', '"').lower(),
+                "quest_template": quest['quest_template']
+            }
+
+            entire_payload = {"type": "quest", "message": quest_payload}
+            ret.append(entire_payload)
+
+        return ret
 
     def __prepare_weather_data(self, weather_data):
         ret = []
@@ -296,6 +328,13 @@ class WebhookWorker:
                 self.__db_wrapper.get_raids_changed_since(self.__last_check)
             )
             full_payload += raids
+
+            # quest
+            if self.__args.quest_webhook:
+                quest = self.__prepare_quest_data(
+                    self.__db_wrapper.quests_from_db(timestamp=self.__last_check)
+                )
+                full_payload += quest
 
             # weather
             if self.__args.weather_webhook:
