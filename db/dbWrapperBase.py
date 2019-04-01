@@ -339,6 +339,13 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def get_pokemon_spawns(self, hours):
+        """
+        Get Pokemon Spawns for dynamic rarity
+        """
+        pass
+
+    @abstractmethod
     def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
         """
         Update/Insert weather from a map_proto dict

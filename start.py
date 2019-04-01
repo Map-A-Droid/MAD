@@ -23,6 +23,7 @@ from utils.walkerArgs import parseArgs
 from utils.webhookHelper import WebhookHelper
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
+from utils.rarity import Rarity
 
 log = logging.getLogger()
 args = parseArgs()
@@ -389,7 +390,10 @@ if __name__ == "__main__":
             if args.webhook:
                 from webhook.webhookworker import WebhookWorker
 
-                webhook_worker = WebhookWorker(args, db_wrapper, routemanagers)
+                rarity = Rarity(args, db_wrapper)
+                rarity.start_dynamic_rarity()
+
+                webhook_worker = WebhookWorker(args, db_wrapper, routemanagers, rarity)
                 t_whw = Thread(name="webhook_worker", target=webhook_worker.run_worker)
                 t_whw.daemon = False
                 t_whw.start()

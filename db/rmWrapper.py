@@ -7,6 +7,7 @@ import requests
 from db.dbWrapperBase import DbWrapperBase
 import logging
 from datetime import datetime, timezone, timedelta
+from functools import reduce
 
 from utils.collections import Location
 from utils.s2Helper import S2Helper
@@ -1337,4 +1338,22 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query)
 
         return res
+
+    def get_pokemon_spawns(self, hours):
+        log.debug('Fetching pokemon spawns from db')
+        query_where = ''
+        if hours:
+            hours = datetime.utcnow() - timedelta(hours=hours)
+            query_where = ' where disappear_time > \'%s\' ' % str(hours)
+
+        query = (
+            "SELECT pokemon_id, count(pokemon_id) from pokemon %s group by pokemon_id" % str(query_where)
+        )
+
+        res = self.execute(query)
+
+        total = reduce(lambda x, y: x + y[1], res, 0)
+
+        return {'pokemon': res, 'total': total}
+
 

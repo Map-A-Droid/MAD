@@ -14,10 +14,11 @@ log = logging.getLogger(__name__)
 class WebhookWorker:
     __IV_MON = []
 
-    def __init__(self, args, db_wrapper, routemanagers):
+    def __init__(self, args, db_wrapper, routemanagers, rarity):
         self.__worker_interval_sec = 10
         self.__args = args
         self.__db_wrapper = db_wrapper
+        self.__rarity = rarity
         self.__last_check = int(time.time())
 
         self.__build_ivmon_list(routemanagers)
@@ -191,6 +192,9 @@ class WebhookWorker:
                 "disappear_time": mon["disappear_time"],
             }
 
+            # get rarity
+            pokemon_rarity = self.__rarity.rarity_by_id(pokemonid=mon["pokemon_id"])
+
             # used by RM
             if mon.get("cp_multiplier", None) is not None:
                 mon_payload["cp_multiplier"] = mon["cp_multiplier"]
@@ -229,6 +233,9 @@ class WebhookWorker:
 
             if mon["gender"] is not None:
                 mon_payload["gender"] = mon["gender"]
+
+            if pokemon_rarity is not None:
+                mon_payload["rarity"] = pokemon_rarity
 
             if (
                 mon["weather_boosted_condition"] is not None
