@@ -16,6 +16,7 @@ Map'A'Droid is a scanner for PoGo based on Android devices.
 - MySQL database, with RocketMap or Monocle structure
 - Rooted Android device
 - PogoDroid token (only necessary for MITM Mode), obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
+- Game running in English, Deutsch or Français (for Quest mode)
 
 >MAD is compatible with [this Monocle schema](https://raw.githubusercontent.com/whitewillem/PMSF/master/sql/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
 
