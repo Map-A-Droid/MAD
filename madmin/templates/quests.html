@@ -51,7 +51,7 @@
 
     $(document).ready(function () {
         $("#navgyms").addClass("active");
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width=100px /><br><h2>Load..</h2>' });
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width=100px /><br /><h2>Load..</h2>' });
         $.ajax({
             type: "GET",
             url: "get_quests",
