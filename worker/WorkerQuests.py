@@ -241,7 +241,7 @@ class WorkerQuests(MITMBase):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         self._work_mutex.acquire()
-        if not self._init:
+        if not self._walker_routemanager.init:
             log.info("Processing Stop / Quest...")
 
             data_received = '-'

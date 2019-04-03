@@ -329,6 +329,10 @@ class RouteManagerBase(ABC):
             self._start_routemanager()
         next_lat, next_lng = 0, 0
 
+        if self._start_calc:
+            log.info("Another process already calculate the new route")
+            return None
+
         # first check if a location is available, if not, block until we have one...
         got_location = False
         while not got_location and self._is_started and not self.init:
@@ -339,7 +343,7 @@ class RouteManagerBase(ABC):
             self._manager_mutex.release()
             if not got_location:
                 log.debug("%s: No location available yet" % str(self.name))
-                if self._get_coords_after_finish_route():
+                if self._get_coords_after_finish_route() and not self.init:
                     # getting new coords or IV worker
                     time.sleep(1)
                 else:
@@ -384,6 +388,11 @@ class RouteManagerBase(ABC):
                 # we are done with init, let's calculate a new route
                 log.warning("Init of %s done, it took %s, calculating new route..."
                             % (str(self.name), self._get_round_finished_string()))
+                if self._start_calc:
+                    log.info("Another process already calculate the new route")
+                    self._manager_mutex.release()
+                    return None
+                self._start_calc = True
                 self.clear_coords()
                 coords = self._get_coords_post_init()
                 log.debug("Setting %s coords to as new points in route of %s"
@@ -394,6 +403,7 @@ class RouteManagerBase(ABC):
                 self.init = False
                 self.change_init_mapping(self.name)
                 self._manager_mutex.release()
+                self._start_calc = False
                 log.debug("Initroute of %s is finished - restart worker" % str(self.name))
                 return None
             elif (self._route_queue.qsize()) == 1:
@@ -419,7 +429,6 @@ class RouteManagerBase(ABC):
             log.info("%s: Moving on with location %s [%s coords left]" % (str(self.name),
                                                                           str(next_coord),
                                                                           str(self._route_queue.qsize())))
-
 
             self._last_round_prio = False
         log.info("%s done grabbing next coord, releasing lock and returning location: %s, %s"

@@ -22,7 +22,7 @@ class RouteManagerQuests(RouteManagerBase):
         return None
 
     def _get_coords_post_init(self):
-        return self.generate_stop_list()
+        return self.db_wrapper.stops_from_db(self.geofence_helper)
 
     def _cluster_priority_queue_criteria(self):
         pass

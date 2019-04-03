@@ -211,7 +211,7 @@
 				{
 					"name": "geofence_included",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "true",
 						"empty": "null",
 						"description": "Including geofence for scanarea"
@@ -220,7 +220,7 @@
 				{
 					"name": "geofence_excluded",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "false",
 						"empty": "null",
 						"description": "Excluding geofence for scanarea"
@@ -344,7 +344,7 @@
 				{
 					"name": "geofence_included",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "true",
 						"empty": "null",
 						"description": "Including geofence for scanarea"
@@ -353,7 +353,7 @@
 				{
 					"name": "geofence_excluded",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "false",
 						"empty": "null",
 						"description": "Excluding geofence for scanarea"
@@ -460,7 +460,7 @@
 				{
 					"name": "geofence_included",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "true",
 						"empty": "null",
 						"description": "Including geofence for scanarea"
@@ -469,7 +469,7 @@
 				{
 					"name": "geofence_excluded",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "false",
 						"empty": "null",
 						"description": "Excluding geofence for scanarea"
@@ -539,7 +539,7 @@
 				{
 					"name": "geofence_included",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "true",
 						"empty": "null",
 						"description": "Including geofence for scanarea"
@@ -548,7 +548,7 @@
 				{
 					"name": "geofence_excluded",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "false",
 						"empty": "null",
 						"description": "Excluding geofence for scanarea"
@@ -643,7 +643,7 @@
 				{
 					"name": "geofence_included",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "true",
 						"empty": "null",
 						"description": "Including geofence for scanarea"
@@ -652,7 +652,7 @@
 				{
 					"name": "geofence_excluded",
 					"settings": {
-						"type": "textarea",
+						"type": "text",
 						"require": "false",
 						"empty": "null",
 						"description": "Excluding geofence for scanarea"
