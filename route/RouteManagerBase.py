@@ -376,7 +376,7 @@ class RouteManagerBase(ABC):
                 self._round_started_time = datetime.now()
                 if len(self._route) == 0: return None
                 log.info("Round of route %s started at %s" % (str(self.name), str(self._round_started_time)))
-            else:
+            elif self._round_started_time is None:
                 self._round_started_time = datetime.now()
 
             # continue as usual
