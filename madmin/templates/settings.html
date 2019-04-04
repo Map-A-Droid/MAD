@@ -42,6 +42,8 @@
         font-style: italic;
         font-size: 9px;
     }
+
+}
 </style>
 {% endblock %}
 
@@ -52,17 +54,11 @@
 
         $("table").addClass("table");
         $('table').DataTable({
-            drawCallback: function () {
-                $("img.lazy").lazyload();
-            },
             "autoWidth": true,
             "searching": false,
             "paging": false,
             "bInfo": false,
-            "ordering": false,
-            columnDefs: [
-                { width: '25%', targets: 0 }
-            ]
+            "ordering": false
         });
     });
 </script>

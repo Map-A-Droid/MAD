@@ -1353,12 +1353,15 @@ def showsettings():
     with open('madmin/static/vars/vars_parser.json') as f:
         vars = json.load(f)
 
+    globalheader = '<thead><tr><th><b>Type</b></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
+
+
     for var in vars:
         line, quickadd, quickline = '', '', ''
-        header = '<thead><tr><th><br /><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
-            '">[Add new]</a></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
+        header = '<tr><td colspan="4"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
+            '">[Add new]</a></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
         subheader = '<tr><td colspan="4">' + \
-            settings[var]['description'] + '</td></tr>'
+            settings[var]['description'] + '</td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
         edit = '<td></td>'
         editsettings = '<td></td>'
         _typearea = var
@@ -1393,7 +1396,7 @@ def showsettings():
                     quickadd = quickadd + area.get('walkerarea') + ' | '
 
                 quickline = quickline + '<tr><td></td><td colspan="3" class="quick">' + \
-                    str(quickadd) + ' </td>'
+                    str(quickadd) + ' </td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td>'
 
             elif _quick:
                 for quickfield in _quick.split('|'):
@@ -1414,13 +1417,14 @@ def showsettings():
                             str(output['settings'].get(
                                 quickfield, '')) + '<br>'
                 quickline = quickline + '<td colspan="2" class="quick">' + \
-                    str(quickadd) + '</td></tr>'
+                    str(quickadd) + '</td><td style="display: none;"></td></tr>'
 
             line = line + quickline
 
         table = table + header + subheader + line
 
-    return render_template('settings.html', settings='<table>' + table + '</table>', title="Mapping Editor")
+    return render_template('settings.html', settings='<table>' + globalheader + '<tbody>' + table + '</tbody></table>', title="Mapping Editor",
+                           responsive=str(conf_args.madmin_noresponsive).lower())
 
 
 @app.route('/addnew', methods=['GET'])
