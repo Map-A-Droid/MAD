@@ -21,22 +21,25 @@ from utils.walkerArgs import parseArgs
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 from utils.rarity import Rarity
+from utils.logging import logLevel
+
 
 args = parseArgs()
+debug_level = logLevel(args.verbose)
 os.environ['LANGUAGE'] = args.language
 logconfig = {
     "levels": [
         {"name": "DEBUG2", "no": 9, "color": "<blue>"},
         {"name": "DEBUG3", "no": 8, "color": "<blue>"},
         {"name": "DEBUG4", "no": 7, "color": "<blue>"},
-        {"name": "DEBUG5", "no": 6, "color": "<blue>"},
+        {"name": "DEBUG5", "no": 6, "color": "<blue>"}
     ],
     "handlers": [
         {
             "sink": sys.stderr,
             "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
             "colorize": True,
-            "level": "INFO"
+            "level": debug_level
         },
         {
             "sink": "logs/{time:YYYY-MM-DD}_mad.log",
@@ -50,6 +53,7 @@ logconfig = {
 }
 
 logger.configure(**logconfig)
+logger.debug("Starting with debug level {}", str(debug_level))
 
 
 # Patch to make exceptions in threads cause an exception.

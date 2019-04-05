@@ -38,15 +38,15 @@ class RmWrapper(DbWrapperBase):
             self._check_create_column(field)
 
     def auto_hatch_eggs(self):
-        logger.debug("{RmWrapper::auto_hatch_eggs} called")
+        logger.debug("RmWrapper::auto_hatch_eggs called")
         now = (datetime.now())
         now_timestamp = time.mktime(datetime.utcfromtimestamp(float(received_timestamp)).timetuple())
 
         mon_id = self.application_args.auto_hatch_number
 
         if mon_id == 0:
-            logger.warning('You have enabled auto hatch but not the mon_id '
-                        'so it will mark them as zero so they will remain unhatched...')
+            logger.warning("You have enabled auto hatch but not the mon_id "
+                           "so it will mark them as zero so they will remain unhatched...")
 
         logger.debug("Time used to find eggs: " + str(now))
         timecheck = now_timestamp
@@ -64,7 +64,7 @@ class RmWrapper(DbWrapperBase):
 
         res = self.execute(query_for_count, vals)
         rows_that_need_hatch_count = len(res)
-        logger.debug("Rows that need updating: {0}".format(rows_that_need_hatch_count))
+        logger.debug("Rows that need updating: {}".format(rows_that_need_hatch_count))
 
         if rows_that_need_hatch_count > 0:
             counter = 0
@@ -84,19 +84,16 @@ class RmWrapper(DbWrapperBase):
                 if affected_rows == 1:
                     counter = counter + 1
                 elif affected_rows > 1:
-                    logger.error('Something is wrong with the indexing on your table you raids on this id {0}'
-                              .format(row[0]))
+                    logger.error('Something is wrong with the indexing on your table you raids on this id {}', row[0])
                 else:
-                    logger.error('The row we wanted to update did not get updated that had id {0}'
-                              .format(row[0]))
+                    logger.error('The row we wanted to update did not get updated that had id {}', row[0])
 
             if counter == rows_that_need_hatch_count:
-                logger.info("{0} gym(s) were updated as part of the regular level 5 egg hatching checks"
-                         .format(counter))
+                logger.info("{} gym(s) were updated as part of the regular level 5 egg hatching checks", counter)
             else:
                 logger.warning(
-                    'There was an issue and the number expected the hatch did not match the successful updates. '
-                    'Expected {0} Actual {1}'.format(rows_that_need_hatch_count, counter))
+                    "There was an issue and the number expected the hatch did not match the successful updates. "
+                    "Expected {} Actual {}", rows_that_need_hatch_count, counter)
         else:
             logger.info('No Eggs due for hatching')
 
@@ -109,7 +106,7 @@ class RmWrapper(DbWrapperBase):
         return unixtime
 
     def get_next_raid_hatches(self, delay_after_hatch, geofence_helper=None):
-        logger.debug("{RmWrapper::get_next_raid_hatches} called")
+        logger.debug("RmWrapper::get_next_raid_hatches called")
         db_time_to_check = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query = (
@@ -128,8 +125,7 @@ class RmWrapper(DbWrapperBase):
                 logger.warning("lat or lng is none")
                 continue
             elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
-                logger.debug("Excluded hatch at %s, %s since the coordinate is not inside the given include fences"
-                          % (str(latitude), str(longitude)))
+                logger.debug("Excluded hatch at {}, {} since the coordinate is not inside the given include fences", str(latitude), str(longitude))
                 continue
             timestamp = self.db_timestring_to_unix_timestamp(str(start))
             data.append((timestamp + delay_after_hatch, Location(latitude, longitude)))
@@ -139,14 +135,13 @@ class RmWrapper(DbWrapperBase):
 
     def submit_raid(self, gym, pkm, lvl, start, end, type, raid_no, capture_time, unique_hash="123",
                     MonWithNoEgg=False):
-        logger.debug("{RmWrapper::submit_raid} called")
+        logger.debug("RmWrapper::submit_raid called")
         logger.debug("[Crop: %s (%s) ] submit_raid: Submitting raid" % (str(raid_no), str(unique_hash)))
 
         if self.raid_exist(gym, type, raid_no, unique_hash=str(unique_hash), mon=pkm):
             self.refresh_times(gym, raid_no, capture_time)
-            logger.debug("[Crop: %s (%s) ] submit_raid: %s already submitted, ignoring"
-                      % (str(raid_no), str(unique_hash), str(type)))
-            logger.debug("{RmWrapper::submit_raid} done")
+            logger.debug("[Crop: {} ({})] submit_raid: {} already submitted, ignoring", str(raid_no), str(unique_hash), str(type))
+            logger.debug("RmWrapper::submit_raid done")
             return False
 
         if start is not None:
@@ -162,11 +157,8 @@ class RmWrapper(DbWrapperBase):
         now_timestamp = time.mktime(datetime.utcfromtimestamp(float(capture_time)).timetuple())
         logger.debug(now_timestamp)
 
-        logger.debug("[Crop: %s (%s) ] submit_raid: Submitting something of type %s"
-                  % (str(raid_no), str(unique_hash), str(type)))
-
-        logger.info("Submitting gym: %s, lv: %s, start and spawn: %s, end: %s, mon: %s"
-                 % (gym, lvl, start, end, pkm))
+        logger.debug("[Crop: {} ({})] submit_raid: Submitting something of type {}", str(raid_no), str(unique_hash), str(type))
+        logger.info("Submitting gym: {}, lvl: {}, start and spawn: {}, end: {}, mon: {}", gym, lvl, start, end, pkm)
 
         # always insert timestamp to last_scanned to have rows change if raid has been reported before
 
@@ -246,17 +238,15 @@ class RmWrapper(DbWrapperBase):
 
             self.execute(query, vals, commit=True)
 
-        logger.info("[Crop: %s (%s) ] submit_raid: Submit finished"
-                 % (str(raid_no), str(unique_hash)))
+        logger.info("[Crop: {} ({})] submit_raid: Submit finished", str(raid_no), str(unique_hash))
         self.refresh_times(gym, raid_no, capture_time)
 
-        logger.debug("{RmWrapper::submit_raid} done")
+        logger.debug("RmWrapper::submit_raid done")
         return True
 
     def read_raid_endtime(self, gym, raid_no, unique_hash="123"):
-        logger.debug("{RmWrapper::read_raid_endtime} called")
-        logger.debug("[Crop: %s (%s) ] read_raid_endtime: Check DB for existing mon"
-                  % (str(raid_no), str(unique_hash)))
+        logger.debug("RmWrapper::read_raid_endtime called")
+        logger.debug("[Crop: {} ({})] read_raid_endtime: Check DB for existing mon", str(raid_no), str(unique_hash))
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query = (
@@ -274,22 +264,18 @@ class RmWrapper(DbWrapperBase):
 
         if number_of_rows > 0:
             for row in res:
-                logger.debug("[Crop: %s (%s) ] read_raid_endtime: Found Rows: %s"
-                          % (str(raid_no), str(unique_hash), str(number_of_rows)))
-                logger.info("[Crop: %s (%s) ] read_raid_endtime: Endtime already submitted"
-                         % (str(raid_no), str(unique_hash)))
+                logger.debug("[Crop: {} ({})] read_raid_endtime: Found Rows: {}", str(raid_no), str(unique_hash), str(number_of_rows))
+                logger.info("[Crop: {} ({})] read_raid_endtime: Endtime already submitted", str(raid_no), str(unique_hash))
                 logger.debug("{RmWrapper::read_raid_endtime} done")
                 return True
 
-        logger.info("[Crop: %s (%s) ] read_raid_endtime: Endtime is new"
-                 % (str(raid_no), str(unique_hash)))
-        logger.debug("{RmWrapper::read_raid_endtime} done")
+        logger.info("[Crop: {} ({})] read_raid_endtime: Endtime is new", str(raid_no), str(unique_hash))
+        logger.debug("RmWrapper::read_raid_endtime done")
         return False
 
     def get_raid_endtime(self, gym, raid_no, unique_hash="123"):
-        logger.debug("{RmWrapper::get_raid_endtime} called")
-        logger.debug("[Crop: %s (%s) ] get_raid_endtime: Check DB for existing mon"
-                  % (str(raid_no), str(unique_hash)))
+        logger.debug("RmWrapper::get_raid_endtime called")
+        logger.debug("[Crop: {} ({})] get_raid_endtime: Check DB for existing mon", str(raid_no), str(unique_hash))
 
         now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         query = (
@@ -307,28 +293,23 @@ class RmWrapper(DbWrapperBase):
 
         if number_of_rows > 0:
             for row in res:
-                logger.debug("[Crop: %s (%s) ] get_raid_endtime: Returning found endtime"
-                          % (str(raid_no), str(unique_hash)))
-                logger.debug("[Crop: %s (%s) ] get_raid_endtime: Time: %s"
-                          % (str(raid_no), str(unique_hash), str(row[0])))
+                logger.debug("[Crop: {} ({})] get_raid_endtime: Returning found endtime", str(raid_no), str(unique_hash))
+                logger.debug("[Crop: {} ({})] get_raid_endtime: Time: %s", str(raid_no), str(unique_hash), str(row[0]))
 
                 return True, row[0]
 
-        logger.debug("[Crop: %s (%s) ] get_raid_endtime: No matching endtime found"
-                  % (str(raid_no), str(unique_hash)))
+        logger.debug("[Crop: {} ({}) ] get_raid_endtime: No matching endtime found", str(raid_no), str(unique_hash))
         return False, None
 
     def raid_exist(self, gym, type, raid_no, unique_hash="123", mon=0):
-        logger.debug("{RmWrapper::raid_exist} called")
-        logger.debug("[Crop: %s (%s) ] raid_exist: Check DB for existing entry"
-                  % (str(raid_no), str(unique_hash)))
+        logger.debug("RmWrapper::raid_exist called")
+        logger.debug("[Crop: {} ({})] raid_exist: Check DB for existing entry", str(raid_no), str(unique_hash))
         now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
         # TODO: consider reducing the code...
 
         if type == "EGG":
-            logger.debug("[Crop: %s (%s) ] raid_exist: Check for EGG"
-                      % (str(raid_no), str(unique_hash)))
+            logger.debug("[Crop: {} ({})] raid_exist: Check for egg", str(raid_no), str(unique_hash))
             query = (
                 "SELECT start "
                 "FROM raid "
@@ -342,19 +323,16 @@ class RmWrapper(DbWrapperBase):
             res = self.execute(query, vals)
             number_of_rows = len(res)
             if number_of_rows > 0:
-                logger.debug("[Crop: %s (%s) ] raid_exist: Found Rows: %s"
-                          % (str(raid_no), str(unique_hash), str(number_of_rows)))
-                logger.info("[Crop: %s (%s) ] raid_exist: Egg already submitted"
-                         % (str(raid_no), str(unique_hash)))
-                logger.debug("{RmWrapper::raid_exist} done")
+                logger.debug("[Crop: {} ({})] raid_exist: Found Rows: {}", str(raid_no), str(unique_hash), str(number_of_rows))
+                logger.info("[Crop: {} ({})] raid_exist: Egg already submitted", str(raid_no), str(unique_hash))
+                logger.debug("RmWrapper::raid_exist done")
                 return True
             else:
-                logger.info("[Crop: %s (%s) ] raid_exist: Egg is new"
-                         % (str(raid_no), str(unique_hash)))
-                logger.debug("{RmWrapper::raid_exist} done")
+                logger.info("[Crop: {} ({})] raid_exist: Egg is new", str(raid_no), str(unique_hash))
+                logger.debug("RmWrapper::raid_exist done")
                 return False
         else:
-            logger.debug("[Crop: %s (%s) ] raid_exist: Check for MON"
+            logger.debug("[Crop: %s (%s)] raid_exist: Check for MON"
                       % (str(raid_no), str(unique_hash)))
             query = (
                 "SELECT start "
@@ -372,22 +350,18 @@ class RmWrapper(DbWrapperBase):
             res = self.execute(query, vals)
             number_of_rows = len(res)
             if number_of_rows > 0:
-                logger.debug("[Crop: %s (%s) ] raid_exist: Found Rows: %s"
-                          % (str(raid_no), str(unique_hash), str(number_of_rows)))
-                logger.info("[Crop: %s (%s) ] raid_exist: Mon already submitted"
-                         % (str(raid_no), str(unique_hash)))
-                logger.debug("{RmWrapper::raid_exist} done")
+                logger.debug("[Crop: {} ({})] raid_exist: Found Rows: {}", str(raid_no), str(unique_hash), str(number_of_rows))
+                logger.info("[Crop: {} ({})] raid_exist: Mon already submitted", str(raid_no), str(unique_hash))
+                logger.debug("RmWrapper::raid_exist done")
                 return True
             else:
-                logger.info("[Crop: %s (%s) ] raid_exist: Mon is new"
-                         % (str(raid_no), str(unique_hash)))
-                logger.debug("{RmWrapper::raid_exist} done")
+                logger.info("[Crop: {} ({})] raid_exist: Mon is new", str(raid_no), str(unique_hash))
+                logger.debug("RmWrapper::raid_exist done")
                 return False
 
     def refresh_times(self, gym, raid_no, capture_time, unique_hash="123"):
-        logger.debug("{RmWrapper::refresh_times} called")
-        logger.debug("[Crop: %s (%s) ] raid_exist: Check for EGG"
-                  % (str(raid_no), str(unique_hash)))
+        logger.debug("RmWrapper::refresh_times called")
+        logger.debug("[Crop: {} ({})] raid_exist: Check for Egg", str(raid_no), str(unique_hash))
         now = datetime.utcfromtimestamp(float(capture_time)).strftime("%Y-%m-%d %H:%M:%S")
 
         query = (
@@ -411,7 +385,7 @@ class RmWrapper(DbWrapperBase):
         self.execute(query, vals, commit=True)
 
     def get_near_gyms(self, lat, lng, hash, raid_no, dist, unique_hash="123"):
-        logger.debug("{RmWrapper::get_near_gyms} called")
+        logger.debug("RmWrapper::get_near_gyms called")
 
         query = (
             "SELECT gym.gym_id, "
@@ -437,11 +411,11 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query, vals)
         for (gym_id, distance, latitude, longitude, name, description, url) in res:
             data.append([gym_id, distance, latitude, longitude, name, description, url])
-        logger.debug("{RmWrapper::get_near_gyms} done")
+        logger.debug("RmWrapper::get_near_gyms done")
         return data
 
     def set_scanned_location(self, lat, lng, capture_time):
-        logger.debug("{RmWrapper::set_scanned_location} called")
+        logger.debug("RmWrapper::set_scanned_location called")
         now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
         cell_id = int(S2Helper.lat_lng_to_cell_id(float(lat), float(lng), 16))
         query = (
@@ -454,11 +428,11 @@ class RmWrapper(DbWrapperBase):
         vals = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, -1)
         self.execute(query, vals, commit=True)
 
-        logger.debug("{RmWrapper::set_scanned_location} Done setting location...")
+        logger.debug("RmWrapper::set_scanned_location Done setting location...")
         return True
 
     def download_gym_images(self):
-        logger.debug("{RmWrapper::download_gym_images} called")
+        logger.debug("RmWrapper::download_gym_images called")
         import json
         import io
         import os
@@ -490,7 +464,7 @@ class RmWrapper(DbWrapperBase):
         return True
 
     def get_gym_infos(self, id=False):
-        logger.debug("{RmWrapper::get_gym_infos} called")
+        logger.debug("RmWrapper::get_gym_infos called")
         gyminfo = {}
 
         query = (
@@ -509,7 +483,7 @@ class RmWrapper(DbWrapperBase):
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
-        logger.debug("{RmWrapper::gyms_from_db} called")
+        logger.debug("RmWrapper::gyms_from_db called")
         query = (
             "SELECT latitude, longitude "
             "FROM gym"
@@ -532,7 +506,7 @@ class RmWrapper(DbWrapperBase):
             return to_return
 
     def stops_from_db(self, geofence_helper):
-        logger.debug("{RmWrapper::stops_from_db} called")
+        logger.debug("RmWrapper::stops_from_db called")
 
         query = (
             "SELECT latitude, longitude "
@@ -557,7 +531,7 @@ class RmWrapper(DbWrapperBase):
 
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
                               snow_level=0, fog_level=0, wind_direction=0, weather_daytime=0):
-        logger.debug("{RmWrapper::update_insert_weather} called")
+        logger.debug("RmWrapper::update_insert_weather called")
         now = datetime.utcfromtimestamp(time.time()).strftime('%Y-%m-%d %H:%M:%S')
 
         real_lat, real_lng = S2Helper.middle_of_cell(cell_id)
@@ -580,7 +554,7 @@ class RmWrapper(DbWrapperBase):
         return True
 
     def submit_mon_iv(self, origin, timestamp, encounter_proto):
-        logger.debug("Updating IV sent by %s" % str(origin))
+        logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
             return
@@ -602,13 +576,11 @@ class RmWrapper(DbWrapperBase):
             encounter_id = encounter_id + 2**64
 
         if getdetspawntime is None:
-            logger.info("{0}: updating IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
-                str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
-            )
+            logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
+                        str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
         else:
-            logger.info("{0}: updating IV mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
-                str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
-            )
+            logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (non-init)",
+                        str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
 
         capture_probability = encounter_proto.get("capture_probability")
         capture_probability_list = capture_probability.get("capture_probability_list")
@@ -662,14 +634,13 @@ class RmWrapper(DbWrapperBase):
             pokemon_display.get("form_value", None)
         )
 
-        logger.debug("Placing query to update mon")
         self.execute(query, vals, commit=True)
         logger.debug("Done updating mon in DB")
 
         return True
 
     def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
-        logger.debug("{RmWrapper::submit_mons_map_proto} called with data received from %s" % str(origin))
+        logger.debug("RmWrapper::submit_mons_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -703,11 +674,9 @@ class RmWrapper(DbWrapperBase):
                 despawn_time = datetime.utcfromtimestamp(despawn_time_unix).strftime('%Y-%m-%d %H:%M:%S')
 
                 if getdetspawntime is None:
-                    logger.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (init) ({5})"
-                             .format(str(origin), mon_id, lat, lon, despawn_time, spawnid))
+                    logger.info("{}: adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", str(origin), mon_id, lat, lon, despawn_time, spawnid)
                 else:
-                    logger.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (non-init) ({5})"
-                             .format(str(origin), mon_id, lat, lon, despawn_time, spawnid))
+                    logger.info("{}: adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})", str(origin), mon_id, lat, lon, despawn_time, spawnid)
 
                 mon_args.append(
                     (
@@ -726,7 +695,7 @@ class RmWrapper(DbWrapperBase):
         return True
 
     def submit_pokestops_map_proto(self, origin, map_proto):
-        logger.debug("{RmWrapper::submit_pokestops_map_proto} called with data received from %s" % str(origin))
+        logger.debug("RmWrapper::submit_pokestops_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -749,7 +718,7 @@ class RmWrapper(DbWrapperBase):
         return True
 
     def submit_gyms_map_proto(self, origin, map_proto):
-        logger.debug("{RmWrapper::submit_gyms_map_proto} called with data received from %s" % str(origin))
+        logger.debug("RmWrapper::submit_gyms_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -803,11 +772,11 @@ class RmWrapper(DbWrapperBase):
                     )
         self.executemany(query_gym, gym_args, commit=True)
         self.executemany(query_gym_details, gym_details_args, commit=True)
-        logger.debug("%s: submit_gyms done" % str(origin))
+        logger.debug("{}: submit_gyms done", str(origin))
         return True
 
     def submit_raids_map_proto(self, origin, map_proto):
-        logger.debug("{RmWrapper::submit_raids_map_proto} called with data received from %s" % str(origin))
+        logger.debug("RmWrapper::submit_raids_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -854,8 +823,7 @@ class RmWrapper(DbWrapperBase):
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
 
-                    logger.info("Adding/Updating gym %s with level %s ending at %s"
-                             % (str(gymid), str(level), str(raidend_date)))
+                    logger.info("Adding/Updating gym {} with level {} ending at {}", str(gymid), str(level), str(raidend_date))
 
                     raid_args.append(
                         (
@@ -870,11 +838,11 @@ class RmWrapper(DbWrapperBase):
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)
-        logger.debug("dbWrapper::submit_raids_map_proto: Done submitting raids with data received from %s" % str(origin))
+        logger.debug("RmWrapper::submit_raids_map_proto: Done submitting raids with data received from {}", str(origin))
         return True
 
     def submit_weather_map_proto(self, origin, map_proto, received_timestamp):
-        logger.debug("{RmWrapper::submit_weather_map_proto} called with data received from %s" % str(origin))
+        logger.debug("RmWrapper::submit_weather_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -903,7 +871,7 @@ class RmWrapper(DbWrapperBase):
     def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
         if min_time_left_seconds is None or eligible_mon_ids is None:
             logger.warning("RmWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
-                        "eligible mon IDs specified")
+                           "eligible mon IDs specified")
             return []
         logger.debug("Getting mons to be encountered")
         query = (
@@ -932,8 +900,8 @@ class RmWrapper(DbWrapperBase):
                 logger.warning("lat or lng is none")
                 continue
             elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
-                logger.debug("Excluded encounter at %s, %s since the coordinate is not inside the given include fences"
-                          % (str(latitude), str(longitude)))
+                logger.debug("Excluded encounter at %s, %s since the coordinate is not inside the given include fences",
+                             str(latitude), str(longitude))
                 continue
 
             next_to_encounter.append(
@@ -964,13 +932,13 @@ class RmWrapper(DbWrapperBase):
                 retry = retry + 1
                 logger.info('Download error', url)
                 if retry <= 5:
-                    logger.info('retry:', retry)
+                    logger.info('retry: {}', retry)
                 else:
                     logger.info('Failed to download after 5 retry')
 
     def __extract_args_single_pokestop(self, stop_data):
         if stop_data['type'] != 1:
-            logger.warning("%s is not a pokestop" % str(stop_data))
+            logger.warning("{} is not a pokestop", str(stop_data))
             return None
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
         last_modified = datetime.utcfromtimestamp(stop_data['last_modified_timestamp_ms']/1000).strftime("%Y-%m-%d %H:%M:%S")
@@ -1004,7 +972,7 @@ class RmWrapper(DbWrapperBase):
         )
 
     def check_stop_quest(self, latitude, longitude):
-        logger.debug("{RmWrapper::stops_from_db} called")
+        logger.debug("RmWrapper::stops_from_db called")
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
@@ -1024,9 +992,8 @@ class RmWrapper(DbWrapperBase):
             return False
 
     def stop_from_db_without_quests(self, geofence_helper):
-        logger.debug("{RmWrapper::stop_from_db_without_questsb} called")
+        logger.debug("RmWrapper::stop_from_db_without_questsb called")
         questinfo = {}
-
 
         query = (
                 "SELECT pokestop.latitude, pokestop.longitude "
@@ -1053,7 +1020,7 @@ class RmWrapper(DbWrapperBase):
             return to_return
 
     def quests_from_db(self, GUID=None, timestamp=None):
-        logger.debug("{RmWrapper::quests_from_db} called")
+        logger.debug("RmWrapper::quests_from_db called")
         questinfo = {}
         data = ()
 
@@ -1096,7 +1063,7 @@ class RmWrapper(DbWrapperBase):
         return questinfo
 
     def submit_pokestops_details_map_proto(self, map_proto):
-        logger.debug("{RmWrapper::submit_pokestops_details_map_proto} called")
+        logger.debug("RmWrapper::submit_pokestops_details_map_proto called")
         pokestop_args = []
 
         query_pokestops = (
@@ -1344,5 +1311,3 @@ class RmWrapper(DbWrapperBase):
         total = reduce(lambda x, y: x + y[1], res, 0)
 
         return {'pokemon': res, 'total': total}
-
-

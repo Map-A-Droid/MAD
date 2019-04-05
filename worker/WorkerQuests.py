@@ -171,7 +171,7 @@ class WorkerQuests(MITMBase):
 
                 if delay_used > 7200:  # There's a maximum of 2 hours wait time
                     delay_used = 7200
-            logger.debug("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+            logger.debug("Need more sleep after Teleport: {} seconds!", str(delay_used))
         else:
             logger.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,

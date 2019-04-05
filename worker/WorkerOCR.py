@@ -52,7 +52,7 @@ class WorkerOCR(WorkerBase):
                     delay_used = 10
                 elif distance > 10000:
                     delay_used = 15
-                logger.debug("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+                logger.debug("Need more sleep after Teleport: {} seconds!", str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
             if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:

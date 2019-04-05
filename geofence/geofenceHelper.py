@@ -59,8 +59,8 @@ class GeofenceHelper:
         return False
 
     def get_geofenced_coordinates(self, coordinates):
-        logger.debug('Using matplotlib: %s.', self.use_matplotlib)
-        logger.debug('Found %d coordinates to geofence.', len(coordinates))
+        logger.debug('Using matplotlib: {}.', self.use_matplotlib)
+        logger.debug('Found {} coordinates to geofence.', len(coordinates))
         geofenced_coordinates = []
         for c in coordinates:
             # Coordinate is not valid if in one excluded area.
@@ -99,7 +99,7 @@ class GeofenceHelper:
                             'name': name,
                             'polygon': []
                         })
-                        logger.debug('Found geofence: %s.', name)
+                        logger.debug('Found geofence: {}', name)
                     else:  # Coordinate line.
                         lat, lon = line.split(",")
                         LatLon = {'lat': float(lat), 'lon': float(lon)}

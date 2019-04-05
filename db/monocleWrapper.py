@@ -653,11 +653,9 @@ class MonocleWrapper(DbWrapperBase):
                     init = False
 
                 if init:
-                    logger.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (init)"
-                             .format(str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
+                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
                 else:
-                    logger.info("{0}: adding mon with id #{1} at {2}, {3}. Despawning at {4} (non-init)"
-                             .format(str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time))
+                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despawns at {4} (non-init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
 
                 mon_id = wild_mon['pokemon_data']['id']
 

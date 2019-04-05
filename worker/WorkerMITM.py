@@ -52,7 +52,7 @@ class WorkerMITM(MITMBase):
                     delay_used = 10
                 elif distance > 10000:
                     delay_used = 15
-                logger.debug("Need more sleep after Teleport: %s seconds!", str(delay_used))
+                logger.debug("Need more sleep after Teleport: {} seconds!", str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             walk_distance_post_teleport = self._devicesettings.get('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
@@ -63,7 +63,7 @@ class WorkerMITM(MITMBase):
                                                                float(self.current_location.lng),
                                                                float(self.current_location.lat) + lat_offset,
                                                                float(self.current_location.lng) + lng_offset)
-                logger.info("Walking roughly: %s" % str(to_walk))
+                logger.info("Walking roughly: {}", str(to_walk))
                 time.sleep(0.3)
                 self._communicator.walkFromTo(self.current_location.lat,
                                               self.current_location.lng,
@@ -165,7 +165,7 @@ class WorkerMITM(MITMBase):
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None
         if latest is None:
-            logger.debug("Nothing received from %s since MAD started" % str(self._id))
+            logger.debug("Nothing received from {} since MAD started", str(self._id))
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
             logger.debug("No data linked to the requested proto since MAD started.")
@@ -208,8 +208,8 @@ class WorkerMITM(MITMBase):
                     logger.warning("No mode specified to wait for - this should not even happen...")
                     time.sleep(0.5)
             else:
-                logger.debug("latest timestamp of proto %s (%s) is older than %s"
-                          % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
+                logger.debug("latest timestamp of proto {} ({}) is older than {}",
+                             str(proto_to_wait_for), str(latest_timestamp), str(timestamp))
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
