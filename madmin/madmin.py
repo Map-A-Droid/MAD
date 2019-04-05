@@ -2,13 +2,13 @@
 import datetime
 import glob
 import json
-import logging
 import os
 import platform
 import re
 import sys
 import threading
 import time
+from loguru import logger
 from functools import wraps
 from pathlib import Path
 from math import floor
@@ -17,19 +17,19 @@ from shutil import copyfile
 from flask import (Flask, jsonify, make_response, redirect, render_template,
                    request, send_from_directory)
 
+from gevent.pywsgi import WSGIServer
 from flask_caching import Cache
 from utils.language import i8ln, open_json_file
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
+from utils.logging import MadLoggerUtils
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
-
-log = logging.getLogger(__name__)
-
+log = logger
 conf_args = None
 db_wrapper = None
 device_mappings = None
@@ -43,8 +43,9 @@ def madmin_start(arg_args, arg_db_wrapper):
     mapping_parser = MappingParser(db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
-    app.run(host=arg_args.madmin_ip, port=int(
-        arg_args.madmin_port), threaded=True, use_reloader=False)
+
+    httpsrv = WSGIServer((arg_args.madmin_ip, int(arg_args.madmin_port)), app.wsgi_app, log=MadLoggerUtils)
+    httpsrv.serve_forever()
 
 
 def auth_required(func):

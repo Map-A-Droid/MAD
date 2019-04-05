@@ -1,13 +1,11 @@
-import logging
 import math
 import time
 
+from loguru import logger
 from route.RouteManagerIV import RouteManagerIV
 from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
 from utils.madGlobals import InternalStopWorkerException
 from worker.MITMBase import MITMBase
-
-log = logging.getLogger(__name__)
 
 
 class WorkerMITM(MITMBase):
@@ -15,7 +13,7 @@ class WorkerMITM(MITMBase):
         return ["iv_mitm", "raids_mitm", "mon_mitm"]
 
     def _health_check(self):
-        log.debug("_health_check: called")
+        logger.debug("_health_check: called")
         pass
 
     def _cleanup(self):
@@ -35,15 +33,15 @@ class WorkerMITM(MITMBase):
                                                         float(self.last_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
-        log.info('main: Moving %s meters to the next position' % distance)
+        logger.info('main: Moving %s meters to the next position' % distance)
         delay_used = 0
-        log.debug("Getting time")
+        logger.debug("Getting time")
         speed = routemanager.settings.get("speed", 0)
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            log.info("main: Teleporting...")
+            logger.info("main: Teleporting...")
             self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
@@ -56,7 +54,7 @@ class WorkerMITM(MITMBase):
                     delay_used = 10
                 elif distance > 10000:
                     delay_used = 15
-                log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+                logger.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             walk_distance_post_teleport = self._devicesettings.get('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
@@ -67,29 +65,29 @@ class WorkerMITM(MITMBase):
                                                                float(self.current_location.lng),
                                                                float(self.current_location.lat) + lat_offset,
                                                                float(self.current_location.lng) + lng_offset)
-                log.info("Walking roughly: %s" % str(to_walk))
+                logger.info("Walking roughly: %s" % str(to_walk))
                 time.sleep(0.3)
                 self._communicator.walkFromTo(self.current_location.lat,
                                               self.current_location.lng,
                                               self.current_location.lat + lat_offset,
                                               self.current_location.lng + lng_offset,
                                               11)
-                log.debug("Walking back")
+                logger.debug("Walking back")
                 time.sleep(0.3)
                 self._communicator.walkFromTo(self.current_location.lat + lat_offset,
                                               self.current_location.lng + lng_offset,
                                               self.current_location.lat,
                                               self.current_location.lng,
                                               11)
-                log.debug("Done walking")
+                logger.debug("Done walking")
                 time.sleep(1)
         else:
-            log.info("main: Walking...")
+            logger.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat, self.current_location.lng, speed)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             delay_used = self._devicesettings.get('post_walk_delay', 7)
-        log.info("Sleeping %s" % str(delay_used))
+        logger.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
         self._devicesettings["last_location"] = self.current_location
         self.last_location = self.current_location
@@ -99,7 +97,7 @@ class WorkerMITM(MITMBase):
         self.__update_injection_settings()
 
     def _pre_work_loop(self):
-        log.info("MITM worker starting")
+        logger.info("MITM worker starting")
 
     def _start_pogo(self):
         pogo_topmost = self._communicator.isPogoTopmost()
@@ -108,7 +106,7 @@ class WorkerMITM(MITMBase):
 
         if not self._communicator.isScreenOn():
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
-            log.warning("Turning screen on")
+            logger.warning("Turning screen on")
             self._communicator.turnScreenOn()
             time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 7))
 
@@ -120,7 +118,7 @@ class WorkerMITM(MITMBase):
             pogo_topmost = self._communicator.isPogoTopmost()
         reached_raidtab = False
         if start_result:
-            log.warning("startPogo: Starting pogo...")
+            logger.warning("startPogo: Starting pogo...")
             time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
 
@@ -170,10 +168,10 @@ class WorkerMITM(MITMBase):
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None
         if latest is None:
-            log.debug("Nothing received from %s since MAD started" % str(self._id))
+            logger.debug("Nothing received from %s since MAD started" % str(self._id))
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
-            log.debug("No data linked to the requested proto since MAD started.")
+            logger.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         else:
             # proto has previously been received, let's check the timestamp...
@@ -198,7 +196,7 @@ class WorkerMITM(MITMBase):
                                 data_requested = latest_data
                                 break
                     if data_requested is None:
-                        log.debug("No spawnpoints in data requested")
+                        logger.debug("No spawnpoints in data requested")
                         time.sleep(1)
                 elif current_mode in ["raids_mitm"]:
                     for data_extract in latest_data['payload']['cells']:
@@ -207,13 +205,13 @@ class WorkerMITM(MITMBase):
                                 data_requested = latest_data
                                 break
                     if data_requested is None:
-                        log.debug("No forts in data received")
+                        logger.debug("No forts in data received")
                         time.sleep(0.5)
                 else:
-                    log.warning("No mode specified to wait for - this should not even happen...")
+                    logger.warning("No mode specified to wait for - this should not even happen...")
                     time.sleep(0.5)
             else:
-                log.debug("latest timestamp of proto %s (%s) is older than %s"
+                logger.debug("latest timestamp of proto %s (%s) is older than %s"
                           % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example

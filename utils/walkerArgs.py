@@ -1,11 +1,8 @@
-import logging
 import os
 import sys
 from time import strftime
 
 import configargparse
-
-log = logging.getLogger(__name__)
 
 
 def memoize(function):

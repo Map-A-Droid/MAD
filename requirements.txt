@@ -31,7 +31,7 @@ scipy==1.1.0
 six==1.11.0
 urllib3==1.24.1
 websockets==7.0
-Werkzeug==0.14.1
+Werkzeug==0.15.2
 requests
 geopy
 s2sphere

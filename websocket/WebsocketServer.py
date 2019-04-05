@@ -1,13 +1,12 @@
 import asyncio
 import collections
-import logging
 import math
 import queue
 import sys
 import time
-from threading import Event, Lock, Thread
-
 import websockets
+from threading import Event, Lock, Thread
+from loguru import logger
 
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException, WrongAreaInWalker
@@ -16,12 +15,11 @@ from utils.routeutil import pre_check_value
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
 
-log = logging.getLogger(__name__)
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 
 # Silence the websocket library.
-logging.getLogger('websockets.server').setLevel(logging.INFO)
-logging.getLogger('websockets.protocol').setLevel(logging.INFO)
+# logging.getLogger('websockets.server').setLevel(logger.INFO)
+# logging.getLogger('websockets.protocol').setLevel(logger.INFO)
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
@@ -56,15 +54,15 @@ class WebsocketServer(object):
         self.__loop = None
 
     def start_server(self):
-        log.info("Starting websocket server...")
+        logger.info("Starting websocket server...")
         self.__loop = asyncio.new_event_loop()
         # build list of origin IDs
         allowed_origins = []
         for device in self.__device_mappings.keys():
             allowed_origins.append(device)
 
-        log.debug("Device mappings: %s" % str(self.__device_mappings))
-        log.debug("Allowed origins derived: %s" % str(allowed_origins))
+        logger.debug("Device mappings: %s" % str(self.__device_mappings))
+        logger.debug("Allowed origins derived: %s" % str(allowed_origins))
 
         asyncio.set_event_loop(self.__loop)
         self.__loop.run_until_complete(
@@ -77,7 +75,7 @@ class WebsocketServer(object):
         self.__stop_server.set()
         self.__current_users_mutex.acquire()
         for id, worker in self.__current_users.items():
-            log.info('Stopping worker %s to apply new mappings.', id)
+            logger.info('Stopping worker %s to apply new mappings.', id)
             worker[1].stop_worker()
         self.__current_users_mutex.release()
 
@@ -100,11 +98,11 @@ class WebsocketServer(object):
             self.__loop.call_soon_threadsafe(self.__loop.stop)
 
     async def handler(self, websocket_client_connection, path):
-        log.info("Waiting for connection...")
+        logger.info("Waiting for connection...")
         # wait for a connection...
         continue_work = await self.__register(websocket_client_connection)
         if not continue_work:
-            log.error("Failed registering client, closing connection")
+            logger.error("Failed registering client, closing connection")
             await websocket_client_connection.close()
             return
 
@@ -116,24 +114,24 @@ class WebsocketServer(object):
                 [producer_task, consumer_task],
                 return_when=asyncio.FIRST_COMPLETED,
         )
-        log.info("consumer or producer of %s stopped, cancelling pending tasks"
+        logger.info("consumer or producer of %s stopped, cancelling pending tasks"
                  % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
         for task in pending:
             task.cancel()
-        log.info("Awaiting unregister of %s" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        logger.info("Awaiting unregister of %s" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
         await self.__unregister(websocket_client_connection)
-        log.info("All done with %s" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        logger.info("All done with %s" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
 
     async def __register(self, websocket_client_connection):
-        log.info("Client %s registering" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
+        logger.info("Client %s registering" % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
         if self.__stop_server.is_set():
-            log.info("MAD is set to shut down, not accepting new connection")
+            logger.info("MAD is set to shut down, not accepting new connection")
             return False
 
         try:
             id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
         except IndexError:
-            log.warning("Client from %s tried to connect without Origin header"
+            logger.warning("Client from %s tried to connect without Origin header"
                         % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
             return False
 
@@ -141,29 +139,29 @@ class WebsocketServer(object):
             try:
                 authBase64 = str(websocket_client_connection.request_headers.get_all("Authorization")[0])
             except IndexError:
-                log.warning("Client from %s tried to connect without auth header"
+                logger.warning("Client from %s tried to connect without auth header"
                             % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
         self.__current_users_mutex.acquire()
         try:
-            log.debug("Checking if %s is already present" % str(id))
+            logger.debug("Checking if %s is already present" % str(id))
             user_present = self.__current_users.get(id)
             if user_present is not None:
-                log.warning("Worker with origin %s is already running, "
+                logger.warning("Worker with origin %s is already running, "
                             "killing the running one and have client reconnect"
                             % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
                 user_present[1].stop_worker()
                 return False
             elif self.__auths and authBase64 and not check_auth(authBase64, self.args, self.__auths):
-                log.warning("Invalid auth details received from %s"
+                logger.warning("Invalid auth details received from %s"
                             % str(websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
             last_known_state = {}
             client_mapping = self.__device_mappings[id]
             devicesettings = client_mapping["settings"]
-            log.debug("Setting up routemanagers for %s" % str(id))
+            logger.debug("Setting up routemanagers for %s" % str(id))
 
             if client_mapping.get("walker", None) is not None:
                 if "walker_area_index" not in devicesettings:
@@ -177,7 +175,7 @@ class WebsocketServer(object):
                 if walker_index > 0:
                     # check status of last area
                     if not devicesettings.get('finished', False):
-                        log.info('Something wrong with last round - get back to old area')
+                        logger.info('Something wrong with last round - get back to old area')
                         walker_index -= 1
                         devicesettings['walker_area_index'] = walker_index
 
@@ -187,9 +185,9 @@ class WebsocketServer(object):
                 # preckeck walker setting
                 while not pre_check_value(walker_settings) and walker_index-1 <= len(walker_area_array):
                     walker_area_name = walker_area_array[walker_index]['walkerarea']
-                    log.info('%s dont using area %s - Walkervalue out of range' % (str(id), str(walker_area_name)))
+                    logger.info('%s dont using area %s - Walkervalue out of range' % (str(id), str(walker_area_name)))
                     if walker_index >= len(walker_area_array) - 1:
-                        log.error('Dont find any working area - check your config')
+                        logger.error('Dont find any working area - check your config')
                         walker_index = 0
                         devicesettings['walker_area_index'] = walker_index
                         walker_settings = walker_area_array[walker_index]
@@ -209,7 +207,7 @@ class WebsocketServer(object):
                 if walker_area_name not in self.__routemanagers:
                     raise WrongAreaInWalker()
 
-                log.info('%s using walker area %s [%s/%s]' % (str(id), str(walker_area_name),
+                logger.info('%s using walker area %s [%s/%s]' % (str(id), str(walker_area_name),
                                                                  str(walker_index+1),
                                                                  str(len(walker_area_array))))
                 walker_routemanager = \
@@ -230,7 +228,7 @@ class WebsocketServer(object):
             if "last_location" not in devicesettings:
                 devicesettings['last_location'] = Location(0.0, 0.0)
 
-            log.debug("Setting up worker for %s" % str(id))
+            logger.debug("Setting up worker for %s" % str(id))
 
             if walker_routemanager is None:
                 pass
@@ -248,10 +246,10 @@ class WebsocketServer(object):
                                       self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper,
                                       pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
             else:
-                log.fatal("Mode not implemented")
+                logger.fatal("Mode not implemented")
                 sys.exit(1)
 
-            log.debug("Starting worker for %s" % str(id))
+            logger.debug("Starting worker for %s" % str(id))
             new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
 
             new_worker_thread.daemon = False
@@ -259,7 +257,7 @@ class WebsocketServer(object):
             self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
             new_worker_thread.start()
         except WrongAreaInWalker:
-            log.error('Unknown Area in Walker settings - check config')
+            logger.error('Unknown Area in Walker settings - check config')
         finally:
             self.__current_users_mutex.release()
 
@@ -272,18 +270,18 @@ class WebsocketServer(object):
         if worker is not None:
             self.__current_users.pop(worker_id)
         self.__current_users_mutex.release()
-        log.info("Worker %s unregistered" % str(worker_id))
+        logger.info("Worker %s unregistered" % str(worker_id))
 
     async def __producer_handler(self, websocket_client_connection):
         while websocket_client_connection.open:
-            # log.debug("Connection still open, trying to send next message")
+            # logger.debug("Connection still open, trying to send next message")
             # retrieve next message from queue to be sent, block if empty
             next = None
             while next is None and websocket_client_connection.open:
-                log.debug("Retrieving next message to send")
+                logger.debug("Retrieving next message to send")
                 next = await self.__retrieve_next_send(websocket_client_connection)
                 if next is None:
-                    # log.debug("next is None, stopping connection...")
+                    # logger.debug("next is None, stopping connection...")
                     return
                 await self.__send_specific(websocket_client_connection, next.id, next.message)
 
@@ -301,14 +299,14 @@ class WebsocketServer(object):
             except Exception as e:
                 await asyncio.sleep(0.02)
         if not websocket_client_connection.open:
-            log.warning("retrieve_next_send: connection closed, returning None")
+            logger.warning("retrieve_next_send: connection closed, returning None")
         return found
 
     async def __consumer_handler(self, websocket_client_connection):
         if websocket_client_connection is None:
             return
         worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
-        log.info("Consumer handler of %s starting" % str(worker_id))
+        logger.info("Consumer handler of %s starting" % str(worker_id))
         while websocket_client_connection.open:
             message = None
             try:
@@ -316,7 +314,7 @@ class WebsocketServer(object):
             except asyncio.TimeoutError as te:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
-                log.warning("Connection to %s was closed, stopping worker" % str(worker_id))
+                logger.warning("Connection to %s was closed, stopping worker" % str(worker_id))
                 self.__current_users_mutex.acquire()
                 worker = self.__current_users.get(worker_id, None)
                 self.__current_users_mutex.release()
@@ -329,7 +327,7 @@ class WebsocketServer(object):
 
             if message is not None:
                 await self.__on_message(message)
-        log.warning("Connection of %s closed in consumer_handler" % str(worker_id))
+        logger.warning("Connection of %s closed in consumer_handler" % str(worker_id))
 
     def clean_up_user(self, worker_id, worker_instance):
         """
@@ -341,22 +339,22 @@ class WebsocketServer(object):
         if worker_id in self.__current_users.keys() and (worker_instance is None
                                                          or self.__current_users[worker_id][1] == worker_instance):
             if self.__current_users[worker_id][2].open:
-                log.info("Calling close for %s..." % str(worker_id))
+                logger.info("Calling close for %s..." % str(worker_id))
                 asyncio.ensure_future(self.__current_users[worker_id][2].close(), loop=self.__loop)
             self.__current_users.pop(worker_id)
-            log.info("Info of %s removed in websocket" % str(worker_id))
+            logger.info("Info of %s removed in websocket" % str(worker_id))
         self.__current_users_mutex.release()
 
     async def __on_message(self, message):
         id = -1
         response = None
         if isinstance(message, str):
-            log.debug("Receiving message: %s" % str(message.strip()))
+            logger.debug("Receiving message: %s" % str(message.strip()))
             splitup = message.split(";")
             id = int(splitup[0])
             response = splitup[1]
         else:
-            log.debug("Received binary values.")
+            logger.debug("Received binary values.")
             id = int.from_bytes(message[:4], byteorder='big', signed=False)
             response = message[4:]
         await self.__set_response(id, response)
@@ -372,7 +370,7 @@ class WebsocketServer(object):
             result = True
         else:
             # the request has already been deleted due to a timeout...
-            log.error("Request has already been deleted...")
+            logger.error("Request has already been deleted...")
         self.__requests_mutex.release()
         return result
 
@@ -402,7 +400,7 @@ class WebsocketServer(object):
         self.__send_queue.put(next_message)
 
     def send_and_wait(self, id, worker_instance, message, timeout):
-        log.debug("%s sending command: %s" % (str(id), message.strip()))
+        logger.debug("%s sending command: %s" % (str(id), message.strip()))
         self.__current_users_mutex.acquire()
         user_entry = self.__current_users.get(id, None)
         self.__current_users_mutex.release()
@@ -417,27 +415,27 @@ class WebsocketServer(object):
         self.__set_request(message_id, message_event)
 
         to_be_sent = u"%s;%s" % (str(message_id), message)
-        log.debug("To be sent: %s" % to_be_sent.strip())
+        logger.debug("To be sent: %s" % to_be_sent.strip())
         self.__send(id, to_be_sent)
 
         # now wait for the response!
         result = None
-        log.debug("Timeout: %s" % str(timeout))
+        logger.debug("Timeout: %s" % str(timeout))
         if message_event.wait(timeout):
-            log.debug("Received answer in time, popping response")
+            logger.debug("Received answer in time, popping response")
             self.__reset_fail_counter(id)
             result = self.__pop_response(message_id)
             if isinstance(result, str):
-                log.debug("Response to %s: %s" % (str(id), str(result.strip())))
+                logger.debug("Response to %s: %s" % (str(id), str(result.strip())))
             else:
-                log.debug("Received binary data to %s, starting with %s" % (str(id), str(result[:10])))
+                logger.debug("Received binary data to %s, starting with %s" % (str(id), str(result[:10])))
         else:
             # timeout reached
-            log.warning("Timeout, increasing timeout-counter")
+            logger.warning("Timeout, increasing timeout-counter")
             # TODO: why is the user removed here?
             new_count = self.__increase_fail_counter(id)
             if new_count > 5:
-                log.error("5 consecutive timeouts to %s, cleanup" % str(id))
+                logger.error("5 consecutive timeouts to %s, cleanup" % str(id))
                 # TODO: signal worker to stop and NOT cleanup the websocket by itself!
                 self.clean_up_user(id, None)
                 raise WebsocketWorkerTimeoutException
@@ -486,7 +484,7 @@ class WebsocketServer(object):
         self.__routemanagers = routemanagers
         self.__auths = auths
         for id, worker in self.__current_users.items():
-            log.info('Stopping worker %s to apply new mappings.', id)
+            logger.info('Stopping worker %s to apply new mappings.', id)
             worker[1].stop_worker()
         self.__current_users_mutex.release()
         for routemanager in old_routemanagers.keys():

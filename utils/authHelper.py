@@ -1,12 +1,10 @@
-import logging
 import base64
-
-log = logging.getLogger(__name__)
+from loguru import logger
 
 
 def check_auth(authHeader, args, auths):
     if "Basic" not in authHeader:
-        log.warning("Auth without Basic auth, aborting.")
+        logger.warning("Auth without Basic auth, aborting.")
         return False
     try:
         base64raw = authHeader.replace("Basic", "").replace(" ", "")
@@ -21,6 +19,6 @@ def check_auth(authHeader, args, auths):
         username = str(decodedSplit[0]).replace("b'", "")
         passwordInConf = auths.get(username, None)
         if passwordInConf is None or passwordInConf is not None and passwordInConf != decodedSplit[1].replace("'", ""):
-            log.warning("Auth attempt from %s failed" % str(authHeader))
+            logger.warning("Auth attempt from %s failed" % str(authHeader))
             return False
     return True

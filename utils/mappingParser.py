@@ -1,7 +1,7 @@
 import json
-import logging
 import os
 from pathlib import Path
+from loguru import logger
 
 from geofence.geofenceHelper import GeofenceHelper
 from route.RouteManagerIV import RouteManagerIV
@@ -9,8 +9,6 @@ from route.RouteManagerMon import RouteManagerMon
 from route.RouteManagerQuests import RouteManagerQuests
 from route.RouteManagerRaids import RouteManagerRaids
 from utils.s2Helper import S2Helper
-
-log = logging.getLogger(__name__)
 
 mode_mapping = {
     "raids_mitm": {
@@ -47,7 +45,6 @@ class MappingParser(object):
             self.__raw_json = json.load(f)
             if 'walker' not in self.__raw_json:
                 self.__raw_json['walker'] = []
-
 
     def get_routemanagers(self):
         from multiprocessing.pool import ThreadPool
@@ -133,15 +130,15 @@ class MappingParser(object):
                     elif mode == "mon_mitm":
                         spawn_known = area.get("coords_spawns_known", False)
                         if spawn_known:
-                            log.info("Reading known Spawnpoints from DB")
+                            logger.info("Reading known Spawnpoints from DB")
                             coords = self.db_wrapper.get_detected_spawns(geofence_helper)
                         else:
-                            log.info("Reading unknown Spawnpoints from DB")
+                            logger.info("Reading unknown Spawnpoints from DB")
                             coords = self.db_wrapper.get_undetected_spawns(geofence_helper)
                     elif mode == "pokestops":
                         coords = self.db_wrapper.stops_from_db(geofence_helper)
                     else:
-                        log.fatal("Mode not implemented yet: %s" % str(mode))
+                        logger.fatal("Mode not implemented yet: %s" % str(mode))
                         exit(1)
                 else:
                     # calculate all level N cells (mapping back from mapping above linked to mode)
@@ -154,12 +151,12 @@ class MappingParser(object):
                 max_radius = mode_mapping[area["mode"]]["range"]
                 max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
                 if not area.get("init", False):
-                    log.info("Calculating route for %s" % str(area.get("name", "unknown")))
+                    logger.info("Initializing area {}", area["name"])
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
                                                                                      0, False))
                     areas_procs[area["name"]] = proc
                 else:
-                    log.info("Init mode enabled and more than 400 coords in init. Going row-based for %s"
+                    logger.info("Init mode enabled and more than 400 coords in init. Going row-based for %s"
                              % str(area.get("name", "unknown")))
                     # we are in init, let's write the init route to file to make it visible in madmin
                     if area["routecalc"] is not None:
@@ -173,14 +170,13 @@ class MappingParser(object):
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
                                                                                      0, False))
                     areas_procs[area["name"]] = proc
-            # log.error("Calculated route, appending another coord and recalculating")
+            # logger.error("Calculated route, appending another coord and recalculating")
 
             area_dict["routemanager"] = route_manager
             areas[area["name"]] = area_dict
 
         for area in areas_procs.keys():
             to_be_checked = areas_procs[area]
-            log.debug(to_be_checked)
             to_be_checked.get()
 
         thread_pool.close()

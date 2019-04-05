@@ -1,6 +1,5 @@
 import glob
 import json
-import logging
 import os
 import os.path
 from shutil import copyfile
@@ -8,8 +7,7 @@ from shutil import copyfile
 import cv2
 import numpy as np
 from PIL import Image
-
-log = logging.getLogger(__name__)
+from loguru import logger
 
 
 class MonRaidImages(object):
@@ -19,7 +17,7 @@ class MonRaidImages(object):
 
         monList = []
 
-        log.info('Processing Pokemon Matching....')
+        logger.info('Processing Pokemon Matching....')
         with open('raidmons.json') as f:
             data = json.load(f)
 
@@ -27,13 +25,13 @@ class MonRaidImages(object):
         filePath = os.path.dirname(monImgPath)
 
         if not os.path.exists(filePath):
-            log.info('ocr/mon_img directory created')
+            logger.info('ocr/mon_img directory created')
             os.makedirs(filePath)
 
         assetPath = pogoassets_path
 
         if not os.path.exists(assetPath):
-            log.error('PogoAssets not found')
+            logger.error('PogoAssets not found')
             exit(0)
 
         for file in glob.glob(monImgPath + "*mon*.png"):
@@ -45,7 +43,7 @@ class MonRaidImages(object):
                 if str(mon).find("_") > -1:
                     mon_split = str(mon).split("_")
                     mon = mon_split[0]
-                    frmadd = mon_split[1] 
+                    frmadd = mon_split[1]
                 else:
                     frmadd = "00"
 
@@ -59,7 +57,7 @@ class MonRaidImages(object):
                     monFileAsset = assetPath + '/pokemon_icons/pokemon_icon_' + str(mon) + '_' + frmadd + '.png'
 
                     if not os.path.isfile(monFileAsset):
-                        log.error('File ' + str(monFileAsset) + ' not found')
+                        logger.error('File ' + str(monFileAsset) + ' not found')
                         exit(0)
 
                     copyfile(monFileAsset, monFile)
@@ -92,19 +90,19 @@ class MonRaidImages(object):
         _monList = myList = '|'.join(map(str, monList))
         dbWrapper = db_wrapper
         dbWrapper.clear_hash_gyms(_monList)
-        
+
     @staticmethod
     def copyWeather(pogoasset):
-        log.info('Processing Weather Pics')
+        logger.info('Processing Weather Pics')
         weatherImgPath = os.getcwd() + '/ocr/weather/'
         filePath = os.path.dirname(weatherImgPath)
         if not os.path.exists(filePath):
-            log.info('weather directory created')
+            logger.info('weather directory created')
             os.makedirs(filePath)
         assetPath = pogoasset
-            
+
         for file in glob.glob(os.path.join(assetPath, 'static_assets/png/weatherIcon_small_*.png')):
-            
+
             MonRaidImages.read_transparent_png(file, os.path.join('ocr/weather', os.path.basename(file)), 0)
 
 

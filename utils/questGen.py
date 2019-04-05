@@ -1,16 +1,12 @@
-import logging
-import json
 import re
 import gettext
-import os
+
 from utils.language import open_json_file, i8ln
 
 
 gettext.find('quest', 'locales', all=True)
 lang = gettext.translation('quest', localedir='locale', fallback=True)
 lang.install()
-
-log = logging.getLogger(__name__)
 
 
 def generate_quest(quest):

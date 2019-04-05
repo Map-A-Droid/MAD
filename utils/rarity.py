@@ -1,9 +1,7 @@
-import logging
 import time
+from loguru import logger
 from timeit import default_timer
 from threading import Thread
-
-log = logging.getLogger(__name__)
 
 
 class Rarity(object):
@@ -45,11 +43,11 @@ class Rarity(object):
         refresh_time_sec = update_frequency_mins * 60
 
         while True:
-            log.info('Updating dynamic rarity...')
+            logger.info('Updating dynamic rarity...')
 
             start = default_timer()
             db_rarities = self._dbwrapper.get_pokemon_spawns(hours)
-            log.info('Pokemon Rarity: %s' % (str(db_rarities)))
+            logger.debug('Pokemon Rarity: %s' % (str(db_rarities)))
             total = db_rarities['total']
             pokemon = db_rarities['pokemon']
 
@@ -59,12 +57,8 @@ class Rarity(object):
                 self._rarity[poke[0]] = self.get_pokemon_rarity(total, int(poke[1]))
 
             duration = default_timer() - start
-            log.info('Updated dynamic rarity. It took %.2fs for %d entries.',
-                     duration,
-                     total)
-
-            log.debug('Waiting %d minutes before next dynamic rarity update.',
-                      refresh_time_sec / 60)
+            logger.info('Updated dynamic rarity. It took %.2fs for %d entries.', duration, total)
+            logger.debug('Waiting %d minutes before next dynamic rarity update.', refresh_time_sec / 60)
             time.sleep(refresh_time_sec)
 
     def rarity_by_id(self, pokemonid):

@@ -1,15 +1,14 @@
 import json
-import logging
 import requests
 import time
+
+from loguru import logger
 
 from utils.gamemechanicutil import calculate_mon_level
 from utils.gamemechanicutil import get_raid_boss_cp
 from utils.s2Helper import S2Helper
 from utils.madGlobals import terminate_mad
 from utils.questGen import generate_quest
-
-log = logging.getLogger(__name__)
 
 
 class WebhookWorker:
@@ -40,7 +39,7 @@ class WebhookWorker:
 
     def __send_webhook(self, payload):
         if len(payload) == 0:
-            log.info("Payload empty. Skip sending to webhook.")
+            logger.info("Payload empty. Skip sending to webhook.")
             return
 
         # get list of urls
@@ -57,7 +56,7 @@ class WebhookWorker:
                 subTypes = webhook[:endIndex]
                 url = url[endIndex:]
 
-                log.debug("webhook types: %s", subTypes)
+                logger.debug("webhook types: %s", subTypes)
 
                 for payloadData in payload:
                     if payloadData["type"] in subTypes:
@@ -66,11 +65,11 @@ class WebhookWorker:
                 payloadToSend = payload
 
             if len(payloadToSend) == 0:
-                log.debug("Payload is empty")
+                logger.debug("Payload is empty")
                 continue
 
-            log.debug("Sending to webhook %s", url)
-            log.debug("Payload: %s" % str(payloadToSend))
+            logger.debug("Sending to webhook %s", url)
+            logger.debug("Payload: %s" % str(payloadToSend))
             try:
                 response = requests.post(
                     url,
@@ -79,17 +78,16 @@ class WebhookWorker:
                     timeout=5,
                 )
                 if response.status_code != 200:
-                    log.warning(
+                    logger.warning(
                         "Got status code other than 200 OK from webhook destination: %s"
                         % str(response.status_code)
                     )
                 else:
-                    log.info(
-                        "Successfully sent payload to webhook. Stats: %s",
-                        json.dumps(self.__payload_type_count(payloadToSend)),
+                    logger.success(
+                        "Successfully sent payload to webhook. Stats: {}", json.dumps(self.__payload_type_count(payloadToSend)),
                     )
             except Exception as e:
-                log.warning("Exception occured while sending webhook: %s" % str(e))
+                logger.warning("Exception occured while sending webhook: %s" % str(e))
 
     def __prepare_quest_data(self, quest_data):
         ret = []
@@ -317,7 +315,7 @@ class WebhookWorker:
                 self.__IV_MON = self.__IV_MON + list(set(ivlist) - set(self.__IV_MON))
 
     def run_worker(self):
-        log.info("Starting webhook worker thread")
+        logger.info("Starting webhook worker thread")
 
         while not terminate_mad.is_set():
             # the payload that is about to be sent
@@ -362,4 +360,4 @@ class WebhookWorker:
             self.__last_check = int(time.time())
             time.sleep(self.__worker_interval_sec)
 
-        log.info("Stopping webhook worker thread")
+        logger.info("Stopping webhook worker thread")
