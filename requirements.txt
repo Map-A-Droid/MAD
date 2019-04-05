@@ -37,3 +37,5 @@ geopy
 s2sphere
 psutil
 watchdog
+loguru
+gevent
