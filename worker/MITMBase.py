@@ -28,7 +28,7 @@ class MITMBase(WorkerBase):
         if not timeout:
             timeout = self._devicesettings.get("mitm_wait_timeout", 45)
 
-        logger.info('{}: Waiting for data after {}', self._id, datetime.fromtimestamp(timestamp))
+        logger.info('Waiting for data after {}', datetime.fromtimestamp(timestamp))
         data_requested = None
 
         while data_requested is None and timestamp + timeout >= math.floor(time.time()):

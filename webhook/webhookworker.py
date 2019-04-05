@@ -39,12 +39,14 @@ class WebhookWorker:
 
     def __send_webhook(self, payload):
         if len(payload) == 0:
-            logger.info("Payload empty. Skip sending to webhook.")
+            logger.debug("Payload empty. Skip sending to webhook.")
             return
 
         # get list of urls
         webhooks = self.__args.webhook_url.replace(" ", "").split(",")
 
+        webhook_count = len(webhooks)
+        current_wh_num = 1
         for webhook in webhooks:
             payloadToSend = []
             # url cleanup
@@ -83,8 +85,14 @@ class WebhookWorker:
                         % str(response.status_code)
                     )
                 else:
+                    if webhook_count > 1:
+                        whcount_text = " [{}/{}]".format(current_wh_num, webhook_count)
+                        current_wh_num += 1
+                    else:
+                        whcount_text = ""
+
                     logger.success(
-                        "Successfully sent payload to webhook. Stats: {}", json.dumps(self.__payload_type_count(payloadToSend)),
+                        "Successfully sent payload to webhook{}. Stats: {}", whcount_text, json.dumps(self.__payload_type_count(payloadToSend)),
                     )
             except Exception as e:
                 logger.warning("Exception occured while sending webhook: %s" % str(e))

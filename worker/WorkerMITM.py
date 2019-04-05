@@ -33,15 +33,13 @@ class WorkerMITM(MITMBase):
                                                         float(self.last_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
-        logger.info('main: Moving %s meters to the next position' % distance)
+        logger.info('Moving {} meters to the next position', round(distance, 2))
         delay_used = 0
-        logger.debug("Getting time")
         speed = routemanager.settings.get("speed", 0)
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            logger.info("main: Teleporting...")
             self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
@@ -54,7 +52,7 @@ class WorkerMITM(MITMBase):
                     delay_used = 10
                 elif distance > 10000:
                     delay_used = 15
-                logger.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+                logger.debug("Need more sleep after Teleport: %s seconds!", str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             walk_distance_post_teleport = self._devicesettings.get('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
@@ -87,7 +85,6 @@ class WorkerMITM(MITMBase):
                                           self.current_location.lat, self.current_location.lng, speed)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             delay_used = self._devicesettings.get('post_walk_delay', 7)
-        logger.info("Sleeping %s" % str(delay_used))
         time.sleep(float(delay_used))
         self._devicesettings["last_location"] = self.current_location
         self.last_location = self.current_location

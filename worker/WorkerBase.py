@@ -113,8 +113,6 @@ class WorkerBase(ABC):
         """
         pass
 
-
-
     @abstractmethod
     def _cleanup(self):
         """
@@ -179,7 +177,6 @@ class WorkerBase(ABC):
         # register worker  in routemanager
         logger.info("Try to register %s in Routemanager %s" % (str(self._id), str(self._walker_routemanager.name)))
         self._walker_routemanager.register_worker(self._id)
-
 
         self._work_mutex.release()
 
@@ -267,7 +264,7 @@ class WorkerBase(ABC):
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
                 logger.error("Websocket connection to %s lost while running healthchecks, "
-                          "connection terminated exceptionally" % str(self._id))
+                             "connection terminated exceptionally" % str(self._id))
                 break
 
             try:
@@ -277,7 +274,7 @@ class WorkerBase(ABC):
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
                 logger.warning("Worker of %s does not support mode that's to be run, "
-                            "connection terminated exceptionally" % str(self._id))
+                               "connection terminated exceptionally" % str(self._id))
                 break
 
             try:
@@ -295,26 +292,26 @@ class WorkerBase(ABC):
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
                 logger.warning("Worker of %s stopping because of stop signal in pre_location_update, "
-                            "connection terminated exceptionally" % str(self._id))
+                               "connection terminated exceptionally" % str(self._id))
                 break
 
             try:
                 logger.debug('main worker %s: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
-                          (str(self._id), self._devicesettings["last_location"].lat,
-                           self._devicesettings["last_location"].lng, self.current_location.lat,
-                           self.current_location.lng))
+                             (str(self._id), self._devicesettings["last_location"].lat,
+                              self._devicesettings["last_location"].lng, self.current_location.lat,
+                              self.current_location.lng))
                 time_snapshot, process_location = self._move_to_location()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
                     as e:
                 logger.warning("Worker %s failed moving to new location, stopping worker, "
-                            "connection terminated exceptionally" % str(self._id))
+                               "connection terminated exceptionally" % str(self._id))
                 break
-                
+
             if process_location:
                 self._add_task_to_loop(self._update_position_file())
                 self._location_count += 1
                 if self._applicationArgs.last_scanned:
-                    logger.info('main: Set new scannedlocation in Database')
+                    logger.debug("Seting new 'scannedlocation' in Database")
                     # self.update_scanned_location(currentLocation.lat, currentLocation.lng, curTime)
                     self._add_task_to_loop(self.update_scanned_location(
                         self.current_location.lat, self.current_location.lng, time_snapshot)
@@ -346,10 +343,10 @@ class WorkerBase(ABC):
     def check_walker(self):
         mode = self._walker['walkertype']
         if mode == "countdown":
-            logger.info("Checking Walker Mode Countdown")
+            logger.info("Checking walker mode 'countdown'")
             countdown = self._walker['walkervalue']
             if not countdown:
-                logger.error("No Value for Mode - check your settings! - kill Worker")
+                logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
             if self._walkerstart is None:
                 self._walkerstart = math.floor(time.time())
@@ -358,27 +355,27 @@ class WorkerBase(ABC):
                     return False
             return True
         elif mode == "timer":
-            logger.info("Checking Walker Mode Timer")
+            logger.debug("Checking walker mode 'timer'")
             exittime = self._walker['walkervalue']
             if not exittime or ':' not in exittime:
-                logger.error("No or wrong Value for Mode - check your settings! - kill Worker")
+                logger.error("No or wrong Value for Mode - check your settings! Killing worker")
                 return False
             return check_walker_value_type(exittime)
         elif mode == "round":
-            logger.info("Checking Walker Mode Round")
+            logger.debug("Checking walker mode 'round'")
             rounds = self._walker['walkervalue']
             if len(rounds) == 0:
-                logger.error("No Value for Mode - check your settings! - kill Worker")
+                logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
             processed_rounds = self._walker_routemanager.get_rounds(self._id)
             if int(processed_rounds) >= int(rounds):
                 return False
             return True
         elif mode == "period":
-            logger.info("Checking Walker Mode Period")
+            logger.debug("Checking walker mode 'period'")
             period = self._walker['walkervalue']
             if len(period) == 0:
-                logger.error("No Value for Mode - check your settings! - kill Worker")
+                logger.error("No Value for Mode - check your settings! Killing worker")
                 return False
             return check_walker_value_type(period)
         elif mode == "coords":
@@ -387,9 +384,9 @@ class WorkerBase(ABC):
                 return check_walker_value_type(exittime)
             return True
         elif mode == "idle":
-            logger.info("Checking Walker Mode Idle")
+            logger.debug("Checking walker mode 'idle'")
             if len(self._walker['walkervalue']) == 0:
-                logger.error("Wrong Value for mode - check your settings! - kill Worker")
+                logger.error("Wrong Value for mode - check your settings! Killing worker")
                 return False
             sleeptime = self._walker['walkervalue']
             logger.info('%s going to sleep' % str(self._id))
@@ -404,7 +401,7 @@ class WorkerBase(ABC):
                 self._start_pogo()
             return False
         else:
-            logger.error("Dont know this Walker Mode - kill Worker")
+            logger.error("Unknown walker mode! Killing worker")
             return False
         return True
 
@@ -484,7 +481,7 @@ class WorkerBase(ABC):
         start_result = self._communicator.startApp("com.mad.pogodroid")
         time.sleep(5)
         return start_result
-    
+
     def _stopPogoDroid(self):
         stopResult = self._communicator.stopApp("com.mad.pogodroid")
         return stopResult
@@ -530,14 +527,14 @@ class WorkerBase(ABC):
         time.sleep(delayBefore)
         compareToTime = time.time() - self._lastScreenshotTaken
         logger.debug("Last screenshot taken: %s" % str(self._lastScreenshotTaken))
-        
+
         if self._applicationArgs.use_media_projection:
             take_screenshot = self._communicator.getScreenshot(os.path.join(self._applicationArgs.temp_path,
                                                                             'screenshot%s.png' % str(self._id)))
         else:
             take_screenshot = self._communicator.get_screenshot_single(os.path.join(self._applicationArgs.temp_path,
                                                                                     'screenshot%s.png' % str(self._id)))
-        
+
         if self._lastScreenshotTaken and compareToTime < 0.5:
             logger.debug("takeScreenshot: screenshot taken recently, returning immediately")
             logger.debug("Screenshot taken recently, skipping")
@@ -574,7 +571,7 @@ class WorkerBase(ABC):
             self._lastScreenHashCount = 0
 
             logger.debug("_checkPogoFreeze: done")
-            
+
     def _check_pogo_main_screen(self, maxAttempts, again=False):
         logger.debug("_check_pogo_main_screen: Trying to get to the Mainscreen with %s max attempts..." % str(maxAttempts))
         pogoTopmost = self._communicator.isPogoTopmost()
@@ -633,7 +630,7 @@ class WorkerBase(ABC):
             attempts += 1
         logger.info("_check_pogo_main_screen: done")
         return True
-    
+
     def _checkPogoButton(self):
         logger.debug("checkPogoButton: Trying to find buttons")
         pogoTopmost = self._communicator.isPogoTopmost()
@@ -653,7 +650,7 @@ class WorkerBase(ABC):
         if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
             logger.error("checkPogoButton: screenshot.png is not a file/corrupted")
             return False
-        
+
         logger.info("checkPogoButton: checking for buttons")
         found = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path,
                                                                    'screenshot%s.png' % str(self._id)), 2.20, 3.01,
@@ -665,7 +662,7 @@ class WorkerBase(ABC):
             return True
         logger.info("checkPogoButton: done")
         return False
-        
+
     def _checkPogoClose(self):
         logger.debug("checkPogoClose: Trying to find closeX")
         pogoTopmost = self._communicator.isPogoTopmost()
@@ -685,7 +682,7 @@ class WorkerBase(ABC):
         if os.path.isdir(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))):
             logger.error("checkPogoClose: screenshot.png is not a file/corrupted")
             return False
-        
+
         logger.info("checkPogoClose: checking for CloseX")
         found = self._pogoWindowManager.checkCloseExceptNearbyButton(
                             os.path.join(self._applicationArgs.temp_path,

@@ -79,10 +79,10 @@ class RouteManagerBase(ABC):
         try:
             if len(self._route) > 0:
                 self._route_queue.queue.clear()
-                logger.info("Creating queue for coords")
+                logger.debug("Creating queue for coords")
                 for latlng in self._route:
                     self._route_queue.put((latlng['lat'], latlng['lng']))
-                logger.info("Finished creating queue")
+                logger.debug("Finished creating queue")
         finally:
             self._manager_mutex.release()
 
@@ -425,13 +425,10 @@ class RouteManagerBase(ABC):
             next_lat = next_coord[0]
             next_lng = next_coord[1]
             self._route_queue.task_done()
-            logger.info("%s: Moving on with location %s [%s coords left]" % (str(self.name),
-                                                                          str(next_coord),
-                                                                          str(self._route_queue.qsize())))
+            logger.info("{}: Moving on with location {} [{} coords left]", str(self.name), str(next_coord), str(self._route_queue.qsize()))
 
             self._last_round_prio = False
-        logger.info("%s done grabbing next coord, releasing lock and returning location: %s, %s"
-                 % (str(self.name), str(next_lat), str(next_lng)))
+        logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}, {}", str(self.name), str(next_lat), str(next_lng))
         self._manager_mutex.release()
         if self._check_coords_before_returning(next_lat, next_lng):
             return Location(next_lat, next_lng)
@@ -439,7 +436,7 @@ class RouteManagerBase(ABC):
             return self.get_next_location()
 
     def del_from_route(self):
-        logger.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
+        logger.debug("%s: Location available, acquiring lock and trying to return location", str(self.name))
         self._manager_mutex.acquire()
         logger.info('Removing coords from Route')
         self._route.pop(int(self._current_index_of_route)-1)

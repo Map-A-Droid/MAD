@@ -64,7 +64,7 @@ class WorkerQuests(MITMBase):
                                                         float(self.last_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
-        logger.info('main: Moving %s meters to the next position' % distance)
+        logger.info('Moving {} meters to the next position', round(distance, 2))
 
         delay_used = 0
         logger.debug("Getting time")
@@ -171,7 +171,7 @@ class WorkerQuests(MITMBase):
 
                 if delay_used > 7200:  # There's a maximum of 2 hours wait time
                     delay_used = 7200
-            logger.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+            logger.debug("Need more sleep after Teleport: %s seconds!" % str(delay_used))
         else:
             logger.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,

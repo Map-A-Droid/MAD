@@ -33,7 +33,7 @@ class WorkerOCR(WorkerBase):
                                                         float(self.last_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
-        logger.info('main: Moving %s meters to the next position' % distance)
+        logger.info('Moving {} meters to the next position', round(distance, 2))
         speed = routemanager.settings.get("speed", 0)
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
@@ -52,7 +52,7 @@ class WorkerOCR(WorkerBase):
                     delay_used = 10
                 elif distance > 10000:
                     delay_used = 15
-                logger.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+                logger.debug("Need more sleep after Teleport: %s seconds!" % str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
             if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
