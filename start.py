@@ -82,8 +82,7 @@ def install_thread_excepthook():
             if str(exc_value) == '[Errno 32] Broken pipe':
                 pass
             else:
-                logger.critical('Unhandled patched exception (%s): "%s".',
-                             exc_type, exc_value)
+                logger.critical('Unhandled patched exception ({}): "{}".', exc_type, exc_value)
                 sys.excepthook(exc_type, exc_value, exc_trace)
     Thread.run = run
 

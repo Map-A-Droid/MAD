@@ -37,6 +37,12 @@ class WebhookWorker:
 
         return count
 
+    def __payload_chunk(self, payload, size):
+        if size == 0:
+            return [payload, ]
+
+        return [payload[x:x+size] for x in range(0, len(payload), size)]
+
     def __send_webhook(self, payload):
         if len(payload) == 0:
             logger.debug("Payload empty. Skip sending to webhook.")
@@ -47,9 +53,10 @@ class WebhookWorker:
 
         webhook_count = len(webhooks)
         current_wh_num = 1
+
         for webhook in webhooks:
             payloadToSend = []
-            # url cleanup
+            subTypes = "all"
             url = webhook.strip()
 
             if url.startswith("["):
@@ -58,8 +65,6 @@ class WebhookWorker:
                 subTypes = webhook[:endIndex]
                 url = url[endIndex:]
 
-                logger.debug("webhook types: %s", subTypes)
-
                 for payloadData in payload:
                     if payloadData["type"] in subTypes:
                         payloadToSend.append(payloadData)
@@ -67,35 +72,49 @@ class WebhookWorker:
                 payloadToSend = payload
 
             if len(payloadToSend) == 0:
-                logger.debug("Payload is empty")
+                logger.debug("Payload empty. Skip sending to: {} (Filter: {})", url, subTypes)
                 continue
+            else:
+                logger.debug("Sending to webhook url: {} (Filter: {})", url, subTypes)
 
-            logger.debug("Sending to webhook %s", url)
-            logger.debug("Payload: %s" % str(payloadToSend))
-            try:
-                response = requests.post(
-                    url,
-                    data=json.dumps(payloadToSend),
-                    headers={"Content-Type": "application/json"},
-                    timeout=5,
-                )
-                if response.status_code != 200:
-                    logger.warning(
-                        "Got status code other than 200 OK from webhook destination: %s"
-                        % str(response.status_code)
+            payload_list = self.__payload_chunk(payloadToSend, self.__args.webhook_max_payload_size)
+
+            current_pl_num = 1
+            for payload_chunk in payload_list:
+                logger.debug("Payload: {}", str(json.dumps(payload_chunk)))
+
+                try:
+                    response = requests.post(
+                        url,
+                        data=json.dumps(payload_chunk),
+                        headers={"Content-Type": "application/json"},
+                        timeout=5,
                     )
-                else:
-                    if webhook_count > 1:
-                        whcount_text = " [{}/{}]".format(current_wh_num, webhook_count)
-                        current_wh_num += 1
+
+                    if response.status_code != 200:
+                        logger.warning("Got status code other than 200 OK from webhook destination: {}", str(response.status_code))
                     else:
-                        whcount_text = ""
+                        if webhook_count > 1:
+                            whcount_text = " [wh {}/{}]".format(current_wh_num, webhook_count)
+                        else:
+                            whcount_text = ""
 
-                    logger.success(
-                        "Successfully sent payload to webhook{}. Stats: {}", whcount_text, json.dumps(self.__payload_type_count(payloadToSend)),
-                    )
-            except Exception as e:
-                logger.warning("Exception occured while sending webhook: %s" % str(e))
+                        if len(payload_list) > 1:
+                            whchunk_text = " [pl {}/{}]".format(current_pl_num, len(payload_list))
+                        else:
+                            whchunk_text = ""
+
+                        logger.success(
+                            "Successfully sent payload to webhook{}{}. Stats: {}",
+                            whchunk_text,
+                            whcount_text,
+                            json.dumps(self.__payload_type_count(payload_chunk))
+                        )
+                except Exception as e:
+                    logger.warning("Exception occured while sending webhook: {}", str(e))
+
+                current_pl_num += 1
+            current_wh_num += 1
 
     def __prepare_quest_data(self, quest_data):
         ret = []
@@ -356,6 +375,7 @@ class WebhookWorker:
                 )
                 full_payload += gyms
 
+            # mon
             if self.__args.pokemon_webhook:
                 mon = self.__prepare_mon_data(
                     self.__db_wrapper.get_mon_changed_since(self.__last_check)

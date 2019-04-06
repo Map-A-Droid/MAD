@@ -75,7 +75,7 @@ class WebsocketServer(object):
         self.__stop_server.set()
         self.__current_users_mutex.acquire()
         for id, worker in self.__current_users.items():
-            logger.info('Stopping worker %s to apply new mappings.', id)
+            logger.info('Stopping worker {} to apply new mappings.', id)
             worker[1].stop_worker()
         self.__current_users_mutex.release()
 
@@ -484,7 +484,7 @@ class WebsocketServer(object):
         self.__routemanagers = routemanagers
         self.__auths = auths
         for id, worker in self.__current_users.items():
-            logger.info('Stopping worker %s to apply new mappings.', id)
+            logger.info('Stopping worker {} to apply new mappings.', id)
             worker[1].stop_worker()
         self.__current_users_mutex.release()
         for routemanager in old_routemanagers.keys():

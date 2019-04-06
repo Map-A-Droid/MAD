@@ -57,7 +57,7 @@ class Rarity(object):
                 self._rarity[poke[0]] = self.get_pokemon_rarity(total, int(poke[1]))
 
             duration = default_timer() - start
-            logger.info('Updated dynamic rarity. It took %.2fs for %d entries.', duration, total)
+            logger.info('Updated dynamic rarity. It took {}s for {} entries.', round(duration, 2), total)
             logger.debug('Waiting %d minutes before next dynamic rarity update.', refresh_time_sec / 60)
             time.sleep(refresh_time_sec)
 
