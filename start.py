@@ -44,10 +44,11 @@ logconfig = {
         {
             "sink": "logs/{time:YYYY-MM-DD}_mad.log",
             "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
+            "level": debug_level,
             "rotation": "0:00",
             "compression": "zip",
             "retention": "10 days",
-            "enqueue": True
+            "enqueue": True,
         }
     ]
 }

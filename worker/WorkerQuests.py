@@ -189,7 +189,7 @@ class WorkerQuests(MITMBase):
                                                            float(self.current_location.lng),
                                                            float(self.current_location.lat) + lat_offset,
                                                            float(self.current_location.lng) + lng_offset)
-            logger.info("Walking roughly: %s" % str(to_walk))
+            logger.info("Walking roughly: {}", str(to_walk))
             time.sleep(0.3)
             self._communicator.walkFromTo(self.current_location.lat,
                                           self.current_location.lng,
@@ -210,7 +210,7 @@ class WorkerQuests(MITMBase):
 
         if self._devicesettings.get('last_action_time', None) is not None:
             timediff = time.time() - self._devicesettings['last_action_time']
-            logger.info("Timediff between now and last action time: %s" % str(float(timediff)))
+            logger.info("Timediff between now and last action time: {}", str(float(timediff)))
             delay_used = delay_used - timediff
         else:
             logger.info("No last action time found - no calulation")
@@ -218,7 +218,7 @@ class WorkerQuests(MITMBase):
         if delay_used < 0:
             logger.info('No more cooldowntime - start over')
         else:
-            logger.info("Real sleep time: %s seconds!" % str(delay_used))
+            logger.info("Real sleep time: {} seconds!", str(delay_used))
             cleanupbox = False
             lastcleanupbox = self._devicesettings.get('last_cleanup_time', None)
             if lastcleanupbox is not None:
@@ -247,7 +247,7 @@ class WorkerQuests(MITMBase):
             reachedMainMenu = self._check_pogo_main_screen(10, False)
             if not reachedMainMenu:
                 self._restart_pogo()
-            
+
             logger.info('Open Stop')
             self._stop_process_time = time.time()
             data_received = self._open_pokestop()
@@ -346,7 +346,7 @@ class WorkerQuests(MITMBase):
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)
-            logger.info('Found item text: %s' % str(item_text))
+            logger.info('Found item text: {}', str(item_text))
             if item_text in not_allow:
                 delete_allowed = False
                 logger.info('Dont delete that!!!')
@@ -457,7 +457,7 @@ class WorkerQuests(MITMBase):
                     self._stop_process_time = time.time()
                     self._open_pokestop()
                 else:
-                    logger.error('Other Return: %s' % str(data_received))
+                    logger.error('Other Return: {}', str(data_received))
                 to += 1
             else:
                 data_received = '-'
@@ -510,8 +510,7 @@ class WorkerQuests(MITMBase):
                 if proto_to_wait_for == 4 and len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return 'Clear'
             else:
-                logger.debug("latest timestamp of proto %s (%s) is older than %s"
-                          % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
+                logger.debug("latest timestamp of proto {} ({}) is older than {}", str(proto_to_wait_for), str(latest_timestamp), str(timestamp))
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
