@@ -56,6 +56,8 @@ case "$dbtype" in
      rdm) gymquery="select id, lat, lon, replace(name,'\'',''), url from gym"
           stopquery="select id, lat, lon, replace(name,'\'',''), url from pokestop"
        ;;
+       *) echo "you need to configure this script before running it" && exit
+       ;;
 esac
 oldquery(){
 mysql -NB -h "$olddbip" -u "$olduser" -p"$oldpass" -P "$oldport" "$olddbname" -e "$1"
