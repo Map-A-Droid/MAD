@@ -152,7 +152,7 @@ def modify_raid_gym():
     lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
+    db_wrapper.delete_hash_table(str(hash), 'raid', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'raid', newJsonString, '999', unique_hash="madmin")
 
     return redirect("/raids", code=302)
@@ -167,7 +167,7 @@ def modify_raid_mon():
     lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
+    db_wrapper.delete_hash_table(str(hash), 'raid', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'raid', newJsonString, '999', unique_hash="madmin")
 
     return redirect("/raids", code=302)
@@ -179,7 +179,7 @@ def modify_gym_hash():
     hash = request.args.get('hash')
     id = request.args.get('id')
 
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', 'gym', 'in', 'hash')
+    db_wrapper.delete_hash_table(str(hash), 'gym', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin")
 
     return redirect("/gyms", code=302)
@@ -239,7 +239,7 @@ def delete_hash():
     if not hash or not type:
         return 'Missing Argument...'
 
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', type, 'in', 'hash')
+    db_wrapper.delete_hash_table(str(hash), type, 'in', 'hash')
     for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
