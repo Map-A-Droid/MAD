@@ -14,4 +14,4 @@ def logLevel(debug_level):
 class MadLoggerUtils:
     # this is being used to change log level for gevent/Flask/Werkzeug
     def log(level, msg):
-        logger.log("DEBUG5", msg)
+        logger.log("DEBUG1", msg)

@@ -6,6 +6,8 @@ from threading import Thread
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
 from utils.version import MADVersion
+from loguru import logger
+from utils.logging import logLevel
 
 args = parseArgs()
 os.environ['LANGUAGE']=args.language
@@ -39,7 +41,7 @@ if __name__ == "__main__":
     elif args.db_method == "monocle":
         db_wrapper = MonocleWrapper(args)
     else:
-        log.error("Invalid db_method in config. Exiting")
+        logger.error("Invalid db_method in config. Exiting")
         sys.exit(1)
 
     version = MADVersion(args, db_wrapper)

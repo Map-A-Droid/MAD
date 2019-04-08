@@ -949,6 +949,8 @@ def config():
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
+            if 'devicesettings' not in mapping:
+                mapping['devicesettings'] = []
             nr = 0
             for oldfields in mapping[area]:
                 if 'name' in oldfields:
@@ -963,6 +965,10 @@ def config():
                     if oldfields['username'] == edit:
                         oldvalues = oldfields
                         _checkfield = 'username'
+                if 'devicepool' in oldfields:
+                    if oldfields['devicepool'] == edit:
+                        oldvalues = oldfields
+                        _checkfield = 'devicepool'
                 if 'walkername' in oldfields:
                     if oldfields['walkername'] == edit:
                         oldvalues = oldfields
@@ -989,6 +995,10 @@ def config():
         if 'walker' in area:
             if area['walker'] == type:
                 _name = area['walker']
+                compfields = area
+        if 'devicesettings' in area:
+            if area['devicesettings'] == type:
+                _name = area['devicesettings']
                 compfields = area
 
     for field in compfields[block]:
@@ -1199,6 +1209,8 @@ def delsetting():
             _checkfield = 'username'
         if 'walkername' in entry:
             _checkfield = 'walkername'
+        if 'devicepool' in entry:
+            _checkfield = 'devicepool'
 
         if str(edit) in str(entry[_checkfield]):
             del mapping[area][key]
@@ -1243,6 +1255,8 @@ def addedit():
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
+            if 'devicesettings' not in mapping:
+                mapping['devicesettings'] = []
 
         with open('madmin/static/vars/settings.json') as f:
             settings = json.load(f)
@@ -1257,6 +1271,8 @@ def addedit():
                     _checkfield = 'username'
                 if 'walkername' in entry:
                     _checkfield = 'walkername'
+                if 'devicepool' in entry:
+                    _checkfield = 'devicepool'
 
                 if str(edit) == str(entry[_checkfield]):
                     if str(block) == str("settings"):
@@ -1348,6 +1364,8 @@ def showsettings():
         mapping = json.load(f)
         if 'walker' not in mapping:
             mapping['walker'] = []
+        if 'devicesettings' not in mapping:
+            mapping['devicesettings'] = []
 
     with open('madmin/static/vars/settings.json') as f:
         settings = json.load(f)

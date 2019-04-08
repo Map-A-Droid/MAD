@@ -28,5 +28,13 @@
 		"could_edit": "false",
 		"field": "username",
 		"description": "Add Username and Password for authentication with RGC"
+	},
+	"devicesettings": {
+		"has_settings": "true",
+		"could_edit": "true",
+		"field": "devicepool",
+		"description": "Define global device settings",
+		"quickview": "devicepool",
+		"quickview_settings": "speed|max_distance|delay_after_prio_event|priority_queue_clustering_timedelta|remove_from_queue_backlog|starve_route"
 	}
 }
