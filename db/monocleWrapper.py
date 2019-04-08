@@ -211,11 +211,11 @@ class MonocleWrapper(DbWrapperBase):
                 start = end - 45 * 60
                 query = (
                     "INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, "
-                    "pokemon_id "
+                    "pokemon_id) "
                     "VALUES(%s, %s, %s, %s, %s, %s)"
                 )
                 vals = (
-                    gym, lvl, int(float(capture_time)), start, end, pkm, int(time.time())
+                    gym, lvl, int(float(capture_time)), start, end, pkm
                 )
             elif end is None or start is None:
                 log.info("Inserting without end or start")
@@ -227,10 +227,10 @@ class MonocleWrapper(DbWrapperBase):
                 log.info("Inserting everything")
                 query = (
                     "INSERT INTO raids (fort_id, level, time_spawn, time_battle, time_end, "
-                    "pokemon_id "
+                    "pokemon_id) "
                     "VALUES (%s, %s, %s, %s, %s, %s)"
                 )
-                vals = (gym, lvl, int(float(capture_time)), start, end, pkm, int(time.time()))
+                vals = (gym, lvl, int(float(capture_time)), start, end, pkm)
 
             self.execute(query, vals, commit=True)
 
