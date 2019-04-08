@@ -20,7 +20,7 @@
 		"could_edit": "true",
 		"field": "origin",
 		"description": "Assign devices to walker",
-		"quickview": "walker",
+		"quickview": "walker|pool",
 		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance"
 	},
 	"auth": {
@@ -35,6 +35,6 @@
 		"field": "devicepool",
 		"description": "Define global device settings",
 		"quickview": "devicepool",
-		"quickview_settings": "speed|max_distance|delay_after_prio_event|priority_queue_clustering_timedelta|remove_from_queue_backlog|starve_route"
+		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance"
 	}
 }

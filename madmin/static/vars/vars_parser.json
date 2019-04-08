@@ -21,6 +21,15 @@
 						"empty": null,
 						"description": "Walker of this area"
 					}
+				},
+				{
+					"name": "pool",
+					"settings": {
+						"type": "poolselect",
+						"require": "true",
+						"empty": null,
+						"description": "Devicepool for this area"
+					}
 				}
 			],
 			"settings": [

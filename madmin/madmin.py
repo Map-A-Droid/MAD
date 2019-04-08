@@ -1132,6 +1132,29 @@ def config():
             _temp = _temp + '</select></div>'
             fieldwebsite.append(str(_temp))
 
+        if field['settings']['type'] == 'poolselect':
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+            with open('configs/mappings.json') as f:
+                mapping = json.load(f)
+                if 'devicesettings' not in mapping:
+                    mapping['devicesettings'] = []
+            mapping['devicesettings'].append({'devicepool': None})
+            for option in mapping['devicesettings']:
+                if edit:
+                    if field['name'] in oldvalues:
+                        if str(oldvalues[field['name']]).lower() == str(option['devicepool']).lower():
+                            sel = 'selected'
+                    else:
+                        if not option['devicepool']:
+                            sel = 'selected'
+                _temp = _temp + '<option value="' + \
+                    str(option['devicepool']) + '" ' + sel + '>' + \
+                    str(option['devicepool']) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
+
         if field['settings']['type'] == 'areaoption':
             _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                 field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + ' size=10 multiple=multiple>'
