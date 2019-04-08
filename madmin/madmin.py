@@ -1301,7 +1301,7 @@ def addedit():
                 if str(edit) == str(entry[_checkfield]):
                     if str(block) == str("settings"):
                         for key, value in datavalue.items():
-                            if value == '':
+                            if value == '' or value == 'None':
                                 if key in entry['settings']:
                                     del entry['settings'][key]
                             elif value in area:

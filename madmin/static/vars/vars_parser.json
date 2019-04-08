@@ -62,7 +62,7 @@
 					"settings": {
 						"type": "option",
 						"require": "false",
-						"values": "false|true",
+						"values": "None|false|true",
 						"description": "More cooldown after teleport"
 					}
 				},
@@ -119,7 +119,7 @@
 					"settings": {
 						"type": "option",
 						"require": "false",
-						"values": "false|true",
+						"values": "None|false|true",
 						"description": "Reboot device if reboot_thresh is reached (Default: false)"
 					}
 				},
