@@ -131,8 +131,8 @@ def quest():
 @app.route("/submit_hash")
 @auth_required
 def submit_hash():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('id')
+    hash = request.args.get('hash')
+    id = request.args.get('id')
 
     if db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin"):
 
@@ -146,10 +146,10 @@ def submit_hash():
 @app.route("/modify_raid_gym")
 @auth_required
 def modify_raid_gym():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('id')
-    mon = request.conf_args.get('mon')
-    lvl = request.conf_args.get('lvl')
+    hash = request.args.get('hash')
+    id = request.args.get('id')
+    mon = request.args.get('mon')
+    lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
@@ -161,10 +161,10 @@ def modify_raid_gym():
 @app.route("/modify_raid_mon")
 @auth_required
 def modify_raid_mon():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('gym')
-    mon = request.conf_args.get('mon')
-    lvl = request.conf_args.get('lvl')
+    hash = request.args.get('hash')
+    id = request.args.get('gym')
+    mon = request.args.get('mon')
+    lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
@@ -210,11 +210,11 @@ def near_gym():
         dist = str(closegym[1])
         gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
 
-        name = 'unknown'
-        lat = '0'
-        lon = '0'
-        url = '0'
-        description = ''
+        name = str(closegym[4])
+        lat = str(closegym[2])
+        lon = str(closegym[3])
+        url = str(closegym[6])
+        description = str(closegym[5])
 
         if str(gymid) in data:
             name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
@@ -442,9 +442,9 @@ def get_screens():
     return jsonify(screens)
 
 
-@app.route("/get_unknows")
+@app.route("/get_unknowns")
 @auth_required
-def get_unknows():
+def get_unknowns():
     unk = []
     for file in glob.glob("ocr/www_hash/unkgym_*.jpg"):
         unkfile = re.search('unkgym_(-?\d+\.?\d+)_(-?\d+\.?\d+)_((?s).*)\.jpg', file)
@@ -579,13 +579,13 @@ def pushScreens(path):
     return send_from_directory('../' + conf_args.raidscreen_path, path)
 
 
-@app.route('/match_unknows', methods=['GET'])
+@app.route('/match_unknowns', methods=['GET'])
 @auth_required
-def match_unknows():
+def match_unknowns():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(conf_args.madmin_noresponsive).lower(), title="match Unkown")
+    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(conf_args.madmin_noresponsive).lower(), title="match Unknown")
 
 
 @app.route('/modify_raid', methods=['GET'])
