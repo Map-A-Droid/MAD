@@ -223,7 +223,7 @@ def near_gym():
             if data[str(gymid)]["description"]:
                 description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
 
-        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon, 'description': description, 'filename': gymImage, 'dist': dist})
+        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon, 'description': description, 'filename': gymImage})
         nearGym.append(ngjson)
 
     return jsonify(nearGym)
