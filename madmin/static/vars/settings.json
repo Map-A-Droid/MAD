@@ -33,7 +33,7 @@
 		"has_settings": "true",
 		"could_edit": "true",
 		"field": "devicepool",
-		"description": "Define global device settings",
+		"description": "Set Global Device Configurations - Individual parameters can be overridden with device settings",
 		"quickview": "devicepool",
 		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance"
 	}

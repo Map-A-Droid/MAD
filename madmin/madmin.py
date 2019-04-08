@@ -1039,7 +1039,8 @@ def config():
 
                 fieldwebsite.append('<table class="table">')
                 fieldwebsite.append(
-                    '<tr><th></th><th>Nr.</th><th>Area<br>Description</th><th>Walkermode</th><th>Setting</th><th>Max. Devices</th><th></th></tr><tbody class="row_position">')
+                    '<tr><th></th><th>Nr.</th><th>Area<br>Description</th><th>Walkermode</th><th>Setting</th>'
+                    '<th>Max. Devices</th><th></th></tr><tbody class="row_position">')
                 if block != 'settings':
                     if field['name'] in oldvalues and str(oldvalues[field['name']]) != str('None'):
                         val = list(oldvalues[field['name']])
@@ -1400,7 +1401,7 @@ def showsettings():
 
     for var in vars:
         line, quickadd, quickline = '', '', ''
-        header = '<tr><td colspan="4"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
+        header = '<tr><td colspan="4" class="header"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
             '">[Add new]</a></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
         subheader = '<tr><td colspan="4">' + \
             settings[var]['description'] + '</td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
