@@ -410,8 +410,9 @@ class MonocleWrapper(DbWrapperBase):
         )
         data = []
         res = self.execute(query, vals)
-        for (id, distance) in res:
-            data.append(id)
+        for (gym_id, distance, latitude, longitude, name, description, url) in res:
+            data.append([gym_id, distance, latitude, longitude, name, description, url])
+        log.debug("{MonocleWrapper::get_near_gyms} done")
         return data
 
     def set_scanned_location(self, lat, lng, capture_time):

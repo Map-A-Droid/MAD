@@ -176,8 +176,8 @@ def modify_raid_mon():
 @app.route("/modify_gym_hash")
 @auth_required
 def modify_gym_hash():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('id')
+    hash = request.args.get('hash')
+    id = request.args.get('id')
 
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'gym', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin")
@@ -192,8 +192,8 @@ def near_gym():
 
     data = db_wrapper.get_gym_infos()
 
-    lat = request.conf_args.get('lat')
-    lon = request.conf_args.get('lon')
+    lat = request.args.get('lat')
+    lon = request.args.get('lon')
     if lat == "9999":
         distance = int(9999)
         lat = conf_args.home_lat
