@@ -1042,7 +1042,7 @@ class MonocleWrapper(DbWrapperBase):
             query = query + add_query
             data = (GUID,)
         elif timestamp is not None:
-            add_query = " and trs_quest.quest_timestamp > %s"
+            add_query = " and trs_quest.quest_timestamp >= %s"
             query = query + add_query
             data = (timestamp,)
 
