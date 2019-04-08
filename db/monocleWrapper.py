@@ -156,7 +156,7 @@ class MonocleWrapper(DbWrapperBase):
             query = (
                 "UPDATE raids "
                 "SET level = %s, time_spawn = %s, time_battle = %s, time_end = FROM_UNIXTIME(%s), "
-                "pokemon_id = %s, last_updated = %s, "
+                "pokemon_id = %s, last_updated = %s "
                 "WHERE fort_id = %s AND time_end >= %s"
             )
             vals = (
@@ -400,7 +400,7 @@ class MonocleWrapper(DbWrapperBase):
             "* sin(radians(lat))"
             ")"
             ") "
-            "AS distance, forts.lat, forts.lon, forts.name, forts.url "
+            "AS distance, forts.lat, forts.lon, forts.name, forts.name, forts.url "
             "FROM forts "
             "HAVING distance <= %s OR distance IS NULL "
             "ORDER BY distance"
