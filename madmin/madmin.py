@@ -292,7 +292,7 @@ def get_gyms():
             url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+            gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
                 name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
