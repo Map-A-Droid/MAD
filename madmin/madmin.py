@@ -208,7 +208,7 @@ def near_gym():
 
         gymid = str(closegym[0])
         dist = str(closegym[1])
-        gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+        gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
         name = str(closegym[4])
         lat = str(closegym[2])
@@ -370,7 +370,7 @@ def get_raids():
             url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+            gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
                 name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
