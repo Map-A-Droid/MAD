@@ -79,9 +79,7 @@ def __generate_new_solution(method, markov_steps, distmat, temp_current, cost_cu
 def get_index_array_numpy_compary(arr_orig, arr_new):
     indices = []
     length_arr = len(arr_orig)
-    # logger.error("Scanning range: %s" % str(length_arr))
     for i in range(length_arr):  # or range(len(theta))
-        # logger.info("Index: %s" % str(i))
         if np.array_equal(arr_new[i], arr_orig[i]):
             continue
         else:
@@ -150,9 +148,9 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
             lessCoordinates[i][0] = newCoords[i][0]
             lessCoordinates[i][1] = newCoords[i][1]
 
-        logger.debug("Coords summed up: %s, that's just %s coords" % (str(lessCoordinates), str(len(lessCoordinates))))
+        logger.debug("Coords summed up: {}, that's just {} coords", str(lessCoordinates), str(len(lessCoordinates)))
 
-    logger.debug("Got %s coordinates" % (len(lessCoordinates) / 2.0))
+    logger.debug("Got {} coordinates", len(lessCoordinates) / 2.0)
     if not len(lessCoordinates) > 2:
         logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
         export_data = []
@@ -207,7 +205,7 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
 
     # Simulated Annealing
     while T > T_MIN and cost_best_counter < halt:
-        logger.info("Still calculating... cost_best_counter: %s" % str(cost_best_counter))
+        logger.info("Still calculating... cost_best_counter: {}", str(cost_best_counter))
 
         if num_cores and num_cores != 1 and thread_pool and cost_best_counter > 0:
             running_calculations = []
@@ -259,9 +257,9 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
                 # multiple solutions, so much fun at once!
                 merged_sol = sol_best.copy()
                 length_sols_minus_one = len(solutions_temp) - 1
-                # logger.error("Length solutions minus one: %s" % str(length_sols_minus_one))
+                # logger.error("Length solutions minus one: {}", str(length_sols_minus_one))
                 # range_to_be_searched = range(length_sols_minus_one)
-                # logger.error("Scanning range: %s" % str(range_to_be_searched))
+                # logger.error("Scanning range: {}", str(range_to_be_searched))
                 for i in range(len(solutions_temp) - 1):
                     merged_sol = merge_results(merged_sol, solutions_temp[i], solutions_temp[i + 1])
                     # TODO: if merged_sol == sol_best, check for the best solution in the set and use that...
@@ -302,7 +300,7 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
     if thread_pool is not None:
         thread_pool.close()
         thread_pool.join()
-    logger.info("Calculated route in %s minutes" % (str((end - start) / 60)))
+    logger.info("Calculated route in {} minutes", str((end - start) / 60))
     # plot(sol_best.tolist(), coordinates, costs)
 
     for i in range(len(sol_best)):

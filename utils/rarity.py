@@ -47,7 +47,7 @@ class Rarity(object):
 
             start = default_timer()
             db_rarities = self._dbwrapper.get_pokemon_spawns(hours)
-            logger.debug('Pokemon Rarity: %s' % (str(db_rarities)))
+            logger.debug('Pokemon Rarity: {}', str(db_rarities))
             total = db_rarities['total']
             pokemon = db_rarities['pokemon']
 

@@ -22,7 +22,7 @@ class MADVersion(object):
             if int(self._version) < int(current_version):
                 logger.error('New Update found')
                 self.start_update()
-        except FileNotFoundError as e:
+        except FileNotFoundError:
             self.set_version(0)
             self.start_update()
 
@@ -39,7 +39,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
             # Adding quest_task = ingame quest conditions
             if self._dbwrapper._check_column_exists('trs_quest', 'quest_task') == 0:
@@ -50,7 +50,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
             # Adding form column for rm / monocle if not exists
             if self._application_args.db_method == "rm":
@@ -73,7 +73,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
         if self._version < 2:
             alter_query = (
@@ -84,7 +84,7 @@ class MADVersion(object):
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
-                logger.info("Unexpected error: %s" % e)
+                logger.info("Unexpected error: {}", e)
         if self._version < 3:
             if self._application_args.db_method == "monocle":
                 # Add Weather Index
@@ -94,7 +94,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
                 # Change Mon Unique Index
                 alter_query = (
@@ -103,7 +103,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
                 alter_query = (
                     "ALTER TABLE sightings DROP INDEX encounter_id;"
@@ -111,7 +111,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
                 alter_query = (
                     "CREATE TABLE sightings_temp LIKE sightings;"
@@ -119,7 +119,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
                 alter_query = (
                     "ALTER TABLE sightings_temp ADD UNIQUE(encounter_id);"
@@ -127,7 +127,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
                 alter_query = (
                     "INSERT IGNORE INTO sightings_temp SELECT * FROM sightings ORDER BY id;"
@@ -135,7 +135,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
                 alter_query = (
                     "RENAME TABLE sightings TO backup_sightings, sightings_temp TO sightings;"
@@ -143,7 +143,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
                 alter_query = (
                     "DROP TABLE backup_sightings;"
@@ -151,7 +151,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
         if self._version < 7:
             alter_query = (
@@ -163,7 +163,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
             alter_query = (
                 "ALTER TABLE trs_status "
@@ -174,7 +174,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
             alter_query = (
                 "ALTER TABLE trs_status "
@@ -185,7 +185,7 @@ class MADVersion(object):
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
-                    logger.info("Unexpected error: %s" % e)
+                    logger.info("Unexpected error: {}", e)
 
             alter_query = (
                 "ALTER TABLE trs_status CHANGE lastPogoRestart "
@@ -194,7 +194,7 @@ class MADVersion(object):
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
-                logger.info("Unexpected error: %s" % e)
+                logger.info("Unexpected error: {}", e)
 
             if self._application_args.db_method == "monocle":
                 alter_query = (
@@ -205,7 +205,7 @@ class MADVersion(object):
                     try:
                         self._dbwrapper.execute(alter_query, commit=True)
                     except Exception as e:
-                        logger.info("Unexpected error: %s" % e)
+                        logger.info("Unexpected error: {}", e)
 
             alter_query = (
                 "ALTER TABLE trs_status "
@@ -224,7 +224,7 @@ class MADVersion(object):
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
-                logger.info("Unexpected error: %s" % e)
+                logger.info("Unexpected error: {}", e)
 
         if self._version < 8:
             alter_query = (
@@ -235,11 +235,11 @@ class MADVersion(object):
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
-                logger.info("Unexpected error: %s" % e)
+                logger.info("Unexpected error: {}", e)
 
         self.set_version(current_version)
 
     def set_version(self, version):
-        output ={'version': version}
+        output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)

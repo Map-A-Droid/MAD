@@ -13,7 +13,7 @@ class Timer(object):
         self._switchtime = switchtime
         self.__stop_switchtimer = Event()
         self.__t_switchtimer = None
-        logger.info('[%s] - check for Switchtimer' % str(self._id))
+        logger.info('[{}] - check for Switchtimer', str(self._id))
 
         self.__t_switchtimer = None
         if self._switch:
@@ -23,22 +23,22 @@ class Timer(object):
             self.__t_switchtimer.start()
 
     def set_switch(self, switch):
-        logger.info('[%s] - set switch: %s' % (str(self._id), str(switch)))
+        logger.info('[{}] - set switch: {}', str(self._id), str(switch))
         self._switchmode = switch
         return
 
     def stop_switch(self):
         if not self.__stop_switchtimer.is_set() and self.__t_switchtimer is not None:
-            logger.info("[%s] stopping switchtimer" % str(self._id))
+            logger.info("[{}] stopping switchtimer", str(self._id))
             self.__stop_switchtimer.set()
             self.__t_switchtimer.join()
-            logger.info("[%s] switchtimer stopped" % str(self._id))
+            logger.info("[{}] switchtimer stopped", str(self._id))
 
     def get_switch(self):
         return self._switchmode
 
     def switchtimer(self):
-        logger.info('[%s] - Starting Switchtimer' % str(self._id))
+        logger.info('[{}] - Starting Switchtimer', str(self._id))
         switchtime = self._switchtime
         sts1 = switchtime[0].split(':')
         sts2 = switchtime[1].split(':')
@@ -61,20 +61,19 @@ class Timer(object):
                 tmTil = tmTil + datetime.timedelta(days=1)
 
             if tmFrom <= tmNow < tmTil:
-                logger.info('[%s] - Switching Mode' % str(self._id))
+                logger.info('[{}] - Switching Mode', str(self._id))
                 self.set_switch(True)
 
                 while self.get_switch():
                     tmNow = datetime.datetime.now()
-                    logger.info("[%s] - Currently in switchmode" % str(self._id))
+                    logger.info("[{}] - Currently in switchmode", str(self._id))
                     if tmNow >= tmTil:
-                        logger.warning(
-                            '[%s] - Switching back - here we go ...' % str(self._id))
+                        logger.warning('[{}] - Switching back - here we go ...', str(self._id))
                         self.set_switch(False)
                     if self.__stop_switchtimer.is_set():
-                        logger.info("[%s] switchtimer stopping in switchmode" % str(self._id))
+                        logger.info("[{}] switchtimer stopping in switchmode", str(self._id))
                         self.set_switch(False)
                     time.sleep(30)
             time.sleep(30)
 
-        logger.info("[%s] switchtimer stopping" % str(self._id))
+        logger.info("[{}] switchtimer stopping", str(self._id))

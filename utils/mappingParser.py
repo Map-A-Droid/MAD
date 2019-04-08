@@ -63,7 +63,7 @@ class MappingParser(object):
 
             geofence_included = Path(area["geofence_included"])
             if not geofence_included.is_file():
-                raise RuntimeError("Geofence included file configured does not exist")
+                raise RuntimeError("Geofence included file for '{}' does not exist.".format(area["name"]))
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
             if geofence_excluded_raw_path is not None:
@@ -138,7 +138,7 @@ class MappingParser(object):
                     elif mode == "pokestops":
                         coords = self.db_wrapper.stops_from_db(geofence_helper)
                     else:
-                        logger.fatal("Mode not implemented yet: %s" % str(mode))
+                        logger.error("Mode not implemented yet: {}", str(mode))
                         exit(1)
                 else:
                     # calculate all level N cells (mapping back from mapping above linked to mode)
@@ -156,8 +156,7 @@ class MappingParser(object):
                                                                                      0, False))
                     areas_procs[area["name"]] = proc
                 else:
-                    logger.info("Init mode enabled and more than 400 coords in init. Going row-based for %s"
-                             % str(area.get("name", "unknown")))
+                    logger.info("Init mode enabled and more than 400 coords in init. Going row-based for {}", str(area.get("name", "unknown")))
                     # we are in init, let's write the init route to file to make it visible in madmin
                     if area["routecalc"] is not None:
                         routefile = area["routecalc"]
@@ -196,7 +195,7 @@ class MappingParser(object):
                 walker_settings = 0
                 while walker_settings < len(walker_arr):
                     if walker_arr[walker_settings]['walkername'] == walker:
-                        device_dict["walker"] = walker_arr[walker_settings].get('setup',[])
+                        device_dict["walker"] = walker_arr[walker_settings].get('setup', [])
                         break
                     walker_settings += 1
             device_dict["settings"] = settings

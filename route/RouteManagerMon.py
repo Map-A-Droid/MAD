@@ -52,7 +52,7 @@ class RouteManagerMon(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
-                logger.info("Starting routemanager %s" % str(self.name))
+                logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
                 self._is_started = True
                 self._init_route_queue()
@@ -61,7 +61,7 @@ class RouteManagerMon(RouteManagerBase):
             self._manager_mutex.release()
 
     def _quit_route(self):
-        logger.info('Shutdown Route %s' % str(self.name))
+        logger.info('Shutdown Route {}', str(self.name))
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
             self._update_prio_queue_thread.join()

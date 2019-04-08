@@ -41,12 +41,12 @@ class MitmMapper(object):
         updated = False
         self.__mapping_mutex.acquire()
         if origin in self.__mapping.keys():
-            logger.debug("Updating timestamp of %s with method %s to %s" % (str(origin), str(key), str(timestamp)))
+            logger.debug("Updating timestamp of {} with method {} to {}", str(origin), str(key), str(timestamp))
             self.__mapping[origin][key] = {}
             self.__mapping[origin][key]["timestamp"] = timestamp
             self.__mapping[origin][key]["values"] = values_dict
             updated = True
         else:
-            logger.warning("Not updating timestamp of %s since origin is unknown" % str(origin))
+            logger.warning("Not updating timestamp of {} since origin is unknown", str(origin))
         self.__mapping_mutex.release()
         return updated

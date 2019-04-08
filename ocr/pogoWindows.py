@@ -40,13 +40,13 @@ class PogoWindows:
 
     def isGpsSignalLost(self, filename, hash):
         if not os.path.isfile(filename):
-            logger.error("isGpsSignalLost: %s does not exist" % str(filename))
+            logger.error("isGpsSignalLost: {} does not exist", str(filename))
             return None
 
         logger.debug("isGpsSignalLost: checking for red bar")
         try:
             col = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             return True
 
@@ -76,7 +76,7 @@ class PogoWindows:
 
         try:
             screenshotRead = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             return -1
 
@@ -88,8 +88,8 @@ class PogoWindows:
 
         if crop:
             screenshotRead = screenshotRead[int(height) - int(int(height / 4.5)):int(height),
-                             int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
-                                 int(width) / 8)]
+                                            int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
+                                            int(width) / 8)]
 
         logger.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
@@ -141,7 +141,7 @@ class PogoWindows:
 
         try:
             screenshotRead = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             return False
 
@@ -153,7 +153,7 @@ class PogoWindows:
 
         if crop:
             screenshotRead = screenshotRead[int(height) - int(height / 5):int(height),
-                             int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
+                                            int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
 
         logger.debug("__readCircleCords: Determined screenshot scale: " + str(height) + " x " + str(width))
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
@@ -176,8 +176,7 @@ class PogoWindows:
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
             for (x, y, r) in circles:
-                logger.debug("__readCircleCords: Found Circle x: %s y: %s" % (
-                str(width / 2), str((int(height) - int(height / 5)) + y)))
+                logger.debug("__readCircleCords: Found Circle x: {} y: {}", str(width / 2), str((int(height) - int(height / 5)) + y))
                 return True, width / 2, (int(height) - int(height / 5)) + y, height, width
         else:
             logger.debug("__readCircleCords: Found no Circle")
@@ -236,7 +235,7 @@ class PogoWindows:
         logger.debug("lookForButton: MinLineLength:" + str(minLineLength))
 
         kernel = np.ones((2, 2), np.uint8)
-        #kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
+        # kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
         edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
 
         maxLineGap = 50
@@ -292,7 +291,7 @@ class PogoWindows:
             logger.debug("__checkRaidLine: Check nearby open ")
         try:
             screenshotRead = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             return False
         if screenshotRead is None:
@@ -306,7 +305,7 @@ class PogoWindows:
 
         height, width, _ = screenshotRead.shape
         screenshotRead = screenshotRead[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
-                         int(0):int(width)]
+                                        int(0):int(width)]
         gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         logger.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
@@ -356,7 +355,7 @@ class PogoWindows:
 
         try:
             image = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             return False
         if image is None:
@@ -395,7 +394,7 @@ class PogoWindows:
     def checkNearby(self, filename, hash, communicator):
         try:
             screenshotRead = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             return False
         if screenshotRead is None:
@@ -419,7 +418,7 @@ class PogoWindows:
 
     def __checkClosePresent(self, filename, hash, communicator,  radiusratio=12, Xcord=True):
         if not os.path.isfile(filename):
-            logger.warning("__checkClosePresent: %s does not exist" % str(filename))
+            logger.warning("__checkClosePresent: {} does not exist", str(filename))
             return False
 
         try:
@@ -437,7 +436,7 @@ class PogoWindows:
 
     # checks for X button on any screen... could kill raidscreen, handle properly
     def checkCloseExceptNearbyButton(self, filename, hash, communicator, closeraid=False):
-        logger.debug("checkCloseExceptNearbyButton: Checking close except nearby with: file %s, hash %s" % (filename, hash))
+        logger.debug("checkCloseExceptNearbyButton: Checking close except nearby with: file {}, hash {}", filename, hash)
         try:
             screenshotRead = cv2.imread(filename)
         except:
@@ -462,16 +461,16 @@ class PogoWindows:
         if self.__checkClosePresent(filename, hash, communicator, 10, True):
             logger.debug("Found close button (X). Closing the window - Ratio: 10")
             return True
-        if self.__checkClosePresent(filename, hash, communicator,11, True):
+        if self.__checkClosePresent(filename, hash, communicator, 11, True):
             logger.debug("Found close button (X). Closing the window - Ratio: 11")
             return True
-        elif self.__checkClosePresent(filename, hash, communicator,12, True):
+        elif self.__checkClosePresent(filename, hash, communicator, 12, True):
             logger.debug("Found close button (X). Closing the window - Ratio: 12")
             return True
-        elif self.__checkClosePresent(filename, hash, communicator,14, True):
+        elif self.__checkClosePresent(filename, hash, communicator, 14, True):
             logger.debug("Found close button (X). Closing the window - Ratio: 14")
             return True
-        elif self.__checkClosePresent(filename, hash, communicator,13, True):
+        elif self.__checkClosePresent(filename, hash, communicator, 13, True):
             logger.debug("Found close button (X). Closing the window - Ratio: 13")
             return True
         else:
@@ -490,11 +489,11 @@ class PogoWindows:
         return text
 
     def checkpogomainscreen(self, filename, hash):
-        logger.debug("checkpogomainscreen: Checking close except nearby with: file %s, hash %s" % (filename, hash))
+        logger.debug("checkpogomainscreen: Checking close except nearby with: file {}, hash {}", filename, hash)
         mainscreen = 0
         try:
             screenshotRead = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             logger.debug("checkCloseExceptNearbyButton: Screenshot corrupted...")
             return False
@@ -502,11 +501,10 @@ class PogoWindows:
             logger.error("checkCloseExceptNearbyButton: Screenshot corrupted :(")
             return False
 
-
-        height, width,_ = screenshotRead.shape
+        height, width, = screenshotRead.shape
         gray = screenshotRead[int(height) - int(round(height / 6)):int(height),
-                             0: int(int(width) / 4)]
-        height_, width_,_ = gray.shape
+                              0: int(int(width) / 4)]
+        height_, width_, = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
         radMax = int((width / float(6) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
@@ -525,10 +523,10 @@ class PogoWindows:
         return False
 
     def checkCloseButton(self, filename, hash, communicator):
-        logger.debug("checkCloseButton: Checking close with: file %s, hash %s" % (filename, hash))
+        logger.debug("checkCloseButton: Checking close with: file {}, hash {}", filename, hash)
         try:
             screenshotRead = cv2.imread(filename)
-        except:
+        except Exception:
             logger.error("Screenshot corrupted :(")
             logger.debug("checkCloseButton: Screenshot corrupted...")
             return False
@@ -537,7 +535,7 @@ class PogoWindows:
             return False
 
         if self.__readCircleCount(filename, hash,
-                                          float(7.7), communicator, xcord=False, crop=True, click=True, canny=True) > 0:
+                                  float(7.7), communicator, xcord=False, crop=True, click=True, canny=True) > 0:
             logger.debug("Found close button (X). Closing the window - Ratio: 10")
             return True
 

@@ -18,10 +18,10 @@ class Communicator:
         self.__sendMutex = Lock()
 
     def cleanup_websocket(self):
-        logger.info("Communicator of %s acquiring lock to cleanup worker in websocket" % str(self.id))
+        logger.info("Communicator of {} acquiring lock to cleanup worker in websocket", str(self.id))
         self.__sendMutex.acquire()
         try:
-            logger.info("Communicator of %s calling cleanup" % str(self.id))
+            logger.info("Communicator of {} calling cleanup", str(self.id))
             self.websocketHandler.clean_up_user(self.id, self.worker_instance_ref)
         finally:
             self.__sendMutex.release()
@@ -35,11 +35,11 @@ class Communicator:
             self.__sendMutex.release()
 
     def startApp(self, packageName):
-        return self.__runAndOk("more start %s\r\n" % (packageName), self.__commandTimeout)
+        return self.__runAndOk("more start {}\r\n" % (packageName), self.__commandTimeout)
 
     def stopApp(self, packageName):
         if not self.__runAndOk("more stop %s\r\n" % (packageName), self.__commandTimeout):
-            logger.error("Failed stopping %s, please check if SU has been granted" % packageName)
+            logger.error("Failed stopping {}, please check if SU has been granted", packageName)
             return False
         else:
             return True

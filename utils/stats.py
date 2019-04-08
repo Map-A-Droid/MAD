@@ -1,4 +1,3 @@
-import os
 import json
 from loguru import logger
 from pathlib import Path
@@ -10,7 +9,7 @@ class PlayerStats(object):
         self._level = 0
 
     def set_level(self, level):
-        logger.info('[%s] - set level %s' % (str(self._id), str(level)))
+        logger.info('[{}] - set level {}', str(self._id), str(level))
         self._level = int(level)
         return True
 
@@ -19,7 +18,7 @@ class PlayerStats(object):
 
     def gen_player_stats(self, data):
         if 'inventory_delta' not in data:
-            logger.debug('{{gen_player_stats}} cannot generate new stats')
+            logger.debug('gen_player_stats cannot generate new stats')
             return True
         stats = data['inventory_delta'].get("inventory_items", None)
         if len(stats) > 0:
@@ -44,7 +43,7 @@ class PlayerStats(object):
     def open_player_stats(self):
         statsfile = Path(str(self._id) + '.stats')
         if not statsfile.is_file():
-            logger.error('[%s] - no Statsfile found' % (str(self._id)))
+            logger.error('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
             return False
 

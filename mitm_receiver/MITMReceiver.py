@@ -38,7 +38,7 @@ class EndpointAction(object):
         elif auths is not None:  # TODO check auth properly...
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(auth, application_args, auths):
-                logger.warning("Unauthorized attempt to POST from %s" % str(request.remote_addr))
+                logger.warning("Unauthorized attempt to POST from {}", str(request.remote_addr))
                 self.response = Response(status=403, headers={})
                 abort = True
         if not abort:
@@ -54,7 +54,7 @@ class EndpointAction(object):
                 self.response = Response(status=200, headers={})
                 self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
-                logger.warning("Could not get JSON data from request: %s" % str(e))
+                logger.warning("Could not get JSON data from request: {}", str(e))
                 self.response = Response(status=500, headers={})
         return self.response
 
@@ -95,7 +95,7 @@ class MITMReceiver(object):
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
         if methods_passed is None:
-            logger.fatal("Invalid REST method specified")
+            logger.error("Invalid REST method specified")
             sys.exit(1)
         self.app.add_url_rule(endpoint, endpoint_name, EndpointAction(handler), methods=methods_passed)
 
@@ -137,13 +137,13 @@ class MITMReceiver(object):
     def process_data(self, received_timestamp, data, origin):
         global application_args
         if origin not in self.__mitm_mapper.playerstats:
-            logger.warning("Not processing data of %s since origin is unknown" % str(origin))
+            logger.warning("Not processing data of {} since origin is unknown", str(origin))
             return
         type = data.get("type", None)
         if type:
             if type == 106:
                 # process GetMapObject
-                logger.success("Processing GMO received from %s. Received at %s" % (str(origin), str(datetime.fromtimestamp(received_timestamp))))
+                logger.success("Processing GMO received from {}. Received at {}", str(origin), str(datetime.fromtimestamp(received_timestamp)))
 
                 if application_args.weather:
                     self._db_wrapper.submit_weather_map_proto(origin, data["payload"], received_timestamp)
@@ -158,7 +158,7 @@ class MITMReceiver(object):
             elif type == 102:
                 playerlevel = self.__mitm_mapper.playerstats[origin].get_level()
                 if playerlevel >= 30:
-                    logger.info("Processing Encounter received from %s at %s" % (str(origin), str(received_timestamp)))
+                    logger.info("Processing Encounter received from {} at {}", str(origin), str(received_timestamp))
                     self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])
                 else:
                     logger.warning('Playerlevel lower than 30 - not processing encounter Data')

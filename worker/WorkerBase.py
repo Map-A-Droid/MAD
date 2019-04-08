@@ -154,13 +154,13 @@ class WorkerBase(ABC):
         while not self._stop_worker_event.isSet():
             time.sleep(1)
         t_main_work.join()
-        logger.info("Worker %s stopping gracefully" % str(self._id))
+        logger.info("Worker {} stopping gracefully", str(self._id))
         # async_result.get()
         return self._last_known_state
 
     def stop_worker(self):
         self._stop_worker_event.set()
-        logger.warning("Worker %s stop called" % str(self._id))
+        logger.warning("Worker {} stop called", str(self._id))
 
     def _internal_pre_work(self):
         current_thread().name = self._id
@@ -169,13 +169,13 @@ class WorkerBase(ABC):
         try:
             self._turn_screen_on_and_start_pogo()
         except WebsocketWorkerRemovedException:
-            logger.error("Timeout during init of worker %s" % str(self._id))
+            logger.error("Timeout during init of worker {}", str(self._id))
             # no cleanup required here? TODO: signal websocket server somehow
             self._stop_worker_event.set()
             return
 
         # register worker  in routemanager
-        logger.info("Try to register %s in Routemanager %s" % (str(self._id), str(self._walker_routemanager.name)))
+        logger.info("Try to register {} in Routemanager {}", str(self._id), str(self._walker_routemanager.name))
         self._walker_routemanager.register_worker(self._id)
 
         self._work_mutex.release()
@@ -196,7 +196,7 @@ class WorkerBase(ABC):
         logger.debug("Checking if we need to restart pogo")
         # Restart pogo every now and then...
         if self._devicesettings.get("restart_pogo", 80) > 0:
-            # logger.debug("main: Current time - lastPogoRestart: %s" % str(curTime - lastPogoRestart))
+            # logger.debug("main: Current time - lastPogoRestart: {}", str(curTime - lastPogoRestart))
             # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
             if self._location_count > self._devicesettings.get("restart_pogo", 80):
                 logger.error(
@@ -214,9 +214,9 @@ class WorkerBase(ABC):
     def _internal_cleanup(self):
         # set the event just to make sure - in case of exceptions for example
         self._stop_worker_event.set()
-        logger.info("Internal cleanup of %s started" % str(self._id))
+        logger.info("Internal cleanup of {} started", str(self._id))
         self._cleanup()
-        logger.info("Internal cleanup of %s signalling end to websocketserver" % str(self._id))
+        logger.info("Internal cleanup of {} signalling end to websocketserver", str(self._id))
         self._walker_routemanager.unregister_worker(self._id)
 
         logger.info("Stopping Route")
@@ -227,20 +227,19 @@ class WorkerBase(ABC):
             self._async_io_looper_thread.join()
 
         self._communicator.cleanup_websocket()
-        logger.info("Internal cleanup of %s finished" % str(self._id))
+        logger.info("Internal cleanup of {} finished", str(self._id))
 
     def _main_work_thread(self):
         # TODO: signal websocketserver the removal
         try:
             self._internal_pre_work()
-        except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                as e:
-            logger.error("Failed initializing worker %s, connection terminated exceptionally" % str(self._id))
+        except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            logger.error("Failed initializing worker {}, connection terminated exceptionally", str(self._id))
             self._internal_cleanup()
             return
 
         if not check_max_walkers_reached(self._walker, self._walker_routemanager):
-            logger.warning('Max. Walkers in Area %s - closing connections' % str(self._walker_routemanager.name))
+            logger.warning('Max. Walkers in Area {} - closing connections', str(self._walker_routemanager.name))
             self._devicesettings['finished'] = True
             self._internal_cleanup()
             return
@@ -252,29 +251,24 @@ class WorkerBase(ABC):
                 if not walkercheck:
                     self._devicesettings['finished'] = True
                     break
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                    as e:
-                logger.warning("Worker %s killed by walker settings" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                logger.warning("Worker {} killed by walker settings", str(self._id))
                 break
 
             try:
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 self._internal_health_check()
                 self._health_check()
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                    as e:
-                logger.error("Websocket connection to %s lost while running healthchecks, "
-                             "connection terminated exceptionally" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                logger.error("Websocket connection to {} lost while running healthchecks, connection terminated exceptionally", str(self._id))
                 break
 
             try:
                 settings = self._internal_grab_next_location()
                 if settings is None:
                     continue
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                    as e:
-                logger.warning("Worker of %s does not support mode that's to be run, "
-                               "connection terminated exceptionally" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                logger.warning("Worker of {} does not support mode that's to be run, connection terminated exceptionally", str(self._id))
                 break
 
             try:
@@ -282,29 +276,24 @@ class WorkerBase(ABC):
                 valid = self._check_location_is_valid()
                 if not valid:
                     break
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                    as e:
-                logger.warning("Worker %s get non valid coords!" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                logger.warning("Worker {} get non valid coords!", str(self._id))
                 break
 
             try:
                 self._pre_location_update()
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                    as e:
-                logger.warning("Worker of %s stopping because of stop signal in pre_location_update, "
-                               "connection terminated exceptionally" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                logger.warning("Worker of {} stopping because of stop signal in pre_location_update, connection terminated exceptionally", str(self._id))
                 break
 
             try:
-                logger.debug('main worker %s: LastLat: %s, LastLng: %s, CurLat: %s, CurLng: %s' %
-                             (str(self._id), self._devicesettings["last_location"].lat,
-                              self._devicesettings["last_location"].lng, self.current_location.lat,
-                              self.current_location.lng))
+                logger.debug('main worker {}: LastLat: {}, LastLng: {}, CurLat: {}, CurLng: {}',
+                             str(self._id), self._devicesettings["last_location"].lat,
+                             self._devicesettings["last_location"].lng, self.current_location.lat,
+                             self.current_location.lng)
                 time_snapshot, process_location = self._move_to_location()
-            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                    as e:
-                logger.warning("Worker %s failed moving to new location, stopping worker, "
-                               "connection terminated exceptionally" % str(self._id))
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                logger.warning("Worker {} failed moving to new location, stopping worker, connection terminated exceptionally", str(self._id))
                 break
 
             if process_location:
@@ -319,11 +308,10 @@ class WorkerBase(ABC):
 
                 try:
                     self._post_move_location_routine(time_snapshot)
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) \
-                    as e:
-                    logger.warning("Worker %s failed running post_move_location_routine, stopping worker" % str(self._id))
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    logger.warning("Worker {} failed running post_move_location_routine, stopping worker", str(self._id))
                     break
-                logger.info("Worker %s finished iteration, continuing work" % str(self._id))
+                logger.info("Worker {} finished iteration, continuing work", str(self._id))
 
         self._internal_cleanup()
 
@@ -337,7 +325,7 @@ class WorkerBase(ABC):
         try:
             self._db_wrapper.set_scanned_location(str(latitude), str(longitude), str(timestamp))
         except Exception as e:
-            logger.error("Failed updating scanned location: %s" % str(e))
+            logger.error("Failed updating scanned location: {}", str(e))
             return
 
     def check_walker(self):
@@ -389,14 +377,14 @@ class WorkerBase(ABC):
                 logger.error("Wrong Value for mode - check your settings! Killing worker")
                 return False
             sleeptime = self._walker['walkervalue']
-            logger.info('%s going to sleep' % str(self._id))
+            logger.info('{} going to sleep', str(self._id))
             killpogo = False
             if check_walker_value_type(sleeptime):
                 self._stop_pogo()
                 killpogo = True
             while not self._stop_worker_event.isSet() and check_walker_value_type(sleeptime):
                 time.sleep(1)
-            logger.info('%s just woke up' % str(self._id))
+            logger.info('{} just woke up', str(self._id))
             if killpogo:
                 self._start_pogo()
             return False
@@ -404,8 +392,6 @@ class WorkerBase(ABC):
             logger.error("Unknown walker mode! Killing worker")
             return False
         return True
-
-
 
     def _internal_grab_next_location(self):
         # TODO: consider adding runWarningThreadEvent.set()
@@ -469,7 +455,7 @@ class WorkerBase(ABC):
     def _reboot(self):
         try:
             start_result = self._communicator.reboot()
-        except WebsocketWorkerRemovedException as e:
+        except WebsocketWorkerRemovedException:
             logger.error("Could not reboot due to client already having disconnected")
             start_result = False
         time.sleep(5)
@@ -489,7 +475,7 @@ class WorkerBase(ABC):
     def _restart_pogo(self, clear_cache=True):
         successful_stop = self._stop_pogo()
         self._db_wrapper.save_last_restart(self._id)
-        logger.debug("restartPogo: stop pogo resulted in %s" % str(successful_stop))
+        logger.debug("restartPogo: stop pogo resulted in {}", str(successful_stop))
         if successful_stop:
             if clear_cache:
                 self._communicator.clearAppCache("com.nianticlabs.pokemongo")
@@ -501,7 +487,7 @@ class WorkerBase(ABC):
     def _restartPogoDroid(self):
         successfulStop = self._stopPogoDroid()
         time.sleep(1)
-        logger.debug("restartPogoDroid: stop pogodriud resulted in %s" % str(successfulStop))
+        logger.debug("restartPogoDroid: stop pogodriud resulted in {}", str(successfulStop))
         if successfulStop:
             return self._start_pogodroid()
         else:
@@ -516,7 +502,7 @@ class WorkerBase(ABC):
             return
         logger.debug("_reopenRaidTab: Checking close except nearby...")
         pathToPass = os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id))
-        logger.debug("Path: %s" % str(pathToPass))
+        logger.debug("Path: {}", str(pathToPass))
         self._pogoWindowManager.checkCloseExceptNearbyButton(pathToPass, self._id, self._communicator, 'True')
         logger.debug("_reopenRaidTab: Getting to raidscreen...")
         self._getToRaidscreen(3)
@@ -526,7 +512,7 @@ class WorkerBase(ABC):
         logger.debug("Taking screenshot...")
         time.sleep(delayBefore)
         compareToTime = time.time() - self._lastScreenshotTaken
-        logger.debug("Last screenshot taken: %s" % str(self._lastScreenshotTaken))
+        logger.debug("Last screenshot taken: {}", str(self._lastScreenshotTaken))
 
         if self._applicationArgs.use_media_projection:
             take_screenshot = self._communicator.getScreenshot(os.path.join(self._applicationArgs.temp_path,
@@ -557,8 +543,8 @@ class WorkerBase(ABC):
             return
         from utils.image_utils import getImageHash
         screenHash = getImageHash(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
-        logger.debug("checkPogoFreeze: Old Hash: " + str(self._lastScreenHash))
-        logger.debug("checkPogoFreeze: New Hash: " + str(screenHash))
+        logger.debug("checkPogoFreeze: Old Hash: {}", str(self._lastScreenHash))
+        logger.debug("checkPogoFreeze: New Hash: {}", str(screenHash))
         if hamming_dist(str(self._lastScreenHash), str(screenHash)) < 4 and str(self._lastScreenHash) != '0':
             logger.debug("checkPogoFreeze: New und old Screenshoot are the same - no processing")
             self._lastScreenHashCount += 1
@@ -573,7 +559,7 @@ class WorkerBase(ABC):
             logger.debug("_checkPogoFreeze: done")
 
     def _check_pogo_main_screen(self, maxAttempts, again=False):
-        logger.debug("_check_pogo_main_screen: Trying to get to the Mainscreen with %s max attempts..." % str(maxAttempts))
+        logger.debug("_check_pogo_main_screen: Trying to get to the Mainscreen with {} max attempts...", str(maxAttempts))
         pogoTopmost = self._communicator.isPogoTopmost()
         if not pogoTopmost:
             return False
@@ -590,8 +576,8 @@ class WorkerBase(ABC):
 
         logger.info("_check_pogo_main_screen: checking mainscreen")
         buttoncheck = self._pogoWindowManager.lookForButton(os.path.join(self._applicationArgs.temp_path,
-                                                           'screenshot%s.png' % str(self._id)),
-                                              2.20, 3.01, self._communicator)
+                                                            'screenshot%s.png' % str(self._id)),
+                                                            2.20, 3.01, self._communicator)
         if buttoncheck:
             logger.info('Found button on screen')
             self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
@@ -601,7 +587,7 @@ class WorkerBase(ABC):
             logger.error("_check_pogo_main_screen: not on Mainscreen...")
             if attempts > maxAttempts:
                 # could not reach raidtab in given maxAttempts
-                logger.error("_check_pogo_main_screen: Could not get to Mainscreen within %s attempts" % str(maxAttempts))
+                logger.error("_check_pogo_main_screen: Could not get to Mainscreen within {} attempts", str(maxAttempts))
                 return False
 
             # not using continue since we need to get a screen before the next round...
@@ -623,7 +609,7 @@ class WorkerBase(ABC):
                 logger.info("_check_pogo_main_screen: Found button (big)")
                 found = True
 
-            logger.info("_check_pogo_main_screen: Previous checks found popups: %s" % str(found))
+            logger.info("_check_pogo_main_screen: Previous checks found popups: {}", str(found))
 
             self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1))
 
@@ -697,7 +683,7 @@ class WorkerBase(ABC):
 
     def _getToRaidscreen(self, maxAttempts, again=False):
         # check for any popups (including post login OK)
-        logger.debug("getToRaidscreen: Trying to get to the raidscreen with %s max attempts..." % str(maxAttempts))
+        logger.debug("getToRaidscreen: Trying to get to the raidscreen with {} max attempts...", str(maxAttempts))
         pogoTopmost = self._communicator.isPogoTopmost()
         if not pogoTopmost:
             return False
@@ -736,7 +722,7 @@ class WorkerBase(ABC):
             logger.debug("getToRaidscreen: not on raidscreen...")
             if attempts > maxAttempts:
                 # could not reach raidtab in given maxAttempts
-                logger.error("getToRaidscreen: Could not get to raidtab within %s attempts" % str(maxAttempts))
+                logger.error("getToRaidscreen: Could not get to raidtab within {} attempts", str(maxAttempts))
                 return False
             self._checkPogoFreeze()
             # not using continue since we need to get a screen before the next round...
@@ -757,7 +743,7 @@ class WorkerBase(ABC):
                 logger.info("getToRaidscreen: Found button (big)")
                 found = True
 
-            logger.info("getToRaidscreen: Previous checks found popups: %s" % str(found))
+            logger.info("getToRaidscreen: Previous checks found popups: {}", str(found))
             if not found:
                 logger.info("getToRaidscreen: Previous checks found nothing. Checking nearby open")
                 if self._pogoWindowManager.checkNearby(os.path.join(self._applicationArgs.temp_path,
@@ -778,6 +764,5 @@ class WorkerBase(ABC):
         self._screen_y = screen[1]
         x_offset = self._devicesettings.get("screenshot_x_offset", 0)
         y_offset = self._devicesettings.get("screenshot_y_offset", 0)
-        logger.debug('Get Screensize of %s: X: %s, Y: %s, X-Offset: %s, Y-Offset: %s' %
-                  (str(self._id), str(self._screen_x), str(self._screen_y), str(x_offset), str(y_offset)))
+        logger.debug('Get Screensize of {}: X: {}, Y: {}, X-Offset: {}, Y-Offset: {}', str(self._id), str(self._screen_x), str(self._screen_y), str(x_offset), str(y_offset))
         self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, x_offset, y_offset)

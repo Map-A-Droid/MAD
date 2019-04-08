@@ -95,10 +95,10 @@ class RouteManagerBase(ABC):
         self._workers_registered_mutex.acquire()
         try:
             if worker_name in self._workers_registered:
-                logger.info("Worker %s already registered to routemanager %s" % (str(worker_name), str(self.name)))
+                logger.info("Worker {} already registered to routemanager {}", str(worker_name), str(self.name))
                 return False
             else:
-                logger.info("Worker %s registering to routemanager %s" % (str(worker_name), str(self.name)))
+                logger.info("Worker {} registering to routemanager {}", str(worker_name), str(self.name))
                 self._workers_registered.append(worker_name)
                 self._rounds[worker_name] = 0
 
@@ -110,15 +110,14 @@ class RouteManagerBase(ABC):
         self._workers_registered_mutex.acquire()
         try:
             if worker_name in self._workers_registered:
-                logger.info("Worker %s unregistering from routemanager %s" % (str(worker_name), str(self.name)))
+                logger.info("Worker {} unregistering from routemanager {}", str(worker_name), str(self.name))
                 self._workers_registered.remove(worker_name)
                 del self._rounds[worker_name]
             else:
                 # TODO: handle differently?
-                logger.info("Worker %s failed unregistering from routemanager %s since subscription was previously "
-                         "lifted" % (str(worker_name), str(self.name)))
+                logger.info("Worker {} failed unregistering from routemanager {} since subscription was previously lifted", str(worker_name), str(self.name))
             if len(self._workers_registered) == 0 and self._is_started:
-                logger.info("Routemanager %s does not have any subscribing workers anymore, calling stop" % str(self.name))
+                logger.info("Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self._quit_route()
         finally:
             self._workers_registered_mutex.release()
@@ -200,9 +199,8 @@ class RouteManagerBase(ABC):
             heapq.heapify(merged)
             self._prio_queue = merged
             self._manager_mutex.release()
-            logger.info("New priority queue with %s entries" % len(merged))
-            logger.debug("Priority queue entries: %s" % str(merged))
-
+            logger.info("New priority queue with {} entries", len(merged))
+            logger.debug("Priority queue entries: {}", str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):
         timedelta = dt2 - dt1
@@ -322,9 +320,9 @@ class RouteManagerBase(ABC):
         return merged
 
     def get_next_location(self):
-        logger.debug("get_next_location of %s called" % str(self.name))
+        logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
-            logger.info("Starting routemanager %s in get_next_location" % str(self.name))
+            logger.info("Starting routemanager {} in get_next_location", str(self.name))
             self._start_routemanager()
         next_lat, next_lng = 0, 0
 
@@ -335,13 +333,12 @@ class RouteManagerBase(ABC):
         # first check if a location is available, if not, block until we have one...
         got_location = False
         while not got_location and self._is_started and not self.init:
-            logger.debug("%s: Checking if a location is available..." % str(self.name))
+            logger.debug("{}: Checking if a location is available...", str(self.name))
             self._manager_mutex.acquire()
-            got_location = not self._route_queue.empty() or \
-                           (self._prio_queue is not None and len(self._prio_queue) > 0)
+            got_location = not self._route_queue.empty() or (self._prio_queue is not None and len(self._prio_queue) > 0)
             self._manager_mutex.release()
             if not got_location:
-                logger.debug("%s: No location available yet" % str(self.name))
+                logger.debug("{}: No location available yet", str(self.name))
                 if self._get_coords_after_finish_route() and not self.init:
                     # getting new coords or IV worker
                     time.sleep(1)
@@ -349,7 +346,7 @@ class RouteManagerBase(ABC):
                     logger.info("Not getting new coords - leaving worker")
                     return None
 
-        logger.debug("%s: Location available, acquiring lock and trying to return location" % str(self.name))
+        logger.debug("{}: Location available, acquiring lock and trying to return location", str(self.name))
         self._manager_mutex.acquire()
         # check priority queue for items of priority that are past our time...
         # if that is not the case, simply increase the index in route and return the location on route
@@ -358,23 +355,22 @@ class RouteManagerBase(ABC):
         if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
                                                              and self._prio_queue and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
-            logger.debug("%s: Priority event" % str(self.name))
+            logger.debug("{}: Priority event", str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]
             next_lat = next_stop.lat
             next_lng = next_stop.lng
             self._last_round_prio = True
-            logger.info("Round of route %s is moving to %s, %s for a priority event"
-                     % (str(self.name), str(next_lat), str(next_lng)))
+            logger.info("Round of route {} is moving to {}, {} for a priority event", str(self.name), str(next_lat), str(next_lng))
         else:
-            logger.debug("%s: Moving on with route" % str(self.name))
+            logger.debug("{}: Moving on with route", str(self.name))
             if len(self._route) == self._route_queue.qsize():
                 if self._round_started_time is not None:
-                    logger.info("Round of route %s reached the first spot again. It took %s"
-                             % (str(self.name), str(self._get_round_finished_string())))
+                    logger.info("Round of route {} reached the first spot again. It took {}", str(self.name), str(self._get_round_finished_string()))
                     self.add_route_to_origin()
                 self._round_started_time = datetime.now()
-                if len(self._route) == 0: return None
-                logger.info("Round of route %s started at %s" % (str(self.name), str(self._round_started_time)))
+                if len(self._route) == 0:
+                    return None
+                logger.info("Round of route {} started at {}", str(self.name), str(self._round_started_time))
             elif self._round_started_time is None:
                 self._round_started_time = datetime.now()
 
@@ -385,8 +381,7 @@ class RouteManagerBase(ABC):
             if self.init and (self._route_queue.empty()) and \
                     self._init_mode_rounds >= int(self.settings.get("init_mode_rounds", 1)):
                 # we are done with init, let's calculate a new route
-                logger.warning("Init of %s done, it took %s, calculating new route..."
-                            % (str(self.name), self._get_round_finished_string()))
+                logger.warning("Init of {} done, it took {}, calculating new route...", str(self.name), self._get_round_finished_string())
                 if self._start_calc:
                     logger.info("Another process already calculate the new route")
                     self._manager_mutex.release()
@@ -394,16 +389,15 @@ class RouteManagerBase(ABC):
                 self._start_calc = True
                 self.clear_coords()
                 coords = self._get_coords_post_init()
-                logger.debug("Setting %s coords to as new points in route of %s"
-                          % (str(len(coords)), str(self.name)))
+                logger.debug("Setting {} coords to as new points in route of {}", str(len(coords)), str(self.name))
                 self.add_coords_list(coords)
-                logger.debug("Route of %s is being calculated" % str(self.name))
+                logger.debug("Route of {} is being calculated", str(self.name))
                 self._recalc_route_workertype()
                 self.init = False
                 self.change_init_mapping(self.name)
                 self._manager_mutex.release()
                 self._start_calc = False
-                logger.debug("Initroute of %s is finished - restart worker" % str(self.name))
+                logger.debug("Initroute of {} is finished - restart worker", str(self.name))
                 return None
             elif (self._route_queue.qsize()) == 1:
                 logger.info('Reaching last coord of route')
@@ -436,7 +430,7 @@ class RouteManagerBase(ABC):
             return self.get_next_location()
 
     def del_from_route(self):
-        logger.debug("%s: Location available, acquiring lock and trying to return location", str(self.name))
+        logger.debug("{}: Location available, acquiring lock and trying to return location", str(self.name))
         self._manager_mutex.acquire()
         logger.info('Removing coords from Route')
         self._route.pop(int(self._current_index_of_route)-1)
@@ -455,7 +449,7 @@ class RouteManagerBase(ABC):
 
         with open('configs/mappings.json', 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
-            
+
     def get_route_status(self):
         if self._route:
             return (len(self._route) - self._route_queue.qsize()), len(self._route)

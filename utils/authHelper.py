@@ -19,6 +19,6 @@ def check_auth(authHeader, args, auths):
         username = str(decodedSplit[0]).replace("b'", "")
         passwordInConf = auths.get(username, None)
         if passwordInConf is None or passwordInConf is not None and passwordInConf != decodedSplit[1].replace("'", ""):
-            logger.warning("Auth attempt from %s failed" % str(authHeader))
+            logger.warning("Auth attempt from {} failed", str(authHeader))
             return False
     return True

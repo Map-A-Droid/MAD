@@ -130,13 +130,13 @@ class RmWrapper(DbWrapperBase):
             timestamp = self.db_timestring_to_unix_timestamp(str(start))
             data.append((timestamp + delay_after_hatch, Location(latitude, longitude)))
 
-        logger.debug("Latest Q: %s" % str(data))
+        logger.debug("Latest Q: {}", str(data))
         return data
 
     def submit_raid(self, gym, pkm, lvl, start, end, type, raid_no, capture_time, unique_hash="123",
                     MonWithNoEgg=False):
         logger.debug("RmWrapper::submit_raid called")
-        logger.debug("[Crop: %s (%s) ] submit_raid: Submitting raid" % (str(raid_no), str(unique_hash)))
+        logger.debug("[Crop: {} ({}) ] submit_raid: Submitting raid", str(raid_no), str(unique_hash))
 
         if self.raid_exist(gym, type, raid_no, unique_hash=str(unique_hash), mon=pkm):
             self.refresh_times(gym, raid_no, capture_time)
@@ -294,7 +294,7 @@ class RmWrapper(DbWrapperBase):
         if number_of_rows > 0:
             for row in res:
                 logger.debug("[Crop: {} ({})] get_raid_endtime: Returning found endtime", str(raid_no), str(unique_hash))
-                logger.debug("[Crop: {} ({})] get_raid_endtime: Time: %s", str(raid_no), str(unique_hash), str(row[0]))
+                logger.debug("[Crop: {} ({})] get_raid_endtime: Time: {}", str(raid_no), str(unique_hash), str(row[0]))
 
                 return True, row[0]
 
@@ -332,8 +332,7 @@ class RmWrapper(DbWrapperBase):
                 logger.debug("RmWrapper::raid_exist done")
                 return False
         else:
-            logger.debug("[Crop: %s (%s)] raid_exist: Check for MON"
-                      % (str(raid_no), str(unique_hash)))
+            logger.debug("[Crop: {} ({})] raid_exist: Check for MON", str(raid_no), str(unique_hash))
             query = (
                 "SELECT start "
                 "FROM raid "
@@ -433,8 +432,6 @@ class RmWrapper(DbWrapperBase):
 
     def download_gym_images(self):
         logger.debug("RmWrapper::download_gym_images called")
-        import json
-        import io
         import os
         gyminfo = {}
 
@@ -900,8 +897,7 @@ class RmWrapper(DbWrapperBase):
                 logger.warning("lat or lng is none")
                 continue
             elif geofence_helper and not geofence_helper.is_coord_inside_include_geofence([latitude, longitude]):
-                logger.debug("Excluded encounter at %s, %s since the coordinate is not inside the given include fences",
-                             str(latitude), str(longitude))
+                logger.debug("Excluded encounter at {}, {} since the coordinate is not inside the given include fences", str(latitude), str(longitude))
                 continue
 
             next_to_encounter.append(

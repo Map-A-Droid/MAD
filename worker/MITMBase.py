@@ -60,7 +60,7 @@ class MITMBase(WorkerBase):
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
                         and self._devicesettings.get("reboot", False):
-                    logger.error("Rebooting %s" % str(self._id))
+                    logger.error("Rebooting {}", str(self._id))
                     self._reboot()
                     raise InternalStopWorkerException
 
@@ -143,19 +143,16 @@ class MITMBase(WorkerBase):
         routemanager = self._walker_routemanager
         logger.debug('===============================')
         logger.debug('Worker Stats')
-        logger.debug('Origin: %s' % str(self._id))
-        logger.debug('Routemanager: %s' % str(routemanager.name))
-        logger.debug('Restart Counter: %s' % str(self._restart_count))
-        logger.debug('Reboot Counter: %s' % str(self._reboot_count))
-        logger.debug('Reboot Option: %s' % str(self._devicesettings.get("reboot", False)))
-        logger.debug('Current Pos: %s %s' % (str(self.current_location.lat),
-                                          str(self.current_location.lng)))
-        logger.debug('Last Pos: %s %s' % (str(self.last_location.lat),
-                                       str(self.last_location.lng)))
-        logger.debug('Route Pos: %s - Route Length: %s ' % (str(routemanager.get_route_status()[0]),
-                                                         str(routemanager.get_route_status()[1])))
-        logger.debug('Init Mode: %s' % str(routemanager.init))
-        logger.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
+        logger.debug('Origin: {}', str(self._id))
+        logger.debug('Routemanager: {}', str(routemanager.name))
+        logger.debug('Restart Counter: {}', str(self._restart_count))
+        logger.debug('Reboot Counter: {}', str(self._reboot_count))
+        logger.debug('Reboot Option: {}', str(self._devicesettings.get("reboot", False)))
+        logger.debug('Current Pos: {} {}', str(self.current_location.lat), str(self.current_location.lng))
+        logger.debug('Last Pos: {} {}', str(self.last_location.lat), str(self.last_location.lng))
+        logger.debug('Route Pos: {} - Route Length: {}', str(routemanager.get_route_status()[0]), str(routemanager.get_route_status()[1]))
+        logger.debug('Init Mode: {}', str(routemanager.init))
+        logger.debug('Last Date/Time of Data: {}', str(self._rec_data_time))
         logger.debug('===============================')
 
         dataToSave = {

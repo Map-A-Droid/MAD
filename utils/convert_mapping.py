@@ -23,7 +23,7 @@ def convert_mappings():
         exist = {}
 
         for dev in __raw_json['devices']:
-            logger.info("Converting device %s" % str(dev['origin']))
+            logger.info("Converting device {}", str(dev['origin']))
 
             walkersetup = []
             daytime_area = dev.get('daytime_area', False)
@@ -60,6 +60,3 @@ def convert_mappings():
         with open(mapping_file, 'w') as outfile:
             json.dump(__raw_json, outfile, indent=4, sort_keys=True)
             logger.info('Finished converting mapping file')
-
-
-

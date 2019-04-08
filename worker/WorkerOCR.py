@@ -10,7 +10,6 @@ from utils.s2Helper import S2Helper
 from .WorkerBase import WorkerBase
 
 
-
 class WorkerOCR(WorkerBase):
     def _pre_work_loop(self):
         self.__speed_weather_check_thread = Thread(name='speedWeatherCheckThread%s' % self._id,
@@ -61,7 +60,7 @@ class WorkerOCR(WorkerBase):
                                                                float(self.current_location.lng),
                                                                float(self.current_location.lat) + 0.0001,
                                                                float(self.current_location.lng) + 0.0001)
-                logger.info("Walking a bit: %s" % str(to_walk))
+                logger.info("Walking a bit: {}", str(to_walk))
                 time.sleep(0.3)
                 self._communicator.walkFromTo(self.current_location.lat, self.current_location.lng,
                                               self.current_location.lat + 0.0001, self.current_location.lng + 0.0001,
@@ -79,7 +78,7 @@ class WorkerOCR(WorkerBase):
                                           self.current_location.lng, speed)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
             delay_used = self._devicesettings.get('post_walk_delay', 7)
-        logger.info("Sleeping %s" % str(delay_used))
+        logger.info("Sleeping {}", str(delay_used))
         time.sleep(float(delay_used))
         cur_time = time.time()
         self._devicesettings["last_location"] = self.current_location
@@ -137,13 +136,13 @@ class WorkerOCR(WorkerBase):
         if count_of_raids > 0:
             logger.debug("Worker: Count of raids >0")
             logger.debug("main: New und old Screenshoot are different - starting OCR")
-            logger.debug("main: countOfRaids: %s" % str(count_of_raids))
+            logger.debug("main: countOfRaids: {}", str(count_of_raids))
             timestamp = time.time()
             copyFileName = self._applicationArgs.raidscreen_path + '/raidscreen_' + str(timestamp) \
-                           + "_" + str(self.current_location.lat) + "_" + str(self.current_location.lng) + "_" \
-                           + str(count_of_raids) + '.png'
+                + "_" + str(self.current_location.lat) + "_" + str(self.current_location.lng) + "_" \
+                + str(count_of_raids) + '.png'
             logger.debug('Copying file: ' + copyFileName)
-            logger.debug("Worker: Copying file to %s" % str(copyFileName))
+            logger.debug("Worker: Copying file to {}", str(copyFileName))
             copyfile(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), copyFileName)
             os.remove(os.path.join(self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
 
@@ -212,7 +211,7 @@ class WorkerOCR(WorkerBase):
                     logger.debug("checkSpeedWeatherWarningThread: did not reach raidscreen in 10 attempts")
                     self.__start_speed_weather_check_event.set()
             except WebsocketWorkerRemovedException as e:
-                logger.error("Timeout during init of worker %s with %s" % (str(self._id), str(e)))
+                logger.error("Timeout during init of worker {} with {}", str(self._id), str(e))
                 self._stop_worker_event.set()
                 self._work_mutex.release()
                 return

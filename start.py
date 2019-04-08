@@ -25,8 +25,9 @@ from utils.logging import logLevel
 
 
 args = parseArgs()
-debug_level = logLevel(args.verbose)
 os.environ['LANGUAGE'] = args.language
+log_level = logLevel(args.verbose)
+log_trace = log_level <= 10
 logconfig = {
     "levels": [
         {"name": "DEBUG2", "no": 9, "color": "<blue>"},
@@ -39,22 +40,26 @@ logconfig = {
             "sink": sys.stderr,
             "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
             "colorize": True,
-            "level": debug_level
+            "level": log_level,
+            "backtrace": log_trace,
+            "enqueue": True
         },
         {
             "sink": "logs/{time:YYYY-MM-DD}_mad.log",
             "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
-            "level": debug_level,
+            "level": log_level,
+            "backtrace": log_trace,
             "rotation": "0:00",
             "compression": "zip",
             "retention": "10 days",
             "enqueue": True,
+            "encoding": "UTF-8"
         }
     ]
 }
 
 logger.configure(**logconfig)
-logger.debug("Starting with debug level {}", str(debug_level))
+logger.debug("Starting with debug level {}", str(log_level))
 
 
 # Patch to make exceptions in threads cause an exception.
@@ -127,8 +132,7 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server, webhook_worker):
 
             # File has changed in the last refresh_time_sec seconds.
             if time_diff_sec < refresh_time_sec:
-                logger.info(
-                    'Change found in %s. Updating device mappings.', filename)
+                logger.info('Change found in {}. Updating device mappings.', filename)
                 (device_mappings, routemanagers, auths) = load_mappings(db_wrapper)
                 mitm_mapper._device_mappings = device_mappings
                 logger.info('Propagating new mappings to all clients.')
@@ -138,16 +142,15 @@ def file_watcher(db_wrapper, mitm_mapper, ws_server, webhook_worker):
                 if webhook_worker is not None:
                     webhook_worker.update_settings(routemanagers)
             else:
-                logger.debug('No change found in %s.', filename)
+                logger.debug('No change found in {}.', filename)
         except Exception as e:
             logger.exception(
-                'Exception occurred while updating device mappings: %s.', e)
+                'Exception occurred while updating device mappings: {}.', e)
 
 
 def find_referring_graphs(obj):
     REFERRERS_TO_IGNORE = [locals(), globals(), gc.garbage]
 
-    print('Looking for references to %s' % repr(obj))
     referrers = (r for r in gc.get_referrers(obj)
                  if r not in REFERRERS_TO_IGNORE)
     for ref in referrers:
@@ -169,7 +172,7 @@ def get_system_infos(db_wrapper):
         logger.info('Starting internal Cleanup')
         logger.debug('Collecting...')
         n = gc.collect()
-        logger.info('Unreachable objects: %s - Remaining garbage: %s - Running threads: %s' % (str(n), str(gc.garbage), str(active_count())))
+        logger.info('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}', str(n), str(gc.garbage), str(active_count()))
 
         for obj in gc.garbage:
             for ref in find_referring_graphs(obj):
@@ -183,7 +186,7 @@ def get_system_infos(db_wrapper):
 
         memoryUse = py.memory_info()[0] / 2. ** 30
         cpuUse = py.cpu_percent()
-        logger.info('Instance Name: "%s" - Memory usage: %s - CPU usage: %s' % (str(args.status_name), str(memoryUse), str(cpuUse)))
+        logger.info('Instance Name: "{}" - Memory usage: {} - CPU usage: {}', str(args.status_name), str(memoryUse), str(cpuUse))
         collected = None
         if args.stat_gc:
             collected = gc.collect()
@@ -252,21 +255,21 @@ if __name__ == "__main__":
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
             if not args.with_madmin:
-                logger.fatal("No mappings.json found - start madmin with with_madmin in config or copy example")
+                logger.error("No mappings.json found - start madmin with with_madmin in config or copy example")
                 sys.exit(1)
 
-            logger.fatal("No mappings.json found - starting setup mode with madmin.")
-            logger.fatal("Open Madmin (ServerIP with Port " + str(args.madmin_port) + ") - 'Mapping Editor' and restart.")
+            logger.error("No mappings.json found - starting setup mode with madmin.")
+            logger.error("Open Madmin (ServerIP with Port " + str(args.madmin_port) + ") - 'Mapping Editor' and restart.")
             generate_mappingjson()
         else:
 
             try:
                 (device_mappings, routemanagers, auths) = load_mappings(db_wrapper)
             except KeyError as e:
-                logger.fatal("Could not parse mappings. Please check those. Description: %s" % str(e))
+                logger.error("Could not parse mappings. Please check those. Reason: {}", str(e))
                 sys.exit(1)
             except RuntimeError as e:
-                logger.fatal("There is something wrong with your mappings. Description: %s" % str(e))
+                logger.error("There is something wrong with your mappings. Reason: {}", str(e))
                 sys.exit(1)
 
             if args.only_routes:
