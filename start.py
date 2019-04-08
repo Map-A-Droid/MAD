@@ -21,45 +21,12 @@ from utils.walkerArgs import parseArgs
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 from utils.rarity import Rarity
-from utils.logging import logLevel
+from utils.logging import initLogging
 
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
-log_level = logLevel(args.verbose)
-log_trace = log_level <= 10
-logconfig = {
-    "levels": [
-        {"name": "DEBUG2", "no": 9, "color": "<blue>"},
-        {"name": "DEBUG3", "no": 8, "color": "<blue>"},
-        {"name": "DEBUG4", "no": 7, "color": "<blue>"},
-        {"name": "DEBUG5", "no": 6, "color": "<blue>"}
-    ],
-    "handlers": [
-        {
-            "sink": sys.stderr,
-            "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
-            "colorize": True,
-            "level": log_level,
-            "backtrace": log_trace,
-            "enqueue": True
-        },
-        {
-            "sink": "logs/{time:YYYY-MM-DD}_mad.log",
-            "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
-            "level": log_level,
-            "backtrace": log_trace,
-            "rotation": "0:00",
-            "compression": "zip",
-            "retention": "10 days",
-            "enqueue": True,
-            "encoding": "UTF-8"
-        }
-    ]
-}
-
-logger.configure(**logconfig)
-logger.debug("Starting with debug level {}", str(log_level))
+initLogging(args)
 
 
 # Patch to make exceptions in threads cause an exception.
