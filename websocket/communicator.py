@@ -35,7 +35,7 @@ class Communicator:
             self.__sendMutex.release()
 
     def startApp(self, packageName):
-        return self.__runAndOk("more start {}\r\n" % (packageName), self.__commandTimeout)
+        return self.__runAndOk("more start %s\r\n" % (packageName), self.__commandTimeout)
 
     def stopApp(self, packageName):
         if not self.__runAndOk("more stop %s\r\n" % (packageName), self.__commandTimeout):
