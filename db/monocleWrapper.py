@@ -453,21 +453,22 @@ class MonocleWrapper(DbWrapperBase):
         gyminfo = {}
 
         query = (
-            "SELECT forts.external_id, forts.lat, forts.lon, forts.name, forts.url, "
-            "IFNULL(forts.park, 'unknown'), IFNULL(forts.sponsor,0), fort_sightings.team "
+            "SELECT forts.id, forts.lat, forts.lon, forts.name, forts.url, "
+            "IFNULL(forts.park, 'unknown'), IFNULL(forts.sponsor,0), "
+            "IFNULL(fort_sightings.team, 0) "
             "FROM forts "
-            "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
+            "LEFT JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
             "WHERE forts.external_id IS NOT NULL "
         )
 
         res = self.execute(query)
 
-        for (external_id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[external_id] = self.__encode_hash_json(team,
-                                                           float(lat),
-                                                           float(lon),
-                                                           str(name).replace('"', '\\"')
-                                                           .replace('\n', '\\n'), str(url), park, sponsor)
+        for (id, lat, lon, name, url, park, sponsor, team) in res:
+            gyminfo[str(id)] = self.__encode_hash_json(team,
+                                                  float(lat),
+                                                  float(lon),
+                                                  str(name).replace('"', '\\"')
+                                                  .replace('\n', '\\n'), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
