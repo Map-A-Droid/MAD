@@ -171,7 +171,7 @@ class MonocleWrapper(DbWrapperBase):
             log.info("Updating without end- or starttime - we should've seen the egg before")
             query = (
                 "UPDATE raids "
-                "SET level = %s, pokemon_id = %s, last_updated = %s, "
+                "SET level = %s, pokemon_id = %s, last_updated = %s "
                 "WHERE gym_id = %s AND time_end >= %s"
             )
             vals = (
@@ -191,7 +191,7 @@ class MonocleWrapper(DbWrapperBase):
             query = (
                 "UPDATE raids "
                 "SET level = %s, time_spawn = %s, time_battle = %s, time_end = %s, "
-                "pokemon_id = %s, last_updated = %s, "
+                "pokemon_id = %s, last_updated = %s "
                 "WHERE gym_id = %s AND time_end >= %s"
             )
             vals = (
