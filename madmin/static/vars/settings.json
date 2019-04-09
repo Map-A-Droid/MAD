@@ -20,7 +20,7 @@
 		"could_edit": "true",
 		"field": "origin",
 		"description": "Assign devices to walker",
-		"quickview": "walker",
+		"quickview": "walker|pool",
 		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance"
 	},
 	"auth": {
@@ -28,5 +28,13 @@
 		"could_edit": "false",
 		"field": "username",
 		"description": "Add Username and Password for authentication with RGC"
+	},
+	"devicesettings": {
+		"has_settings": "true",
+		"could_edit": "true",
+		"field": "devicepool",
+		"description": "Set Global Device Configurations - Individual parameters can be overridden with device settings",
+		"quickview": "devicepool",
+		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance"
 	}
 }

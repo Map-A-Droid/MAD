@@ -185,12 +185,27 @@ class MappingParser(object):
     def get_devicemappings(self):
         # returns mapping of devises to areas
         devices = {}
+        devices.clear()
+        device_dict = {}
         device_arr = self.__raw_json["devices"]
         walker_arr = self.__raw_json["walker"]
+        pool_arr = self.__raw_json["devicesettings"]
         for device in device_arr:
-            device_dict = {}
+
+            device_dict.clear()
             walker = device["walker"]
+            pool = device.get("pool", None)
             settings = device.get("settings", None)
+
+            if pool:
+                pool_settings = 0
+                while pool_settings < len(pool_arr):
+                    if pool_arr[pool_settings]['devicepool'] == pool:
+                        settings = self.inherit_device_settings(settings,
+                                                                 pool_arr[pool_settings].get('settings', []).copy())
+                        break
+                    pool_settings += 1
+
             if walker:
                 walker_settings = 0
                 while walker_settings < len(walker_arr):
@@ -198,9 +213,15 @@ class MappingParser(object):
                         device_dict["walker"] = walker_arr[walker_settings].get('setup', [])
                         break
                     walker_settings += 1
+
             device_dict["settings"] = settings
             devices[device["origin"]] = device_dict
         return devices
+
+    def inherit_device_settings(self, devicesettings, poolsettings):
+        for setting in devicesettings:
+            poolsettings[setting] = devicesettings[setting]
+        return poolsettings
 
     def get_auths(self):
         # returns list of allowed authentications

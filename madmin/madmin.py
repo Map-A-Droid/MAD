@@ -949,6 +949,8 @@ def config():
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
+            if 'devicesettings' not in mapping:
+                mapping['devicesettings'] = []
             nr = 0
             for oldfields in mapping[area]:
                 if 'name' in oldfields:
@@ -963,6 +965,10 @@ def config():
                     if oldfields['username'] == edit:
                         oldvalues = oldfields
                         _checkfield = 'username'
+                if 'devicepool' in oldfields:
+                    if oldfields['devicepool'] == edit:
+                        oldvalues = oldfields
+                        _checkfield = 'devicepool'
                 if 'walkername' in oldfields:
                     if oldfields['walkername'] == edit:
                         oldvalues = oldfields
@@ -989,6 +995,10 @@ def config():
         if 'walker' in area:
             if area['walker'] == type:
                 _name = area['walker']
+                compfields = area
+        if 'devicesettings' in area:
+            if area['devicesettings'] == type:
+                _name = area['devicesettings']
                 compfields = area
 
     for field in compfields[block]:
@@ -1029,7 +1039,8 @@ def config():
 
                 fieldwebsite.append('<table class="table">')
                 fieldwebsite.append(
-                    '<tr><th></th><th>Nr.</th><th>Area<br>Description</th><th>Walkermode</th><th>Setting</th><th>Max. Devices</th><th></th></tr><tbody class="row_position">')
+                    '<tr><th></th><th>Nr.</th><th>Area<br>Description</th><th>Walkermode</th><th>Setting</th>'
+                    '<th>Max. Devices</th><th></th></tr><tbody class="row_position">')
                 if block != 'settings':
                     if field['name'] in oldvalues and str(oldvalues[field['name']]) != str('None'):
                         val = list(oldvalues[field['name']])
@@ -1122,6 +1133,29 @@ def config():
             _temp = _temp + '</select></div>'
             fieldwebsite.append(str(_temp))
 
+        if field['settings']['type'] == 'poolselect':
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+            with open('configs/mappings.json') as f:
+                mapping = json.load(f)
+                if 'devicesettings' not in mapping:
+                    mapping['devicesettings'] = []
+            mapping['devicesettings'].append({'devicepool': None})
+            for option in mapping['devicesettings']:
+                if edit:
+                    if field['name'] in oldvalues:
+                        if str(oldvalues[field['name']]).lower() == str(option['devicepool']).lower():
+                            sel = 'selected'
+                    else:
+                        if not option['devicepool']:
+                            sel = 'selected'
+                _temp = _temp + '<option value="' + \
+                    str(option['devicepool']) + '" ' + sel + '>' + \
+                    str(option['devicepool']) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
+
         if field['settings']['type'] == 'areaoption':
             _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                 field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + ' size=10 multiple=multiple>'
@@ -1199,6 +1233,8 @@ def delsetting():
             _checkfield = 'username'
         if 'walkername' in entry:
             _checkfield = 'walkername'
+        if 'devicepool' in entry:
+            _checkfield = 'devicepool'
 
         if str(edit) in str(entry[_checkfield]):
             del mapping[area][key]
@@ -1243,6 +1279,8 @@ def addedit():
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
+            if 'devicesettings' not in mapping:
+                mapping['devicesettings'] = []
 
         with open('madmin/static/vars/settings.json') as f:
             settings = json.load(f)
@@ -1257,11 +1295,13 @@ def addedit():
                     _checkfield = 'username'
                 if 'walkername' in entry:
                     _checkfield = 'walkername'
+                if 'devicepool' in entry:
+                    _checkfield = 'devicepool'
 
                 if str(edit) == str(entry[_checkfield]):
                     if str(block) == str("settings"):
                         for key, value in datavalue.items():
-                            if value == '':
+                            if value == '' or value == 'None':
                                 if key in entry['settings']:
                                     del entry['settings'][key]
                             elif value in area:
@@ -1348,6 +1388,8 @@ def showsettings():
         mapping = json.load(f)
         if 'walker' not in mapping:
             mapping['walker'] = []
+        if 'devicesettings' not in mapping:
+            mapping['devicesettings'] = []
 
     with open('madmin/static/vars/settings.json') as f:
         settings = json.load(f)
@@ -1359,7 +1401,7 @@ def showsettings():
 
     for var in vars:
         line, quickadd, quickline = '', '', ''
-        header = '<tr><td colspan="4"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
+        header = '<tr><td colspan="4" class="header"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
             '">[Add new]</a></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
         subheader = '<tr><td colspan="4">' + \
             settings[var]['description'] + '</td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
