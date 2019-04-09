@@ -3,9 +3,11 @@ import math
 import time
 from abc import abstractmethod
 from loguru import logger
+import collections
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
 
+Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 class MITMBase(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler,
@@ -19,10 +21,11 @@ class MITMBase(WorkerBase):
         self._restart_count = 0
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
-
-        #if not NoOcr:
-        #    from ocr.pogoWindows import PogoWindows
-        #    self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
+        if self._devicesettings.get('last_mode', None) is not None and \
+                self._devicesettings['last_mode'] in ("raids_mitm", "mon_mitm", "iv_mitm", "raids_ocr" ):
+            logger.info('Last Mode not pokestop - reset saved location')
+            self.last_location = Location(0.0, 0.0)
+        self._devicesettings['last_mode'] = self._walker_routemanager.mode
 
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
         if not timeout:

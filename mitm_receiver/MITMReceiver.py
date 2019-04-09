@@ -162,7 +162,7 @@ class MITMReceiver(object):
                     logger.info("Processing Encounter received from {} at {}", str(origin), str(received_timestamp))
                     self._db_wrapper.submit_mon_iv(origin, received_timestamp, data["payload"])
                 else:
-                    logger.warning('Playerlevel lower than 30 - not processing encounter Data')
+                    logger.debug('Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
                 self._db_wrapper.submit_quest_proto(data["payload"])
             elif type == 104:

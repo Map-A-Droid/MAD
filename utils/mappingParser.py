@@ -130,10 +130,10 @@ class MappingParser(object):
                     elif mode == "mon_mitm":
                         spawn_known = area.get("coords_spawns_known", False)
                         if spawn_known:
-                            logger.info("Reading known Spawnpoints from DB")
+                            logger.debug("Reading known Spawnpoints from DB")
                             coords = self.db_wrapper.get_detected_spawns(geofence_helper)
                         else:
-                            logger.info("Reading unknown Spawnpoints from DB")
+                            logger.debug("Reading unknown Spawnpoints from DB")
                             coords = self.db_wrapper.get_undetected_spawns(geofence_helper)
                     elif mode == "pokestops":
                         coords = self.db_wrapper.stops_from_db(geofence_helper)

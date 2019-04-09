@@ -150,7 +150,7 @@ class WebsocketServer(object):
 
             last_known_state = {}
             client_mapping = self.__device_mappings[id]
-            devicesettings = client_mapping["settings"]
+            devicesettings = client_mapping["settings"].copy()
             logger.debug("Setting up routemanagers for {}", str(id))
 
             if client_mapping.get("walker", None) is not None:
@@ -197,6 +197,7 @@ class WebsocketServer(object):
                 if walker_area_name not in self.__routemanagers:
                     raise WrongAreaInWalker()
 
+                logger.debug('Devicesettings {}: {}', str(id), devicesettings)
                 logger.info('{} using walker area {} [{}/{}]', str(id), str(walker_area_name), str(walker_index+1), str(len(walker_area_array)))
                 walker_routemanager = \
                     self.__routemanagers[walker_area_name].get("routemanager", None)
