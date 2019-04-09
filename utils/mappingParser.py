@@ -43,8 +43,8 @@ class MappingParser(object):
         self.db_wrapper = db_wrapper
         with open('configs/mappings.json') as f:
             self.__raw_json = json.load(f)
-            if 'walker' not in self.__raw_json:
-                self.__raw_json['walker'] = []
+            if 'walker' not in self.__raw_json: self.__raw_json['walker'] = []
+            if 'devicesettings' not in self.__raw_json: self.__raw_json['devicesettings'] = []
 
     def get_routemanagers(self):
         from multiprocessing.pool import ThreadPool
