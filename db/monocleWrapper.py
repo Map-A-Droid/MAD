@@ -172,7 +172,7 @@ class MonocleWrapper(DbWrapperBase):
             query = (
                 "UPDATE raids "
                 "SET level = %s, pokemon_id = %s, last_updated = %s "
-                "WHERE gym_id = %s AND time_end >= %s"
+                "WHERE fort_id = %s AND time_end >= %s"
             )
             vals = (
                 lvl, pkm, int(time.time()), gym, int(time.time())
