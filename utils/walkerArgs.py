@@ -1,11 +1,8 @@
-import logging
 import os
 import sys
 from time import strftime
 
 import configargparse
-
-log = logging.getLogger(__name__)
 
 
 def memoize(function):
@@ -110,7 +107,7 @@ def parseArgs():
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
-    
+
     parser.add_argument('-L', '--language', default='en',
                         help=('Set Language for MadMin / Quests. Default: en'))
 
@@ -148,6 +145,12 @@ def parseArgs():
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
 
+    # rarity
+    parser.add_argument('-rh', '--rarity_hours', type=int, default=72,
+                        help='Set the number of hours for the calculation of pokemon rarity (Default: 72)')
+    parser.add_argument('-ruf', '--rarity_update_frequency', type=int, default=60,
+                        help='Update frequency for dynamic rarity in minutes (Default: 60)')
+
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
@@ -165,6 +168,8 @@ def parseArgs():
                         help='Send Ex-raids to the webhook if detected')
     parser.add_argument('-whst', '--webhook_start_time', default=0,
                         help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
+    parser.add_argument('-whmps', '--webhook_max_payload_size', default=0, type=int,
+                        help='Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
@@ -229,17 +234,17 @@ def parseArgs():
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
-                              
+
     parser.add_argument('-lr', '--log-rotation',
                         help=('Active log rotation. (Default: Disable)'),
                         action='store_true', default=False)
-                              
+
     parser.add_argument('-lrbc', '--log-rotation-backup-count', default=10, type=int,
                         help=('Number of Log Rotation Backup Files. (Default: 10)'))
-                              
+
     parser.add_argument('-lrfs', '--log-rotation-file-size', default=10485760, type=int,
                         help=('Filesize of Log Files in bytes (Default: 10485760 = 10 MB)'))
-    
+
     parser.add_argument('-cla', '--cleanup-age', default=0, type=int,
                         help='Delete logs older than X minutes. Default: 0')
 

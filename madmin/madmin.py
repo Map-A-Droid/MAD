@@ -1,37 +1,35 @@
 # -*- coding: utf-8 -*-
+import datetime
+import glob
+import json
+import os
+import platform
+import re
 import sys
-from utils.language import open_json_file, i8ln
+import threading
+import time
+from loguru import logger
+from functools import wraps
+from pathlib import Path
+from math import floor
+from shutil import copyfile
+
+from flask import (Flask, jsonify, make_response, redirect, render_template,
+                   request, send_from_directory)
+
+from gevent.pywsgi import WSGIServer
+from flask_caching import Cache
+from utils.language import i8ln, open_json_file
+from utils.mappingParser import MappingParser
+from utils.questGen import generate_quest
+from utils.logging import MadLoggerUtils
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
-import threading
-import logging
-import time
-from flask import (
-    Flask,
-    jsonify,
-    render_template,
-    request,
-    send_from_directory,
-    redirect,
-    make_response
-)
-from flask_caching import Cache
-from utils.mappingParser import MappingParser
-import json
-import os, glob, platform
-import re
-import datetime
-from functools import wraps
-from shutil import copyfile
-from math import floor
-from utils.questGen import generate_quest
 
 app = Flask(__name__)
 cache = Cache(app, config={'CACHE_TYPE': 'simple'})
-
-log = logging.getLogger(__name__)
-
+log = logger
 conf_args = None
 db_wrapper = None
 device_mappings = None
@@ -42,10 +40,13 @@ def madmin_start(arg_args, arg_db_wrapper):
     global conf_args, device_mappings, db_wrapper, areas
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
-    mapping_parser = MappingParser(arg_db_wrapper)
+    mapping_parser = MappingParser(db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
-    app.run(host=arg_args.madmin_ip, port=int(arg_args.madmin_port), threaded=True, use_reloader=False)
+
+    httpsrv = WSGIServer((arg_args.madmin_ip, int(arg_args.madmin_port)), app.wsgi_app, log=MadLoggerUtils)
+    httpsrv.serve_forever()
+
 
 def auth_required(func):
     @wraps(func)
@@ -82,8 +83,10 @@ def run_job():
 @auth_required
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
-    response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization')
-    response.headers.add('Access-Control-Allow-Methods', 'GET,PUT,POST,DELETE,OPTIONS')
+    response.headers.add('Access-Control-Allow-Headers',
+                         'Content-Type,Authorization')
+    response.headers.add('Access-Control-Allow-Methods',
+                         'GET,PUT,POST,DELETE,OPTIONS')
     return response
 
 
@@ -131,8 +134,8 @@ def quest():
 @app.route("/submit_hash")
 @auth_required
 def submit_hash():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('id')
+    hash = request.args.get('hash')
+    id = request.args.get('id')
 
     if db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin"):
 
@@ -140,49 +143,51 @@ def submit_hash():
             copyfile(file, 'www_hash/gym_0_0_' + str(hash) + '.jpg')
             os.remove(file)
 
-        return redirect("/unknown", code=302)
+        return redirect(getBasePath(request) + "/unknown", code=302)
 
 
 @app.route("/modify_raid_gym")
 @auth_required
 def modify_raid_gym():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('id')
-    mon = request.conf_args.get('mon')
-    lvl = request.conf_args.get('lvl')
+    hash = request.args.get('hash')
+    id = request.args.get('id')
+    mon = request.args.get('mon')
+    lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
-    db_wrapper.insert_hash(hash, 'raid', newJsonString, '999', unique_hash="madmin")
+    db_wrapper.insert_hash(hash, 'raid', newJsonString,
+                           '999', unique_hash="madmin")
 
-    return redirect("/raids", code=302)
+    return redirect(getBasePath(request) + "/raids", code=302)
 
 
 @app.route("/modify_raid_mon")
 @auth_required
 def modify_raid_mon():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('gym')
-    mon = request.conf_args.get('mon')
-    lvl = request.conf_args.get('lvl')
+    hash = request.args.get('hash')
+    id = request.args.get('gym')
+    mon = request.args.get('mon')
+    lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
-    db_wrapper.insert_hash(hash, 'raid', newJsonString, '999', unique_hash="madmin")
+    db_wrapper.insert_hash(hash, 'raid', newJsonString,
+                           '999', unique_hash="madmin")
 
-    return redirect("/raids", code=302)
+    return redirect(getBasePath(request) + "/raids", code=302)
 
 
 @app.route("/modify_gym_hash")
 @auth_required
 def modify_gym_hash():
-    hash = request.conf_args.get('hash')
-    id = request.conf_args.get('id')
+    hash = request.args.get('hash')
+    id = request.args.get('id')
 
     db_wrapper.delete_hash_table('"' + str(hash) + '"', 'gym', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin")
 
-    return redirect("/gyms", code=302)
+    return redirect(getBasePath(request) + "/gyms", code=302)
 
 
 @app.route("/near_gym")
@@ -192,8 +197,8 @@ def near_gym():
 
     data = db_wrapper.get_gym_infos()
 
-    lat = request.conf_args.get('lat')
-    lon = request.conf_args.get('lon')
+    lat = request.args.get('lat')
+    lon = request.args.get('lon')
     if lat == "9999":
         distance = int(9999)
         lat = conf_args.home_lat
@@ -203,27 +208,30 @@ def near_gym():
 
     if not lat or not lon:
         return 'Missing Argument...'
-    closestGymIds = db_wrapper.get_near_gyms(lat, lon, 123, 1, int(distance), unique_hash="madmin")
+    closestGymIds = db_wrapper.get_near_gyms(
+        lat, lon, 123, 1, int(distance), unique_hash="madmin")
     for closegym in closestGymIds:
 
         gymid = str(closegym[0])
         dist = str(closegym[1])
-        gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+        gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
         name = 'unknown'
         lat = '0'
         lon = '0'
-        url = '0'
         description = ''
 
         if str(gymid) in data:
-            name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
+            name = data[str(gymid)]["name"].replace(
+                "\\", r"\\").replace('"', '')
             lat = data[str(gymid)]["latitude"]
             lon = data[str(gymid)]["longitude"]
             if data[str(gymid)]["description"]:
-                description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
+                description = data[str(gymid)]["description"].replace(
+                    "\\", r"\\").replace('"', '').replace("\n", "")
 
-        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon, 'description': description, 'filename': gymImage, 'dist': dist})
+        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon,
+                   'description': description, 'filename': gymImage})
         nearGym.append(ngjson)
 
     return jsonify(nearGym)
@@ -232,7 +240,6 @@ def near_gym():
 @app.route("/delete_hash")
 @auth_required
 def delete_hash():
-    nearGym = []
     hash = request.args.get('hash')
     type = request.args.get('type')
     redi = request.args.get('redirect')
@@ -243,13 +250,12 @@ def delete_hash():
     for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
-    return redirect('/' + str(redi), code=302)
+    return redirect(getBasePath(request) + '/' + str(redi), code=302)
 
 
 @app.route("/delete_file")
 @auth_required
 def delete_file():
-    nearGym = []
     hash = request.args.get('hash')
     type = request.args.get('type')
     redi = request.args.get('redirect')
@@ -259,7 +265,7 @@ def delete_file():
     for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
-    return redirect('/' + str(redi), code=302)
+    return redirect(getBasePath(request) + '/' + str(redi), code=302)
 
 
 @app.route("/get_gyms")
@@ -271,7 +277,7 @@ def get_gyms():
     hashdata = json.loads(getAllHash('gym'))
 
     for file in glob.glob("ocr/www_hash/gym_*.jpg"):
-        unkfile = re.search('gym_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
+        unkfile = re.search(r'gym_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
         hashvalue = (unkfile.group(3))
 
         if str(hashvalue) in hashdata:
@@ -280,28 +286,33 @@ def get_gyms():
             count = hashdata[hashvalue]["count"]
             modify = hashdata[hashvalue]["modify"]
 
-            creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+            creationdate = datetime.datetime.fromtimestamp(
+                creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
             if conf_args.madmin_time == "12":
-                creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
-                modify = datetime.datetime.strptime(modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+                creationdate = datetime.datetime.strptime(
+                    creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+                modify = datetime.datetime.strptime(
+                    modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
             name = 'unknown'
             lat = '0'
             lon = '0'
-            url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+            gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
-                name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
+                name = data[str(gymid)]["name"].replace(
+                    "\\", r"\\").replace('"', '')
                 lat = data[str(gymid)]["latitude"]
                 lon = data[str(gymid)]["longitude"]
                 if data[str(gymid)]["description"]:
-                    description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
+                    description = data[str(gymid)]["description"].replace(
+                        "\\", r"\\").replace('"', '').replace("\n", "")
 
-            gymJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify })
+            gymJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue,
+                        'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify})
             gyms.append(gymJson)
 
         else:
@@ -325,7 +336,7 @@ def get_raids():
     hashdata = json.loads(getAllHash('raid'))
 
     for file in glob.glob("ocr/www_hash/raid_*.jpg"):
-        unkfile = re.search('raid_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
+        unkfile = re.search(r'raid_(-?\d+)_(-?\d+)_((?s).*)\.jpg', file)
         hashvalue = (unkfile.group(3))
 
         if str(hashvalue) in hashdata:
@@ -346,40 +357,45 @@ def get_raids():
                 monPic = ''
             else:
                 type = 'mon'
-                monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
                 if str(monid) in mondata:
                     monName = i8ln(mondata[str(monid)]["name"])
 
             eggId = eggIdsByLevel[int(lvl) - 1]
             if eggId == 1:
-                eggPic = '/asset/static_assets/png/ic_raid_egg_normal.png'
+                eggPic = 'asset/static_assets/png/ic_raid_egg_normal.png'
             if eggId == 2:
-                eggPic = '/asset/static_assets/png/ic_raid_egg_rare.png'
+                eggPic = 'asset/static_assets/png/ic_raid_egg_rare.png'
             if eggId == 3:
-                eggPic = '/asset/static_assets/png/ic_raid_egg_legendary.png'
+                eggPic = 'asset/static_assets/png/ic_raid_egg_legendary.png'
 
-            creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+            creationdate = datetime.datetime.fromtimestamp(
+                creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
             if conf_args.madmin_time == "12":
-                creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
-                modify = datetime.datetime.strptime(modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+                creationdate = datetime.datetime.strptime(
+                    creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+                modify = datetime.datetime.strptime(
+                    modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
             name = 'unknown'
             lat = '0'
             lon = '0'
-            url = '0'
             description = ''
 
-            gymImage = 'ocr/gym_img/_' + str(gymid) + '_.jpg'
+            gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
             if str(gymid) in data:
-                name = data[str(gymid)]["name"].replace("\\", r"\\").replace('"', '')
+                name = data[str(gymid)]["name"].replace(
+                    "\\", r"\\").replace('"', '')
                 lat = data[str(gymid)]["latitude"]
                 lon = data[str(gymid)]["longitude"]
                 if data[str(gymid)]["description"]:
-                    description = data[str(gymid)]["description"].replace("\\", r"\\").replace('"', '').replace("\n", "")
+                    description = data[str(gymid)]["description"].replace(
+                        "\\", r"\\").replace('"', '').replace("\n", "")
 
-            raidJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage, 'count': count, 'creation': creationdate, 'modify': modify,  'level': lvl, 'mon': mon, 'type': type, 'eggPic': eggPic, 'monPic': monPic, 'monname': monName })
+            raidJson = ({'id': gymid, 'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'name': name, 'description': description, 'gymimage': gymImage,
+                         'count': count, 'creation': creationdate, 'modify': modify,  'level': lvl, 'mon': mon, 'type': type, 'eggPic': eggPic, 'monPic': monPic, 'monname': monName})
             raids.append(raidJson)
         else:
             log.debug("File: " + str(file) + " not found in Database")
@@ -393,7 +409,7 @@ def get_raids():
 @auth_required
 def get_mons():
     mons = []
-    monList =[]
+    monList = []
 
     mondata = open_json_file('pokemon')
 
@@ -412,14 +428,15 @@ def get_mons():
 
             mon = '{:03d}'.format(int(mon))
 
-            monPic = '/asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + frmadd + '.png'
             monName = 'unknown'
             monid = int(mon)
 
             if str(monid) in mondata:
                 monName = i8ln(mondata[str(monid)]["name"])
 
-            monJson = ({'filename': monPic, 'mon': monid, 'name': monName, 'lvl': lvl})
+            monJson = ({'filename': monPic, 'mon': monid,
+                        'name': monName, 'lvl': lvl})
             monList.append(monJson)
 
     return jsonify(monList)
@@ -431,10 +448,12 @@ def get_screens():
     screens = []
 
     for file in glob.glob(str(conf_args.raidscreen_path) + "/raidscreen_*.png"):
-        creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+        creationdate = datetime.datetime.fromtimestamp(
+            creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
 
         if conf_args.madmin_time == "12":
-            creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+            creationdate = datetime.datetime.strptime(
+                creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
         screenJson = ({'filename': file[4:], 'creation': creationdate})
         screens.append(screenJson)
@@ -447,16 +466,20 @@ def get_screens():
 def get_unknows():
     unk = []
     for file in glob.glob("ocr/www_hash/unkgym_*.jpg"):
-        unkfile = re.search('unkgym_(-?\d+\.?\d+)_(-?\d+\.?\d+)_((?s).*)\.jpg', file)
-        creationdate = datetime.datetime.fromtimestamp(creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+        unkfile = re.search(
+            r'unkgym_(-?\d+\.?\d+)_(-?\d+\.?\d+)_((?s).*)\.jpg', file)
+        creationdate = datetime.datetime.fromtimestamp(
+            creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
         lat = (unkfile.group(1))
         lon = (unkfile.group(2))
         hashvalue = (unkfile.group(3))
 
         if conf_args.madmin_time == "12":
-            creationdate = datetime.datetime.strptime(creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+            creationdate = datetime.datetime.strptime(
+                creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
-        hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue, 'filename': file[4:], 'creation': creationdate})
+        hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue,
+                     'filename': file[4:], 'creation': creationdate})
         unk.append(hashJson)
 
     return jsonify(unk)
@@ -483,6 +506,68 @@ def get_position():
     return jsonify(positions)
 
 
+@cache.cached()
+@app.route("/get_geofence")
+@auth_required
+def get_geofence():
+    geofences = {}
+
+    for name, area in areas.items():
+        geofence_include = {}
+        geofence_exclude = {}
+        geofence_name = 'Unknown'
+        geofence_included = Path(area["geofence_included"])
+        if not geofence_included.is_file():
+            continue
+        with geofence_included.open() as gf:
+            for line in gf:
+                line = line.strip()
+                if not line:  # Empty line.
+                    continue
+                elif line.startswith("["):  # Name line.
+                    geofence_name = line.replace("[", "").replace("]", "")
+                    geofence_include[geofence_name] = []
+                else:  # Coordinate line.
+                    lat, lon = line.split(",")
+                    geofence_include[geofence_name].append([
+                        getCoordFloat(lon),
+                        getCoordFloat(lat)
+                    ])
+
+        if area['geofence_excluded']:
+            geofence_name = 'Unknown'
+            geofence_excluded = Path(area["geofence_excluded"])
+            if not geofence_excluded.is_file():
+                continue
+            with geofence_excluded.open() as gf:
+                for line in gf:
+                    line = line.strip()
+                    if not line:  # Empty line.
+                        continue
+                    elif line.startswith("["):  # Name line.
+                        geofence_name = line.replace("[", "").replace("]", "")
+                        geofence_exclude[geofence_name] = []
+                    else:  # Coordinate line.
+                        lat, lon = line.split(",")
+                        geofence_exclude[geofence_name].append([
+                            getCoordFloat(lon),
+                            getCoordFloat(lat)
+                        ])
+
+        geofences[name] = {'include': geofence_include,
+                           'exclude': geofence_exclude}
+
+    geofencexport = []
+    for name, fences in geofences.items():
+        coordinates = []
+        for fname, coords in fences.get('include').items():
+            coordinates.append([coords, fences.get('exclude').get(fname, [])])
+        geofencexport.append({'name': name, 'coordinates': coordinates})
+
+    return jsonify(geofencexport)
+
+
+@cache.cached()
 @app.route("/get_route")
 @auth_required
 def get_route():
@@ -498,7 +583,8 @@ def get_route():
                         getCoordFloat(latlon[0]),
                         getCoordFloat(latlon[1])
                     ])
-                routeexport.append({'name': str(name), 'mode': area['mode'], 'coordinates': route})
+                routeexport.append(
+                    {'name': str(name), 'mode': area['mode'], 'coordinates': route})
         # ignore missing routes files
         except OSError:
             pass
@@ -520,7 +606,7 @@ def get_spawns():
             'lon': spawn['lon'],
             'spawndef': spawn['spawndef'],
             'lastscan': spawn['lastscan']
-            })
+        })
 
     return jsonify(coords)
 
@@ -542,15 +628,15 @@ def get_gymcoords():
             'lat': gym['latitude'],
             'lon': gym['longitude'],
             'team_id': gym['team_id']
-            })
+        })
 
     return jsonify(coords)
 
 
 @app.route("/get_quests")
+@auth_required
 def get_quests():
     coords = []
-    monName= ''
 
     data = db_wrapper.quests_from_db()
 
@@ -662,45 +748,53 @@ def addwalker():
 
         if edit:
             if int(walkerposition) == int(oldwalkerposition):
-                mapping['walker'][int(walkernr)]['setup'][int(walkerposition)] = walkerlist
+                mapping['walker'][int(walkernr)]['setup'][int(
+                    walkerposition)] = walkerlist
             else:
-                del mapping['walker'][int(walkernr)]['setup'][int(oldwalkerposition)]
+                del mapping['walker'][int(
+                    walkernr)]['setup'][int(oldwalkerposition)]
                 if walkerposition:
-                    mapping['walker'][int(walkernr)]['setup'].insert(int(walkerposition), walkerlist)
+                    mapping['walker'][int(walkernr)]['setup'].insert(
+                        int(walkerposition), walkerlist)
                 else:
-                    mapping['walker'][int(walkernr)]['setup'].insert(999, walkerlist)
+                    mapping['walker'][int(walkernr)]['setup'].insert(
+                        999, walkerlist)
         else:
-
             if walkerposition:
-                mapping['walker'][int(walkernr)]['setup'].insert(int(walkerposition), walkerlist)
+                mapping['walker'][int(walkernr)]['setup'].insert(
+                    int(walkerposition), walkerlist)
             else:
-                mapping['walker'][int(walkernr)]['setup'].insert(999, walkerlist)
+                mapping['walker'][int(walkernr)]['setup'].insert(
+                    999, walkerlist)
 
         with open('configs/mappings.json', 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-            return redirect("/config?type=walker&area=walker&block=fields&edit=" + str(walker), code=302)
+            return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(walker), code=302)
 
     if walker and edit:
         walkerposition = request.args.get('walkerposition')
-        _walkerval = mapping['walker'][int(walkernr)]['setup'][int(walkerposition)]
+        _walkerval = mapping['walker'][int(
+            walkernr)]['setup'][int(walkerposition)]
         walkerarea = _walkerval['walkerarea']
         walkertype = _walkerval['walkertype']
         walkervalue = _walkerval['walkervalue']
         walkermax = _walkerval.get('walkermax', '')
         walkertext = _walkerval.get('walkertext', '').replace(' ', '_')
-        if walkermax is None : walkermax = ''
+        if walkermax is None:
+            walkermax = ''
         edit = True
 
-    fieldwebsite.append('<form action="/addwalker" id="settings">')
-    fieldwebsite.append('<input type="hidden" name="walker" value="' + walker + '">')
+    fieldwebsite.append('<form action="addwalker" id="settings">')
+    fieldwebsite.append(
+        '<input type="hidden" name="walker" value="' + walker + '">')
     fieldwebsite.append('<input type="hidden" name="add" value=True>')
-    if walker and edit :
-        fieldwebsite.append('<input type="hidden" name="oldwalkerposition" value=' + str(walkerposition) + '>')
+    if walker and edit:
+        fieldwebsite.append(
+            '<input type="hidden" name="oldwalkerposition" value=' + str(walkerposition) + '>')
         fieldwebsite.append('<input type="hidden" name="edit" value=True>')
-    fieldwebsite.append('<input type="hidden" name="walkernr" value=' + str(walkernr) + '>')
-
-
+    fieldwebsite.append(
+        '<input type="hidden" name="walkernr" value=' + str(walkernr) + '>')
 
     req = "required"
 
@@ -708,7 +802,8 @@ def addwalker():
     lockvalue = ''
 
     _temp = '<div class="form-group"><label>Area</label><br /><small class="form-text text-muted">Select the Area' \
-            '</small><select class="form-controll" name="walkerarea" ' + lockvalue + ' ' + req + '>'
+            '</small><select class="form-control" name="walkerarea" ' + \
+        lockvalue + ' ' + req + '>'
     with open('configs/mappings.json') as f:
         mapping = json.load(f)
         if 'walker' not in mapping:
@@ -719,7 +814,7 @@ def addwalker():
         sel = ''
         if edit:
             if str(walkerarea).lower() == str(option['name']).lower():
-                    sel = 'selected'
+                sel = 'selected'
         _temp = _temp + '<option value="' + str(option['name']) + '" ' + sel + '>' + str(
             option['name']) + '</option>'
         sel = ''
@@ -740,13 +835,14 @@ def addwalker():
             '- Kill worker after X:XX o´clock (Format: 24h)<br>' \
             '- Kill worker if outside of a period (Format: 24h f.e. 7:00-21:00)<br>' \
             '</small>' \
-            '<select class="form-controll" name="walkertype" ' + lockvalue + ' ' + req + '>'
+            '<select class="form-control" name="walkertype" ' + lockvalue + ' ' + req + '>'
     _options = ('countdown#timer#round#period#coords#idle').split('#')
     for option in _options:
         if edit:
             if str(walkertype).lower() in str(option).lower():
-                    sel = 'selected'
-        _temp = _temp + '<option value="' + str(option) + '" ' + sel + '>' + str(option) + '</option>'
+                sel = 'selected'
+        _temp = _temp + '<option value="' + \
+            str(option) + '" ' + sel + '>' + str(option) + '</option>'
         sel = ''
     _temp = _temp + '</select></div>'
     fieldwebsite.append(str(_temp))
@@ -768,7 +864,8 @@ def addwalker():
                         '</small>'
                         '<input type="text" name="walkerposition" value="' + str(walkerposition) + '"></div>')
 
-    fieldwebsite.append('<button type="submit" class="btn btn-primary">Save</form>')
+    fieldwebsite.append(
+        '<button type="submit" class="btn btn-primary">Save</button></form>')
 
     if edit:
         header = "Edit " + walkerarea + " (" + walker + ")"
@@ -794,7 +891,7 @@ def savesortwalker():
     for ase in data:
         _temp = ase.split("|")
         walkerlist = {'walkerarea': _temp[0], 'walkertype': _temp[1], 'walkervalue': _temp[2], 'walkermax': _temp[3],
-                      'walkertext' : _temp[4]}
+                      'walkertext': _temp[4]}
         datavalue.append(walkerlist)
 
     mapping['walker'][int(walkernr)]['setup'] = datavalue
@@ -802,8 +899,7 @@ def savesortwalker():
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-    return redirect("/config?type=walker&area=walker&block=fields&edit=" + str(edit), code=302)
-
+    return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(edit), code=302)
 
 
 @app.route('/delwalker')
@@ -820,12 +916,11 @@ def delwalker():
 
     del mapping['walker'][int(walkernr)]['setup'][int(walkerposition)]
 
-    temp = []
-
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-    return redirect("/config?type=walker&area=walker&block=fields&edit=" + str(walker), code=302)
+    return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(walker), code=302)
+
 
 @app.route('/config')
 @auth_required
@@ -833,23 +928,29 @@ def config():
     fieldwebsite = []
     oldvalues = []
     sel = ''
-    _walkernr=0
+    _walkernr = 0
 
     edit = False
     edit = request.args.get('edit')
     type = request.args.get('type')
     block = request.args.get('block')
     area = request.args.get('area')
-    fieldwebsite.append('<form action="/addedit" id="settings">')
-    fieldwebsite.append('<input type="hidden" name="block" value="' + block + '">')
-    fieldwebsite.append('<input type="hidden" name="mode" value="' + type + '">')
-    fieldwebsite.append('<input type="hidden" name="area" value="' + area + '">')
+    fieldwebsite.append('<form action="addedit" id="settings" method="post">')
+    fieldwebsite.append(
+        '<input type="hidden" name="block" value="' + block + '" />')
+    fieldwebsite.append(
+        '<input type="hidden" name="mode" value="' + type + '" />')
+    fieldwebsite.append(
+        '<input type="hidden" name="area" value="' + area + '" />')
     if edit:
-        fieldwebsite.append('<input type="hidden" name="edit" value="' + edit + '">')
+        fieldwebsite.append(
+            '<input type="hidden" name="edit" value="' + edit + '" />')
         with open('configs/mappings.json') as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
+            if 'devicesettings' not in mapping:
+                mapping['devicesettings'] = []
             nr = 0
             for oldfields in mapping[area]:
                 if 'name' in oldfields:
@@ -864,6 +965,10 @@ def config():
                     if oldfields['username'] == edit:
                         oldvalues = oldfields
                         _checkfield = 'username'
+                if 'devicepool' in oldfields:
+                    if oldfields['devicepool'] == edit:
+                        oldvalues = oldfields
+                        _checkfield = 'devicepool'
                 if 'walkername' in oldfields:
                     if oldfields['walkername'] == edit:
                         oldvalues = oldfields
@@ -891,217 +996,227 @@ def config():
             if area['walker'] == type:
                 _name = area['walker']
                 compfields = area
-
+        if 'devicesettings' in area:
+            if area['devicesettings'] == type:
+                _name = area['devicesettings']
+                compfields = area
 
     for field in compfields[block]:
-            req = ''
-            lock = field['settings'].get("lockonedit", False)
-            lockvalue = ''
-            if lock:
-                lockvalue = 'readonly'
-            if field['settings']['type'] == 'text':
-                req = field['settings'].get('require', 'false')
-                if req in ('true'):
-                    req = "required"
-                if edit:
-                    if block == "settings":
-                        if field['name'] in oldvalues['settings']:
-                            if str(oldvalues['settings'][field['name']]) != str('None'):
-                                val = str(oldvalues['settings'][field['name']])
-                            else:
-                                val = ''
-                        else:
-                            val = ''
-                    else:
-                        if field['name'] in oldvalues:
-                            if str(oldvalues[field['name']]) != str('None'):
-                                val = str(oldvalues[field['name']])
-                            else:
-                                val = ''
-                        else:
-                            val = ''
-                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" value="' + val + '" ' + lockvalue + ' ' + req + '></div>')
+        lock = field['settings'].get("lockonedit", False)
+        lockvalue = 'readonly' if lock and edit else ''
+        req = 'required' if field['settings'].get(
+            'require', 'false') == 'true' else ''
+        if field['settings']['type'] == 'text' or field['settings']['type'] == 'textarea':
+            val = ''
+            if edit:
+                if block == 'settings':
+                    if field['name'] in oldvalues['settings'] and str(oldvalues['settings'][field['name']]) != str('None'):
+                        val = str(oldvalues['settings'][field['name']])
                 else:
-                    fieldwebsite.append('<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><input type="text" name="' + str(field['name']) + '" ' + req + '></div>')
-            if field['settings']['type'] == 'list':
-                req = field['settings'].get('require', 'false')
+                    if field['name'] in oldvalues and str(oldvalues[field['name']]) != str('None'):
+                        val = str(oldvalues[field['name']])
 
-                if req in ('true'):
-                    req = "required"
-                if edit:
-                    fieldwebsite.append('<div class="form-group"><label>' + str(
-                        field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                        field['settings']['description']) + '</small></div>')
+            formStr = '<div class="form-group">'
+            formStr += '<label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small>'
+            if field['settings']['type'] == 'text':
+                formStr += '<input type="text" name="' + \
+                    str(field['name']) + '" value="' + val + \
+                    '" ' + lockvalue + ' ' + req + '>'
+            if field['settings']['type'] == 'textarea':
+                formStr += '<textarea rows="10" name="' + \
+                    str(field['name']) + '" ' + lockvalue + \
+                    ' ' + req + '>' + val + '</textarea>'
+            formStr += '</div>'
+            fieldwebsite.append(formStr)
 
-                    fieldwebsite.append('<table class="table">')
+        if field['settings']['type'] == 'list':
+            if edit:
+                val = ''
+                fieldwebsite.append('<div class="form-group"><label>' + str(
+                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                    field['settings']['description']) + '</small></div>')
+
+                fieldwebsite.append('<table class="table">')
+                fieldwebsite.append(
+                    '<tr><th></th><th>Nr.</th><th>Area<br>Description</th><th>Walkermode</th><th>Setting</th>'
+                    '<th>Max. Devices</th><th></th></tr><tbody class="row_position">')
+                if block != 'settings':
+                    if field['name'] in oldvalues and str(oldvalues[field['name']]) != str('None'):
+                        val = list(oldvalues[field['name']])
+                        i = 0
+                        while i < len(val):
+                            fieldwebsite.append('<tr id=' + str(val[i]['walkerarea']) + '|' + str(
+                                val[i]['walkertype']) + '|' + str(val[i]['walkervalue']) + '|' + str(val[i].get('walkermax', '')) + '|' + str(val[i].get('walkertext', '')).replace(' ', '_') + '>'
+                                '<td ><img src="static/sort.png" class="handle"></td><td>' + str(i) + '</td><td><b>' + str(val[i]['walkerarea']) + '</b><br>' + str(val[i].get('walkertext', '')).replace('_', ' ') + '</td><td>' + str(
+                                val[i]['walkertype']) + '</td><td>' + str(val[i]['walkervalue']) + '</td><td>' + str(val[i].get('walkermax', '')) + '</td><td>'
+                                '<a href="delwalker?walker=' + str(edit) + '&walkernr=' + str(
+                                    _walkernr) + '&walkerposition=' + str(i) + '">Delete</a><br>'
+                                '<a href="addwalker?walker=' + str(edit) + '&walkernr=' + str(_walkernr) + '&walkerposition=' + str(i) + '&edit=True">Edit</a></form></td></tr>')
+                            i += 1
+
+                    fieldwebsite.append('</tbody></table>')
                     fieldwebsite.append(
-                        '<tr><th></th><th>Nr.</th><th>Area<br>Description</th><th>Walkermode</th><th>Setting</th><th>Max. Devices</th><th></th></tr><tbody class="row_position">')
-                    if block == "settings":
+                        '<div class="form-group"><a href="addwalker?walker=' + str(edit) + '&walkernr=' + str(
+                            _walkernr) + '">Add Area</a></div>')
+
+        if field['settings']['type'] == 'option':
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+            _options = field['settings']['values'].split('|')
+            for option in _options:
+                if edit:
+                    if block == 'settings':
                         if field['name'] in oldvalues['settings']:
-                            if str(oldvalues['settings'][field['name']]) != str('None'):
-                                val = str(oldvalues['settings'][field['name']])
-                            else:
-                                val = ''
-                        else:
-                            val = ''
+                            if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
+                                sel = 'selected'
                     else:
                         if field['name'] in oldvalues:
-                            if str(oldvalues[field['name']]) != str('None'):
-                                val = list(oldvalues[field['name']])
-                                i = 0
-                                while i < len(val):
-                                    fieldwebsite.append('<tr id=' + str(val[i]['walkerarea']) +'|' +  str(
-                                        val[i]['walkertype']) +'|' + str(val[i]['walkervalue']) + '|' + str(val[i].get('walkermax', '')) + '|' + str(val[i].get('walkertext', '')).replace(' ', '_') + '>'
-                                        '<td ><img src=static/sort.png class=handle></td><td>' + str(i) + '</td><td><b>' + str(val[i]['walkerarea']) + '</b><br>' + str(val[i].get('walkertext', '')).replace('_', ' ') + '</td><td>' + str(
-                                        val[i]['walkertype']) + '</td><td>' + str(val[i]['walkervalue']) + '</td><td>' + str(val[i].get('walkermax', '')) + '</td><td>'
-                                        '<a href=/delwalker?walker=' + str(edit) + '&walkernr=' + str(_walkernr) + '&walkerposition=' + str(i) + '>Delete</a><br>'
-                                        '<a href=/addwalker?walker=' + str(edit) + '&walkernr=' + str(_walkernr) + '&walkerposition=' + str(i) + '&edit=True>Edit</a></form></td></tr>')
-                                    i += 1
+                            if str(oldvalues[field['name']]).lower() in str(option).lower():
+                                sel = 'selected'
+                _temp = _temp + '<option value="' + \
+                    str(option) + '" ' + sel + '>' + str(option) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
 
+        if field['settings']['type'] == 'areaselect':
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+            with open('configs/mappings.json') as f:
+                mapping = json.load(f)
+                if 'walker' not in mapping:
+                    mapping['walker'] = []
+            mapping['areas'].append({'name': None})
 
-                            else:
-                                val = ''
+            for option in mapping['areas']:
+                if edit:
+                    if block == "settings":
+                        if str(oldvalues[field['settings']['name']]).lower() == str(option['name']).lower():
+                            sel = 'selected'
                         else:
-                            val = ''
-
-                        fieldwebsite.append('</tbody></table>')
-
-                        fieldwebsite.append(
-                            '<div class="form-group"><a href =/addwalker?walker=' + str(edit) + '&walkernr=' + str(
-                                _walkernr) + '>Add Area</a></div>')
-
-
-            if field['settings']['type'] == 'option':
-                req = field['settings'].get('require', 'false')
-                if req in ('true'):
-                    req = "required"
-                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                _options = field['settings']['values'].split('|')
-                for option in _options:
-                    if edit:
-                        if block == "settings":
-                            if field['name'] in oldvalues['settings']:
-                                if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
-                                    sel = 'selected'
+                            if oldvalues[field['settings']['name']] == '':
+                                sel = 'selected'
+                    else:
+                        if field['name'] in oldvalues:
+                            if str(oldvalues[field['name']]).lower() == str(option['name']).lower():
+                                sel = 'selected'
                         else:
-                            if field['name'] in oldvalues:
-                                if str(oldvalues[field['name']]).lower() in str(option).lower():
-                                    sel = 'selected'
-                    _temp = _temp + '<option value="' + str(option) + '" ' + sel + '>' + str(option) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-            if field['settings']['type'] == 'areaselect':
-                req = field['settings'].get('require', 'false')
-                if req in ('true'):
-                    req = "required"
-                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
-                    mapping = json.load(f)
-                    if 'walker' not in mapping:
-                        mapping['walker'] = []
-                mapping['areas'].append({'name': None})
+                            if not option['name']:
+                                sel = 'selected'
+                _temp = _temp + '<option value="' + \
+                    str(option['name']) + '" ' + sel + '>' + \
+                    str(option['name']) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
 
-                for option in mapping['areas']:
-                    if edit:
+        if field['settings']['type'] == 'walkerselect':
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+            with open('configs/mappings.json') as f:
+                mapping = json.load(f)
+                if 'walker' not in mapping:
+                    mapping['walker'] = []
+            for option in mapping['walker']:
+                if edit:
+                    if field['name'] in oldvalues:
+                        if str(oldvalues[field['name']]).lower() == str(option['walkername']).lower():
+                            sel = 'selected'
+                    else:
+                        if not option['walkername']:
+                            sel = 'selected'
+                _temp = _temp + '<option value="' + \
+                    str(option['walkername']) + '" ' + sel + '>' + \
+                    str(option['walkername']) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
+
+        if field['settings']['type'] == 'poolselect':
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+            with open('configs/mappings.json') as f:
+                mapping = json.load(f)
+                if 'devicesettings' not in mapping:
+                    mapping['devicesettings'] = []
+            mapping['devicesettings'].append({'devicepool': None})
+            for option in mapping['devicesettings']:
+                if edit:
+                    if field['name'] in oldvalues:
+                        if str(oldvalues[field['name']]).lower() == str(option['devicepool']).lower():
+                            sel = 'selected'
+                    else:
+                        if not option['devicepool']:
+                            sel = 'selected'
+                _temp = _temp + '<option value="' + \
+                    str(option['devicepool']) + '" ' + sel + '>' + \
+                    str(option['devicepool']) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
+
+        if field['settings']['type'] == 'areaoption':
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + ' size=10 multiple=multiple>'
+            with open('configs/mappings.json') as f:
+                mapping = json.load(f)
+                if 'walker' not in mapping:
+                    mapping['walker'] = []
+            mapping['areas'].append({'name': None})
+            oldvalues_split = []
+
+            if edit:
+                if block == "settings":
+                    if oldvalues[field['settings']['name']] is not None:
+                        oldvalues_split = oldvalues[field['settings']['name']].replace(
+                            " ", "").split(",")
+                else:
+                    print(oldvalues[field['name']])
+                    if oldvalues[field['name']] is not None:
+                        oldvalues_split = oldvalues[field['name']].replace(
+                            " ", "").split(",")
+
+            for option in mapping['areas']:
+                if edit:
+                    for old_value in oldvalues_split:
                         if block == "settings":
-                            if str(oldvalues[field['settings']['name']]).lower() == str(option['name']).lower():
+                            if str(old_value).lower() == str(option['name']).lower():
                                 sel = 'selected'
                             else:
-                                if oldvalues[field['settings']['name']] == '':
+                                if old_value == '':
                                     sel = 'selected'
                         else:
                             if field['name'] in oldvalues:
-                                if str(oldvalues[field['name']]).lower() == str(option['name']).lower():
+                                if str(old_value).lower() == str(option['name']).lower():
                                     sel = 'selected'
                             else:
                                 if not option['name']:
                                     sel = 'selected'
-                    _temp = _temp + '<option value="' + str(option['name']) + '" ' + sel + '>' + str(option['name']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-            if field['settings']['type'] == 'walkerselect':
-                req = field['settings'].get('require', 'false')
-                if req in ('true'):
-                    req = "required"
-                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
-                    mapping = json.load(f)
-                    if 'walker' not in mapping:
-                        mapping['walker'] = []
-                for option in mapping['walker']:
-                    if edit:
-                        if field['name'] in oldvalues:
-                            if str(oldvalues[field['name']]).lower() == str(option['walkername']).lower():
-                                sel = 'selected'
-                        else:
-                            if not option['walkername']:
-                                sel = 'selected'
-                    _temp = _temp + '<option value="' + str(option['walkername']) + '" ' + sel + '>' + str(option['walkername']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-            if field['settings']['type'] == 'areaoption':
-                req = field['settings'].get('require', 'false')
-                if req in ('true'):
-                    req = "required"
-                _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(field['settings']['description']) + '</small><select class="form-controll" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + ' size=10 multiple=multiple>'
-                with open('configs/mappings.json') as f:
-                    mapping = json.load(f)
-                    if 'walker' not in mapping:
-                        mapping['walker'] = []
-                mapping['areas'].append({'name': None})
-                oldvalues_split=[]
-
-                if edit:
-                    if block == "settings":
-                        if oldvalues[field['settings']['name']] is not None:
-                           oldvalues_split = oldvalues[field['settings']['name']].replace(" ", "").split(",")
-                    else:
-                        print(oldvalues[field['name']])
-                        if oldvalues[field['name']] is not None:
-                            oldvalues_split = oldvalues[field['name']].replace(" ", "").split(",")
-
-                for option in mapping['areas']:
-                    if edit:
-                        for old_value in oldvalues_split:
-                            if block == "settings":
-                                if str(old_value).lower() == str(option['name']).lower():
-                                    sel = 'selected'
-                                else:
-                                    if old_value == '':
-                                        sel = 'selected'
-                            else:
-                                if field['name'] in oldvalues:
-                                    if str(old_value).lower() == str(option['name']).lower():
-                                        sel = 'selected'
-                                else:
-                                    if not option['name']:
-                                        sel = 'selected'
-                    _temp = _temp + '<option value="' + str(option['name']) + '" ' + sel + '>' + str(option['name']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
+                _temp = _temp + '<option value="' + \
+                    str(option['name']) + '" ' + sel + '>' + \
+                    str(option['name']) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
 
     if edit:
         header = "Edit " + edit + " (" + type + ")"
     else:
         header = "Add new " + type
 
-    fieldwebsite.append('<button type="submit" class="btn btn-primary">Save</form>')
+    fieldwebsite.append(
+        '<button type="submit" class="btn btn-primary">Save</button></form>')
 
     return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings",
                            walkernr=_walkernr, edit=edit)
 
 
-@app.route('/delsetting', methods=['GET', 'POST'])
+@app.route('/delsetting', methods=['GET'])
 @auth_required
 def delsetting():
-
+    global device_mappings, areas
     edit = request.args.get('edit')
-    type = request.args.get('type')
-    block = request.args.get('block')
     area = request.args.get('area')
 
     with open('configs/mappings.json') as f:
@@ -1109,26 +1224,29 @@ def delsetting():
         if 'walker' not in mapping:
             mapping['walker'] = []
 
-    i = 0
-    for asd in mapping[area]:
-        if 'name' in mapping[area][i]:
+    for key, entry in enumerate(mapping[area]):
+        if 'name' in entry:
             _checkfield = 'name'
-        if 'origin' in mapping[area][i]:
+        if 'origin' in entry:
             _checkfield = 'origin'
-        if 'username' in mapping[area][i]:
+        if 'username' in entry:
             _checkfield = 'username'
-        if 'walkername' in mapping[area][i]:
+        if 'walkername' in entry:
             _checkfield = 'walkername'
+        if 'devicepool' in entry:
+            _checkfield = 'devicepool'
 
-        if str(edit) in str(mapping[area][i][_checkfield]):
-            del mapping[area][i]
-
-        i += 1
+        if str(edit) in str(entry[_checkfield]):
+            del mapping[area][key]
 
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-    return redirect("/showsettings", code=302)
+    mapping_parser = MappingParser(db_wrapper)
+    device_mappings = mapping_parser.get_devicemappings()
+    areas = mapping_parser.get_areas()
+
+    return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
 def check_float(number):
@@ -1139,10 +1257,11 @@ def check_float(number):
         return False
 
 
-@app.route('/addedit', methods=['GET', 'POST'])
+@app.route('/addedit', methods=['POST'])
 @auth_required
 def addedit():
-    data = request.args.to_dict(flat=False)
+    global device_mappings, areas
+    data = request.form.to_dict(flat=False)
     datavalue = {}
 
     for ase in data:
@@ -1151,114 +1270,117 @@ def addedit():
 
     edit = datavalue.get("edit", False)
     block = datavalue.get("block", False)
-    type_ = datavalue.get("type", False)
-    name = datavalue.get("name", False)
     area = datavalue.get("area", False)
-    delete = datavalue.get("del", False)
+    mode = datavalue.get("mode", False)
 
-    with open('configs/mappings.json') as f:
-        mapping = json.load(f)
-        if 'walker' not in mapping:
-            mapping['walker'] = []
+    try:
 
-    with open('madmin/static/vars/settings.json') as f:
-        settings = json.load(f)
+        with open('configs/mappings.json') as f:
+            mapping = json.load(f)
+            if 'walker' not in mapping:
+                mapping['walker'] = []
+            if 'devicesettings' not in mapping:
+                mapping['devicesettings'] = []
 
-    if edit:
-        i = 0
-        for asd in mapping[area]:
-            if 'name' in mapping[area][i]:
-                _checkfield = 'name'
-            if 'origin' in mapping[area][i]:
-                _checkfield = 'origin'
-            if 'username' in mapping[area][i]:
-                _checkfield = 'username'
-            if 'walkername' in mapping[area][i]:
-                _checkfield = 'walkername'
+        with open('madmin/static/vars/settings.json') as f:
+            settings = json.load(f)
 
-            if str(edit) == str(mapping[area][i][_checkfield]):
-                if str(block) == str("settings"):
-                    for ase, key in datavalue.items():
-                        if key == '':
-                            if ase in mapping[area][i]['settings']:
-                                del mapping[area][i]['settings'][ase]
-                        elif key in area:
-                            continue
-                        else:
-                            key = match_typ(key)
-                            if str(ase) not in ('block', 'area', 'type', 'edit', 'mode'):
-                                mapping[area][i]['settings'][ase] = key
+        if edit:
+            for entry in mapping[area]:
+                if 'name' in entry:
+                    _checkfield = 'name'
+                if 'origin' in entry:
+                    _checkfield = 'origin'
+                if 'username' in entry:
+                    _checkfield = 'username'
+                if 'walkername' in entry:
+                    _checkfield = 'walkername'
+                if 'devicepool' in entry:
+                    _checkfield = 'devicepool'
 
-                else:
-                    for ase, key in datavalue.items():
-                        if ase in mapping[area][i]:
-                            if key == '':
-                                if ase in mapping[area][i]:
-                                    del mapping[area][i][ase]
-                            elif key in area:
+                if str(edit) == str(entry[_checkfield]):
+                    if str(block) == str("settings"):
+                        for key, value in datavalue.items():
+                            if value == '' or value == 'None':
+                                if key in entry['settings']:
+                                    del entry['settings'][key]
+                            elif value in area:
                                 continue
                             else:
-                                key = match_typ(key)
-                                if str(ase) not in ('block', 'area', 'type', 'edit'):
-                                    mapping[area][i][ase] = key
-                        else:
-                            if key in area:
+                                if str(key) not in ('block', 'area', 'type', 'edit', 'mode'):
+                                    entry['settings'][key] = match_type(value)
+
+                    else:
+                        for key, value in datavalue.items():
+                            if value == '':
+                                if key in entry:
+                                    del entry[key]
+                            elif value in area:
                                 continue
                             else:
-                                key = match_typ(key)
-                                if str(ase) not in ('block', 'area', 'type', 'edit'):
-                                    new = {}
-                                    new[ase] = key
-                                    mapping[area][i][ase] = key
-            i += 1
-    else:
-        new = {}
-        for ase, key in datavalue.items():
-            if key != '' and key not in area:
-                key = match_typ(key)
-                if str(ase) not in ('block', 'area', 'type', 'edit'):
-                    new[ase] = key
+                                if str(key) in ('geofence'):
+                                    entry[key] = value
+                                elif str(key) not in ('block', 'area', 'type', 'edit'):
+                                    entry[key] = match_type(value)
 
-        if str(block) == str("settings"):
-            mapping[area]['settings'].append(new)
         else:
-            if (settings[area]['has_settings']) in ('true'):
-                new['settings'] = {}
-            mapping[area].append(new)
+            new = {}
+            for key, value in datavalue.items():
+                if value != '' and value not in area:
+                    if str(key) in ('geofence'):
+                        new[key] = value
+                    elif str(key) not in ('block', 'area', 'type', 'edit'):
+                        new[key] = match_type(value)
 
-    with open('configs/mappings.json', 'w') as outfile:
-        json.dump(mapping, outfile, indent=4, sort_keys=True)
+            if str(block) == str("settings"):
+                mapping[area]['settings'].append(new)
+            else:
+                if settings[area]['has_settings'] == 'true':
+                    new['settings'] = {}
+                mapping[area].append(new)
 
-    return redirect("/showsettings", code=302)
+        with open('configs/mappings.json', 'w') as outfile:
+            json.dump(mapping, outfile, indent=4, sort_keys=True)
+
+        mapping_parser = MappingParser(db_wrapper)
+        device_mappings = mapping_parser.get_devicemappings()
+        areas = mapping_parser.get_areas()
+
+    except:
+        log.info('Invalid data')
+        return redirect(getBasePath(request) + '/config?type='+mode+'&area='+area+'&block='+block+'&edit='+edit, code=302)
+
+    return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
-def match_typ(key):
-    if '[' in key and ']' in key:
-        if ':' in key:
-            tempkey = []
-            keyarray = key.replace('[', '').replace(']', '').replace(' ', '').replace("'", '').split(',')
-            for k in keyarray:
-                tempkey.append(str(k))
-            key = tempkey
+def match_type(value):
+    if '[' in value and ']' in value:
+        if ':' in value:
+            tempvalue = []
+            valuearray = value.replace('[', '').replace(']', '').replace(
+                ' ', '').replace("'", '').split(',')
+            for k in valuearray:
+                tempvalue.append(str(k))
+            value = tempvalue
         else:
-            key = list(key.replace('[', '').replace(']', '').split(','))
-            key = [int(i) for i in key]
-    elif key in 'true':
-        key = bool(True)
-    elif key in 'false':
-        key = bool(False)
-    elif key.isdigit():
-        key = int(key)
-    elif check_float(key):
-        key = float(key)
-    elif key == "None":
-        key = None
+            value = list(value.replace('[', '').replace(']', '').split(','))
+            value = [int(i) for i in value]
+    elif value in 'true':
+        value = bool(True)
+    elif value in 'false':
+        value = bool(False)
+    elif value.isdigit():
+        value = int(value)
+    elif check_float(value):
+        value = float(value)
+    elif value == "None":
+        value = None
     else:
-        key = key.replace(' ', '_')
-    return key
+        value = value.replace(' ', '_')
+    return value
 
 
-@app.route('/showsettings', methods=['GET', 'POST'])
+@app.route('/showsettings')
 @auth_required
 def showsettings():
     table = ''
@@ -1266,16 +1388,23 @@ def showsettings():
         mapping = json.load(f)
         if 'walker' not in mapping:
             mapping['walker'] = []
+        if 'devicesettings' not in mapping:
+            mapping['devicesettings'] = []
 
     with open('madmin/static/vars/settings.json') as f:
         settings = json.load(f)
     with open('madmin/static/vars/vars_parser.json') as f:
         vars = json.load(f)
 
+    globalheader = '<thead><tr><th><b>Type</b></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
+
+
     for var in vars:
         line, quickadd, quickline = '', '', ''
-        header = '<thead><tr><th><br><b>' + (var.upper()) + '</b> <a href=/addnew?area=' + var + '>[Add new]</a></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
-        subheader = '<tr><td colspan="4">' + settings[var]['description'] + '</td></tr>'
+        header = '<tr><td colspan="4" class="header"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
+            '">[Add new]</a></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
+        subheader = '<tr><td colspan="4">' + \
+            settings[var]['description'] + '</td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
         edit = '<td></td>'
         editsettings = '<td></td>'
         _typearea = var
@@ -1287,46 +1416,61 @@ def showsettings():
             quickadd, quickline = '', ''
             mode = output.get('mode', _typearea)
             if settings[var]['could_edit']:
-                edit = '<td><a href=/config?type=' + str(mode) + '&area=' + str(_typearea) + '&block=fields&edit=' + str(output[_field]) + '>[Edit]</a></td>'
+                edit = '<td><a href="config?type=' + str(mode) + '&area=' + str(
+                    _typearea) + '&block=fields&edit=' + str(output[_field]) + '">[Edit]</a></td>'
             else:
                 edit = '<td></td>'
             if settings[var]['has_settings'] in ('true'):
-                editsettings = '<td><a href=/config?type=' + str(mode) + '&area=' + str(_typearea) + '&block=settings&edit=' + str(output[_field]) + '>[Edit Settings]</a></td>'
+                editsettings = '<td><a href="config?type=' + str(mode) + '&area=' + str(
+                    _typearea) + '&block=settings&edit=' + str(output[_field]) + '">[Edit Settings]</a></td>'
             else:
                 editsettings = '<td></td>'
-            delete = '<td><a href=/delsetting?type=' + str(mode) + '&area=' + str(_typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true>[Delete]</a></td>'
+            delete = '<td><a href="delsetting?type=' + str(mode) + '&area=' + str(
+                _typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true">[Delete]</a></td>'
 
-            line = line + '<tr><td><b>' + str(output[_field]) + '</b></td>' + str(edit) + str(editsettings) + str(delete) + '</tr>'
+            line = line + '<tr><td><b>' + \
+                str(output[_field]) + '</b></td>' + str(edit) + \
+                str(editsettings) + str(delete) + '</tr>'
 
             if _quick == 'setup':
-
-                quickadd = 'Assigned areas: ' + str(len(output.get('setup', []))) + '<br>Areas: '
+                quickadd = 'Assigned areas: ' + \
+                    str(len(output.get('setup', []))) + '<br />Areas: '
                 for area in output.get('setup', []):
                     quickadd = quickadd + area.get('walkerarea') + ' | '
 
-                quickline = quickline + '<tr><td></td><td colspan="3" class=quick>' + str(quickadd) + ' </td>'
+                quickline = quickline + '<tr><td></td><td colspan="3" class="quick">' + \
+                    str(quickadd) + ' </td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td>'
 
             elif _quick:
                 for quickfield in _quick.split('|'):
                     if output.get(quickfield, False):
-                        quickadd = quickadd + str(quickfield) + ': ' + str(output.get(quickfield, '')) + '<br>'
-                quickline = quickline + '<tr><td></td><td class=quick>' + str(quickadd) + '</td>'
+                        quickadd = quickadd + \
+                            str(quickfield) + ': ' + \
+                            str(output.get(quickfield, '')).split(
+                                '\n')[0] + '<br>'
+                quickline = quickline + '<tr><td></td><td class="quick">' + \
+                    str(quickadd) + '</td>'
+
             quickadd = ''
             if _quicksett:
                 for quickfield in _quicksett.split('|'):
                     if output['settings'].get(quickfield, False):
-                        quickadd = quickadd + str(quickfield) + ': ' + str(output['settings'].get(quickfield, '')) + '<br>'
-                quickline = quickline + '<td colspan="2" class=quick>' + str(quickadd) + '</td></tr>'
-
+                        quickadd = quickadd + \
+                            str(quickfield) + ': ' + \
+                            str(output['settings'].get(
+                                quickfield, '')) + '<br>'
+                quickline = quickline + '<td colspan="2" class="quick">' + \
+                    str(quickadd) + '</td><td style="display: none;"></td></tr>'
 
             line = line + quickline
 
-
         table = table + header + subheader + line
 
-    return render_template('settings.html', settings='<table>' + table + '</table>', title="Mapping Editor")
+    return render_template('settings.html', settings='<table>' + globalheader + '<tbody>' + table + '</tbody></table>', title="Mapping Editor",
+                           responsive=str(conf_args.madmin_noresponsive).lower())
 
-@app.route('/addnew', methods=['GET', 'POST'])
+
+@app.route('/addnew', methods=['GET'])
 @auth_required
 def addnew():
     area = request.args.get('area')
@@ -1334,10 +1478,11 @@ def addnew():
     with open('madmin/static/vars/vars_parser.json') as f:
         settings = json.load(f)
     if (len(settings[area])) == 1:
-        return redirect('config?type=' + area + '&area=' + area + '&block=fields')
+        return redirect(getBasePath(request) + '/config?type=' + area + '&area=' + area + '&block=fields', code=302)
 
     for output in settings[area]:
-        line = line + '<h3><a href=config?type=' + str(output['name']) + '&area=' + str(area) + '&block=fields>'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
+        line = line + '<h3><a href="config?type=' + str(output['name']) + '&area=' + str(
+            area) + '&block=fields">'+str(output['name'])+'</a></h3><h5>'+str(output['description'])+'</h5><hr>'
 
     return render_template('sel_type.html', line=line, title="Type selector")
 
@@ -1346,6 +1491,7 @@ def addnew():
 @auth_required
 def status():
     return render_template('status.html', responsive=str(conf_args.madmin_noresponsive).lower(), title="Worker status")
+
 
 @app.route('/statistics', methods=['GET'])
 @auth_required
@@ -1360,16 +1506,20 @@ def statistics():
     return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
                            minutes_usage=minutes_usage, time=conf_args.madmin_time)
 
+
 @app.route('/get_status', methods=['GET'])
 @auth_required
 def get_status():
     data = json.loads(db_wrapper.download_status())
     return jsonify(data)
 
+
 def datetime_from_utc_to_local(utc_datetime):
     now_timestamp = time.time()
-    offset = datetime.datetime.fromtimestamp(now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
+    offset = datetime.datetime.fromtimestamp(
+        now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
     return int(utc_datetime + offset.total_seconds()) * 1000
+
 
 @app.route('/get_game_stats', methods=['GET'])
 @auth_required
@@ -1412,7 +1562,8 @@ def game_stats():
             insta['CO-' + dat[4]]['data'].append([dat[3] * 1000, dat[2]])
 
     for label in insta:
-        usage.append({'label': label, 'data': insta[label]['data'], 'yaxis': insta[label]['axis'], 'idx': idx})
+        usage.append(
+            {'label': label, 'data': insta[label]['data'], 'yaxis': insta[label]['axis'], 'idx': idx})
         idx += 1
 
     # Gym
@@ -1460,6 +1611,12 @@ def game_stats():
     return jsonify(stats)
 
 
+def getBasePath(request):
+    if request.referrer:
+        return '/'.join(request.referrer.split('/')[:-1])
+    return ''
+
+
 def decodeHashJson(hashJson):
     data = json.loads(hashJson)
     raidGym = data['gym']
@@ -1470,7 +1627,8 @@ def decodeHashJson(hashJson):
 
 
 def encodeHashJson(gym, lvl, mon):
-    hashJson = json.dumps({'gym': gym, 'lvl': lvl, 'mon': mon}, separators=(',', ':'))
+    hashJson = json.dumps(
+        {'gym': gym, 'lvl': lvl, 'mon': mon}, separators=(',', ':'))
     return hashJson
 
 
@@ -1478,9 +1636,8 @@ def getAllHash(type):
     rv = db_wrapper.get_all_hash(type)
     hashRes = {}
     for result in rv:
-        hashRes[result[1]] = ({'id': str(result[0]), 'type': result[2], 'count': result[3], 'modify': str(result[4])})
-    # data_json = json.dumps(hashRes, sort_keys=True, indent=4, separators=(',', ': '))
-    data_json = hashRes
+        hashRes[result[1]] = ({'id': str(
+            result[0]), 'type': result[2], 'count': result[3], 'modify': str(result[4])})
     return json.dumps(hashRes, indent=4, sort_keys=True)
 
 

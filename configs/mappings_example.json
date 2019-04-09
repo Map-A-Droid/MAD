@@ -89,14 +89,8 @@
     "devices": [
         {
             "origin": "redmi",
+            "pool": "Globalpool",
             "settings": {
-                "cool_down_sleep": false,
-                "post_pogo_start_delay": 60,
-                "post_teleport_delay": 7,
-                "post_turn_screen_on_delay": 10,
-                "post_walk_delay": 0,
-                "restart_pogo": 100,
-                "walk_after_teleport_distance": 0
             },
             "walker": "huehuedurr"
         },
@@ -128,6 +122,25 @@
                 "walk_after_teleport_distance": 1
             },
             "walker": "iv_total"
+        }
+    ],
+    "devicesettings": [
+        {
+            "devicepool": "Globalpool",
+            "settings": {
+                "cool_down_sleep": false,
+                "delay_after_hatch": 2,
+                "mitm_wait_timeout": 35,
+                "post_pogo_start_delay": 120,
+                "post_screenshot_delay": 2,
+                "post_teleport_delay": 7,
+                "post_turn_screen_on_delay": 2,
+                "post_walk_delay": 1,
+                "reboot": true,
+                "reboot_thresh": 5,
+                "restart_pogo": 0,
+                "restart_thresh": 5
+            }
         }
     ],
     "walker": [

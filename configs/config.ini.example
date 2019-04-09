@@ -102,6 +102,12 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
 #quest_webhook               # Activate support for quest webhook
 
+# Dynamic Rarity
+######################
+
+#rarity_hours:               # Set the number of hours for the calculation of pokemon rarity (Default: 72)
+#rarity_update_frequency:    # Update frequency for dynamic rarity in minutes (Default: 60)
+
 # Auto Hatch
 ######################
 #auto_hatch                  # Activate auto hatch of level 5 eggs

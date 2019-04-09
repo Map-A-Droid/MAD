@@ -1,14 +1,12 @@
-import logging
 import math
 import time
-import os, sys
+import os
 from threading import Thread, Event
 
+from loguru import logger
 from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
 from utils.madGlobals import InternalStopWorkerException, WebsocketWorkerRemovedException
 from worker.MITMBase import MITMBase
-
-log = logging.getLogger(__name__)
 
 
 class WorkerQuests(MITMBase):
@@ -66,16 +64,16 @@ class WorkerQuests(MITMBase):
                                                         float(self.last_location.lng),
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
-        log.info('main: Moving %s meters to the next position' % distance)
+        logger.info('Moving {} meters to the next position', round(distance, 2))
 
         delay_used = 0
-        log.debug("Getting time")
+        logger.debug("Getting time")
         speed = routemanager.settings.get("speed", 0)
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            log.info("main: Teleporting...")
+            logger.info("main: Teleporting...")
             self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
             cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
@@ -83,7 +81,7 @@ class WorkerQuests(MITMBase):
             speed = 16.67  # Speed can be 60 km/h up to distances of 3km
 
             if self.last_location.lat == 0.0 and self.last_location.lng == 0.0:
-                log.info('Starting fresh round - using lower delay')
+                logger.info('Starting fresh round - using lower delay')
                 delay_used = self._devicesettings.get('post_teleport_delay', 7)
             else:
                 if distance >= 1335000:
@@ -173,9 +171,9 @@ class WorkerQuests(MITMBase):
 
                 if delay_used > 7200:  # There's a maximum of 2 hours wait time
                     delay_used = 7200
-            log.info("Need more sleep after Teleport: %s seconds!" % str(delay_used))
+            logger.debug("Need more sleep after Teleport: {} seconds!", str(delay_used))
         else:
-            log.info("main: Walking...")
+            logger.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat,
                                           self.current_location.lng, speed)
@@ -191,36 +189,36 @@ class WorkerQuests(MITMBase):
                                                            float(self.current_location.lng),
                                                            float(self.current_location.lat) + lat_offset,
                                                            float(self.current_location.lng) + lng_offset)
-            log.info("Walking roughly: %s" % str(to_walk))
+            logger.info("Walking roughly: {}", str(to_walk))
             time.sleep(0.3)
             self._communicator.walkFromTo(self.current_location.lat,
                                           self.current_location.lng,
                                           self.current_location.lat + lat_offset,
                                           self.current_location.lng + lng_offset,
                                           11)
-            log.debug("Walking back")
+            logger.debug("Walking back")
             time.sleep(0.3)
             self._communicator.walkFromTo(self.current_location.lat + lat_offset,
                                           self.current_location.lng + lng_offset,
                                           self.current_location.lat,
                                           self.current_location.lng,
                                           11)
-            log.debug("Done walking")
+            logger.debug("Done walking")
             time.sleep(1)
         if self._init:
             delay_used = 5
 
         if self._devicesettings.get('last_action_time', None) is not None:
             timediff = time.time() - self._devicesettings['last_action_time']
-            log.info("Timediff between now and last action time: %s" % str(float(timediff)))
+            logger.info("Timediff between now and last action time: {}", str(float(timediff)))
             delay_used = delay_used - timediff
         else:
-            log.info("No last action time found - no calulation")
+            logger.info("No last action time found - no calulation")
 
         if delay_used < 0:
-            log.info('No more cooldowntime - start over')
+            logger.info('No more cooldowntime - start over')
         else:
-            log.info("Real sleep time: %s seconds!" % str(delay_used))
+            logger.info("Real sleep time: {} seconds!", str(delay_used))
             cleanupbox = False
             lastcleanupbox = self._devicesettings.get('last_cleanup_time', None)
             if lastcleanupbox is not None:
@@ -241,22 +239,22 @@ class WorkerQuests(MITMBase):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         self._work_mutex.acquire()
-        if not self._init:
-            log.info("Processing Stop / Quest...")
+        if not self._walker_routemanager.init:
+            logger.info("Processing Stop / Quest...")
 
             data_received = '-'
 
             reachedMainMenu = self._check_pogo_main_screen(10, False)
             if not reachedMainMenu:
                 self._restart_pogo()
-            
-            log.info('Open Stop')
+
+            logger.info('Open Stop')
             self._stop_process_time = time.time()
             data_received = self._open_pokestop()
             if data_received == 'Stop' : self._handle_stop()
         else:
-            log.info('Currently in INIT Mode - no Stop processing')
-        log.debug("Releasing lock")
+            logger.info('Currently in INIT Mode - no Stop processing')
+        logger.debug("Releasing lock")
         self._work_mutex.release()
 
     def _start_pogo(self):
@@ -267,7 +265,7 @@ class WorkerQuests(MITMBase):
         if not self._communicator.isScreenOn():
             # TODO
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
-            log.warning("Turning screen on")
+            logger.warning("Turning screen on")
             self._communicator.turnScreenOn()
             time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 7))
 
@@ -279,7 +277,7 @@ class WorkerQuests(MITMBase):
             pogo_topmost = self._communicator.isPogoTopmost()
         reached_raidtab = False
         if start_result:
-            log.warning("startPogo: Starting pogo...")
+            logger.warning("startPogo: Starting pogo...")
             time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
             self._check_pogo_main_screen(15, True)
@@ -291,7 +289,7 @@ class WorkerQuests(MITMBase):
             self.clear_thread.join()
 
     def _clear_thread(self):
-        log.info('Starting clear Quest Thread')
+        logger.info('Starting clear Quest Thread')
         while not self._stop_worker_event.is_set():
             # wait for event signal
             while not self._start_inventory_clear.is_set():
@@ -304,24 +302,24 @@ class WorkerQuests(MITMBase):
                     # TODO: less magic numbers?
                     time.sleep(1)
                     if self.clear_thread_task == 1:
-                        log.info("Clearing box")
+                        logger.info("Clearing box")
                         self.clear_box(self._delay_add)
                         self.clear_thread_task = 0
                         self._devicesettings['last_cleanup_time'] = time.time()
                     elif self.clear_thread_task == 2:
-                        log.info("Clearing quest")
+                        logger.info("Clearing quest")
                         self._clear_quests(self._delay_add)
                         self.clear_thread_task = 0
                     time.sleep(1)
                     self._start_inventory_clear.clear()
                 except WebsocketWorkerRemovedException as e:
-                    log.error("Worker removed while clearing quest/box")
+                    logger.error("Worker removed while clearing quest/box")
                     self._stop_worker_event.set()
                     return
                 self._work_mutex.release()
 
     def clear_box(self, delayadd):
-        log.info('Cleanup Box')
+        logger.info('Cleanup Box')
         not_allow = ('Gift', 'Raid Pass', 'Camera', 'Geschenk', 'Raid-Pass', 'Kamera',
                      'Cadeau', 'Passe de Raid', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
@@ -348,10 +346,10 @@ class WorkerQuests(MITMBase):
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)
-            log.info('Found item text: %s' % str(item_text))
+            logger.info('Found item text: {}', str(item_text))
             if item_text in not_allow:
                 delete_allowed = False
-                log.info('Dont delete that!!!')
+                logger.info('Dont delete that!!!')
                 y += self._resocalc.get_next_item_coord(self)
                 text_y1 += self._resocalc.get_next_item_coord(self)
                 text_y2 += self._resocalc.get_next_item_coord(self)
@@ -381,7 +379,7 @@ class WorkerQuests(MITMBase):
                         text_y2 += self._resocalc.get_next_item_coord(self)
                         _pos += 1
                 else:
-                    log.info('Unknown error')
+                    logger.info('Unknown error')
                     to = 8
                 time.sleep(1)
 
@@ -410,7 +408,7 @@ class WorkerQuests(MITMBase):
             data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=25)
             if data_received is not None:
                 if 'Gym' in data_received:
-                    log.info('Clicking GYM')
+                    logger.info('Clicking GYM')
                     time.sleep(1)
                     x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                            self._resocalc.get_close_main_button_coords(self)[1]
@@ -422,7 +420,7 @@ class WorkerQuests(MITMBase):
                     self._stop_process_time = time.time()
                 if 'Mon' in data_received:
                     time.sleep(1)
-                    log.info('Clicking MON')
+                    logger.info('Clicking MON')
                     time.sleep(.5)
                     self._turn_map(self._delay_add)
                     self._stop_process_time = time.time()
@@ -439,31 +437,31 @@ class WorkerQuests(MITMBase):
         to = 0
         data_received = '-'
         while not 'Quest' in data_received and int(to) < 3:
-            log.info('Spin Stop')
+            logger.info('Spin Stop')
             data_received = self._wait_for_data(timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=25)
             if data_received is not None:
 
                 if 'Box' in data_received:
-                    log.error('Box is full ... Next round!')
+                    logger.error('Box is full ... Next round!')
                     self.clear_thread_task = 1
                     break
 
                 if 'Quest' in data_received:
-                    log.info('Getting new Quest')
+                    logger.info('Getting new Quest')
                     self.clear_thread_task = 2
                     break
 
                 if 'SB' in data_received or 'Time' in data_received:
-                    log.error('Softban - waiting...')
+                    logger.error('Softban - waiting...')
                     time.sleep(10)
                     self._stop_process_time = time.time()
                     self._open_pokestop()
                 else:
-                    log.error('Other Return: %s' % str(data_received))
+                    logger.error('Other Return: {}', str(data_received))
                 to += 1
             else:
                 data_received = '-'
-                log.info('Did not get any data ... Maybe already turned or softban.')
+                logger.info('Did not get any data ... Maybe already turned or softban.')
                 self._close_gym(self._delay_add)
                 self._turn_map(self._delay_add)
                 time.sleep(3)
@@ -477,10 +475,10 @@ class WorkerQuests(MITMBase):
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None
         if latest is None:
-            log.debug("Nothing received since MAD started")
+            logger.debug("Nothing received since MAD started")
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
-            log.debug("No data linked to the requested proto since MAD started.")
+            logger.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp:
             return 'Gym'
@@ -508,12 +506,11 @@ class WorkerQuests(MITMBase):
                     elif latest_data['payload']['result'] == 4:
                         return 'Box'
                 elif proto_to_wait_for == 104 and latest_data['payload']['type'] == 1:
-                        return 'Stop'
+                    return 'Stop'
                 if proto_to_wait_for == 4 and len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
-                        return 'Clear'
+                    return 'Clear'
             else:
-                log.debug("latest timestamp of proto %s (%s) is older than %s"
-                          % (str(proto_to_wait_for), str(latest_timestamp), str(timestamp)))
+                logger.debug("latest timestamp of proto {} ({}) is older than {}", str(proto_to_wait_for), str(latest_timestamp), str(timestamp))
                 # TODO: timeout error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)

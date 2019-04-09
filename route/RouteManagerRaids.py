@@ -1,9 +1,7 @@
-import logging
+from loguru import logger
 from route.RouteManagerBase import RouteManagerBase
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from threading import Event, Thread
-
-log = logging.getLogger(__name__)
 
 
 class RouteManagerRaids(RouteManagerBase):
@@ -14,12 +12,10 @@ class RouteManagerRaids(RouteManagerBase):
         self._init_route_queue()
         return True
 
-
     def _recalc_route_workertype(self):
         self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
                           nofile=False)
         self._init_route_queue()
-
 
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, settings=None, init=False,
@@ -51,7 +47,7 @@ class RouteManagerRaids(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
-                log.info("Starting routemanager %s" % str(self.name))
+                logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
                 self._is_started = True
                 self._first_round_finished = False
@@ -59,7 +55,7 @@ class RouteManagerRaids(RouteManagerBase):
             self._manager_mutex.release()
 
     def _quit_route(self):
-        log.info('Shutdown Route %s' % str(self.name))
+        logger.info("Shutdown Route {}", str(self.name))
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
             self._update_prio_queue_thread.join()

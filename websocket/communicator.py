@@ -1,13 +1,8 @@
-import datetime
-import logging
-import time
-from threading import Lock
-
 import gpxdata
+from threading import Lock
+from loguru import logger
 
 from utils.geo import get_distance_of_two_points_in_meters
-
-log = logging.getLogger(__name__)
 
 
 class Communicator:
@@ -23,10 +18,10 @@ class Communicator:
         self.__sendMutex = Lock()
 
     def cleanup_websocket(self):
-        log.info("Communicator of %s acquiring lock to cleanup worker in websocket" % str(self.id))
+        logger.info("Communicator of {} acquiring lock to cleanup worker in websocket", str(self.id))
         self.__sendMutex.acquire()
         try:
-            log.info("Communicator of %s calling cleanup" % str(self.id))
+            logger.info("Communicator of {} calling cleanup", str(self.id))
             self.websocketHandler.clean_up_user(self.id, self.worker_instance_ref)
         finally:
             self.__sendMutex.release()
@@ -44,7 +39,7 @@ class Communicator:
 
     def stopApp(self, packageName):
         if not self.__runAndOk("more stop %s\r\n" % (packageName), self.__commandTimeout):
-            log.error("Failed stopping %s, please check if SU has been granted" % packageName)
+            logger.error("Failed stopping {}, please check if SU has been granted", packageName)
             return False
         else:
             return True
@@ -70,11 +65,11 @@ class Communicator:
 
     def swipe(self, x1, y1, x2, y2):
         return self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "touch swipe %s %s %s %s\r\n" % (
-        str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
+            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def touchandhold(self, x1, y1, x2, y2):
         return self.__runAndOk("touch swipe %s %s %s %s 3000" % (
-        str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
+            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def getscreensize(self):
         response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "screen size",
@@ -91,21 +86,21 @@ class Communicator:
         if encoded is None:
             return False
         elif isinstance(encoded, str):
-            log.debug("Screenshot response not binary")
+            logger.debug("Screenshot response not binary")
             if "KO: " in encoded:
-                log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                logger.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
                 return False
             elif "OK:" not in encoded:
-                log.error("getScreenshot: response not OK")
+                logger.error("getScreenshot: response not OK")
                 return False
             return False
         else:
-            log.debug("Storing screenshot...")
+            logger.debug("Storing screenshot...")
 
             fh = open(path, "wb")
             fh.write(encoded)
             fh.close()
-            log.debug("Done storing, returning")
+            logger.debug("Done storing, returning")
             return True
 
     def getScreenshot(self, path):
@@ -118,21 +113,21 @@ class Communicator:
         if encoded is None:
             return False
         elif isinstance(encoded, str):
-            log.debug("Screenshot response not binary")
+            logger.debug("Screenshot response not binary")
             if "KO: " in encoded:
-                log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                logger.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
                 return False
             elif "OK:" not in encoded:
-                log.error("getScreenshot: response not OK")
+                logger.error("getScreenshot: response not OK")
                 return False
             return False
         else:
-            log.debug("Storing screenshot...")
+            logger.debug("Storing screenshot...")
 
             fh = open(path, "wb")
             fh.write(encoded)
             fh.close()
-            log.debug("Done storing, returning")
+            logger.debug("Done storing, returning")
             return True
 
     def backButton(self):
