@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block header %}
+<style>
+  input[type=text],
+  select,
+  textarea {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  input[type=submit] {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }
+
+  #inputdata {
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 20px;
+    /*width: 80%;*/
+  }
+
+  hr {
+    border-style: solid;
+    border-color: lightgray;
+  }
+
+
+   .screen {
+        float: left;
+        width: 45%;
+        border: black 2px;
+        border-style: solid;
+        margin: 10px;
+    }
+
+    img.screenshot {
+        width: 100%;
+    }
+
+   .phonename {
+        font-size: larger;
+        text-align: center;
+        background-color: lightgray;
+        width: 100%;
+    }
+
+    div#button {
+        width: 100%;
+        text-align: center;
+        background-color: lightgray;
+        color: white;
+        font-size: x-large;
+    }
+
+}
+</style>
+{% endblock %}
+
+{% block content %}
+
+<h2>{{header | safe }}</h2>
+
+<div>
+  {% for item in editform %}
+  {{item | safe }}
+  {% endfor %}
+</div>
+
+{% endblock %}

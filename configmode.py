@@ -27,9 +27,9 @@ def generate_mappingjson():
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 
-def start_madmin(args, db_wrapper):
+def start_madmin(args, db_wrapper, ws_server):
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper)
+    madmin_start(args, db_wrapper, None)
 
 
 if __name__ == "__main__":
@@ -54,6 +54,6 @@ if __name__ == "__main__":
     version.get_version()
 
     logger.success('Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
-    t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper))
+    t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper, None))
     t_flask.daemon = False
     t_flask.start()

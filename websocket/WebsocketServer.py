@@ -394,7 +394,7 @@ class WebsocketServer(object):
         user_entry = self.__current_users.get(id, None)
         self.__current_users_mutex.release()
 
-        if user_entry is None or user_entry[1] != worker_instance:
+        if user_entry is None or user_entry[1] != worker_instance and worker_instance != 'madmin':
             raise WebsocketWorkerRemovedException
 
         message_id = self.__get_new_message_id()
@@ -481,3 +481,6 @@ class WebsocketServer(object):
             if area is None:
                 continue
             area["routemanager"].stop_routemanager()
+
+    def get_reg_origins(self):
+        return self.__current_users

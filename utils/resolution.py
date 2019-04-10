@@ -15,7 +15,10 @@ class Resocalculator(object):
     def get_coords_quest_menu(self):
         click_x = (int(self._screen_x) / 1.07)
         click_y = int(self._screen_y) - (int(self._screen_x) / 3.86)
-        return click_x + self._x_offset, click_y + self._y_offset
+        if self._y_offset >0:
+            return click_x + self._x_offset, click_y - self._y_offset - 55
+        else:
+            return click_x, click_y
 
     def get_gym_click_coords(self):
         click_x = int(self._screen_x) / 2
@@ -36,7 +39,10 @@ class Resocalculator(object):
     def get_close_main_button_coords(self):
         click_x = int(self._screen_x) / 2
         click_y = int(self._screen_y) - (int(self._screen_x) / 7.57)
-        return click_x + self._x_offset, click_y + self._y_offset
+        if self._y_offset >0:
+            return click_x + self._x_offset, click_y - self._y_offset - 55
+        else:
+            return click_x, click_y
 
     def get_delete_quest_coords(self):
         if float(self._xyratio) > 2.1:
@@ -87,7 +93,7 @@ class Resocalculator(object):
     def get_item_menu_coords(self):
         click_x = int(self._screen_x) / 1.28
         click_y = int(self._screen_y) - (int(self._screen_x) / 3.27)
-        return click_x + self._x_offset, click_y + self._y_offset
+        return click_x + self._x_offset, click_y - self._y_offset
 
     def get_delete_item_coords(self):
         if float(self._xyratio) > 2:
@@ -134,7 +140,7 @@ class Resocalculator(object):
 
     def get_next_item_coord(self):
         y = int(self._screen_x) / 2.84
-        return y + self._y_offset
+        return y
 
     def get_confirm_delete_item_coords(self):
         click_x = int(self._screen_x) / 2

@@ -68,9 +68,9 @@ def start_ocr_observer(args, db_helper):
     observer.start()
 
 
-def start_madmin(args, db_wrapper):
+def start_madmin(args, db_wrapper, ws_server):
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper)
+    madmin_start(args, db_wrapper, ws_server)
 
 
 def generate_mappingjson():
@@ -313,7 +313,7 @@ if __name__ == "__main__":
 
     if args.with_madmin:
         logger.info('Starting Madmin on Port: {}', str(args.madmin_port))
-        t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper,))
+        t_flask = Thread(name='madmin', target=start_madmin, args=(args, db_wrapper, ws_server,))
         t_flask.daemon = True
         t_flask.start()
 

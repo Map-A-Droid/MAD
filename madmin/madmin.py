@@ -23,6 +23,7 @@ from utils.language import i8ln, open_json_file
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
 from utils.logging import MadLoggerUtils
+from websocket.communicator import Communicator
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -34,15 +35,17 @@ conf_args = None
 db_wrapper = None
 device_mappings = None
 areas = None
+ws_server = None
 
 
-def madmin_start(arg_args, arg_db_wrapper):
-    global conf_args, device_mappings, db_wrapper, areas
+def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
+    global conf_args, device_mappings, db_wrapper, areas, ws_server
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
+    ws_server = glob_ws_server
 
     httpsrv = WSGIServer((arg_args.madmin_ip, int(arg_args.madmin_port)), app.wsgi_app, log=MadLoggerUtils)
     httpsrv.serve_forever()
@@ -88,6 +91,85 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
+
+
+@app.route('/phonecontrol', methods=['GET'])
+@auth_required
+def get_phonescreens():
+    global device_mappings
+    global ws_server
+    screens_phone = []
+    if ws_server is None:
+        screens_phone.append('No control in configmode')
+        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
+    for phonename in ws_server.get_reg_origins():
+        if os.path.isfile("temp/screenshot" + str(phonename) + ".png"):
+            creationdate = datetime.datetime.fromtimestamp(os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime('%Y-%m-%d %H:%M:%S')
+            screens_phone.append("<div class=screen><div class=phonename><b>"
+                             + str(phonename) + "</b></div><img src=/screenshot/screenshot" + str(phonename + ".png class='screenshot'><div class=phonename>" + creationdate +"</div> "
+                             "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
+                             "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
+                             "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
+                             "</div>"))
+
+        else:
+            screens_phone.append("<div class=screen><div class=phonename><b>"
+                                 + str(phonename) + "</b></div><img src=/static/dummy.png class='screenshot'><div class=phonename>NO Screen available</div> "
+                "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
+                "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
+                "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
+                "</div>")
+
+    return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
+
+
+@app.route('/screenshot/<path:path>', methods=['GET'])
+@auth_required
+def pushscreens(path):
+    return send_from_directory('../temp', path)
+
+
+@app.route('/static/<path:path>', methods=['GET'])
+@auth_required
+def pushstatic(path):
+    return send_from_directory('../madmin/static', path)
+
+
+@app.route('/take_screenshot', methods=['GET'])
+@auth_required
+def take_screenshot():
+    global ws_server
+    origin = request.args.get('origin')
+    logger.info('MADmin: Taking screenshot ({})', str(origin))
+    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    if conf_args.use_media_projection:
+        temp_comm.getScreenshot(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
+    else:
+        temp_comm.get_screenshot_single(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
+
+    return redirect('phonecontrol')
+
+
+@app.route('/restart_pogo', methods=['GET'])
+@auth_required
+def restart_pogo():
+    global ws_server
+    origin = request.args.get('origin')
+    logger.info('MADmin: Restart Pogo ({})', str(origin))
+    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    temp_comm.stopApp("com.nianticlabs.pokemongo")
+    return redirect('phonecontrol')
+
+
+@app.route('/restart_phone', methods=['GET'])
+@auth_required
+def restart_phone():
+    global ws_server
+    origin = request.args.get('origin')
+    logger.info('MADmin: Restart Phone ({})', str(origin))
+    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    temp_comm.reboot()
+    return redirect('phonecontrol')
 
 
 @app.route('/screens', methods=['GET'])
