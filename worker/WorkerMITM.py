@@ -164,9 +164,9 @@ class WorkerMITM(MITMBase):
             (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(
                 routemanager.geofence_helper, self._latest_encounter_update)
             if encounter_ids:
-                log.debug("Found %d new encounter_ids", len(encounter_ids))
+                logger.debug("Found {} new encounter_ids", len(encounter_ids))
                 for encounter_id, disappear in encounter_ids.items():
-                    log.debug("id: %d, despawn: %d", encounter_id, disappear)
+                    logger.debug("id: {}, despawn: {}", encounter_id, disappear)
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
@@ -176,12 +176,12 @@ class WorkerMITM(MITMBase):
             for key, value in self._encounter_ids.items():
                 if (value < max_age):
                     remove.append(key)
-                    log.debug("removing encounterid: %d mon despawned", key)
+                    logger.debug("removing encounterid: {} mon despawned", key)
 
             for key in remove:
                 del self._encounter_ids[key]
 
-            log.debug("Encounter list len: %d", len(self._encounter_ids))
+            logger.debug("Encounter list len: {}", len(self._encounter_ids))
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.

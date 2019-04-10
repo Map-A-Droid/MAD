@@ -482,11 +482,11 @@ class RmWrapper(DbWrapperBase):
     def gyms_from_db(self, geofence_helper):
         logger.debug("RmWrapper::gyms_from_db called")
         if geofence_helper is None:
-            log.error("No geofence_helper! Not fetching gyms.")
+            logger.error("No geofence_helper! Not fetching gyms.")
             return []
 
         #(minLat, minLon, maxLat, maxLon)
-        log.debug("Filtering with rectangle")
+        logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
 
         query = (
@@ -500,19 +500,20 @@ class RmWrapper(DbWrapperBase):
         list_of_coords = []
         for (latitude, longitude) in res:
             list_of_coords.append([latitude, longitude])
-        log.debug("Got %d coordinates in this rect (minLat, minLon, maxLat, maxLon): %s", len(list_of_coords), str(rectangle))
+        logger.debug("Got {} coordinates in this rect (minLat, minLon, "
+                     "maxLat, maxLon): {}", len(list_of_coords), str(rectangle))
 
         geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
         return geofenced_coords
 
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
-        log.debug("{RmWrapper::update_encounters_from_db} called")
+        logger.debug("{RmWrapper::update_encounters_from_db} called")
         if geofence_helper is None:
-            log.error("No geofence_helper! Not fetching encounters.")
+            logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
         
-        log.debug("Filtering with rectangle")
+        logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
         query = (
             "SELECT latitude, longitude, encounter_id, "
@@ -536,7 +537,7 @@ class RmWrapper(DbWrapperBase):
             latest = max(latest, last_modified)
 
         encounter_id_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
-        log.debug("Got %d encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, last_modified): %s", len(encounter_id_coords), str(params))
+        logger.debug("Got {} encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, last_modified): {}", len(encounter_id_coords), str(params))
         encounter_id_infos = {}
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time

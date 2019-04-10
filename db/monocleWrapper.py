@@ -493,7 +493,8 @@ class MonocleWrapper(DbWrapperBase):
             latest = max(latest, last_modified)
 
         encounter_id_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
-        log.debug("Got %d encounter coordinates within this rect and age (minLat, minLon, maxLat, maxLon, last_modified): %s", len(encounter_id_coords), str(params))
+        log.debug("Got {} encounter coordinates within this rect and age (minLat, minLon, "
+                  "maxLat, maxLon, last_modified): {}", len(encounter_id_coords), str(params))
         encounter_id_infos = {}
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time

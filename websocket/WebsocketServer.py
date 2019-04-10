@@ -150,8 +150,9 @@ class WebsocketServer(object):
 
             last_known_state = {}
             client_mapping = self.__device_mappings[id]
-            devicesettings = client_mapping["settings"].copy()
+            devicesettings = client_mapping["settings"]
             logger.debug("Setting up routemanagers for {}", str(id))
+            logger.debug('Devicesettings {}: {}', str(id), devicesettings)
 
             if client_mapping.get("walker", None) is not None:
                 if "walker_area_index" not in devicesettings:

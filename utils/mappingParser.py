@@ -201,8 +201,8 @@ class MappingParser(object):
                 pool_settings = 0
                 while pool_settings < len(pool_arr):
                     if pool_arr[pool_settings]['devicepool'] == pool:
-                        settings = self.inherit_device_settings(settings,
-                                                                 pool_arr[pool_settings].get('settings', []).copy())
+                        device_dict["settings"] = self.inherit_device_settings(settings,
+                                                                 pool_arr[pool_settings].get('settings', []))
                         break
                     pool_settings += 1
 
@@ -214,14 +214,17 @@ class MappingParser(object):
                         break
                     walker_settings += 1
 
-            device_dict["settings"] = settings
+
             devices[device["origin"]] = device_dict
         return devices
 
     def inherit_device_settings(self, devicesettings, poolsettings):
+        inheritsettings = {}
+        for setting in poolsettings:
+            inheritsettings[setting] = poolsettings[setting]
         for setting in devicesettings:
-            poolsettings[setting] = devicesettings[setting]
-        return poolsettings
+            inheritsettings[setting] = devicesettings[setting]
+        return inheritsettings
 
     def get_auths(self):
         # returns list of allowed authentications
