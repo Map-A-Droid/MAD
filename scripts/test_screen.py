@@ -10,7 +10,7 @@ import os
 from PIL import Image
 
 class testimage(object):
-    def __init__(self, image, mode):
+    def __init__(self, image, mode, xoffset=0, yoffset=0):
         
         self._image = cv2.imread(image)
         self._screen_y, self._screen_x, _ = self._image.shape
@@ -18,7 +18,7 @@ class testimage(object):
         print (float(self._screen_y) / float(self._screen_x))
 
         self._resocalc = Resocalculator
-        print (self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, -200, 85))
+        print (self._resocalc.get_x_y_ratio(self, self._screen_x, self._screen_y, xoffset, yoffset))
         
         if self._mode == "menu":
             self._image_check = self.check_menu(self._image)
@@ -176,8 +176,17 @@ class testimage(object):
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required = True, help = "Path to the image")
 ap.add_argument("-m", "--mode", required = True, help = "Type of Image")
+ap.add_argument("-xo", "--xoffset", required = False, help = "X Offset")
+ap.add_argument("-yo", "--yoffset", required = False, help = "Y Offset")
 args = vars(ap.parse_args())
 
-test = testimage(args["image"], args["mode"])
+xoffset = 0
+if args["xoffset"]:
+    xoffset = int(args["xoffset"])
+yoffset = 0
+if args["yoffset"]:
+    yoffset = int(args["yoffset"])
+
+test = testimage(args["image"], args["mode"], xoffset, yoffset)
 
 
