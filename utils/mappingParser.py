@@ -204,6 +204,9 @@ class MappingParser(object):
                                                                  pool_arr[pool_settings].get('settings', []))
                         break
                     pool_settings += 1
+             else:
+                 device_dict["settings"] = device.get("settings", None)
+                
             if walker:
                 walker_settings = 0
                 while walker_settings < len(walker_arr):
