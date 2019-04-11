@@ -85,14 +85,45 @@
 {% block scripts %}
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
-$(document).ready(function() {
-    $("img").on("click", function(event) {
-        id = event.target.id;
-        var imagex = this.width / (event.pageX - this.offsetLeft);
-        var imagey = this.height / (event.pageY - this.offsetTop);
-        window.location.href='click_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey;
+ $(document).ready(function() {
+  $("img").on("click", function(event) {
+    event.preventDefault();
+    var id = event.target.id;
+    var imagex = this.width / (event.pageX - this.offsetLeft);
+    var imagey = this.height / (event.pageY - this.offsetTop);
+    var url = 'click_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey
+    $.blockUI({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: url,
+       success: function(data){
+           $('#date' + id).text(data);
+           $('img#' + id).attr('src', '/screenshot/madmin/screenshot' + id + '.png');
+           setTimeout($.unblockUI, 10);
+       }
     });
-});
+  });
+
+
+$("a#screenshot").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var url = $(this).attr("href");
+       $.blockUI({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: url,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           setTimeout($.unblockUI, 10);
+       }
+     });
+   });
+  });
+
+
+
 </script>
 {% endblock %}
 

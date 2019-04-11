@@ -484,3 +484,6 @@ class WebsocketServer(object):
 
     def get_reg_origins(self):
         return self.__current_users
+
+    def get_origin_communicator(self, origin):
+        return self.__current_users[origin][1].get_communicator()

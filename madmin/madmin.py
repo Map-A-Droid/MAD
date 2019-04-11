@@ -168,8 +168,8 @@ def get_phonescreens():
                 "<div class=screen><div class=phonename><b>"+ str(phonename) + "</b></div>"
                 "<img src=/screenshot/madmin/screenshot" + str(phonename) + ".png class='screenshot' id ='"
                 + str(phonename) + "'>"
-                "<div class=phonename>" + creationdate +"</div> "
-                "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
+                "<div class=phonename id=date" + str(phonename) + ">" + creationdate +"</div> "
+                "<div id=button><a id=screenshot origin=" + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
                 "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
                 "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
                 "</div>")
@@ -177,9 +177,10 @@ def get_phonescreens():
         else:
             screens_phone.append(
                 "<div class=screen><div class=phonename><b>"+ str(phonename) + "</b></div>"
-                "<img src=/static/dummy.png class='screenshot'>"
-                "<div class=phonename>NO Screen available</div> "
-                "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
+                "<img src=/static/dummy.png class='screenshot' id ='"
+                + str(phonename) + "'>"
+                "<div class=phonename id=date" + str(phonename) + ">NO Screen available</div> "
+                "<div id=button><a id=screenshot origin=" + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
                 "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
                 "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
                 "</div>")
@@ -206,13 +207,22 @@ def take_screenshot():
     global ws_server
     origin = request.args.get('origin')
     logger.info('MADmin: Taking screenshot ({})', str(origin))
-    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    temp_comm = ws_server.get_origin_communicator(origin)
     if conf_args.use_media_projection:
         temp_comm.getScreenshot(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
     else:
         temp_comm.get_screenshot_single(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
 
-    return redirect('phonecontrol')
+    image_resize("temp/screenshot" + str(origin) + ".png", width=400)
+
+    creationdate = datetime.datetime.fromtimestamp(
+        os.path.getmtime("temp/screenshot" + str(origin) + ".png")).strftime('%Y-%m-%d %H:%M:%S')
+
+    if conf_args.madmin_time == "12":
+        creationdate = datetime.datetime.fromtimestamp(
+            os.path.getmtime("temp/screenshot" + str(origin) + ".png")).strftime('%Y-%m-%d %I:%M:%S %p')
+
+    return creationdate
 
 
 @app.route('/click_screenshot', methods=['GET'])
@@ -229,7 +239,7 @@ def click_screenshot():
     real_click_x = int(width / float(click_x))
     real_click_y = int(height / float(click_y))
 
-    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    temp_comm = ws_server.get_origin_communicator(origin)
     temp_comm.click(int(real_click_x), int(real_click_y))
 
     logger.info('MADMin Click x:{} y:{} ({})', str(real_click_x), str(real_click_y), str(origin))
@@ -244,7 +254,7 @@ def restart_pogo():
     global ws_server
     origin = request.args.get('origin')
     logger.info('MADmin: Restart Pogo ({})', str(origin))
-    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    temp_comm = ws_server.get_origin_communicator(origin)
     temp_comm.stopApp("com.nianticlabs.pokemongo")
     return redirect('phonecontrol')
 
@@ -255,7 +265,7 @@ def restart_phone():
     global ws_server
     origin = request.args.get('origin')
     logger.info('MADmin: Restart Phone ({})', str(origin))
-    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    temp_comm = ws_server.get_origin_communicator(origin)
     temp_comm.reboot()
     return redirect('phonecontrol')
 

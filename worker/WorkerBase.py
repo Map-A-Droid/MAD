@@ -59,6 +59,9 @@ class WorkerBase(ABC):
             self.last_location = Location(0.0, 0.0)
         self.last_processed_location = Location(0.0, 0.0)
 
+    def get_communicator(self):
+        return self._communicator
+
     @abstractmethod
     def _pre_work_loop(self):
         """
