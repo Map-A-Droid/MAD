@@ -14,6 +14,50 @@
 <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/js/leaflet-sidebar.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
+  L.Marker.addInitHook(function() {
+    if (this.options.virtual) {
+      this.on('add', function() {
+        this._updateIconVisibility = function() {
+          var map = this._map,
+            isVisible = map.getBounds().contains(this.getLatLng()),
+            wasVisible = this._wasVisible,
+            icon = this._icon,
+            iconParent = this._iconParent,
+            shadow = this._shadow,
+            shadowParent = this._shadowParent;
+
+          if (!iconParent) {
+            iconParent = this._iconParent = icon.parentNode;
+          }
+          if (shadow && !shadowParent) {
+            shadowParent = this._shadowParent = shadow.parentNode;
+          }
+
+          if (isVisible != wasVisible) {
+            if (isVisible) {
+              iconParent.appendChild(icon);
+              if (shadow) {
+                shadowParent.appendChild(shadow);
+              }
+            } else {
+              iconParent.removeChild(icon);
+              if (shadow) {
+                shadowParent.removeChild(shadow);
+              }
+            }
+
+            this._wasVisible = isVisible;
+
+          }
+        };
+
+        this._map.on('resize moveend zoomend', this._updateIconVisibility, this);
+        this._updateIconVisibility();
+
+      }, this);
+    }
+  });
+
 	var map = null;
 	var leaflet_data = {
 		layers: {}
@@ -276,7 +320,7 @@
 					var l_quests = L.layerGroup();
 
 					res.data.forEach(function (quest) {
-						L.marker([quest['latitude'], quest['longitude']], { icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id']) })
+						L.marker([quest['latitude'], quest['longitude']], { virtual: true, icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id']) })
               .bindPopup('<div id="gymImage" style="background: url(&quot;' + quest['url'] + '&quot;) center center no-repeat;"></div><div id="gymName"><strong>' + quest['name'] + '</div><div id="gymID"></strong>' + quest['pokestop_id'] + '</div><div id="gymCoords"><a href="https://maps.google.com/?q=' + quest['latitude'] + ',' + quest['longitude'] + '">' + quest['latitude'] + ', ' + quest['longitude'] + '</a><div id="questTimestamp">Scanned at: ' + new Date(quest['timestamp']*1000).toLocaleString() + '</div>' + '<br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_task'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', { 'className': 'questpopup' })
 							.addTo(l_quests);
 					});
