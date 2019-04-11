@@ -8,6 +8,7 @@ import re
 import sys
 import threading
 import time
+import cv2
 from loguru import logger
 from functools import wraps
 from pathlib import Path
@@ -24,6 +25,7 @@ from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
 from utils.logging import MadLoggerUtils
 from websocket.communicator import Communicator
+from functools import wraps, update_wrapper
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -82,6 +84,18 @@ def run_job():
     t_webApp.start()
 
 
+def nocache(view):
+    @wraps(view)
+    def no_cache(*args, **kwargs):
+        response = make_response(view(*args, **kwargs))
+        response.headers['Last-Modified'] = datetime.datetime.now()
+        response.headers['Cache-Control'] = 'no-store, no-cache, must-revalidate, post-check=0, pre-check=0, max-age=0'
+        response.headers['Pragma'] = 'no-cache'
+        response.headers['Expires'] = '-1'
+        return response
+
+    return update_wrapper(no_cache, view)
+
 @app.after_request
 @auth_required
 def after_request(response):
@@ -93,28 +107,72 @@ def after_request(response):
     return response
 
 
+def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
+    # initialize the dimensions of the image to be resized and
+    # grab the image size
+    dim = None
+    filename = os.path.basename(image)
+    image = cv2.imread(image, 3)
+    (h, w) = image.shape[:2]
+
+    # if both the width and height are None, then return the
+    # original image
+    if width is None and height is None:
+        return image
+
+    # check to see if the width is None
+    if width is None:
+        # calculate the ratio of the height and construct the
+        # dimensions
+        r = height / float(h)
+        dim = (int(w * r), height)
+
+    # otherwise, the height is None
+    else:
+        # calculate the ratio of the width and construct the
+        # dimensions
+        r = width / float(w)
+        dim = (width, int(h * r))
+
+    # resize the image
+    resized = cv2.resize(image, dim, interpolation = inter)
+    cv2.imwrite("temp/madmin/" + str(filename), resized, [int(cv2.IMWRITE_PNG_COMPRESSION), 9])
+
+    # return the resized image
+    return
+
 @app.route('/phonecontrol', methods=['GET'])
 @auth_required
+@nocache
 def get_phonescreens():
+    if not os.path.exists("temp/madmin"):
+        os.makedirs("temp/madmin")
     global device_mappings
     global ws_server
     screens_phone = []
     if ws_server is None:
         screens_phone.append('No control in configmode')
         return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
-    for phonename in ws_server.get_reg_origins():
+    phones = ws_server.get_reg_origins().copy()
+    for phonename in phones:
         if os.path.isfile("temp/screenshot" + str(phonename) + ".png"):
-            creationdate = datetime.datetime.fromtimestamp(os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime('%Y-%m-%d %H:%M:%S')
-            screens_phone.append("<div class=screen><div class=phonename><b>"
-                             + str(phonename) + "</b></div><img src=/screenshot/screenshot" + str(phonename + ".png class='screenshot'><div class=phonename>" + creationdate +"</div> "
-                             "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
-                             "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
-                             "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
-                             "</div>"))
+            creationdate = datetime.datetime.fromtimestamp(
+                os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime('%Y-%m-%d %H:%M:%S')
+            image_resize("temp/screenshot" + str(phonename) + ".png", width=400)
+            screens_phone.append(
+                "<div class=screen><div class=phonename><b>"+ str(phonename) + "</b></div>"
+                "<img src=/screenshot/madmin/screenshot" + str(phonename) + ".png class='screenshot'>"
+                "<div class=phonename>" + creationdate +"</div> "
+                "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
+                "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
+                "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
+                "</div>")
 
         else:
-            screens_phone.append("<div class=screen><div class=phonename><b>"
-                                 + str(phonename) + "</b></div><img src=/static/dummy.png class='screenshot'><div class=phonename>NO Screen available</div> "
+            screens_phone.append(
+                "<div class=screen><div class=phonename><b>"+ str(phonename) + "</b></div>"
+                "<img src=/static/dummy.png class='screenshot'>"
+                "<div class=phonename>NO Screen available</div> "
                 "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
                 "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
                 "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
@@ -125,6 +183,7 @@ def get_phonescreens():
 
 @app.route('/screenshot/<path:path>', methods=['GET'])
 @auth_required
+@nocache
 def pushscreens(path):
     return send_from_directory('../temp', path)
 
