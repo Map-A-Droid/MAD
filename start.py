@@ -275,6 +275,7 @@ if __name__ == "__main__":
                             target=mitm_receiver.run_receiver)
             t_mitm.daemon = True
             t_mitm.start()
+            time.sleep(5)
 
             logger.info('Starting scanner')
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper,

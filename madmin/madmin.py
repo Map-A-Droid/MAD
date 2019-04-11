@@ -158,10 +158,16 @@ def get_phonescreens():
         if os.path.isfile("temp/screenshot" + str(phonename) + ".png"):
             creationdate = datetime.datetime.fromtimestamp(
                 os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime('%Y-%m-%d %H:%M:%S')
+
+            if conf_args.madmin_time == "12":
+                creationdate = datetime.datetime.fromtimestamp(
+                    os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime('%Y-%m-%d %I:%M:%S %p')
+
             image_resize("temp/screenshot" + str(phonename) + ".png", width=400)
             screens_phone.append(
                 "<div class=screen><div class=phonename><b>"+ str(phonename) + "</b></div>"
-                "<img src=/screenshot/madmin/screenshot" + str(phonename) + ".png class='screenshot'>"
+                "<img src=/screenshot/madmin/screenshot" + str(phonename) + ".png class='screenshot' id ='"
+                + str(phonename) + "'>"
                 "<div class=phonename>" + creationdate +"</div> "
                 "<div id=button><a href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
                 "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
@@ -207,6 +213,29 @@ def take_screenshot():
         temp_comm.get_screenshot_single(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
 
     return redirect('phonecontrol')
+
+
+@app.route('/click_screenshot', methods=['GET'])
+@auth_required
+def click_screenshot():
+    global ws_server
+    origin = request.args.get('origin')
+    click_x = request.args.get('clickx')
+    click_y = request.args.get('clicky')
+
+    img = cv2.imread("temp/screenshot" + str(origin) + ".png", 0)
+    height, width = img.shape[:2]
+
+    real_click_x = int(width / float(click_x))
+    real_click_y = int(height / float(click_y))
+
+    temp_comm = Communicator(ws_server, origin, 'madmin', conf_args.websocket_command_timeout)
+    temp_comm.click(int(real_click_x), int(real_click_y))
+
+    logger.info('MADMin Click x:{} y:{} ({})', str(real_click_x), str(real_click_y), str(origin))
+    time.sleep(2)
+
+    return redirect('take_screenshot?origin=' + str(origin))
 
 
 @app.route('/restart_pogo', methods=['GET'])
