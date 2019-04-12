@@ -71,6 +71,8 @@ class MITMReceiver(object):
                           methods_passed=['POST'])
         self.add_endpoint(endpoint='/get_latest_mitm/', endpoint_name='get_latest_mitm/', handler=self.get_latest,
                           methods_passed=['GET'])
+        self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/', handler=self.get_addresses,
+                          methods_passed = ['GET'])
         self._data_queue = Queue()
         self._db_wrapper = db_wrapper
         self.worker_threads = []
@@ -117,6 +119,11 @@ class MITMReceiver(object):
             ids_iv = ids_iv.get("values", None)
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings}
         return json.dumps(response)
+
+    def get_addresses(self, origin, data):
+        with open('configs/addresses.json') as f:
+            address_object = json.load(f)
+        return json.dumps(address_object)
 
     def received_data_worker(self):
         while True:
