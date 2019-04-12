@@ -50,6 +50,7 @@ class RouteManagerRaids(RouteManagerBase):
                 logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
                 self._is_started = True
+                self._init_route_queue()
                 self._first_round_finished = False
         finally:
             self._manager_mutex.release()
