@@ -14,13 +14,15 @@ from utils.routeutil import pre_check_value
 
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
+from worker.WorkerConfigmode import WorkerConfigmode
 
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
 class WebsocketServer(object):
-    def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths, pogoWindowManager):
+    def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths, pogoWindowManager,
+                 configmode = False):
         self.__current_users = {}
         self.__current_users_mutex = Lock()
         self.__stop_server = Event()
@@ -45,6 +47,7 @@ class WebsocketServer(object):
 
         self.__next_id = 0
         self.__id_mutex = Lock()
+        self._configmode = configmode
 
         self.__loop = None
 
@@ -147,6 +150,14 @@ class WebsocketServer(object):
             elif self.__auths and authBase64 and not check_auth(authBase64, self.args, self.__auths):
                 logger.warning("Invalid auth details received from {}", str(websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
+
+            if self._configmode:
+                worker = WorkerConfigmode(self.args, id, self)
+                logger.debug("Starting worker for {}", str(id))
+                new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
+                new_worker_thread.daemon = False
+                self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
+                return True
 
             last_known_state = {}
             client_mapping = self.__device_mappings[id]

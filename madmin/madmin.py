@@ -150,9 +150,6 @@ def get_phonescreens():
     global device_mappings
     global ws_server
     screens_phone = []
-    if ws_server is None:
-        screens_phone.append('No control in configmode')
-        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
     phones = ws_server.get_reg_origins().copy()
     for phonename in phones:
         if os.path.isfile("temp/screenshot" + str(phonename) + ".png"):
