@@ -41,6 +41,15 @@ class S2Helper:
         return lat_lng.lat().degrees, lat_lng.lng().degrees
 
     @staticmethod
+    def coords_of_cell(cell_id):
+        cell = s2sphere.Cell(s2sphere.CellId(cell_id))
+        coords = []
+        for v in range(0, 4):
+            vertex = s2sphere.LatLng.from_point(cell.get_vertex(v))
+            coords.append([vertex.lat().degrees, vertex.lng().degrees])
+        return coords
+
+    @staticmethod
     def calc_s2_cells(north, south, west, east, cell_size=16):
         centers_in_area = []
         region = s2sphere.RegionCoverer()
