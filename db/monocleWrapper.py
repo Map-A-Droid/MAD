@@ -30,6 +30,11 @@ class MonocleWrapper(DbWrapperBase):
                 "table": "raids",
                 "column": "is_exclusive",
                 "ctype": "tinyint(1) NULL"
+            },
+            {
+                "table": "fort_sightings",
+                "column": "is_ex_raid_eligible",
+                "ctype": "tinyint(1) NULL"
             }
         ]
 
@@ -741,11 +746,12 @@ class MonocleWrapper(DbWrapperBase):
 
         query_fort_sightings = (
             "INSERT INTO fort_sightings (fort_id, last_modified, team, guard_pokemon_id, "
-            "slots_available, is_in_battle, updated) "
-            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s, %s)"
+            "slots_available, is_in_battle, updated, is_ex_raid_eligible) "
+            "VALUES ((SELECT id FROM forts WHERE external_id = %s), %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE  last_modified=VALUES(last_modified), team=VALUES(team),"
             "guard_pokemon_id=VALUES(guard_pokemon_id),slots_available=VALUES(slots_available),"
-            "is_in_battle=VALUES(is_in_battle), updated=VALUES(updated)"
+            "is_in_battle=VALUES(is_in_battle), updated=VALUES(updated), "
+            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible)"
         )
 
         for cell in cells:
@@ -761,14 +767,12 @@ class MonocleWrapper(DbWrapperBase):
                     slots = gym['gym_details']['slots_available']
                     is_in_battle = gym['gym_details'].get('is_in_battle', False)
                     last_modified = gym['last_modified_timestamp_ms']/1000
+                    is_ex_raid_eligible = gym['gym_details']['is_ex_raid_eligible']
+
                     if is_in_battle:
                         is_in_battle = 1
                     else:
                         is_in_battle = 0
-
-                    raidendSec = 0
-                    if gym['gym_details']['has_raid']:
-                        raidendSec = int(gym['gym_details']['raid_info']['raid_end'] / 1000)
 
                     vals_forts.append(
                         (
@@ -778,7 +782,8 @@ class MonocleWrapper(DbWrapperBase):
 
                     vals_fort_sightings.append(
                         (
-                               gym_id, last_modified, team, guardmon, slots, is_in_battle, now
+                               gym_id, last_modified, team, guardmon, slots,
+                               is_in_battle, now, is_ex_raid_eligible
                         )
                     )
 
@@ -1094,7 +1099,7 @@ class MonocleWrapper(DbWrapperBase):
         query = (
             "SELECT forts.external_id, level, time_spawn, time_battle, time_end, "
             "pokemon_id, cp, move_1, move_2, last_updated, form, is_exclusive, name, url, "
-            "lat, lon, team, weather.condition "
+            "lat, lon, team, weather.condition, is_ex_raid_eligible "
             "FROM raids "
             "LEFT JOIN fort_sightings ON raids.fort_id = fort_sightings.fort_id "
             "LEFT JOIN forts ON raids.fort_id = forts.id "
@@ -1108,7 +1113,7 @@ class MonocleWrapper(DbWrapperBase):
         for (gym_id, level, spawn, start, end, pokemon_id,
                 cp, move_1, move_2, last_scanned, form, is_exclusive,
                 name, url, latitude, longitude, team_id,
-                weather_boosted_condition) in res:
+                weather_boosted_condition, is_ex_raid_eligible) in res:
             ret.append({
                     "gym_id": gym_id,
                     "level": level,
@@ -1127,7 +1132,8 @@ class MonocleWrapper(DbWrapperBase):
                     "longitude": longitude,
                     "team_id": team_id,
                     "weather_boosted_condition": weather_boosted_condition,
-                    "is_exclusive": is_exclusive
+                    "is_exclusive": is_exclusive,
+                    "is_ex_raid_eligible": is_ex_raid_eligible
                 })
 
         return ret
@@ -1201,7 +1207,7 @@ class MonocleWrapper(DbWrapperBase):
     def get_gyms_changed_since(self, timestamp):
         query = (
             "SELECT name, url, external_id, team, guard_pokemon_id, slots_available, "
-            "lat, lon, is_in_battle, updated "
+            "lat, lon, is_in_battle, updated, is_ex_raid_eligible "
             "FROM forts "
             "LEFT JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
             "WHERE updated >= %s"
@@ -1211,7 +1217,7 @@ class MonocleWrapper(DbWrapperBase):
         ret = []
 
         for (name, url, external_id, team, guard_pokemon_id, slots_available,
-                lat, lon, is_in_battle, updated) in res:
+                lat, lon, is_in_battle, updated, is_ex_raid_eligible) in res:
             ret.append({
                 "gym_id": external_id,
                 "team_id": team,
@@ -1223,6 +1229,7 @@ class MonocleWrapper(DbWrapperBase):
                 "last_modified": updated,
                 "name": name,
                 "url": url,
+                "is_ex_raid_eligible": is_ex_raid_eligible
             })
 
         return ret

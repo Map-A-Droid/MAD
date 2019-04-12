@@ -11,10 +11,10 @@
 # if you intend to use the priority queue functionality these settings are required
 #db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
 
-#dbip:                       # IP adress or hostname of the mysql server (needed for ocr mode)
-#dbusername:                 # Username of database (needed for ocr mode)
-#dbpassword:                 # Password of database (needed for ocr mode)
-#dbname:                     # Name of the database (needed for ocr mode)
+#dbip:                       # IP adress or hostname of the mysql server
+#dbusername:                 # Username of database
+#dbpassword:                 # Password of database
+#dbname:                     # Name of the database
 #dbport:                     # Port of the database (Default: 3306)
 #db_poolsize:                # Amount of connections to keep open to the DB. Default: 2
 

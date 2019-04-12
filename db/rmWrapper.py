@@ -30,7 +30,7 @@ class RmWrapper(DbWrapperBase):
             {
                 "table": "gym",
                 "column": "is_ex_raid_eligible",
-                "ctype": "tinyint(1) NULL"
+                "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
             }
         ]
 
@@ -767,12 +767,13 @@ class RmWrapper(DbWrapperBase):
 
         query_gym = (
             "INSERT INTO gym (gym_id, team_id, guard_pokemon_id, slots_available, enabled, latitude, longitude, "
-            "total_cp, is_in_battle, last_modified, last_scanned) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "total_cp, is_in_battle, last_modified, last_scanned, is_ex_raid_eligible) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE "
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
-            "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude)"
+            "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
+            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
@@ -791,6 +792,7 @@ class RmWrapper(DbWrapperBase):
                     slots_available = gym['gym_details']['slots_available']
                     last_modified_ts = gym['last_modified_timestamp_ms']/1000
                     last_modified = datetime.utcfromtimestamp(last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
+                    is_ex_raid_eligible = gym['gym_details']['is_ex_raid_eligible']
 
                     gym_args.append(
                         (
@@ -800,7 +802,8 @@ class RmWrapper(DbWrapperBase):
                             0,  # total CP
                             0,  # is_in_battle
                             last_modified,  # last_modified
-                            now   # last_scanned
+                            now,   # last_scanned
+                            is_ex_raid_eligible
                         )
                     )
 
@@ -1123,7 +1126,7 @@ class RmWrapper(DbWrapperBase):
             "SELECT raid.gym_id, raid.level, raid.spawn, raid.start, raid.end, raid.pokemon_id, "
             "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, "
             "gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
-            "gym.team_id, weather_boosted_condition "
+            "gym.team_id, weather_boosted_condition, gym.is_ex_raid_eligible "
             "FROM raid "
             "LEFT JOIN gymdetails ON gymdetails.gym_id = raid.gym_id "
             "LEFT JOIN gym ON gym.gym_id = raid.gym_id "
@@ -1137,7 +1140,7 @@ class RmWrapper(DbWrapperBase):
         for (gym_id, level, spawn, start, end, pokemon_id,
                 cp, move_1, move_2, last_scanned, form, is_exclusive,
                 name, url, latitude, longitude, team_id,
-                weather_boosted_condition) in res:
+                weather_boosted_condition, is_ex_raid_eligible) in res:
             ret.append({
                     "gym_id": gym_id,
                     "level": level,
@@ -1156,7 +1159,8 @@ class RmWrapper(DbWrapperBase):
                     "longitude": longitude,
                     "team_id": team_id,
                     "weather_boosted_condition": weather_boosted_condition,
-                    "is_exclusive": is_exclusive
+                    "is_exclusive": is_exclusive,
+                    "is_ex_raid_eligible": is_ex_raid_eligible
                 })
 
         return ret
@@ -1246,10 +1250,10 @@ class RmWrapper(DbWrapperBase):
             "SELECT name, description, url, gym.gym_id, team_id, "
             "guard_pokemon_id, slots_available, latitude, longitude, "
             "total_cp, is_in_battle, weather_boosted_condition, "
-            "last_modified, gym.last_scanned "
+            "last_modified, gym.last_scanned, gym.is_ex_raid_eligible "
             "FROM gym "
             "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
-            "WHERE last_modified >= %s"
+            "WHERE gym.last_scanned >= %s"
         )
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -1257,8 +1261,8 @@ class RmWrapper(DbWrapperBase):
         ret = []
 
         for (name, description, url, gym_id, team_id, guard_pokemon_id, slots_available,
-                latitude, longitude, total_cp, is_in_battle,
-                weather_boosted_condition, last_modified, last_scanned) in res:
+                latitude, longitude, total_cp, is_in_battle, weather_boosted_condition,
+                last_modified, last_scanned, is_ex_raid_eligible) in res:
             ret.append({
                 "gym_id": gym_id,
                 "team_id": team_id,
@@ -1273,7 +1277,8 @@ class RmWrapper(DbWrapperBase):
                 "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
                 "name": name,
                 "url": url,
-                "description": description
+                "description": description,
+                "is_ex_raid_eligible": is_ex_raid_eligible
             })
 
         return ret
