@@ -464,12 +464,12 @@ class MonocleWrapper(DbWrapperBase):
             return to_return
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
-        log.debug("{monocleWrapper::update_encounters_from_db} called")
+        logger.debug("{monocleWrapper::update_encounters_from_db} called")
         if geofence_helper is None:
-            log.error("No geofence_helper! Not fetching encounters.")
+            logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
         
-        log.debug("Filtering with rectangle")
+        logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
         query = (
             "SELECT lat, lon, encounter_id, "
@@ -493,7 +493,7 @@ class MonocleWrapper(DbWrapperBase):
             latest = max(latest, last_modified)
 
         encounter_id_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
-        log.debug("Got {} encounter coordinates within this rect and age (minLat, minLon, "
+        logger.debug("Got {} encounter coordinates within this rect and age (minLat, minLon, "
                   "maxLat, maxLon, last_modified): {}", len(encounter_id_coords), str(params))
         encounter_id_infos = {}
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
