@@ -9,20 +9,31 @@ args = parseArgs()
 client = AdbClient(host=args.adb_server_ip, port=args.adb_server_port)
 
 def check_adb_status(adb):
-    if client.device(adb) is not None:
-        return True
+    if not args.use_adb : return None
+    try:
+        if client.device(adb) is not None:
+            return True
+    except Exception as e:
+        logger.exception(
+            'MADmin: Exception occurred while checking adb status ({}): {}.', str(adb), e)
     return None
 
 
 def return_adb_devices():
-    return client.devices()
+    if not args.use_adb: return []
+    try:
+        return client.devices()
+    except Exception as e:
+        logger.exception(
+            'MADmin: Exception occurred while getting adb clients: {}.', e)
+    return []
 
 
 def send_shell_command(adb, origin, command):
     try:
         device = client.device(adb)
         if device is not None:
-            logger.info('MADmin: Using ADB ({})', str(origin))
+            logger.info('MADmin: Using ADB shell command ({})', str(origin))
             device.shell(command)
             return True
     except Exception as e:

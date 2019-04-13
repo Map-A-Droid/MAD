@@ -217,6 +217,8 @@ def parseArgs():
                         help='Use Media Projection for image transfer (OCR) (Default: False)')
 
     # adb
+    parser.add_argument('-adb', '--use_adb', action='store_false', default=False,
+                        help='Use ADB for phonecontrol (Default: False)')
     parser.add_argument('-adbservip', '--adb_server_ip', default='127.0.0.1',
                         help='IP address of ADB server (Default: 127.0.0.1)')
 

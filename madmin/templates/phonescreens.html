@@ -68,6 +68,18 @@
         color: white;
         font-size: x-large;
     }
+
+    div#softbar {
+        width: 100%;
+    }
+
+    div#softbutton {
+        width: 50%;
+        float: left;
+        text-align: center;
+    }
+
+
     @media only screen and (max-width: 600px) {
     .screen {
         width: 90%;
@@ -119,7 +131,42 @@ $("a#quit").bind("click", function(event) {
      });
    });
 
-$("img").mousedown(function(e){
+
+$(".backbutton").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var adb = $(this).attr("adb");
+       var url = $(this).attr("href");
+       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: 'send_command?origin=' + origin + '&command=back&adb=' + adb,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('div#' + origin).unblock();
+       }
+     });
+   });
+
+$(".homebutton").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var adb = $(this).attr("adb");
+       var url = $(this).attr("href");
+       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('div#' + origin).unblock();
+       }
+     });
+   });
+
+$(".screenshot").mousedown(function(e){
 e.preventDefault();
 
     $(this).data("tracking",true);

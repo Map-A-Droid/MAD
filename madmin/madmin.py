@@ -40,7 +40,6 @@ ws_server = None
 datetimeformat = None
 
 
-
 def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
     global conf_args, device_mappings, db_wrapper, areas, ws_server, datetimeformat
     conf_args = arg_args
@@ -154,9 +153,12 @@ def generate_phones(phonename, add_text, adb_option, screen):
     phone = (
             "<div class=screen id=" + str(phonename) + "><div class=phonename><b>" + str(phonename) + " "
             + str(add_text) + "</b></div><img src=" + screen + " class='screenshot' id ='"
-            + str(phonename) + "' adb ='" + str(adb_option) + "'><div class=phonename id=date"
-            + str(phonename) + ">" + creationdate + "</div><div id=button><a id=screenshot origin="
-            + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "&adb="
+            + str(phonename) + "' adb ='" + str(adb_option) + "'><div id=softbar><div id=softbutton>"
+            "<img src=/static/back.png width=20px adb=" + str(adb_option) + " class=backbutton origin="
+            + str(phonename) + "></div><div id=softbutton><img src=/static/home.png width=20px adb="
+            + str(adb_option) + " class=homebutton origin="+ str(phonename) + "></div></div>"
+            "<div class=phonename id=date" + str(phonename) + ">" + creationdate + "</div><div id=button>"
+            "<a id=screenshot origin=" + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "&adb="
             + str(adb_option) + "'>Take Screenshot</a></div><div id=button><a href='quit_pogo?origin="
             + str(phonename) + "&adb=" + str(adb_option) + "' id='quit' origin="
             + str(phonename) + ">Quit Pogo</a></div><div id=button><a href='restart_phone?origin="
@@ -346,6 +348,31 @@ def restart_phone():
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.reboot()
     return redirect('phonecontrol')
+
+
+@app.route('/send_command', methods=['GET'])
+@auth_required
+def send_command():
+    global ws_server
+    origin = request.args.get('origin')
+    useadb = request.args.get('adb')
+    command = request.args.get('command')
+    adb = device_mappings[origin].get('adb', False)
+    logger.info('MADmin: Sending Command ({})', str(origin))
+    if command == 'home':
+        cmd = "input keyevent 3"
+    elif command == 'back':
+        cmd = "input keyevent 4"
+    if useadb == 'True' and send_shell_command(adb, origin, cmd):
+        logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+    else:
+        temp_comm = ws_server.get_origin_communicator(origin)
+        if command == 'home':
+            temp_comm.homeButton()
+        elif command == 'back':
+            temp_comm.backButton()
+
+    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
 
 
 @app.route('/screens', methods=['GET'])
@@ -545,13 +572,9 @@ def get_gyms():
             modify = hashdata[hashvalue]["modify"]
 
             creationdate = datetime.datetime.fromtimestamp(
-                creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+                creation_date(file)).strftime(datetimeformat)
 
-            if conf_args.madmin_time == "12":
-                creationdate = datetime.datetime.strptime(
-                    creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
-                modify = datetime.datetime.strptime(
-                    modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+            modify = datetime.datetime.strptime(modify, '%Y-%m-%d %H:%M:%S').strftime(datetimeformat)
 
             name = 'unknown'
             lat = '0'
@@ -707,11 +730,8 @@ def get_screens():
 
     for file in glob.glob(str(conf_args.raidscreen_path) + "/raidscreen_*.png"):
         creationdate = datetime.datetime.fromtimestamp(
-            creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+            creation_date(file)).strftime(datetimeformat)
 
-        if conf_args.madmin_time == "12":
-            creationdate = datetime.datetime.strptime(
-                creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
         screenJson = ({'filename': file[4:], 'creation': creationdate})
         screens.append(screenJson)
@@ -727,14 +747,10 @@ def get_unknows():
         unkfile = re.search(
             r'unkgym_(-?\d+\.?\d+)_(-?\d+\.?\d+)_((?s).*)\.jpg', file)
         creationdate = datetime.datetime.fromtimestamp(
-            creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+            creation_date(file)).strftime(datetimeformat)
         lat = (unkfile.group(1))
         lon = (unkfile.group(2))
         hashvalue = (unkfile.group(3))
-
-        if conf_args.madmin_time == "12":
-            creationdate = datetime.datetime.strptime(
-                creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
 
         hashJson = ({'lat': lat, 'lon': lon, 'hashvalue': hashvalue,
                      'filename': file[4:], 'creation': creationdate})
