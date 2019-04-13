@@ -74,7 +74,7 @@
     }
 
     div#softbutton {
-        width: 50%;
+        width: 33%;
         float: left;
         text-align: center;
     }
@@ -158,6 +158,24 @@ $(".homebutton").bind("click", function(event) {
        $.ajax({
        type: "GET",
        url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('div#' + origin).unblock();
+       }
+     });
+   });
+
+$(".gpsbutton").bind("click", function(event) {
+       event.preventDefault();
+       var coords = prompt("Please enter the new coords:", "0.0,0.0");
+       var origin = $(this).attr("origin");
+       var adb = $(this).attr("adb");
+       var url = $(this).attr("href");
+       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb,
        success: function(data){
            $('#date' + origin).text(data);
            $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');

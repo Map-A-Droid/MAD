@@ -156,7 +156,8 @@ def generate_phones(phonename, add_text, adb_option, screen):
             + str(phonename) + "' adb ='" + str(adb_option) + "'><div id=softbar><div id=softbutton>"
             "<img src=/static/back.png width=20px adb=" + str(adb_option) + " class=backbutton origin="
             + str(phonename) + "></div><div id=softbutton><img src=/static/home.png width=20px adb="
-            + str(adb_option) + " class=homebutton origin="+ str(phonename) + "></div></div>"
+            + str(adb_option) + " class=homebutton origin=" + str(phonename) + "></div><div id=softbutton><img src=/static/gps.png width=20px adb="
+            + str(adb_option) + " class=gpsbutton origin=" + str(phonename) + "></div></div>"
             "<div class=phonename id=date" + str(phonename) + ">" + creationdate + "</div><div id=button>"
             "<a id=screenshot origin=" + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "&adb="
             + str(adb_option) + "'>Take Screenshot</a></div><div id=button><a href='quit_pogo?origin="
@@ -348,6 +349,25 @@ def restart_phone():
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.reboot()
     return redirect('phonecontrol')
+
+
+@app.route('/send_gps', methods=['GET'])
+@auth_required
+def send_gps():
+    global ws_server
+    origin = request.args.get('origin')
+    useadb = request.args.get('adb')
+    coords = request.args.get('coords').replace(' ', '').split(',')
+    if len(coords) <  2:
+        return 'Wrong Format!'
+    logger.info('MADmin: Set GPS Coords {}, {} - WS Mode only! ({})', str(coords[0]), str(coords[1]), str(origin))
+    try:
+        temp_comm = ws_server.get_origin_communicator(origin)
+        temp_comm.setLocation(coords[0], coords[1], 0)
+    except Exception as e:
+        logger.exception(
+            'MADmin: Exception occurred while set gps coords: {}.', e)
+    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
 
 
 @app.route('/send_command', methods=['GET'])
