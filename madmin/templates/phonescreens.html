@@ -86,40 +86,83 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script>
  $(document).ready(function() {
-  $("img").on("click", function(event) {
-    event.preventDefault();
-    var id = event.target.id;
-    var imagex = this.width / (event.pageX - this.offsetLeft);
-    var imagey = this.height / (event.pageY - this.offsetTop);
-    var url = 'click_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey
-    $.blockUI({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
-       $.ajax({
-       type: "GET",
-       url: url,
-       success: function(data){
-           $('#date' + id).text(data);
-           $('img#' + id).attr('src', '/screenshot/madmin/screenshot' + id + '.png');
-           setTimeout($.unblockUI, 10);
-       }
-    });
-  });
-
 
 $("a#screenshot").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
        var url = $(this).attr("href");
-       $.blockUI({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
        $.ajax({
        type: "GET",
        url: url,
        success: function(data){
            $('#date' + origin).text(data);
            $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
-           setTimeout($.unblockUI, 10);
+           $('div#' + origin).unblock();
        }
      });
    });
+
+$("a#quit").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var url = $(this).attr("href");
+       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: url,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('div#' + origin).unblock();
+       }
+     });
+   });
+
+$("img").mousedown(function(e){
+e.preventDefault();
+
+    $(this).data("tracking",true);
+    $(this).data("start",{x:e.offsetX,y:e.offsetY,
+                          xe:e.offsetX,ye:e.offsetY});
+
+}).mousemove(function(e){
+    if($(this).data("tracking")){
+        var start = $(this).data("start");
+        var w = Math.abs(e.offsetX);
+        var h = Math.abs(e.offsetY);
+        $(this).data("start",{x:start.x,y:start.y,
+                              xe:w, ye:h});
+
+    }
+}).mouseup(function(e){
+    $(this).data("tracking",false);
+    var start = $(this).data("start");
+    var id = event.target.id;
+    var adb = $(this).attr("adb");
+    var imagex = this.width / (start.x );
+    var imagey = this.height / (start.y);
+    var imagexe = this.width / (start.xe );
+    var imageye = this.height / (start.ye);
+    if (start.x == start.xe && start.y == start.ye) {
+        var url = 'click_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey + '&adb=' + adb
+    } else {
+        var url = 'swipe_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey + '&adb=' + adb + '&clickxe=' + imagexe +'&clickye=' + imageye
+    }
+    $('div#' + id).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: url,
+       success: function(data){
+           $('#date' + id).text(data);
+           $('img#' + id).attr('src', '/screenshot/madmin/screenshot' + id + '.png');
+           $('div#' + id).unblock();
+       }
+    });
+
+
+});
+
   });
 
 
@@ -130,7 +173,7 @@ $("a#screenshot").bind("click", function(event) {
 {% block content %}
 
 <h2>{{header | safe }}</h2>
-
+<h4>Full click and swipe control your devices.</h4>
 <div>
   {% for item in editform %}
   {{item | safe }}

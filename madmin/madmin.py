@@ -10,7 +10,6 @@ import threading
 import time
 import cv2
 from loguru import logger
-from functools import wraps
 from pathlib import Path
 from math import floor
 from shutil import copyfile
@@ -24,7 +23,7 @@ from utils.language import i8ln, open_json_file
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
 from utils.logging import MadLoggerUtils
-from websocket.communicator import Communicator
+from utils.adb import check_adb_status, return_adb_devices, make_screenshot, make_screenclick, send_shell_command, make_screenswipe
 from functools import wraps, update_wrapper
 
 sys.path.append("..")  # Adds higher directory to python modules path.
@@ -38,16 +37,22 @@ db_wrapper = None
 device_mappings = None
 areas = None
 ws_server = None
+datetimeformat = None
+
 
 
 def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
-    global conf_args, device_mappings, db_wrapper, areas, ws_server
+    global conf_args, device_mappings, db_wrapper, areas, ws_server, datetimeformat
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
     ws_server = glob_ws_server
+    if conf_args.madmin_time == "12":
+        datetimeformat = '%Y-%m-%d %I:%M:%S %p'
+    else:
+        datetimeformat = '%Y-%m-%d %H:%M:%S'
 
     httpsrv = WSGIServer((arg_args.madmin_ip, int(arg_args.madmin_port)), app.wsgi_app, log=MadLoggerUtils)
     httpsrv.serve_forever()
@@ -141,6 +146,25 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     # return the resized image
     return
 
+
+def generate_phones(phonename, add_text, adb_option, screen):
+    creationdate = datetime.datetime.fromtimestamp(
+        os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime(datetimeformat)
+
+    phone = (
+            "<div class=screen id=" + str(phonename) + "><div class=phonename><b>" + str(phonename) + " "
+            + str(add_text) + "</b></div><img src=" + screen + " class='screenshot' id ='"
+            + str(phonename) + "' adb ='" + str(adb_option) + "'><div class=phonename id=date"
+            + str(phonename) + ">" + creationdate + "</div><div id=button><a id=screenshot origin="
+            + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "&adb="
+            + str(adb_option) + "'>Take Screenshot</a></div><div id=button><a href='quit_pogo?origin="
+            + str(phonename) + "&adb=" + str(adb_option) + "' id='quit' origin="
+            + str(phonename) + ">Quit Pogo</a></div><div id=button><a href='restart_phone?origin="
+            + str(phonename) + "&adb=" + str(adb_option) + "'>Reboot Phone</a></div></div>"
+    )
+    return phone
+
+
 @app.route('/phonecontrol', methods=['GET'])
 @auth_required
 @nocache
@@ -149,38 +173,45 @@ def get_phonescreens():
         os.makedirs("temp/madmin")
     global device_mappings
     global ws_server
+
     screens_phone = []
+    ws_connected_phones = []
     phones = ws_server.get_reg_origins().copy()
     for phonename in phones:
-        if os.path.isfile("temp/screenshot" + str(phonename) + ".png"):
-            creationdate = datetime.datetime.fromtimestamp(
-                os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime('%Y-%m-%d %H:%M:%S')
+        ws_connected_phones.append(phonename)
+        add_text = ""
+        adb_option = False
+        adb = device_mappings[phonename].get('adb', False)
+        if adb is not None and check_adb_status(adb) is not None:
+            ws_connected_phones.append(adb)
+            adb_option=True
+            add_text = '<b>ADB</b>'
 
-            if conf_args.madmin_time == "12":
-                creationdate = datetime.datetime.fromtimestamp(
-                    os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime('%Y-%m-%d %I:%M:%S %p')
-
-            image_resize("temp/screenshot" + str(phonename) + ".png", width=400)
-            screens_phone.append(
-                "<div class=screen><div class=phonename><b>"+ str(phonename) + "</b></div>"
-                "<img src=/screenshot/madmin/screenshot" + str(phonename) + ".png class='screenshot' id ='"
-                + str(phonename) + "'>"
-                "<div class=phonename id=date" + str(phonename) + ">" + creationdate +"</div> "
-                "<div id=button><a id=screenshot origin=" + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
-                "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
-                "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
-                "</div>")
+        filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(phonename))
+        if os.path.isfile(filename):
+            image_resize(filename, width=400)
+            screen = "/screenshot/madmin/screenshot" + str(phonename) + ".png"
+            screens_phone.append(generate_phones(phonename, add_text, adb_option, screen))
 
         else:
-            screens_phone.append(
-                "<div class=screen><div class=phonename><b>"+ str(phonename) + "</b></div>"
-                "<img src=/static/dummy.png class='screenshot' id ='"
-                + str(phonename) + "'>"
-                "<div class=phonename id=date" + str(phonename) + ">NO Screen available</div> "
-                "<div id=button><a id=screenshot origin=" + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "'>Take Screenshot</a></div>"
-                "<div id=button><a href='restart_pogo?origin=" + str(phonename) + "'>Restart Pogo</a></div>"
-                "<div id=button><a href='restart_phone?origin=" + str(phonename) + "'>Reboot Phone</a></div>"
-                "</div>")
+            screen = "/static/dummy.png"
+            screens_phone.append(generate_phones(phonename, add_text, adb_option, screen))
+
+    for phonename in return_adb_devices():
+        if phonename.serial not in ws_connected_phones:
+            for pho in device_mappings:
+                if phonename.serial == device_mappings[pho].get('adb', False):
+                    adb_option = True
+                    add_text = '<b>ADB - no WS<img src="/static/warning.png" width="20px" ' \
+                               'alt="NO websocket connection!"></b>'
+                    filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(pho))
+                    if os.path.isfile(filename):
+                        image_resize(filename, width=400)
+                        screen = "/screenshot/madmin/screenshot" + str(pho) + ".png"
+                        screens_phone.append(generate_phones(pho, add_text, adb_option, screen))
+                    else:
+                        screen = "/static/dummy.png"
+                        screens_phone.append(generate_phones(pho, add_text, adb_option, screen))
 
     return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
 
@@ -203,21 +234,23 @@ def pushstatic(path):
 def take_screenshot():
     global ws_server
     origin = request.args.get('origin')
-    logger.info('MADmin: Taking screenshot ({})', str(origin))
-    temp_comm = ws_server.get_origin_communicator(origin)
-    if conf_args.use_media_projection:
+    useadb = request.args.get('adb', False)
+    logger.info('MADmin: Making screenshot ({})', str(origin))
+    adb = device_mappings[origin].get('adb', False)
+
+    if useadb == 'True' and make_screenshot(adb, origin):
+        logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
+    elif conf_args.use_media_projection:
+        temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.getScreenshot(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
     else:
+        temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.get_screenshot_single(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
 
     image_resize("temp/screenshot" + str(origin) + ".png", width=400)
 
     creationdate = datetime.datetime.fromtimestamp(
-        os.path.getmtime("temp/screenshot" + str(origin) + ".png")).strftime('%Y-%m-%d %H:%M:%S')
-
-    if conf_args.madmin_time == "12":
-        creationdate = datetime.datetime.fromtimestamp(
-            os.path.getmtime("temp/screenshot" + str(origin) + ".png")).strftime('%Y-%m-%d %I:%M:%S %p')
+        os.path.getmtime(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))).strftime(datetimeformat)
 
     return creationdate
 
@@ -229,31 +262,74 @@ def click_screenshot():
     origin = request.args.get('origin')
     click_x = request.args.get('clickx')
     click_y = request.args.get('clicky')
+    useadb = request.args.get('adb')
 
-    img = cv2.imread("temp/screenshot" + str(origin) + ".png", 0)
+    filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin))
+    img = cv2.imread(filename, 0)
     height, width = img.shape[:2]
 
     real_click_x = int(width / float(click_x))
     real_click_y = int(height / float(click_y))
+    adb = device_mappings[origin].get('adb', False)
 
-    temp_comm = ws_server.get_origin_communicator(origin)
-    temp_comm.click(int(real_click_x), int(real_click_y))
+    if useadb == 'True' and make_screenclick(adb, origin, real_click_x, real_click_y):
+        logger.info('MADMin: ADB screenclick successfully ({})', str(origin))
+    else:
+        logger.info('MADMin WS Click x:{} y:{} ({})', str(real_click_x), str(real_click_y), str(origin))
+        temp_comm = ws_server.get_origin_communicator(origin)
+        temp_comm.click(int(real_click_x), int(real_click_y))
 
-    logger.info('MADMin Click x:{} y:{} ({})', str(real_click_x), str(real_click_y), str(origin))
-    time.sleep(2)
+    time.sleep(1)
+    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
 
-    return redirect('take_screenshot?origin=' + str(origin))
-
-
-@app.route('/restart_pogo', methods=['GET'])
+@app.route('/swipe_screenshot', methods=['GET'])
 @auth_required
-def restart_pogo():
+def swipe_screenshot():
     global ws_server
     origin = request.args.get('origin')
+    click_x = request.args.get('clickx')
+    click_y = request.args.get('clicky')
+    click_xe = request.args.get('clickxe')
+    click_ye = request.args.get('clickye')
+    useadb = request.args.get('adb')
+
+    filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin))
+    img = cv2.imread(filename, 0)
+    height, width = img.shape[:2]
+
+    real_click_x = int(width / float(click_x))
+    real_click_y = int(height / float(click_y))
+    real_click_xe = int(width / float(click_xe))
+    real_click_ye = int(height / float(click_ye))
+    adb = device_mappings[origin].get('adb', False)
+
+    if useadb == 'True' and make_screenswipe(adb, origin, real_click_x, real_click_y, real_click_xe, real_click_ye):
+        logger.info('MADMin: ADB screenswipe successfully ({})', str(origin))
+    else:
+        logger.info('MADMin WS Swipe x:{} y:{} xe:{} ye:{} ({})', str(real_click_x), str(real_click_y),
+                    str(real_click_xe), str(real_click_ye),  str(origin))
+        temp_comm = ws_server.get_origin_communicator(origin)
+        temp_comm.touchandhold(int(real_click_x), int(real_click_y), int(real_click_xe), int(real_click_ye))
+
+    time.sleep(1)
+    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+
+
+@app.route('/quit_pogo', methods=['GET'])
+@auth_required
+def quit_pogo():
+    global ws_server
+    origin = request.args.get('origin')
+    useadb = request.args.get('adb')
+    adb = device_mappings[origin].get('adb', False)
     logger.info('MADmin: Restart Pogo ({})', str(origin))
-    temp_comm = ws_server.get_origin_communicator(origin)
-    temp_comm.stopApp("com.nianticlabs.pokemongo")
-    return redirect('phonecontrol')
+    if useadb == 'True' and send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
+        logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+    else:
+        temp_comm = ws_server.get_origin_communicator(origin)
+        temp_comm.stopApp("com.nianticlabs.pokemongo")
+        logger.info('MADMin: WS command successfully ({})', str(origin))
+    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
 
 
 @app.route('/restart_phone', methods=['GET'])
@@ -261,9 +337,14 @@ def restart_pogo():
 def restart_phone():
     global ws_server
     origin = request.args.get('origin')
+    useadb = request.args.get('adb')
+    adb = device_mappings[origin].get('adb', False)
     logger.info('MADmin: Restart Phone ({})', str(origin))
-    temp_comm = ws_server.get_origin_communicator(origin)
-    temp_comm.reboot()
+    if useadb == 'True' and send_shell_command(adb, origin, "am broadcast -a android.intent.action.BOOT_COMPLETED"):
+        logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+    else:
+        temp_comm = ws_server.get_origin_communicator(origin)
+        temp_comm.reboot()
     return redirect('phonecontrol')
 
 
@@ -1267,6 +1348,38 @@ def config():
             mapping['areas'].append({'name': None})
 
             for option in mapping['areas']:
+                if edit:
+                    if block == "settings":
+                        if str(oldvalues[field['settings']['name']]).lower() == str(option['name']).lower():
+                            sel = 'selected'
+                        else:
+                            if oldvalues[field['settings']['name']] == '':
+                                sel = 'selected'
+                    else:
+                        if field['name'] in oldvalues:
+                            if str(oldvalues[field['name']]).lower() == str(option['name']).lower():
+                                sel = 'selected'
+                        else:
+                            if not option['name']:
+                                sel = 'selected'
+                _temp = _temp + '<option value="' + \
+                    str(option['name']) + '" ' + sel + '>' + \
+                    str(option['name']) + '</option>'
+                sel = ''
+            _temp = _temp + '</select></div>'
+            fieldwebsite.append(str(_temp))
+
+        if field['settings']['type'] == 'adbselect':
+            devices = return_adb_devices()
+            _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
+            adb = {}
+            adb['serial'] = []
+            adb['serial'].append({'name': None})
+            for device in devices:
+                adb['serial'].append({'name': device.serial})
+
+            for option in adb['serial']:
                 if edit:
                     if block == "settings":
                         if str(oldvalues[field['settings']['name']]).lower() == str(option['name']).lower():

@@ -155,7 +155,6 @@ class WebsocketServer(object):
                 worker = WorkerConfigmode(self.args, id, self)
                 logger.debug("Starting worker for {}", str(id))
                 new_worker_thread = Thread(name='worker_%s' % id, target=worker.start_worker)
-                new_worker_thread.daemon = False
                 self.__current_users[id] = [new_worker_thread, worker, websocket_client_connection, 0]
                 return True
 

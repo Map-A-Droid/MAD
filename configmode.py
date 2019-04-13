@@ -34,7 +34,7 @@ def start_madmin(args, db_wrapper, ws_server):
     madmin_start(args, db_wrapper, ws_server)
 
 def load_mappings(db_wrapper):
-    mapping_parser = MappingParser(db_wrapper)
+    mapping_parser = MappingParser(db_wrapper, True)
     device_mappings = mapping_parser.get_devicemappings()
     routemanagers = mapping_parser.get_routemanagers()
     auths = mapping_parser.get_auths()

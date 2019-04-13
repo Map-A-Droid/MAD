@@ -30,6 +30,15 @@
 						"empty": null,
 						"description": "Configpool for this area"
 					}
+				},
+				{
+					"name": "adbname",
+					"settings": {
+						"type": "adbselect",
+						"require": "true",
+						"empty": null,
+						"description": "ADB devicename"
+					}
 				}
 			],
 			"settings": [

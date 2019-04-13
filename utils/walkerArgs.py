@@ -216,6 +216,13 @@ def parseArgs():
     parser.add_argument('-ump', '--use_media_projection', action='store_true', default=False,
                         help='Use Media Projection for image transfer (OCR) (Default: False)')
 
+    # adb
+    parser.add_argument('-adbservip', '--adb_server_ip', default='127.0.0.1',
+                        help='IP address of ADB server (Default: 127.0.0.1)')
+
+    parser.add_argument('-adpservprt', '--adb_server_port', type=int, default=5037,
+                        help='Port of ADB server (Default: 5037)')
+
     # log settings
     parser.add_argument('--no-file-logs',
                         help=('Disable logging to files. ' +

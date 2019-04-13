@@ -17,3 +17,6 @@ class WorkerConfigmode(object):
         logger.info("Worker {} started in configmode", str(self._id))
         while not self._stop_worker_event.isSet():
             time.sleep(1)
+
+    def stop_worker(self):
+        self._stop_worker_event.set()

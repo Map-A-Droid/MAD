@@ -77,6 +77,10 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #stat_gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
 #statistic_interval:         # Update interval for the usage generator in seconds (Default: 60)
 
+# ADB
+#adb_server_ip               # IP address of ADB server (Default: 127.0.0.1)
+#adb_server_port             # Port of ADB server (Default: 5037)
+
 # MADmin
 ######################
 #with_madmin                 # Start Madmin

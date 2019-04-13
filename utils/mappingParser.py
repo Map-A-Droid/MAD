@@ -39,8 +39,9 @@ mode_mapping = {
 
 
 class MappingParser(object):
-    def __init__(self, db_wrapper):
+    def __init__(self, db_wrapper, configmode = False):
         self.db_wrapper = db_wrapper
+        self.configmode = configmode
         with open('configs/mappings.json') as f:
             self.__raw_json = json.load(f)
             if 'walker' not in self.__raw_json: self.__raw_json['walker'] = []
@@ -52,6 +53,10 @@ class MappingParser(object):
 
         # returns list of routemanagers with area IDs
         areas = {}
+
+        if self.configmode:
+            return areas
+
         area_arr = self.__raw_json["areas"]
 
         thread_pool = ThreadPool(processes=4)
@@ -194,6 +199,7 @@ class MappingParser(object):
             device_dict = {}
             device_dict.clear()
             walker = device["walker"]
+            device_dict["adb"] = device.get("adbname", None)
             pool = device.get("pool", None)
             settings = device.get("settings", None)
             if pool:
