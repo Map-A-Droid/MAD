@@ -174,12 +174,6 @@ class WebhookWorker:
             else:
                 weather_payload["longitude"] = weather["longitude"]
 
-            if weather.get("coords", None) is None:
-                weather_payload["coords"] = S2Helper.coords_of_cell(
-                    weather["s2_cell_id"])
-            else:
-                weather_payload["coords"] = weather["coords"]
-
             entire_payload = {"type": "weather", "message": weather_payload}
             ret.append(entire_payload)
 
