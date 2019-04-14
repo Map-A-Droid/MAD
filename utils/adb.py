@@ -75,7 +75,7 @@ def make_screenswipe(adb, origin, x, y, xe, ye):
     try:
         device = client.device(adb)
         if device is not None:
-            device.shell("input swipe " + str(x) + " " + str(y) + " " + str(xe) + " " + str(ye) + " 3000")
+            device.shell("input swipe " + str(x) + " " + str(y) + " " + str(xe) + " " + str(ye) + " 100")
             logger.info('MADMin ADB Swipe x:{} y:{} xe:{} ye:{}({})', str(x), str(y), str(xe), str(ye), str(origin))
             time.sleep(1)
             return True

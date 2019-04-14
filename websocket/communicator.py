@@ -136,6 +136,9 @@ class Communicator:
     def homeButton(self):
         return self.__runAndOk("touch keyevent 3", self.__commandTimeout)
 
+    def sendText(self, text):
+        return self.__runAndOk("touch text " + str(text), self.__commandTimeout)
+
     def isScreenOn(self):
         self.__sendMutex.acquire()
         try:

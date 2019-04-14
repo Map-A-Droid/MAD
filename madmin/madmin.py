@@ -39,6 +39,9 @@ areas = None
 ws_server = None
 datetimeformat = None
 
+with open('madmin/static/vars/template/phone.tpl', 'r') as file:
+    phone_template = file.read().replace('\n', '')
+
 
 def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
     global conf_args, device_mappings, db_wrapper, areas, ws_server, datetimeformat
@@ -147,27 +150,19 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
 
 
 def generate_phones(phonename, add_text, adb_option, screen, dummy=False):
-    if dummy:
+    if not dummy:
         creationdate = datetime.datetime.fromtimestamp(
             os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime(datetimeformat)
     else:
         creationdate = 'No Screen available'
-    phone = (
-            "<div class=screen id=" + str(phonename) + "><div class=phonename><b>" + str(phonename) + " "
-            + str(add_text) + "</b></div><img src=" + screen + " class='screenshot' id ='"
-            + str(phonename) + "' adb ='" + str(adb_option) + "'><div id=softbar><div id=softbutton>"
-            "<img src=/static/back.png width=20px adb=" + str(adb_option) + " class=backbutton origin="
-            + str(phonename) + "></div><div id=softbutton><img src=/static/home.png width=20px adb="
-            + str(adb_option) + " class=homebutton origin=" + str(phonename) + "></div><div id=softbutton><img src=/static/gps.png width=20px adb="
-            + str(adb_option) + " class=gpsbutton origin=" + str(phonename) + "></div></div>"
-            "<div class=phonename id=date" + str(phonename) + ">" + creationdate + "</div><div id=button>"
-            "<a id=screenshot origin=" + str(phonename) + " href='take_screenshot?origin=" + str(phonename) + "&adb="
-            + str(adb_option) + "'>Take Screenshot</a></div><div id=button><a href='quit_pogo?origin="
-            + str(phonename) + "&adb=" + str(adb_option) + "' id='quit' origin="
-            + str(phonename) + ">Quit Pogo</a></div><div id=button><a href='restart_phone?origin="
-            + str(phonename) + "&adb=" + str(adb_option) + "'>Reboot Phone</a></div></div>"
+
+    return (
+        phone_template.replace('<<phonename>>', phonename)
+            .replace('<<adb_option>>', str(adb_option))
+            .replace('<<add_text>>', add_text)
+            .replace('<<screen>>', screen)
+            .replace('<<creationdate>>', creationdate)
     )
-    return phone
 
 
 @app.route('/phonecontrol', methods=['GET'])
@@ -369,6 +364,25 @@ def send_gps():
     except Exception as e:
         logger.exception(
             'MADmin: Exception occurred while set gps coords: {}.', e)
+    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+
+
+@app.route('/send_text', methods=['GET'])
+@auth_required
+def send_text():
+    global ws_server
+    origin = request.args.get('origin')
+    useadb = request.args.get('adb')
+    text = request.args.get('text')
+    adb = device_mappings[origin].get('adb', False)
+    if len(text) == 0 :
+        return 'Empty text'
+    logger.info('MADmin: Send text ({})', str(origin))
+    if useadb == 'True' and send_shell_command(adb, origin, 'input text "' + text + '"'):
+        logger.info('MADMin: Send text successfully ({})', str(origin))
+    else:
+        temp_comm = ws_server.get_origin_communicator(origin)
+        temp_comm.sendText(text)
     return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
 
 
@@ -1533,7 +1547,9 @@ def config():
     else:
         header = "Add new " + type
 
-    fieldwebsite.append(
+    if (type=='walker' and edit is None) or (type!='walker' and edit is not None) \
+            or (type != 'walker' and edit is None):
+        fieldwebsite.append(
         '<button type="submit" class="btn btn-primary">Save</button></form>')
 
     return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings",

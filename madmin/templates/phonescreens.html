@@ -71,10 +71,11 @@
 
     div#softbar {
         width: 100%;
+        float: left;
     }
 
     div#softbutton {
-        width: 33%;
+        width: 20%;
         float: left;
         text-align: center;
     }
@@ -185,6 +186,34 @@ $(".gpsbutton").bind("click", function(event) {
            });
        };
    });
+
+$(".keyboardbutton").bind("click", function(event) {
+       event.preventDefault();
+       var text = prompt("Please enter text:", "");
+       if (text != null) {
+           var origin = $(this).attr("origin");
+           var adb = $(this).attr("adb");
+           var url = $(this).attr("href");
+           $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $.ajax({
+               type: "GET",
+               url: 'send_text?origin=' + origin + '&text=' + text + '&adb=' + adb,
+               success: function(data){
+                   $('#date' + origin).text(data);
+                   $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+                   $('div#' + origin).unblock();
+               }
+           });
+       };
+   });
+
+$(".downloadbutton").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var img = $('img#' + origin).attr("src").replace("/madmin", "");
+       window.open(img, '_blank');
+});
+
 
 $(".screenshot").mousedown(function(e){
 e.preventDefault();
