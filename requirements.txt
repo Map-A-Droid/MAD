@@ -14,7 +14,7 @@ idna==2.7
 ImageHash==4.0
 imutils==0.5.2
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2>=2.10.1
 kiwisolver==1.0.1
 MarkupSafe==1.1.0
 matplotlib==3.0.2
