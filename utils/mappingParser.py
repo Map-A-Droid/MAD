@@ -114,6 +114,15 @@ class MappingParser(object):
                                                settings=area.get("settings", None),
                                                mode=mode
                                                )
+            elif mode == "idle":
+                route_manager = RouteManagerRaids(self.db_wrapper, None, mode_mapping['raid']["range"],
+                                                  mode_mapping['raid']["max_count"],
+                                                  area["geofence_included"], area.get("geofence_excluded", None),
+                                                  area["routecalc"],
+                                                  mode=area["mode"], settings=area.get("settings", None),
+                                                  init=area.get("init", False),
+                                                  name=area.get("name", "unknown")
+                                                  )
             elif mode == "pokestops":
                 route_manager = RouteManagerQuests(self.db_wrapper, None, mode_mapping[area["mode"]]["range"],
                                                    mode_mapping[area["mode"]]["max_count"],
@@ -126,7 +135,7 @@ class MappingParser(object):
             else:
                 raise RuntimeError("Invalid mode found in mapping parser.")
 
-            if not mode == "iv_mitm":
+            if not mode in ("iv_mitm", "idle"):
                 if mode == "raids_ocr" or area.get("init", False) is False:
                     # grab data from DB depending on mode
                     # TODO: move routemanagers to factory
@@ -247,9 +256,9 @@ class MappingParser(object):
         areas_arr = self.__raw_json["areas"]
         for area in areas_arr:
             area_dict = {}
-            area_dict['routecalc'] = area['routecalc']
+            area_dict['routecalc'] = area.get('routecalc', None)
             area_dict['mode'] = area['mode']
-            area_dict['geofence_included'] = area['geofence_included']
+            area_dict['geofence_included'] = area.get('geofence_included', None)
             area_dict['geofence_excluded'] = area.get('geofence_excluded', None)
             area_dict['init'] = area.get('init', False)
             areas[area['name']] = area_dict

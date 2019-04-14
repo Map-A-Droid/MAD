@@ -146,10 +146,12 @@ def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
     return
 
 
-def generate_phones(phonename, add_text, adb_option, screen):
-    creationdate = datetime.datetime.fromtimestamp(
-        os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime(datetimeformat)
-
+def generate_phones(phonename, add_text, adb_option, screen, dummy=False):
+    if dummy:
+        creationdate = datetime.datetime.fromtimestamp(
+            os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime(datetimeformat)
+    else:
+        creationdate = 'No Screen available'
     phone = (
             "<div class=screen id=" + str(phonename) + "><div class=phonename><b>" + str(phonename) + " "
             + str(add_text) + "</b></div><img src=" + screen + " class='screenshot' id ='"
@@ -198,7 +200,7 @@ def get_phonescreens():
 
         else:
             screen = "/static/dummy.png"
-            screens_phone.append(generate_phones(phonename, add_text, adb_option, screen))
+            screens_phone.append(generate_phones(phonename, add_text, adb_option, screen, True))
 
     for phonename in return_adb_devices():
         if phonename.serial not in ws_connected_phones:
@@ -214,7 +216,7 @@ def get_phonescreens():
                         screens_phone.append(generate_phones(pho, add_text, adb_option, screen))
                     else:
                         screen = "/static/dummy.png"
-                        screens_phone.append(generate_phones(pho, add_text, adb_option, screen))
+                        screens_phone.append(generate_phones(pho, add_text, adb_option, screen, True))
 
     return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
 

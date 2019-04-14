@@ -169,19 +169,21 @@ $(".homebutton").bind("click", function(event) {
 $(".gpsbutton").bind("click", function(event) {
        event.preventDefault();
        var coords = prompt("Please enter the new coords:", "0.0,0.0");
-       var origin = $(this).attr("origin");
-       var adb = $(this).attr("adb");
-       var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
-       $.ajax({
-       type: "GET",
-       url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb,
-       success: function(data){
-           $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
-           $('div#' + origin).unblock();
-       }
-     });
+       if (coords != null) {
+           var origin = $(this).attr("origin");
+           var adb = $(this).attr("adb");
+           var url = $(this).attr("href");
+           $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $.ajax({
+               type: "GET",
+               url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb,
+               success: function(data){
+                   $('#date' + origin).text(data);
+                   $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+                   $('div#' + origin).unblock();
+               }
+           });
+       };
    });
 
 $(".screenshot").mousedown(function(e){

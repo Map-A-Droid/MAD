@@ -795,6 +795,40 @@
 			]
 		},
 		{
+			"name": "idle",
+			"description": "Idle Mode - worker do nothing.",
+			"fields": [
+				{
+					"name": "name",
+					"settings": {
+						"type": "text",
+						"require": "true",
+						"description": "Name of area",
+						"lockonedit": "true"
+					}
+				},
+				{
+					"name": "geofence_included",
+					"settings": {
+						"type": "text",
+						"require": "true",
+						"empty": "null",
+						"description": "Including geofence for scanarea"
+					}
+				},
+				{
+					"name": "routecalc",
+					"settings": {
+						"type": "text",
+						"require": "true",
+						"description": "Name of routefile"
+					}
+				}
+			],
+			"settings": [
+			]
+		},
+		{
 			"name": "raids_ocr",
 			"description": "OCR scanner for detecting raids.",
 			"fields": [
