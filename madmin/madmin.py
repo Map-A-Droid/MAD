@@ -802,7 +802,7 @@ def get_position():
 
     for name, device in device_mappings.items():
         try:
-            with open(os.path.join(args.file_path, name + '.position'), 'r') as f:
+            with open(os.path.join(conf_args.file_path, name + '.position'), 'r') as f:
                 latlon = f.read().strip().split(', ')
                 worker = {
                     'name': str(name),
@@ -886,7 +886,7 @@ def get_route():
     for name, area in areas.items():
         route = []
         try:
-            with open(area['routecalc'] + '.calc', 'r') as f:
+            with open(os.path.join(conf_args.file_path, area['routecalc'] + '.calc'), 'r') as f:
                 for line in f.readlines():
                     latlon = line.strip().split(', ')
                     route.append([
