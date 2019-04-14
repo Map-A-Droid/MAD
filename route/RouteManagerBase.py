@@ -14,6 +14,8 @@ from geofence.geofenceHelper import GeofenceHelper
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from route.routecalc.calculate_route import getJsonRoute
 from utils.collections import Location
+from utils.walkerArgs import parseArgs
+args = parseArgs()
 
 
 Relation = collections.namedtuple('Relation', ['other_event', 'distance', 'timedelta'])
@@ -28,7 +30,7 @@ class RouteManagerBase(ABC):
         self.name = name
         self._coords_unstructured = coords
         self.geofence_helper = GeofenceHelper(path_to_include_geofence, path_to_exclude_geofence)
-        self._routefile = routefile
+        self._routefile = os.path.join(args.file_path, routefile)
         self._max_radius = max_radius
         self._max_coords_within_radius = max_coords_within_radius
         self.settings = settings

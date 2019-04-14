@@ -174,6 +174,12 @@ def parseArgs():
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
 
+    # folder
+    parser.add_argument('--file-path',
+                        help='Defines directory to save worker stats- and position files and calculated routes',
+                        default='files')
+
+
     # Statistics
     parser.add_argument('-stco', '--stat_gc', action='store_true', default=False,
                         help='Store collected objects (garbage collector) (Default: False)')
@@ -243,17 +249,6 @@ def parseArgs():
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
-
-    parser.add_argument('-lr', '--log-rotation',
-                        help=('Active log rotation. (Default: Disable)'),
-                        action='store_true', default=False)
-
-    parser.add_argument('-lrbc', '--log-rotation-backup-count', default=10, type=int,
-                        help=('Number of Log Rotation Backup Files. (Default: 10)'))
-
-    parser.add_argument('-lrfs', '--log-rotation-file-size', default=10485760, type=int,
-                        help=('Filesize of Log Files in bytes (Default: 10485760 = 10 MB)'))
-
     parser.add_argument('-cla', '--cleanup-age', default=0, type=int,
                         help='Delete logs older than X minutes. Default: 0')
 

@@ -375,7 +375,7 @@ def send_text():
     useadb = request.args.get('adb')
     text = request.args.get('text')
     adb = device_mappings[origin].get('adb', False)
-    if len(text) == 0 :
+    if len(text) == 0:
         return 'Empty text'
     logger.info('MADmin: Send text ({})', str(origin))
     if useadb == 'True' and send_shell_command(adb, origin, 'input text "' + text + '"'):
@@ -802,7 +802,7 @@ def get_position():
 
     for name, device in device_mappings.items():
         try:
-            with open(name + '.position', 'r') as f:
+            with open(os.path.join(args.file_path, name + '.position'), 'r') as f:
                 latlon = f.read().strip().split(', ')
                 worker = {
                     'name': str(name),

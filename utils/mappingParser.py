@@ -115,8 +115,8 @@ class MappingParser(object):
                                                mode=mode
                                                )
             elif mode == "idle":
-                route_manager = RouteManagerRaids(self.db_wrapper, None, mode_mapping['raid']["range"],
-                                                  mode_mapping['raid']["max_count"],
+                route_manager = RouteManagerRaids(self.db_wrapper, None, mode_mapping['raids_mitm']["range"],
+                                                  mode_mapping['raids_mitm']["max_count"],
                                                   area["geofence_included"], area.get("geofence_excluded", None),
                                                   area["routecalc"],
                                                   mode=area["mode"], settings=area.get("settings", None),

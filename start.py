@@ -7,6 +7,7 @@ from threading import Thread, active_count
 import datetime
 import calendar
 import gc
+import shutil
 
 from watchdog.observers import Observer
 from loguru import logger
@@ -165,6 +166,11 @@ def get_system_infos(db_wrapper):
         db_wrapper.insert_usage(args.status_name, cpuUse, memoryUse, collected, unixnow)
         time.sleep(args.statistic_interval)
 
+def create_folder(folder):
+    if not os.path.exists(folder):
+        logger.info(str(folder) + ' created')
+        os.makedirs(folder)
+
 
 def load_mappings(db_wrapper):
     mapping_parser = MappingParser(db_wrapper)
@@ -199,6 +205,19 @@ if __name__ == "__main__":
         for file in glob.glob("ocr/www_hash/*.jpg"):
             os.remove(file)
         sys.exit(0)
+
+    # create folders
+    create_folder(args.raidscreen_path)
+    create_folder(args.file_path)
+
+    # move existing files
+    filetype = ['*.calc', '*.stats', '*.position']
+    for typ in filetype:
+        for data in glob.glob(typ):
+            try:
+                shutil.move(data, os.path.join(args.file_path))
+            except Exception as e:
+                logger.info('File {} already exist in subfolder', str(data))
 
     if not os.path.exists(args.raidscreen_path):
         logger.info('Raidscreen directory created')

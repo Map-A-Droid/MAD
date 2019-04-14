@@ -1,5 +1,6 @@
 import sys
 from loguru import logger
+import os
 
 
 def initLogging(args):
@@ -22,7 +23,7 @@ def initLogging(args):
                 "enqueue": True
             },
             {
-                "sink": "logs/{time:YYYY-MM-DD}_mad.log",
+                "sink": os.path.join(args.log_path, args.log_filename),
                 "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
                 "level": log_level,
                 "backtrace": log_trace,
