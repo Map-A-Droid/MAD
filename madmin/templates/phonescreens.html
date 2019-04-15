@@ -172,7 +172,7 @@ $(".gpsbutton").bind("click", function(event) {
        var coords = prompt("Please enter the new coords:", "0.0,0.0");
 
        if (coords != null) {
-           var sleeptime = prompt("Additional sleeptime after geofix?", "0");
+           var sleeptime = prompt("Additional sleeptime after geofix (in seconds)?", "0");
            if (sleeptime == null || sleeptime == "") { sleeptime = 0 }
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
