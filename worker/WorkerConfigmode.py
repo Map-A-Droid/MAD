@@ -21,3 +21,6 @@ class WorkerConfigmode(object):
 
     def stop_worker(self):
         self._stop_worker_event.set()
+
+    def set_geofix_sleeptime(self, sleeptime):
+        return True
