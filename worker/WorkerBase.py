@@ -51,6 +51,7 @@ class WorkerBase(ABC):
         self._screen_x = 0
         self._screen_y = 0
         self._lastStart = ""
+        self._geofix_sleeptime = 0
         self._pogoWindowManager = pogoWindowManager
 
         self.current_location = Location(0.0, 0.0)
@@ -396,6 +397,10 @@ class WorkerBase(ABC):
             return False
         return True
 
+    def set_geofix_sleeptime(self, sleeptime):
+        self._geofix_sleeptime = sleeptime
+        return True
+
     def _internal_grab_next_location(self):
         # TODO: consider adding runWarningThreadEvent.set()
         self._last_known_state["last_location"] = self.last_location
@@ -403,6 +408,10 @@ class WorkerBase(ABC):
         logger.debug("Requesting next location from routemanager")
         # requesting a location is blocking (iv_mitm will wait for a prioQ item), we really need to clean
         # the workers up...
+        if int(self._geofix_sleeptime) > 0:
+            logger.info('Getting a geofix position from MADMin - sleeping for {} seconds', str(self._geofix_sleeptime))
+            time.sleep(int(self._geofix_sleeptime))
+            self._geofix_sleeptime = 0
         routemanager = self._walker_routemanager
         self.current_location = routemanager.get_next_location()
         return routemanager.settings

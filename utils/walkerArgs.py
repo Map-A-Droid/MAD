@@ -175,7 +175,7 @@ def parseArgs():
                         help='Read weather and post to db - if supported! (Default: False)')
 
     # folder
-    parser.add_argument('--file-path',
+    parser.add_argument('--file_path',
                         help='Defines directory to save worker stats- and position files and calculated routes',
                         default='files')
 

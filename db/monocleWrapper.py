@@ -1082,7 +1082,7 @@ class MonocleWrapper(DbWrapperBase):
     def submit_pokestops_details_map_proto(self, map_proto):
         logger.debug("{MonocleWrapper::submit_pokestops_details_map_proto} called")
         pokestop_args = []
-        # now = datetime.datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+        # now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_pokestops = (
             "UPDATE pokestops set name = %s, url= %s, updated = %s, lat = %s, lon = %s "
@@ -1268,7 +1268,7 @@ class MonocleWrapper(DbWrapperBase):
         logger.debug('Fetching pokemon spawns from db')
         query_where = ''
         if hours:
-            zero = datetime.datetime.now()
+            zero = datetime.now()
             hours = calendar.timegm(zero.timetuple()) - hours*60*60
             query_where = ' where expire_timestamp > %s ' % str(hours)
 
@@ -1277,7 +1277,10 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        return res
+
+        total = reduce(lambda x, y: x + y[1], res, 0)
+
+        return {'pokemon': res, 'total': total}
 
     def statistics_get_gym_count(self):
         logger.debug('Fetching gym count from db')

@@ -210,19 +210,6 @@ if __name__ == "__main__":
     create_folder(args.raidscreen_path)
     create_folder(args.file_path)
 
-    # move existing files
-    filetype = ['*.calc', '*.stats', '*.position']
-    for typ in filetype:
-        for data in glob.glob(typ):
-            try:
-                shutil.move(data, os.path.join(args.file_path))
-            except Exception as e:
-                logger.info('File {} already exist in subfolder', str(data))
-
-    if not os.path.exists(args.raidscreen_path):
-        logger.info('Raidscreen directory created')
-        os.makedirs(args.raidscreen_path)
-
     if not args.only_scan and not args.with_madmin and not args.only_ocr and not args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"
                      " -wm    ---- start madmin (browserbased monitoring/configuration)\n"
