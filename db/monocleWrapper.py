@@ -1277,7 +1277,10 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        return res
+
+        total = reduce(lambda x, y: x + y[1], res, 0)
+
+        return {'pokemon': res, 'total': total}
 
     def statistics_get_gym_count(self):
         logger.debug('Fetching gym count from db')
