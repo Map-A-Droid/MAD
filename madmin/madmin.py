@@ -1426,7 +1426,7 @@ def config():
             fieldwebsite.append(str(_temp))
 
         if field['settings']['type'] == 'adbselect':
-            devices = return_adb_devices()
+            devices = adb_connect.return_adb_devices()
             _temp = '<div class="form-group"><label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                 field['settings']['description']) + '</small><select class="form-control" name="' + str(field['name']) + '" ' + lockvalue + ' ' + req + '>'
             adb = {}
