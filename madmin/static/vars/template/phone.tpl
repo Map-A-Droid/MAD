@@ -10,7 +10,7 @@
 </div>
 
 <div class=phonename id=date<<phonename>>><<creationdate>></div>
-<div id=button><a id=screenshot origin=<<phonename>> href='take_screenshot?origin=<<phonename>>&adb=<<adb_option>>'>Take Screenshot</a></div>
+<div id=button><a id=screenshot origin=<<phonename>> href='take_screenshot?origin=<<phonename>>&adb=<<adb_option>>'>Make Screenshot</a></div>
 <div id=button><a href='quit_pogo?origin=<<phonename>>&adb=<<adb_option>>' id='quit' origin=<<phonename>>>Quit Pogo</a></div>
 <div id=button><a href='restart_phone?origin=<<phonename>>&adb=<<adb_option>>'>Reboot Phone</a></div>
 </div>

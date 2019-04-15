@@ -79,7 +79,8 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
 #statistic_interval:         # Update interval for the usage generator in seconds (Default: 60)
 
 # ADB
-#use_adb                      # Use ADB for phonecontrol (Default: False')
+######################
+#use_adb                      # Use ADB for phonecontrol (Default: False)
 #adb_server_ip:               # IP address of ADB server (Default: 127.0.0.1)
 #adb_server_port:             # Port of ADB server (Default: 5037)
 

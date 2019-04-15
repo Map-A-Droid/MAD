@@ -39,4 +39,4 @@ psutil
 watchdog
 loguru
 gevent
-pure-python-adb
+

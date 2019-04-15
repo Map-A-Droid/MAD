@@ -498,4 +498,6 @@ class WebsocketServer(object):
         return self.__current_users
 
     def get_origin_communicator(self, origin):
-        return self.__current_users[origin][1].get_communicator()
+        if self.__current_users.get(origin, None) is not None:
+            return self.__current_users[origin][1].get_communicator()
+        return None

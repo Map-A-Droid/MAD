@@ -23,8 +23,8 @@ from utils.language import i8ln, open_json_file
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
 from utils.logging import MadLoggerUtils
-from utils.adb import check_adb_status, return_adb_devices, make_screenshot, make_screenclick, send_shell_command, make_screenswipe
 from functools import wraps, update_wrapper
+from utils.adb import ADBConnect
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -38,19 +38,21 @@ device_mappings = None
 areas = None
 ws_server = None
 datetimeformat = None
+adb_connect = None
 
 with open('madmin/static/vars/template/phone.tpl', 'r') as file:
     phone_template = file.read().replace('\n', '')
 
 
 def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
-    global conf_args, device_mappings, db_wrapper, areas, ws_server, datetimeformat
+    global conf_args, device_mappings, db_wrapper, areas, ws_server, datetimeformat, adb_connect
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
     mapping_parser = MappingParser(db_wrapper)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
     ws_server = glob_ws_server
+    adb_connect = ADBConnect(conf_args)
     if conf_args.madmin_time == "12":
         datetimeformat = '%Y-%m-%d %I:%M:%S %p'
     else:
@@ -182,10 +184,12 @@ def get_phonescreens():
         add_text = ""
         adb_option = False
         adb = device_mappings[phonename].get('adb', False)
-        if adb is not None and check_adb_status(adb) is not None:
+        if adb is not None and adb_connect.check_adb_status(adb) is not None:
             ws_connected_phones.append(adb)
             adb_option=True
             add_text = '<b>ADB</b>'
+        else:
+            ws_connected_phones.append(adb)
 
         filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(phonename))
         if os.path.isfile(filename):
@@ -197,7 +201,7 @@ def get_phonescreens():
             screen = "/static/dummy.png"
             screens_phone.append(generate_phones(phonename, add_text, adb_option, screen, True))
 
-    for phonename in return_adb_devices():
+    for phonename in adb_connect.return_adb_devices():
         if phonename.serial not in ws_connected_phones:
             for pho in device_mappings:
                 if phonename.serial == device_mappings[pho].get('adb', False):
@@ -238,7 +242,7 @@ def take_screenshot():
     logger.info('MADmin: Making screenshot ({})', str(origin))
     adb = device_mappings[origin].get('adb', False)
 
-    if useadb == 'True' and make_screenshot(adb, origin):
+    if useadb == 'True' and adb_connect.make_screenshot(adb, origin):
         logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
     elif conf_args.use_media_projection:
         temp_comm = ws_server.get_origin_communicator(origin)
@@ -272,7 +276,7 @@ def click_screenshot():
     real_click_y = int(height / float(click_y))
     adb = device_mappings[origin].get('adb', False)
 
-    if useadb == 'True' and make_screenclick(adb, origin, real_click_x, real_click_y):
+    if useadb == 'True' and adb_connect.make_screenclick(adb, origin, real_click_x, real_click_y):
         logger.info('MADMin: ADB screenclick successfully ({})', str(origin))
     else:
         logger.info('MADMin WS Click x:{} y:{} ({})', str(real_click_x), str(real_click_y), str(origin))
@@ -303,7 +307,7 @@ def swipe_screenshot():
     real_click_ye = int(height / float(click_ye))
     adb = device_mappings[origin].get('adb', False)
 
-    if useadb == 'True' and make_screenswipe(adb, origin, real_click_x, real_click_y, real_click_xe, real_click_ye):
+    if useadb == 'True' and adb_connect.make_screenswipe(adb, origin, real_click_x, real_click_y, real_click_xe, real_click_ye):
         logger.info('MADMin: ADB screenswipe successfully ({})', str(origin))
     else:
         logger.info('MADMin WS Swipe x:{} y:{} xe:{} ye:{} ({})', str(real_click_x), str(real_click_y),
@@ -323,7 +327,7 @@ def quit_pogo():
     useadb = request.args.get('adb')
     adb = device_mappings[origin].get('adb', False)
     logger.info('MADmin: Restart Pogo ({})', str(origin))
-    if useadb == 'True' and send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
+    if useadb == 'True' and adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
         logger.info('MADMin: ADB shell command successfully ({})', str(origin))
     else:
         temp_comm = ws_server.get_origin_communicator(origin)
@@ -340,7 +344,7 @@ def restart_phone():
     useadb = request.args.get('adb')
     adb = device_mappings[origin].get('adb', False)
     logger.info('MADmin: Restart Phone ({})', str(origin))
-    if useadb == 'True' and send_shell_command(adb, origin, "am broadcast -a android.intent.action.BOOT_COMPLETED"):
+    if useadb == 'True' and adb_connect.send_shell_command(adb, origin, "am broadcast -a android.intent.action.BOOT_COMPLETED"):
         logger.info('MADMin: ADB shell command successfully ({})', str(origin))
     else:
         temp_comm = ws_server.get_origin_communicator(origin)
@@ -378,7 +382,7 @@ def send_text():
     if len(text) == 0:
         return 'Empty text'
     logger.info('MADmin: Send text ({})', str(origin))
-    if useadb == 'True' and send_shell_command(adb, origin, 'input text "' + text + '"'):
+    if useadb == 'True' and adb_connect.send_shell_command(adb, origin, 'input text "' + text + '"'):
         logger.info('MADMin: Send text successfully ({})', str(origin))
     else:
         temp_comm = ws_server.get_origin_communicator(origin)
@@ -399,7 +403,7 @@ def send_command():
         cmd = "input keyevent 3"
     elif command == 'back':
         cmd = "input keyevent 4"
-    if useadb == 'True' and send_shell_command(adb, origin, cmd):
+    if useadb == 'True' and adb_connect.send_shell_command(adb, origin, cmd):
         logger.info('MADMin: ADB shell command successfully ({})', str(origin))
     else:
         temp_comm = ws_server.get_origin_communicator(origin)
