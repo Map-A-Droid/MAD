@@ -9,6 +9,7 @@ from worker.WorkerBase import WorkerBase
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
+
 class MITMBase(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler,
                  walker_routemanager, devicesettings, db_wrapper, mitm_mapper, pogoWindowManager,
