@@ -359,12 +359,16 @@ def send_gps():
     origin = request.args.get('origin')
     useadb = request.args.get('adb')
     coords = request.args.get('coords').replace(' ', '').split(',')
-    if len(coords) <  2:
+    sleeptime = request.args.get('sleeptime', "0")
+    if len(coords) < 2:
         return 'Wrong Format!'
     logger.info('MADmin: Set GPS Coords {}, {} - WS Mode only! ({})', str(coords[0]), str(coords[1]), str(origin))
     try:
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.setLocation(coords[0], coords[1], 0)
+        if int(sleeptime) > 0:
+            logger.info("MADmin: Set additional sleeptime: {} ({})", str(sleeptime), str(origin))
+            ws_server.set_geofix_sleeptime_worker(origin, sleeptime)
     except Exception as e:
         logger.exception(
             'MADmin: Exception occurred while set gps coords: {}.', e)
