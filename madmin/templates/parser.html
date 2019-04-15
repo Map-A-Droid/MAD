@@ -3,7 +3,8 @@
 {% block header %}
 <style>
   input[type=text],
-  select {
+  select,
+  textarea {
     width: 100%;
     padding: 12px 20px;
     margin: 8px 0;
@@ -48,7 +49,74 @@
     border-width: 1px;
 
 }
+@media (max-width: px-to-ems($break-4 - 1px)) {
 
+  // make each table separate from other ones
+  table {
+    border: 0;
+    @include trailing-border;
+    padding-bottom: 0;
+    display: block;
+    width: 100%;
+
+    // make sure captions are displayed
+    caption {
+      display: block;
+    }
+
+    /*
+     * wipe the thead from the face of the earth
+     * modern screen readers will expose the
+     * generated content
+     */
+    thead {
+      display: none;
+      visibility: hidden;
+    }
+
+    /*
+     * make everything display block so it
+     * aligns vertically
+     */
+    tbody, tr, th, td {
+      border: 0;
+      display: block;
+      padding: 0;
+      text-align: left;
+      white-space: normal;
+    }
+
+    // give each row a little space
+    tr {
+      @include trailer;
+    }
+
+    /* Labeling
+     * adding a data-title attribute to the cells
+     * lets us add text before the content to provide
+     * the missing context
+     *
+     * Markup:
+     *   <td data-title="Column Header">Content Here</td>
+     *
+     * Display:
+     *   Column Header: Content Here
+     */
+    th[data-title]:before,
+    td[data-title]:before {
+      content: attr(data-title) ":\00A0";
+      font-weight: bold;
+    }
+    th:not([data-title]) {
+      font-weight: bold;
+    }
+
+    // hide empty cells
+    td:empty {
+      display: none;
+    }
+  }
+}
 </style>
 {% endblock %}
 
@@ -122,7 +190,7 @@ function updateOrder(data) {
 
 <h2>{{header | safe }}</h2>
 
-<h4><a href="/showsettings">Back to editor</a></h4>
+<h4><a href="showsettings">Back to editor</a></h4>
 <div id="inputdata">
   {% for item in editform %}
   {{item | safe }}

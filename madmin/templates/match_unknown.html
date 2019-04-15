@@ -43,7 +43,7 @@
         $("#navunknown").addClass("active");
         $.ajax({
             type: "GET",
-            url: "/near_gym?lat={{ lat }}&lon={{ lon }}",
+            url: "near_gym?lat={{ lat }}&lon={{ lon }}",
             success: function (result) {
                 setGrid('#show-data', result);
             }
@@ -54,6 +54,6 @@
 
 {% block content %}
 <h2>Check saved Gyms</h2>
-<h4><a href="/unknown">Back to unknown Gyms</a></h4>
+<h4><a href="unknown">Back to unknown Gyms</a></h4>
 <table id="show-data" class="table"></table>
 {% endblock %}
