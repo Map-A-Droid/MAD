@@ -100,7 +100,7 @@ def parseArgs():
                         help=('Path to Pogo Asset.'
                               'See https://github.com/ZeChrales/PogoAssets/'))
 
-    parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots', # TODO: check if user appended / or not and deal accordingly (rmeove it?)
+    parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots',  # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
@@ -178,7 +178,6 @@ def parseArgs():
     parser.add_argument('--file_path',
                         help='Defines directory to save worker stats- and position files and calculated routes',
                         default='files')
-
 
     # Statistics
     parser.add_argument('-stco', '--stat_gc', action='store_true', default=False,

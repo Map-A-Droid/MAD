@@ -3,7 +3,6 @@ import os
 import cv2
 import imutils
 import numpy as np
-
 from utils.logging import logger
 
 
@@ -12,13 +11,15 @@ def mon_image_matching(args, url_img_name, fort_img_name, raidNo, hash):
     url_img = cv2.imread(url_img_name, 3)
 
     if (url_img is None):
-        logger.error('[Crop: ' + str(raidNo) + ' (' + str(hash) + ') ] ' + 'fort_image_matching: {} appears to be corrupted', str(url_img_name))
+        logger.error('[Crop: ' + str(raidNo) + ' (' + str(hash) + ') ] ' +
+                     'fort_image_matching: {} appears to be corrupted', str(url_img_name))
         return 0.0
 
     fort_img = cv2.imread(fort_img_name, 3)
 
     if (fort_img is None):
-        logger.error('[Crop: ' + str(raidNo) + ' (' + str(hash) + ') ] ' + 'fort_image_matching: {} appears to be corrupted', str(fort_img_name))
+        logger.error('[Crop: ' + str(raidNo) + ' (' + str(hash) + ') ] ' +
+                     'fort_image_matching: {} appears to be corrupted', str(fort_img_name))
         return 0.0
     height, width, _ = url_img.shape
     height_f, width_f, _ = fort_img.shape
@@ -39,7 +40,8 @@ def mon_image_matching(args, url_img_name, fort_img_name, raidNo, hash):
     found = None
     for scale in np.linspace(args.npmFrom, args.npmValue, 10)[::-1]:
 
-        resized = imutils.resize(fort_img, width=int(fort_img.shape[1] * scale))
+        resized = imutils.resize(
+            fort_img, width=int(fort_img.shape[1] * scale))
         r = fort_img.shape[1] / float(resized.shape[1])
 
         if resized.shape[0] < tH or resized.shape[1] < tW:
@@ -53,7 +55,8 @@ def mon_image_matching(args, url_img_name, fort_img_name, raidNo, hash):
         if endY < height_f/2 or endX < width_f/2 or endY > height_f/2+height_f/2*0.4 or endY < height_f/2+height_f/2*0.3:
             maxVal = 0.0
 
-        logger.debug('[Crop: ' + str(raidNo) + ' (' + str(hash) + ') ] ' + 'Filename: ' + str(url_img_name) + ' Matchvalue: ' + str(maxVal) + ' Scale: ' + str(scale))
+        logger.debug('[Crop: ' + str(raidNo) + ' (' + str(hash) + ') ] ' + 'Filename: ' +
+                     str(url_img_name) + ' Matchvalue: ' + str(maxVal) + ' Scale: ' + str(scale))
 
         if found is None or maxVal > found[0]:
             found = (maxVal, maxLoc, r)

@@ -1,7 +1,7 @@
 import cv2
-from utils.logging import logger
-from PIL import Image
 from imagehash import dhash
+from PIL import Image
+from utils.logging import logger
 
 
 def getImageHash(image, hashSize=8):

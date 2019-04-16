@@ -1,14 +1,13 @@
 import json
-import requests
 import time
 
-from utils.logging import logger
+import requests
 
-from utils.gamemechanicutil import calculate_mon_level
-from utils.gamemechanicutil import get_raid_boss_cp
-from utils.s2Helper import S2Helper
+from utils.gamemechanicutil import calculate_mon_level, get_raid_boss_cp
+from utils.logging import logger
 from utils.madGlobals import terminate_mad
 from utils.questGen import generate_quest
+from utils.s2Helper import S2Helper
 
 
 class WebhookWorker:
@@ -72,12 +71,15 @@ class WebhookWorker:
                 payloadToSend = payload
 
             if len(payloadToSend) == 0:
-                logger.debug("Payload empty. Skip sending to: {} (Filter: {})", url, subTypes)
+                logger.debug(
+                    "Payload empty. Skip sending to: {} (Filter: {})", url, subTypes)
                 continue
             else:
-                logger.debug("Sending to webhook url: {} (Filter: {})", url, subTypes)
+                logger.debug(
+                    "Sending to webhook url: {} (Filter: {})", url, subTypes)
 
-            payload_list = self.__payload_chunk(payloadToSend, self.__args.webhook_max_payload_size)
+            payload_list = self.__payload_chunk(
+                payloadToSend, self.__args.webhook_max_payload_size)
 
             current_pl_num = 1
             for payload_chunk in payload_list:
@@ -92,15 +94,18 @@ class WebhookWorker:
                     )
 
                     if response.status_code != 200:
-                        logger.warning("Got status code other than 200 OK from webhook destination: {}", str(response.status_code))
+                        logger.warning("Got status code other than 200 OK from webhook destination: {}", str(
+                            response.status_code))
                     else:
                         if webhook_count > 1:
-                            whcount_text = " [wh {}/{}]".format(current_wh_num, webhook_count)
+                            whcount_text = " [wh {}/{}]".format(
+                                current_wh_num, webhook_count)
                         else:
                             whcount_text = ""
 
                         if len(payload_list) > 1:
-                            whchunk_text = " [pl {}/{}]".format(current_pl_num, len(payload_list))
+                            whchunk_text = " [pl {}/{}]".format(
+                                current_pl_num, len(payload_list))
                         else:
                             whchunk_text = ""
 
@@ -108,10 +113,12 @@ class WebhookWorker:
                             "Successfully sent payload to webhook{}{}. Stats: {}",
                             whchunk_text,
                             whcount_text,
-                            json.dumps(self.__payload_type_count(payload_chunk))
+                            json.dumps(
+                                self.__payload_type_count(payload_chunk))
                         )
                 except Exception as e:
-                    logger.warning("Exception occured while sending webhook: {}", str(e))
+                    logger.warning(
+                        "Exception occured while sending webhook: {}", str(e))
 
                 current_pl_num += 1
             current_wh_num += 1
@@ -260,12 +267,14 @@ class WebhookWorker:
             }
 
             # get rarity
-            pokemon_rarity = self.__rarity.rarity_by_id(pokemonid=mon["pokemon_id"])
+            pokemon_rarity = self.__rarity.rarity_by_id(
+                pokemonid=mon["pokemon_id"])
 
             # used by RM
             if mon.get("cp_multiplier", None) is not None:
                 mon_payload["cp_multiplier"] = mon["cp_multiplier"]
-                mon_payload["pokemon_level"] = calculate_mon_level(mon["cp_multiplier"])
+                mon_payload["pokemon_level"] = calculate_mon_level(
+                    mon["cp_multiplier"])
 
             # used by Monocle
             if mon.get("level", None) is not None:
@@ -352,7 +361,8 @@ class WebhookWorker:
                 ivlist = manager.settings.get("mon_ids_iv", [])
 
                 # TODO check if area/routemanager is actually active before adding the IDs
-                self.__IV_MON = self.__IV_MON + list(set(ivlist) - set(self.__IV_MON))
+                self.__IV_MON = self.__IV_MON + \
+                    list(set(ivlist) - set(self.__IV_MON))
 
     def run_worker(self):
         logger.info("Starting webhook worker thread")
@@ -370,14 +380,16 @@ class WebhookWorker:
             # quest
             if self.__args.quest_webhook:
                 quest = self.__prepare_quest_data(
-                    self.__db_wrapper.quests_from_db(timestamp=self.__last_check)
+                    self.__db_wrapper.quests_from_db(
+                        timestamp=self.__last_check)
                 )
                 full_payload += quest
 
             # weather
             if self.__args.weather_webhook:
                 weather = self.__prepare_weather_data(
-                    self.__db_wrapper.get_weather_changed_since(self.__last_check)
+                    self.__db_wrapper.get_weather_changed_since(
+                        self.__last_check)
                 )
                 full_payload += weather
 

@@ -1,6 +1,7 @@
-import sys
-from loguru import logger
 import os
+import sys
+
+from loguru import logger
 
 
 def initLogging(args):
