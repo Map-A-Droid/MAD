@@ -4,7 +4,6 @@ import os
 import cv2
 import imutils
 import numpy as np
-
 from utils.logging import logger
 
 weatherImages = {
@@ -27,21 +26,25 @@ def weather_image_matching(weather_icon_name, screenshot_name):
 
     if weather_icon is None:
         # TODO missing parameter
-        logger.error('weather_image_matching: {} appears to be corrupted', str(url_img_name))
+        logger.error(
+            'weather_image_matching: {} appears to be corrupted', str(url_img_name))
         return 0
 
     screenshot_img = cv2.imread(screenshot_name, 3)
 
     if screenshot_img is None:
-        logger.error('weather_image_matching: {} appears to be corrupted', str(screenshot_name))
+        logger.error(
+            'weather_image_matching: {} appears to be corrupted', str(screenshot_name))
         return 0
     height, width, = weather_icon.shape
 
-    fort_img = imutils.resize(screenshot_img, width=int(screenshot_img.shape[1] * 2))
+    fort_img = imutils.resize(
+        screenshot_img, width=int(screenshot_img.shape[1] * 2))
     height_f, width_f, = screenshot_img.shape
     screenshot_img = screenshot_img[0: int(height_f/7), 0: width_f]
 
-    resized = imutils.resize(weather_icon, width=int(weather_icon.shape[1] * 1))
+    resized = imutils.resize(
+        weather_icon, width=int(weather_icon.shape[1] * 1))
 
     crop = cv2.Canny(resized, 100, 200)
 
@@ -55,7 +58,8 @@ def weather_image_matching(weather_icon_name, screenshot_name):
 
     found = None
     for scale in np.linspace(0.2, 1, 5)[::-1]:
-        resized = imutils.resize(screenshot_img, width=int(screenshot_img.shape[1] * scale))
+        resized = imutils.resize(screenshot_img, width=int(
+            screenshot_img.shape[1] * scale))
         r = screenshot_img.shape[1] / float(resized.shape[1])
 
         if resized.shape[0] < tH or resized.shape[1] < tW:
@@ -87,7 +91,8 @@ def checkWeather(raidpic):
 
     if foundweather[0] > 0:
         weatherName = foundweather[1].split('.')
-        logger.info('The weather on the screenshot could be identified ({})', str(weatherName[0].replace('_', ' ')))
+        logger.info('The weather on the screenshot could be identified ({})', str(
+            weatherName[0].replace('_', ' ')))
         return True, weatherImages[os.path.basename(foundweather[1])]
         # True, WeatherID
         # send to database !

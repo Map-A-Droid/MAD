@@ -6,7 +6,7 @@ class Resocalculator(object):
         self._y_offset = 0
         self._x_offset = 0
 
-    def get_x_y_ratio(self, x, y, x_offset = 0, y_offset = 0):
+    def get_x_y_ratio(self, x, y, x_offset=0, y_offset=0):
         self._xyratio = float(y) / float(x)
         self._x_offset = x_offset
         self._y_offset = y_offset
@@ -15,7 +15,7 @@ class Resocalculator(object):
     def get_coords_quest_menu(self):
         click_x = (int(self._screen_x) / 1.07)
         click_y = int(self._screen_y) - (int(self._screen_x) / 3.86)
-        if self._y_offset >0:
+        if self._y_offset > 0:
             return click_x + self._x_offset, click_y - self._y_offset - 55
         else:
             return click_x, click_y
@@ -39,7 +39,7 @@ class Resocalculator(object):
     def get_close_main_button_coords(self):
         click_x = int(self._screen_x) / 2
         click_y = int(self._screen_y) - (int(self._screen_x) / 7.57)
-        if self._y_offset >0:
+        if self._y_offset > 0:
             return click_x + self._x_offset, click_y - self._y_offset - 55
         else:
             return click_x, click_y

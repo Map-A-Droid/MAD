@@ -1,6 +1,7 @@
 import datetime
 import time
-from threading import Thread, Event
+from threading import Event, Thread
+
 from utils.logging import logger
 
 
@@ -66,12 +67,15 @@ class Timer(object):
 
                 while self.get_switch():
                     tmNow = datetime.datetime.now()
-                    logger.info("[{}] - Currently in switchmode", str(self._id))
+                    logger.info("[{}] - Currently in switchmode",
+                                str(self._id))
                     if tmNow >= tmTil:
-                        logger.warning('[{}] - Switching back - here we go ...', str(self._id))
+                        logger.warning(
+                            '[{}] - Switching back - here we go ...', str(self._id))
                         self.set_switch(False)
                     if self.__stop_switchtimer.is_set():
-                        logger.info("[{}] switchtimer stopping in switchmode", str(self._id))
+                        logger.info(
+                            "[{}] switchtimer stopping in switchmode", str(self._id))
                         self.set_switch(False)
                     time.sleep(30)
             time.sleep(30)

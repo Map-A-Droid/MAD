@@ -7,23 +7,24 @@ import re
 import sys
 import threading
 import time
-import cv2
-from utils.logging import logger, LogLevelChanger
-from pathlib import Path
+from functools import update_wrapper, wraps
 from math import floor
+from pathlib import Path
 from shutil import copyfile
 
 from flask import (Flask, jsonify, make_response, redirect, render_template,
                    request, send_from_directory)
-
 from gevent.pywsgi import WSGIServer
+
+import cv2
 from flask_caching import Cache
+from utils.adb import ADBConnect
+from utils.functions import (creation_date, generate_path, generate_phones,
+                             image_resize)
 from utils.language import i8ln, open_json_file
+from utils.logging import LogLevelChanger, logger
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
-from functools import wraps, update_wrapper
-from utils.adb import ADBConnect
-from utils.functions import generate_path, image_resize, generate_phones, creation_date
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -54,7 +55,8 @@ def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
     else:
         datetimeformat = '%Y-%m-%d %H:%M:%S'
 
-    httpsrv = WSGIServer((arg_args.madmin_ip, int(arg_args.madmin_port)), app.wsgi_app, log=LogLevelChanger)
+    httpsrv = WSGIServer((arg_args.madmin_ip, int(
+        arg_args.madmin_port)), app.wsgi_app, log=LogLevelChanger)
     httpsrv.serve_forever()
 
 
@@ -98,6 +100,7 @@ def nocache(view):
 
     return update_wrapper(no_cache, view)
 
+
 @app.after_request
 @auth_required
 def after_request(response):
@@ -131,21 +134,25 @@ def get_phonescreens():
         adb = device_mappings[phonename].get('adb', False)
         if adb is not None and adb_connect.check_adb_status(adb) is not None:
             ws_connected_phones.append(adb)
-            adb_option=True
+            adb_option = True
             add_text = '<b>ADB</b>'
         else:
             ws_connected_phones.append(adb)
 
-        filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(phonename))
+        filename = os.path.join(conf_args.temp_path,
+                                'screenshot%s.png' % str(phonename))
         if os.path.isfile(filename):
-            image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=400)
+            image_resize(filename, os.path.join(
+                conf_args.temp_path, "madmin"), width=400)
             screen = "/screenshot/madmin/screenshot" + str(phonename) + ".png"
             screens_phone.append(
-                generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=False)
+                generate_phones(phonename, add_text, adb_option,
+                                screen, filename, datetimeformat, dummy=False)
             )
         else:
             screen = "/static/dummy.png"
-            screens_phone.append(generate_phones(phonename, add_text, adb_option, screen, True))
+            screens_phone.append(generate_phones(
+                phonename, add_text, adb_option, screen, True))
 
     for phonename in adb_connect.return_adb_devices():
         if phonename.serial not in ws_connected_phones:
@@ -154,10 +161,13 @@ def get_phonescreens():
                     adb_option = True
                     add_text = '<b>ADB - no WS<img src="/static/warning.png" width="20px" ' \
                                'alt="NO websocket connection!"></b>'
-                    filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(pho))
+                    filename = os.path.join(
+                        conf_args.temp_path, 'screenshot%s.png' % str(pho))
                     if os.path.isfile(filename):
-                        image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=400)
-                        screen = "/screenshot/madmin/screenshot" + str(pho) + ".png"
+                        image_resize(filename, os.path.join(
+                            conf_args.temp_path, "madmin"), width=400)
+                        screen = "/screenshot/madmin/screenshot" + \
+                            str(pho) + ".png"
                         screens_phone.append(generate_phones(
                             phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=True)
                         )
@@ -197,10 +207,12 @@ def take_screenshot(origin=None, useadb=None):
         logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
     elif conf_args.use_media_projection:
         temp_comm = ws_server.get_origin_communicator(origin)
-        temp_comm.getScreenshot(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
+        temp_comm.getScreenshot(os.path.join(
+            conf_args.temp_path, 'screenshot%s.png' % str(origin)))
     else:
         temp_comm = ws_server.get_origin_communicator(origin)
-        temp_comm.get_screenshot_single(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
+        temp_comm.get_screenshot_single(os.path.join(
+            conf_args.temp_path, 'screenshot%s.png' % str(origin)))
 
     image_resize(os.path.join(conf_args.temp_path, "screenshot" + str(origin) + ".png"),
                  os.path.join(conf_args.temp_path, "madmin"), width=400)
@@ -220,7 +232,8 @@ def click_screenshot():
     click_y = request.args.get('clicky')
     useadb = request.args.get('adb')
 
-    filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin))
+    filename = os.path.join(conf_args.temp_path,
+                            'screenshot%s.png' % str(origin))
     img = cv2.imread(filename, 0)
     height, width = img.shape[:2]
 
@@ -231,7 +244,8 @@ def click_screenshot():
     if useadb == 'True' and adb_connect.make_screenclick(adb, origin, real_click_x, real_click_y):
         logger.info('MADMin: ADB screenclick successfully ({})', str(origin))
     else:
-        logger.info('MADMin WS Click x:{} y:{} ({})', str(real_click_x), str(real_click_y), str(origin))
+        logger.info('MADMin WS Click x:{} y:{} ({})', str(
+            real_click_x), str(real_click_y), str(origin))
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.click(int(real_click_x), int(real_click_y))
 
@@ -250,7 +264,8 @@ def swipe_screenshot():
     click_ye = request.args.get('clickye')
     useadb = request.args.get('adb')
 
-    filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin))
+    filename = os.path.join(conf_args.temp_path,
+                            'screenshot%s.png' % str(origin))
     img = cv2.imread(filename, 0)
     height, width = img.shape[:2]
 
@@ -266,7 +281,8 @@ def swipe_screenshot():
         logger.info('MADMin WS Swipe x:{} y:{} xe:{} ye:{} ({})', str(real_click_x), str(real_click_y),
                     str(real_click_xe), str(real_click_ye),  str(origin))
         temp_comm = ws_server.get_origin_communicator(origin)
-        temp_comm.touchandhold(int(real_click_x), int(real_click_y), int(real_click_xe), int(real_click_ye))
+        temp_comm.touchandhold(int(real_click_x), int(
+            real_click_y), int(real_click_xe), int(real_click_ye))
 
     time.sleep(2)
     return take_screenshot(origin, useadb)
@@ -317,12 +333,14 @@ def send_gps():
     sleeptime = request.args.get('sleeptime', "0")
     if len(coords) < 2:
         return 'Wrong Format!'
-    logger.info('MADmin: Set GPS Coords {}, {} - WS Mode only! ({})', str(coords[0]), str(coords[1]), str(origin))
+    logger.info('MADmin: Set GPS Coords {}, {} - WS Mode only! ({})',
+                str(coords[0]), str(coords[1]), str(origin))
     try:
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.setLocation(coords[0], coords[1], 0)
         if int(sleeptime) > 0:
-            logger.info("MADmin: Set additional sleeptime: {} ({})", str(sleeptime), str(origin))
+            logger.info("MADmin: Set additional sleeptime: {} ({})",
+                        str(sleeptime), str(origin))
             ws_server.set_geofix_sleeptime_worker(origin, sleeptime)
     except Exception as e:
         logger.exception(
@@ -578,7 +596,8 @@ def get_gyms():
             creationdate = datetime.datetime.fromtimestamp(
                 creation_date(file)).strftime(datetimeformat)
 
-            modify = datetime.datetime.strptime(modify, '%Y-%m-%d %H:%M:%S').strftime(datetimeformat)
+            modify = datetime.datetime.strptime(
+                modify, '%Y-%m-%d %H:%M:%S').strftime(datetimeformat)
 
             name = 'unknown'
             lat = '0'
@@ -735,7 +754,6 @@ def get_screens():
     for file in glob.glob(str(conf_args.raidscreen_path) + "/raidscreen_*.png"):
         creationdate = datetime.datetime.fromtimestamp(
             creation_date(file)).strftime(datetimeformat)
-
 
         screenJson = ({'filename': file[4:], 'creation': creationdate})
         screens.append(screenJson)
@@ -985,6 +1003,7 @@ def modify_mon():
 @auth_required
 def pushAssets(path):
     return send_from_directory(conf_args.pogoasset, path)
+
 
 @app.route('/addwalker')
 @auth_required
@@ -1515,10 +1534,10 @@ def config():
     else:
         header = "Add new " + type
 
-    if (type=='walker' and edit is None) or (type!='walker' and edit is not None) \
+    if (type == 'walker' and edit is None) or (type != 'walker' and edit is not None) \
             or (type != 'walker' and edit is None):
         fieldwebsite.append(
-        '<button type="submit" class="btn btn-primary">Save</button></form>')
+            '<button type="submit" class="btn btn-primary">Save</button></form>')
 
     return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings",
                            walkernr=_walkernr, edit=edit)
@@ -1710,13 +1729,13 @@ def showsettings():
 
     globalheader = '<thead><tr><th><b>Type</b></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
 
-
     for var in vars:
         line, quickadd, quickline = '', '', ''
         header = '<tr><td colspan="4" class="header"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
             '">[Add new]</a></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
         subheader = '<tr><td colspan="4">' + \
-            settings[var]['description'] + '</td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
+            settings[var]['description'] + \
+            '</td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
         edit = '<td></td>'
         editsettings = '<td></td>'
         _typearea = var
@@ -1912,7 +1931,8 @@ def game_stats():
 
     spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
 
-    stats = {'spawn': spawn, 'gym': gym, 'quest': quest, 'stop': stop, 'usage': usage}
+    stats = {'spawn': spawn, 'gym': gym,
+             'quest': quest, 'stop': stop, 'usage': usage}
     return jsonify(stats)
 
 
@@ -1948,4 +1968,3 @@ def getAllHash(type):
 
 def getCoordFloat(coordinate):
     return floor(float(coordinate) * (10 ** 5)) / float(10 ** 5)
-

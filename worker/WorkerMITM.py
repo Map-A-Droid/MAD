@@ -1,9 +1,10 @@
 import math
 import time
 
-from utils.logging import logger
 from route.RouteManagerIV import RouteManagerIV
-from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
+from utils.geo import (get_distance_of_two_points_in_meters,
+                       get_lat_lng_offsets_by_distance)
+from utils.logging import logger
 from utils.madGlobals import InternalStopWorkerException
 from worker.MITMBase import MITMBase
 
@@ -30,18 +31,23 @@ class WorkerMITM(MITMBase):
             raise InternalStopWorkerException
         # get the distance from our current position (last) to the next gym (cur)
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(self.last_location.lng),
-                                                        float(self.current_location.lat),
+                                                        float(
+                                                            self.last_location.lng),
+                                                        float(
+                                                            self.current_location.lat),
                                                         float(self.current_location.lng))
-        logger.info('Moving {} meters to the next position', round(distance, 2))
+        logger.info('Moving {} meters to the next position',
+                    round(distance, 2))
         delay_used = 0
         speed = routemanager.settings.get("speed", 0)
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            self._communicator.setLocation(self.current_location.lat, self.current_location.lng, 0)
-            cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
+            self._communicator.setLocation(
+                self.current_location.lat, self.current_location.lng, 0)
+            # the time we will take as a starting point to wait for data...
+            cur_time = math.floor(time.time())
 
             delay_used = self._devicesettings.get('post_teleport_delay', 7)
             # Test for cooldown / teleported distance TODO: check this block...
@@ -52,16 +58,21 @@ class WorkerMITM(MITMBase):
                     delay_used = 10
                 elif distance > 10000:
                     delay_used = 15
-                logger.debug("Need more sleep after Teleport: {} seconds!", str(delay_used))
+                logger.debug(
+                    "Need more sleep after Teleport: {} seconds!", str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
-            walk_distance_post_teleport = self._devicesettings.get('walk_after_teleport_distance', 0)
+            walk_distance_post_teleport = self._devicesettings.get(
+                'walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
                 # TODO: actually use to_walk for distance
-                lat_offset, lng_offset = get_lat_lng_offsets_by_distance(walk_distance_post_teleport)
+                lat_offset, lng_offset = get_lat_lng_offsets_by_distance(
+                    walk_distance_post_teleport)
 
                 to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
-                                                               float(self.current_location.lng),
-                                                               float(self.current_location.lat) + lat_offset,
+                                                               float(
+                                                                   self.current_location.lng),
+                                                               float(
+                                                                   self.current_location.lat) + lat_offset,
                                                                float(self.current_location.lng) + lng_offset)
                 logger.info("Walking roughly: {}", str(to_walk))
                 time.sleep(0.3)
@@ -83,7 +94,8 @@ class WorkerMITM(MITMBase):
             logger.info("main: Walking...")
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat, self.current_location.lng, speed)
-            cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
+            # the time we will take as a starting point to wait for data...
+            cur_time = math.floor(time.time())
             delay_used = self._devicesettings.get('post_walk_delay', 7)
         time.sleep(float(delay_used))
         self._devicesettings["last_location"] = self.current_location
@@ -105,12 +117,14 @@ class WorkerMITM(MITMBase):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             logger.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._devicesettings.get("post_turn_screen_on_delay", 7))
+            time.sleep(self._devicesettings.get(
+                "post_turn_screen_on_delay", 7))
 
         cur_time = time.time()
         start_result = False
         while not pogo_topmost:
-            start_result = self._communicator.startApp("com.nianticlabs.pokemongo")
+            start_result = self._communicator.startApp(
+                "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
         reached_raidtab = False
@@ -166,7 +180,8 @@ class WorkerMITM(MITMBase):
             if encounter_ids:
                 logger.debug("Found {} new encounter_ids", len(encounter_ids))
                 for encounter_id, disappear in encounter_ids.items():
-                    logger.debug("id: {}, despawn: {}", encounter_id, disappear)
+                    logger.debug("id: {}, despawn: {}",
+                                 encounter_id, disappear)
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
@@ -195,10 +210,12 @@ class WorkerMITM(MITMBase):
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None
         if latest is None:
-            logger.debug("Nothing received from {} since MAD started", str(self._id))
+            logger.debug(
+                "Nothing received from {} since MAD started", str(self._id))
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
-            logger.debug("No data linked to the requested proto since MAD started.")
+            logger.debug(
+                "No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         else:
             # proto has previously been received, let's check the timestamp...
@@ -235,7 +252,8 @@ class WorkerMITM(MITMBase):
                         logger.debug("No forts in data received")
                         time.sleep(0.5)
                 else:
-                    logger.warning("No mode specified to wait for - this should not even happen...")
+                    logger.warning(
+                        "No mode specified to wait for - this should not even happen...")
                     time.sleep(0.5)
             else:
                 logger.debug("latest timestamp of proto {} ({}) is older than {}",

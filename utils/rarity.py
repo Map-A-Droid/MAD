@@ -1,7 +1,8 @@
 import time
-from utils.logging import logger
-from timeit import default_timer
 from threading import Thread
+from timeit import default_timer
+
+from utils.logging import logger
 
 
 class Rarity(object):
@@ -54,11 +55,14 @@ class Rarity(object):
             # Store as an easy lookup table for front-end.
 
             for poke in pokemon:
-                self._rarity[poke[0]] = self.get_pokemon_rarity(total, int(poke[1]))
+                self._rarity[poke[0]] = self.get_pokemon_rarity(
+                    total, int(poke[1]))
 
             duration = default_timer() - start
-            logger.info('Updated dynamic rarity. It took {}s for {} entries.', round(duration, 2), total)
-            logger.debug('Waiting %d minutes before next dynamic rarity update.', refresh_time_sec / 60)
+            logger.info('Updated dynamic rarity. It took {}s for {} entries.', round(
+                duration, 2), total)
+            logger.debug(
+                'Waiting %d minutes before next dynamic rarity update.', refresh_time_sec / 60)
             time.sleep(refresh_time_sec)
 
     def rarity_by_id(self, pokemonid):
