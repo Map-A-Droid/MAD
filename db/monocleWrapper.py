@@ -4,7 +4,7 @@ import time
 import calendar
 import requests
 
-from loguru import logger
+from utils.logging import logger
 from datetime import datetime, timedelta
 from functools import reduce
 
@@ -42,7 +42,7 @@ class MonocleWrapper(DbWrapperBase):
             self._check_create_column(field)
 
     def auto_hatch_eggs(self):
-        logger.info("{MonocleWrapper::auto_hatch_eggs} called")
+        logger.info("MonocleWrapper::auto_hatch_eggs called")
 
         mon_id = self.application_args.auto_hatch_number
 
@@ -469,7 +469,7 @@ class MonocleWrapper(DbWrapperBase):
             return to_return
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
-        logger.debug("{monocleWrapper::update_encounters_from_db} called")
+        logger.debug("monocleWrapper::update_encounters_from_db called")
         if geofence_helper is None:
             logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
@@ -991,7 +991,7 @@ class MonocleWrapper(DbWrapperBase):
             )
 
     def check_stop_quest(self, latitude, longitude):
-        logger.debug("{MonocleWrapper::stops_from_db} called")
+        logger.debug("MonocleWrapper::stops_from_db called")
         query = (
             "SELECT trs_quest.GUID from trs_quest inner join pokestops on pokestops.external_id = trs_quest.GUID "
             "where from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = "
@@ -1010,7 +1010,7 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
     def stop_from_db_without_quests(self, geofence_helper):
-        logger.debug("{RmWrapper::stop_from_db_without_questsb} called")
+        logger.debug("RmWrapper::stop_from_db_without_questsb called")
         questinfo = {}
 
         query = (
@@ -1038,7 +1038,7 @@ class MonocleWrapper(DbWrapperBase):
             return to_return
 
     def quests_from_db(self, GUID=None, timestamp=None):
-        logger.debug("{MonocleWrapper::quests_from_db} called")
+        logger.debug("MonocleWrapper::quests_from_db called")
         questinfo = {}
         data = ()
 
@@ -1080,7 +1080,7 @@ class MonocleWrapper(DbWrapperBase):
         return questinfo
 
     def submit_pokestops_details_map_proto(self, map_proto):
-        logger.debug("{MonocleWrapper::submit_pokestops_details_map_proto} called")
+        logger.debug("MonocleWrapper::submit_pokestops_details_map_proto called")
         pokestop_args = []
         # now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 

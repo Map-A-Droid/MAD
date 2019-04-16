@@ -15,10 +15,18 @@ def initLogging(args):
         ],
         "handlers": [
             {
-                "sink": sys.stderr,
+                "sink": sys.stdout,
                 "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
                 "colorize": True,
                 "level": log_level,
+                "enqueue": True,
+                "filter": errorFilter
+            },
+            {
+                "sink": sys.stderr,
+                "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
+                "colorize": True,
+                "level": "ERROR",
                 "backtrace": log_trace,
                 "enqueue": True
             },
@@ -50,7 +58,33 @@ def logLevel(debug_level):
     return loglevel
 
 
-class MadLoggerUtils:
+def errorFilter(record):
+    return record["level"] != "ERROR"
+
+
+class LogLevelChanger:
     # this is being used to change log level for gevent/Flask/Werkzeug
     def log(level, msg):
         logger.log("DEBUG5", msg)
+
+
+def debug2(message, *args, **kwargs):
+    logger.opt(depth=1).log("DEBUG2", message, *args, **kwargs)
+
+
+def debug3(message, *args, **kwargs):
+    logger.opt(depth=1).log("DEBUG3", message, *args, **kwargs)
+
+
+def debug4(message, *args, **kwargs):
+    logger.opt(depth=1).log("DEBUG4", message, *args, **kwargs)
+
+
+def debug5(message, *args, **kwargs):
+    logger.opt(depth=1).log("DEBUG5", message, *args, **kwargs)
+
+
+logger.debug2 = debug2
+logger.debug3 = debug3
+logger.debug4 = debug4
+logger.debug5 = debug5

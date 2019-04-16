@@ -1,4 +1,4 @@
-from loguru import logger
+from utils.logging import logger
 
 from threading import Lock
 from utils.stats import PlayerStats

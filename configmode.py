@@ -2,7 +2,7 @@ import os
 import sys
 
 from threading import Thread
-from loguru import logger
+from utils.logging import logger
 
 from utils.walkerArgs import parseArgs
 from db.monocleWrapper import MonocleWrapper

@@ -2,7 +2,7 @@ import os
 import time
 from shutil import copyfile
 from threading import Thread, Event
-from loguru import logger
+from utils.logging import logger
 from ocr.checkWeather import checkWeather
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.madGlobals import InternalStopWorkerException, WebsocketWorkerRemovedException

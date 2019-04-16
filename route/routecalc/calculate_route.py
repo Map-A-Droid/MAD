@@ -5,7 +5,7 @@ import os
 import secrets
 import numpy as np
 
-from loguru import logger
+from utils.logging import logger
 
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location

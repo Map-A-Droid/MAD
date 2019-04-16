@@ -6,7 +6,7 @@ import sys
 import time
 import websockets
 from threading import Event, Lock, Thread
-from loguru import logger
+from utils.logging import logger
 
 from utils.authHelper import check_auth
 from utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException, WrongAreaInWalker

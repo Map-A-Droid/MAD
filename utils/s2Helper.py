@@ -5,7 +5,7 @@ import sys
 import gpxdata
 from geopy import distance, Point
 import s2sphere
-from loguru import logger
+from utils.logging import logger
 
 # from utils.collections import Location
 # from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters

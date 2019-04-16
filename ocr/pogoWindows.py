@@ -8,7 +8,7 @@ import time
 import cv2
 # from numpy import round, ones, uint8
 # from tinynumpy import tinynumpy as np
-from loguru import logger
+from utils.logging import logger
 import numpy as np
 from PIL import Image
 import pytesseract

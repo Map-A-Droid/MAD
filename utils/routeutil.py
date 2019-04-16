@@ -1,6 +1,6 @@
 import re
 import datetime
-from loguru import logger
+from utils.logging import logger
 
 
 def check_walker_value_type(value):

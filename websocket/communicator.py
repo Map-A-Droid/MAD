@@ -1,6 +1,6 @@
 import gpxdata
 from threading import Lock
-from loguru import logger
+from utils.logging import logger
 
 from utils.geo import get_distance_of_two_points_in_meters
 

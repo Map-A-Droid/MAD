@@ -1,7 +1,7 @@
 import json
 import os
 from pathlib import Path
-from loguru import logger
+from utils.logging import logger
 
 from geofence.geofenceHelper import GeofenceHelper
 from route.RouteManagerIV import RouteManagerIV

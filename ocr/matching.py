@@ -4,7 +4,7 @@ import cv2
 import imutils
 import numpy as np
 from PIL import Image
-from loguru import logger
+from utils.logging import logger
 
 
 def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, checkX=False, radius=None, x1=0.30, x2=0.62, y1=0.62, y2=1.23):

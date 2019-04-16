@@ -1,4 +1,4 @@
-from loguru import logger
+from utils.logging import logger
 import os
 import sys
 import time

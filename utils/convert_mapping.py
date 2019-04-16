@@ -1,6 +1,6 @@
 import json
 import shutil
-from loguru import logger
+from utils.logging import logger
 
 mapping_file = './configs/mappings.json'
 save_mapping_file = './configs/mappings_org.json'

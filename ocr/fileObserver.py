@@ -4,7 +4,7 @@ import re
 import time
 from threading import Thread
 
-from loguru import logger
+from utils.logging import logger
 
 import cv2
 import numpy as np

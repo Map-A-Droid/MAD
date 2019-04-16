@@ -3,7 +3,7 @@ import sys
 import time
 import requests
 
-from loguru import logger
+from utils.logging import logger
 from datetime import datetime, timezone, timedelta
 from functools import reduce
 
@@ -266,7 +266,7 @@ class RmWrapper(DbWrapperBase):
             for row in res:
                 logger.debug("[Crop: {} ({})] read_raid_endtime: Found Rows: {}", str(raid_no), str(unique_hash), str(number_of_rows))
                 logger.info("[Crop: {} ({})] read_raid_endtime: Endtime already submitted", str(raid_no), str(unique_hash))
-                logger.debug("{RmWrapper::read_raid_endtime} done")
+                logger.debug("RmWrapper::read_raid_endtime done")
                 return True
 
         logger.info("[Crop: {} ({})] read_raid_endtime: Endtime is new", str(raid_no), str(unique_hash))
@@ -508,11 +508,11 @@ class RmWrapper(DbWrapperBase):
 
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
-        logger.debug("{RmWrapper::update_encounters_from_db} called")
+        logger.debug("RmWrapper::update_encounters_from_db called")
         if geofence_helper is None:
             logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
-        
+
         logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
         query = (
@@ -530,7 +530,7 @@ class RmWrapper(DbWrapperBase):
 
         params = rectangle
         params = params + (latest, )
-        res = self.execute(query, params)    
+        res = self.execute(query, params)
         list_of_coords = []
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in res:
             list_of_coords.append([latitude, longitude, encounter_id, disappear_time, last_modified])
@@ -541,7 +541,7 @@ class RmWrapper(DbWrapperBase):
         encounter_id_infos = {}
         for (latitude, longitude, encounter_id, disappear_time, last_modified) in encounter_id_coords:
             encounter_id_infos[encounter_id] = disappear_time
-            
+
         return latest, encounter_id_infos
 
     def stops_from_db(self, geofence_helper):

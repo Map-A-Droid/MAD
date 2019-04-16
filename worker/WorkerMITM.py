@@ -1,7 +1,7 @@
 import math
 import time
 
-from loguru import logger
+from utils.logging import logger
 from route.RouteManagerIV import RouteManagerIV
 from utils.geo import get_distance_of_two_points_in_meters, get_lat_lng_offsets_by_distance
 from utils.madGlobals import InternalStopWorkerException
