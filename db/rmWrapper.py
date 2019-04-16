@@ -1167,11 +1167,13 @@ class RmWrapper(DbWrapperBase):
 
     def get_mon_changed_since(self, timestamp):
         query = (
-            "SELECT encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, "
+            "SELECT encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
             "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
-            "weather_boosted_condition, last_modified "
+            "weather_boosted_condition, last_modified, "
+            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified "
             "FROM pokemon "
+            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint "
             "WHERE last_modified >= %s"
         )
 
@@ -1183,7 +1185,7 @@ class RmWrapper(DbWrapperBase):
                 longitude, disappear_time, individual_attack,
                 individual_defense, individual_stamina, move_1, move_2,
                 cp, cp_multiplier, weight, height, gender, form, costume,
-                weather_boosted_condition, last_modified) in res:
+                weather_boosted_condition, last_modified, verified) in res:
             ret.append({
                 "encounter_id": encounter_id,
                 "pokemon_id": pokemon_id,
@@ -1204,7 +1206,8 @@ class RmWrapper(DbWrapperBase):
                 "costume": costume,
                 "height": height,
                 "weight": weight,
-                "weather_boosted_condition": weather_boosted_condition
+                "weather_boosted_condition": weather_boosted_condition,
+                "spawn_verified": verified == 1
             })
 
         return ret

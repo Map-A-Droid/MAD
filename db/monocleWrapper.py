@@ -1134,8 +1134,10 @@ class MonocleWrapper(DbWrapperBase):
         query = (
             "SELECT encounter_id, spawn_id, pokemon_id, lat, lon, expire_timestamp, "
             "atk_iv, def_iv, sta_iv, move_1, move_2, cp, weight, gender, form, costume, "
-            "weather_boosted_condition, updated, level "
+            "weather_boosted_condition, updated, level, "
+            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified "
             "FROM sightings "
+            "LEFT JOIN trs_spawn ON sightings.spawn_id = trs_spawn.spawnpoint"
             "WHERE updated >= %s"
         )
 
@@ -1145,8 +1147,8 @@ class MonocleWrapper(DbWrapperBase):
         for (encounter_id, spawnpoint_id, pokemon_id, latitude,
                 longitude, disappear_time, individual_attack,
                 individual_defense, individual_stamina, move_1, move_2,
-                cp, weight, gender, form, costume,
-                weather_boosted_condition, last_modified, level) in res:
+                cp, weight, gender, form, costume, weather_boosted_condition, 
+                last_modified, level, verified) in res:
             ret.append({
                 "encounter_id": encounter_id,
                 "pokemon_id": pokemon_id,
@@ -1166,7 +1168,8 @@ class MonocleWrapper(DbWrapperBase):
                 "costume": costume,
                 "weight": weight,
                 "weather_boosted_condition": weather_boosted_condition,
-                "level": level
+                "level": level,
+                "spawn_verified": verified == 1
             })
 
         return ret
