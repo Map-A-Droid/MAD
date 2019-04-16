@@ -7,10 +7,9 @@ from datetime import datetime
 from queue import Queue
 
 from flask import (Flask, Response, request)
-from loguru import logger
+from utils.logging import logger, LogLevelChanger
 from gevent.pywsgi import WSGIServer
 
-from utils.logging import MadLoggerUtils
 from utils.authHelper import check_auth
 
 app = Flask(__name__)
@@ -93,7 +92,7 @@ class MITMReceiver(object):
             t.join()
 
     def run_receiver(self):
-        httpsrv = WSGIServer((self.__listen_ip, int(self.__listen_port)), self.app.wsgi_app, log=MadLoggerUtils)
+        httpsrv = WSGIServer((self.__listen_ip, int(self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
         httpsrv.serve_forever()
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):

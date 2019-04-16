@@ -4,7 +4,7 @@ import time
 import calendar
 import requests
 
-from loguru import logger
+from utils.logging import logger
 from datetime import datetime, timedelta
 from functools import reduce
 
@@ -42,7 +42,7 @@ class MonocleWrapper(DbWrapperBase):
             self._check_create_column(field)
 
     def auto_hatch_eggs(self):
-        logger.info("{MonocleWrapper::auto_hatch_eggs} called")
+        logger.info("MonocleWrapper::auto_hatch_eggs called")
 
         mon_id = self.application_args.auto_hatch_number
 
@@ -469,7 +469,7 @@ class MonocleWrapper(DbWrapperBase):
             return to_return
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
-        logger.debug("{monocleWrapper::update_encounters_from_db} called")
+        logger.debug("monocleWrapper::update_encounters_from_db called")
         if geofence_helper is None:
             logger.error("No geofence_helper! Not fetching encounters.")
             return 0, {}
@@ -655,25 +655,17 @@ class MonocleWrapper(DbWrapperBase):
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
 
-
                 s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(lat, lon, level=10)
-
-                despawn_time = datetime.now() + timedelta(seconds=300)
-                despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
-
-                init = True
-
                 getdetspawntime = self.get_detected_endtime(str(spawnid))
 
                 if getdetspawntime:
                     despawn_time = self._gen_endtime(getdetspawntime)
                     despawn_time_unix = despawn_time
-                    init = False
-
-                if init:
-                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
-                else:
                     logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despawns at {4} (non-init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
+                else:
+                    despawn_time = datetime.now() + timedelta(seconds=300)
+                    despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
+                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
 
                 mon_id = wild_mon['pokemon_data']['id']
 
@@ -991,7 +983,7 @@ class MonocleWrapper(DbWrapperBase):
             )
 
     def check_stop_quest(self, latitude, longitude):
-        logger.debug("{MonocleWrapper::stops_from_db} called")
+        logger.debug("MonocleWrapper::stops_from_db called")
         query = (
             "SELECT trs_quest.GUID from trs_quest inner join pokestops on pokestops.external_id = trs_quest.GUID "
             "where from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d') = "
@@ -1010,7 +1002,7 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
     def stop_from_db_without_quests(self, geofence_helper):
-        logger.debug("{RmWrapper::stop_from_db_without_questsb} called")
+        logger.debug("RmWrapper::stop_from_db_without_questsb called")
         questinfo = {}
 
         query = (
@@ -1038,7 +1030,7 @@ class MonocleWrapper(DbWrapperBase):
             return to_return
 
     def quests_from_db(self, GUID=None, timestamp=None):
-        logger.debug("{MonocleWrapper::quests_from_db} called")
+        logger.debug("MonocleWrapper::quests_from_db called")
         questinfo = {}
         data = ()
 
@@ -1080,7 +1072,7 @@ class MonocleWrapper(DbWrapperBase):
         return questinfo
 
     def submit_pokestops_details_map_proto(self, map_proto):
-        logger.debug("{MonocleWrapper::submit_pokestops_details_map_proto} called")
+        logger.debug("MonocleWrapper::submit_pokestops_details_map_proto called")
         pokestop_args = []
         # now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -1142,8 +1134,10 @@ class MonocleWrapper(DbWrapperBase):
         query = (
             "SELECT encounter_id, spawn_id, pokemon_id, lat, lon, expire_timestamp, "
             "atk_iv, def_iv, sta_iv, move_1, move_2, cp, weight, gender, form, costume, "
-            "weather_boosted_condition, updated, level "
+            "weather_boosted_condition, updated, level, "
+            "(trs_spawn.calc_endminsec IS NOT NULL) AS verified "
             "FROM sightings "
+            "LEFT JOIN trs_spawn ON sightings.spawn_id = trs_spawn.spawnpoint"
             "WHERE updated >= %s"
         )
 
@@ -1153,8 +1147,8 @@ class MonocleWrapper(DbWrapperBase):
         for (encounter_id, spawnpoint_id, pokemon_id, latitude,
                 longitude, disappear_time, individual_attack,
                 individual_defense, individual_stamina, move_1, move_2,
-                cp, weight, gender, form, costume,
-                weather_boosted_condition, last_modified, level) in res:
+                cp, weight, gender, form, costume, weather_boosted_condition, 
+                last_modified, level, verified) in res:
             ret.append({
                 "encounter_id": encounter_id,
                 "pokemon_id": pokemon_id,
@@ -1174,7 +1168,8 @@ class MonocleWrapper(DbWrapperBase):
                 "costume": costume,
                 "weight": weight,
                 "weather_boosted_condition": weather_boosted_condition,
-                "level": level
+                "level": level,
+                "spawn_verified": verified == 1
             })
 
         return ret

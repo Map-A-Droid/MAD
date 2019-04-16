@@ -6,7 +6,7 @@ import time
 import math
 
 from abc import ABC, abstractmethod
-from loguru import logger
+from utils.logging import logger
 from threading import Event, Thread, current_thread, Lock
 from utils.routeutil import check_walker_value_type, check_max_walkers_reached
 from utils.hamming import hamming_distance as hamming_dist

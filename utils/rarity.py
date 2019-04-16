@@ -1,5 +1,5 @@
 import time
-from loguru import logger
+from utils.logging import logger
 from timeit import default_timer
 from threading import Thread
 

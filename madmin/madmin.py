@@ -8,7 +8,7 @@ import sys
 import threading
 import time
 import cv2
-from loguru import logger
+from utils.logging import logger, LogLevelChanger
 from pathlib import Path
 from math import floor
 from shutil import copyfile
@@ -21,7 +21,6 @@ from flask_caching import Cache
 from utils.language import i8ln, open_json_file
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
-from utils.logging import MadLoggerUtils
 from functools import wraps, update_wrapper
 from utils.adb import ADBConnect
 from utils.functions import generate_path, image_resize, generate_phones, creation_date
@@ -55,7 +54,7 @@ def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
     else:
         datetimeformat = '%Y-%m-%d %H:%M:%S'
 
-    httpsrv = WSGIServer((arg_args.madmin_ip, int(arg_args.madmin_port)), app.wsgi_app, log=MadLoggerUtils)
+    httpsrv = WSGIServer((arg_args.madmin_ip, int(arg_args.madmin_port)), app.wsgi_app, log=LogLevelChanger)
     httpsrv.serve_forever()
 
 

@@ -1,5 +1,5 @@
 import json
-from loguru import logger
+from utils.logging import logger
 from pathlib import Path
 import os
 from utils.walkerArgs import parseArgs

@@ -10,7 +10,6 @@ import gc
 import shutil
 
 from watchdog.observers import Observer
-from loguru import logger
 
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
@@ -22,7 +21,7 @@ from utils.walkerArgs import parseArgs
 from utils.version import MADVersion
 from websocket.WebsocketServer import WebsocketServer
 from utils.rarity import Rarity
-from utils.logging import initLogging
+from utils.logging import initLogging, logger
 
 
 args = parseArgs()
@@ -165,6 +164,7 @@ def get_system_infos(db_wrapper):
         unixnow = calendar.timegm(zero.utctimetuple())
         db_wrapper.insert_usage(args.status_name, cpuUse, memoryUse, collected, unixnow)
         time.sleep(args.statistic_interval)
+
 
 def create_folder(folder):
     if not os.path.exists(folder):
@@ -330,15 +330,13 @@ if __name__ == "__main__":
                              target=get_system_infos, args=(db_wrapper,))
             t_usage.daemon = False
             t_usage.start()
-        else:
-            logger.warning("Dont collect system usage just for MADmin")
 
     try:
         while True:
             time.sleep(10)
     finally:
         db_wrapper = None
-        logger.error("Stop called")
+        logger.success("Stop called")
         terminate_mad.set()
         # now cleanup all threads...
         # TODO: check against args or init variables to None...

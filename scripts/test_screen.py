@@ -175,6 +175,8 @@ class testimage(object):
         radMax = int((width / float(6) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         gray = cv2.Canny(gray, 100, 50, apertureSize=3)
+        cv2.imshow("output",gray)
+        cv2.waitKey(0)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,
                                    maxRadius=radMax)
         if circles is not None:

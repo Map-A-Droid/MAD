@@ -2,7 +2,7 @@ import json
 import requests
 import time
 
-from loguru import logger
+from utils.logging import logger
 
 from utils.gamemechanicutil import calculate_mon_level
 from utils.gamemechanicutil import get_raid_boss_cp
@@ -256,6 +256,7 @@ class WebhookWorker:
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
                 "disappear_time": mon["disappear_time"],
+                "verified": mon["spawn_verified"]
             }
 
             # get rarity

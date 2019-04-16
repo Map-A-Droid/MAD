@@ -1,6 +1,6 @@
 import sys
 
-from loguru import logger
+from utils.logging import logger
 
 # Most of the code is from RocketMap
 # https://github.com/RocketMap/RocketMap
@@ -25,7 +25,7 @@ class GeofenceHelper:
                 pathToIncludeGeofence, excluded=False)
             self.excluded_areas = self.parse_geofences_file(
                 pathToExcludeGeofence, excluded=True)
-            logger.log("DEBUG2", 'Loaded {} geofenced and {} excluded areas.', len(self.geofenced_areas), len(self.excluded_areas))
+            logger.debug2("Loaded {} geofenced and {} excluded areas.", len(self.geofenced_areas), len(self.excluded_areas))
 
     def get_polygon_from_fence(self):
         maxLat, minLat, maxLon, minLon = -90, 90, -180, 180
@@ -80,7 +80,7 @@ class GeofenceHelper:
             else:
                 geofenced_coordinates.append(c)
 
-        logger.log("DEBUG2", 'Geofenced to {} coordinates', len(geofenced_coordinates))
+        logger.debug2("Geofenced to {} coordinates", len(geofenced_coordinates))
         return geofenced_coordinates
 
     def is_enabled(self):

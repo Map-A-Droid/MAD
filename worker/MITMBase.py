@@ -2,7 +2,7 @@ from datetime import datetime
 import math
 import time
 from abc import abstractmethod
-from loguru import logger
+from utils.logging import logger
 import collections
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase

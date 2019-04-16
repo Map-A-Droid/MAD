@@ -1,7 +1,7 @@
 import collections
 import time
 
-from loguru import logger
+from utils.logging import logger
 
 from route.RouteManagerBase import RouteManagerBase
 

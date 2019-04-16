@@ -13,7 +13,7 @@ import imagehash
 import numpy as np
 import pytesseract
 from PIL import Image
-from loguru import logger
+from utils.logging import logger
 
 from .matching import fort_image_matching
 from .matching_mon import mon_image_matching

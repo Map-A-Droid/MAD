@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from threading import RLock, Event, Thread, Lock
 from datetime import datetime
 from queue import Queue
-from loguru import logger
+from utils.logging import logger
 from geofence.geofenceHelper import GeofenceHelper
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from route.routecalc.calculate_route import getJsonRoute

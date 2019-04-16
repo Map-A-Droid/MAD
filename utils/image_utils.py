@@ -1,5 +1,5 @@
 import cv2
-from loguru import logger
+from utils.logging import logger
 from PIL import Image
 from imagehash import dhash
 
