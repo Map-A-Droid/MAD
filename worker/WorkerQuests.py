@@ -213,7 +213,7 @@ class WorkerQuests(MITMBase):
             logger.info("Timediff between now and last action time: {}", str(float(timediff)))
             delay_used = delay_used - timediff
         else:
-            logger.info("No last action time found - no calulation")
+            logger.info("No last action time found - no calculation")
 
         if delay_used < 0:
             logger.info('No more cooldowntime - start over')
