@@ -1260,9 +1260,8 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        total = reduce(lambda x, y: x + y[1], res, 0)
-
-        return {'pokemon': res, 'total': total}
+        
+        return res
 
     def get_pokemon_spawns(self, hours):
         logger.debug('Fetching pokemon spawns from db')
