@@ -23,8 +23,10 @@ RUN apt-get -y install tk
 RUN apt-get update
 
 COPY requirements.txt /usr/src/app/
+COPY requirements_ocr.txt /usr/src/app/
 
 RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
+RUN apt-get update && apt-get install -y git && pip install -r requirements_ocr.txt
 
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/

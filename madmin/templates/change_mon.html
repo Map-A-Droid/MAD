@@ -44,7 +44,7 @@
         $("#navraids").addClass("active");
         $.ajax({
             type: "GET",
-            url: "/get_mons",
+            url: "get_mons",
             success: function (result) {
                 setGrid('#show-data', result);
             }
@@ -55,6 +55,6 @@
 
 {% block content %}
 <h2>Modify detecting Mon</h2>
-<h4><a href="/raids">Back to Raids</a></h4>
+<h4><a href="raids">Back to Raids</a></h4>
 <table id="show-data" class="table"></table>
 {% endblock %}

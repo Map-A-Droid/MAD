@@ -1,11 +1,8 @@
-import logging
 import os
 import sys
 from time import strftime
 
 import configargparse
-
-log = logging.getLogger(__name__)
 
 
 def memoize(function):
@@ -55,6 +52,8 @@ def parseArgs():
                         help='IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).')
     parser.add_argument('-mrport', '--mitmreceiver_port', required=False, default=8000,
                         help='Port to listen on for proto data (MITM data). Default: 8000.')
+    parser.add_argument('-mrdw', '--mitmreceiver_data_workers', type=int, default=2,
+                        help='Amount of workers to work off the data that queues up. Default: 2.')
 
     # WEBSOCKET
     parser.add_argument('-wsip', '--ws_ip', required=False, default="0.0.0.0", type=str,
@@ -84,10 +83,14 @@ def parseArgs():
                         help='Use this instance only for OCR.')
     parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
                         help='Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.')
-    parser.add_argument('-otc', '--ocr_thread_count', action='store_true', default=2,
+    parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
                         help='Amount of threads/processes to be used for screenshot-analysis.')
     parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
                         help='Start madmin as instance.')
+    parser.add_argument('-or', '--only_routes', action='store_true', default=False,
+                        help='Only calculate routes, then exit the program. No scanning.')
+    parser.add_argument('-nocr', '--no_ocr', action='store_true', default=False,
+                        help='Activate if you not using OCR for Quest or Raidscanning.')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
@@ -100,13 +103,13 @@ def parseArgs():
     parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots', # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
-    parser.add_argument('-ssvpath', '--successsave_path', default='ocr/success',
-                        help='Folder for saved Raidcrops. Default: ocr/success')
-
     parser.add_argument('-unkpath', '--unknown_path', default='unknown',
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
+
+    parser.add_argument('-L', '--language', default='en',
+                        help=('Set Language for MadMin / Quests. Default: en'))
 
     parser.add_argument('-hlat', '--home_lat', default='0.0', type=float,
                         help=('Set Lat from the center of your scan location.'
@@ -115,16 +118,10 @@ def parseArgs():
                         help=('Set Lng from the center of your scan location.'
                               'Especially for using MADBOT (User submitted Raidscreens). Default: 0.0'))
 
-    parser.add_argument('-clnupa', '--cleanup_age', default='1440',
-                        help='Delete Screenshots older than X minutes. Default: 1440')
-
     parser.add_argument('-gdv', '--gym_detection_value', default='0.75', type=float,
                         help=(
                             'Value of gym detection. The higher the more accurate is checked. 0.65 maybe generate '
                             'more false positive. Default: 0.75'))
-
-    parser.add_argument('-ssv', '--save_success', action='store_true', default=False,
-                        help='Save success submitted raidcrops.')
 
     parser.add_argument('-lc', '--last_scanned', action='store_true', default=False,
                         help='Submit last scanned location to RM DB (if supported). Default: False')
@@ -148,32 +145,48 @@ def parseArgs():
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
 
-    # timezone
-    parser.add_argument('-tz', '--timezone', type=int, required=False,
-                        help='Hours Difference to GMT0. f.e.: +2 for Berlin/Germany')
-
-    # sleeptimer
-    parser.add_argument('-st', '--sleeptimer', action='store_true', default=False,
-                        help='Activate the Sleeptimer.')
-    parser.add_argument('-si', '--sleepinterval', default=[], action='append',
-                        help='Intervals for the sleeptimer. f.e. [[22:00, 5:00]]')
-
-    # download coords
-    parser.add_argument('-jj', '--justjson', action='store_true', default=False,
-                        help='just generate the gym_info.json')
+    # rarity
+    parser.add_argument('-rh', '--rarity_hours', type=int, default=72,
+                        help='Set the number of hours for the calculation of pokemon rarity (Default: 72)')
+    parser.add_argument('-ruf', '--rarity_update_frequency', type=int, default=60,
+                        help='Update frequency for dynamic rarity in minutes (Default: 60)')
 
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
-                        help='URL endpoint/s for webhooks (seperated by commas) - urls have to start with http*')
+                        help='URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
                         help='Activate weather webhook support')
+    parser.add_argument('-qwh', '--quest_webhook', action='store_true', default=False,
+                        help='Activate quest webhook support')
+    parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
+                        help='Activate gym webhook support')
+    parser.add_argument('-whser', '--webhook_submit_exraids', action='store_true', default=False,
+                        help='Send Ex-raids to the webhook if detected')
+    parser.add_argument('-whst', '--webhook_start_time', default=0,
+                        help='Debug: Set initial timestamp to fetch changed elements from the DB to send via WH.')
+    parser.add_argument('-whmps', '--webhook_max_payload_size', default=0, type=int,
+                        help='Split up the payload into chunks and send multiple requests. Default: 0 (unlimited)')
     # weather
     parser.add_argument('-w', '--weather', action='store_true', default=False,
                         help='Read weather and post to db - if supported! (Default: False)')
+
+    # folder
+    parser.add_argument('--file_path',
+                        help='Defines directory to save worker stats- and position files and calculated routes',
+                        default='files')
+
+
+    # Statistics
+    parser.add_argument('-stco', '--stat_gc', action='store_true', default=False,
+                        help='Store collected objects (garbage collector) (Default: False)')
+    parser.add_argument('-stiv', '--statistic_interval', default=60, type=int,
+                        help='Store new local stats every N seconds (Default: 60)')
+    parser.add_argument('-stat', '--statistic', action='store_true', default=False,
+                        help='Activate system statistics (Default: False)')
 
     # MADmin
     parser.add_argument('-mmt', '--madmin_time', default='24',
@@ -190,6 +203,12 @@ def parseArgs():
     parser.add_argument('-mmnrsp', '--madmin_noresponsive', action='store_false', default=True,
                         help='MADmin deactivate responsive tables')
 
+    parser.add_argument('-mmuser', '--madmin_user', default='',
+                        help='Username for MADmin Frontend.')
+
+    parser.add_argument('-mmpassword', '--madmin_password', default='',
+                        help='Password for MADmin Frontend.')
+
     parser.add_argument('-pfile', '--position_file', default='current',
                         help='Filename for bot\'s current position (Default: current)')
 
@@ -200,6 +219,17 @@ def parseArgs():
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
+    parser.add_argument('-ump', '--use_media_projection', action='store_true', default=False,
+                        help='Use Media Projection for image transfer (OCR) (Default: False)')
+
+    # adb
+    parser.add_argument('-adb', '--use_adb', action='store_true', default=False,
+                        help='Use ADB for phonecontrol (Default: False)')
+    parser.add_argument('-adbservip', '--adb_server_ip', default='127.0.0.1',
+                        help='IP address of ADB server (Default: 127.0.0.1)')
+
+    parser.add_argument('-adpservprt', '--adb_server_port', type=int, default=5037,
+                        help='Port of ADB server (Default: 5037)')
 
     # log settings
     parser.add_argument('--no-file-logs',
@@ -219,6 +249,8 @@ def parseArgs():
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
+    parser.add_argument('-cla', '--cleanup-age', default=0, type=int,
+                        help='Delete logs older than X minutes. Default: 0')
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
                         help='Activate auto hatch of level 5 eggs')

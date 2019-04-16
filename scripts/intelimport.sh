@@ -34,8 +34,9 @@ esac
 gymCount=0
 stopCount=0
 
-cat $1 |{ while IFS=\; read name url portalGuid
+while IFS=";" read name url portalGuid
 do
+ portalGuid=$(sed -e 's,\n,,' -e 's,\r,,' <<< "$portalGuid")
         echo "name: $name, url: $url, external_id: $portalGuid"
         if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $gyms where $gymID=\"$portalGuid\";") -eq 1 ]; then
                 echo "Thats a gym, updating row..."
@@ -54,7 +55,6 @@ do
                       echo "Thats NOT a pokestop, skipping..."
               fi
         fi
-done
+done < $1
 echo "$gymCount Gyms updated"
 echo "$stopCount Stops updated"
-}
