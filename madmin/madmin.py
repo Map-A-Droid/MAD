@@ -181,7 +181,7 @@ def get_phonescreens():
     if ws_server is not None:
         phones = ws_server.get_reg_origins().copy()
     else:
-        ws_server = []
+        phones = []
     for phonename in phones:
         ws_connected_phones.append(phonename)
         add_text = ""
