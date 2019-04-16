@@ -39,9 +39,10 @@ mode_mapping = {
 
 
 class MappingParser(object):
-    def __init__(self, db_wrapper, configmode = False):
+    def __init__(self, db_wrapper, args, configmode = False):
         self.db_wrapper = db_wrapper
         self.configmode = configmode
+        self.args = args
         with open('configs/mappings.json') as f:
             self.__raw_json = json.load(f)
             if 'walker' not in self.__raw_json: self.__raw_json['walker'] = []
@@ -173,7 +174,7 @@ class MappingParser(object):
                     logger.info("Init mode enabled and more than 400 coords in init. Going row-based for {}", str(area.get("name", "unknown")))
                     # we are in init, let's write the init route to file to make it visible in madmin
                     if area["routecalc"] is not None:
-                        routefile = area["routecalc"]
+                        routefile = os.path.join(self.args.file_path, area["routecalc"])
                         if os.path.isfile(routefile + '.calc'):
                             os.remove(routefile + '.calc')
                         with open(routefile + '.calc', 'a') as f:

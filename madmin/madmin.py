@@ -48,7 +48,7 @@ def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
     global conf_args, device_mappings, db_wrapper, areas, ws_server, datetimeformat, adb_connect
     conf_args = arg_args
     db_wrapper = arg_db_wrapper
-    mapping_parser = MappingParser(db_wrapper)
+    mapping_parser = MappingParser(db_wrapper, conf_args)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
     ws_server = glob_ws_server
@@ -178,7 +178,10 @@ def get_phonescreens():
 
     screens_phone = []
     ws_connected_phones = []
-    phones = ws_server.get_reg_origins().copy()
+    if ws_server is not None:
+        phones = ws_server.get_reg_origins().copy()
+    else:
+        ws_server = []
     for phonename in phones:
         ws_connected_phones.append(phonename)
         add_text = ""
@@ -1594,7 +1597,7 @@ def delsetting():
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-    mapping_parser = MappingParser(db_wrapper)
+    mapping_parser = MappingParser(db_wrapper, conf_args)
     device_mappings = mapping_parser.get_devicemappings()
     areas = mapping_parser.get_areas()
 
@@ -1694,7 +1697,7 @@ def addedit():
         with open('configs/mappings.json', 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-        mapping_parser = MappingParser(db_wrapper)
+        mapping_parser = MappingParser(db_wrapper, conf_args)
         device_mappings = mapping_parser.get_devicemappings()
         areas = mapping_parser.get_areas()
 

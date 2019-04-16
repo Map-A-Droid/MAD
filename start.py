@@ -173,7 +173,7 @@ def create_folder(folder):
 
 
 def load_mappings(db_wrapper):
-    mapping_parser = MappingParser(db_wrapper)
+    mapping_parser = MappingParser(db_wrapper, args, configmode=False)
     device_mappings = mapping_parser.get_devicemappings()
     routemanagers = mapping_parser.get_routemanagers()
     auths = mapping_parser.get_auths()
