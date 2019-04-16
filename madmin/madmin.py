@@ -3,7 +3,6 @@ import datetime
 import glob
 import json
 import os
-import platform
 import re
 import sys
 import threading
@@ -25,6 +24,7 @@ from utils.questGen import generate_quest
 from utils.logging import MadLoggerUtils
 from functools import wraps, update_wrapper
 from utils.adb import ADBConnect
+from utils.functions import generate_path, image_resize, generate_phones, creation_date
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -39,9 +39,6 @@ areas = None
 ws_server = None
 datetimeformat = None
 adb_connect = None
-
-with open('madmin/static/vars/template/phone.tpl', 'r') as file:
-    phone_template = file.read().replace('\n', '')
 
 
 def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
@@ -78,9 +75,6 @@ def auth_required(func):
     return decorated
 
 
-# @app.before_first_request
-# def init():
-#     task = my_task.apply_async()
 def run_job():
     try:
         while True:
@@ -116,63 +110,12 @@ def after_request(response):
     return response
 
 
-def image_resize(image, width = None, height = None, inter = cv2.INTER_AREA):
-    # initialize the dimensions of the image to be resized and
-    # grab the image size
-    dim = None
-    filename = os.path.basename(image)
-    image = cv2.imread(image, 3)
-    (h, w) = image.shape[:2]
-
-    # if both the width and height are None, then return the
-    # original image
-    if width is None and height is None:
-        return image
-
-    # check to see if the width is None
-    if width is None:
-        # calculate the ratio of the height and construct the
-        # dimensions
-        r = height / float(h)
-        dim = (int(w * r), height)
-
-    # otherwise, the height is None
-    else:
-        # calculate the ratio of the width and construct the
-        # dimensions
-        r = width / float(w)
-        dim = (width, int(h * r))
-
-    # resize the image
-    resized = cv2.resize(image, dim, interpolation = inter)
-    cv2.imwrite("temp/madmin/" + str(filename), resized, [int(cv2.IMWRITE_PNG_COMPRESSION), 9])
-
-    # return the resized image
-    return
-
-
-def generate_phones(phonename, add_text, adb_option, screen, dummy=False):
-    if not dummy:
-        creationdate = datetime.datetime.fromtimestamp(
-            os.path.getmtime("temp/screenshot" + str(phonename) + ".png")).strftime(datetimeformat)
-    else:
-        creationdate = 'No Screen available'
-
-    return (
-        phone_template.replace('<<phonename>>', phonename)
-            .replace('<<adb_option>>', str(adb_option))
-            .replace('<<add_text>>', add_text)
-            .replace('<<screen>>', screen)
-            .replace('<<creationdate>>', creationdate)
-    )
-
-
 @app.route('/phonecontrol', methods=['GET'])
 @auth_required
 @nocache
 def get_phonescreens():
-    if not os.path.exists("temp/madmin"):
-        os.makedirs("temp/madmin")
+    if not os.path.exists(os.path.join(conf_args.temp_path, "madmin")):
+        os.makedirs(os.path.join(conf_args.temp_path, "madmin"))
     global device_mappings
     global ws_server
 
@@ -196,10 +139,11 @@ def get_phonescreens():
 
         filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(phonename))
         if os.path.isfile(filename):
-            image_resize(filename, width=400)
+            image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=400)
             screen = "/screenshot/madmin/screenshot" + str(phonename) + ".png"
-            screens_phone.append(generate_phones(phonename, add_text, adb_option, screen))
-
+            screens_phone.append(
+                generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=False)
+            )
         else:
             screen = "/static/dummy.png"
             screens_phone.append(generate_phones(phonename, add_text, adb_option, screen, True))
@@ -213,12 +157,17 @@ def get_phonescreens():
                                'alt="NO websocket connection!"></b>'
                     filename = os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(pho))
                     if os.path.isfile(filename):
-                        image_resize(filename, width=400)
+                        image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=400)
                         screen = "/screenshot/madmin/screenshot" + str(pho) + ".png"
-                        screens_phone.append(generate_phones(pho, add_text, adb_option, screen))
+                        screens_phone.append(generate_phones(
+                            phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=True)
+                        )
                     else:
                         screen = "/static/dummy.png"
-                        screens_phone.append(generate_phones(pho, add_text, adb_option, screen, True))
+                        screens_phone.append(
+                            generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat,
+                                            dummy=True)
+                        )
 
     return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
 
@@ -227,18 +176,18 @@ def get_phonescreens():
 @auth_required
 @nocache
 def pushscreens(path):
-    return send_from_directory('../temp', path)
+    return send_from_directory(generate_path(conf_args.temp_path), path)
 
 
 @app.route('/static/<path:path>', methods=['GET'])
 @auth_required
 def pushstatic(path):
-    return send_from_directory('../madmin/static', path)
+    return send_from_directory(generate_path('madmin/static'), path)
 
 
 @app.route('/take_screenshot', methods=['GET'])
 @auth_required
-def take_screenshot():
+def take_screenshot(origin=None, useadb=None):
     global ws_server
     origin = request.args.get('origin')
     useadb = request.args.get('adb', False)
@@ -254,7 +203,8 @@ def take_screenshot():
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.get_screenshot_single(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))
 
-    image_resize("temp/screenshot" + str(origin) + ".png", width=400)
+    image_resize(os.path.join(conf_args.temp_path, "screenshot" + str(origin) + ".png"),
+                 os.path.join(conf_args.temp_path, "madmin"), width=400)
 
     creationdate = datetime.datetime.fromtimestamp(
         os.path.getmtime(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))).strftime(datetimeformat)
@@ -286,8 +236,9 @@ def click_screenshot():
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.click(int(real_click_x), int(real_click_y))
 
-    time.sleep(1)
-    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+    time.sleep(2)
+    return take_screenshot(origin, useadb)
+
 
 @app.route('/swipe_screenshot', methods=['GET'])
 @auth_required
@@ -318,8 +269,8 @@ def swipe_screenshot():
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.touchandhold(int(real_click_x), int(real_click_y), int(real_click_xe), int(real_click_ye))
 
-    time.sleep(1)
-    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+    time.sleep(2)
+    return take_screenshot(origin, useadb)
 
 
 @app.route('/quit_pogo', methods=['GET'])
@@ -336,7 +287,9 @@ def quit_pogo():
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.stopApp("com.nianticlabs.pokemongo")
         logger.info('MADMin: WS command successfully ({})', str(origin))
-    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+
+    time.sleep(2)
+    return take_screenshot(origin, useadb)
 
 
 @app.route('/restart_phone', methods=['GET'])
@@ -352,7 +305,7 @@ def restart_phone():
     else:
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.reboot()
-    return redirect('phonecontrol')
+    return redirect(getBasePath(request) + '/phonecontrol')
 
 
 @app.route('/send_gps', methods=['GET'])
@@ -375,7 +328,9 @@ def send_gps():
     except Exception as e:
         logger.exception(
             'MADmin: Exception occurred while set gps coords: {}.', e)
-    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+
+    time.sleep(2)
+    return take_screenshot(origin, useadb)
 
 
 @app.route('/send_text', methods=['GET'])
@@ -394,7 +349,9 @@ def send_text():
     else:
         temp_comm = ws_server.get_origin_communicator(origin)
         temp_comm.sendText(text)
-    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+
+    time.sleep(2)
+    return take_screenshot(origin, useadb)
 
 
 @app.route('/send_command', methods=['GET'])
@@ -419,7 +376,8 @@ def send_command():
         elif command == 'back':
             temp_comm.backButton()
 
-    return redirect('take_screenshot?origin=' + str(origin) + '&adb=' + str(useadb))
+    time.sleep(2)
+    return take_screenshot(origin, useadb)
 
 
 @app.route('/screens', methods=['GET'])
@@ -1869,13 +1827,6 @@ def get_status():
     return jsonify(data)
 
 
-def datetime_from_utc_to_local(utc_datetime):
-    now_timestamp = time.time()
-    offset = datetime.datetime.fromtimestamp(
-        now_timestamp) - datetime.datetime.utcfromtimestamp(now_timestamp)
-    return int(utc_datetime + offset.total_seconds()) * 1000
-
-
 @app.route('/get_game_stats', methods=['GET'])
 @auth_required
 def game_stats():
@@ -1999,38 +1950,3 @@ def getAllHash(type):
 def getCoordFloat(coordinate):
     return floor(float(coordinate) * (10 ** 5)) / float(10 ** 5)
 
-
-def creation_date(path_to_file):
-    """
-    Try to get the date that a file was created, falling back to when it was
-    last modified if that isn't possible.
-    See http://stackoverflow.com/a/39501288/1709587 for explanation.
-    """
-    if platform.system() == 'Windows':
-        return os.path.getctime(path_to_file)
-    else:
-        stat = os.stat(path_to_file)
-        try:
-            return stat.st_birthtime
-        except AttributeError:
-            # We're probably on Linux. No easy way to get creation dates here,
-            # so we'll settle for when its content was last modified.
-            return stat.st_mtime
-
-
-if __name__ == "__main__":
-    from utils.walkerArgs import parseArgs
-    from db.monocleWrapper import MonocleWrapper
-    from db.rmWrapper import RmWrapper
-
-    args = parseArgs()
-
-    if args.db_method == "rm":
-        db_wrapper = RmWrapper(args, None)
-    elif args.db_method == "monocle":
-        db_wrapper = MonocleWrapper(args, None)
-    else:
-        log.error("Invalid db_method in config. Exiting")
-        sys.exit(1)
-
-    app.run()

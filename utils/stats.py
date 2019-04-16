@@ -40,17 +40,17 @@ class PlayerStats(object):
                         'pokemons_encountered': str(data_inventory['inventory_item_data']['player_stats']['pokemons_encountered']),
                         'poke_stop_visits': str(data_inventory['inventory_item_data']['player_stats']['poke_stop_visits'])
                     })
-                    with open(os.path.join(args.file_path, self._id + '.stats'), 'w') as outfile:
+                    with open(os.path.join(args.file_path, str(self._id) + '.stats'), 'w') as outfile:
                         json.dump(data, outfile, indent=4, sort_keys=True)
 
     def open_player_stats(self):
-        statsfile = Path(os.path.join(args.file_path, self._id + '.stats'))
+        statsfile = Path(os.path.join(args.file_path, str(self._id) + '.stats'))
         if not statsfile.is_file():
             logger.error('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
             return False
 
-        with open(os.path.join(args.file_path, self._id + '.stats')) as f:
+        with open(os.path.join(args.file_path, str(self._id) + '.stats')) as f:
             data = json.load(f)
 
         self.set_level(data[self._id][0]['level'])
