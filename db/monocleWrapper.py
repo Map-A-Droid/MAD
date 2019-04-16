@@ -655,25 +655,17 @@ class MonocleWrapper(DbWrapperBase):
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
 
-
                 s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(lat, lon, level=10)
-
-                despawn_time = datetime.now() + timedelta(seconds=300)
-                despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
-
-                init = True
-
                 getdetspawntime = self.get_detected_endtime(str(spawnid))
 
                 if getdetspawntime:
                     despawn_time = self._gen_endtime(getdetspawntime)
                     despawn_time_unix = despawn_time
-                    init = False
-
-                if init:
-                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
-                else:
                     logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despawns at {4} (non-init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
+                else:
+                    despawn_time = datetime.now() + timedelta(seconds=300)
+                    despawn_time_unix = int(time.mktime(despawn_time.timetuple()))
+                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
 
                 mon_id = wild_mon['pokemon_data']['id']
 
