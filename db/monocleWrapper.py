@@ -1191,7 +1191,7 @@ class MonocleWrapper(DbWrapperBase):
             "weather_boosted_condition, updated, level, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified "
             "FROM sightings "
-            "LEFT JOIN trs_spawn ON sightings.spawn_id = trs_spawn.spawnpoint"
+            "LEFT JOIN trs_spawn ON sightings.spawn_id = trs_spawn.spawnpoint "
             "WHERE updated >= %s"
         )
 
