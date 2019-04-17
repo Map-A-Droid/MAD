@@ -1158,7 +1158,7 @@ def addwalker():
 
     fieldwebsite.append('<div class="form-group"><label>Value for Walkermode</label><br />'
                         '<small class="form-text text-muted"></small>'
-                        '<input type="text" name="walkervalue" value="' + str(walkervalue) + '"></div>')
+                        '<input type="text" name="walkervalue" value="' + str(walkervalue) + '" pattern="((2[0-3]|[01]?[0-9]):([0-5][0-9])|((2[0-3]|[01]?[0-9]):([0-5][0-9])\s*-\s*(2[0-3]|[01]?[0-9]):([0-5][0-9])))"></div>')
 
     fieldwebsite.append('<div class="form-group"><label>Max. Walker in Area</label><br />'
                         '<small class="form-text text-muted">Empty = infinitely</small>'
