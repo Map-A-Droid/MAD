@@ -46,10 +46,10 @@ class Scanner:
             os.makedirs(self.www_hash)
 
     def detectRaidTime(self, raidpic, hash, raidNo, radius):
-        zero = datetime.datetime.now()
-        unixnow = calendar.timegm(zero.timetuple())
+        unixnow = time.time()
         logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
                      ') ] ' + 'detectRaidTime: Reading Raidtimer')
+
         height, width, channel = raidpic.shape
         raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.265)):int(
             round(radius*2*0.03)+(2*radius)+(radius*2*0.43)), 0:width]
@@ -104,8 +104,7 @@ class Scanner:
             return (raidFound, False, False, False)
 
     def detectRaidEndtimer(self, raidpic, hash, raidNo, radius):
-        zero = datetime.datetime.now()
-        unixnow = calendar.timegm(zero.timetuple())
+        unixnow = time.time()
         logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
                      ') ] ' + 'detectRaidEndtimer: Reading Raidtimer')
         height, width, channel = raidpic.shape
@@ -844,9 +843,8 @@ class Scanner:
 
     # returns UTC timestamp
     def getHatchTime(self, data, raidNo):
-        zero = datetime.datetime.now().replace(
+        unix_zero = datetime.datetime.now().replace(
             hour=0, minute=0, second=0, microsecond=0)
-        unix_zero = calendar.timegm(zero.timetuple())
         hour_min_divider = data.find(':')
         if hour_min_divider is None or hour_min_divider == -1:
             return False
@@ -884,8 +882,7 @@ class Scanner:
             return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
 
     def getEndTime(self, data, raidNo):
-        zero = datetime.datetime.now()
-        unix_zero = calendar.timegm(zero.timetuple())
+        unix_zero = time.time()
         hour_min_divider = data.find(':')
         logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
                      ') ] ' + 'getHatchTime: :Count: ' + str(data.count(':')))
