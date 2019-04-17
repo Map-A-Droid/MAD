@@ -463,8 +463,8 @@ def modify_raid_gym():
     lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
-    db_wrapper.insert_hash(hash, 'raid', newJsonString,
+    db_wrapper.delete_hash_table(str(hash), 'raid', 'in', 'hash')
+    db_wrapper.insert_hash(hash, 'raid', newJsonString, 
                            '999', unique_hash="madmin")
 
     return redirect(getBasePath(request) + "/raids", code=302)
@@ -479,7 +479,7 @@ def modify_raid_mon():
     lvl = request.args.get('lvl')
 
     newJsonString = encodeHashJson(id, lvl, mon)
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', 'raid', 'in', 'hash')
+    db_wrapper.delete_hash_table(str(hash), 'raid', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'raid', newJsonString,
                            '999', unique_hash="madmin")
 
@@ -492,7 +492,7 @@ def modify_gym_hash():
     hash = request.args.get('hash')
     id = request.args.get('id')
 
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', 'gym', 'in', 'hash')
+    db_wrapper.delete_hash_table(str(hash), 'gym', 'in', 'hash')
     db_wrapper.insert_hash(hash, 'gym', id, '999', unique_hash="madmin")
 
     return redirect(getBasePath(request) + "/gyms", code=302)
@@ -523,7 +523,6 @@ def near_gym():
         gymid = str(closegym[0])
         dist = str(closegym[1])
         gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
-
         name = 'unknown'
         lat = '0'
         lon = '0'
@@ -538,7 +537,7 @@ def near_gym():
                 description = data[str(gymid)]["description"].replace(
                     "\\", r"\\").replace('"', '').replace("\n", "")
 
-        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon,
+        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon, 
                    'description': description, 'filename': gymImage})
         nearGym.append(ngjson)
 
@@ -554,7 +553,7 @@ def delete_hash():
     if not hash or not type:
         return 'Missing Argument...'
 
-    db_wrapper.delete_hash_table('"' + str(hash) + '"', type, 'in', 'hash')
+    db_wrapper.delete_hash_table(str(hash), type, 'in', 'hash')
     for file in glob.glob("ocr/www_hash/*" + str(hash) + ".jpg"):
         os.remove(file)
 
@@ -762,9 +761,9 @@ def get_screens():
     return jsonify(screens)
 
 
-@app.route("/get_unknows")
+@app.route("/get_unknowns")
 @auth_required
-def get_unknows():
+def get_unknowns():
     unk = []
     for file in glob.glob("ocr/www_hash/unkgym_*.jpg"):
         unkfile = re.search(
@@ -962,13 +961,13 @@ def pushScreens(path):
     return send_from_directory('../' + conf_args.raidscreen_path, path)
 
 
-@app.route('/match_unknows', methods=['GET'])
+@app.route('/match_unknowns', methods=['GET'])
 @auth_required
-def match_unknows():
+def match_unknowns():
     hash = request.args.get('hash')
     lat = request.args.get('lat')
     lon = request.args.get('lon')
-    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(conf_args.madmin_noresponsive).lower(), title="match Unkown")
+    return render_template('match_unknown.html', hash=hash, lat=lat, lon=lon, responsive=str(conf_args.madmin_noresponsive).lower(), title="match Unknown")
 
 
 @app.route('/modify_raid', methods=['GET'])

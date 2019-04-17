@@ -103,7 +103,7 @@ def parseArgs():
     parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots',  # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
-    parser.add_argument('-unkpath', '--unknown_path', default='unknown',
+    parser.add_argument('-unkpath', '--unknown_path', default='ocr/unknown',
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings

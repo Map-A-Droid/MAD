@@ -539,8 +539,9 @@ class DbWrapperBase(ABC):
             "WHERE " + field + " " + mode + " (%s) "
             "AND type like %s"
         )
-        vals = (str(ids), str(type),)
+        vals = (str(ids), str(type))
         logger.debug(query)
+
 
         self.execute(query, vals, commit=True)
         return True

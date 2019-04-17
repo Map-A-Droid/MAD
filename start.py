@@ -62,7 +62,6 @@ def install_thread_excepthook():
 def start_ocr_observer(args, db_helper):
     from ocr.fileObserver import checkScreenshot
     observer = Observer()
-    logger.error(args.raidscreen_path)
     observer.schedule(checkScreenshot(args, db_helper),
                       path=args.raidscreen_path)
     observer.start()
