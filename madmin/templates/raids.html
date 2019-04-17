@@ -63,9 +63,9 @@
                 {
                     "targets": [7],
                     "render": function (data, type, row) {
-                        var modifyRaid = "<a href='/modify_raid?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Gym</a>";
-                        var modifyMon = "<a href='/modify_mon?hash=" + row.hashvalue + "&lvl=" + row.level + "&gym=" + row.id + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Mon</a>";
-                        var deleteHash = "<a href='/delete_hash?hash=" + row.hashvalue + "&type=raid&redirect=raids'>Delete</a>";
+                        var modifyRaid = "<a href='modify_raid?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Gym</a>";
+                        var modifyMon = "<a href='modify_mon?hash=" + row.hashvalue + "&lvl=" + row.level + "&gym=" + row.id + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Mon</a>";
+                        var deleteHash = "<a href='delete_hash?hash=" + row.hashvalue + "&type=raid&redirect=raids'>Delete</a>";
                         return modifyRaid + "<br />" + modifyMon + "<br />" + deleteHash;
                     }
                 }
@@ -83,7 +83,7 @@
         $("#navraids").addClass("active");
         $.ajax({
             type: "GET",
-            url: "/get_raids",
+            url: "get_raids",
             success: function (result) {
                 setGrid('#show-data', result);
             }

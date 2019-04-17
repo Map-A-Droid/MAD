@@ -30,8 +30,8 @@
                 {
                     "targets": [7],
                     "render": function (data, type, row) {
-                        var modifyGym = "<a href='/modify_gym?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "'>Change Gym</a>";
-                        var deleteHash = "<a href='/delete_hash?hash=" + row.hashvalue + "&type=gym&redirect=gyms'>Delete</a>";
+                        var modifyGym = "<a href='modify_gym?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "'>Change Gym</a>";
+                        var deleteHash = "<a href='delete_hash?hash=" + row.hashvalue + "&type=gym&redirect=gyms'>Delete</a>";
                         return modifyGym + "<br />" + deleteHash;
                     }
                 }
@@ -48,9 +48,8 @@
         $("#navgyms").addClass("active");
         $.ajax({
             type: "GET",
-            url: "/get_gyms",
+            url: "get_gyms",
             success: function (result) {
-                console.log(result);
                 setGrid('#show-data', result);
             }
         });
