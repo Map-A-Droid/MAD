@@ -1039,6 +1039,8 @@ class RmWrapper(DbWrapperBase):
 
     def __download_img(self, url, file_name):
         retry = 1
+        if not url:
+            return
         while retry <= 5:
             try:
                 r = requests.get(url, stream=True, timeout=10)

@@ -143,7 +143,7 @@ def get_phonescreens():
                                 'screenshot%s.png' % str(phonename))
         if os.path.isfile(filename):
             image_resize(filename, os.path.join(
-                conf_args.temp_path, "madmin"), width=400)
+                conf_args.temp_path, "madmin"), width=200)
             screen = "/screenshot/madmin/screenshot" + str(phonename) + ".png"
             screens_phone.append(
                 generate_phones(phonename, add_text, adb_option,
@@ -165,7 +165,7 @@ def get_phonescreens():
                         conf_args.temp_path, 'screenshot%s.png' % str(pho))
                     if os.path.isfile(filename):
                         image_resize(filename, os.path.join(
-                            conf_args.temp_path, "madmin"), width=400)
+                            conf_args.temp_path, "madmin"), width=200)
                         screen = "/screenshot/madmin/screenshot" + \
                             str(pho) + ".png"
                         screens_phone.append(generate_phones(
@@ -406,6 +406,7 @@ def screens():
 @app.route('/', methods=['GET'])
 @auth_required
 def root():
+    print(conf_args.only_ocr)
     return render_template('index.html', running_ocr=(conf_args.only_ocr))
 
 

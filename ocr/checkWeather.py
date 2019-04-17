@@ -36,11 +36,11 @@ def weather_image_matching(weather_icon_name, screenshot_name):
         logger.error(
             'weather_image_matching: {} appears to be corrupted', str(screenshot_name))
         return 0
-    height, width, = weather_icon.shape
+    height, width, _= weather_icon.shape
 
     fort_img = imutils.resize(
         screenshot_img, width=int(screenshot_img.shape[1] * 2))
-    height_f, width_f, = screenshot_img.shape
+    height_f, width_f, _= screenshot_img.shape
     screenshot_img = screenshot_img[0: int(height_f/7), 0: width_f]
 
     resized = imutils.resize(
