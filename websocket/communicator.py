@@ -1,13 +1,8 @@
-import datetime
-import logging
-import time
 from threading import Lock
 
 import gpxdata
-
 from utils.geo import get_distance_of_two_points_in_meters
-
-log = logging.getLogger(__name__)
+from utils.logging import logger
 
 
 class Communicator:
@@ -23,18 +18,21 @@ class Communicator:
         self.__sendMutex = Lock()
 
     def cleanup_websocket(self):
-        log.info("Communicator of %s acquiring lock to cleanup worker in websocket" % str(self.id))
+        logger.info(
+            "Communicator of {} acquiring lock to cleanup worker in websocket", str(self.id))
         self.__sendMutex.acquire()
         try:
-            log.info("Communicator of %s calling cleanup" % str(self.id))
-            self.websocketHandler.clean_up_user(self.id, self.worker_instance_ref)
+            logger.info("Communicator of {} calling cleanup", str(self.id))
+            self.websocketHandler.clean_up_user(
+                self.id, self.worker_instance_ref)
         finally:
             self.__sendMutex.release()
 
     def __runAndOk(self, command, timeout):
         self.__sendMutex.acquire()
         try:
-            result = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, command, timeout)
+            result = self.websocketHandler.send_and_wait(
+                self.id, self.worker_instance_ref, command, timeout)
             return result is not None and "OK" in result
         finally:
             self.__sendMutex.release()
@@ -44,7 +42,8 @@ class Communicator:
 
     def stopApp(self, packageName):
         if not self.__runAndOk("more stop %s\r\n" % (packageName), self.__commandTimeout):
-            log.error("Failed stopping %s, please check if SU has been granted" % packageName)
+            logger.error(
+                "Failed stopping {}, please check if SU has been granted", packageName)
             return False
         else:
             return True
@@ -70,11 +69,11 @@ class Communicator:
 
     def swipe(self, x1, y1, x2, y2):
         return self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "touch swipe %s %s %s %s\r\n" % (
-        str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
+            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def touchandhold(self, x1, y1, x2, y2):
         return self.__runAndOk("touch swipe %s %s %s %s 3000" % (
-        str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
+            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def getscreensize(self):
         response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "screen size",
@@ -91,21 +90,22 @@ class Communicator:
         if encoded is None:
             return False
         elif isinstance(encoded, str):
-            log.debug("Screenshot response not binary")
+            logger.debug("Screenshot response not binary")
             if "KO: " in encoded:
-                log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                logger.error(
+                    "getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
                 return False
             elif "OK:" not in encoded:
-                log.error("getScreenshot: response not OK")
+                logger.error("getScreenshot: response not OK")
                 return False
             return False
         else:
-            log.debug("Storing screenshot...")
+            logger.debug("Storing screenshot...")
 
             fh = open(path, "wb")
             fh.write(encoded)
             fh.close()
-            log.debug("Done storing, returning")
+            logger.debug("Done storing, returning")
             return True
 
     def getScreenshot(self, path):
@@ -118,25 +118,32 @@ class Communicator:
         if encoded is None:
             return False
         elif isinstance(encoded, str):
-            log.debug("Screenshot response not binary")
+            logger.debug("Screenshot response not binary")
             if "KO: " in encoded:
-                log.error("getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                logger.error(
+                    "getScreenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
                 return False
             elif "OK:" not in encoded:
-                log.error("getScreenshot: response not OK")
+                logger.error("getScreenshot: response not OK")
                 return False
             return False
         else:
-            log.debug("Storing screenshot...")
+            logger.debug("Storing screenshot...")
 
             fh = open(path, "wb")
             fh.write(encoded)
             fh.close()
-            log.debug("Done storing, returning")
+            logger.debug("Done storing, returning")
             return True
 
     def backButton(self):
         return self.__runAndOk("screen back\r\n", self.__commandTimeout)
+
+    def homeButton(self):
+        return self.__runAndOk("touch keyevent 3", self.__commandTimeout)
+
+    def sendText(self, text):
+        return self.__runAndOk("touch text " + str(text), self.__commandTimeout)
 
     def isScreenOn(self):
         self.__sendMutex.acquire()
@@ -165,7 +172,8 @@ class Communicator:
         self.__sendMutex.acquire()
         try:
             response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref,
-                                                           "geo fix %s %s %s\r\n" % (lat, lng, alt),
+                                                           "geo fix %s %s %s\r\n" % (
+                                                               lat, lng, alt),
                                                            self.__commandTimeout)
             return response
         finally:
@@ -174,7 +182,8 @@ class Communicator:
     def terminate_connection(self):
         self.__sendMutex.acquire()
         try:
-            response = self.websocketHandler.send_and_wait(self.id, self.worker_instance_ref, "exit\r\n", 5)
+            response = self.websocketHandler.send_and_wait(
+                self.id, self.worker_instance_ref, "exit\r\n", 5)
             return response
         finally:
             self.__sendMutex.release()
@@ -187,7 +196,8 @@ class Communicator:
     def walkFromTo(self, startLat, startLng, destLat, destLng, speed):
         self.__sendMutex.acquire()
         # calculate the time it will take to walk and add it to the timeout!
-        distance = get_distance_of_two_points_in_meters(startLat, startLng, destLat, destLng)
+        distance = get_distance_of_two_points_in_meters(
+            startLat, startLng, destLat, destLng)
         # speed is in kmph, distance in m
         # we want m/s -> speed / 3.6
         speed_meters = speed / 3.6

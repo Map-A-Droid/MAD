@@ -1,21 +1,18 @@
-import logging
-
 import cv2
-from PIL import Image
 from imagehash import dhash
-
-log = logging.getLogger(__name__)
+from PIL import Image
+from utils.logging import logger
 
 
 def getImageHash(image, hashSize=8):
     try:
         image_temp = cv2.imread(image)
     except Exception as e:
-        log.error("Screenshot corrupted :(")
-        log.debug(e)
+        logger.error("Screenshot corrupted :(")
+        logger.debug(e)
         return '0'
     if image_temp is None:
-        log.error("Screenshot corrupted :(")
+        logger.error("Screenshot corrupted :(")
         return '0'
 
     hashPic = Image.open(image)

@@ -1,19 +1,19 @@
-import re
 import datetime
-import logging
+import re
 
-log = logging.getLogger(__name__)
+from utils.logging import logger
 
 
 def check_walker_value_type(value):
-    match = re.search(r'^(\d?\d:\d\d)$|^((\d?\d:\d\d)-(\d?\d:\d\d))$', value.replace(' ', ''))
+    match = re.search(
+        r'^(\d?\d:\d\d)$|^((\d?\d:\d\d)-(\d?\d:\d\d))$', value.replace(' ', ''))
     if match:
         if match.group(1):
             return check_time_till_end(value)
         elif match.group(2):
             return check_time_period(value)
 
-    log.error("Wrong Value for mode - check your settings! - kill Worker")
+    logger.error("Wrong Value for mode - check your settings! - kill Worker")
     return False
 
 
@@ -69,4 +69,3 @@ def check_max_walkers_reached(walker_settings, routemanager):
         return False
 
     return True
-

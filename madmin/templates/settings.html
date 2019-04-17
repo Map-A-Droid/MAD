@@ -3,7 +3,8 @@
 {% block header %}
 <style>
     input[type=text],
-    select {
+    select,
+    textarea {
         width: 100%;
         padding: 12px 20px;
         margin: 8px 0;
@@ -41,6 +42,12 @@
         font-style: italic;
         font-size: 9px;
     }
+
+    td.header {
+    background-color: lightgrey;
+    }
+
+}
 </style>
 {% endblock %}
 
@@ -51,17 +58,11 @@
 
         $("table").addClass("table");
         $('table').DataTable({
-            drawCallback: function () {
-                $("img.lazy").lazyload();
-            },
             "autoWidth": true,
             "searching": false,
             "paging": false,
             "bInfo": false,
-            "ordering": false,
-            columnDefs: [
-                { width: '25%', targets: 0 }
-            ]
+            "ordering": false
         });
     });
 </script>

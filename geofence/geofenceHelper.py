@@ -1,7 +1,6 @@
-import logging
 import sys
 
-log = logging.getLogger(__name__)
+from utils.logging import logger
 
 # Most of the code is from RocketMap
 # https://github.com/RocketMap/RocketMap
@@ -9,7 +8,7 @@ log = logging.getLogger(__name__)
 # Matlplotlib is faster for big calculations.
 try:
     from matplotlib.path import Path
-except ImportError as e:
+except ImportError:
     # Pass as this is an optional requirement. We're going to check later if it
     # was properly imported and only use it if it's installed.
     pass
@@ -22,15 +21,12 @@ class GeofenceHelper:
         self.use_matplotlib = 'matplotlib' in sys.modules
 
         if pathToIncludeGeofence or pathToExcludeGeofence:
-            log.info('Loading geofenced or excluded areas.')
             self.geofenced_areas = self.parse_geofences_file(
                 pathToIncludeGeofence, excluded=False)
             self.excluded_areas = self.parse_geofences_file(
                 pathToExcludeGeofence, excluded=True)
-            log.info('Loaded %d geofenced and %d excluded areas.',
-                     len(self.geofenced_areas),
-                     len(self.excluded_areas))
-                     
+            logger.debug2("Loaded {} geofenced and {} excluded areas.", len(
+                self.geofenced_areas), len(self.excluded_areas))
 
     def get_polygon_from_fence(self):
         maxLat, minLat, maxLon, minLon = -90, 90, -180, 180
@@ -41,31 +37,35 @@ class GeofenceHelper:
                     minLat = min(fence['lat'], minLat)
                     maxLon = max(fence['lon'], maxLon)
                     minLon = min(fence['lon'], minLon)
-                                    
+
         return minLat, minLon, maxLat, maxLon
 
     def is_coord_inside_include_geofence(self, coordinate):
-        # log.debug("Checking if coord %s is inside fences" % str(coordinate))
+        # logger.debug("Checking if coord {} is inside fences", str(coordinate))
         # Coordinate is not valid if in one excluded area.
         if self._is_excluded(coordinate):
-            # log.debug("Coord %s is inside EXCLUDED fences" % str(coordinate))
+            # logger.debug("Coord {} is inside EXCLUDED fences", str(coordinate))
             return False
 
         # Coordinate is geofenced if in one geofenced area.
         if self.geofenced_areas:
             for va in self.geofenced_areas:
                 if self._in_area(coordinate, va):
-                    # log.debug("Coord %s is inside fences" % str(coordinate))
+                    # logger.debug("Coord {} is inside fences", str(coordinate))
                     return True
         else:
-            # log.debug("No fences present, adding the coord")
+            # logger.debug("No fences present, adding the coord")
             return True
-        # log.debug("Coord %s is not inside fences" % str(coordinate))
+        # logger.debug("Coord {} is not inside fences", str(coordinate))
         return False
 
     def get_geofenced_coordinates(self, coordinates):
-        log.debug('Using matplotlib: %s.', self.use_matplotlib)
-        log.debug('Found %d coordinates to geofence.', len(coordinates))
+
+        # Import: We are working with n-tuples in some functions be carefull
+        # and do not break compatibility
+        logger.debug('Using matplotlib: {}.', self.use_matplotlib)
+        logger.debug('Found {} coordinates to geofence.', len(coordinates))
+
         geofenced_coordinates = []
         for c in coordinates:
             # Coordinate is not valid if in one excluded area.
@@ -81,8 +81,8 @@ class GeofenceHelper:
             else:
                 geofenced_coordinates.append(c)
 
-        log.info('Geofenced to %s coordinates',
-                 len(geofenced_coordinates))
+        logger.debug2("Geofenced to {} coordinates",
+                      len(geofenced_coordinates))
         return geofenced_coordinates
 
     def is_enabled(self):
@@ -105,7 +105,7 @@ class GeofenceHelper:
                             'name': name,
                             'polygon': []
                         })
-                        log.debug('Found geofence: %s.', name)
+                        logger.debug('Found geofence: {}', name)
                     else:  # Coordinate line.
                         lat, lon = line.split(",")
                         LatLon = {'lat': float(lat), 'lon': float(lon)}
@@ -167,9 +167,9 @@ class GeofenceHelper:
                     point['lat'] <= max(lat1, lat2)):
                 if lon1 != lon2:
                     latIntersection = (
-                            (point['lon'] - lon1) *
-                            (lat2 - lat1) / (lon2 - lon1) +
-                            lat1)
+                        (point['lon'] - lon1) *
+                        (lat2 - lat1) / (lon2 - lon1) +
+                        lat1)
 
                 if lat1 == lat2 or point['lat'] <= latIntersection:
                     inside = not inside

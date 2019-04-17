@@ -1,23 +1,23 @@
 import json
-import logging
-import requests
 import time
 
-from utils.gamemechanicutil import calculate_mon_level
-from utils.gamemechanicutil import get_raid_boss_cp
-from utils.s2Helper import S2Helper
-from utils.madGlobals import terminate_mad
+import requests
 
-log = logging.getLogger(__name__)
+from utils.gamemechanicutil import calculate_mon_level, get_raid_boss_cp
+from utils.logging import logger
+from utils.madGlobals import terminate_mad
+from utils.questGen import generate_quest
+from utils.s2Helper import S2Helper
 
 
 class WebhookWorker:
     __IV_MON = []
 
-    def __init__(self, args, db_wrapper, routemanagers):
+    def __init__(self, args, db_wrapper, routemanagers, rarity):
         self.__worker_interval_sec = 10
         self.__args = args
         self.__db_wrapper = db_wrapper
+        self.__rarity = rarity
         self.__last_check = int(time.time())
 
         self.__build_ivmon_list(routemanagers)
@@ -36,17 +36,26 @@ class WebhookWorker:
 
         return count
 
+    def __payload_chunk(self, payload, size):
+        if size == 0:
+            return [payload, ]
+
+        return [payload[x:x+size] for x in range(0, len(payload), size)]
+
     def __send_webhook(self, payload):
         if len(payload) == 0:
-            log.info("Payload empty. Skip sending to webhook.")
+            logger.debug("Payload empty. Skip sending to webhook.")
             return
 
         # get list of urls
         webhooks = self.__args.webhook_url.replace(" ", "").split(",")
 
+        webhook_count = len(webhooks)
+        current_wh_num = 1
+
         for webhook in webhooks:
             payloadToSend = []
-            # url cleanup
+            subTypes = "all"
             url = webhook.strip()
 
             if url.startswith("["):
@@ -55,8 +64,6 @@ class WebhookWorker:
                 subTypes = webhook[:endIndex]
                 url = url[endIndex:]
 
-                log.debug("webhook types: %s", subTypes)
-
                 for payloadData in payload:
                     if payloadData["type"] in subTypes:
                         payloadToSend.append(payloadData)
@@ -64,30 +71,88 @@ class WebhookWorker:
                 payloadToSend = payload
 
             if len(payloadToSend) == 0:
-                log.debug("Payload is empty")
+                logger.debug(
+                    "Payload empty. Skip sending to: {} (Filter: {})", url, subTypes)
                 continue
+            else:
+                logger.debug(
+                    "Sending to webhook url: {} (Filter: {})", url, subTypes)
 
-            log.debug("Sending to webhook %s", url)
-            log.debug("Payload: %s" % str(payloadToSend))
-            try:
-                response = requests.post(
-                    url,
-                    data=json.dumps(payloadToSend),
-                    headers={"Content-Type": "application/json"},
-                    timeout=5,
-                )
-                if response.status_code != 200:
-                    log.warning(
-                        "Got status code other than 200 OK from webhook destination: %s"
-                        % str(response.status_code)
+            payload_list = self.__payload_chunk(
+                payloadToSend, self.__args.webhook_max_payload_size)
+
+            current_pl_num = 1
+            for payload_chunk in payload_list:
+                logger.debug("Payload: {}", str(json.dumps(payload_chunk)))
+
+                try:
+                    response = requests.post(
+                        url,
+                        data=json.dumps(payload_chunk),
+                        headers={"Content-Type": "application/json"},
+                        timeout=5,
                     )
-                else:
-                    log.info(
-                        "Successfully sent payload to webhook. Stats: %s",
-                        json.dumps(self.__payload_type_count(payloadToSend)),
-                    )
-            except Exception as e:
-                log.warning("Exception occured while sending webhook: %s" % str(e))
+
+                    if response.status_code != 200:
+                        logger.warning("Got status code other than 200 OK from webhook destination: {}", str(
+                            response.status_code))
+                    else:
+                        if webhook_count > 1:
+                            whcount_text = " [wh {}/{}]".format(
+                                current_wh_num, webhook_count)
+                        else:
+                            whcount_text = ""
+
+                        if len(payload_list) > 1:
+                            whchunk_text = " [pl {}/{}]".format(
+                                current_pl_num, len(payload_list))
+                        else:
+                            whchunk_text = ""
+
+                        logger.success(
+                            "Successfully sent payload to webhook{}{}. Stats: {}",
+                            whchunk_text,
+                            whcount_text,
+                            json.dumps(
+                                self.__payload_type_count(payload_chunk))
+                        )
+                except Exception as e:
+                    logger.warning(
+                        "Exception occured while sending webhook: {}", str(e))
+
+                current_pl_num += 1
+            current_wh_num += 1
+
+    def __prepare_quest_data(self, quest_data):
+        ret = []
+
+        for pokestopid in quest_data:
+            quest = generate_quest(quest_data[str(pokestopid)])
+            quest_payload = {
+                "pokestop_id": quest['pokestop_id'],
+                "latitude": quest['latitude'],
+                "longitude": quest['longitude'],
+                "quest_type": quest['quest_type'],
+                "quest_type_raw": quest['quest_type_raw'],
+                "item_type": quest['item_type'],
+                "name": quest['name'].replace('"', '\\"').replace('\n', '\\n'),
+                "url": quest['url'],
+                "timestamp": quest['timestamp'],
+                "quest_reward_type": quest['quest_reward_type'],
+                "quest_reward_type_raw": quest['quest_reward_type_raw'],
+                "quest_target": quest['quest_target'],
+                "pokemon_id": int(quest['pokemon_id']),
+                "item_amount": quest['item_amount'],
+                "item_id": quest['item_id'],
+                "quest_task": quest['quest_task'],
+                "quest_condition": quest['quest_condition'].replace('\'', '"').lower(),
+                "quest_template": quest['quest_template']
+            }
+
+            entire_payload = {"type": "quest", "message": quest_payload}
+            ret.append(entire_payload)
+
+        return ret
 
     def __prepare_weather_data(self, weather_data):
         ret = []
@@ -115,6 +180,12 @@ class WebhookWorker:
                 )[1]
             else:
                 weather_payload["longitude"] = weather["longitude"]
+
+            if weather.get("coords", None) is None:
+                weather_payload["coords"] = S2Helper.coords_of_cell(
+                    weather["s2_cell_id"])
+            else:
+                weather_payload["coords"] = weather["coords"]
 
             entire_payload = {"type": "weather", "message": weather_payload}
             ret.append(entire_payload)
@@ -192,12 +263,18 @@ class WebhookWorker:
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
                 "disappear_time": mon["disappear_time"],
+                "verified": mon["spawn_verified"]
             }
+
+            # get rarity
+            pokemon_rarity = self.__rarity.rarity_by_id(
+                pokemonid=mon["pokemon_id"])
 
             # used by RM
             if mon.get("cp_multiplier", None) is not None:
                 mon_payload["cp_multiplier"] = mon["cp_multiplier"]
-                mon_payload["pokemon_level"] = calculate_mon_level(mon["cp_multiplier"])
+                mon_payload["pokemon_level"] = calculate_mon_level(
+                    mon["cp_multiplier"])
 
             # used by Monocle
             if mon.get("level", None) is not None:
@@ -232,6 +309,9 @@ class WebhookWorker:
 
             if mon["gender"] is not None:
                 mon_payload["gender"] = mon["gender"]
+
+            if pokemon_rarity is not None:
+                mon_payload["rarity"] = pokemon_rarity
 
             if (
                 mon["weather_boosted_condition"] is not None
@@ -281,10 +361,11 @@ class WebhookWorker:
                 ivlist = manager.settings.get("mon_ids_iv", [])
 
                 # TODO check if area/routemanager is actually active before adding the IDs
-                self.__IV_MON = self.__IV_MON + list(set(ivlist) - set(self.__IV_MON))
+                self.__IV_MON = self.__IV_MON + \
+                    list(set(ivlist) - set(self.__IV_MON))
 
     def run_worker(self):
-        log.info("Starting webhook worker thread")
+        logger.info("Starting webhook worker thread")
 
         while not terminate_mad.is_set():
             # the payload that is about to be sent
@@ -296,10 +377,19 @@ class WebhookWorker:
             )
             full_payload += raids
 
+            # quest
+            if self.__args.quest_webhook:
+                quest = self.__prepare_quest_data(
+                    self.__db_wrapper.quests_from_db(
+                        timestamp=self.__last_check)
+                )
+                full_payload += quest
+
             # weather
             if self.__args.weather_webhook:
                 weather = self.__prepare_weather_data(
-                    self.__db_wrapper.get_weather_changed_since(self.__last_check)
+                    self.__db_wrapper.get_weather_changed_since(
+                        self.__last_check)
                 )
                 full_payload += weather
 
@@ -310,6 +400,7 @@ class WebhookWorker:
                 )
                 full_payload += gyms
 
+            # mon
             if self.__args.pokemon_webhook:
                 mon = self.__prepare_mon_data(
                     self.__db_wrapper.get_mon_changed_since(self.__last_check)
@@ -322,4 +413,4 @@ class WebhookWorker:
             self.__last_check = int(time.time())
             time.sleep(self.__worker_interval_sec)
 
-        log.info("Stopping webhook worker thread")
+        logger.info("Stopping webhook worker thread")

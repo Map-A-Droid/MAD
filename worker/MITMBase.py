@@ -1,13 +1,14 @@
-import datetime
-import logging
+import collections
 import math
 import time
 from abc import abstractmethod
+from datetime import datetime
 
+from utils.logging import logger
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
 
-log = logging.getLogger(__name__)
+Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
 class MITMBase(WorkerBase):
@@ -22,32 +23,38 @@ class MITMBase(WorkerBase):
         self._restart_count = 0
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
+        self._latest_encounter_update = 0
+        self._encounter_ids = {}
 
-        #if not NoOcr:
-        #    from ocr.pogoWindows import PogoWindows
-        #    self._pogoWindowManager = PogoWindows(self._communicator, args.temp_path)
+        if self._devicesettings.get('last_mode', None) is not None and \
+                self._devicesettings['last_mode'] in ("raids_mitm", "mon_mitm", "iv_mitm", "raids_ocr"):
+            logger.info('Last Mode not pokestop - reset saved location')
+            self.last_location = Location(0.0, 0.0)
+        self._devicesettings['last_mode'] = self._walker_routemanager.mode
 
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
         if not timeout:
             timeout = self._devicesettings.get("mitm_wait_timeout", 45)
 
-        log.info('Waiting for data after %s' % str(timestamp))
+        logger.info('Waiting for data after {}',
+                    datetime.fromtimestamp(timestamp))
         data_requested = None
 
         while data_requested is None and timestamp + timeout >= math.floor(time.time()):
             latest = self._mitm_mapper.request_latest(self._id)
-            data_requested = self._wait_data_worker(latest, proto_to_wait_for, timestamp)
+            data_requested = self._wait_data_worker(
+                latest, proto_to_wait_for, timestamp)
             time.sleep(1)
 
         if data_requested is not None:
-            log.info('Got the data requested...')
+            logger.info('Got the data requested...')
             self._reboot_count = 0
             self._restart_count = 0
-            self._rec_data_time = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
-            log.warning("Timeout waiting for data")
+            logger.warning("Timeout waiting for data")
 
             current_routemanager = self._walker_routemanager
             self._restart_count += 1
@@ -56,14 +63,16 @@ class MITMBase(WorkerBase):
             reboot_thresh = self._devicesettings.get("reboot_thresh", 3)
             if current_routemanager is not None:
                 if self._init:
-                    restart_thresh = self._devicesettings.get("restart_thresh", 5) * 2
-                    reboot_thresh = self._devicesettings.get("reboot_thresh", 3) * 2
+                    restart_thresh = self._devicesettings.get(
+                        "restart_thresh", 5) * 2
+                    reboot_thresh = self._devicesettings.get(
+                        "reboot_thresh", 3) * 2
 
             if self._restart_count > restart_thresh:
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
                         and self._devicesettings.get("reboot", False):
-                    log.error("Rebooting %s" % str(self._id))
+                    logger.error("Rebooting {}", str(self._id))
                     self._reboot()
                     raise InternalStopWorkerException
 
@@ -82,84 +91,85 @@ class MITMBase(WorkerBase):
         pass
 
     def _clear_quests(self, delayadd):
-        log.debug('{_clear_quests} called')
+        logger.debug('{_clear_quests} called')
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
-               self._resocalc.get_coords_quest_menu(self)[1]
+            self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
 
         x, y = self._resocalc.get_delete_quest_coords(self)[0], \
-               self._resocalc.get_delete_quest_coords(self)[1]
+            self._resocalc.get_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
 
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
-               self._resocalc.get_confirm_delete_quest_coords(self)[1]
+            self._resocalc.get_confirm_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
 
-
         x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-               self._resocalc.get_close_main_button_coords(self)[1]
+            self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
 
         time.sleep(2)
 
-        log.debug('{_clear_quests} finished')
+        logger.debug('{_clear_quests} finished')
         return
 
     def _open_gym(self, delayadd):
-        log.debug('{_open_gym} called')
+        logger.debug('{_open_gym} called')
         time.sleep(.5)
-        x, y = self._resocalc.get_gym_click_coords(self)[0], self._resocalc.get_gym_click_coords(self)[1]
+        x, y = self._resocalc.get_gym_click_coords(
+            self)[0], self._resocalc.get_gym_click_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(.5 + int(delayadd))
-        log.debug('{_open_gym} finished')
+        logger.debug('{_open_gym} finished')
         return
 
     def _spin_wheel(self, delayadd):
-        log.debug('{_spin_wheel} called')
+        logger.debug('{_spin_wheel} called')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
-                    self._resocalc.get_gym_spin_coords(self)[2]
+            self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         return
 
     def _close_gym(self, delayadd):
-        log.debug('{_close_gym} called')
+        logger.debug('{_close_gym} called')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-               self._resocalc.get_close_main_button_coords(self)[1]
+            self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
         time.sleep(1 + int(delayadd))
-        log.debug('{_close_gym} called')
+        logger.debug('{_close_gym} called')
 
     def _turn_map(self, delayadd):
-        log.debug('{_turn_map} called')
-        log.info('Turning map')
+        logger.debug('{_turn_map} called')
+        logger.info('Turning map')
         x1, x2, y = self._resocalc.get_gym_spin_coords(self)[0], self._resocalc.get_gym_spin_coords(self)[1], \
-                    self._resocalc.get_gym_spin_coords(self)[2]
+            self._resocalc.get_gym_spin_coords(self)[2]
         self._communicator.swipe(int(x1), int(y), int(x2), int(y))
         time.sleep(int(delayadd))
-        log.debug('{_turn_map} called')
+        logger.debug('{_turn_map} called')
         return
 
     def worker_stats(self):
         routemanager = self._walker_routemanager
-        log.debug('===============================')
-        log.debug('Worker Stats')
-        log.debug('Origin: %s' % str(self._id))
-        log.debug('Routemanager: %s' % str(routemanager.name))
-        log.debug('Restart Counter: %s' % str(self._restart_count))
-        log.debug('Reboot Counter: %s' % str(self._reboot_count))
-        log.debug('Reboot Option: %s' % str(self._devicesettings.get("reboot", False)))
-        log.debug('Current Pos: %s %s' % (str(self.current_location.lat),
-                                          str(self.current_location.lng)))
-        log.debug('Last Pos: %s %s' % (str(self.last_location.lat),
-                                       str(self.last_location.lng)))
-        log.debug('Route Pos: %s - Route Length: %s ' % (str(routemanager.get_route_status()[0]),
-                                                         str(routemanager.get_route_status()[1])))
-        log.debug('Init Mode: %s' % str(routemanager.init))
-        log.debug('Last Date/Time of Data: %s' % str(self._rec_data_time))
-        log.debug('===============================')
+        logger.debug('===============================')
+        logger.debug('Worker Stats')
+        logger.debug('Origin: {}', str(self._id))
+        logger.debug('Routemanager: {}', str(routemanager.name))
+        logger.debug('Restart Counter: {}', str(self._restart_count))
+        logger.debug('Reboot Counter: {}', str(self._reboot_count))
+        logger.debug('Reboot Option: {}', str(
+            self._devicesettings.get("reboot", False)))
+        logger.debug('Current Pos: {} {}', str(
+            self.current_location.lat), str(self.current_location.lng))
+        logger.debug('Last Pos: {} {}', str(
+            self.last_location.lat), str(self.last_location.lng))
+        logger.debug('Route Pos: {} - Route Length: {}', str(
+            routemanager.get_route_status()[0]), str(routemanager.get_route_status()[1]))
+        logger.debug('Init Mode: {}', str(routemanager.init))
+        logger.debug('Last Date/Time of Data: {}', str(self._rec_data_time))
+        logger.debug('===============================')
 
         dataToSave = {
             'Origin':            self._id,
@@ -176,4 +186,3 @@ class MITMBase(WorkerBase):
         }
 
         self._db_wrapper.save_status(dataToSave)
-

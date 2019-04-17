@@ -1,5 +1,6 @@
 from utils.collections import Relation
-from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
+from utils.geo import (get_distance_of_two_points_in_meters,
+                       get_middle_of_coord_list)
 
 
 class ClusteringHelper:
@@ -29,7 +30,8 @@ class ClusteringHelper:
                                 and relation[0][1].lng == other_event[1].lng):
                             already_present = True
                     if not already_present:
-                        relations[event].append(Relation(other_event, distance, timedelta))
+                        relations[event].append(
+                            Relation(other_event, distance, timedelta))
         return relations
 
     def _get_most_west_amongst_relations(self, relations):
@@ -78,10 +80,12 @@ class ClusteringHelper:
                     inside_circle.append(event_relations)
             elif timedelta_start < 0 and 0 <= distance <= max_radius:
                 # we found an event starting before earliest_timestamp, let's check that...
-                earliest_timestamp_temp = earliest_timestamp - abs(timedelta_start)
+                earliest_timestamp_temp = earliest_timestamp - \
+                    abs(timedelta_start)
                 if latest_timestamp - earliest_timestamp_temp <= self.max_timedelta_seconds:
                     earliest_timestamp = earliest_timestamp_temp
-                    highest_timedelta = highest_timedelta + abs(timedelta_start)
+                    highest_timedelta = highest_timedelta + \
+                        abs(timedelta_start)
                     inside_circle.append(event_relations)
             elif timedelta_end >= 0 and timedelta_start >= 0 and 0 <= distance <= max_radius:
                 # we found an event within our current timedelta and proximity, just append it to the list
@@ -123,10 +127,13 @@ class ClusteringHelper:
             farthest_away = event
             distance_to_farthest = max_radius
         else:
-            farthest_away, distance_to_farthest = self._get_farthest_in_relation(to_be_inspected)
+            farthest_away, distance_to_farthest = self._get_farthest_in_relation(
+                to_be_inspected)
             all_events_within_range_and_time = [event, farthest_away]
-            earliest_timestamp = self._get_earliest_timestamp_in_queue(all_events_within_range_and_time)
-            latest_timestamp = self._get_latest_timestamp_in_queue(all_events_within_range_and_time)
+            earliest_timestamp = self._get_earliest_timestamp_in_queue(
+                all_events_within_range_and_time)
+            latest_timestamp = self._get_latest_timestamp_in_queue(
+                all_events_within_range_and_time)
             middle = get_middle_of_coord_list(
                 [event[1], farthest_away[1]]
             )
@@ -142,7 +149,8 @@ class ClusteringHelper:
         if count_inside <= self.max_count_per_circle and count_inside == len(to_be_inspected):
             return middle_event, events_in_circle
         elif count_inside > self.max_count_per_circle:
-            to_be_inspected = [to_keep for to_keep in to_be_inspected if not to_keep.other_event == farthest_away]
+            to_be_inspected = [
+                to_keep for to_keep in to_be_inspected if not to_keep.other_event == farthest_away]
             return self._get_circle(event, to_be_inspected, relations, distance_to_farthest)
         else:
             return middle_event, events_in_circle
@@ -165,12 +173,15 @@ class ClusteringHelper:
 
         while len(relations) > 0:
             next = self._get_most_west_amongst_relations(relations)
-            middle_event, events_to_be_removed = self._get_circle(next, relations[next], relations, self.max_radius)
+            middle_event, events_to_be_removed = self._get_circle(
+                next, relations[next], relations, self.max_radius)
             final_set.append(middle_event)
-            relations = self._remove_coords_from_relations(relations, events_to_be_removed)
+            relations = self._remove_coords_from_relations(
+                relations, events_to_be_removed)
         return final_set
 
     def get_clustered(self, queue):
-        relations = self._get_relations_in_range_within_time(queue, max_radius=self.max_radius)
+        relations = self._get_relations_in_range_within_time(
+            queue, max_radius=self.max_radius)
         summed_up = self._sum_up_relations(relations)
         return summed_up

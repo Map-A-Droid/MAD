@@ -14,7 +14,7 @@ idna==2.7
 ImageHash==4.0
 imutils==0.5.2
 itsdangerous==1.1.0
-Jinja2==2.10
+Jinja2>=2.10.1
 kiwisolver==1.0.1
 MarkupSafe==1.1.0
 matplotlib==3.0.2
@@ -31,9 +31,12 @@ scipy==1.1.0
 six==1.11.0
 urllib3==1.24.1
 websockets==7.0
-Werkzeug==0.14.1
+Werkzeug==0.15.2
 requests
 geopy
 s2sphere
 psutil
 watchdog
+loguru
+gevent
+
