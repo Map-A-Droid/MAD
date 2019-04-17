@@ -152,7 +152,7 @@ def get_phonescreens():
         else:
             screen = "/static/dummy.png"
             screens_phone.append(generate_phones(
-                phonename, add_text, adb_option, screen, True))
+                phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=True))
 
     for phonename in adb_connect.return_adb_devices():
         if phonename.serial not in ws_connected_phones:
