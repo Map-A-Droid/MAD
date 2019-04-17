@@ -904,7 +904,7 @@ class DbWrapperBase(ABC):
             "SELECT latitude, longitude, spawndef, calc_endminsec FROM trs_spawn WHERE calc_endminsec IS NOT NULL and "
             "DATE_FORMAT(STR_TO_DATE(calc_endminsec,'%i:%s'),'%i:%s') between DATE_FORMAT(DATE_ADD(NOW(), "
             "INTERVAL if(spawndef=15,60,30) MINUTE),'%i:%s') and DATE_FORMAT(DATE_ADD(NOW(), "
-            "INTERVAL if(spawndef=15,70,40) MINUTE),'%i:%s')"
+            "INTERVAL if(spawndef=15,65,35) MINUTE),'%i:%s')"
         )
         res = self.execute(query)
         next_up = []
