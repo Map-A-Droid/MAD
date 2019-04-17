@@ -169,16 +169,17 @@ def get_phonescreens():
                         screen = "/screenshot/madmin/screenshot" + \
                             str(pho) + ".png"
                         screens_phone.append(generate_phones(
-                            phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=True)
+                            pho, add_text, adb_option, screen, filename, datetimeformat, dummy=False)
                         )
                     else:
                         screen = "/static/dummy.png"
                         screens_phone.append(
-                            generate_phones(phonename, add_text, adb_option, screen, filename, datetimeformat,
+                            generate_phones(pho, add_text, adb_option, screen, filename, datetimeformat,
                                             dummy=True)
                         )
 
-    return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol", running_ocr=(conf_args.only_ocr))
+    return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol",
+                           running_ocr=(conf_args.only_ocr))
 
 
 @app.route('/screenshot/<path:path>', methods=['GET'])
@@ -218,7 +219,7 @@ def take_screenshot(origin=None, useadb=None):
                  os.path.join(conf_args.temp_path, "madmin"), width=400)
 
     creationdate = datetime.datetime.fromtimestamp(
-        os.path.getmtime(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))).strftime(datetimeformat)
+        creation_date(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))).strftime(datetimeformat)
 
     return creationdate
 
@@ -683,13 +684,10 @@ def get_raids():
                 eggPic = 'asset/static_assets/png/ic_raid_egg_legendary.png'
 
             creationdate = datetime.datetime.fromtimestamp(
-                creation_date(file)).strftime('%Y-%m-%d %H:%M:%S')
+                creation_date(file)).strftime(datetimeformat)
 
-            if conf_args.madmin_time == "12":
-                creationdate = datetime.datetime.strptime(
-                    creationdate, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
-                modify = datetime.datetime.strptime(
-                    modify, '%Y-%m-%d %H:%M:%S').strftime('%Y-%m-%d %I:%M:%S %p')
+            modify = datetime.datetime.strptime(
+                modify, '%Y-%m-%d %H:%M:%S').strftime(datetimeformat)
 
             name = 'unknown'
             lat = '0'
