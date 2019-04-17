@@ -143,7 +143,7 @@ def get_phonescreens():
                                 'screenshot%s.png' % str(phonename))
         if os.path.isfile(filename):
             image_resize(filename, os.path.join(
-                conf_args.temp_path, "madmin"), width=200)
+                conf_args.temp_path, "madmin"), width=250)
             screen = "/screenshot/madmin/screenshot" + str(phonename) + ".png"
             screens_phone.append(
                 generate_phones(phonename, add_text, adb_option,
@@ -165,7 +165,7 @@ def get_phonescreens():
                         conf_args.temp_path, 'screenshot%s.png' % str(pho))
                     if os.path.isfile(filename):
                         image_resize(filename, os.path.join(
-                            conf_args.temp_path, "madmin"), width=200)
+                            conf_args.temp_path, "madmin"), width=250)
                         screen = "/screenshot/madmin/screenshot" + \
                             str(pho) + ".png"
                         screens_phone.append(generate_phones(
@@ -216,7 +216,7 @@ def take_screenshot(origin=None, useadb=None):
             conf_args.temp_path, 'screenshot%s.png' % str(origin)))
 
     image_resize(os.path.join(conf_args.temp_path, "screenshot" + str(origin) + ".png"),
-                 os.path.join(conf_args.temp_path, "madmin"), width=400)
+                 os.path.join(conf_args.temp_path, "madmin"), width=250)
 
     creationdate = datetime.datetime.fromtimestamp(
         creation_date(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))).strftime(datetimeformat)
