@@ -116,6 +116,42 @@ function updateOrder(data) {
     })
 }
 </script>
+<script>
+var validateWalkervalueMsg;
+var validateWalkervalueDynamicErrorMsg = function () { return validateWalkervalueMsg; }
+jQuery.validator.addMethod("validateWalkervalue", function(value, element) {
+
+        var digitsOnlyOrEmptyPattern = "^[0-9]*$";
+        var hourPattern = "((2[0-3]|[01]?[0-9]):([0-5][0-9]))";
+        var rangeHoursPattern = "("+hourPattern+"\s*-\s*"+hourPattern+")";
+        validateWalkervalueMsg = "";
+
+        // define rules we using,
+        // key-typename : array(pattern, message)
+        var rules = {
+                countdown : [digitsOnlyOrEmptyPattern, "Please set correct number of seconds - digits only."],
+                timer : ['^(|'+hourPattern+')$', "Please set correct time (24h format: XX:XX)."],
+                round: [digitsOnlyOrEmptyPattern, "Please set correct number of rounds - digits only."],
+                period : ['^(|'+rangeHoursPattern+')$', "Please set correct time (24h format: XX:XX-XX:XX)."],
+                coords: ['^(|'+hourPattern+'|'+rangeHoursPattern+')$', "Please set correct time."],
+                idle: ['^(|'+hourPattern+'|'+rangeHoursPattern+')$', "Please set correct time."],
+        };
+
+        var type = $("select[name='walkertype']").val();
+        if (!(type in rules)) {
+                        console.log("No rule implemented for " + type + " please fix :)");
+                        return true;
+        }
+        var ruleToUse = new RegExp(rules[type][0], "");
+        if (ruleToUse.test(value)) {
+                return true;
+        } else {
+                validateWalkervalueMsg = rules[type][1];
+                return false;
+        }
+    return true;
+}, validateWalkervalueDynamicErrorMsg);
+</script>
 
 {% endblock %}
 
