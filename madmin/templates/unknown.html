@@ -21,15 +21,15 @@
                 {
                     "targets": [0],
                     "render": function (data, type, row) {
-                        var matchunknowns = "<a href='/match_unknows?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "'>Match Gym</a>";
-                        var deletefile = "<a href='/delete_file?hash=" + row.hashvalue + "&type=gym&redirect=unknown'>Delete</a>";
+                        var matchunknowns = "<a href='match_unknows?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "'>Match Gym</a>";
+                        var deletefile = "<a href='delete_file?hash=" + row.hashvalue + "&type=gym&redirect=unknown'>Delete</a>";
                         return data + "<br /><br />" + matchunknowns + "<br />" + deletefile;
                     }
                 },
                 {
                     "targets": [1],
                     "render": function (data, type, row) {
-                        return "<img class='lazy' data-original='../" + data + "' width=100>";
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
                     }
                 },
                 {
@@ -70,14 +70,14 @@
             "responsive": {{ responsive }},
             "autoWidth": true
         });
-  }
+    }
 
     $(document).ready(function () {
     $("#navunknown").addClass("active");
 
         $.ajax({
             type: "GET",
-            url: "/get_unknows",
+            url: "get_unknows",
             success: function (result) {
                 setGrid('#show-data', result);
             }

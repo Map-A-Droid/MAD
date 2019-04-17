@@ -6,7 +6,7 @@
 # portion of the MAD config file
 ########################################################################################################
 # This section is for your old database, your new database is already configured in MAD/configs/config.ini
-# Old database type (only valid options are "rm" and "monocle"):
+# Old database type (only valid options are "rm", "rdm", and "monocle"):
 dbtype=""
 # Old database IP:
 olddbip="127.0.0.1"
@@ -32,7 +32,7 @@ madconf="../configs/config.ini"
 
 
 # Grab db info from MAD's config file
-! [[ -f "$madconf" ]] && echo "Unable to find your MAD config. You should be running this in the MAD directory" && exit 2
+! [[ -f "$madconf" ]] && echo "Unable to find your MAD config. You should be running this in the MAD scripts directory or change madconf var" && exit 2
 dbip=$(awk -F: '/^dbip/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 user=$(awk -F: '/^dbusername/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 pass=$(awk -F: '/^dbpassword/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
@@ -139,8 +139,17 @@ while read -r spawn_id lat lon _ ;do
 done< <(oldquery "select distinct id, latitude, longitude from spawnpoint" ; oldquery "select distinct id, latitude, longitude from spawnpoint_old" 2>/dev/null)
 }
 
+import_rdm(){
+while read -r spawn_id lat lon old _ ;do
+ spawn_exists || continue
+ gettime
+ testweirdsql && query "insert into trs_spawn set spawnpoint=${spawn_id}, latitude=${lat}, longitude=${lon}, earliest_unseen=99999999, calc_endminsec=$new;" && echo "spawn $spawn_id added to the db" >> addspawns.log
+done< <(oldquery "select id, lat, lon, despawn_sec from spawnpoint")
+}
+
 case "$dbtype" in
  monocle) import_mon ;;
       rm) import_rm  ;;
-       *) echo "unknown dbtype, only valid options are monocle and rm, suck it" && exit 4;;
+     rdm) import_rdm ;;
+       *) echo "unknown dbtype, only valid options are monocle, rdm, and rm... suck it" && exit 4;;
 esac
