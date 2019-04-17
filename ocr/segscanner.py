@@ -658,7 +658,7 @@ class Scanner:
             test = self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
 
         self.unknownfound(raidhashPic, 'raid', False, raidNo,
-                          hash, False, test, float(captureLat), float(captureLng))
+                          hash, False, test, '0', '0')
 
         os.remove(raidhashPic)
         os.remove(filenameOfCrop)
