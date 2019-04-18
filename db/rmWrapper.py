@@ -189,7 +189,7 @@ class RmWrapper(DbWrapperBase):
                 "WHERE gym_id = %s"
             )
             vals = (
-                lvl, now_timestamp, start_db, end_db, pkm, int(
+                lvl, now_timestamp, start, end_db, pkm, int(
                     time.time()), '999', '1', '1', gym
             )
         elif end is None or start is None:
@@ -1039,6 +1039,8 @@ class RmWrapper(DbWrapperBase):
 
     def __download_img(self, url, file_name):
         retry = 1
+        if not url:
+            return
         while retry <= 5:
             try:
                 r = requests.get(url, stream=True, timeout=10)

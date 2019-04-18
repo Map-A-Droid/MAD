@@ -46,10 +46,10 @@ class Scanner:
             os.makedirs(self.www_hash)
 
     def detectRaidTime(self, raidpic, hash, raidNo, radius):
-        zero = datetime.datetime.now()
-        unixnow = calendar.timegm(zero.timetuple())
+        unixnow = time.time()
         logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
                      ') ] ' + 'detectRaidTime: Reading Raidtimer')
+
         height, width, channel = raidpic.shape
         raidtimer = raidpic[int(round(radius*2*0.03)+(2*radius)+(radius*2*0.265)):int(
             round(radius*2*0.03)+(2*radius)+(radius*2*0.43)), 0:width]
@@ -74,6 +74,7 @@ class Scanner:
                 logger.info('[Crop: {} ({})] detectRaidTime: found raidtimer {}', str(
                     raidNo), str(self.uniqueHash), raidtimer)
                 hatchTime = self.getHatchTime(raidtimer, raidNo)
+                logger.info('HIER')
 
                 if hatchTime:
                     logger.info('[Crop: {} ({})] ' + 'detectRaidTime: Hatchtime {}',
@@ -104,8 +105,7 @@ class Scanner:
             return (raidFound, False, False, False)
 
     def detectRaidEndtimer(self, raidpic, hash, raidNo, radius):
-        zero = datetime.datetime.now()
-        unixnow = calendar.timegm(zero.timetuple())
+        unixnow = time.time()
         logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
                      ') ] ' + 'detectRaidEndtimer: Reading Raidtimer')
         height, width, channel = raidpic.shape
@@ -353,7 +353,6 @@ class Scanner:
             return None
 
     def unknownfound(self, raidpic, type, zoom, raidNo, hash, captureTime, imageHash=0, lat=0, lng=0):
-
         if captureTime:
             text = datetime.datetime.fromtimestamp(float(captureTime))
             text = "Scanned: " + str(text.strftime("%Y-%m-%d %H:%M"))
@@ -622,13 +621,12 @@ class Scanner:
         if eggfound:
             logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
                          'start_detect: Found egg level {} starting at {} and ending at {}. GymID: {}', raidlevel, raidstart, raidend, gymId)
-            submitStatus = self.db_wrapper.submit_raid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG', raidNo,
+            self.db_wrapper.submit_raid(str(gymId), None, raidlevel, raidstart, raidend, 'EGG', raidNo,
                                                        captureTime, unique_hash=self.uniqueHash)
-            # if submitStatus:
             raidHashJson = self.encodeHashJson(gymId, raidlevel, False, raidNo)
             logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
                          'start_detect: Adding Raidhash to Database: ' + str(raidHashJson))
-            self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
+            test = self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
 
         else:
             logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
@@ -640,28 +638,27 @@ class Scanner:
                 if raidend[1]:
                     logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
                                  'start_detect: Submitting mon without egg. ID: {}, gymId: {}', str(monFound[0]), str(gymId))
-                    submitStatus = self.db_wrapper.submit_raid(str(gymId), monFound[0], raidlevel, None, raidend[2],
+                    self.db_wrapper.submit_raid(str(gymId), monFound[0], raidlevel, None, raidend[2],
                                                                'MON', raidNo, captureTime, unique_hash=self.uniqueHash,
                                                                MonWithNoEgg=True)
                 else:
                     logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
                                  'start_detect: Submitting mon without raidend. ID: {}, gymId: {}', str(monFound[0]), str(gymId))
-                    submitStatus = self.db_wrapper.submit_raid(str(gymId), monFound[0], raidlevel, None, None, 'MON',
+                    self.db_wrapper.submit_raid(str(gymId), monFound[0], raidlevel, None, None, 'MON',
                                                                raidNo, captureTime, unique_hash=self.uniqueHash)
             else:
                 logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
                              'start_detect: Submitting mon with previously reported endtime. ID: {}, gymId: {}', str(monFound[0]), str(gymId))
-                submitStatus = self.db_wrapper.submit_raid(str(gymId), monFound[0], raidlevel, None, None, 'MON',
+                self.db_wrapper.submit_raid(str(gymId), monFound[0], raidlevel, None, None, 'MON',
                                                            raidNo, captureTime, unique_hash=self.uniqueHash)
 
-            raidHashJson = self.encodeHashJson(
-                gymId, raidlevel, monFound[0], raidNo)
+            raidHashJson = self.encodeHashJson(gymId, raidlevel, monFound[0], raidNo)
             logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) + ') ] ' +
                          'start_detect: Adding Raidhash to Database: ' + str(raidHashJson))
-            self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
+            test = self.imageHash(raidhashPic, raidHashJson, False, 'raid', raidNo)
 
         self.unknownfound(raidhashPic, 'raid', False, raidNo,
-                          hash, False, genRaidHash, '0', '0')
+                          hash, False, test, '0', '0')
 
         os.remove(raidhashPic)
         os.remove(filenameOfCrop)
@@ -844,9 +841,8 @@ class Scanner:
 
     # returns UTC timestamp
     def getHatchTime(self, data, raidNo):
-        zero = datetime.datetime.now().replace(
-            hour=0, minute=0, second=0, microsecond=0)
-        unix_zero = calendar.timegm(zero.timetuple())
+        unix_zero = datetime.datetime.now().replace(
+            hour=0, minute=0, second=0, microsecond=0).timestamp()
         hour_min_divider = data.find(':')
         if hour_min_divider is None or hour_min_divider == -1:
             return False
@@ -855,6 +851,7 @@ class Scanner:
         am_found = re.search(r"[a|A]\w+", data)
         pm_found = re.search(r"[p|P]\w+", data)
         hour_min = re.search(r"([\d]{1,2}:[\d]{1,2})", data)
+
 
         if hour_min is None:
             logger.error('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
@@ -870,6 +867,7 @@ class Scanner:
         if am_found:
             logger.debug('[Crop: ' + str(raidNo) + ' (' +
                          str(self.uniqueHash) + ') ] ' + 'getHatchTime: Found AM')
+
             return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
         elif pm_found:
             logger.debug('[Crop: ' + str(raidNo) + ' (' +
@@ -884,8 +882,7 @@ class Scanner:
             return int(unix_zero)+int(hour_min[0])*3600+int(hour_min[1])*60
 
     def getEndTime(self, data, raidNo):
-        zero = datetime.datetime.now()
-        unix_zero = calendar.timegm(zero.timetuple())
+        unix_zero = time.time()
         hour_min_divider = data.find(':')
         logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
                      ') ] ' + 'getHatchTime: :Count: ' + str(data.count(':')))
