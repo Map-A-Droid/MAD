@@ -329,7 +329,11 @@ def restart_phone():
 def send_gps():
     global ws_server
     origin = request.args.get('origin')
+
     useadb = request.args.get('adb')
+    if useadb is None:
+        useadb = device_mappings[origin].get('adb', False)
+
     coords = request.args.get('coords').replace(' ', '').split(',')
     sleeptime = request.args.get('sleeptime', "0")
     if len(coords) < 2:
@@ -473,7 +477,7 @@ def modify_raid_gym():
 
     newJsonString = encodeHashJson(id, lvl, mon)
     db_wrapper.delete_hash_table(str(hash), 'raid', 'in', 'hash')
-    db_wrapper.insert_hash(hash, 'raid', newJsonString, 
+    db_wrapper.insert_hash(hash, 'raid', newJsonString,
                            '999', unique_hash="madmin")
 
     return redirect(getBasePath(request) + "/raids", code=302)
@@ -546,7 +550,7 @@ def near_gym():
                 description = data[str(gymid)]["description"].replace(
                     "\\", r"\\").replace('"', '').replace("\n", "")
 
-        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon, 
+        ngjson = ({'id': gymid, 'dist': dist, 'name': name, 'lat': lat, 'lon': lon,
                    'description': description, 'filename': gymImage})
         nearGym.append(ngjson)
 
