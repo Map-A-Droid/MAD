@@ -459,7 +459,7 @@
 			},
 			// click on a location on the map
 			l_event_click(e) {
-				if( worker_list.length > 0 )
+				if( this.workers.length > 0 )
 					$('#injectionModal').data('coords', e.latlng.lat + ',' + e.latlng.lng).modal();
 			},
 			injectLocation() {
