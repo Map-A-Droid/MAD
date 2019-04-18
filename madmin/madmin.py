@@ -329,7 +329,11 @@ def restart_phone():
 def send_gps():
     global ws_server
     origin = request.args.get('origin')
-    useadb = device_mappings[origin].get('adb', False)
+
+    useadb = request.args.get('adb')
+    if useadb is None:
+        useadb = device_mappings[origin].get('adb', False)
+
     coords = request.args.get('coords').replace(' ', '').split(',')
     sleeptime = request.args.get('sleeptime', "0")
     if len(coords) < 2:
@@ -440,7 +444,6 @@ def unknown():
 def map():
     return render_template('map.html', lat=conf_args.home_lat, lng=conf_args.home_lng,
                            running_ocr=(conf_args.only_ocr))
-    return render_template('map.html', lat=conf_args.home_lat, lng=conf_args.home_lng, adb=adb_connect)
 
 
 @app.route('/quests', methods=['GET'])

@@ -175,11 +175,12 @@ $(".gpsbutton").bind("click", function(event) {
            var sleeptime = prompt("Additional sleeptime after geofix (in seconds)?", "0");
            if (sleeptime == null || sleeptime == "") { sleeptime = 0 }
            var origin = $(this).attr("origin");
+           var adb = $(this).attr("adb");
            var url = $(this).attr("href");
            $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
            $.ajax({
                type: "GET",
-               url: 'send_gps?origin=' + origin + '&coords=' + coords + '&sleeptime=' + sleeptime,
+               url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb + '&sleeptime=' + sleeptime,
                success: function(data){
                    $('#date' + origin).text(data);
                    $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
