@@ -9,6 +9,9 @@
 # before MAD then you want to use import_allspawns.sh as well. This script does not import things like #
 # controlling team/mons, or ex status, because MAD will fill this in after 1 scan.                     #
 #                                                                                                      #
+# If you were already scanning in MAD using your Monocle database, be sure to remove version.json      #
+# so MAD will update your new rocketmap schema.                                                        #
+#                                                                                                      #
 # Blank RocketMap schema created via https://github.com/cecpk/OSM-Rocketmap properly working with MAD  #
 #       https://gist.github.com/sn0opy/fb654915180cfbd07d5a30407c286995i                               #
 #                                                                                                      #
