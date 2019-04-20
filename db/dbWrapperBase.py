@@ -1190,3 +1190,11 @@ class DbWrapperBase(ABC):
         res = self.execute(query)
 
         return res
+
+    def submit_stats_complete(self, origin, period, data):
+        query_status = (
+            "INSERT IGNORE INTO trs_stats (worker, timestamp_scan, raid, mon, mon_iv) "
+            "VALUES (%s, %s, %s, %s, %s) "
+        )
+        self.execute(query_status, data, commit=True)
+        return True

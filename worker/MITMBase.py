@@ -25,6 +25,7 @@ class MITMBase(WorkerBase):
         self._mitm_mapper = mitm_mapper
         self._latest_encounter_update = 0
         self._encounter_ids = {}
+        self._stats = mitm_mapper.return_player_object(id)
 
         if self._devicesettings.get('last_mode', None) is not None and \
                 self._devicesettings['last_mode'] in ("raids_mitm", "mon_mitm", "iv_mitm", "raids_ocr"):
@@ -57,6 +58,10 @@ class MITMBase(WorkerBase):
             logger.warning("Timeout waiting for data")
 
             current_routemanager = self._walker_routemanager
+
+            self._stats.stats_collect_location_data(self.current_location, 0, timestamp,
+                                                    current_routemanager.get_position_typ(self._id), 0)
+
             self._restart_count += 1
 
             restart_thresh = self._devicesettings.get("restart_thresh", 5)

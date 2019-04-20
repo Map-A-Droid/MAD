@@ -647,7 +647,7 @@ class RmWrapper(DbWrapperBase):
 
         return True
 
-    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto, stats):
         logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -670,6 +670,8 @@ class RmWrapper(DbWrapperBase):
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
+
+        stats.stats_collect_mon_iv(encounter_id)
 
         if getdetspawntime:
             logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
@@ -737,7 +739,7 @@ class RmWrapper(DbWrapperBase):
 
         return True
 
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
+    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv, stats):
         logger.debug(
             "RmWrapper::submit_mons_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
@@ -764,6 +766,8 @@ class RmWrapper(DbWrapperBase):
 
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2**64
+
+                stats.stats_collect_mon(encounter_id)
 
                 now = datetime.utcfromtimestamp(
                     time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -887,7 +891,7 @@ class RmWrapper(DbWrapperBase):
         logger.debug("{}: submit_gyms done", str(origin))
         return True
 
-    def submit_raids_map_proto(self, origin, map_proto):
+    def submit_raids_map_proto(self, origin, map_proto, stats):
         logger.debug(
             "RmWrapper::submit_raids_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
@@ -940,6 +944,8 @@ class RmWrapper(DbWrapperBase):
                     is_exclusive = gym['gym_details']['raid_info']['is_exclusive']
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
+
+                    stats.stats_collect_raid(gymid)
 
                     logger.info("Adding/Updating gym {} with level {} ending at {}",
                                 str(gymid), str(level), str(raidend_date))

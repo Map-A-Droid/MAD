@@ -43,6 +43,7 @@ class RouteManagerBase(ABC):
         self._route_queue = Queue()
         self._start_calc = False
         self._rounds = {}
+        self._positiontyp = {}
 
         # we want to store the workers using the routemanager
         self._workers_registered = []
@@ -111,6 +112,7 @@ class RouteManagerBase(ABC):
                             str(worker_name), str(self.name))
                 self._workers_registered.append(worker_name)
                 self._rounds[worker_name] = 0
+                self._positiontyp[worker_name] = 0
 
                 return True
         finally:
@@ -336,7 +338,7 @@ class RouteManagerBase(ABC):
         merged = self.clustering_helper.get_clustered(latest)
         return merged
 
-    def get_next_location(self):
+    def get_next_location(self, origin):
         logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
             logger.info(
@@ -381,10 +383,12 @@ class RouteManagerBase(ABC):
             next_lat = next_stop.lat
             next_lng = next_stop.lng
             self._last_round_prio = True
+            self._positiontyp[origin] = 1
             logger.info("Round of route {} is moving to {}, {} for a priority event", str(
                 self.name), str(next_lat), str(next_lng))
         else:
             logger.debug("{}: Moving on with route", str(self.name))
+            self._positiontyp[origin] = 0
             if len(self._route) == self._route_queue.qsize():
                 if self._round_started_time is not None:
                     logger.info("Round of route {} reached the first spot again. It took {}", str(
@@ -435,7 +439,7 @@ class RouteManagerBase(ABC):
                 if self._get_coords_after_finish_route():
                     # getting new coords or IV worker
                     self._manager_mutex.release()
-                    return self.get_next_location()
+                    return self.get_next_location(origin)
                 elif not self._get_coords_after_finish_route():
                     logger.info("Not getting new coords - leaving worker")
                     self._manager_mutex.release()
@@ -457,7 +461,7 @@ class RouteManagerBase(ABC):
         if self._check_coords_before_returning(next_lat, next_lng):
             return Location(next_lat, next_lng)
         else:
-            return self.get_next_location()
+            return self.get_next_location(origin)
 
     def del_from_route(self):
         logger.debug(
@@ -495,3 +499,6 @@ class RouteManagerBase(ABC):
 
     def get_registered_workers(self):
         return len(self._workers_registered)
+
+    def get_position_typ(self, origin):
+        return self._positiontyp[origin]

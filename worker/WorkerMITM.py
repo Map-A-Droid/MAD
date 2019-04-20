@@ -237,6 +237,9 @@ class WorkerMITM(MITMBase):
                         for WP in data_extract['wild_pokemon']:
                             # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                             if WP['spawnpoint_id']:
+                                self._stats.stats_collect_location_data(self.current_location, 1, timestamp,
+                                                                        current_routemanager.get_position_typ(self._id),
+                                                                        time.time())
                                 data_requested = latest_data
                                 break
                     if data_requested is None:
@@ -246,6 +249,9 @@ class WorkerMITM(MITMBase):
                     for data_extract in latest_data['payload']['cells']:
                         for forts in data_extract['forts']:
                             if forts['id']:
+                                self._stats.stats_collect_location_data(self.current_location, 1, timestamp,
+                                                                        current_routemanager.get_position_typ(self._id),
+                                                                        time.time())
                                 data_requested = latest_data
                                 break
                     if data_requested is None:

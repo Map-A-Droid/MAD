@@ -164,6 +164,7 @@ class MITMReceiver(object):
             return
         type = data.get("type", None)
         if type:
+            self.__mitm_mapper.playerstats[origin].stats_collector(type)
             if type == 106:
                 # process GetMapObject
                 logger.success("Processing GMO received from {}. Received at {}", str(
@@ -177,13 +178,13 @@ class MITMReceiver(object):
                     origin, data["payload"])
                 self._db_wrapper.submit_gyms_map_proto(origin, data["payload"])
                 self._db_wrapper.submit_raids_map_proto(
-                    origin, data["payload"])
+                    origin, data["payload"], self.__mitm_mapper.playerstats[origin])
 
                 self._db_wrapper.submit_spawnpoints_map_proto(
                     origin, data["payload"])
                 mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
                 self._db_wrapper.submit_mons_map_proto(
-                    origin, data["payload"], mon_ids_iv)
+                    origin, data["payload"], mon_ids_iv, self.__mitm_mapper.playerstats[origin])
             elif type == 102:
                 playerlevel = self.__mitm_mapper.playerstats[origin].get_level(
                 )
@@ -191,7 +192,7 @@ class MITMReceiver(object):
                     logger.info("Processing Encounter received from {} at {}", str(
                         origin), str(received_timestamp))
                     self._db_wrapper.submit_mon_iv(
-                        origin, received_timestamp, data["payload"])
+                        origin, received_timestamp, data["payload"], self.__mitm_mapper.playerstats[origin])
                 else:
                     logger.debug(
                         'Playerlevel lower than 30 - not processing encounter Data')
@@ -203,3 +204,6 @@ class MITMReceiver(object):
             elif type == 4:
                 self.__mitm_mapper.playerstats[origin].gen_player_stats(
                     data["payload"])
+
+
+

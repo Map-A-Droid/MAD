@@ -66,3 +66,26 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
         .replace('<<screen>>', screen)
         .replace('<<creationdate>>', creationdate)
     )
+
+
+def get_min_period():
+    min = datetime.datetime.now().strftime("%M")
+    if 0 <= int(min) < 15:
+        pos = 0
+    elif 15 <= int(min) < 30:
+        pos = 15
+    elif 30 <= int(min) < 45:
+        pos = 30
+    elif 45 <= int(min) < 60:
+        pos = 40
+
+    return datetime.datetime.now().replace(
+          microsecond=0).timestamp()
+
+# minute= int(pos),
+# second=0,
+
+
+def get_now_timestamp():
+    return datetime.datetime.now().timestamp()
+

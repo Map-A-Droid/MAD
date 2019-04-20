@@ -261,7 +261,7 @@ if __name__ == "__main__":
 
             pogoWindowManager = None
 
-            mitm_mapper = MitmMapper(device_mappings)
+            mitm_mapper = MitmMapper(device_mappings, db_wrapper)
             ocr_enabled = False
 
             for routemanager in routemanagers.keys():

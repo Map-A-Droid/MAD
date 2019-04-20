@@ -438,7 +438,7 @@ class WorkerBase(ABC):
             time.sleep(int(self._geofix_sleeptime))
             self._geofix_sleeptime = 0
         routemanager = self._walker_routemanager
-        self.current_location = routemanager.get_next_location()
+        self.current_location = routemanager.get_next_location(self._id)
         return routemanager.settings
 
     def _init_routine(self):
