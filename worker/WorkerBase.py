@@ -658,7 +658,7 @@ class WorkerBase(ABC):
             if not found and self._pogoWindowManager.check_close_except_nearby_button(
                     os.path.join(self._applicationArgs.temp_path,
                                  'screenshot%s.png' % str(self._id)), self._id,
-                    self._communicator, closeraid=True):
+                    self._communicator, close_raid=True):
                 logger.info(
                         "_check_pogo_main_screen: Found (X) button (except nearby)")
                 found = True
