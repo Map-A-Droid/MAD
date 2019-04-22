@@ -1925,6 +1925,8 @@ def statistics_detection_worker_data():
         if last_lat == 0 and last_lng == 0:
             last_lat = dat[1]
             last_lng = dat[2]
+        if dat[1]==0 and dat[2] == 0:
+            distance = ''
 
         location_raw.append({'lat': dat[1], 'lng': dat[2], 'distance': distance, 'type': dat[3], 'data': dat[4],
                              'fix_ts': datetime.datetime.fromtimestamp(dat[5]).strftime(datetimeformat),
@@ -1981,14 +1983,27 @@ def statistics():
                                + ' target=_new>[MAP]</a>''</td><td>'
                                + str(dat[1]) + '</td><td>' + str(dat[2]) + '</td><td>'
                                + str(dat[3]) + '</td><td>' + str(dat[0]) + '</td><td>' + str(dat[4]) + '</td><td>'
-                               + datetime.datetime.strptime(str(dat[5]), '%Y-%m-%d %H:%M:%S').strftime(datetimeformat)
+                               + ConvertDateTimeToLocal(int(dat[5])).strftime(datetimeformat)
                                + '</td><td>' + str(dat[6]) + '</td></tr>')
 
     detection_empty.append('</table>')
 
+    data = db_wrapper.statistics_get_location_info()
+    location_info = []
+    location_info.append('<table><thead><tr><th>Worker</th><th>Locations</th><th>Locations OK</th><th>Locations NOK</th>'
+                         '<th>OK / NOK Ratio</th></tr></thead>')
+
+    for dat in data:
+        location_info.append('<tr><td><a href=statistics_detection_worker?worker=' + str(dat[0]) + '>' + str(dat[0]) +
+                             '</a>''</td><td>' + str(dat[1]) + '</td><td>' + str(dat[2]) + '</td><td>'
+                               + str(dat[3]) + '</td><td>' + str(dat[4]) + '</td></tr>')
+
+    location_info.append('</table>')
+
+
     return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
                            minutes_usage=minutes_usage, time=conf_args.madmin_time, running_ocr=(conf_args.only_ocr),
-                           detection=detection, detection_empty=detection_empty)
+                           detection=detection, detection_empty=detection_empty, location_info=location_info)
 
 
 @app.route('/get_status', methods=['GET'])

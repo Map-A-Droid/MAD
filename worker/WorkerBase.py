@@ -55,6 +55,7 @@ class WorkerBase(ABC):
         self._lastStart = ""
         self._geofix_sleeptime = 0
         self._pogoWindowManager = pogoWindowManager
+        self._waittime_without_delays = 0
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self._devicesettings.get("last_location", None)
@@ -468,6 +469,9 @@ class WorkerBase(ABC):
                     "post_turn_screen_on_delay", 2))
         # check if pogo is running and start it if necessary
         logger.info("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
+        self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
+                                                2, 0,
+                                                self._walker_routemanager.get_walker_type())
         self._start_pogo()
 
     def _check_screen_on(self):
@@ -500,6 +504,9 @@ class WorkerBase(ABC):
                     "Could not reboot due to client already having disconnected")
             start_result = False
         time.sleep(5)
+        self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
+                                                3, 0,
+                                                self._walker_routemanager.get_walker_type())
         self._db_wrapper.save_last_reboot(self._id)
         self.stop_worker()
         return start_result
@@ -522,6 +529,9 @@ class WorkerBase(ABC):
             if clear_cache:
                 self._communicator.clearAppCache("com.nianticlabs.pokemongo")
             time.sleep(1)
+            self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
+                                                    4, 0,
+                                                    self._walker_routemanager.get_walker_type())
             return self._start_pogo()
         else:
             return False

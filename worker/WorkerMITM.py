@@ -100,6 +100,7 @@ class WorkerMITM(MITMBase):
         time.sleep(float(delay_used))
         self._devicesettings["last_location"] = self.current_location
         self.last_location = self.current_location
+        self._waittime_without_delays = time.time()
         return cur_time, True
 
     def _pre_location_update(self):
@@ -238,7 +239,7 @@ class WorkerMITM(MITMBase):
                             # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
                             if WP['spawnpoint_id']:
                                 self._stats.stats_collect_location_data(
-                                    self.current_location, 1, timestamp,
+                                    self.current_location, 1, self._waittime_without_delays,
                                     current_routemanager.get_position_type(self._id),
                                     time.time(),
                                     current_routemanager.get_walker_type())
@@ -252,7 +253,7 @@ class WorkerMITM(MITMBase):
                         for forts in data_extract['forts']:
                             if forts['id']:
                                 self._stats.stats_collect_location_data(
-                                    self.current_location, 1, timestamp,
+                                    self.current_location, 1, self._waittime_without_delays,
                                     current_routemanager.get_position_type(self._id),
                                     time.time(),
                                     current_routemanager.get_walker_type())

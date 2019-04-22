@@ -1327,7 +1327,7 @@ class DbWrapperBase(ABC):
 
         query = (
             "SELECT %s, worker, count(fix_ts), avg(data_ts-fix_ts) as data_time from trs_stats_location_raw "
-            "where success=1 and (walker='mon_mitm' or walker='iv_mitm') %s %s group by worker %s" %
+            "where success=1 and typ in (0,1) and (walker='mon_mitm' or walker='iv_mitm') %s %s group by worker %s" %
             (str(query_date), (query_where), str(worker_where), str(grouped_query))
         )
 
@@ -1383,7 +1383,7 @@ class DbWrapperBase(ABC):
         query = (
             "SELECT %s, worker, count(period), if(typ=0,if(success=1,'OK-Normal','NOK-Normal'),"
             "if(success=1,'OK-PrioQ','NOK-PrioQ')) from trs_stats_location_raw "
-            " %s %s group by worker %s" %
+            " %s %s and typ in(0,1) group by worker %s" %
             (str(query_date), (query_where), str(worker_where), str(grouped_query))
         )
 
@@ -1395,7 +1395,7 @@ class DbWrapperBase(ABC):
         logger.debug('Fetching all empty locations from db')
         query =(
             "SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
-            "SEPARATOR ', '), if(b.typ=0,'Normal','PrioQ'), max(FROM_UNIXTIME(b.period)), (select count(c.id) "
+            "SEPARATOR ', '), if(b.typ=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
             "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) from "
             "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 1 ORDER BY count(id) DESC"
         )
@@ -1442,7 +1442,7 @@ class DbWrapperBase(ABC):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
         query = (
-                "SELECT %s, lat, lng, if(typ=0,'Normal','PrioQ'), if(success=1,'OK','NOK'), fix_ts, "
+                "SELECT %s, lat, lng, if(typ=0,'Normal',if(typ=1,'PrioQ', if(typ=2,'Startup',if(typ=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
                 "if(data_ts=0,fix_ts,data_ts) from "
                 "trs_stats_location_raw"
                 " %s %s order by id asc" %
@@ -1451,5 +1451,18 @@ class DbWrapperBase(ABC):
 
         res = self.execute(query)
         return res
+
+    def statistics_get_location_info(self):
+        logger.debug('Fetching all empty locations from db')
+        query =(
+            "select worker, sum(location_count), sum(location_ok), sum(location_nok), "
+            "sum(location_nok) / sum(location_count) * 100 as Loc_fail_rate "
+            "from trs_stats_location "
+            "group by worker"
+        )
+
+        res = self.execute(query)
+        return res
+
 
 
