@@ -517,6 +517,18 @@
 
 				sidebar.open("layers");
 
+				setlat = {{ setlat }};
+				setlng = {{ setlng }};
+				if(setlat != 0 && setlng != 0) {
+				    var circle = L.circle([setlat, setlng], {
+                    color: 'blue',
+                    fillColor: 'blue',
+                    fillOpacity: 0.5,
+                    radius: 30
+                    }).addTo(map);
+                    map.setView([setlat, setlng], 20);
+				};
+
 				map.on('zoomend', this.l_event_zoomed);
 				map.on('moveend', this.l_event_moveend);
 				map.on('click', this.l_event_click);

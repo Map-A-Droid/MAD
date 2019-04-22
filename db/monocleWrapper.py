@@ -586,7 +586,7 @@ class MonocleWrapper(DbWrapperBase):
 
         self.execute(query, vals, commit=True)
 
-    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto, stats):
         logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -605,6 +605,8 @@ class MonocleWrapper(DbWrapperBase):
         encounter_id = wild_pokemon['encounter_id']
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
+
+        stats.stats_collect_mon(encounter_id)
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
@@ -676,7 +678,7 @@ class MonocleWrapper(DbWrapperBase):
         )
         self.execute(query_insert, vals, commit=True)
 
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
+    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv, stats):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -697,6 +699,8 @@ class MonocleWrapper(DbWrapperBase):
                 encounter_id = wild_mon['encounter_id']
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
+
+                stats.stats_collect_mon(encounter_id)
 
                 s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(
                     lat, lon, level=10)
@@ -833,7 +837,7 @@ class MonocleWrapper(DbWrapperBase):
                          vals_fort_sightings, commit=True)
         return True
 
-    def submit_raids_map_proto(self, origin, map_proto):
+    def submit_raids_map_proto(self, origin, map_proto, stats):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -875,6 +879,8 @@ class MonocleWrapper(DbWrapperBase):
                     is_exclusive = gym['gym_details']['raid_info']['is_exclusive']
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
+
+                    stats.stats_collect_raid(gymid)
 
                     now = time.time()
 

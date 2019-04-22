@@ -25,6 +25,7 @@ from utils.language import i8ln, open_json_file
 from utils.logging import LogLevelChanger, logger
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
+from utils.geo import get_distance_of_two_points_in_meters
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -442,8 +443,10 @@ def unknown():
 @app.route('/map', methods=['GET'])
 @auth_required
 def map():
+    setlat = request.args.get('lat', 0)
+    setlng = request.args.get('lng', 0)
     return render_template('map.html', lat=conf_args.home_lat, lng=conf_args.home_lng,
-                           running_ocr=(conf_args.only_ocr))
+                           running_ocr=(conf_args.only_ocr), setlat=setlat, setlng=setlng)
 
 
 @app.route('/quests', methods=['GET'])
@@ -1841,6 +1844,107 @@ def status():
                            running_ocr=(conf_args.only_ocr))
 
 
+@app.route('/statistics_detection_worker_data', methods=['GET'])
+@auth_required
+def statistics_detection_worker_data():
+    minutes = request.args.get('minutes', 120)
+    worker = request.args.get('worker')
+
+    # spawns
+    mon = []
+    mon_iv = []
+    raid = []
+    quest = []
+    usage = []
+
+    data = db_wrapper.statistics_get_detection_count(minutes=minutes, worker=worker)
+    for dat in data:
+        mon.append([dat[0] * 1000, int(dat[2])])
+        mon_iv.append([dat[0] * 1000, int(dat[3])])
+        raid.append([dat[0] * 1000, int(dat[4])])
+        quest.append([dat[0] * 1000, int(dat[5])])
+
+    usage.append({'label': 'Mon', 'data': mon})
+    usage.append({'label': 'Mon_IV', 'data': mon_iv})
+    usage.append({'label': 'Raid', 'data': raid})
+    usage.append({'label': 'Quest', 'data': quest})
+
+
+    # locations avg
+    locations_avg = []
+
+    data = db_wrapper.statistics_get_avg_data_time(minutes=minutes, worker=worker)
+    for dat in data:
+        # dtime = datetime.datetime.utcfromtimestamp(int(dat[0])).strftime(datetimeformat)
+        dtime = time.strftime(datetimeformat, time.localtime(int(dat[0])))
+        locations_avg.append({'dtime': dtime, 'ok_locations': dat[2], 'avg_datareceive': float(dat[3])})
+
+    #locations
+    ok = []
+    nok = []
+    sumloc = []
+    locations = []
+    data = db_wrapper.statistics_get_locations(minutes=minutes, worker=worker)
+    for dat in data:
+        ok.append([dat[0] * 1000, int(dat[3])])
+        nok.append([dat[0] * 1000, int(dat[4])])
+        sumloc.append([dat[0] * 1000, int(dat[2])])
+
+    locations.append({'label': 'Locations', 'data': sumloc})
+    locations.append({'label': 'Locations_ok', 'data': ok})
+    locations.append({'label': 'Locations_nok', 'data': nok})
+
+    #dataratio
+    loctionratio=[]
+    data = db_wrapper.statistics_get_locations_dataratio(minutes=minutes, worker=worker)
+    for dat in data:
+        loctionratio.append({'label': dat[3], 'data': dat[2]})
+
+
+    # all spaws
+    all_spawns = []
+    data = db_wrapper.statistics_get_detection_count(grouped=False, worker=worker)
+    all_spawns.append({'type': 'Mon', 'amount': int(data[0][2])})
+    all_spawns.append({'type': 'Mon_IV', 'amount': int(data[0][3])})
+    all_spawns.append({'type': 'Raid', 'amount': int(data[0][4])})
+    all_spawns.append({'type': 'Quest', 'amount': int(data[0][5])})
+
+    # raw detection data
+    detections_raw = []
+    data = db_wrapper.statistics_get_detection_raw(minutes=minutes, worker=worker)
+    for dat in data:
+        detections_raw.append({'typ': dat[1], 'id': dat[2], 'count': dat[3]})
+
+    # location raw
+    location_raw = []
+    last_lat = 0
+    last_lng = 0
+    distance = 0
+    data = db_wrapper.statistics_get_location_raw(minutes=minutes, worker=worker)
+    for dat in data:
+        if last_lat != 0 and last_lng != 0:
+            distance = get_distance_of_two_points_in_meters(last_lat, last_lng, dat[1], dat[2])
+        if last_lat == 0 and last_lng == 0:
+            last_lat = dat[1]
+            last_lng = dat[2]
+
+        location_raw.append({'lat': dat[1], 'lng': dat[2], 'distance': distance, 'type': dat[3], 'data': dat[4]})
+
+    workerstats = {'avg': locations_avg, 'receiving': usage, 'locations': locations,
+                   'ratio': loctionratio, 'allspawns': all_spawns, 'detections_raw': detections_raw,
+                   'location_raw': location_raw}
+    return jsonify(workerstats)
+
+@app.route('/statistics_detection_worker', methods=['GET'])
+@auth_required
+def statistics_detection_worker():
+    minutes = request.args.get('minutes', 120)
+    worker = request.args.get('worker')
+
+    return render_template('statistics_worker.html', title="MAD Worker Statisics", minutes=minutes,
+                        time=conf_args.madmin_time, worker=worker, running_ocr=conf_args.only_ocr)
+
+
 @app.route('/statistics', methods=['GET'])
 @auth_required
 def statistics():
@@ -1851,8 +1955,38 @@ def statistics():
     if not minutes_spawn:
         minutes_spawn = 120
 
+    # statistics_get_detection_count
+    data = db_wrapper.statistics_get_detection_count(grouped=False)
+    detection = []
+    detection.append('<table><thead><tr><th><b>Walker</b></th><th>Mons</th><th>Mons IV</th><th>Raids'
+                     '</th><th>Quests</th></tr></thead>')
+
+    for dat in data:
+        detection.append('<tr><td><a href=statistics_detection_worker?worker=' + str(dat[1]) + '>' + str(dat[1])
+                         + '</td><td>' + str(dat[2]) + '</td><td>'
+                         + str(dat[3]) + '</td><td>' + str(dat[4]) + '</td><td>' + str(dat[5]) + '</td></tr>')
+
+    detection.append('</table>')
+
+    # empty scans
+
+    data = db_wrapper.statistics_get_all_empty_scanns()
+    detection_empty = []
+    detection_empty.append('<table><thead><tr><th>Map</th><th>Lat</th><th>Lng</th><th>Worker</th><th>Count'
+                           '</th><th>Type</th><th>Last scan</th><th>Count success</th></tr></thead>')
+
+    for dat in data:
+        detection_empty.append('<tr><td><a href=map?lat=' + str(dat[1]) + '&lng=' + str(dat[2]) + '>[MAP]</a></td><td>'
+                               + str(dat[1]) + '</td><td>' + str(dat[2]) + '</td><td>'
+                               + str(dat[3]) + '</td><td>' + str(dat[0]) + '</td><td>' + str(dat[4]) + '</td><td>'
+                               + datetime.datetime.strptime(str(dat[5]), '%Y-%m-%d %H:%M:%S').strftime(datetimeformat)
+                               + '</td><td>' + str(dat[6]) + '</td></tr>')
+
+    detection_empty.append('</table>')
+
     return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
-                           minutes_usage=minutes_usage, time=conf_args.madmin_time, running_ocr=(conf_args.only_ocr))
+                           minutes_usage=minutes_usage, time=conf_args.madmin_time, running_ocr=(conf_args.only_ocr),
+                           detection=detection, detection_empty=detection_empty)
 
 
 @app.route('/get_status', methods=['GET'])
@@ -1865,8 +1999,9 @@ def get_status():
 @app.route('/get_game_stats', methods=['GET'])
 @auth_required
 def game_stats():
-    minutes_usage = request.args.get('minutes_usage')
-    minutes_spawn = request.args.get('minutes_spawn')
+    minutes_usage = request.args.get('minutes_usage',10)
+    minutes_spawn = request.args.get('minutes_spawn',10)
+
     # Stop
     stop = []
     data = db_wrapper.statistics_get_stop_quest()

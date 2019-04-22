@@ -197,7 +197,7 @@ class MITMReceiver(object):
                     logger.debug(
                         'Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
-                self._db_wrapper.submit_quest_proto(data["payload"])
+                self._db_wrapper.submit_quest_proto(data["payload"], self.__mitm_mapper.playerstats[origin])
             elif type == 104:
                 self._db_wrapper.submit_pokestops_details_map_proto(
                     data["payload"])

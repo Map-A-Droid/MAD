@@ -23,10 +23,6 @@ class PlayerStats(object):
         self._db_wrapper = db_wrapper
         self._stats_period = 0
         self.__mapping_mutex = Lock()
-        t_usage = Thread(name='stats_processor',
-                         target=self.stats_processor)
-        t_usage.daemon = False
-        t_usage.start()
 
     def set_level(self, level):
         logger.info('[{}] - set level {}', str(self._id), str(level))
@@ -73,48 +69,47 @@ class PlayerStats(object):
 
         self.set_level(data[self._id][0]['level'])
 
-    def stats_processor(self):
-        while True:
-            self.__mapping_mutex.acquire()
-            if self._stats_collector_start is False:
-                for save_ts in self._stats_collect.copy():
-                    if int(save_ts) < int(self._last_processed_timestamp):
-                        collect_data = self._stats_collect.get(save_ts, []).copy()
-                        self.stats_complete_parser(collect_data, save_ts)
-                        logger.error(int(self._last_processed_timestamp)-int(save_ts))
-                        if int(self._last_processed_timestamp)-int(save_ts) > 10:
-                            print ('TURE')
-                            del self._stats_collect[save_ts]
-
-                self._last_processed_timestamp = int(time.time())
-
-            self.__mapping_mutex.release()
-            time.sleep(5)
-
     def stats_collector(self, prototyp):
         self.__mapping_mutex.acquire()
+        data_send_stats = []
+        data_send_location = []
         self._stats_period = get_min_period()
         period = self._stats_period
 
+        if not self._stats_collector_start:
+            if self._last_processed_timestamp != period:
+
+                collect_data = self._stats_collect.get(self._last_processed_timestamp, []).copy()
+
+                data_send_stats.append(self.stats_complete_parser(collect_data, self._last_processed_timestamp))
+                data_send_location.append(self.stats_location_parser(collect_data, self._last_processed_timestamp))
+                data_send_location_raw = self.stats_location_raw_parser(collect_data, self._last_processed_timestamp)
+                data_send_detection_raw = self.stats_detection_raw_parser(collect_data, self._last_processed_timestamp)
+
+                self._stats_collect[self._last_processed_timestamp] = None
+                del self._stats_collect[self._last_processed_timestamp]
+
+                self._db_wrapper.submit_stats_complete(data_send_stats)
+                self._db_wrapper.submit_stats_locations(data_send_location)
+                self._db_wrapper.submit_stats_locations_raw(data_send_location_raw)
+                self._db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
+                self._last_processed_timestamp = period
+
         if self._stats_collector_start:
             self._stats_collector_start = False
-            self._last_processed_timestamp = int(time.time())
+            self._last_processed_timestamp = period
 
         if period not in self._stats_collect:
             self._stats_collect[period] = {}
 
-        if prototyp not in self._stats_collect[period]:
-            self._stats_collect[period][prototyp] = {}
-            self._stats_collect[period][prototyp]['protocount'] = 1
-        else:
-            print (self._stats_collect[period])
-            self._stats_collect[period][prototyp]['protocount'] += 1
         self.__mapping_mutex.release()
 
     def stats_collect_mon(self, encounter_id):
         period = self._stats_period
+
         if period not in self._stats_collect:
             self._stats_collect[period] = {}
+
         if 106 not in self._stats_collect[period]:
             self._stats_collect[period][106] = {}
 
@@ -132,8 +127,10 @@ class PlayerStats(object):
 
     def stats_collect_mon_iv(self, encounter_id):
         period = self._stats_period
+
         if period not in self._stats_collect:
             self._stats_collect[period] = {}
+
         if 102 not in self._stats_collect[period]:
             self._stats_collect[period][102] = {}
 
@@ -151,8 +148,10 @@ class PlayerStats(object):
 
     def stats_collect_raid(self, gym_id):
         period = self._stats_period
+
         if period not in self._stats_collect:
             self._stats_collect[period] = {}
+
         if 106 not in self._stats_collect[period]:
             self._stats_collect[period][106] = {}
 
@@ -168,22 +167,45 @@ class PlayerStats(object):
         else:
             self._stats_collect[period][106]['raid'][gym_id] += 1
 
-    def stats_collect_location_data(self, location, datarec, start_timestamp, typ, rec_timestamp):
+    def stats_collect_quest(self, stop_id):
         period = self._stats_period
-        now = start_timestamp
+
+        if period not in self._stats_collect:
+            self._stats_collect[period] = {}
+
+        if 106 not in self._stats_collect[period]:
+            self._stats_collect[period][106] = {}
+
+        if 'quest' not in self._stats_collect[period][106]:
+            self._stats_collect[period][106]['quest'] = {}
+
+        if 'quest_count' not in self._stats_collect[period][106]:
+            self._stats_collect[period][106]['quest_count'] = 0
+
+        if stop_id not in self._stats_collect[period][106]['quest']:
+            self._stats_collect[period][106]['quest'][stop_id] = 1
+            self._stats_collect[period][106]['quest_count'] += 1
+        else:
+            self._stats_collect[period][106]['quest'][stop_id] += 1
+
+    def stats_collect_location_data(self, location, datarec, start_timestamp, typ, rec_timestamp, walker):
+        period = self._stats_period
         if period not in self._stats_collect:
             self._stats_collect[period] = {}
         if 'location' not in self._stats_collect[period]:
-            self._stats_collect[period]['location'] = {}
+            self._stats_collect[period]['location'] = []
 
-        if now not in self._stats_collect[period]['location']:
-            self._stats_collect[period]['location'][now] = {}
+        loc_data = (str(self._id),
+                    start_timestamp,
+                    location.lat,
+                    location.lng,
+                    rec_timestamp,
+                    typ,
+                    walker,
+                    datarec,
+                    period)
 
-        self._stats_collect[period]['location'][now]['lat'] = location.lat
-        self._stats_collect[period]['location'][now]['lng'] = location.lng
-        self._stats_collect[period]['location'][now]['datarec'] = datarec
-        self._stats_collect[period]['location'][now]['typ'] = typ
-        self._stats_collect[period]['location'][now]['timestamp_start'] = rec_timestamp
+        self._stats_collect[period]['location'].append(loc_data)
 
         if 'location_count' not in self._stats_collect[period]:
             self._stats_collect[period]['location_count'] = 1
@@ -204,17 +226,120 @@ class PlayerStats(object):
         raid_count = 0
         mon_count = 0
         mon_iv_count = 0
+        quest_count = 0
 
         if 106 in data:
             raid_count = data[106].get('raid_count', 0)
             mon_count = data[106].get('mon_count', 0)
+            quest_count = data[106].get('quest_count', 0)
 
         if 102 in data:
             mon_iv_count = data[102].get('mon_iv_count', 0)
-        stats_data = (str(self._id), str(int(period)), str(raid_count), str(mon_count), str(mon_iv_count))
+        stats_data = (str(self._id),
+                      str(int(period)),
+                      str(raid_count),
+                      str(mon_count),
+                      str(mon_iv_count),
+                      str(quest_count)
+                      )
+
         logger.info('Submit complete stats for {} - Period: {}: {}', str(self._id), str(period), str(stats_data))
 
+        return stats_data
+
         self._db_wrapper.submit_stats_complete(self._id, period, stats_data)
+
+    def stats_location_parser(self, data, period):
+
+        location_count = data.get('location_count', 0)
+        location_ok = data.get('location_ok', 0)
+        location_nok = data.get('location_nok', 0)
+
+        location_data = (str(self._id),
+                         str(int(period)),
+                         str(location_count),
+                         str(location_ok),
+                         str(location_nok))
+
+        logger.info('Submit location stats for {} - Period: {}: {}', str(self._id), str(period), str(location_data))
+
+        return location_data
+
+    def stats_location_raw_parser(self, data, period):
+
+        data_location_raw = []
+
+        if 'location' in data:
+            for loc_raw in data['location']:
+                data_location_raw.append(loc_raw)
+
+        logger.info('Submit raw location stats for {} - Period: {} - Count: {}', str(self._id), str(period),
+                    str(len(data_location_raw)))
+
+        return data_location_raw
+
+    def stats_detection_raw_parser(self, data, period):
+
+        data_location_raw = []
+        # elf._stats_collect[period][106]['mon'][encounter_id]
+
+        if 106 in data:
+            if 'mon' in data[106]:
+                for mon_id in data[106]['mon']:
+                    typ_id = str(mon_id)
+                    typ_count = int(data[106]['mon'][mon_id])
+
+                    data_location_raw.append((str(self._id),
+                                             str(typ_id),
+                                             'mon',
+                                             str(typ_count),
+                                             str(int(period))
+                                              ))
+
+            if 'raid' in data[106]:
+                for gym_id in data[106]['raid']:
+                    typ_id = str(gym_id)
+                    typ_count = int(data[106]['raid'][gym_id])
+
+                    data_location_raw.append((str(self._id),
+                                             str(typ_id),
+                                             'raid',
+                                             str(typ_count),
+                                             str(int(period))
+                                              ))
+
+            if 'quest' in data[106]:
+                for stop_id in data[106]['quest']:
+                    typ_id = str(stop_id)
+                    typ_count = int(data[106]['quest'][stop_id])
+
+                    data_location_raw.append((str(self._id),
+                                             str(typ_id),
+                                             'quest',
+                                             str(typ_count),
+                                             str(int(period))
+                                              ))
+
+        if 102 in data:
+            if 'mon_iv' in data[102]:
+                for mon_id in data[102]['mon_iv']:
+                    typ_id = str(mon_id)
+                    typ_count = int(data[102]['mon_iv'][mon_id])
+
+                    data_location_raw.append((str(self._id),
+                                             str(typ_id),
+                                             'mon_iv',
+                                             str(typ_count),
+                                             str(int(period))
+                                              ))
+
+        logger.info('Submit raw detection stats for {} - Period: {} - Count: {}', str(self._id), str(period),
+                    str(len(data_location_raw)))
+
+        return data_location_raw
+
+
+
 
 
 

@@ -11,19 +11,6 @@
 <script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
 
 <script>
-    $(document).ready(function () {
-        $("table").addClass("table");
-        $('table').DataTable({
-            "autoWidth": true,
-            "searching": false,
-            "paging": true,
-            "bInfo": false,
-            "ordering": false
-        });
-    });
-
-
-
     $(function () {
 
         var options_dots = {
@@ -115,34 +102,20 @@
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
 
         $.ajax({
-            "url": "get_game_stats?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
+            "url": "statistics_detection_worker_data?worker={{ worker }}&minutes={{ minutes }}",
             "type": "GET",
             "cache": false,
             "dataType": "json",
             success: function (result) {
-                spawn = result.spawn
-                quest = result.quest
-                gym = result.gym
-                stop = result.stop
-                usage = result.usage
+                receiving = result.receiving
+                avg = result.avg
+                locations = result.locations
+                location_ratio = result.ratio
+                allspawns = result.allspawns
+                detections_raw = result.detections_raw
+                location_raw = result.location_raw
 
-                $.plot($("#flot_spawn"), [
-                    {
-                        data: spawn.iv,
-                        label: "IV Spawns / Hour"
-                    },
-                    {
-                        data: spawn.noniv,
-                        label: "NonIV Spawns / Hour"
-                    },
-                    {
-                        data: spawn.sum,
-                        label: "Sum Spawns / Hour"
-                    }
-                ], options_dots);
-                $("#flot_spawn").UseTooltip();
-
-                $.plot($("#flot_usage"), usage,
+                $.plot($("#flot_usage"), receiving,
                     {
                         grid: {
                             hoverable: true,
@@ -156,57 +129,91 @@
                             //{% else %}
                             timeformat: "%d.%m<br>%H:%M",
                             //{% endif %}
-                            tickSize: [3, "hour"],
+                            tickSize: [1, "hour"],
                             timezone: "browser"
                         },
-                        yaxes: [
-                            {
-                                //[First axis]
-                                axisLabel: "CPU",
-                                color: "black",
-                                axisLabelUseCanvas: true,
-                                axisLabelFontSizePixels: 12,
-                                axisLabelFontFamily: 'Verdana, Arial',
-                                axisLabelPadding: 3
-                            }, {
-                                position: "right",
-                                axisLabel: "Memory",
-                                color: "black",
-                                axisLabelUseCanvas: true,
-                                axisLabelFontSizePixels: 12,
-                                axisLabelFontFamily: 'Verdana, Arial',
-                                axisLabelPadding: 3
-                            }, {
-                                position: "right",
-                                axisLabel: "Collected Objects",
-                                color: "black",
-                                axisLabelUseCanvas: true,
-                                axisLabelFontSizePixels: 12,
-                                axisLabelFontFamily: 'Verdana, Arial',
-                                axisLabelPadding: 3,
-                                min: 1
-                            }
-                        ],
-
                         legend: {
                             container: $("#legendContainer_usage"),
                             noColumns: 0
-                        }
+                        },
+                        series: {
+                             lines: {
+                                 show: true,
+                                 color: '#ffa500'
+                             },
+                             points: {
+                                 show: true
+                             }
+                         }
                     }
                 );
                 $("#flot_usage").UseTooltipFull();
-
-                $.plot($("#flot_quest"), [
+                $.plot($("#flot_locations"), locations,
                     {
-                        data: quest,
-                        color: "#5482FF",
-                        label: "Quest / Hour"
-                    }
-                ], options_bars);
-                $("#flot_quest").UseTooltip();
+                        grid: {
+                            hoverable: true,
+                            borderWidth: 2,
+                            backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+                        },
+                        xaxis: {
+                            mode: "time",
+                            //{% if time == "12" %}
+                            timeformat: "%d.%m<br>%I:%M %p",
+                            //{% else %}
+                            timeformat: "%d.%m<br>%H:%M",
+                            //{% endif %}
+                            tickSize: [1, "hour"],
+                            timezone: "browser"
+                        },
+                        legend: {
+                            container: $("#legendContainer_locations"),
+                            noColumns: 0
+                        },
+                        series: {
+                             lines: {
+                                 show: true,
+                                 color: '#ffa500'
+                             },
+                             points: {
+                                 show: true
+                             }
+                         }}
+                );
+                $("#flot_locations").UseTooltipFull();
 
-                $.plot($("#flot_stop"), stop, options_pie);
-                $.plot($("#flot_gym"), gym, options_pie);
+
+                setGrid('#show-data', avg, [
+                    { data: 'dtime', title: 'Time' },
+                    { data: 'ok_locations', title: 'Locations with Data' },
+                    { data: 'avg_datareceive', title: 'AVG Data Receiving (seconds)' }
+                ]);
+                setGrid('#show-data-detection_raw', detections_raw, [
+                    { data: 'typ', title: 'Typ' },
+                    { data: 'id', title: 'ID' },
+                    { data: 'count', title: 'Count of scanning' }
+                ]);
+                setGrid('#show-data-complete', allspawns, [
+                    { data: 'type', title: 'Type' },
+                    { data: 'amount', title: 'Count' }
+                ]);
+                setGrid('#show-data-location_raw', location_raw, [
+                    { data: null, title: 'Map' },
+                    { data: 'lat', title: 'Lat' },
+                    { data: 'lng', title: 'Lng' },
+                    { data: 'distance', title: 'Distance from pref. Location' },
+                    { data: 'type', title: 'Type' },
+                    { data: 'data', title: 'Rec. data' }
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=map?lat=" + row.lat + "&lng=" + row.lng + ">[MAP]</a>";
+                    }
+                }
+                ]);
+                $.plot($("#flot_ratio"), location_ratio, options_pie);
+
+
 
             },
             complete: function () {
@@ -214,6 +221,18 @@
             }
 
         });
+
+
+        function setGrid(tableGridHtmlId, gridData, columns, defs) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "searching": true,
+            "paging": true,
+            "columns": columns,
+            "ordering": false,
+            "columnDefs": defs
+        });
+	}
 
         var previousPoint = null, previousLabel = null;
 
@@ -319,22 +338,11 @@
         height: 300px;
     }
 
-    #flot_spawn {
+    #flot_locations {
         width: 100%;
         height: 300px;
     }
-
-    #flot_quest {
-        width: 100%;
-        height: 300px;
-    }
-
-    #flot_gym {
-        width: 100%;
-        height: 300px;
-    }
-
-    #flot_stop {
+    #flot_ratio {
         width: 100%;
         height: 300px;
     }
@@ -363,53 +371,39 @@
 {% endblock %}
 
 {% block content %}
-<h2>Global detection Count</h2>
-{% for item in detection %}
-  {{item | safe }}
-  {% endfor %}
-<br>
-<h2>CPU / Memory Usage</h2>
+<h1>Statistic for Worker {{ worker }}</h1>
+<h2>Complete Worker Detection</h2>
+<table id="show-data-complete" class="table" style="width:100%;"></table>
+<hr>
+<h2>Workerdetails</h2>
 <div id="selector">
-    View {{ minutes_usage }} minutes <br>Set:
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=10">10</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=60">60</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=120">120</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=240">240</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=480">480</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=1440">1440</a>
-    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=10080">One Week</a>
+    View {{ minutes }} minutes <br>Set:
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=60">60</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=120">120</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=240">240</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=480">480</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=1440">1440</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=10080">One Week</a>
     </div>
+<h2>Worker Detection</h2>
 <div id="legendContainer_usage"></div>
 <div id="flot_usage"></div>
 <br>
-<h2>Spawn Statistics last day</h2>
-<div id="selector">
-    View {{ minutes_spawn }} minutes <br>Set:
-    <a href="statistics?minutes_spawn=10&amp;minutes_usage={{ minutes_usage }}">10</a>
-    <a href="statistics?minutes_spawn=60&amp;minutes_usage={{ minutes_usage }}">60</a>
-    <a href="statistics?minutes_spawn=120&amp;minutes_usage={{ minutes_usage }}">120</a>
-    <a href="statistics?minutes_spawn=240&amp;minutes_usage={{ minutes_usage }}">240</a>
-    <a href="statistics?minutes_spawn=480&amp;minutes_usage={{ minutes_usage }}">480</a>
-    <a href="statistics?minutes_spawn=1440&amp;minutes_usage={{ minutes_usage }}">1440</a>
-    <a href="statistics?minutes_spawn=10080&amp;minutes_usage={{ minutes_usage }}">One Week</a>
-    </div>
-<div id="legendContainer_spawn"></div>
-<div id="flot_spawn"></div>
+<h2>Location / Data Statistics (Mon_mitm / IV_mitm)</h2>
+<table id="show-data" class="table" style="width:100%;"></table>
 <br>
-<h2>Today Quest Statistics</h2>
-<div id="legendContainer_quest"></div>
-<div id="flot_quest"></div>
+<h2>Location / Data Ratio</h2>
+<div id="legendContainer_locations"></div>
+<div id="flot_locations"></div>
 <br>
-<h2>Stop / Quest Statistics</h2>
-<div id="flot_stop"></div>
+<h2>Location / Data / QueueType Ratio</h2>
+<div id="legendContainer_locations"></div>
+<div id="flot_ratio"></div>
 <br>
-<h2>Live Gym Statistics</h2>
-<div id="flot_gym"></div>
+<h2>Raw detection data</h2>
+<table id="show-data-detection_raw" class="table" style="width:100%;"></table>
 <br>
-<h2>Empty Scans > 1</h2>
-{% for item in detection_empty %}
-  {{item | safe }}
-  {% endfor %}
-<br>
-<br>
+<h2>Raw location data</h2>
+<table id="show-data-location_raw" class="table" style="width:100%;"></table>
+
 {% endblock %}

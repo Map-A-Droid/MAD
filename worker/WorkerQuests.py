@@ -498,8 +498,8 @@ class WorkerQuests(MITMBase):
 
         if data_received == 'Quest':
             self._stats.stats_collect_location_data(self.current_location, 1, self._stop_process_time,
-                                                    self._walker_routemanager.get_position_typ(self._id),
-                                                    time.time())
+                                                    self._walker_routemanager.get_position_type(self._id),
+                                                    time.time(), self._walker_routemanager.get_walker_type())
             self._devicesettings['last_action_time'] = time.time()
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):

@@ -60,7 +60,8 @@ class MITMBase(WorkerBase):
             current_routemanager = self._walker_routemanager
 
             self._stats.stats_collect_location_data(self.current_location, 0, timestamp,
-                                                    current_routemanager.get_position_typ(self._id), 0)
+                                                    current_routemanager.get_position_type(self._id), 0,
+                                                    current_routemanager.get_walker_type())
 
             self._restart_count += 1
 
