@@ -1976,7 +1976,8 @@ def statistics():
                            '</th><th>Type</th><th>Last scan</th><th>Count success</th></tr></thead>')
 
     for dat in data:
-        detection_empty.append('<tr><td><a href=map?lat=' + str(dat[1]) + '&lng=' + str(dat[2]) + '>[MAP]</a></td><td>'
+        detection_empty.append('<tr><td><a href=map?lat=' + str(dat[1]) + '&lng=' + str(dat[2])
+                               + ' target=_new>[MAP]</a>''</td><td>'
                                + str(dat[1]) + '</td><td>' + str(dat[2]) + '</td><td>'
                                + str(dat[3]) + '</td><td>' + str(dat[0]) + '</td><td>' + str(dat[4]) + '</td><td>'
                                + datetime.datetime.strptime(str(dat[5]), '%Y-%m-%d %H:%M:%S').strftime(datetimeformat)
