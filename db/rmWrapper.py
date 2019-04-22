@@ -859,6 +859,7 @@ class RmWrapper(DbWrapperBase):
                     latitude = gym['latitude']
                     longitude = gym['longitude']
                     slots_available = gym['gym_details']['slots_available']
+                    is_in_battle = gym['gym_details']['is_in_battle']
                     last_modified_ts = gym['last_modified_timestamp_ms']/1000
                     last_modified = datetime.utcfromtimestamp(
                         last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
