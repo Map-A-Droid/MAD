@@ -259,6 +259,7 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
                 cost_best = costs_temps[0]
                 sol_best = solutions_temp[0].copy()
             else:
+                logger.debug("Multiple solutions at once, trying to merge")
                 # multiple solutions, so much fun at once!
                 merged_sol = sol_best.copy()
                 length_sols_minus_one = len(solutions_temp) - 1
