@@ -1,6 +1,17 @@
 {% extends "base.html" %}
 
 {% block header %}
+<style>
+    .pokestopimg {
+        border: 3px solid #36c6ff;
+        width: 70px;
+        height: 70px;
+        background-size: cover;
+        display: block;
+        border-radius: 50px;
+        margin: auto;
+    }
+</style>
 {% endblock %}
 
 {% block scripts %}
@@ -22,7 +33,7 @@
                 {
                     "targets": [0],
                     "render": function (data, type, row) {
-                        return "<img class='lazy' data-original='" + data + "' width=100>";
+                        return "<img class='lazy pokestopimg' data-original='" + data + "' width=100>";
                     }
                 },
                 {
