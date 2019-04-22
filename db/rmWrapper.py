@@ -842,7 +842,7 @@ class RmWrapper(DbWrapperBase):
             "guard_pokemon_id=VALUES(guard_pokemon_id), team_id=VALUES(team_id), "
             "slots_available=VALUES(slots_available), last_scanned=VALUES(last_scanned), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "is_ex_raid_eligible=VALUES(is_ex_raid_eligible)"
+            "is_in_battle=VALUES(is_in_battle), is_ex_raid_eligible=VALUES(is_ex_raid_eligible)"
         )
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
@@ -870,7 +870,7 @@ class RmWrapper(DbWrapperBase):
                             1,  # enabled
                             latitude, longitude,
                             0,  # total CP
-                            0,  # is_in_battle
+                            is_in_battle,  # is_in_battle
                             last_modified,  # last_modified
                             now,   # last_scanned
                             is_ex_raid_eligible
