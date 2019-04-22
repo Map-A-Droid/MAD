@@ -86,10 +86,13 @@ def get_min_period():
     return datetime.datetime.utcnow().replace(
         minute=int(pos), second=0, microsecond=0).timestamp()
 
-#minute=int(pos),
-# second=0,
-
 
 def get_now_timestamp():
     return datetime.datetime.now().timestamp()
+
+
+def ConvertDateTimeToLocal(timestampValue):
+    offset = datetime.datetime.now() - datetime.datetime.utcnow()
+    return datetime.datetime.fromtimestamp(timestampValue) + offset + datetime.timedelta(seconds=1)
+
 

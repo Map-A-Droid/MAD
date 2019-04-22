@@ -1294,10 +1294,10 @@ class DbWrapperBase(ABC):
         if grouped:
             grouped_query = ", day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan))"
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
+        query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(timestamp_scan), '%y-%m-%d %k:00:00'))"
         if minutes:
             minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(timestamp_scan) >= \'%s\' ' % str(minutes)
+            query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query = (
             "SELECT  %s, worker, sum(mon) as Mon, sum(mon_iv) as MonIV, sum(raid) as Raids, sum(quest) as Quests FROM "
@@ -1317,11 +1317,11 @@ class DbWrapperBase(ABC):
         if worker:
             worker_where = ' and worker = \'%s\' ' % str(worker)
         if grouped:
-            grouped_query = ", day(FROM_UNIXTIME(data_ts)), hour(FROM_UNIXTIME(data_ts))"
+            grouped_query = ", day(FROM_UNIXTIME(period)), hour(FROM_UNIXTIME(period))"
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
-            query_where = ' and FROM_UNIXTIME(fix_ts) >= \'%s\' ' % str(minutes)
+            query_where = ' and (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
@@ -1330,6 +1330,7 @@ class DbWrapperBase(ABC):
             "where success=1 and (walker='mon_mitm' or walker='iv_mitm') %s %s group by worker %s" %
             (str(query_date), (query_where), str(worker_where), str(grouped_query))
         )
+
         res = self.execute(query)
 
         return res
@@ -1348,7 +1349,7 @@ class DbWrapperBase(ABC):
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(timestamp_scan) >= \'%s\' ' % str(minutes)
+            query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
 
@@ -1375,7 +1376,7 @@ class DbWrapperBase(ABC):
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(period) >= \'%s\' ' % str(minutes)
+            query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
@@ -1413,7 +1414,7 @@ class DbWrapperBase(ABC):
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(timestamp_scan) >= \'%s\' ' % str(minutes)
+            query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
 
@@ -1436,12 +1437,14 @@ class DbWrapperBase(ABC):
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(period) >= \'%s\' ' % str(minutes)
+            query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
         query = (
-                "SELECT %s, lat, lng, if(typ=0,'Normal','PrioQ'), if(success=1,'OK','NOK') from trs_stats_location_raw"
+                "SELECT %s, lat, lng, if(typ=0,'Normal','PrioQ'), if(success=1,'OK','NOK'), fix_ts, "
+                "if(data_ts=0,fix_ts,data_ts) from "
+                "trs_stats_location_raw"
                 " %s %s order by id asc" %
                 (str(query_date), (query_where), str(worker_where))
         )

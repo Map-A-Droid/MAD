@@ -20,7 +20,7 @@ import cv2
 from flask_caching import Cache
 from utils.adb import ADBConnect
 from utils.functions import (creation_date, generate_path, generate_phones,
-                             image_resize)
+                             image_resize, ConvertDateTimeToLocal)
 from utils.language import i8ln, open_json_file
 from utils.logging import LogLevelChanger, logger
 from utils.mappingParser import MappingParser
@@ -413,7 +413,6 @@ def screens():
 @app.route('/', methods=['GET'])
 @auth_required
 def root():
-    print(conf_args.only_ocr)
     return render_template('index.html', running_ocr=(conf_args.only_ocr))
 
 
@@ -1875,8 +1874,7 @@ def statistics_detection_worker_data():
 
     data = db_wrapper.statistics_get_avg_data_time(minutes=minutes, worker=worker)
     for dat in data:
-        # dtime = datetime.datetime.utcfromtimestamp(int(dat[0])).strftime(datetimeformat)
-        dtime = time.strftime(datetimeformat, time.localtime(int(dat[0])))
+        dtime = ConvertDateTimeToLocal(int(dat[0])).strftime(datetimeformat)
         locations_avg.append({'dtime': dtime, 'ok_locations': dat[2], 'avg_datareceive': float(dat[3])})
 
     #locations
@@ -1928,12 +1926,15 @@ def statistics_detection_worker_data():
             last_lat = dat[1]
             last_lng = dat[2]
 
-        location_raw.append({'lat': dat[1], 'lng': dat[2], 'distance': distance, 'type': dat[3], 'data': dat[4]})
+        location_raw.append({'lat': dat[1], 'lng': dat[2], 'distance': distance, 'type': dat[3], 'data': dat[4],
+                             'fix_ts': datetime.datetime.fromtimestamp(dat[5]).strftime(datetimeformat),
+                             'data_ts': datetime.datetime.fromtimestamp(dat[6]).strftime(datetimeformat)})
 
     workerstats = {'avg': locations_avg, 'receiving': usage, 'locations': locations,
                    'ratio': loctionratio, 'allspawns': all_spawns, 'detections_raw': detections_raw,
                    'location_raw': location_raw}
     return jsonify(workerstats)
+
 
 @app.route('/statistics_detection_worker', methods=['GET'])
 @auth_required
