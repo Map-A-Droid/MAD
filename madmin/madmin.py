@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import ast
 import datetime
 import glob
 import json
@@ -1300,6 +1301,7 @@ def config():
 
     for field in compfields[block]:
         lock = field['settings'].get("lockonedit", False)
+        showmonsidpicker = field['settings'].get("showmonsidpicker", False)
         lockvalue = 'readonly' if lock and edit else ''
         req = 'required' if field['settings'].get(
             'require', 'false') == 'true' else ''
@@ -1316,6 +1318,11 @@ def config():
             formStr = '<div class="form-group">'
             formStr += '<label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                 field['settings']['description']) + '</small>'
+
+            # No idea how/where to put that link, ended with this one
+            if showmonsidpicker:
+                monsidpicker_link = '<a href=showmonsidpicker?edit=' + str(edit) + '&type=' + str(type) +'>[BETA ID Picker]</a>'
+                formStr += monsidpicker_link
             if field['settings']['type'] == 'text':
                 formStr += '<input type="text" name="' + \
                     str(field['name']) + '" value="' + val + \
@@ -1968,3 +1975,74 @@ def getAllHash(type):
 
 def getCoordFloat(coordinate):
     return floor(float(coordinate) * (10 ** 5)) / float(10 ** 5)
+
+@app.route('/showmonsidpicker', methods=['GET', 'POST'])
+@auth_required
+def showmonsidpicker():
+    edit = request.args.get('edit')
+    type = request.args.get('type')
+    header = ""
+    title = ""
+
+    if request.method == 'GET' and (not edit or not type):
+        return render_template('showmonsidpicker.html', error_msg="How did you end up here? Missing params.", header=header, title=title)
+
+    with open('configs/mappings.json') as f:
+        mapping = json.load(f)
+
+    if "areas" not in mapping:
+        return render_template('showmonsidpicker.html', error_msg="No areas defined at all, please configure first.", header=header, title=title)
+
+    this_area = None
+    this_area_index = -1
+    for t_area in mapping["areas"]:
+        this_area_index += 1
+        if t_area["name"] == edit and t_area["mode"] == type:
+            this_area = t_area
+            break
+
+    if this_area == None:
+        return render_template('showmonsidpicker.html', error_msg="No area (" + edit + " with mode: " + type + ") found in mappings, add it first.", header=header, title=title)
+
+    title = "Mons ID Picker for " + edit
+    header = "Editing area " + edit + " (" + type + ")"
+    backurl = "config?type="+type+"&area=areas&block=settings&edit="+edit
+
+    if "settings" not in this_area:
+        return render_template('showmonsidpicker.html', error_msg="No settings key found for area " + edit + "(" + type + "). Configure it first.", header=header, title=title)
+
+    if request.method == 'POST':
+        new_mons_list = request.form.get('current_mons_list')
+        if not new_mons_list:
+            return redirect("/showsettings", code=302)
+
+        mapping["areas"][this_area_index]["settings"]["mon_ids_iv"] = ast.literal_eval(new_mons_list)
+
+        with open('configs/mappings.json', 'w') as outfile:
+            json.dump(mapping, outfile, indent=4, sort_keys=True)
+        return redirect(backurl, code=302)
+
+    if "mon_ids_iv" not in this_area["settings"]:
+        current_mons = []
+    else:
+        current_mons = this_area["settings"]["mon_ids_iv"]
+
+    mondata = open_json_file('pokemon')
+
+    current_mons_list = []
+
+    for mon_id in current_mons:
+        mon_name = i8ln(mondata[str(mon_id)]["name"])
+        current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
+
+    # Why o.O
+    stripped_mondata = {}
+    for mon_id in mondata:
+        stripped_mondata[mondata[str(mon_id)]["name"]] = mon_id
+        if os.environ['LANGUAGE'] != "en":
+            stripped_mondata[i8ln(mondata[str(mon_id)]["name"])] = mon_id
+
+    formhiddeninput = '<form action="showmonsidpicker?edit=' + edit + '&type=' + type +'" id="showmonsidpicker" method="post">'
+    formhiddeninput += '<input type="hidden" id="current_mons_list" name="current_mons_list" value="' + str(current_mons) + '">'
+    formhiddeninput += '<button type="submit" class="btn btn-success">Save</button></form>'
+    return render_template('showmonsidpicker.html', backurl=backurl, formhiddeninput=formhiddeninput, current_mons_list=current_mons_list, stripped_mondata=stripped_mondata, header=header, title=title)

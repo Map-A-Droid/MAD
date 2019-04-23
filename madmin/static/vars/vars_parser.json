@@ -481,7 +481,8 @@
 						"type": "text",
 						"require": "false",
 						"description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
-						"output": "int"
+						"output": "int",
+						"showmonsidpicker": true
 					}
 				},
 				{
@@ -597,7 +598,8 @@
 						"type": "text",
 						"require": "false",
 						"description": "Encounter this mon ids (Put in brakets [1,2,3] as comma separated list!)",
-						"output": "int"
+						"output": "int",
+						"showmonsidpicker": true
 					}
 				},
 				{
