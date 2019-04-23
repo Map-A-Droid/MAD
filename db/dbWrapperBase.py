@@ -1397,7 +1397,7 @@ class DbWrapperBase(ABC):
             "SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
             "SEPARATOR ', '), if(b.typ=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
             "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) from "
-            "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 1 ORDER BY count(id) DESC"
+            "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 ORDER BY count(id) DESC"
         )
 
         res = self.execute(query)
@@ -1442,7 +1442,8 @@ class DbWrapperBase(ABC):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
         query = (
-                "SELECT %s, lat, lng, if(typ=0,'Normal',if(typ=1,'PrioQ', if(typ=2,'Startup',if(typ=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
+                "SELECT %s, lat, lng, if(typ=0,'Normal',if(typ=1,'PrioQ', if(typ=2,'Startup',"
+                "if(typ=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
                 "if(data_ts=0,fix_ts,data_ts) from "
                 "trs_stats_location_raw"
                 " %s %s order by id asc" %
