@@ -104,7 +104,8 @@
                 "post_walk_delay": 0,
                 "reboot": false,
                 "restart_pogo": 0,
-                "walk_after_teleport_distance": 1
+                "walk_after_teleport_distance": 1,
+                "route_calc_algorithm": "quick"
             },
             "walker": "test123"
         },
@@ -119,7 +120,8 @@
                 "reboot": true,
                 "reboot_thresh": 10,
                 "restart_pogo": 0,
-                "walk_after_teleport_distance": 1
+                "walk_after_teleport_distance": 1,
+                "route_calc_algorithm": "optimized"
             },
             "walker": "iv_total"
         }
@@ -139,7 +141,8 @@
                 "reboot": true,
                 "reboot_thresh": 5,
                 "restart_pogo": 0,
-                "restart_thresh": 5
+                "restart_thresh": 5,
+                "route_calc_algorithm": "optimized"
             }
         }
     ],
