@@ -2032,7 +2032,10 @@ def showmonsidpicker():
     current_mons_list = []
 
     for mon_id in current_mons:
-        mon_name = i8ln(mondata[str(mon_id)]["name"])
+        try:
+            mon_name = i8ln(mondata[str(mon_id)]["name"])
+        except KeyError:
+            mon_name = "No-name-in-file-please-fix"
         current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
 
     # Why o.O
@@ -2040,7 +2043,11 @@ def showmonsidpicker():
     for mon_id in mondata:
         stripped_mondata[mondata[str(mon_id)]["name"]] = mon_id
         if os.environ['LANGUAGE'] != "en":
-            stripped_mondata[i8ln(mondata[str(mon_id)]["name"])] = mon_id
+            try:
+                localized_name = i8ln(mondata[str(mon_id)]["name"])
+                stripped_mondata[localized_name] = mon_id
+            except KeyError:
+                pass
 
     formhiddeninput = '<form action="showmonsidpicker?edit=' + edit + '&type=' + type +'" id="showmonsidpicker" method="post">'
     formhiddeninput += '<input type="hidden" id="current_mons_list" name="current_mons_list" value="' + str(current_mons) + '">'
