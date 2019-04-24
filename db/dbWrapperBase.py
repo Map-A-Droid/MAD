@@ -1271,6 +1271,7 @@ class DbWrapperBase(ABC):
         query_status = (
             "INSERT IGNORE INTO trs_stats_location_raw (worker, fix_ts, lat, lng, data_ts, typ, walker, "
             "success, period) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE counter=(counter+1)"
         )
         self.executemany(query_status, data, commit=True)
         return True

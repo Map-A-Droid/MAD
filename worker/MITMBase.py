@@ -52,22 +52,27 @@ class MITMBase(WorkerBase):
             self._reboot_count = 0
             self._restart_count = 0
             self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            self._stats.stats_collect_location_data(
+                self.current_location, 1, self._waittime_without_delays,
+                self._walker_routemanager.get_position_type(self._id),
+                time.time(),
+                self._walker_routemanager.get_walker_type())
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
             logger.warning("Timeout waiting for data")
 
-            current_routemanager = self._walker_routemanager
-
-            self._stats.stats_collect_location_data(self.current_location, 0, timestamp,
-                                                    current_routemanager.get_position_type(self._id), 0,
-                                                    current_routemanager.get_walker_type())
+            self._stats.stats_collect_location_data(
+                self.current_location, 0, self._waittime_without_delays,
+                self._walker_routemanager.get_position_type(self._id), 0,
+                self._walker_routemanager.get_walker_type())
 
             self._restart_count += 1
 
             restart_thresh = self._devicesettings.get("restart_thresh", 5)
             reboot_thresh = self._devicesettings.get("reboot_thresh", 3)
-            if current_routemanager is not None:
+            if self._walker_routemanager is not None:
                 if self._init:
                     restart_thresh = self._devicesettings.get(
                         "restart_thresh", 5) * 2
