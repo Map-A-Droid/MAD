@@ -1,6 +1,7 @@
 import datetime
 import os
 import platform
+import calendar
 
 import cv2
 
@@ -83,8 +84,9 @@ def get_min_period():
     elif 50 <= int(min) < 60:
         pos = 50
 
-    return datetime.datetime.utcnow().replace(
-        minute=int(pos), second=0, microsecond=0).timestamp()
+    returndatetime = datetime.datetime.utcnow().replace(
+        minute=int(pos), second=0, microsecond=0)
+    return calendar.timegm(returndatetime.utctimetuple())
 
 
 def get_now_timestamp():

@@ -188,7 +188,8 @@ class PlayerStats(object):
         else:
             self._stats_collect[period][106]['quest'][stop_id] += 1
 
-    def stats_collect_location_data(self, location, datarec, start_timestamp, typ, rec_timestamp, walker):
+    def stats_collect_location_data(self, location, datarec, start_timestamp, type, rec_timestamp, walker,
+                                    transporttype):
         period = self._stats_period
         if period not in self._stats_collect:
             self._stats_collect[period] = {}
@@ -200,10 +201,11 @@ class PlayerStats(object):
                     location.lat,
                     location.lng,
                     rec_timestamp,
-                    typ,
+                    type,
                     walker,
                     datarec,
-                    period)
+                    period,
+                    transporttype)
 
         self._stats_collect[period]['location'].append(loc_data)
 
@@ -286,50 +288,50 @@ class PlayerStats(object):
         if 106 in data:
             if 'mon' in data[106]:
                 for mon_id in data[106]['mon']:
-                    typ_id = str(mon_id)
-                    typ_count = int(data[106]['mon'][mon_id])
+                    type_id = str(mon_id)
+                    type_count = int(data[106]['mon'][mon_id])
 
                     data_location_raw.append((str(self._id),
-                                             str(typ_id),
+                                             str(type_id),
                                              'mon',
-                                             str(typ_count),
+                                             str(type_count),
                                              str(int(period))
                                               ))
 
             if 'raid' in data[106]:
                 for gym_id in data[106]['raid']:
-                    typ_id = str(gym_id)
-                    typ_count = int(data[106]['raid'][gym_id])
+                    type_id = str(gym_id)
+                    type_count = int(data[106]['raid'][gym_id])
 
                     data_location_raw.append((str(self._id),
-                                             str(typ_id),
+                                             str(type_id),
                                              'raid',
-                                             str(typ_count),
+                                             str(type_count),
                                              str(int(period))
                                               ))
 
             if 'quest' in data[106]:
                 for stop_id in data[106]['quest']:
-                    typ_id = str(stop_id)
-                    typ_count = int(data[106]['quest'][stop_id])
+                    type_id = str(stop_id)
+                    type_count = int(data[106]['quest'][stop_id])
 
                     data_location_raw.append((str(self._id),
-                                             str(typ_id),
+                                             str(type_id),
                                              'quest',
-                                             str(typ_count),
+                                             str(type_count),
                                              str(int(period))
                                               ))
 
         if 102 in data:
             if 'mon_iv' in data[102]:
                 for mon_id in data[102]['mon_iv']:
-                    typ_id = str(mon_id)
-                    typ_count = int(data[102]['mon_iv'][mon_id])
+                    type_id = str(mon_id)
+                    type_count = int(data[102]['mon_iv'][mon_id])
 
                     data_location_raw.append((str(self._id),
-                                             str(typ_id),
+                                             str(type_id),
                                              'mon_iv',
-                                             str(typ_count),
+                                             str(type_count),
                                              str(int(period))
                                               ))
 

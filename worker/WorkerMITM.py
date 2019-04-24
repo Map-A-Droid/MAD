@@ -46,6 +46,7 @@ class WorkerMITM(MITMBase):
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             self._communicator.setLocation(
                 self.current_location.lat, self.current_location.lng, 0)
+            self._transporttype = 0
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
@@ -92,6 +93,7 @@ class WorkerMITM(MITMBase):
                 time.sleep(1)
         else:
             logger.info("main: Walking...")
+            self._transporttype = 1
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat, self.current_location.lng, speed)
             # the time we will take as a starting point to wait for data...

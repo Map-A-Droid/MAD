@@ -1911,7 +1911,7 @@ def statistics_detection_worker_data():
     detections_raw = []
     data = db_wrapper.statistics_get_detection_raw(minutes=minutes, worker=worker)
     for dat in data:
-        detections_raw.append({'typ': dat[1], 'id': dat[2], 'count': dat[3]})
+        detections_raw.append({'type': dat[1], 'id': dat[2], 'count': dat[3]})
 
     # location raw
     location_raw = []
@@ -1921,16 +1921,19 @@ def statistics_detection_worker_data():
     data = db_wrapper.statistics_get_location_raw(minutes=minutes, worker=worker)
     for dat in data:
         if last_lat != 0 and last_lng != 0:
-            distance = get_distance_of_two_points_in_meters(last_lat, last_lng, dat[1], dat[2])
+            distance = round(get_distance_of_two_points_in_meters(last_lat, last_lng, dat[1], dat[2]),2)
+            last_lat = dat[1]
+            last_lng = dat[2]
         if last_lat == 0 and last_lng == 0:
             last_lat = dat[1]
             last_lng = dat[2]
-        if dat[1]==0 and dat[2] == 0:
+        if dat[1] == 0 and dat[2] == 0:
             distance = ''
 
         location_raw.append({'lat': dat[1], 'lng': dat[2], 'distance': distance, 'type': dat[3], 'data': dat[4],
                              'fix_ts': datetime.datetime.fromtimestamp(dat[5]).strftime(datetimeformat),
-                             'data_ts': datetime.datetime.fromtimestamp(dat[6]).strftime(datetimeformat)})
+                             'data_ts': datetime.datetime.fromtimestamp(dat[6]).strftime(datetimeformat),
+                             'transporttype': dat[8]})
 
     workerstats = {'avg': locations_avg, 'receiving': usage, 'locations': locations,
                    'ratio': loctionratio, 'allspawns': all_spawns, 'detections_raw': detections_raw,
@@ -2016,8 +2019,8 @@ def get_status():
 @app.route('/get_game_stats', methods=['GET'])
 @auth_required
 def game_stats():
-    minutes_usage = request.args.get('minutes_usage',10)
-    minutes_spawn = request.args.get('minutes_spawn',10)
+    minutes_usage = request.args.get('minutes_usage', 10)
+    minutes_spawn = request.args.get('minutes_spawn', 10)
 
     # Stop
     stop = []

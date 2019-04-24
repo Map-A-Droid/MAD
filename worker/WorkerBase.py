@@ -56,12 +56,16 @@ class WorkerBase(ABC):
         self._geofix_sleeptime = 0
         self._pogoWindowManager = pogoWindowManager
         self._waittime_without_delays = 0
+        self._transporttype = 0
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self._devicesettings.get("last_location", None)
         if self.last_location is None:
             self.last_location = Location(0.0, 0.0)
         self.last_processed_location = Location(0.0, 0.0)
+
+
+
 
     def get_communicator(self):
         return self._communicator
@@ -469,9 +473,6 @@ class WorkerBase(ABC):
                     "post_turn_screen_on_delay", 2))
         # check if pogo is running and start it if necessary
         logger.info("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
-        self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
-                                                2, 0,
-                                                self._walker_routemanager.get_walker_type())
         self._start_pogo()
 
     def _check_screen_on(self):
@@ -506,7 +507,7 @@ class WorkerBase(ABC):
         time.sleep(5)
         self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
                                                 3, 0,
-                                                self._walker_routemanager.get_walker_type())
+                                                self._walker_routemanager.get_walker_type(), 99)
         self._db_wrapper.save_last_reboot(self._id)
         self.stop_worker()
         return start_result
@@ -531,7 +532,7 @@ class WorkerBase(ABC):
             time.sleep(1)
             self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
                                                     4, 0,
-                                                    self._walker_routemanager.get_walker_type())
+                                                    self._walker_routemanager.get_walker_type(), 99)
             return self._start_pogo()
         else:
             return False

@@ -1030,12 +1030,16 @@ class DbWrapperBase(ABC):
                  ' lng double NOT NULL,'
                  ' fix_ts int(11) NOT NULL,'
                  ' data_ts int(11) NOT NULL,'
-                 ' typ tinyint(1) NOT NULL,'
+                 ' type tinyint(1) NOT NULL,'
                  ' walker varchar(255) NOT NULL,'
                  ' success tinyint(1) NOT NULL,'
                  ' period int(11) NOT NULL, '
+                 ' count int(11) NOT NULL, '
+                 ' transporttype tinyint(1) NOT NULL, '
                  ' PRIMARY KEY (id),'
-                 ' KEY latlng (lat, lng)) ')
+                 ' KEY latlng (lat, lng),'
+                 ' UNIQUE count_same_events (worker, lat, lng, type, period))'
+                 )
 
         self.execute(query, commit=True)
 
@@ -1047,19 +1051,21 @@ class DbWrapperBase(ABC):
                  ' location_ok int(11) NOT NULL,'
                  ' location_nok int(11) NOT NULL, '
                  ' PRIMARY KEY (id),'
-                 ' KEY worker (worker))')
+                 ' KEY worker (worker))'
+                 )
 
         self.execute(query, commit=True)
 
         query = ('CREATE TABLE if not exists trs_stats_detect_raw ('
                  ' id int(11) AUTO_INCREMENT,'
                  ' worker varchar(100) NOT NULL,'
-                 ' typ_id varchar(100) NOT NULL,'
-                 ' typ varchar(10) NOT NULL,'
+                 ' type_id varchar(100) NOT NULL,'
+                 ' type varchar(10) NOT NULL,'
                  ' count int(11) NOT NULL,'
                  ' timestamp_scan int(11) NOT NULL,'
                  ' PRIMARY KEY (id),'
-                 ' KEY worker (worker))')
+                 ' KEY worker (worker))'
+                 )
 
         self.execute(query, commit=True)
 
@@ -1072,7 +1078,8 @@ class DbWrapperBase(ABC):
                  ' mon_iv  int(11) DEFAULT NULL,'
                  ' quest  int(100) DEFAULT NULL,'
                  ' PRIMARY KEY (id), '
-                 ' KEY worker (worker))')
+                 ' KEY worker (worker))'
+                 )
 
         self.execute(query, commit=True)
 
@@ -1269,16 +1276,16 @@ class DbWrapperBase(ABC):
 
     def submit_stats_locations_raw(self, data):
         query_status = (
-            "INSERT IGNORE INTO trs_stats_location_raw (worker, fix_ts, lat, lng, data_ts, typ, walker, "
-            "success, period) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE counter=(counter+1)"
+            "INSERT IGNORE INTO trs_stats_location_raw (worker, fix_ts, lat, lng, data_ts, type, walker, "
+            "success, period, transporttype) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE count=(count+1)"
         )
         self.executemany(query_status, data, commit=True)
         return True
 
     def submit_stats_detections_raw(self, data):
         query_status = (
-            "INSERT IGNORE INTO trs_stats_detect_raw (worker, typ_id, typ, count, timestamp_scan) "
+            "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, timestamp_scan) "
             "VALUES (%s, %s, %s, %s, %s) "
         )
         self.executemany(query_status, data, commit=True)
@@ -1328,7 +1335,7 @@ class DbWrapperBase(ABC):
 
         query = (
             "SELECT %s, worker, count(fix_ts), avg(data_ts-fix_ts) as data_time from trs_stats_location_raw "
-            "where success=1 and typ in (0,1) and (walker='mon_mitm' or walker='iv_mitm') %s %s group by worker %s" %
+            "where success=1 and type in (0,1) and (walker='mon_mitm' or walker='iv_mitm') %s %s group by worker %s" %
             (str(query_date), (query_where), str(worker_where), str(grouped_query))
         )
 
@@ -1373,7 +1380,7 @@ class DbWrapperBase(ABC):
         if worker and not minutes:
             worker_where = ' where worker = \'%s\' ' % str(worker)
         if grouped:
-            grouped_query = ", success, typ"
+            grouped_query = ", success, type"
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
@@ -1382,9 +1389,9 @@ class DbWrapperBase(ABC):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
         query = (
-            "SELECT %s, worker, count(period), if(typ=0,if(success=1,'OK-Normal','NOK-Normal'),"
+            "SELECT %s, worker, count(period), if(type=0,if(success=1,'OK-Normal','NOK-Normal'),"
             "if(success=1,'OK-PrioQ','NOK-PrioQ')) from trs_stats_location_raw "
-            " %s %s and typ in(0,1) group by worker %s" %
+            " %s %s and type in(0,1) group by worker %s" %
             (str(query_date), (query_where), str(worker_where), str(grouped_query))
         )
 
@@ -1396,7 +1403,7 @@ class DbWrapperBase(ABC):
         logger.debug('Fetching all empty locations from db')
         query =(
             "SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
-            "SEPARATOR ', '), if(b.typ=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
+            "SEPARATOR ', '), if(b.type=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
             "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) from "
             "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 ORDER BY count(id) DESC"
         )
@@ -1420,7 +1427,7 @@ class DbWrapperBase(ABC):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
 
         query = (
-            "SELECT %s, typ, typ_id, count FROM trs_stats_detect_raw %s %s order by id asc" %
+            "SELECT %s, type, type_id, count FROM trs_stats_detect_raw %s %s order by id asc" %
             (str(query_date), (query_where), str(worker_where))
         )
 
@@ -1443,11 +1450,10 @@ class DbWrapperBase(ABC):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
         query = (
-                "SELECT %s, lat, lng, if(typ=0,'Normal',if(typ=1,'PrioQ', if(typ=2,'Startup',"
-                "if(typ=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
-                "if(data_ts=0,fix_ts,data_ts) from "
-                "trs_stats_location_raw"
-                " %s %s order by id asc" %
+                "SELECT %s, lat, lng, if(type=0,'Normal',if(type=1,'PrioQ', if(type=2,'Startup',"
+                "if(type=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
+                "if(data_ts=0,fix_ts,data_ts), count, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
+                "'other')) from trs_stats_location_raw %s %s order by id asc" %
                 (str(query_date), (query_where), str(worker_where))
         )
 

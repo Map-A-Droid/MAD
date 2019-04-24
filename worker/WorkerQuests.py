@@ -82,6 +82,7 @@ class WorkerQuests(MITMBase):
             logger.info("main: Teleporting...")
             self._communicator.setLocation(
                 self.current_location.lat, self.current_location.lng, 0)
+            self._transporttype = 0
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
@@ -183,6 +184,7 @@ class WorkerQuests(MITMBase):
                 "Need more sleep after Teleport: {} seconds!", str(delay_used))
         else:
             logger.info("main: Walking...")
+            self._transporttype = 1
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat,
                                           self.current_location.lng, speed)

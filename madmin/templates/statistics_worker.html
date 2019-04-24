@@ -114,6 +114,7 @@
                 allspawns = result.allspawns
                 detections_raw = result.detections_raw
                 location_raw = result.location_raw
+                console.log(receiving)
 
                 $.plot($("#flot_usage"), receiving,
                     {
@@ -124,12 +125,12 @@
                         },
                         xaxis: {
                             mode: "time",
-                            //{% if time == "12" %}
+                            {% if time == "12" %}
                             timeformat: "%d.%m<br>%I:%M %p",
-                            //{% else %}
+                            {% else %}
                             timeformat: "%d.%m<br>%H:%M",
-                            //{% endif %}
-                            tickSize: [1, "hour"],
+                            {% endif %}
+                            tickSize: [3, "hour"],
                             timezone: "browser"
                         },
                         legend: {
@@ -188,7 +189,7 @@
                     { data: 'avg_datareceive', title: 'AVG Data Receiving (seconds)' }
                 ]);
                 setGrid('#show-data-detection_raw', detections_raw, [
-                    { data: 'typ', title: 'Typ' },
+                    { data: 'type', title: 'Typ' },
                     { data: 'id', title: 'ID' },
                     { data: 'count', title: 'Count of scanning' }
                 ]);
@@ -198,18 +199,34 @@
                 ]);
                 setGrid('#show-data-location_raw', location_raw, [
                     { data: null, title: 'Map' },
-                    { data: 'lat', title: 'Lat' },
-                    { data: 'lng', title: 'Lng' },
-                    { data: 'distance', title: 'Distance from pref. Location' },
-                    { data: 'type', title: 'Type' },
-                    { data: 'data', title: 'Rec. data' },
-                    { data: 'fix_ts', title: 'Geofixtime' },
-                    { data: 'data_ts', title: 'Datatime' }
+                    { data: null, title: 'Lat / Lng' },
+                    { data: 'distance', title: 'Distance' },
+                    { data: 'type', title: 'Type / Data' },
+                    { data: 'fix_ts', title: 'Geofix- / Datatime' },
+                    { data: 'transporttype', title: 'Transport Type' }
                 ], [
                 {
                     "targets": [0],
                     "render": function (data, type, row) {
                         return "<a href=map?lat=" + row.lat + "&lng=" + row.lng + " target=_new>[MAP]</a>";
+                    },
+                },
+                {
+                    "targets": [1],
+                    "render": function (data, type, row) {
+                        return row.lat + "<br>" + row.lng;
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        return row.type + "<br>" + row.data;
+                    }
+                },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+                        return row.fix_ts + "<br>" + row.data_ts;
                     }
                 }
                 ]);

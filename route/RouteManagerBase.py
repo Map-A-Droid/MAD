@@ -49,7 +49,7 @@ class RouteManagerBase(ABC):
         self._workers_registered = []
         self._workers_registered_mutex = Lock()
 
-        self._last_round_prio = False
+        self._last_round_prio = {}
         self._manager_mutex = RLock()
         self._round_started_time = None
         if coords is not None:
@@ -375,14 +375,15 @@ class RouteManagerBase(ABC):
         # if that is not the case, simply increase the index in route and return the location on route
 
         # determine whether we move to the next location or the prio queue top's item
-        if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
+        if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio.get(origin, False)
+                                                              or self.starve_route)
                                                              and self._prio_queue and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
             logger.debug("{}: Priority event", str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]
             next_lat = next_stop.lat
             next_lng = next_stop.lng
-            self._last_round_prio = True
+            self._last_round_prio[origin] = True
             self._positiontyp[origin] = 1
             logger.info("Round of route {} is moving to {}, {} for a priority event", str(
                 self.name), str(next_lat), str(next_lng))
@@ -454,7 +455,7 @@ class RouteManagerBase(ABC):
             logger.info("{}: Moving on with location {} [{} coords left]", str(
                 self.name), str(next_coord), str(self._route_queue.qsize()))
 
-            self._last_round_prio = False
+            self._last_round_prio[origin] = False
         logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}, {}", str(
             self.name), str(next_lat), str(next_lng))
         self._manager_mutex.release()

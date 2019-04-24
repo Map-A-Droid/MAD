@@ -27,6 +27,10 @@ class MITMBase(WorkerBase):
         self._encounter_ids = {}
         self._stats = mitm_mapper.return_player_object(id)
 
+        self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
+                                                2, 0,
+                                                self._walker_routemanager.get_walker_type(), 99)
+
         if self._devicesettings.get('last_mode', None) is not None and \
                 self._devicesettings['last_mode'] in ("raids_mitm", "mon_mitm", "iv_mitm", "raids_ocr"):
             logger.info('Last Mode not pokestop - reset saved location')
@@ -57,7 +61,7 @@ class MITMBase(WorkerBase):
                 self.current_location, 1, self._waittime_without_delays,
                 self._walker_routemanager.get_position_type(self._id),
                 time.time(),
-                self._walker_routemanager.get_walker_type())
+                self._walker_routemanager.get_walker_type(), self._transporttype)
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
@@ -66,7 +70,7 @@ class MITMBase(WorkerBase):
             self._stats.stats_collect_location_data(
                 self.current_location, 0, self._waittime_without_delays,
                 self._walker_routemanager.get_position_type(self._id), 0,
-                self._walker_routemanager.get_walker_type())
+                self._walker_routemanager.get_walker_type(), self._transporttype)
 
             self._restart_count += 1
 

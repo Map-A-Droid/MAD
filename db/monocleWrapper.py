@@ -606,7 +606,7 @@ class MonocleWrapper(DbWrapperBase):
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
-        stats.stats_collect_mon(encounter_id)
+        stats.stats_collect_mon_iv(encounter_id)
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
