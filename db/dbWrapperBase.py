@@ -1325,7 +1325,7 @@ class DbWrapperBase(ABC):
         if worker:
             worker_where = ' and worker = \'%s\' ' % str(worker)
         if grouped:
-            grouped_query = ", day(FROM_UNIXTIME(period)), hour(FROM_UNIXTIME(period))"
+            grouped_query = ", day(FROM_UNIXTIME(period)), hour(FROM_UNIXTIME(period)), transporttype"
         if minutes:
             minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
@@ -1334,7 +1334,8 @@ class DbWrapperBase(ABC):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
         query = (
-            "SELECT %s, worker, count(fix_ts), avg(data_ts-fix_ts) as data_time from trs_stats_location_raw "
+            "SELECT %s, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
+                "'other')), worker, count(fix_ts), avg(data_ts-fix_ts) as data_time from trs_stats_location_raw "
             "where success=1 and type in (0,1) and (walker='mon_mitm' or walker='iv_mitm') %s %s group by worker %s" %
             (str(query_date), (query_where), str(worker_where), str(grouped_query))
         )
@@ -1471,6 +1472,3 @@ class DbWrapperBase(ABC):
 
         res = self.execute(query)
         return res
-
-
-

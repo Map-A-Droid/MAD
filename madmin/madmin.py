@@ -1875,7 +1875,8 @@ def statistics_detection_worker_data():
     data = db_wrapper.statistics_get_avg_data_time(minutes=minutes, worker=worker)
     for dat in data:
         dtime = ConvertDateTimeToLocal(int(dat[0])).strftime(datetimeformat)
-        locations_avg.append({'dtime': dtime, 'ok_locations': dat[2], 'avg_datareceive': float(dat[3])})
+        locations_avg.append({'dtime': dtime, 'ok_locations': dat[3], 'avg_datareceive': float(dat[4]),
+                              'transporttype': dat[1]})
 
     #locations
     ok = []
