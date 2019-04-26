@@ -1874,7 +1874,7 @@ def statistics_detection_worker_data():
 
     data = db_wrapper.statistics_get_avg_data_time(minutes=minutes, worker=worker)
     for dat in data:
-        dtime = ConvertDateTimeToLocal(int(dat[0])).strftime(datetimeformat)
+        dtime = datetime.datetime.fromtimestamp(dat[0]).strftime(datetimeformat)
         locations_avg.append({'dtime': dtime, 'ok_locations': dat[3], 'avg_datareceive': float(dat[4]),
                               'transporttype': dat[1]})
 
@@ -1896,9 +1896,11 @@ def statistics_detection_worker_data():
     #dataratio
     loctionratio=[]
     data = db_wrapper.statistics_get_locations_dataratio(minutes=minutes, worker=worker)
-    for dat in data:
-        loctionratio.append({'label': dat[3], 'data': dat[2]})
-
+    if len(data) > 0:
+        for dat in data:
+            loctionratio.append({'label': dat[3], 'data': dat[2]})
+    else:
+        loctionratio.append({'label': '', 'data': 0})
 
     # all spaws
     all_spawns = []
