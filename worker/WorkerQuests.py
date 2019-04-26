@@ -80,9 +80,9 @@ class WorkerQuests(MITMBase):
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             logger.info("main: Teleporting...")
+            self._transporttype = 0
             self._communicator.setLocation(
                 self.current_location.lat, self.current_location.lng, 0)
-            self._transporttype = 0
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
@@ -501,7 +501,8 @@ class WorkerQuests(MITMBase):
         if data_received == 'Quest':
             self._stats.stats_collect_location_data(self.current_location, 1, self._stop_process_time,
                                                     self._walker_routemanager.get_position_type(self._id),
-                                                    time.time(), self._walker_routemanager.get_walker_type())
+                                                    time.time(), self._walker_routemanager.get_walker_type(),
+                                                    self._transporttype)
             self._devicesettings['last_action_time'] = time.time()
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):

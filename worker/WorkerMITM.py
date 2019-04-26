@@ -44,9 +44,10 @@ class WorkerMITM(MITMBase):
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
+            logger.info("main: Teleporting...")
+            self._transporttype = 0
             self._communicator.setLocation(
                 self.current_location.lat, self.current_location.lng, 0)
-            self._transporttype = 0
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
