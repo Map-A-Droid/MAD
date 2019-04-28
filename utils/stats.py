@@ -79,7 +79,7 @@ class PlayerStats(object):
         if not self._stats_collector_start:
             if self._last_processed_timestamp != period:
 
-                collect_data = self._stats_collect.get(self._last_processed_timestamp, []).copy()
+                collect_data = self._stats_collect.get(self._last_processed_timestamp, [])
 
                 data_send_stats.append(self.stats_complete_parser(collect_data, self._last_processed_timestamp))
                 data_send_location.append(self.stats_location_parser(collect_data, self._last_processed_timestamp))

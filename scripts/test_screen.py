@@ -6,9 +6,10 @@ import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
+sys.path.append("..")
 from utils.resolution import Resocalculator
 
-sys.path.append("..")
+
 
 
 class testimage(object):
@@ -88,6 +89,7 @@ class testimage(object):
 
     def open_del_item(self, image):
         print('Check Open del Item')
+
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
