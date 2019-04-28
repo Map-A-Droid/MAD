@@ -208,13 +208,13 @@ class RouteManagerBase(ABC):
     def _merge_priority_queue(self, new_queue):
         if new_queue is not None:
             self._manager_mutex.acquire()
-            merged = set(new_queue + self._prio_queue)
-            merged = list(merged)
+            merged = list(new_queue)
+            logger.info("New raw priority queue with {} entries", len(merged))
             merged = self._filter_priority_queue_internal(merged)
             heapq.heapify(merged)
             self._prio_queue = merged
             self._manager_mutex.release()
-            logger.info("New priority queue with {} entries", len(merged))
+            logger.info("New clustered priority queue with {} entries", len(merged))
             logger.debug("Priority queue entries: {}", str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):

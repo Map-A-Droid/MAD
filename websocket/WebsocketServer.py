@@ -4,11 +4,12 @@ import math
 import queue
 import sys
 import time
+import logging
 from threading import Event, Lock, Thread
 
 import websockets
 from utils.authHelper import check_auth
-from utils.logging import logger
+from utils.logging import logger, InterceptHandler
 from utils.madGlobals import (WebsocketWorkerRemovedException,
                               WebsocketWorkerTimeoutException,
                               WrongAreaInWalker)
@@ -19,6 +20,11 @@ from worker.WorkerQuests import WorkerQuests
 
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 Location = collections.namedtuple('Location', ['lat', 'lng'])
+
+logging.getLogger('websockets.server').setLevel(logging.DEBUG)
+logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
+logging.getLogger('websockets.server').addHandler(InterceptHandler())
+logging.getLogger('websockets.protocol').addHandler(InterceptHandler())
 
 
 class WebsocketServer(object):

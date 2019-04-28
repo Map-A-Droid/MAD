@@ -1,5 +1,6 @@
 import os
 import sys
+import logging
 
 from loguru import logger
 
@@ -63,10 +64,16 @@ def errorFilter(record):
     return record["level"] != "ERROR"
 
 
+# this is being used to change log level for gevent/Flask/Werkzeug
 class LogLevelChanger:
-    # this is being used to change log level for gevent/Flask/Werkzeug
     def log(level, msg):
-        logger.log("DEBUG5", msg)
+        logger.opt(depth=6).log("DEBUG5", msg)
+
+
+# this is being used to intercept standard python logging to loguru
+class InterceptHandler(logging.Handler):
+    def emit(self, record):
+        logger.opt(depth=6, exception=record.exc_info).log("DEBUG5", record.getMessage())
 
 
 def debug2(message, *args, **kwargs):

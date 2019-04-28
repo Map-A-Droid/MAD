@@ -60,6 +60,14 @@ if __name__ == "__main__":
         logger.error("Invalid db_method in config. Exiting")
         sys.exit(1)
 
+    db_wrapper.create_hash_database_if_not_exists()
+    db_wrapper.check_and_create_spawn_tables()
+    db_wrapper.create_quest_database_if_not_exists()
+    db_wrapper.create_status_database_if_not_exists()
+    db_wrapper.create_usage_database_if_not_exists()
+    version = MADVersion(args, db_wrapper)
+    version.get_version()
+
     try:
         (device_mappings, routemanagers, auths) = load_mappings(db_wrapper)
     except KeyError as e:
@@ -76,9 +84,6 @@ if __name__ == "__main__":
     t_ws = Thread(name='scanner', target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()
-
-    version = MADVersion(args, db_wrapper)
-    version.get_version()
 
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
