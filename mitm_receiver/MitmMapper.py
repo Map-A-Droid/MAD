@@ -11,6 +11,7 @@ class MitmMapper(object):
         self.__mapping_mutex = Lock()
         self._device_mappings = device_mappings
         self._db_wrapper = db_wrapper
+        self.injected = {}
         if device_mappings is not None:
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}
@@ -56,3 +57,9 @@ class MitmMapper(object):
 
     def return_player_object(self, origin):
         return self.playerstats[origin]
+
+    def set_injection_status(self, origin):
+        self.injected[origin] = True
+
+    def get_injection_status(self, origin):
+        return self.injected.get(origin, False)

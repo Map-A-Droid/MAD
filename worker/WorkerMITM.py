@@ -134,7 +134,10 @@ class WorkerMITM(MITMBase):
         reached_raidtab = False
         if start_result:
             logger.warning("startPogo: Starting pogo...")
-            time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
+            while not self._mitm_mapper.get_injection_status(self._id):
+                logger.info("Worker {} not injected till now", str(self._id))
+                time.sleep(10)
+            #time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
 
             # let's handle the login and stuff
