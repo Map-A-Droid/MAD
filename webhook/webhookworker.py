@@ -44,7 +44,7 @@ class WebhookWorker:
         if size == 0:
             return [payload]
 
-        return [payload[x: x + size] for x in range(0, len(payload), size)]
+        return [payload[x : x + size] for x in range(0, len(payload), size)]
 
     def __is_in_excluded_area(self, coordinate):
         for gfh in self.__geofence_helpers:
@@ -148,8 +148,22 @@ class WebhookWorker:
             if self.__is_in_excluded_area([stop["latitude"], stop["longitude"]]):
                 continue
 
-            quest = generate_quest(stop)
-            quest_payload = {
+            try:
+                quest = generate_quest(quest_data[str(stopid)])
+                quest_payload = self.__construct_quest_payload(quest)
+
+                entire_payload = {"type": "quest", "message": quest_payload}
+                ret.append(entire_payload)
+            except Exception as e:
+                logger.warning(
+                    "Exception occured while generating quest webhook: {}", str(e)
+                )
+
+        return ret
+
+    def __construct_quest_payload(self, quest):
+        if self.__args.quest_webhook_flavor == "default":
+            return {
                 "pokestop_id": quest["pokestop_id"],
                 "latitude": quest["latitude"],
                 "longitude": quest["longitude"],
@@ -170,10 +184,70 @@ class WebhookWorker:
                 "quest_template": quest["quest_template"],
             }
 
-            entire_payload = {"type": "quest", "message": quest_payload}
-            ret.append(entire_payload)
+        # Other known type is Poracle/RDM compatible.
 
-        return ret
+        # For some reason we aren't saving JSON in our databse, so we gotta replace ' with ".
+        # Pray that we never save strings that contain ' inside them.
+        quest_conditions = json.loads(quest["quest_condition"].replace("'", '"'))
+        quest_condition = []
+        quest_rewards = []
+        a_quest_type = quest["quest_reward_type_raw"]
+        a_quest_reward = {}
+        quest_rewards.append(a_quest_reward)
+        a_quest_reward["info"] = {}
+        a_quest_reward["type"] = a_quest_type
+
+        if a_quest_type == 2:
+            a_quest_reward["info"]["item_id"] = quest["item_id"]
+            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
+        if a_quest_type == 3:
+            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
+        if a_quest_type == 7:
+            a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
+            a_quest_reward["info"]["shiny"] = 0
+
+        for a_quest_condition in quest_conditions:
+            # Quest condition for special type of pokemon.
+            if "with_pokemon_type" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_type")
+                a_quest_condition["info"]["pokemon_type_ids"] = a_quest_condition[
+                    "info"
+                ].pop("pokemon_type")
+            # Quest condition for raid level(s).
+            if "with_raid_level" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_raid_level")
+                a_quest_condition["info"]["raid_levels"] = a_quest_condition[
+                    "info"
+                ].pop("raid_level")
+            # Quest condition for throw type.
+            if "with_throw_type" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_throw_type")
+                a_quest_condition["info"]["throw_type_id"] = a_quest_condition[
+                    "info"
+                ].pop("throw_type")
+            # Quest condition for use of special items
+            if "with_item" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_item")
+                a_quest_condition["info"]["item_id"] = a_quest_condition["info"].pop(
+                    "item"
+                )
+
+            quest_condition.append(a_quest_condition)
+
+        return {
+            "pokestop_id": quest["pokestop_id"],
+            "pokestop_name": quest["name"].replace('"', '\\"').replace("\n", "\\n"),
+            "template": quest["quest_template"],
+            "pokestop_url": quest["url"],
+            "conditions": quest_condition,
+            "type": quest["quest_type_raw"],
+            "latitude": quest["latitude"],
+            "longitude": quest["longitude"],
+            "rewards": quest_rewards,
+            "target": quest["quest_target"],
+            "timestamp": quest["timestamp"],
+            "quest_task": quest["quest_task"],
+        }
 
     def __prepare_weather_data(self, weather_data):
         ret = []
@@ -409,7 +483,9 @@ class WebhookWorker:
                         continue
 
                     self.__geofence_helpers.append(
-                        GeofenceHelper(rmgr["geofence_included"], rmgr["geofence_excluded"])
+                        GeofenceHelper(
+                            rmgr["geofence_included"], rmgr["geofence_excluded"]
+                        )
                     )
 
             else:
