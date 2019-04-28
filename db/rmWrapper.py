@@ -671,7 +671,7 @@ class RmWrapper(DbWrapperBase):
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
-        if getdetspawntime:
+        if getdetspawntime is None:
             logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
         else:
