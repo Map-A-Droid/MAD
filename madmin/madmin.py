@@ -1584,7 +1584,7 @@ def delsetting():
         if 'devicepool' in entry:
             _checkfield = 'devicepool'
 
-        if str(edit) in str(entry[_checkfield]):
+        if str(edit) == str(entry[_checkfield]):
             del mapping[area][key]
 
     with open('configs/mappings.json', 'w') as outfile:
