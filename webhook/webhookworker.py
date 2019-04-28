@@ -364,20 +364,18 @@ class WebhookWorker:
                 self.__IV_MON = self.__IV_MON + \
                     list(set(ivlist) - set(self.__IV_MON))
 
-    def run_worker(self):
-        logger.info("Starting webhook worker thread")
+    def __create_payload(self):
+        # the payload that is about to be sent
+        full_payload = []
 
-        while not terminate_mad.is_set():
-            # the payload that is about to be sent
-            full_payload = []
-
+        try:
             # raids
             raids = self.__prepare_raid_data(
                 self.__db_wrapper.get_raids_changed_since(self.__last_check)
             )
             full_payload += raids
 
-            # quest
+            # quests
             if self.__args.quest_webhook:
                 quest = self.__prepare_quest_data(
                     self.__db_wrapper.quests_from_db(
@@ -406,6 +404,17 @@ class WebhookWorker:
                     self.__db_wrapper.get_mon_changed_since(self.__last_check)
                 )
                 full_payload += mon
+        except Exception:
+            logger.exception("Error while creating webhook payload")
+
+        return full_payload
+
+    def run_worker(self):
+        logger.info("Starting webhook worker thread")
+
+        while not terminate_mad.is_set():
+            # fetch data and create payload
+            full_payload = self.__create_payload()
 
             # send our payload
             self.__send_webhook(full_payload)
