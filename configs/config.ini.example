@@ -104,6 +104,7 @@ pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeCh
                              #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
                              #  possible types are: pokemon, raid, gym, weather
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
+#webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
 #weather_webhook             # Activate support for weather webhook
 #pokemon_webhook             # Activate support for pokemon webhook
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
