@@ -63,7 +63,7 @@
 					"settings": {
 						"type": "text",
 						"require": "false",
-						"description": "Max. distance of walking - otherwise teleport to new location"
+						"description": "Walk n metres in both directions after teleport for getting data"
 					}
 				},
 				{
