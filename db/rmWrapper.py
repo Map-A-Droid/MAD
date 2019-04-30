@@ -673,7 +673,8 @@ class RmWrapper(DbWrapperBase):
 
         stats.stats_collect_mon_iv(encounter_id)
 
-        if getdetspawntime:
+        if getdetspawntime is None:
+
             logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
         else:
