@@ -166,7 +166,7 @@ class WebhookWorker:
 
         # For some reason we aren't saving JSON in our databse, so we gotta replace ' with ".
         # Pray that we never save strings that contain ' inside them.
-        quest_conditions = json.loads(quest['quest_condition'].replace('\'', '"'))
+        quest_conditions = json.loads(quest['quest_condition'])
         quest_condition = []
         quest_rewards = []
         a_quest_type = quest['quest_reward_type_raw']
