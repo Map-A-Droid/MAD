@@ -372,44 +372,49 @@ class WorkerQuests(MITMBase):
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)
-            logger.info('Found item text: {}', str(item_text))
-            if item_text in not_allow:
-                delete_allowed = False
-                logger.info('Dont delete that!!!')
-                y += self._resocalc.get_next_item_coord(self)
-                text_y1 += self._resocalc.get_next_item_coord(self)
-                text_y2 += self._resocalc.get_next_item_coord(self)
-                _pos += 1
-            else:
-
-                delete_allowed = True
-                self._communicator.click(int(x), int(y))
-                time.sleep(1 + int(delayadd))
-
-                self._communicator.touchandhold(
-                    click_x1, click_y, click_x2, click_y)
-                time.sleep(1)
-
-                delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
-                    self._resocalc.get_confirm_delete_item_coords(self)[1]
-                curTime = time.time()
-                self._communicator.click(int(delx), int(dely))
-
-                data_received = self._wait_for_data(
-                    timestamp=curTime, proto_to_wait_for=4, timeout=25)
-
-                if data_received is not None:
-                    if 'Clear' in data_received:
-                        to += 1
-                    else:
-                        y += self._resocalc.get_next_item_coord(self)
-                        text_y1 += self._resocalc.get_next_item_coord(self)
-                        text_y2 += self._resocalc.get_next_item_coord(self)
-                        _pos += 1
+            try:
+                logger.info('Found item text: {}', str(item_text))
+                if item_text in not_allow:
+                    delete_allowed = False
+                    logger.info('Dont delete that!!!')
+                    y += self._resocalc.get_next_item_coord(self)
+                    text_y1 += self._resocalc.get_next_item_coord(self)
+                    text_y2 += self._resocalc.get_next_item_coord(self)
+                    _pos += 1
                 else:
-                    logger.info('Unknown error')
-                    to = 8
+
+                    delete_allowed = True
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(1 + int(delayadd))
+
+                    self._communicator.touchandhold(
+                        click_x1, click_y, click_x2, click_y)
+                    time.sleep(1)
+
+                    delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
+                        self._resocalc.get_confirm_delete_item_coords(self)[1]
+                    curTime = time.time()
+                    self._communicator.click(int(delx), int(dely))
+
+                    data_received = self._wait_for_data(
+                        timestamp=curTime, proto_to_wait_for=4, timeout=25)
+
+                    if data_received is not None:
+                        if 'Clear' in data_received:
+                            to += 1
+                        else:
+                            y += self._resocalc.get_next_item_coord(self)
+                            text_y1 += self._resocalc.get_next_item_coord(self)
+                            text_y2 += self._resocalc.get_next_item_coord(self)
+                            _pos += 1
+                    else:
+                        logger.error('Unknown error clearing out {}', str(item_text))
+                        to = 8
                 time.sleep(1)
+            except UnicodeEncodeError:
+                logger.warning('Found some text that was not unicode!')
+                to = 8
+                pass
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
