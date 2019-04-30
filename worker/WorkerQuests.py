@@ -470,7 +470,7 @@ class WorkerQuests(MITMBase):
     def _handle_stop(self):
         to = 0
         data_received = '-'
-        while not 'Quest' in data_received and int(to) < 3:
+        while 'Quest' not in data_received and int(to) < 4:
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=25)
@@ -498,6 +498,10 @@ class WorkerQuests(MITMBase):
                 data_received = '-'
                 logger.info(
                     'Did not get any data ... Maybe already turned or softban.')
+                if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
+                    logger.info('Quest is done without us noticing. Getting new Quest...')
+                    self.clear_thread_task = 2
+                    break
                 self._close_gym(self._delay_add)
                 self._turn_map(self._delay_add)
                 time.sleep(3)
