@@ -93,6 +93,7 @@ class PlayerStats(object):
                 self._db_wrapper.submit_stats_locations(data_send_location)
                 self._db_wrapper.submit_stats_locations_raw(data_send_location_raw)
                 self._db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
+                self._db_wrapper.cleanup_statistics()
                 self._last_processed_timestamp = period
 
         if self._stats_collector_start:

@@ -1308,7 +1308,7 @@ class MonocleWrapper(DbWrapperBase):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %k:00:00'))" \
                      "as timestamp"
         if minutes:
-            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
+            minutes = datetime.now() - timedelta(minutes=int(minutes))
             query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(
                 minutes)
 

@@ -57,6 +57,7 @@ class WorkerBase(ABC):
         self._pogoWindowManager = pogoWindowManager
         self._waittime_without_delays = 0
         self._transporttype = 0
+        self._not_injected_count = 0
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self._devicesettings.get("last_location", None)
@@ -186,6 +187,17 @@ class WorkerBase(ABC):
             self._stop_worker_event.set()
             return
 
+        while not self._mitm_mapper.get_injection_status(self._id):
+            if self._not_injected_count >= 20:
+                logger.error("Worker {} not get injected in time - reboot", str(self._id))
+                self._reboot()
+            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            if self._stop_worker_event.isSet():
+                logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                break
+            self._not_injected_count += 1
+            time.sleep(10)
+
         # register worker  in routemanager
         logger.info("Try to register {} in Routemanager {}", str(
                 self._id), str(self._walker_routemanager.name))
@@ -253,6 +265,8 @@ class WorkerBase(ABC):
                     "Failed initializing worker {}, connection terminated exceptionally", str(self._id))
             self._internal_cleanup()
             return
+
+
 
         if not check_max_walkers_reached(self._walker, self._walker_routemanager):
             logger.warning('Max. Walkers in Area {} - closing connections',

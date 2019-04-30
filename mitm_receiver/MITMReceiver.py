@@ -112,6 +112,7 @@ class MITMReceiver(object):
                 "Could not read method ID. Stopping processing of proto")
             return None
         if not self.__mitm_mapper.get_injection_status(origin):
+            logger.info("Worker {} is injected now", str(origin))
             self.__mitm_mapper.set_injection_status(origin)
         timestamp = int(math.floor(time.time()))
         self.__mitm_mapper.update_latest(

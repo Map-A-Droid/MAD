@@ -292,6 +292,7 @@ class WorkerQuests(MITMBase):
         cur_time = time.time()
         start_result = False
         while not pogo_topmost:
+            self._mitm_mapper.set_injection_status(self._id, False)
             start_result = self._communicator.startApp(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
@@ -299,10 +300,6 @@ class WorkerQuests(MITMBase):
         reached_raidtab = False
         if start_result:
             logger.warning("startPogo: Starting pogo...")
-            while not self._mitm_mapper.get_injection_status(self._id):
-                logger.info("Worker {} not injected till now", str(self._id))
-                time.sleep(10)
-            #time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = cur_time
             self._check_pogo_main_screen(15, True)
             reached_mainscreen = True

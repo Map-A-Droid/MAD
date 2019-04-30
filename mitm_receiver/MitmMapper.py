@@ -58,8 +58,8 @@ class MitmMapper(object):
     def return_player_object(self, origin):
         return self.playerstats[origin]
 
-    def set_injection_status(self, origin):
-        self.injected[origin] = True
+    def set_injection_status(self, origin, status=True):
+        self.injected[origin] = status
 
     def get_injection_status(self, origin):
         return self.injected.get(origin, False)

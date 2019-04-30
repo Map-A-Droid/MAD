@@ -11,16 +11,7 @@
 <script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
 
 <script>
-    $(document).ready(function () {
-        $("table").addClass("table");
-        $('table').DataTable({
-            "autoWidth": true,
-            "searching": false,
-            "paging": true,
-            "bInfo": false,
-            "ordering": false
-        });
-    });
+
 
 
 
@@ -125,6 +116,79 @@
                 gym = result.gym
                 stop = result.stop
                 usage = result.usage
+                good_spawns = result.good_spawns
+                detection = result.detection
+                detection_empty = result.detection_empty
+                location_info = result.location_info
+
+                setGrid('#show-data-good-pokemon', good_spawns, [
+                    { data: 'id', title: 'Mon-ID' },
+                    { data: 'name', title: 'Name' },
+                    { data: null, title: 'Pic' },
+                    { data: 'iv', title: 'IV' },
+                    { data: 'lvl', title: 'Level' },
+                    { data: 'cp', title: 'CP' },
+                    { data: 'periode', title: 'Scantime' },
+                ], [
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " width=100>";
+                    }
+                }
+                ]);
+
+                setGrid('#show-data-detection', detection, [
+                    { data: null, title: 'Worker' },
+                    { data: 'mons', title: 'Mons' },
+                    { data: 'mons_iv', title: 'Mons IV' },
+                    { data: 'raids', title: 'Raids' },
+                    { data: 'quests', title: 'Quests' }
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=statistics_detection_worker?worker=" + row.worker + ">" + row.worker + "</a>";
+                    }
+                }
+
+                ]);
+
+                setGrid('#show-data-location-info', location_info, [
+                    { data: null, title: 'Worker' },
+                    { data: 'locations', title: 'Locations' },
+                    { data: 'locationsok', title: 'Locations OK' },
+                    { data: 'locationsnok', title: 'Locations NOK' },
+                    { data: 'ratio', title: 'NOK Ratio' }
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=statistics_detection_worker?worker=" + row.worker + ">" + row.worker + "</a>";
+                    }
+                }
+
+                ]);
+
+                setGrid('#show-data-detection_empty', detection_empty, [
+                    { data: null, title: 'MAP' },
+                    { data: 'lat', title: 'Lat' },
+                    { data: 'lng', title: 'Lng' },
+                    { data: 'worker', title: 'Worker' },
+                    { data: 'count', title: 'Cout' },
+                    { data: 'type', title: 'Type' },
+                    { data: 'lastscan', title: 'Last Scan' },
+                    { data: 'countsuccess', title: 'Count Success' },
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=map?lat=" + row.lat + "&lng=" + row.lng + " target=_new>[MAP]</a>";
+                    }
+                }
+
+                ]);
+
 
                 $.plot($("#flot_spawn"), [
                     {
@@ -309,6 +373,21 @@
                 opacity: 0.9
             }).appendTo("body").fadeIn(200);
         }
+
+        function setGrid(tableGridHtmlId, gridData, columns, defs) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "searching": true,
+            "paging": true,
+            "columns": columns,
+            "ordering": false,
+            "columnDefs": defs,
+            "responsive": {{ responsive }}
+        });
+	    }
+
+
+
     });
 
 </script>
@@ -364,9 +443,7 @@
 
 {% block content %}
 <h2>Global detection Count</h2>
-{% for item in detection %}
-  {{item | safe }}
-  {% endfor %}
+<table id="show-data-detection" class="table" style="width:100%;"></table>
 <br>
 <h2>CPU / Memory Usage</h2>
 <div id="selector">
@@ -407,13 +484,11 @@
 <div id="flot_gym"></div>
 <br>
 <h2>Empty Scans > 5</h2>
-{% for item in detection_empty %}
-  {{item | safe }}
-  {% endfor %}
+<table id="show-data-detection_empty" class="table" style="width:100%;"></table>
 <br>
 <h2>Location Statistics</h2>
-{% for item in location_info %}
-  {{item | safe }}
-  {% endfor %}
+<table id="show-data-location-info" class="table" style="width:100%;"></table>
 <br>
+<h2>Last 30 perfect pokemons</h2>
+<table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
 {% endblock %}

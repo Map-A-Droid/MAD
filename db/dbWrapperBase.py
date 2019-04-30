@@ -400,6 +400,10 @@ class DbWrapperBase(ABC):
     def statistics_get_stop_quest(self, days):
         pass
 
+    @abstractmethod
+    def get_best_pokemon_spawns(self):
+        pass
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -1304,7 +1308,7 @@ class DbWrapperBase(ABC):
         query_where = ''
         query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(timestamp_scan), '%y-%m-%d %k:00:00'))"
         if minutes:
-            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
+            minutes = datetime.now() - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query = (
@@ -1327,7 +1331,7 @@ class DbWrapperBase(ABC):
         if grouped:
             grouped_query = ", day(FROM_UNIXTIME(period)), hour(FROM_UNIXTIME(period)), transporttype"
         if minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' and (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
@@ -1356,7 +1360,7 @@ class DbWrapperBase(ABC):
         if grouped:
             grouped_query = ", day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan))"
         if minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
@@ -1383,7 +1387,7 @@ class DbWrapperBase(ABC):
         if grouped:
             grouped_query = ", success, type"
         if minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
@@ -1405,8 +1409,9 @@ class DbWrapperBase(ABC):
         query =(
             "SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
             "SEPARATOR ', '), if(b.type=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
-            "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) from "
-            "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 ORDER BY count(id) DESC"
+            "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) as successcount from "
+            "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 and successcount=0 "
+            "ORDER BY count(id) DESC"
         )
 
         res = self.execute(query)
@@ -1421,7 +1426,7 @@ class DbWrapperBase(ABC):
         if worker and not minutes:
             worker_where = ' where worker = \'%s\' ' % str(worker)
         if minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
@@ -1444,7 +1449,7 @@ class DbWrapperBase(ABC):
         if worker and not minutes:
             worker_where = ' where worker = \'%s\' ' % str(worker)
         if minutes:
-            minutes = datetime.utcnow().replace(
+            minutes = datetime.now().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
@@ -1472,3 +1477,25 @@ class DbWrapperBase(ABC):
 
         res = self.execute(query)
         return res
+
+    def cleanup_statistics(self):
+        logger.debug("Cleanup statistics tables")
+        query = (
+            "delete from trs_stats_detect where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)
+
+        query = (
+            "delete from trs_stats_detect_raw where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)
+
+        query = (
+            "delete from trs_stats_location where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)
+
+        query = (
+            "delete from trs_stats_location_raw where period < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)
