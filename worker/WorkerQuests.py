@@ -219,6 +219,10 @@ class WorkerQuests(MITMBase):
                                           11)
             logger.debug("Done walking")
             time.sleep(1)
+            delay_used -= (to_walk / 3.05) - 1.  # We already waited for a bit because of this walking part
+            if delay_used < 0:
+                delay_used = 0
+
         if self._init:
             delay_used = 5
 
@@ -348,7 +352,7 @@ class WorkerQuests(MITMBase):
         x, y = self._resocalc.get_item_menu_coords(
             self)[0], self._resocalc.get_item_menu_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        time.sleep(2 + int(delayadd))
         _data_err_counter = 0
         _pos = 1
         text_x1, text_x2, text_y1, text_y2 = self._resocalc.get_delete_item_text(
