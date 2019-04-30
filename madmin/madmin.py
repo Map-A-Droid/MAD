@@ -2095,8 +2095,12 @@ def game_stats():
         monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
         monName_raw = (get_raid_boss_cp(dat[2]))
         monName = i8ln(monName_raw['name'])
+        if conf_args.db_method == "rm":
+            lvl = calculate_mon_level(dat[7])
+        else:
+            lvl = dat[7]
         good_spawns.append({'id': dat[2], 'iv': round(calculate_iv(dat[4], dat[5], dat[6]), 0),
-                            'lvl': calculate_mon_level(dat[7]), 'cp': dat[8], 'img': monPic,
+                            'lvl': lvl, 'cp': dat[8], 'img': monPic,
                             'name': monName,
                             'periode': datetime.datetime.fromtimestamp(dat[3]).strftime(datetimeformat)})
 
