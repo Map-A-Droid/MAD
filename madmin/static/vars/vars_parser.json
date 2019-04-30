@@ -63,7 +63,7 @@
 					"settings": {
 						"type": "text",
 						"require": "false",
-						"description": "Walk n seconds after teleport for getting data"
+						"description": "Walk n metres in both directions after teleport for getting data"
 					}
 				},
 				{
