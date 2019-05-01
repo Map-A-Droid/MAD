@@ -6,9 +6,10 @@ import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
+sys.path.append("..")
 from utils.resolution import Resocalculator
 
-sys.path.append("..")
+
 
 
 class testimage(object):
@@ -178,7 +179,7 @@ class testimage(object):
         mainscreen = 0
 
         height, width, _ = image.shape
-        gray = image[int(height) - int(round(height / 6)):int(height),
+        gray = image[int(height) - int(round(height / 5)):int(height),
                      0: int(int(width) / 4)]
         original = gray
         height_, width_, _ = gray.shape
