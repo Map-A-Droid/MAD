@@ -99,6 +99,9 @@ class testimage(object):
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
         y += self._resocalc.get_next_item_coord(self)
+        y += self._resocalc.get_next_item_coord(self)
+        y += self._resocalc.get_next_item_coord(self)
+        y += self._resocalc.get_next_item_coord(self)
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def swipe_del_item(self, image):
