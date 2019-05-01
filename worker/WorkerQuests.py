@@ -301,7 +301,7 @@ class WorkerQuests(MITMBase):
         if start_result:
             logger.warning("startPogo: Starting pogo...")
             self._last_known_state["lastPogoRestart"] = cur_time
-            self._check_pogo_main_screen(15, True)
+            #self._check_pogo_main_screen(15, True)
             reached_mainscreen = True
         return reached_mainscreen
 
