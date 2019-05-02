@@ -58,8 +58,17 @@ class WorkerBase(ABC):
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self._devicesettings.get("last_location", None)
+
         if self.last_location is None:
             self.last_location = Location(0.0, 0.0)
+
+        if self._devicesettings.get('last_mode', None) is not None and \
+                self._devicesettings['last_mode'] in ("raids_mitm", "mon_mitm", "iv_mitm", "raids_ocr"):
+            # Reset last_location - no useless waiting delays (otherwise stop mode)
+            logger.info('Last Mode not pokestop - reset saved location')
+            self.last_location = Location(0.0, 0.0)
+
+        self._devicesettings['last_mode'] = self._walker_routemanager.mode
         self.last_processed_location = Location(0.0, 0.0)
 
     def get_communicator(self):
