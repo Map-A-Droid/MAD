@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2019-02-14 08:33+0100\n"
-"PO-Revision-Date: 2019-02-14 08:54+0100\n"
+"POT-Creation-Date: 2019-05-02 23:42+0200\n"
+"PO-Revision-Date: 2019-05-02 23:46+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -26,17 +26,17 @@ msgstr "Poussières Étoiles"
 msgid "Pokemon"
 msgstr "Pokemon"
 
-msgid "Curveball"
-msgstr "à effet"
-
-msgid "Excellent"
-msgstr "Excellent"
-
 msgid "Great"
 msgstr "Superbe"
 
 msgid "Nice"
 msgstr "Joli"
+
+msgid "Curveball"
+msgstr "à effet"
+
+msgid "Excellent"
+msgstr "Excellent"
 
 msgid "Catch {0} {type}Pokemon{wb}."
 msgstr "Attrape {0} Pokémon {type}{wb}."
@@ -74,6 +74,9 @@ msgstr "Gagne {0} Raids."
 msgid "Win a level 3 or higher raid."
 msgstr "Gagne un Raid de niveau 3 ou plus."
 
+msgid "Win a level 2 or higher raid."
+msgstr "Gagne un Raid de niveau 2 ou plus."
+
 msgid "Battle in {0} Raids."
 msgstr "Combats dans {0} Raids."
 
@@ -97,6 +100,14 @@ msgstr "Fais évoluer {0} Pokémon."
 
 msgid "Use an item to evolve a Pokemon."
 msgstr "Utilise un objet pour faire évoluer un Pokémon."
+
+msgid "Evolve {0} {type}Pokemon"
+msgstr "Fais évoluer {0} {type}Pokémon."
+
+#, fuzzy
+#| msgid "Evolve {0} Pokemon."
+msgid "Evolve {0} {poke}."
+msgstr "Fais évoluer {0} Pokémon."
 
 msgid " in a row"
 msgstr " à la suite"
