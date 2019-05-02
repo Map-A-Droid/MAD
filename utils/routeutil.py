@@ -20,7 +20,7 @@ def check_walker_value_type(value, walker_start_time):
 def check_time_till_end(exittime, walker_start_time):
     timer = exittime.split(':')
     hour = walker_start_time.strftime("%H")
-    minute = walker_start_time.strftime("%H")
+    minute = walker_start_time.strftime("%M")
     tmNow = datetime.datetime.now()
     tmFrom = datetime.datetime.now().replace(
         hour=int(hour), minute=int(minute), second=0, microsecond=0)
@@ -61,9 +61,7 @@ def pre_check_value(walker_settings):
         walkervalue = walker_settings['walkervalue']
         if len(walkervalue) == 0:
             return True
-
-        return check_walker_value_type(walkervalue)
-
+        return check_walker_value_type(walkervalue, datetime.datetime.now())
     return True
 
 
