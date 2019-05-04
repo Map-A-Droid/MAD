@@ -157,6 +157,7 @@ def parseArgs():
                         help='URL endpoint/s for webhooks (seperated by commas) with [<type>] '
                              'for restriction like [mon|weather|raid]http://example.org/foo/bar '
                              '- urls have to start with http*')
+
     parser.add_argument('-whea', '--webhook_excluded_areas', default="",
                         help='Comma-separated list of area names to exclude elements from within to be sent to a webhook')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,

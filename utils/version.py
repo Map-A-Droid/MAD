@@ -243,8 +243,18 @@ class MADVersion(object):
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
-                logger.info("Unexpected error: {}", e)
+                logger.exception("Unexpected error: {}", e)
 
+        if self._version < 9:
+            alter_query = (
+                "UPDATE trs_quest "
+                "SET quest_condition=REPLACE(quest_condition,'\\\','\"'),"
+                " quest_reward=REPLACE(quest_reward,'\\\','\"')"
+            )
+            try:
+                self._dbwrapper.execute(alter_query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
         self.set_version(current_version)
 
     def set_version(self, version):

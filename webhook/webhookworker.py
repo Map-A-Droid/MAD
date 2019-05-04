@@ -141,7 +141,6 @@ class WebhookWorker:
 
     def __prepare_quest_data(self, quest_data):
         ret = []
-
         for stopid in quest_data:
             stop = quest_data[str(stopid)]
 
