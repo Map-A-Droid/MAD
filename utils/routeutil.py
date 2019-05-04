@@ -22,6 +22,8 @@ def check_time_till_end(exittime):
     tmNow = datetime.datetime.now()
     tmTil = datetime.datetime.now().replace(
         hour=int(timer[0]), minute=int(timer[1]), second=0, microsecond=0)
+    if tmTil < tmNow:
+        tmTil = tmTil + datetime.timedelta(days=1)
     if tmNow > tmTil:
         return False
     return True

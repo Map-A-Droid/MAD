@@ -183,7 +183,7 @@ class testimage(object):
         mainscreen = 0
 
         height, width, _ = image.shape
-        gray = image[int(height) - int(round(height / 6)):int(height),
+        gray = image[int(height) - int(round(height / 5)):int(height),
                      0: int(int(width) / 4)]
         original = gray
         height_, width_, _ = gray.shape

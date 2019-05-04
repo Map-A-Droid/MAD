@@ -3,12 +3,21 @@ import math
 import time
 from abc import abstractmethod
 from datetime import datetime
+from enum import Enum
 
 from utils.logging import logger
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
+
+
+class LatestReceivedType(Enum):
+    UNDEFINED = -1
+    GYM = 0
+    STOP = 2
+    MON = 3
+    CLEAR = 4
 
 
 class MITMBase(WorkerBase):
@@ -43,15 +52,15 @@ class MITMBase(WorkerBase):
 
         logger.info('Waiting for data after {}',
                     datetime.fromtimestamp(timestamp))
-        data_requested = None
+        data_requested = LatestReceivedType.UNDEFINED
 
-        while data_requested is None and timestamp + timeout >= math.floor(time.time()):
+        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= math.floor(time.time()):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
             time.sleep(1)
 
-        if data_requested is not None:
+        if data_requested != LatestReceivedType.UNDEFINED:
             logger.info('Got the data requested...')
             self._reboot_count = 0
             self._restart_count = 0

@@ -6,7 +6,7 @@ from utils.geo import (get_distance_of_two_points_in_meters,
                        get_lat_lng_offsets_by_distance)
 from utils.logging import logger
 from utils.madGlobals import InternalStopWorkerException
-from worker.MITMBase import MITMBase
+from worker.MITMBase import MITMBase, LatestReceivedType
 
 
 class WorkerMITM(MITMBase):
@@ -234,7 +234,7 @@ class WorkerMITM(MITMBase):
                 latest_data = latest_proto.get("values", None)
                 if latest_data is None:
                     time.sleep(0.5)
-                    return None
+                    return LatestReceivedType.UNDEFINED
                 elif current_mode in ["mon_mitm", "iv_mitm"]:
                     # check if the GMO contains mons
                     for data_extract in latest_data['payload']['cells']:

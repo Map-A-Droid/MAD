@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+
+{% block header %}
+<style>
+    ul#sortable li { display:inline; margin-left: 5px; cursor: pointer;}
+    ul#sortable li i.fa-trash-alt { cursor: no-drop; }
+    div#log { overflow: hidden; width: 100%;}
+    div#log pre { overflow-y: scroll; min-height: 0px; max-height: 120px; }
+    .ui-sortable-placeholder { background-color: #17a2b8!important; padding-left: 50px; padding-right: 50px; border: 2px dotted black; visibility: visible !important; }
+</style>
+<link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css" integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+<link rel="stylesheet" href="//code.jquery.com/ui/1.12.1/themes/smoothness/jquery-ui.css">
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+<script>
+function showmonsidpicker_log(text) {
+    $("div#log > pre").prepend(text + "\n");
+}
+
+function showmonsidpicker_remove(id, name) {
+    // Just first result, so we won't totally nuke entries when duplicates
+    $('li[data-mon-id="'+id+'"]').first().remove();
+    showmonsidpicker_log("Removed " + id + ". " + name);
+}
+
+function showmonsidpicker_buildli(id, name) {
+    var $new_i = $('<i/>').addClass('fas').addClass('fa-trash-alt').attr('onClick', 'showmonsidpicker_remove('+id+', "' + name + '")');
+    var $new_span = $('<span/>').addClass('badge').addClass('badge-success').text(id + ". " + name + " | ").append($new_i);
+    return $("<li/>").attr('data-mon-id',id).attr('data-mon-name',name).append($new_span);
+}
+
+function showmonsidpicker_addnew(id, name) {
+    if ($('*[data-mon-id="'+id+'"]').length > 0) {
+        alert("Pokemon " + name + " is already on the list, not doing anything.");
+        showmonsidpicker_log("Not adding " + id + ". " + name + " - already on the list.");
+        return;
+    }
+    showmonsidpicker_log("Added " + id + ". " + name);
+    var $li = showmonsidpicker_buildli(id,name);
+    $("#sortable").append($li);
+    //need to refresh after appending something
+    //$("#sortable").sortable('refresh');
+}
+{% if stripped_mondata is defined %}
+   var mondata = JSON.parse('{{ stripped_mondata|tojson }}');
+{% endif %}
+$(document).ready(function() {
+    $("#sortable").sortable({
+         cursor: "move",
+         start: function(event, ui) { ui.item[0].dataset.startPos = ui.item.index()+1; }, // set current item index into data start_pos, so we can use it later in stop
+         stop: function(event, ui) {showmonsidpicker_log("Changed position of " + ui.item[0].dataset.monId + ". " + ui.item[0].dataset.monName + " from #" + ui.item[0].dataset.startPos + " to #" + (ui.item.index()+1)); },
+         cancel: "li.notdraggable"
+    });
+    $("#sortable").disableSelection();
+
+    $("#showmonsidpicker_input").autocomplete({
+        minLength: 3,
+        source: function (request, response) {
+            var term = request.term.toLowerCase();
+            var result = [];
+            Object.keys(mondata).forEach(function(k){
+                  // search
+                  if (k.toLowerCase().indexOf(term) != -1) {
+                      result.push({"label": mondata[k] + ". " + k, "value": mondata[k], "name": k});
+                  }
+            });
+            response(result);
+        },
+        select: function(event, ui) {
+            showmonsidpicker_addnew(ui.item.value, ui.item.name);
+            event.preventDefault();
+            $("#showmonsidpicker_input").val("");
+        }
+    });
+    $("form#showmonsidpicker").submit(function(event) {
+        console.log("SUBMIT HANDLER");
+        var idsInOrder = $("#sortable").sortable('toArray', {
+            attribute: 'data-mon-id'
+        });
+        console.log(idsInOrder);
+        $("input#current_mons_list").val(idsInOrder);
+    });
+});
+</script>
+
+{% endblock %}
+
+{% block content %}
+
+<h2>{{header | safe }}</h2>
+{% if error_msg is defined %}
+    <div class="alert alert-danger" role="alert">
+        {{ error_msg | safe }}
+    </div>
+{% else %}
+    <p>Set mons in order for priority of checking by dragging and dropping them. Not really mobile-friendly, sorry ¯\_(ツ)_/¯. Logs are 'per session' (not saved anywhere) - this is just a way for you to recover if clicked anything by accident.</p>
+    <ul id="sortable">
+    {% for mon in current_mons_list %}
+        <li data-mon-id={{ mon.mon_id}} data-mon-name='{{ mon.mon_name }}'><span class='badge badge-secondary'>{{ mon.mon_id }}. {{ mon.mon_name }} | <i class='fas fa-trash-alt' onclick='showmonsidpicker_remove({{ mon.mon_id }}, "{{ mon.mon_name}}")'></i></span></li>
+    {% endfor %}
+    </ul>
+    <div class="row">
+        <div class="col-xs-12 col-md-8">
+            <div class="showmonsidpicker_autocomplete">
+                <div class="input-group">
+                    <div class="input-group-prepend">
+                        <span class='input-group-text alert-success'><i class='fas fa-plus-square'></i></span>
+                    </div>
+                    <input id="showmonsidpicker_input" type="text" class="form-control" placeholder="Type the name of Pokémon you want to add (3 chars, autocomplete)">
+                </div>
+            </div>
+        </div>
+        <div class="col-xs-6 col-md-4">
+             <div class="float-right">{{ formhiddeninput | safe }}</div>
+        </div>
+    </div>
+{% endif %}
+<div class="row">
+    <h4>Log</h4>
+</div>
+<div class="row">
+    <div id="log">
+        <pre></pre>
+    </div>
+</div>
+<div class="row">
+{% if backurl is defined %}
+    <h4><a href="{{ backurl }}">Back to editor</a></h4>
+{% else %}
+    <h4><a href="showsettings">Back to editor</a></h4>
+{% endif %}
+</div>
+{% endblock %}

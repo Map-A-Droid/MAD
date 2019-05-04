@@ -241,6 +241,7 @@ class PogoWindows:
 
     def __internal_look_for_button(self, filename, ratiomin, ratiomax, communicator):
         logger.debug("lookForButton: Reading lines")
+        disToMiddleMin = None
         try:
             screenshot_read = cv2.imread(filename)
             gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
@@ -609,8 +610,8 @@ class PogoWindows:
             return False
 
         height, width, _ = screenshot_read.shape
-        gray = screenshot_read[int(height) - int(round(height / 6)):int(height),
-                              0: int(int(width) / 4)]
+        gray = screenshot_read[int(height) - int(round(height / 5)):int(height),
+                               0: int(int(width) / 4)]
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
         radMax = int((width / float(6) + 3) / 2)
