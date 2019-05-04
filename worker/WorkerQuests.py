@@ -268,6 +268,7 @@ class WorkerQuests(MITMBase):
 
             logger.info('Open Stop')
             self._stop_process_time = time.time()
+            self._waittime_without_delays = self._stop_process_time
             data_received = self._open_pokestop()
             if data_received == 'Stop':
                 self._handle_stop()
@@ -477,6 +478,7 @@ class WorkerQuests(MITMBase):
                 if 'Quest' in data_received:
                     logger.info('Getting new Quest')
                     self.clear_thread_task = 2
+                    self._devicesettings['last_action_time'] = time.time()
                     break
 
                 if 'SB' in data_received or 'Time' in data_received:
@@ -497,13 +499,6 @@ class WorkerQuests(MITMBase):
                 self._stop_process_time = time.time()
                 self._open_pokestop()
                 to += 1
-
-        if data_received == 'Quest':
-            self._stats.stats_collect_location_data(self.current_location, 1, self._stop_process_time,
-                                                    self._walker_routemanager.get_position_type(self._id),
-                                                    time.time(), self._walker_routemanager.get_walker_type(),
-                                                    self._transporttype)
-            self._devicesettings['last_action_time'] = time.time()
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = None

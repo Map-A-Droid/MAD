@@ -1398,16 +1398,24 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %k:00:00')) as timestamp"
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp"
         if minutes:
-            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
-            query_where = ' where disappear_time > \'%s\' ' % str(minutes)
+            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(minutes)
+
+        # SELECT unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp,
+        # count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join trs_stats_detect_raw
+        # on pokemon.encounter_id=trs_stats_detect_raw.type_id where FROM_UNIXTIME(timestamp_scan)
+        # > '2019-05-04 10:47:47.259159' group by IV, day(FROM_UNIXTIME(timestamp_scan)),
+        # hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp
 
         query = (
-            "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon %s "
-            "group by IV, day(disappear_time), hour(disappear_time) order by timestamp" %
+            "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join "
+            "trs_stats_detect_raw on pokemon.encounter_id=trs_stats_detect_raw.type_id %s "
+            "group by IV, day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp" %
                 (str(query_date), str(query_where))
         )
+
         res = self.execute(query)
 
         return res
@@ -1420,6 +1428,7 @@ class RmWrapper(DbWrapperBase):
             "as Color, count(team_id) as Count FROM `gym` group by team_id"
 
         )
+
         res = self.execute(query)
 
         return res

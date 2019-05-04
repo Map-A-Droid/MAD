@@ -1305,15 +1305,16 @@ class MonocleWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %k:00:00'))" \
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))" \
                      "as timestamp"
         if minutes:
             minutes = datetime.now() - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(
+            query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(
                 minutes)
 
         query = (
-            "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings %s "
+            "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings join "
+            "trs_stats_detect_raw on sightings.encounter_id=trs_stats_detect_raw.type_id %s "
             "group by IV, day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
             "order by timestamp" %
                 (str(query_date), str(query_where))

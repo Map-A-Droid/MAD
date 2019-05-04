@@ -1339,8 +1339,9 @@ class DbWrapperBase(ABC):
 
         query = (
             "SELECT %s, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
-                "'other')), worker, count(fix_ts), avg(data_ts-fix_ts) as data_time from trs_stats_location_raw "
-            "where success=1 and type in (0,1) and (walker='mon_mitm' or walker='iv_mitm') %s %s group by worker %s" %
+            "'other')), worker, count(fix_ts), avg(data_ts-fix_ts) as data_time, walker from trs_stats_location_raw "
+            "where success=1 and type in (0,1) and (walker='mon_mitm' or walker='iv_mitm' or walker='pokestops') "
+            "%s %s group by worker %s" %
             (str(query_date), (query_where), str(worker_where), str(grouped_query))
         )
 
