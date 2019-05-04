@@ -543,7 +543,7 @@ class PogoWindows:
             return False
 
         height, width, _ = screenshotRead.shape
-        gray = screenshotRead[int(height) - int(round(height / 6)):int(height),
+        gray = screenshotRead[int(height) - int(round(height / 5)):int(height),
                               0: int(int(width) / 4)]
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)

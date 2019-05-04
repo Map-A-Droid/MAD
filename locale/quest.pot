@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2019-03-20 09:47+0100\n"
+"POT-Creation-Date: 2019-05-02 23:42+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -24,16 +24,16 @@ msgstr ""
 msgid "Pokemon"
 msgstr ""
 
-msgid "Curveball"
-msgstr ""
-
-msgid "Excellent"
-msgstr ""
-
 msgid "Great"
 msgstr ""
 
 msgid "Nice"
+msgstr ""
+
+msgid "Curveball"
+msgstr ""
+
+msgid "Excellent"
 msgstr ""
 
 msgid "Catch {0} {type}Pokemon{wb}."
@@ -70,6 +70,9 @@ msgid "Win {0} Raids."
 msgstr ""
 
 msgid "Win a level 3 or higher raid."
+msgstr ""
+
+msgid "Win a level 2 or higher raid."
 msgstr ""
 
 msgid "Battle in {0} Raids."

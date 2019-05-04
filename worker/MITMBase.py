@@ -26,12 +26,6 @@ class MITMBase(WorkerBase):
         self._latest_encounter_update = 0
         self._encounter_ids = {}
 
-        if self._devicesettings.get('last_mode', None) is not None and \
-                self._devicesettings['last_mode'] in ("raids_mitm", "mon_mitm", "iv_mitm", "raids_ocr"):
-            logger.info('Last Mode not pokestop - reset saved location')
-            self.last_location = Location(0.0, 0.0)
-        self._devicesettings['last_mode'] = self._walker_routemanager.mode
-
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
         if not timeout:
             timeout = self._devicesettings.get("mitm_wait_timeout", 45)

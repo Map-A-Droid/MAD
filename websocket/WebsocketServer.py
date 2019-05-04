@@ -505,13 +505,16 @@ class WebsocketServer(object):
         self.__requests_mutex.release()
 
     def update_settings(self, routemanagers, device_mappings, auths):
-        for loc in self.__device_mappings:
-            if "last_location" in self.__device_mappings[loc]['settings']:
-                device_mappings[loc]['settings']["last_location"] = \
-                    self.__device_mappings[loc]['settings']["last_location"]
-            if "walker_area_index" in self.__device_mappings[loc]['settings']:
-                device_mappings[loc]['settings']["walker_area_index"] = \
-                    self.__device_mappings[loc]['settings']["walker_area_index"]
+        for dev in self.__device_mappings:
+            if "last_location" in self.__device_mappings[dev]['settings']:
+                device_mappings[dev]['settings']["last_location"] = \
+                    self.__device_mappings[dev]['settings']["last_location"]
+            if "walker_area_index" in self.__device_mappings[dev]['settings']:
+                device_mappings[dev]['settings']["walker_area_index"] = \
+                    self.__device_mappings[dev]['settings']["walker_area_index"]
+            if "last_mode" in self.__device_mappings[dev]['settings']:
+                device_mappings[dev]['settings']["last_mode"] = \
+                    self.__device_mappings[dev]['settings']["last_mode"]
         self.__current_users_mutex.acquire()
         # save reference to old routemanagers to stop them
         old_routemanagers = routemanagers
