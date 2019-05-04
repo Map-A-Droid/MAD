@@ -975,8 +975,8 @@ class DbWrapperBase(ABC):
             condition = map_proto['challenge_quest']['quest']['goal'].get(
                 "condition", None)
 
-            task = questtask(int(quest_type), str(condition), int(target))
-            stats.stats_collect_quest(fort_id)
+            json_condition = json.dumps(condition)
+            task = questtask(int(quest_type), json_condition, int(target))
 
             query_quests = (
                 "INSERT INTO trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
@@ -992,7 +992,7 @@ class DbWrapperBase(ABC):
             vals = (
                 fort_id, quest_type, time.time(
                 ), stardust, pokemon_id, rewardtype, item, itemamount, target,
-                str(condition), str(reward), task, quest_template
+                json_condition, json.dumps(reward), task, quest_template
             )
             logger.debug("DbWrapperBase::submit_quest_proto submitted quest typ {} at stop {}", str(
                 quest_type), str(fort_id))
