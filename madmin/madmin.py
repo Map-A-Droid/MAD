@@ -1526,7 +1526,6 @@ def config():
                         oldvalues_split = oldvalues[field['settings']['name']].replace(
                             " ", "").split(",")
                 else:
-                    print(oldvalues[field['name']])
                     if oldvalues[field['name']] is not None:
                         oldvalues_split = oldvalues[field['name']].replace(
                             " ", "").split(",")
