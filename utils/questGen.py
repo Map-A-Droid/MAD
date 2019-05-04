@@ -151,6 +151,8 @@ def questtask(typeid, condition, target):
             text = _("Win {0} Raids.")
             if re.search(r"'raid_level': \[3, 4, 5\]", condition) is not None:
                 text = _('Win a level 3 or higher raid.')
+            if re.search(r"'raid_level': \[2, 3, 4, 5\]", condition) is not None:
+                text = _('Win a level 2 or higher raid.')
         else:
             text = _("Battle in {0} Raids.")
     elif typeid == 10:
