@@ -237,6 +237,10 @@ class WorkerQuests(MITMBase):
                                           11)
             logger.debug("Done walking")
             time.sleep(1)
+            delay_used -= (to_walk / 3.05) - 1.  # We already waited for a bit because of this walking part
+            if delay_used < 0:
+                delay_used = 0
+
         if self._init:
             delay_used = 5
 
@@ -364,7 +368,7 @@ class WorkerQuests(MITMBase):
         x, y = self._resocalc.get_item_menu_coords(
                 self)[0], self._resocalc.get_item_menu_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        time.sleep(2 + int(delayadd))
         _data_err_counter = 0
         _pos = 1
         text_x1, text_x2, text_y1, text_y2 = self._resocalc.get_delete_item_text(
@@ -384,44 +388,49 @@ class WorkerQuests(MITMBase):
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)
-            logger.info('Found item text: {}', str(item_text))
-            if item_text in not_allow:
-                delete_allowed = False
-                logger.info('Dont delete that!!!')
-                y += self._resocalc.get_next_item_coord(self)
-                text_y1 += self._resocalc.get_next_item_coord(self)
-                text_y2 += self._resocalc.get_next_item_coord(self)
-                _pos += 1
-            else:
 
-                delete_allowed = True
-                self._communicator.click(int(x), int(y))
-                time.sleep(1 + int(delayadd))
-
-                self._communicator.touchandhold(
-                        click_x1, click_y, click_x2, click_y)
-                time.sleep(1)
-
-                delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
-                             self._resocalc.get_confirm_delete_item_coords(self)[1]
-                curTime = time.time()
-                self._communicator.click(int(delx), int(dely))
-
-                data_received = self._wait_for_data(
-                        timestamp=curTime, proto_to_wait_for=4, timeout=25)
-
-                if data_received is not None:
-                    if data_received == LatestReceivedType.CLEAR:
-                        to += 1
-                    else:
-                        y += self._resocalc.get_next_item_coord(self)
-                        text_y1 += self._resocalc.get_next_item_coord(self)
-                        text_y2 += self._resocalc.get_next_item_coord(self)
-                        _pos += 1
+            try:
+                logger.info('Found item text: {}', str(item_text))
+                if item_text in not_allow:
+                    delete_allowed = False
+                    logger.info('Dont delete that!!!')
+                    y += self._resocalc.get_next_item_coord(self)
+                    text_y1 += self._resocalc.get_next_item_coord(self)
+                    text_y2 += self._resocalc.get_next_item_coord(self)
+                    _pos += 1
                 else:
-                    logger.info('Unknown error')
-                    to = 8
+                    delete_allowed = True
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(1 + int(delayadd))
+
+                    self._communicator.touchandhold(
+                            click_x1, click_y, click_x2, click_y)
+                    time.sleep(1)
+
+                    delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
+                                 self._resocalc.get_confirm_delete_item_coords(self)[1]
+                    curTime = time.time()
+                    self._communicator.click(int(delx), int(dely))
+
+                    data_received = self._wait_for_data(
+                            timestamp=curTime, proto_to_wait_for=4, timeout=25)
+
+                    if data_received is not None:
+                        if data_received == LatestReceivedType.CLEAR:
+                            to += 1
+                        else:
+                            y += self._resocalc.get_next_item_coord(self)
+                            text_y1 += self._resocalc.get_next_item_coord(self)
+                            text_y2 += self._resocalc.get_next_item_coord(self)
+                            _pos += 1
+                    else:
+                        logger.error('Unknown error clearing out {}', str(item_text))
+                        to = 8
                 time.sleep(1)
+            except UnicodeEncodeError:
+                logger.warning('Found some text that was not unicode!')
+                to = 8
+                pass
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
@@ -540,7 +549,7 @@ class WorkerQuests(MITMBase):
     def _handle_stop(self):
         to = 0
         data_received = FortSearchResultTypes.UNDEFINED
-        while data_received != FortSearchResultTypes.QUEST and int(to) < 3:
+        while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=25)
@@ -559,9 +568,11 @@ class WorkerQuests(MITMBase):
                 if self._open_pokestop() is None:
                     return
             else:
-                # logger.info(
-                #         'Did not get any data ... Maybe already turned or softban.')
                 logger.info("Likely already spun this stop or brief softban, trying again")
+                if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
+                    logger.info('Quest is done without us noticing. Getting new Quest...')
+                    self.clear_thread_task = 2
+                    break
                 self._close_gym(self._delay_add)
 
                 self._turn_map(self._delay_add)
