@@ -243,7 +243,7 @@ class RouteManagerBase(ABC):
         return round_completed_in
 
     def add_coord_to_be_removed(self, lat: float, lon: float):
-        if lat < 0.0 or lat > 180.0 or lon < 0.0 or lon > 180.0:
+        if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
             return
         self._manager_mutex.acquire()
         self._coords_to_be_ignored.add([lat, lon])
