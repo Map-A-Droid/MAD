@@ -1483,3 +1483,11 @@ class RmWrapper(DbWrapperBase):
 
         res = self.execute(query)
         return res
+
+    def delete_stop(self, latitude, longitude):
+        logger.debug('Deleting stop from db')
+        query = (
+            "delete from pokestop where latitude=%s and longitude=%s"
+        )
+        del_vars = (latitude, longitude)
+        self.execute(query, del_vars, commit=True)
