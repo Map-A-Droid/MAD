@@ -212,7 +212,7 @@ class WorkerMITM(MITMBase):
                                         values_dict=injected_settings)
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
-        data_requested = None
+        data_requested = LatestReceivedType.UNDEFINED
         if latest is None:
             logger.debug(
                 "Nothing received from {} since MAD started", str(self._id))
