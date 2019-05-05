@@ -44,7 +44,7 @@ class RouteManagerBase(ABC):
         self._start_calc = False
         self._rounds = {}
         self._positiontyp = {}
-        self._coords_to_be_ignored = set()
+        self._coords_to_be_ignored = []
 
         # we want to store the workers using the routemanager
         self._workers_registered = []
@@ -246,7 +246,7 @@ class RouteManagerBase(ABC):
         if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
             return
         self._manager_mutex.acquire()
-        self._coords_to_be_ignored.add([lat, lon])
+        self._coords_to_be_ignored.append([lat, lon])
         self._manager_mutex.release()
 
     @abstractmethod
