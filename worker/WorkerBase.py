@@ -74,10 +74,6 @@ class WorkerBase(ABC):
         self._devicesettings['last_mode'] = self._walker_routemanager.mode
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
-        self.workerstarttime = datetime.datetime.now()
-
-
-
 
     def get_communicator(self):
         return self._communicator
@@ -402,7 +398,7 @@ class WorkerBase(ABC):
                 logger.error(
                         "No or wrong Value for Mode - check your settings! Killing worker")
                 return False
-            return check_walker_value_type(exittime, self.workerstarttime)
+            return check_walker_value_type(exittime)
         elif mode == "round":
             logger.debug("Checking walker mode 'round'")
             rounds = self._walker['walkervalue']
@@ -421,11 +417,11 @@ class WorkerBase(ABC):
                 logger.error(
                         "No Value for Mode - check your settings! Killing worker")
                 return False
-            return check_walker_value_type(period, self.workerstarttime)
+            return check_walker_value_type(period)
         elif mode == "coords":
             exittime = self._walker['walkervalue']
             if len(exittime) > 0:
-                return check_walker_value_type(exittime, self.workerstarttime)
+                return check_walker_value_type(exittime)
             return True
         elif mode == "idle":
             logger.debug("Checking walker mode 'idle'")
@@ -436,10 +432,10 @@ class WorkerBase(ABC):
             sleeptime = self._walker['walkervalue']
             logger.info('{} going to sleep', str(self._id))
             killpogo = False
-            if check_walker_value_type(sleeptime, self.workerstarttime):
+            if check_walker_value_type(sleeptime):
                 self._stop_pogo()
                 killpogo = True
-            while not self._stop_worker_event.isSet() and check_walker_value_type(sleeptime, self.workerstarttime):
+            while not self._stop_worker_event.isSet() and check_walker_value_type(sleeptime):
                 time.sleep(1)
             logger.info('{} just woke up', str(self._id))
             if killpogo:

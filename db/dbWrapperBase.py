@@ -981,6 +981,7 @@ class DbWrapperBase(ABC):
 
             json_condition = json.dumps(condition)
             task = questtask(int(quest_type), json_condition, int(target))
+            stats.stats_collect_quest(fort_id)
 
             query_quests = (
                 "INSERT INTO trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
