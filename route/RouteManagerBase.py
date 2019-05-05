@@ -44,6 +44,7 @@ class RouteManagerBase(ABC):
         self._start_calc = False
         self._rounds = {}
         self._positiontyp = {}
+        self._coords_to_be_ignored = set()
 
         # we want to store the workers using the routemanager
         self._workers_registered = []
@@ -240,6 +241,13 @@ class RouteManagerBase(ABC):
             )
         )
         return round_completed_in
+
+    def add_coord_to_be_removed(self, lat: float, lon: float):
+        if lat < 0.0 or lat > 180.0 or lon < 0.0 or lon > 180.0:
+            return
+        self._manager_mutex.acquire()
+        self._coords_to_be_ignored.add([lat, lon])
+        self._manager_mutex.release()
 
     @abstractmethod
     def _retrieve_latest_priority_queue(self):

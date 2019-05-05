@@ -1388,7 +1388,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
         return res
 
-    def delete_stop(self, latitude, longitude):
+    def delete_stop(self, latitude: float, longitude: float):
         logger.debug('Deleting stop from db')
         query = (
             "delete from pokestops where lat=%s and lon=%s"

@@ -405,7 +405,7 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def delete_stop(self, lat, lng):
+    def delete_stop(self, lat: float, lng: float):
         pass
 
 

@@ -503,6 +503,9 @@ class WorkerQuests(MITMBase):
                     continue
 
                 fort_type: int = fort.get("type", 0)
+                if fort_type == 0:
+                    self._db_wrapper.delete_stop(latitude, longitude)
+                    return False
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
@@ -515,6 +518,7 @@ class WorkerQuests(MITMBase):
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         if not self._current_position_has_spinnable_stop():
+            self._walker_routemanager.add_coord_to_be_removed(self.current_location.lat, self.current_location.lng)
             return None
         while data_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
