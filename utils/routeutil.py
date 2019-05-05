@@ -4,12 +4,12 @@ import re
 from utils.logging import logger
 
 
-def check_walker_value_type(value, walker_start_time):
+def check_walker_value_type(value):
     match = re.search(
         r'^(\d?\d:\d\d)$|^((\d?\d:\d\d)-(\d?\d:\d\d))$', value.replace(' ', ''))
     if match:
         if match.group(1):
-            return check_time_till_end(value, walker_start_time)
+            return check_time_till_end(value)
         elif match.group(2):
             return check_time_period(value)
 
@@ -17,19 +17,12 @@ def check_walker_value_type(value, walker_start_time):
     return False
 
 
-def check_time_till_end(exittime, walker_start_time):
+def check_time_till_end(exittime):
     timer = exittime.split(':')
-    day = walker_start_time.strftime("%d")
-    hour = walker_start_time.strftime("%H")
-    minute = walker_start_time.strftime("%M")
     tmNow = datetime.datetime.now()
-    tmFrom = datetime.datetime.now().replace(day=int(day),
-        hour=int(hour), minute=int(minute), second=0, microsecond=0)
     tmTil = datetime.datetime.now().replace(
         hour=int(timer[0]), minute=int(timer[1]), second=0, microsecond=0)
-    if (tmTil + datetime.timedelta(minutes=5)) < tmFrom:
-        tmTil = tmTil + datetime.timedelta(days=1)
-    if tmFrom <= tmNow < (tmTil + datetime.timedelta(minutes=5)):
+    if tmNow < (tmTil + datetime.timedelta(minutes=5)):
         return True
     else:
         return False
@@ -60,7 +53,7 @@ def pre_check_value(walker_settings):
         walkervalue = walker_settings['walkervalue']
         if len(walkervalue) == 0:
             return True
-        return check_walker_value_type(walkervalue, datetime.datetime.now())
+        return check_walker_value_type(walkervalue)
     return True
 
 
