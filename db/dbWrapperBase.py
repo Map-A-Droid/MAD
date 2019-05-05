@@ -404,6 +404,11 @@ class DbWrapperBase(ABC):
     def get_best_pokemon_spawns(self):
         pass
 
+    @abstractmethod
+    def delete_stop(self, lat, lng):
+        pass
+
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
