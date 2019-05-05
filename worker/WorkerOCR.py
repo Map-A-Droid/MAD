@@ -93,6 +93,7 @@ class WorkerOCR(WorkerBase):
         cur_time = time.time()
         self._devicesettings["last_location"] = self.current_location
         self.last_location = self.current_location
+        self._waittime_without_delays = time.time()
         return cur_time, True
 
     def _post_move_location_routine(self, timestamp):

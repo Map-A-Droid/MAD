@@ -586,7 +586,7 @@ class MonocleWrapper(DbWrapperBase):
 
         self.execute(query, vals, commit=True)
 
-    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto, stats):
         logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -605,6 +605,8 @@ class MonocleWrapper(DbWrapperBase):
         encounter_id = wild_pokemon['encounter_id']
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
+
+        stats.stats_collect_mon_iv(encounter_id)
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
@@ -676,7 +678,7 @@ class MonocleWrapper(DbWrapperBase):
         )
         self.execute(query_insert, vals, commit=True)
 
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
+    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv, stats):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -697,6 +699,8 @@ class MonocleWrapper(DbWrapperBase):
                 encounter_id = wild_mon['encounter_id']
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
+
+                stats.stats_collect_mon(encounter_id)
 
                 s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(
                     lat, lon, level=10)
@@ -833,7 +837,7 @@ class MonocleWrapper(DbWrapperBase):
                          vals_fort_sightings, commit=True)
         return True
 
-    def submit_raids_map_proto(self, origin, map_proto):
+    def submit_raids_map_proto(self, origin, map_proto, stats):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -875,6 +879,8 @@ class MonocleWrapper(DbWrapperBase):
                     is_exclusive = gym['gym_details']['raid_info']['is_exclusive']
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
+
+                    stats.stats_collect_raid(gymid)
 
                     now = time.time()
 
@@ -1299,15 +1305,16 @@ class MonocleWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %k:00:00'))" \
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))" \
                      "as timestamp"
         if minutes:
-            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(
+            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(
                 minutes)
 
         query = (
-            "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings %s "
+            "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings join "
+            "trs_stats_detect_raw on sightings.encounter_id=trs_stats_detect_raw.type_id %s "
             "group by IV, day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
             "order by timestamp" %
                 (str(query_date), str(query_where))
@@ -1362,4 +1369,21 @@ class MonocleWrapper(DbWrapperBase):
         )
         res = self.execute(query)
 
+        return res
+
+    def get_best_pokemon_spawns(self):
+        logger.debug('Fetching best pokemon spawns from db')
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:%i:00'))"
+
+        query = (
+                "SELECT encounter_id, GROUP_CONCAT(DISTINCT worker order by worker asc SEPARATOR ', '), pokemon_id, "
+                "%s, atk_iv, def_iv, sta_iv, level, cp FROM sightings join "
+                "trs_stats_detect_raw on sightings.encounter_id=type_id WHERE "
+                "atk_iv>14 and def_iv>14 and sta_iv>14 and "
+                "trs_stats_detect_raw.type='mon' group by encounter_id "
+                "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
+                (str(query_date))
+        )
+
+        res = self.execute(query)
         return res

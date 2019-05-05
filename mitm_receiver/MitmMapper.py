@@ -5,15 +5,17 @@ from utils.stats import PlayerStats
 
 
 class MitmMapper(object):
-    def __init__(self, device_mappings):
+    def __init__(self, device_mappings, db_wrapper):
         self.__mapping = {}
         self.playerstats = {}
         self.__mapping_mutex = Lock()
         self._device_mappings = device_mappings
+        self._db_wrapper = db_wrapper
+        self.injected = {}
         if device_mappings is not None:
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}
-                self.playerstats[origin] = PlayerStats(origin)
+                self.playerstats[origin] = PlayerStats(origin, self._db_wrapper)
                 self.playerstats[origin].open_player_stats()
 
     def get_mon_ids_iv(self, origin):
@@ -52,3 +54,12 @@ class MitmMapper(object):
                 "Not updating timestamp of {} since origin is unknown", str(origin))
         self.__mapping_mutex.release()
         return updated
+
+    def return_player_object(self, origin):
+        return self.playerstats[origin]
+
+    def set_injection_status(self, origin, status=True):
+        self.injected[origin] = status
+
+    def get_injection_status(self, origin):
+        return self.injected.get(origin, False)

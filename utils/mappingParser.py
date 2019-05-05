@@ -1,4 +1,5 @@
 import json
+import multiprocessing
 import os
 from pathlib import Path
 
@@ -219,9 +220,25 @@ class MappingParser(object):
             area_dict["routemanager"] = route_manager
             areas[area["name"]] = area_dict
 
-        for area in areas_procs.keys():
-            to_be_checked = areas_procs[area]
-            to_be_checked.get()
+        while len(areas_procs) > 0:
+            try:
+                for area in areas_procs.keys():
+                    to_be_checked = areas_procs[area]
+                    to_be_checked.wait(0.2)
+                    if to_be_checked.ready() and to_be_checked.successful():
+                        areas_procs.pop(area)
+                        break
+                    elif to_be_checked.ready():
+                        logger.warning("Area {} failed to be calculated".format(area))
+                        areas_procs.pop(area)
+                        break
+                    else:
+                        continue
+            except multiprocessing.context.TimeoutError as e:
+                logger.debug("...")
+        # for area in areas_procs.keys():
+        #     to_be_checked = areas_procs[area]
+        #     to_be_checked.get()
 
         thread_pool.close()
         thread_pool.join()

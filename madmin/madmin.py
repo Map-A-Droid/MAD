@@ -18,14 +18,16 @@ from flask import (Flask, jsonify, make_response, redirect, render_template,
 from gevent.pywsgi import WSGIServer
 
 import cv2
+from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp
 from flask_caching import Cache
 from utils.adb import ADBConnect
 from utils.functions import (creation_date, generate_path, generate_phones,
-                             image_resize)
+                             image_resize, ConvertDateTimeToLocal)
 from utils.language import i8ln, open_json_file
 from utils.logging import LogLevelChanger, logger
 from utils.mappingParser import MappingParser
 from utils.questGen import generate_quest
+from utils.geo import get_distance_of_two_points_in_meters
 
 sys.path.append("..")  # Adds higher directory to python modules path.
 
@@ -413,7 +415,6 @@ def screens():
 @app.route('/', methods=['GET'])
 @auth_required
 def root():
-    print(conf_args.only_ocr)
     return render_template('index.html', running_ocr=(conf_args.only_ocr))
 
 
@@ -443,8 +444,10 @@ def unknown():
 @app.route('/map', methods=['GET'])
 @auth_required
 def map():
+    setlat = request.args.get('lat', 0)
+    setlng = request.args.get('lng', 0)
     return render_template('map.html', lat=conf_args.home_lat, lng=conf_args.home_lng,
-                           running_ocr=(conf_args.only_ocr))
+                           running_ocr=(conf_args.only_ocr), setlat=setlat, setlng=setlng)
 
 
 @app.route('/quests', methods=['GET'])
@@ -1848,6 +1851,119 @@ def status():
                            running_ocr=(conf_args.only_ocr))
 
 
+@app.route('/statistics_detection_worker_data', methods=['GET'])
+@auth_required
+def statistics_detection_worker_data():
+    minutes = request.args.get('minutes', 120)
+    worker = request.args.get('worker')
+
+    # spawns
+    mon = []
+    mon_iv = []
+    raid = []
+    quest = []
+    usage = []
+
+    data = db_wrapper.statistics_get_detection_count(minutes=minutes, worker=worker)
+    for dat in data:
+        mon.append([dat[0] * 1000, int(dat[2])])
+        mon_iv.append([dat[0] * 1000, int(dat[3])])
+        raid.append([dat[0] * 1000, int(dat[4])])
+        quest.append([dat[0] * 1000, int(dat[5])])
+
+    usage.append({'label': 'Mon', 'data': mon})
+    usage.append({'label': 'Mon_IV', 'data': mon_iv})
+    usage.append({'label': 'Raid', 'data': raid})
+    usage.append({'label': 'Quest', 'data': quest})
+
+
+    # locations avg
+    locations_avg = []
+
+    data = db_wrapper.statistics_get_avg_data_time(minutes=minutes, worker=worker)
+    for dat in data:
+        dtime = datetime.datetime.fromtimestamp(dat[0]).strftime(datetimeformat)
+        locations_avg.append({'dtime': dtime, 'ok_locations': dat[3], 'avg_datareceive': float(dat[4]),
+                              'transporttype': dat[1], 'type': dat[5]})
+
+
+    #locations
+    ok = []
+    nok = []
+    sumloc = []
+    locations = []
+    data = db_wrapper.statistics_get_locations(minutes=minutes, worker=worker)
+    for dat in data:
+        ok.append([dat[0] * 1000, int(dat[3])])
+        nok.append([dat[0] * 1000, int(dat[4])])
+        sumloc.append([dat[0] * 1000, int(dat[2])])
+
+    locations.append({'label': 'Locations', 'data': sumloc})
+    locations.append({'label': 'Locations_ok', 'data': ok})
+    locations.append({'label': 'Locations_nok', 'data': nok})
+
+    #dataratio
+    loctionratio=[]
+    data = db_wrapper.statistics_get_locations_dataratio(minutes=minutes, worker=worker)
+    if len(data) > 0:
+        for dat in data:
+            loctionratio.append({'label': dat[3], 'data': dat[2]})
+    else:
+        loctionratio.append({'label': '', 'data': 0})
+
+    # all spaws
+    all_spawns = []
+    data = db_wrapper.statistics_get_detection_count(grouped=False, worker=worker)
+    all_spawns.append({'type': 'Mon', 'amount': int(data[0][2])})
+    all_spawns.append({'type': 'Mon_IV', 'amount': int(data[0][3])})
+    all_spawns.append({'type': 'Raid', 'amount': int(data[0][4])})
+    all_spawns.append({'type': 'Quest', 'amount': int(data[0][5])})
+
+    # raw detection data
+    detections_raw = []
+    data = db_wrapper.statistics_get_detection_raw(minutes=minutes, worker=worker)
+    for dat in data:
+        detections_raw.append({'type': dat[1], 'id': dat[2], 'count': dat[3]})
+
+    # location raw
+    location_raw = []
+    last_lat = 0
+    last_lng = 0
+    distance = 0
+    data = db_wrapper.statistics_get_location_raw(minutes=minutes, worker=worker)
+    for dat in data:
+        if last_lat != 0 and last_lng != 0:
+            distance = round(get_distance_of_two_points_in_meters(last_lat, last_lng, dat[1], dat[2]),2)
+            last_lat = dat[1]
+            last_lng = dat[2]
+        if last_lat == 0 and last_lng == 0:
+            last_lat = dat[1]
+            last_lng = dat[2]
+        if dat[1] == 0 and dat[2] == 0:
+            distance = ''
+
+        location_raw.append({'lat': dat[1], 'lng': dat[2], 'distance': distance, 'type': dat[3], 'data': dat[4],
+                             'fix_ts': datetime.datetime.fromtimestamp(dat[5]).strftime(datetimeformat),
+                             'data_ts': datetime.datetime.fromtimestamp(dat[6]).strftime(datetimeformat),
+                             'transporttype': dat[8]})
+
+    workerstats = {'avg': locations_avg, 'receiving': usage, 'locations': locations,
+                   'ratio': loctionratio, 'allspawns': all_spawns, 'detections_raw': detections_raw,
+                   'location_raw': location_raw}
+    return jsonify(workerstats)
+
+
+@app.route('/statistics_detection_worker', methods=['GET'])
+@auth_required
+def statistics_detection_worker():
+    minutes = request.args.get('minutes', 120)
+    worker = request.args.get('worker')
+
+    return render_template('statistics_worker.html', title="MAD Worker Statisics", minutes=minutes,
+                           time=conf_args.madmin_time, worker=worker, running_ocr=conf_args.only_ocr,
+                           responsive=str(conf_args.madmin_noresponsive).lower())
+
+
 @app.route('/statistics', methods=['GET'])
 @auth_required
 def statistics():
@@ -1859,7 +1975,8 @@ def statistics():
         minutes_spawn = 120
 
     return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
-                           minutes_usage=minutes_usage, time=conf_args.madmin_time, running_ocr=(conf_args.only_ocr))
+                           minutes_usage=minutes_usage, time=conf_args.madmin_time, running_ocr=conf_args.only_ocr,
+                           responsive=str(conf_args.madmin_noresponsive).lower())
 
 
 @app.route('/get_status', methods=['GET'])
@@ -1872,8 +1989,30 @@ def get_status():
 @app.route('/get_game_stats', methods=['GET'])
 @auth_required
 def game_stats():
-    minutes_usage = request.args.get('minutes_usage')
-    minutes_spawn = request.args.get('minutes_spawn')
+    minutes_usage = request.args.get('minutes_usage', 10)
+    minutes_spawn = request.args.get('minutes_spawn', 10)
+
+    data = db_wrapper.statistics_get_location_info()
+    location_info = []
+    for dat in data:
+        location_info.append({'worker': str(dat[0]), 'locations': str(dat[1]), 'locationsok': str(dat[2]),
+                              'locationsnok': str(dat[3]), 'ratio': str(dat[4]), })
+
+    # empty scans
+    data = db_wrapper.statistics_get_all_empty_scanns()
+    detection_empty = []
+    for dat in data:
+        detection_empty.append({'lat': str(dat[1]), 'lng': str(dat[2]), 'worker': str(dat[3]),
+                                'count': str(dat[0]), 'type': str(dat[4]), 'lastscan': str(dat[5]),
+                                'countsuccess': str(dat[6])})
+
+    # statistics_get_detection_count
+    data = db_wrapper.statistics_get_detection_count(grouped=False)
+    detection = []
+    for dat in data:
+        detection.append({'worker': str(dat[1]), 'mons': str(dat[2]), 'mons_iv': str(dat[3]),
+                          'raids': str(dat[4]), 'quests': str(dat[5])})
+
     # Stop
     stop = []
     data = db_wrapper.statistics_get_stop_quest()
@@ -1955,8 +2094,26 @@ def game_stats():
 
     spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
 
-    stats = {'spawn': spawn, 'gym': gym,
-             'quest': quest, 'stop': stop, 'usage': usage}
+    # good_spawns avg
+    good_spawns = []
+    data = db_wrapper.get_best_pokemon_spawns()
+    for dat in data:
+        mon = "%03d" % dat[2]
+        monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+        monName_raw = (get_raid_boss_cp(dat[2]))
+        monName = i8ln(monName_raw['name'])
+        if conf_args.db_method == "rm":
+            lvl = calculate_mon_level(dat[7])
+        else:
+            lvl = dat[7]
+        good_spawns.append({'id': dat[2], 'iv': round(calculate_iv(dat[4], dat[5], dat[6]), 0),
+                            'lvl': lvl, 'cp': dat[8], 'img': monPic,
+                            'name': monName,
+                            'periode': datetime.datetime.fromtimestamp(dat[3]).strftime(datetimeformat)})
+
+    stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
+             'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
+             'location_info': location_info}
     return jsonify(stats)
 
 

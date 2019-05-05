@@ -199,6 +199,7 @@ if __name__ == "__main__":
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
     db_wrapper.create_usage_database_if_not_exists()
+    db_wrapper.create_statistics_databases_if_not_exists()
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
@@ -261,7 +262,7 @@ if __name__ == "__main__":
 
             pogoWindowManager = None
 
-            mitm_mapper = MitmMapper(device_mappings)
+            mitm_mapper = MitmMapper(device_mappings, db_wrapper)
             ocr_enabled = False
 
             for routemanager in routemanagers.keys():
@@ -279,7 +280,7 @@ if __name__ == "__main__":
 
             if not args.no_ocr:
                 from ocr.pogoWindows import PogoWindows
-                pogoWindowManager = PogoWindows(args.temp_path)
+                pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
 
             if ocr_enabled:
                 from ocr.copyMons import MonRaidImages

@@ -3,12 +3,21 @@ import math
 import time
 from abc import abstractmethod
 from datetime import datetime
+from enum import Enum
 
 from utils.logging import logger
 from utils.madGlobals import InternalStopWorkerException
 from worker.WorkerBase import WorkerBase
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
+
+
+class LatestReceivedType(Enum):
+    UNDEFINED = -1
+    GYM = 0
+    STOP = 2
+    MON = 3
+    CLEAR = 4
 
 
 class MITMBase(WorkerBase):
@@ -25,6 +34,11 @@ class MITMBase(WorkerBase):
         self._mitm_mapper = mitm_mapper
         self._latest_encounter_update = 0
         self._encounter_ids = {}
+        self._stats = mitm_mapper.return_player_object(id)
+
+        self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
+                                                2, 0,
+                                                self._walker_routemanager.get_walker_type(), 99)
 
     def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
         if not timeout:
@@ -32,30 +46,40 @@ class MITMBase(WorkerBase):
 
         logger.info('Waiting for data after {}',
                     datetime.fromtimestamp(timestamp))
-        data_requested = None
+        data_requested = LatestReceivedType.UNDEFINED
 
-        while data_requested is None and timestamp + timeout >= math.floor(time.time()):
+        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= math.floor(time.time()):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
             time.sleep(1)
 
-        if data_requested is not None:
+        if data_requested != LatestReceivedType.UNDEFINED:
             logger.info('Got the data requested...')
             self._reboot_count = 0
             self._restart_count = 0
             self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+            self._stats.stats_collect_location_data(
+                self.current_location, 1, self._waittime_without_delays,
+                self._walker_routemanager.get_position_type(self._id),
+                time.time(),
+                self._walker_routemanager.get_walker_type(), self._transporttype)
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
             logger.warning("Timeout waiting for data")
 
-            current_routemanager = self._walker_routemanager
+            self._stats.stats_collect_location_data(
+                self.current_location, 0, self._waittime_without_delays,
+                self._walker_routemanager.get_position_type(self._id), 0,
+                self._walker_routemanager.get_walker_type(), self._transporttype)
+
             self._restart_count += 1
 
             restart_thresh = self._devicesettings.get("restart_thresh", 5)
             reboot_thresh = self._devicesettings.get("reboot_thresh", 3)
-            if current_routemanager is not None:
+            if self._walker_routemanager is not None:
                 if self._init:
                     restart_thresh = self._devicesettings.get(
                         "restart_thresh", 5) * 2

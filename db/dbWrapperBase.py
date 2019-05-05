@@ -400,6 +400,10 @@ class DbWrapperBase(ABC):
     def statistics_get_stop_quest(self, days):
         pass
 
+    @abstractmethod
+    def get_best_pokemon_spawns(self):
+        pass
+
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -942,7 +946,7 @@ class DbWrapperBase(ABC):
             )
         return next_up
 
-    def submit_quest_proto(self, map_proto):
+    def submit_quest_proto(self, map_proto, stats):
         logger.debug("DbWrapperBase::submit_quest_proto called")
         fort_id = map_proto.get("fort_id", None)
         if fort_id is None:
@@ -1014,6 +1018,72 @@ class DbWrapperBase(ABC):
                  ' rebootingOption TEXT NOT NULL, '
                  ' restartCounter TEXT NOT NULL, '
                  ' PRIMARY KEY (origin))')
+
+        self.execute(query, commit=True)
+
+        return True
+
+    def create_statistics_databases_if_not_exists(self):
+        logger.debug(
+            "DbWrapperBase::create_statistics_databases_if_not_exists called")
+
+        query = ('CREATE TABLE if not exists trs_stats_location_raw ( '
+                 ' id int(11) AUTO_INCREMENT,'
+                 ' worker varchar(100) NOT NULL,'
+                 ' lat double NOT NULL,'
+                 ' lng double NOT NULL,'
+                 ' fix_ts int(11) NOT NULL,'
+                 ' data_ts int(11) NOT NULL,'
+                 ' type tinyint(1) NOT NULL,'
+                 ' walker varchar(255) NOT NULL,'
+                 ' success tinyint(1) NOT NULL,'
+                 ' period int(11) NOT NULL, '
+                 ' count int(11) NOT NULL, '
+                 ' transporttype tinyint(1) NOT NULL, '
+                 ' PRIMARY KEY (id),'
+                 ' KEY latlng (lat, lng),'
+                 ' UNIQUE count_same_events (worker, lat, lng, type, period))'
+                 )
+
+        self.execute(query, commit=True)
+
+        query = ('CREATE TABLE if not exists trs_stats_location ('
+                 ' id int(11) AUTO_INCREMENT,'
+                 ' worker varchar(100) NOT NULL,'
+                 ' timestamp_scan int(11) NOT NULL,'
+                 ' location_count int(11) NOT NULL,'
+                 ' location_ok int(11) NOT NULL,'
+                 ' location_nok int(11) NOT NULL, '
+                 ' PRIMARY KEY (id),'
+                 ' KEY worker (worker))'
+                 )
+
+        self.execute(query, commit=True)
+
+        query = ('CREATE TABLE if not exists trs_stats_detect_raw ('
+                 ' id int(11) AUTO_INCREMENT,'
+                 ' worker varchar(100) NOT NULL,'
+                 ' type_id varchar(100) NOT NULL,'
+                 ' type varchar(10) NOT NULL,'
+                 ' count int(11) NOT NULL,'
+                 ' timestamp_scan int(11) NOT NULL,'
+                 ' PRIMARY KEY (id),'
+                 ' KEY worker (worker))'
+                 )
+
+        self.execute(query, commit=True)
+
+        query = ('CREATE TABLE if not exists trs_stats_detect ('
+                 ' id  int(100) AUTO_INCREMENT,'
+                 ' worker  varchar(100) NOT NULL,'
+                 ' timestamp_scan  int(11) NOT NULL,'
+                 ' mon  int(255) DEFAULT NULL,'
+                 ' raid  int(255) DEFAULT NULL,'
+                 ' mon_iv  int(11) DEFAULT NULL,'
+                 ' quest  int(100) DEFAULT NULL,'
+                 ' PRIMARY KEY (id), '
+                 ' KEY worker (worker))'
+                 )
 
         self.execute(query, commit=True)
 
@@ -1191,3 +1261,242 @@ class DbWrapperBase(ABC):
         res = self.execute(query)
 
         return res
+
+    def submit_stats_complete(self, data):
+        query_status = (
+            "INSERT INTO trs_stats_detect (worker, timestamp_scan, raid, mon, mon_iv, quest) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+        )
+        self.executemany(query_status, data, commit=True)
+        return True
+
+    def submit_stats_locations(self, data):
+        query_status = (
+            "INSERT IGNORE INTO trs_stats_location (worker, timestamp_scan, location_count, location_ok, location_nok) "
+            "VALUES (%s, %s, %s, %s, %s) "
+        )
+        self.executemany(query_status, data, commit=True)
+        return True
+
+    def submit_stats_locations_raw(self, data):
+        query_status = (
+            "INSERT IGNORE INTO trs_stats_location_raw (worker, fix_ts, lat, lng, data_ts, type, walker, "
+            "success, period, transporttype) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "ON DUPLICATE KEY UPDATE count=(count+1)"
+        )
+        self.executemany(query_status, data, commit=True)
+        return True
+
+    def submit_stats_detections_raw(self, data):
+        query_status = (
+            "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, timestamp_scan) "
+            "VALUES (%s, %s, %s, %s, %s) "
+        )
+        self.executemany(query_status, data, commit=True)
+        return True
+
+    def statistics_get_detection_count(self, minutes=False, grouped=True, worker=False):
+        logger.debug('Fetching group detection count from db')
+        grouped_query = ""
+        worker_where = ""
+        if worker and minutes:
+            worker_where = ' and worker = \'%s\' ' % str(worker)
+        if worker and not minutes:
+            worker_where = ' where worker = \'%s\' ' % str(worker)
+        if grouped:
+            grouped_query = ", day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan))"
+        query_where = ''
+        query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(timestamp_scan), '%y-%m-%d %k:00:00'))"
+        if minutes:
+            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
+
+        query = (
+            "SELECT  %s, worker, sum(mon) as Mon, sum(mon_iv) as MonIV, sum(raid) as Raids, sum(quest) as Quests FROM "
+            "trs_stats_detect %s %s group by worker %s"
+            " order by timestamp_scan" %
+                (str(query_date), str(query_where), str(worker_where), str(grouped_query))
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_avg_data_time(self, minutes=False, grouped=True, worker=False):
+        logger.debug('Fetching group detection count from db')
+        grouped_query = ""
+        query_where = ""
+        worker_where = ""
+        if worker:
+            worker_where = ' and worker = \'%s\' ' % str(worker)
+        if grouped:
+            grouped_query = ", day(FROM_UNIXTIME(period)), hour(FROM_UNIXTIME(period)), transporttype"
+        if minutes:
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
+            query_where = ' and (period) >= unix_timestamp(\'%s\') ' % str(minutes)
+
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
+
+        query = (
+            "SELECT %s, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
+            "'other')), worker, count(fix_ts), avg(data_ts-fix_ts) as data_time, walker from trs_stats_location_raw "
+            "where success=1 and type in (0,1) and (walker='mon_mitm' or walker='iv_mitm' or walker='pokestops') "
+            "%s %s group by worker %s" %
+            (str(query_date), (query_where), str(worker_where), str(grouped_query))
+        )
+
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_locations(self, minutes=False, grouped=True, worker=False):
+        logger.debug('Fetching group locations count from db')
+        grouped_query = ""
+        query_where = ""
+        worker_where = ""
+        if worker and minutes:
+            worker_where = ' and worker = \'%s\' ' % str(worker)
+        if worker and not minutes:
+            worker_where = ' where worker = \'%s\' ' % str(worker)
+        if grouped:
+            grouped_query = ", day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan))"
+        if minutes:
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
+            query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
+
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
+
+        query = (
+            "SELECT %s, worker, sum(location_count), sum(location_ok), sum(location_nok) from trs_stats_location "
+            " %s %s group by worker %s" %
+            (str(query_date), (query_where), str(worker_where), str(grouped_query))
+        )
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_locations_dataratio(self, minutes=False, grouped=True, worker=False):
+        logger.debug('Fetching group locations dataratio from db')
+        grouped_query = ""
+        query_where = ""
+        worker_where = ""
+        if worker and minutes:
+            worker_where = ' and worker = \'%s\' ' % str(worker)
+        if worker and not minutes:
+            worker_where = ' where worker = \'%s\' ' % str(worker)
+        if grouped:
+            grouped_query = ", success, type"
+        if minutes:
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
+            query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
+
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
+
+        query = (
+            "SELECT %s, worker, count(period), if(type=0,if(success=1,'OK-Normal','NOK-Normal'),"
+            "if(success=1,'OK-PrioQ','NOK-PrioQ')) from trs_stats_location_raw "
+            " %s %s and type in(0,1) group by worker %s" %
+            (str(query_date), (query_where), str(worker_where), str(grouped_query))
+        )
+
+        res = self.execute(query)
+
+        return res
+
+    def statistics_get_all_empty_scanns(self):
+        logger.debug('Fetching all empty locations from db')
+        query =(
+            "SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
+            "SEPARATOR ', '), if(b.type=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
+            "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) as successcount from "
+            "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 and successcount=0 "
+            "ORDER BY count(id) DESC"
+        )
+
+        res = self.execute(query)
+        return res
+
+    def statistics_get_detection_raw(self, minutes=False, worker=False):
+        logger.debug('Fetching detetion raw data from db')
+        query_where = ""
+        worker_where = ""
+        if worker and minutes:
+            worker_where = ' and worker = \'%s\' ' % str(worker)
+        if worker and not minutes:
+            worker_where = ' where worker = \'%s\' ' % str(worker)
+        if minutes:
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
+            query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
+
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
+
+        query = (
+            "SELECT %s, type, type_id, count FROM trs_stats_detect_raw %s %s order by id asc" %
+            (str(query_date), (query_where), str(worker_where))
+        )
+
+        res = self.execute(query)
+        return res
+
+    def statistics_get_location_raw(self, minutes=False, worker=False):
+        logger.debug('Fetching locations raw data from db')
+        query_where = ""
+        worker_where = ""
+        if worker and minutes:
+            worker_where = ' and worker = \'%s\' ' % str(worker)
+        if worker and not minutes:
+            worker_where = ' where worker = \'%s\' ' % str(worker)
+        if minutes:
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
+            query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
+
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
+
+        query = (
+                "SELECT %s, lat, lng, if(type=0,'Normal',if(type=1,'PrioQ', if(type=2,'Startup',"
+                "if(type=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
+                "if(data_ts=0,fix_ts,data_ts), count, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
+                "'other')) from trs_stats_location_raw %s %s order by id asc" %
+                (str(query_date), (query_where), str(worker_where))
+        )
+
+        res = self.execute(query)
+        return res
+
+    def statistics_get_location_info(self):
+        logger.debug('Fetching all empty locations from db')
+        query =(
+            "select worker, sum(location_count), sum(location_ok), sum(location_nok), "
+            "sum(location_nok) / sum(location_count) * 100 as Loc_fail_rate "
+            "from trs_stats_location "
+            "group by worker"
+        )
+
+        res = self.execute(query)
+        return res
+
+    def cleanup_statistics(self):
+        logger.debug("Cleanup statistics tables")
+        query = (
+            "delete from trs_stats_detect where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)
+
+        query = (
+            "delete from trs_stats_detect_raw where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)
+
+        query = (
+            "delete from trs_stats_location where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)
+
+        query = (
+            "delete from trs_stats_location_raw where period < (UNIX_TIMESTAMP() - 604800)"
+        )
+        self.execute(query, commit=True)

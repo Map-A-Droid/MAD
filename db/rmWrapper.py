@@ -647,7 +647,7 @@ class RmWrapper(DbWrapperBase):
 
         return True
 
-    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin, timestamp, encounter_proto, stats):
         logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -671,7 +671,10 @@ class RmWrapper(DbWrapperBase):
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
+        stats.stats_collect_mon_iv(encounter_id)
+
         if getdetspawntime is None:
+
             logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
         else:
@@ -737,7 +740,7 @@ class RmWrapper(DbWrapperBase):
 
         return True
 
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
+    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv, stats):
         logger.debug(
             "RmWrapper::submit_mons_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
@@ -764,6 +767,8 @@ class RmWrapper(DbWrapperBase):
 
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2**64
+
+                stats.stats_collect_mon(encounter_id)
 
                 now = datetime.utcfromtimestamp(
                     time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -887,7 +892,7 @@ class RmWrapper(DbWrapperBase):
         logger.debug("{}: submit_gyms done", str(origin))
         return True
 
-    def submit_raids_map_proto(self, origin, map_proto):
+    def submit_raids_map_proto(self, origin, map_proto, stats):
         logger.debug(
             "RmWrapper::submit_raids_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
@@ -940,6 +945,8 @@ class RmWrapper(DbWrapperBase):
                     is_exclusive = gym['gym_details']['raid_info']['is_exclusive']
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
+
+                    stats.stats_collect_raid(gymid)
 
                     logger.info("Adding/Updating gym {} with level {} ending at {}",
                                 str(gymid), str(level), str(raidend_date))
@@ -1391,16 +1398,24 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(disappear_time, '%y-%m-%d %k:00:00')) as timestamp"
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp"
         if minutes:
-            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
-            query_where = ' where disappear_time > \'%s\' ' % str(minutes)
+            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(minutes)
+
+        # SELECT unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp,
+        # count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join trs_stats_detect_raw
+        # on pokemon.encounter_id=trs_stats_detect_raw.type_id where FROM_UNIXTIME(timestamp_scan)
+        # > '2019-05-04 10:47:47.259159' group by IV, day(FROM_UNIXTIME(timestamp_scan)),
+        # hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp
 
         query = (
-            "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon %s "
-            "group by IV, day(disappear_time), hour(disappear_time) order by timestamp" %
+            "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join "
+            "trs_stats_detect_raw on pokemon.encounter_id=trs_stats_detect_raw.type_id %s "
+            "group by IV, day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp" %
                 (str(query_date), str(query_where))
         )
+
         res = self.execute(query)
 
         return res
@@ -1413,6 +1428,7 @@ class RmWrapper(DbWrapperBase):
             "as Color, count(team_id) as Count FROM `gym` group by team_id"
 
         )
+
         res = self.execute(query)
 
         return res
@@ -1450,3 +1466,20 @@ class RmWrapper(DbWrapperBase):
         total = reduce(lambda x, y: x + y[1], res, 0)
 
         return {'pokemon': res, 'total': total}
+
+    def get_best_pokemon_spawns(self):
+        logger.debug('Fetching best pokemon spawns from db')
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:%i:00'))"
+
+        query = (
+                "SELECT encounter_id, GROUP_CONCAT(DISTINCT worker order by worker asc SEPARATOR ', '), pokemon_id, "
+                "%s, individual_attack, individual_defense, individual_stamina, cp_multiplier, cp FROM pokemon join "
+                "trs_stats_detect_raw on pokemon.encounter_id=type_id WHERE "
+                "individual_attack>14 and individual_defense>14 and individual_stamina>14 and "
+                "trs_stats_detect_raw.type='mon' group by encounter_id "
+                "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
+                (str(query_date))
+        )
+
+        res = self.execute(query)
+        return res

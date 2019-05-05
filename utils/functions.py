@@ -1,6 +1,7 @@
 import datetime
 import os
 import platform
+import calendar
 
 import cv2
 
@@ -66,3 +67,34 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
         .replace('<<screen>>', screen)
         .replace('<<creationdate>>', creationdate)
     )
+
+
+def get_min_period():
+    min = datetime.datetime.utcnow().strftime("%M")
+    if 0 <= int(min) < 10:
+        pos = 0
+    elif 10 <= int(min) < 20:
+        pos = 10
+    elif 20 <= int(min) < 30:
+        pos = 20
+    elif 30 <= int(min) < 40:
+        pos = 30
+    elif 40 <= int(min) < 50:
+        pos = 40
+    elif 50 <= int(min) < 60:
+        pos = 50
+
+    returndatetime = datetime.datetime.utcnow().replace(
+        minute=int(pos), second=0, microsecond=0)
+    return calendar.timegm(returndatetime.utctimetuple())
+
+
+def get_now_timestamp():
+    return datetime.datetime.now().timestamp()
+
+
+def ConvertDateTimeToLocal(timestampValue):
+    offset = datetime.datetime.now() - datetime.datetime.utcnow()
+    return datetime.datetime.fromtimestamp(timestampValue) + offset + datetime.timedelta(seconds=1)
+
+
