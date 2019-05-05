@@ -510,6 +510,8 @@ class WorkerQuests(MITMBase):
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
                 return fort_type == 1 and enabled and not closed and cooldown == 0
+        # by now we should've found the stop in the GMO
+        # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         return False
 
     def _open_pokestop(self):
