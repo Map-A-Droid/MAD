@@ -4,6 +4,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from functools import reduce
+from typing import List
 
 import requests
 
@@ -489,21 +490,21 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         for (lat, lon) in res:
-            list_of_coords.append([lat, lon])
+            list_of_coords.append(Location(lat, lon))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
         logger.debug("monocleWrapper::update_encounters_from_db called")
@@ -553,21 +554,21 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         for (lat, lon) in res:
-            list_of_coords.append([lat, lon])
+            list_of_coords.append(Location(lat, lon))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
                               snow_level=0, fog_level=0, wind_direction=0, weather_daytime=0):
@@ -1078,19 +1079,19 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
         list_of_coords = []
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def quests_from_db(self, GUID=None, timestamp=None):
         logger.debug("MonocleWrapper::quests_from_db called")

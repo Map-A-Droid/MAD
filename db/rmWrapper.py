@@ -3,6 +3,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
+from typing import List
 
 import requests
 
@@ -534,7 +535,6 @@ class RmWrapper(DbWrapperBase):
             logger.error("No geofence_helper! Not fetching gyms.")
             return []
 
-        #(minLat, minLon, maxLat, maxLon)
         logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
 
@@ -546,9 +546,9 @@ class RmWrapper(DbWrapperBase):
             "latitude <= %s AND longitude <= %s"
         )
         res = self.execute(query, rectangle)
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
         logger.debug("Got {} coordinates in this rect (minLat, minLon, "
                      "maxLat, maxLon): {}", len(list_of_coords), str(rectangle))
 
@@ -605,21 +605,21 @@ class RmWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
                               snow_level=0, fog_level=0, wind_direction=0, weather_daytime=0):
@@ -1138,21 +1138,21 @@ class RmWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def quests_from_db(self, GUID=None, timestamp=None):
         logger.debug("RmWrapper::quests_from_db called")

@@ -4,6 +4,7 @@ import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
 from threading import Lock, Semaphore
+from typing import List
 
 import mysql
 import numpy as np
@@ -725,14 +726,14 @@ class DbWrapperBase(ABC):
             "SELECT latitude, longitude "
             "FROM trs_spawn"
         )
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         logger.debug(
             "DbWrapperBase::get_detected_spawns executing select query")
         res = self.execute(query)
         logger.debug(
             "DbWrapperBase::get_detected_spawns result of query: {}", str(res))
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
             logger.debug(
@@ -744,11 +745,11 @@ class DbWrapperBase(ABC):
         else:
             logger.debug(
                 "DbWrapperBase::get_detected_spawns converting to numpy")
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def get_undetected_spawns(self, geofence_helper):
         logger.debug("DbWrapperBase::get_undetected_spawns called")
@@ -758,7 +759,7 @@ class DbWrapperBase(ABC):
             "FROM trs_spawn "
             "WHERE calc_endminsec is NULL"
         )
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         logger.debug(
             "DbWrapperBase::get_undetected_spawns executing select query")
         res = self.execute(query)
@@ -777,11 +778,11 @@ class DbWrapperBase(ABC):
         else:
             logger.debug(
                 "DbWrapperBase::get_undetected_spawns converting to numpy")
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def get_detected_endtime(self, spawn_id):
         logger.debug("DbWrapperBase::get_detected_endtime called")
