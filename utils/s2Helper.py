@@ -1,12 +1,14 @@
 import math
 import multiprocessing
 import sys
+from typing import List
 
 import gpxdata
 import s2sphere
 from geopy import Point, distance
 # from utils.collections import Location
 # from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
+from geofence.geofenceHelper import GeofenceHelper
 from utils.collections import Location
 from utils.geo import (get_distance_of_two_points_in_meters,
                        get_middle_of_coord_list)
@@ -122,7 +124,7 @@ class S2Helper:
 
     # the following stuff is drafts for further consideration
     @staticmethod
-    def _generate_locations(distance, geofence_helper):
+    def _generate_locations(distance: float, geofence_helper: GeofenceHelper):
         results = []
         south, east, north, west = geofence_helper.get_polygon_from_fence()
 
@@ -195,7 +197,7 @@ class S2Helper:
         return most_north_and_east
 
     @staticmethod
-    def order_location_list_rows(location_list):
+    def order_location_list_rows(location_list: List[Location]):
         if location_list is None or len(location_list) == 0:
             return []
 
@@ -216,7 +218,7 @@ class S2Helper:
         return new_list
 
     @staticmethod
-    def get_most_northern_row(location_list):
+    def get_most_northern_row(location_list: List[Location]):
         if location_list is None or len(location_list) == 0:
             return []
 
