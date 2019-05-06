@@ -246,7 +246,7 @@ class RouteManagerBase(ABC):
         if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
             return
         self._manager_mutex.acquire()
-        self._coords_to_be_ignored.add([lat, lon])
+        self._coords_to_be_ignored.add((lat, lon))
         self._manager_mutex.release()
 
     @abstractmethod

@@ -72,7 +72,7 @@ class RouteManagerQuests(RouteManagerBase):
                 return False
             coords = self._check_unprocessed_stops(openstops)
             # remove coords to be ignored from coords
-            coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
+            coords = [coord for coord in coords if (coord[0], coord[1]) not in self._coords_to_be_ignored]
             if len(coords) > 0:
                 self.clear_coords()
                 self.add_coords_list(coords)
