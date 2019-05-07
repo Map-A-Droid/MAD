@@ -979,7 +979,11 @@ class DbWrapperBase(ABC):
                 "target", None)
             condition = map_proto['challenge_quest']['quest']['goal'].get(
                 "condition", None)
-
+            is_hidden_ditto = map_proto['challenge_quest']['quest']['quest_rewards'][0]['pokemon_encounter'].get(
+                "is_hidden_ditto", False)
+            if is_hidden_ditto:
+                pokemon_id = 132
+            
             json_condition = json.dumps(condition)
             task = questtask(int(quest_type), json_condition, int(target))
             stats.stats_collect_quest(fort_id)
