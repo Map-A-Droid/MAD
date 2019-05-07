@@ -474,11 +474,12 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[str(id)] = self.__encode_hash_json(team,
-                                                  float(lat),
-                                                  float(lon),
-                                                  str(name).replace('"', '\\"')
-                                                  .replace('\n', '\\n'), str(url), park, sponsor)
+            gyminfo[str(id)] = self.__encode_hash_json(id,
+                                                       team,
+                                                       float(lat),
+                                                       float(lon),
+                                                       str(name).replace('"', '\\"')
+                                                       .replace('\n', '\\n'), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):

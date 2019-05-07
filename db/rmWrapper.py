@@ -1154,10 +1154,9 @@ class RmWrapper(DbWrapperBase):
             #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
-    def quests_from_db(self, GUID=None, timestamp=None):
+    def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
         logger.debug("RmWrapper::quests_from_db called")
         questinfo = {}
-        data = ()
 
         query = (
             "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
@@ -1165,21 +1164,32 @@ class RmWrapper(DbWrapperBase):
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
             "pokestop.name, pokestop.image, trs_quest.quest_target, trs_quest.quest_condition, "
             "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
-            "FROM pokestop inner join trs_quest on "
-            "pokestop.pokestop_id = trs_quest.GUID where "
-            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
+            "FROM pokestop INNER JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
+            "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
         )
 
-        if GUID is not None:
-            add_query = " and trs_quest.GUID = %s"
-            query = query + add_query
-            data = (GUID,)
-        elif timestamp is not None:
-            add_query = " and trs_quest.quest_timestamp >= %s"
-            query = query + add_query
-            data = (timestamp,)
+        query_where = ""
 
-        res = self.execute(query, data)
+        if neLat is not None and neLon is not None and swLat is not None and swLon is not None:
+            oquery_where = (
+                " AND (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(swLat, swLon, neLat, neLon)
+
+            query_where = query_where + oquery_where
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+        elif timestamp is not None:
+            oquery_where = " AND trs_quest.quest_timestamp >= {}".format(timestamp)
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
 
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
@@ -1492,3 +1502,75 @@ class RmWrapper(DbWrapperBase):
         del_vars = (latitude, longitude)
         self.execute(query, del_vars, commit=True)
 
+    def get_gyms_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        gyms = {}
+
+        # base query to fetch gyms
+        query = (
+            "SELECT gym.gym_id, gym.latitude, gym.longitude, "
+            "gymdetails.name, gymdetails.url, gym.team_id, "
+            "gym.last_modified, raid.level, raid.spawn, raid.start, "
+            "raid.end, raid.pokemon_id, raid.form "
+            "FROM gym "
+            "INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
+            "LEFT JOIN raid ON raid.gym_id = gym.gym_id "
+        )
+
+        # fetch gyms only in a certain rectangle
+        query_where = (
+            " WHERE (latitude >= {} AND longitude >= {} "
+            " AND latitude <= {} AND longitude <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        # but don't fetch gyms from a known rectangle
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        # there's no old rectangle so check for a timestamp to send only updated stuff
+        elif timestamp is not None:
+            tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
+
+            # TODO ish: until we don't show any other information like raids
+            #          we can use last_modified, since that will give us actual
+            #          changes like gym color change
+            oquery_where = " AND last_modified >= '{}' ".format(tsdt)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (gym_id, latitude, longitude, name, url, team_id, last_updated,
+                level, spawn, start, end, mon_id, form) in res:
+
+            nowts = datetime.utcfromtimestamp(time.time()).timestamp()
+
+            # check if we found a raid and if it's still active
+            if end is None or nowts > int(end.replace(tzinfo=timezone.utc).timestamp()):
+                raid = None
+            else:
+                raid = {
+                    "spawn": int(spawn.replace(tzinfo=timezone.utc).timestamp()),
+                    "start": int(start.replace(tzinfo=timezone.utc).timestamp()),
+                    "end": int(end.replace(tzinfo=timezone.utc).timestamp()),
+                    "mon": mon_id,
+                    "form": form,
+                    "level": level
+                }
+
+            gyms[gym_id] = {
+                "id": gym_id,
+                "name": name,
+                "url": url,
+                "latitude": latitude,
+                "longitude": longitude,
+                "team_id": team_id,
+                "last_updated": last_updated,
+                "raid": raid
+            }
+
+        return gyms
