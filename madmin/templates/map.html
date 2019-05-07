@@ -154,24 +154,21 @@
       'settings.routes.coordinateRadius': {
         deep: true,
         handler: function () {
+          $this = this;
           for (routetype in this.settings.routes.coordinateRadius) {
-            // update settings
             this.updateStoredSetting('settings-coordinateRadius-' + routetype, this.settings.routes.coordinateRadius[routetype]);
+          }
 
-            console.log(routetype);
-            /*
-            for (layer in this.layers.dyn.routes) {
-              if (this.layers.dyn.routes[layer].type == routetype) {
-                leaflet_data.layers[layer].getLayers().forEach(function (point) {
-                  try {
-                    point.setRadius(this.settings.routes.coordinateRadius[routetype]);
-                  } catch (err) {
-                    // yes, this is bad and I know it ...
-                  }
-                }, this);
+          for (route in leaflet_data["routes"]) {
+            leaflet_data["routes"][route].eachLayer(function(marker) {
+              try {
+                marker.setRadius($this.settings.routes.coordinateRadius[$this.layers.dyn.routes[route].mode]);
+              } catch(e) {
+                // routes have a special layer containing polylines
+                // unfortunately, there's no identifer for them, thus
+                // we catch this exception and ignore it
               }
-            }
-            */
+            });
           }
         }
       }
@@ -346,14 +343,14 @@
             }
 
             if (route.mode == "mon_mitm") {
-              mode = "mon";
-              cradius = $this.settings.routes.coordinateRadius.mon;
+              mode = "mons";
+              cradius = $this.settings.routes.coordinateRadius.mons;
             } else if (route.mode == "pokestops") {
-              mode = "quest";
-              cradius = $this.settings.routes.coordinateRadius.quest;
+              mode = "quests";
+              cradius = $this.settings.routes.coordinateRadius.quests;
             } else if (route.mode == "raids_mitm" || route.mode == "raids_ocr") {
-              mode = "raid";
-              cradius = $this.settings.routes.coordinateRadius.raid;
+              mode = "raids";
+              cradius = $this.settings.routes.coordinateRadius.raids;
             }
 
             route.coordinates.forEach(function (coord) {
@@ -789,11 +786,6 @@
         });
         return lonlat;
       },
-      setCircleRadiusForRoute(route, type) {
-        route.forEach(function (circle) {
-          circle.setRadius(this.settings.routes.coordinateRadius[type]);
-        }, this);
-      },
       initMap() {
         $this = this;
 
@@ -803,9 +795,9 @@
         const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
 
         // get stored coordinate radius
-        this.settings.routes.coordinateRadius.raid = this.getStoredSetting('settings-coordinateRadius-raid', 490);
-        this.settings.routes.coordinateRadius.quest = this.getStoredSetting('settings-coordinateRadius-quest', 40);
-        this.settings.routes.coordinateRadius.mon = this.getStoredSetting('settings-coordinateRadius-mon', 67);
+        this.settings.routes.coordinateRadius.raids = this.getStoredSetting('settings-coordinateRadius-raids', 490);
+        this.settings.routes.coordinateRadius.quests = this.getStoredSetting('settings-coordinateRadius-quests', 40);
+        this.settings.routes.coordinateRadius.mons = this.getStoredSetting('settings-coordinateRadius-mons', 67);
 
         // get stored static layer settings
         var statlayers = Object.keys(this.layers.stat);
@@ -832,7 +824,7 @@
           position: "left",
         }).addTo(map);
 
-        sidebar.open(this.getStoredSetting("sidebartab", "points"));
+        sidebar.close();
 
         {% if setlat and setlng %}
         var setlat = {{ setlat }};
@@ -966,21 +958,21 @@
         <h1 class="leaflet-sidebar-header bg-dark">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
         <ul class="list-group list-group-flush">
           <li class="list-group-item layer-item d-flex">
-            <div class="flex-grow-1"><strong>Raid coordinate radius</strong></div>
+            <div class="flex-grow-1"><strong>Raids visual radius</strong></div>
             <div class="custom-control custom-switch">
-              <input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raid" max="1100" class="form-control form-control-sm" />
+              <input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raids" max="1100" class="form-control form-control-sm" />
             </div>
           </li>
           <li class="list-group-item layer-item d-flex">
-            <div class="flex-grow-1"><strong>Mon coordinate radius</strong></div>
+            <div class="flex-grow-1"><strong>Mons visual radius</strong></div>
             <div class="custom-control custom-switch">
-              <input id="moncoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mon" max="1100" class="form-control form-control-sm" />
+              <input id="moncoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mons" max="1100" class="form-control form-control-sm" />
             </div>
           </li>
           <li class="list-group-item layer-item d-flex">
-            <div class="flex-grow-1"><strong>Quest coordinate radius</strong></div>
+            <div class="flex-grow-1"><strong>Quests visual radius</strong></div>
             <div class="custom-control custom-switch">
-              <input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quest" max="1100" class="form-control form-control-sm" />
+              <input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quests" max="1100" class="form-control form-control-sm" />
             </div>
           </li>
         </ul>
