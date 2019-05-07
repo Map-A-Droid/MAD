@@ -1403,12 +1403,6 @@ class RmWrapper(DbWrapperBase):
             minutes = datetime.now() - timedelta(minutes=int(minutes))
             query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(minutes)
 
-        # SELECT unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp,
-        # count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join trs_stats_detect_raw
-        # on pokemon.encounter_id=trs_stats_detect_raw.type_id where FROM_UNIXTIME(timestamp_scan)
-        # > '2019-05-04 10:47:47.259159' group by IV, day(FROM_UNIXTIME(timestamp_scan)),
-        # hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp
-
         query = (
             "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join "
             "trs_stats_detect_raw on pokemon.encounter_id=trs_stats_detect_raw.type_id %s "

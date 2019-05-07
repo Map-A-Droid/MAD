@@ -1314,7 +1314,8 @@ class DbWrapperBase(ABC):
         query_where = ''
         query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(timestamp_scan), '%y-%m-%d %k:00:00'))"
         if minutes:
-            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query = (

@@ -113,23 +113,23 @@ class MITMBase(WorkerBase):
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
             self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        time.sleep(2 + int(delayadd))
 
         x, y = self._resocalc.get_delete_quest_coords(self)[0], \
             self._resocalc.get_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        time.sleep(1.5 + int(delayadd))
 
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
             self._resocalc.get_confirm_delete_quest_coords(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1 + int(delayadd))
+        time.sleep(1.5 + int(delayadd))
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], \
             self._resocalc.get_close_main_button_coords(self)[1]
         self._communicator.click(int(x), int(y))
 
-        time.sleep(2)
+        time.sleep(1.5)
 
         logger.debug('{_clear_quests} finished')
         return
