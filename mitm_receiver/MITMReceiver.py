@@ -114,7 +114,8 @@ class MITMReceiver(object):
         if not self.__mitm_mapper.get_injection_status(origin):
             logger.info("Worker {} is injected now", str(origin))
             self.__mitm_mapper.set_injection_status(origin)
-        timestamp = int(math.floor(time.time()))
+        # extract timestamp from data
+        timestamp = data.get("timestamp", int(math.floor(time.time())))
         self.__mitm_mapper.update_latest(
             origin, timestamp=timestamp, key=type, values_dict=data)
         self._data_queue.put(
