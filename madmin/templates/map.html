@@ -63,6 +63,7 @@
 
   // main map element
   var map;
+  var mapclick = 0;
 
   // special canvas icon layer
   var mapIconLayer;
@@ -205,10 +206,6 @@
       },
       map_fetch_workers() {
         var $this = this;
-
-        if (!$this.layers.stat.workers) {
-          return;
-        }
 
         axios.get("get_position").then(function (res) {
           res.data.forEach(function (worker) {
@@ -748,9 +745,18 @@
         setTimeout(function() { $this.map_fetch_everything() }, 100);
       },
       l_event_click(e) {
-        if( this.workers.length > 0 ) {
-          $('#injectionModal').data('coords', e.latlng.lat + ',' + e.latlng.lng).modal();
-        }
+        $this = this;
+        mapclick = mapclick + 1;
+
+        setTimeout(function() {
+          if(mapclick == 1) {
+            $('#injectionModal').data('coords', e.latlng.lat + ',' + e.latlng.lng).modal();
+            mapclick = 0;
+          }
+        }, 250);
+      },
+      l_event_dbclick(e) {
+        mapclick = 0;
       },
       updateBounds(isOld) {
         if (!isOld) {
@@ -845,6 +851,7 @@
         map.on('zoomend', this.l_event_zoomed);
         map.on('moveend', this.l_event_moveend);
         map.on('click', this.l_event_click);
+        map.on('dblclick', this.l_event_dbclick);
 
         sidebar.on("content", function(event) {
           $this.updateStoredSetting("sidebartab", event.id);
