@@ -288,7 +288,7 @@ class WorkerQuests(MITMBase):
 
             data_received = self._open_pokestop(timestamp)
             if data_received is not None and data_received == LatestReceivedType.STOP:
-                self._handle_stop()
+                self._handle_stop(timestamp)
         else:
             logger.info('Currently in INIT Mode - no Stop processing')
         logger.debug("Releasing lock")
@@ -319,7 +319,6 @@ class WorkerQuests(MITMBase):
         if start_result:
             logger.warning("startPogo: Starting pogo...")
             self._last_known_state["lastPogoRestart"] = cur_time
-            #self._check_pogo_main_screen(15, True)
             reached_mainscreen = True
         return reached_mainscreen
 
@@ -478,7 +477,7 @@ class WorkerQuests(MITMBase):
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
                                         values_dict=injected_settings)
 
-    def _current_position_has_spinnable_stop(self):
+    def _current_position_has_spinnable_stop(self, timestamp: float):
         latest: dict = self._mitm_mapper.request_latest(self._id)
         if latest is None or 106 not in latest.keys():
             return False
@@ -557,7 +556,7 @@ class WorkerQuests(MITMBase):
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
     #  /FortSearchResponse.proto#L12
-    def _handle_stop(self):
+    def _handle_stop(self, timestamp: float):
         to = 0
         data_received = FortSearchResultTypes.UNDEFINED
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
@@ -576,7 +575,7 @@ class WorkerQuests(MITMBase):
                   FortSearchResultTypes.OUT_OF_RANGE):
                 logger.error('Softban - waiting...')
                 time.sleep(10)
-                if self._open_pokestop() is None:
+                if self._open_pokestop(timestamp) is None:
                     return
             else:
                 logger.info("Likely already spun this stop or brief softban, trying again")
@@ -588,7 +587,7 @@ class WorkerQuests(MITMBase):
 
                 self._turn_map(self._delay_add)
                 time.sleep(1)
-                if self._open_pokestop() is None:
+                if self._open_pokestop(timestamp) is None:
                     return
                 to += 1
                 break
