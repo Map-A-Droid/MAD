@@ -1396,3 +1396,4 @@ class MonocleWrapper(DbWrapperBase):
         )
         del_vars = (latitude, longitude)
         self.execute(query, del_vars, commit=True)
+

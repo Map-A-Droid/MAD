@@ -409,7 +409,6 @@ class DbWrapperBase(ABC):
     def delete_stop(self, lat: float, lng: float):
         pass
 
-
     def create_hash_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -759,14 +758,14 @@ class DbWrapperBase(ABC):
             "FROM trs_spawn "
             "WHERE calc_endminsec is NULL"
         )
-        list_of_coords: List[Location] = List[Location]
+        list_of_coords: List[Location] = []
         logger.debug(
             "DbWrapperBase::get_undetected_spawns executing select query")
         res = self.execute(query)
         logger.debug(
             "DbWrapperBase::get_undetected_spawns result of query: {}", str(res))
         for (latitude, longitude) in res:
-            list_of_coords.append(Location(latitude, longitude))
+            list_of_coords.append([latitude, longitude])
 
         if geofence_helper is not None:
             logger.debug(
@@ -1315,7 +1314,8 @@ class DbWrapperBase(ABC):
         query_where = ''
         query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(timestamp_scan), '%y-%m-%d %k:00:00'))"
         if minutes:
-            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query = (

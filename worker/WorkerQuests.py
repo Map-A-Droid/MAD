@@ -478,7 +478,7 @@ class WorkerQuests(MITMBase):
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
                                         values_dict=injected_settings)
 
-    def _current_position_has_spinnable_stop(self, timestamp: float):
+    def _current_position_has_spinnable_stop(self):
         latest: dict = self._mitm_mapper.request_latest(self._id)
         if latest is None or 106 not in latest.keys():
             return False

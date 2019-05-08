@@ -535,6 +535,7 @@ class RmWrapper(DbWrapperBase):
             logger.error("No geofence_helper! Not fetching gyms.")
             return []
 
+        #(minLat, minLon, maxLat, maxLon)
         logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
 
@@ -1491,3 +1492,4 @@ class RmWrapper(DbWrapperBase):
         )
         del_vars = (latitude, longitude)
         self.execute(query, del_vars, commit=True)
+
