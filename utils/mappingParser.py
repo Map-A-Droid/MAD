@@ -162,7 +162,7 @@ class MappingParser(object):
             else:
                 raise RuntimeError("Invalid mode found in mapping parser.")
 
-            if not mode in ("iv_mitm", "idle"):
+            if mode not in ("iv_mitm", "idle"):
                 if mode == "raids_ocr" or area.get("init", False) is False:
                     # grab data from DB depending on mode
                     # TODO: move routemanagers to factory

@@ -273,7 +273,7 @@ class WorkerQuests(MITMBase):
         self.last_location = self.current_location
         return cur_time, True
 
-    def _post_move_location_routine(self, timestamp):
+    def _post_move_location_routine(self, timestamp: float):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         self._work_mutex.acquire()
@@ -286,7 +286,7 @@ class WorkerQuests(MITMBase):
 
             logger.info('Open Stop')
 
-            data_received = self._open_pokestop()
+            data_received = self._open_pokestop(timestamp)
             if data_received is not None and data_received == LatestReceivedType.STOP:
                 self._handle_stop()
         else:
@@ -478,7 +478,7 @@ class WorkerQuests(MITMBase):
         self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
                                         values_dict=injected_settings)
 
-    def _current_position_has_spinnable_stop(self):
+    def _current_position_has_spinnable_stop(self, timestamp: float):
         latest: dict = self._mitm_mapper.request_latest(self._id)
         if latest is None or 106 not in latest.keys():
             return False
@@ -514,14 +514,19 @@ class WorkerQuests(MITMBase):
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         return False
 
-    def _open_pokestop(self):
+    def _open_pokestop(self, timestamp: float):
         to = 0
         data_received = LatestReceivedType.UNDEFINED
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
-        if not self._current_position_has_spinnable_stop():
-            self._walker_routemanager.add_coord_to_be_removed(self.current_location.lat, self.current_location.lng)
-            return None
+        if not self._current_position_has_spinnable_stop(timestamp):
+            # wait for GMO in case we moved too far away
+            data_received = self._wait_for_data(
+                    timestamp=timestamp, proto_to_wait_for=106, timeout=25)
+            if data_received == LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
+                logger.info("Stop {} considered to be ignored in the next round due to failed spinnable check")
+                self._walker_routemanager.add_coord_to_be_removed(self.current_location.lat, self.current_location.lng)
+                return None
         while data_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time

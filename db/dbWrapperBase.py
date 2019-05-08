@@ -759,14 +759,14 @@ class DbWrapperBase(ABC):
             "FROM trs_spawn "
             "WHERE calc_endminsec is NULL"
         )
-        list_of_coords: List[Location] = []
+        list_of_coords: List[Location] = List[Location]
         logger.debug(
             "DbWrapperBase::get_undetected_spawns executing select query")
         res = self.execute(query)
         logger.debug(
             "DbWrapperBase::get_undetected_spawns result of query: {}", str(res))
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
             logger.debug(
