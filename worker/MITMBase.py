@@ -19,7 +19,7 @@ class LatestReceivedType(Enum):
     MON = 3
     CLEAR = 4
 
-
+#get_trash_click_positions
 class MITMBase(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler,
                  walker_routemanager, devicesettings, db_wrapper, mitm_mapper, pogoWindowManager,
@@ -115,15 +115,18 @@ class MITMBase(WorkerBase):
         self._communicator.click(int(x), int(y))
         time.sleep(2 + int(delayadd))
 
-        x, y = self._resocalc.get_delete_quest_coords(self)[0], \
-            self._resocalc.get_delete_quest_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1.5 + int(delayadd))
-
+        trashcancheck = self._get_trash_positions()
+        logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
+        # get confirm box coords
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
-            self._resocalc.get_confirm_delete_quest_coords(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(1.5 + int(delayadd))
+               self._resocalc.get_confirm_delete_quest_coords(self)[1]
+
+        for trash in range(len(trashcancheck)):
+            logger.info("Delete old quest {}", int(trash)+1)
+            self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
+            time.sleep(1 + int(delayadd))
+            self._communicator.click(int(x), int(y))
+            time.sleep(1 + int(delayadd))
 
         x, y = self._resocalc.get_close_main_button_coords(self)[0], \
             self._resocalc.get_close_main_button_coords(self)[1]

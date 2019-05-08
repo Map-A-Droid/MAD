@@ -71,6 +71,7 @@ class WorkerQuests(MITMBase):
     def _pre_location_update(self):
         self._start_inventory_clear.set()
         self._update_injection_settings()
+        self.clear_box(self._delay_add)
 
     def _move_to_location(self):
         routemanager = self._walker_routemanager
@@ -377,12 +378,98 @@ class WorkerQuests(MITMBase):
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], \
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
-        to = 0
-        delete_allowed = True
+        delrounds = 0
+        first_round = True
+        delete_allowed = False
+        error_counter = 0
 
-        while int(to) <= 7 and int(_pos) <= int(4):
+        while int(delrounds) <= 8:
+
+            trash = 0
+            if not first_round and not delete_allowed:
+                error_counter += 1
+                logger.warning('Find no item to delete: {}', str(error_counter))
+                self._communicator.touchandhold(int(200), int(300), int(200), int(100))
+                time.sleep(1)
+
+            trashcancheck = self._get_trash_positions()
+            logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
+            first_round = False
+            delete_allowed = False
+
+            while int(trash) <= len(trashcancheck) - 1:
+                check_y_text_starter = int(trashcancheck[trash].y)
+                check_y_text_ending = int(trashcancheck[trash].y) + self._resocalc.get_inventory_text_diff(self)
+
+                item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
+                                                                                    'screenshot%s.png' % str(self._id)),
+                                                                       self._id, text_x1, text_x2, check_y_text_ending,
+                                                                       check_y_text_starter)
+
+                logger.info("Found item {}", str(item_text))
+                if item_text in not_allow:
+                    logger.info('Could not delete this item - check next one')
+                    trash += 1
+                else:
+                    logger.info('Could delete this item')
+                    self._communicator.click(int(trashcancheck[trash].x), int(trashcancheck[trash].y))
+                    time.sleep(1 + int(delayadd))
+
+                    self._communicator.touchandhold(
+                        click_x1, click_y, click_x2, click_y)
+                    time.sleep(1)
+
+                    delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
+                                 self._resocalc.get_confirm_delete_item_coords(self)[1]
+                    curTime = time.time()
+                    self._communicator.click(int(delx), int(dely))
+
+                    data_received = self._wait_for_data(
+                        timestamp=curTime, proto_to_wait_for=4, timeout=35)
+
+                    if data_received is not None:
+                        if data_received == LatestReceivedType.CLEAR:
+                            delrounds += 1
+                            trash = 99
+                            delete_allowed = True
+                    else:
+                        logger.error('Unknown error clearing out {}', str(item_text))
+                        to = 8
+
+
+
+
+
+
+
+
+
+        for trash in range(len(trashcancheck)):
+            item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
+                                                                                'screenshot%s.png' % str(self._id)),
+                                                                   self._id, text_x1, text_x2, text_y1,
+                                                                   int(trashcancheck[trash].y),
+                                                                   )
+            logger.info("Found item {}", str(item_text))
+            if item_text in not_allow:
+                print("TE")
+
+            else:
+                logger.info('Fake deleting ...')
+                text_y1 += self._resocalc.get_next_item_coord(self)
+            #self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
+
+
+
+        while int(to) <= 7:
+
+
+
+
             if delete_allowed:
                 self._takeScreenshot(delayBefore=1)
+
+
 
             item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
                                                                                 'screenshot%s.png' % str(self._id)),
