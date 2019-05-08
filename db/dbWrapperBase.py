@@ -728,7 +728,7 @@ class DbWrapperBase(ABC):
 
         return float(found[0][1])
 
-    def get_detected_spawns(self, geofence_helper):
+    def get_detected_spawns(self, geofence_helper) -> List[Location]:
         logger.debug("DbWrapperBase::get_detected_spawns called")
 
         query = (
@@ -775,7 +775,7 @@ class DbWrapperBase(ABC):
         logger.debug(
             "DbWrapperBase::get_undetected_spawns result of query: {}", str(res))
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
             logger.debug(
@@ -1347,7 +1347,8 @@ class DbWrapperBase(ABC):
         query_where = ''
         query_date = "unix_timestamp(DATE_FORMAT(from_unixtime(timestamp_scan), '%y-%m-%d %k:00:00'))"
         if minutes:
-            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
         query = (

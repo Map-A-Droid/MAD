@@ -91,7 +91,7 @@ class RouteManagerQuests(RouteManagerBase):
             stops_not_processed: Dict[Location, int] = {}
 
             if len(self._stoplist) == 0:
-                return []
+                return list_of_stops_to_return
             else:
                 # we only want to add stops that we haven't spun yet
                 for stop in self._stoplist:
