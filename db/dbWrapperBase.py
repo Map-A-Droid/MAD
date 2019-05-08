@@ -718,7 +718,7 @@ class DbWrapperBase(ABC):
 
         return float(found[0][1])
 
-    def get_detected_spawns(self, geofence_helper):
+    def get_detected_spawns(self, geofence_helper) -> List[Location]:
         logger.debug("DbWrapperBase::get_detected_spawns called")
 
         query = (
@@ -758,7 +758,7 @@ class DbWrapperBase(ABC):
             "FROM trs_spawn "
             "WHERE calc_endminsec is NULL"
         )
-        list_of_coords: List[Location] = List[Location]
+        list_of_coords: List[Location] = []
         logger.debug(
             "DbWrapperBase::get_undetected_spawns executing select query")
         res = self.execute(query)

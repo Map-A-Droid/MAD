@@ -18,6 +18,7 @@ from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
 from utils.logging import logger
 from utils.walkerArgs import parseArgs
+from worker.WorkerBase import WorkerBase
 
 args = parseArgs()
 
@@ -50,7 +51,7 @@ class RouteManagerBase(ABC):
         self._coords_to_be_ignored = set()
 
         # we want to store the workers using the routemanager
-        self._workers_registered = []
+        self._workers_registered: List[WorkerBase] = []
         self._workers_registered_mutex = Lock()
 
         self._last_round_prio = {}
