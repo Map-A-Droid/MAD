@@ -474,11 +474,12 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[str(id)] = self.__encode_hash_json(team,
-                                                  float(lat),
-                                                  float(lon),
-                                                  str(name).replace('"', '\\"')
-                                                  .replace('\n', '\\n'), str(url), park, sponsor)
+            gyminfo[str(id)] = self.__encode_hash_json(id,
+                                                       team,
+                                                       float(lat),
+                                                       float(lon),
+                                                       str(name).replace('"', '\\"')
+                                                       .replace('\n', '\\n'), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
@@ -1093,10 +1094,9 @@ class MonocleWrapper(DbWrapperBase):
             #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
-    def quests_from_db(self, GUID=None, timestamp=None):
+    def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
         logger.debug("MonocleWrapper::quests_from_db called")
         questinfo = {}
-        data = ()
 
         query = (
             "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
@@ -1104,21 +1104,32 @@ class MonocleWrapper(DbWrapperBase):
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
             "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
             "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
-            "FROM pokestops inner join trs_quest on "
-            "pokestops.external_id = trs_quest.GUID where "
-            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
+            "FROM pokestops inner join trs_quest ON pokestops.external_id = trs_quest.GUID "
+            "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
         )
 
-        if GUID is not None:
-            add_query = " and trs_quest.GUID = %s"
-            query = query + add_query
-            data = (GUID,)
-        elif timestamp is not None:
-            add_query = " and trs_quest.quest_timestamp >= %s"
-            query = query + add_query
-            data = (timestamp,)
+        query_where = ""
 
-        res = self.execute(query, data)
+        if neLat is not None and neLon is not None and swLat is not None and swLon is not None:
+            oquery_where = (
+                " AND (lat >= {} AND lon >= {} "
+                " AND lat <= {} AND lon <= {}) "
+            ).format(swLat, swLon, neLat, neLon)
+
+            query_where = query_where + oquery_where
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (lat >= {} AND lon >= {} "
+                " AND lat <= {} AND lon <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+        elif timestamp is not None:
+            oquery_where = " AND trs_quest.quest_timestamp >= {}".format(timestamp)
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
 
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
@@ -1397,3 +1408,71 @@ class MonocleWrapper(DbWrapperBase):
         del_vars = (latitude, longitude)
         self.execute(query, del_vars, commit=True)
 
+    def get_gyms_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        gyms = {}
+
+        # base query to fetch gyms
+        query = (
+            "SELECT forts.external_id, forts.lat, forts.lon, forts.name, "
+            "forts.url, IFNULL(fort_sightings.team, 0), "
+            "fort_sightings.last_modified, raids.level, raids.time_spawn, raids.time_battle, "
+            "raids.time_end, raids.pokemon_id, raids.form "
+            "FROM forts "
+            "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
+            "LEFT JOIN raids ON raids.fort_id = forts.id "
+        )
+
+        # fetch gyms only in a certain rectangle
+        query_where = (
+            " WHERE (lat >= {} AND lon >= {} "
+            " AND lat <= {} AND lon <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        # but don't fetch gyms from a known rectangle
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (lat >= {} AND lon >= {} "
+                " AND lat <= {} AND lon <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        # there's no old rectangle so check for a timestamp to send only updated stuff
+        elif timestamp is not None:
+            # TODO ish: until we don't show any other information like raids
+            #          we can use last_modified, since that will give us actual
+            #          changes like gym color change
+            oquery_where = " AND last_modified >= {} ".format(timestamp)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (gym_id, latitude, longitude, name, url, team_id, last_updated,
+                level, spawn, start, end, mon_id, form) in res:
+
+            # check if we found a raid and if it's still active
+            if end is None or time.time() > end:
+                raid = None
+            else:
+                raid = {
+                    "spawn": spawn,
+                    "start": start,
+                    "end": end,
+                    "mon": mon_id,
+                    "form": form,
+                    "level": level
+                }
+
+            gyms[gym_id] = {
+                "id": gym_id,
+                "name": name,
+                "url": url,
+                "latitude": latitude,
+                "longitude": longitude,
+                "team_id": int(team_id),
+                "last_updated": last_updated,
+                "raid": raid
+            }
+
+        return gyms

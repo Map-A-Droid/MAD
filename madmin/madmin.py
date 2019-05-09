@@ -912,39 +912,70 @@ def get_route():
 @app.route("/get_spawns")
 @auth_required
 def get_spawns():
+    neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+    timestamp = request.args.get("timestamp", None)
+
     coords = []
-    data = json.loads(db_wrapper.download_spawns())
+    data = json.loads(
+        db_wrapper.download_spawns(
+            neLat,
+            neLon,
+            swLat,
+            swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+        )
+    )
 
     for spawnid in data:
         spawn = data[str(spawnid)]
         coords.append({
-            'endtime': spawn['endtime'],
-            'lat': spawn['lat'],
-            'lon': spawn['lon'],
-            'spawndef': spawn['spawndef'],
-            'lastscan': spawn['lastscan']
+            "id": spawn["id"],
+            "endtime": spawn["endtime"],
+            "lat": spawn["lat"],
+            "lon": spawn["lon"],
+            "spawndef": spawn["spawndef"],
+            "lastscan": spawn["lastscan"]
         })
 
     return jsonify(coords)
 
 
-@cache.cached()
 @app.route("/get_gymcoords")
 @auth_required
 def get_gymcoords():
+    neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+    timestamp = request.args.get("timestamp", None)
+
     coords = []
 
-    data = db_wrapper.get_gym_infos()
+    data = db_wrapper.get_gyms_in_rectangle(
+            neLat,
+            neLon,
+            swLat,
+            swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+    )
 
     for gymid in data:
         gym = data[str(gymid)]
+
         coords.append({
-            'id': gymid,
-            'name': gym['name'],
-            'img': gym['url'],
-            'lat': gym['latitude'],
-            'lon': gym['longitude'],
-            'team_id': gym['team_id']
+            "id": gymid,
+            "name": gym["name"],
+            "img": gym["url"],
+            "lat": gym["latitude"],
+            "lon": gym["longitude"],
+            "team_id": gym["team_id"],
+            "last_updated": gym["last_updated"],
+            "raid": gym["raid"]
         })
 
     return jsonify(coords)
@@ -955,7 +986,20 @@ def get_gymcoords():
 def get_quests():
     coords = []
 
-    data = db_wrapper.quests_from_db()
+    neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+    timestamp = request.args.get("timestamp", None)
+
+    data = db_wrapper.quests_from_db(
+            neLat=neLat,
+            neLon=neLon,
+            swLat=swLat,
+            swLon=swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+    )
 
     for pokestopid in data:
         quest = data[str(pokestopid)]
@@ -2230,3 +2274,20 @@ def showmonsidpicker():
     formhiddeninput += '<input type="hidden" id="current_mons_list" name="current_mons_list" value="' + str(current_mons) + '">'
     formhiddeninput += '<button type="submit" class="btn btn-success">Save</button></form>'
     return render_template('showmonsidpicker.html', backurl=backurl, formhiddeninput=formhiddeninput, current_mons_list=current_mons_list, stripped_mondata=stripped_mondata, header=header, title=title)
+
+def getBoundParameter(request):
+    neLat = request.args.get('neLat')
+    neLon = request.args.get('neLon')
+    swLat = request.args.get('swLat')
+    swLon = request.args.get('swLon')
+    oNeLat = request.args.get('oNeLat', None)
+    oNeLon = request.args.get('oNeLon', None)
+    oSwLat = request.args.get('oSwLat', None)
+    oSwLon = request.args.get('oSwLon', None)
+
+    # reset old bounds to None if they're equal
+    # this will tell the query to only fetch new/updated elements
+    if neLat == oNeLat and neLon == oNeLon and swLat == oSwLat and swLon == oSwLon:
+        oNeLat = oNeLon = oSwLat = oSwLon = None
+
+    return neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon

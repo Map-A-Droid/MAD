@@ -167,8 +167,16 @@ class MITMReceiver(object):
                 "Not processing data of {} since origin is unknown", str(origin))
             return
         type = data.get("type", None)
-        if type:
+        raw = data.get("raw", False)
+
+        if raw:
+            logger.debug5("Received raw payload: {}", data["payload"])
+
+        if type and not raw:
             self.__mitm_mapper.playerstats[origin].stats_collector(type)
+
+            logger.debug4("Received payload: {}", data["payload"])
+
             if type == 106:
                 # process GetMapObject
                 logger.success("Processing GMO received from {}. Received at {}", str(

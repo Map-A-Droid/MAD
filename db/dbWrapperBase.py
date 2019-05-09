@@ -389,6 +389,16 @@ class DbWrapperBase(ABC):
     def get_weather_changed_since(self, timestamp):
         pass
 
+    @abstractmethod
+    def get_gyms_in_rectangle(self, neLat, neLon, swLat, swLon,
+                              oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        """
+        Basically just for MADmin map. This method returns gyms within a certain rectangle.
+        It also handles a diff/old area to reduce returned data. Also checks for updated
+        elements withing the rectangle via the timestamp.
+        """
+        pass
+
     def statistics_get_pokemon_count(self, days):
         pass
 
@@ -883,7 +893,7 @@ class DbWrapperBase(ABC):
         self.execute(query_trs_spawn, commit=True)
         self.execute(query_trs_spawnsightings, commit=True)
 
-    def download_spawns(self):
+    def download_spawns(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
         logger.debug("dbWrapper::download_spawns")
         spawn = {}
 
@@ -893,12 +903,35 @@ class DbWrapperBase(ABC):
             "FROM `trs_spawn`"
         )
 
+        query_where = (
+            " WHERE (latitude >= {} AND longitude >= {} "
+            " AND latitude <= {} AND longitude <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+        elif timestamp is not None:
+            tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
+
+            oquery_where = (
+                " AND last_scanned >= '{}' "
+            ).format(tsdt)
+
+            query_where = query_where + oquery_where
+
+        query = query + query_where
         res = self.execute(query)
+
         for (spawnid, lat, lon, endtime, spawndef, last_scanned) in res:
-            spawn[spawnid] = {'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef,
+            spawn[spawnid] = {'id': spawnid, 'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef,
                               'lastscan': str(last_scanned)}
 
-        return str(json.dumps(spawn, indent=4, sort_keys=True))
+        return str(json.dumps(spawn))
 
     def retrieve_next_spawns(self, geofence_helper):
         """
