@@ -700,7 +700,7 @@
             <div class="id"><i class="fa fa-fingerprint"></i> <span>${spawn['id']}</span></div>
             <div class="coords">
               <i class="fa fa-map-pin"></i>
-              <a href="https://maps.google.com/?q=${spawn['lat']},${spawn['lon']}">${spawn['lat']}, ${spawn['lon']}</a>
+              <a href="https://maps.google.com/?q=${spawn['lat']},${spawn['lon']}">${spawn['lat'].toFixed(6)}, ${spawn['lon'].toFixed(6)}</a>
            </div>`;
       },
       getStoredSetting(name, defaultval) {
