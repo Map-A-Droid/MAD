@@ -589,40 +589,46 @@
         return icon;
       },
       build_quest(quest_reward_type_raw, quest_task, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type) {
+        var size = "100%";
+
         switch (quest_reward_type_raw) {
           case 2:
-            var image = 'static/quest/reward_' + quest_item_id + '_1.png';
-            var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
-            var width = 40;
+            var image = `static/quest/reward_${quest_item_id}_1.png`;
+            var rewardtext = `${quest_item_amount}x ${quest_item_type}`;
             break;
           case 3:
-            var image = 'static/quest/reward_stardust.png';
-            var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
-            var width = 40;
+            var image = "static/quest/reward_stardust.png";
+            var rewardtext = `${quest_item_amount} ${quest_item_type}`;
             break;
           case 7:
             var form = '00';
             if (quest_pokemon_id === 327) {
               form = '11';
             }
-            var image = 'asset/pokemon_icons/pokemon_icon_' + String.prototype.padStart.call(quest_pokemon_id, 3, 0) + '_' + form + '.png';
+            var image = `asset/pokemon_icons/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${form}.png`;
             var rewardtext = quest_pokemon_name;
-            var width = 60;
+            var size = "150%";
             break;
         }
 
-        popuptext = '<center><b>' + quest_task + '</b><br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
-        return popuptext;
+        return `<div class="quest">
+            <div class="task"><i class="fa fa-question-circle"></i> Task: <strong>${quest_task}</strong></div>
+            <div class="reward"><i class="fa fa-trophy"></i> Reward: <strong>${rewardtext}</strong></div>
+            <div class="rewardImg" style="background-image: url(${image}); background-size: ${size}"></div>
+          </div>`;
       },
       build_stop_popup(marker) {
         var quest = this.quests[marker.options.id];
 
-        return `<div id="gymImage" style="background: url(${quest['url']}) center center no-repeat;"></div>
-          <div id="gymName"><strong>${quest['name']}</strong></div>
-          <div id="gymID">${quest['pokestop_id']}</div>
-          <div id="gymCoords">
-            <a href="https://maps.google.com/?q=${quest['latitude']},${quest['longitude']}">${quest['latitude']}, ${quest['longitude']}</a>
-            <div id="questTimestamp">Scanned at: ${new Date(quest['timestamp']*1000).toLocaleString()}</div>
+        return `<div class="content">
+            <div class="image" style="background: url(${quest['url']}) center center no-repeat;"></div>
+            <div class="name"><strong>${quest['name']}</strong></div>
+            <div class="id"><i class="fa fa-fingerprint"></i> <span>${quest['pokestop_id']}</span></div>
+            <div class="coords">
+              <i class="fa fa-map-pin"></i>
+              <a href="https://maps.google.com/?q=${quest['latitude']},${quest['longitude']}">${quest['latitude']}, ${quest['longitude']}</a>
+            </div>
+            <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: ${new Date(quest['timestamp']*1000).toLocaleString()}</div>
             <br>
             ${this.build_quest(quest['quest_reward_type_raw'], quest['quest_task'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type'])}
           </div>`;
@@ -630,12 +636,15 @@
       build_gym_popup(marker) {
         gym = this.gyms[marker.options.id];
 
-        var foo = `<div id="gymImage" style="background: url(${gym['img']}) center center no-repeat;"></div>
-          <div id="gymName"><strong>${gym['name']}</div>
-          <div id="gymID"></strong>${gym['id']}</div>
-          <div id="gymCoords"><a href="https://maps.google.com/?q=${gym['lat']},${gym['lon']}">${gym['lat']}, ${gym['lon']}</a></div>`;
-
-        return foo;
+        return `<div class="content">
+            <div class="image" style="background: url(${gym['img']}) center center no-repeat;"></div>
+            <div class="name"><strong>${gym['name']}</strong></div>
+            <div class="id"><i class="fa fa-fingerprint"></i> <span>${gym['id']}</span></div>
+            <div class="coords">
+              <i class="fa fa-map-pin"></i>
+              <a href="https://maps.google.com/?q=${gym['lat']},${gym['lon']}">${gym['lat']}, ${gym['lon']}</a>
+           </div>
+          </div>`;
       },
       build_spawn_popup(marker) {
         spawn = this.spawns[marker.options.id];
