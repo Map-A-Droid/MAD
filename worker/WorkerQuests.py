@@ -396,6 +396,9 @@ class WorkerQuests(MITMBase):
                 time.sleep(1)
 
             trashcancheck = self._get_trash_positions()
+            if trashcancheck is None:
+                logger.error('Could not find any trashcan - abort')
+                return
             logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
             first_round = False
             delete_allowed = False
@@ -592,6 +595,7 @@ class WorkerQuests(MITMBase):
                 logger.error('Softban - waiting...')
                 time.sleep(10)
                 if self._open_pokestop(timestamp) is None:
+                    self._devicesettings['last_action_time'] = time.time()
                     return
             else:
                 logger.info("Likely already spun this stop or brief softban, trying again")
@@ -604,12 +608,11 @@ class WorkerQuests(MITMBase):
                 self._turn_map(self._delay_add)
                 time.sleep(1)
                 if self._open_pokestop(timestamp) is None:
+                    self._devicesettings['last_action_time'] = time.time()
                     return
                 to += 1
-                break
 
-        if data_received == FortSearchResultTypes.QUEST:
-            self._devicesettings['last_action_time'] = time.time()
+        self._devicesettings['last_action_time'] = time.time()
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         if latest is None:

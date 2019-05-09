@@ -600,12 +600,12 @@ class WorkerBase(ABC):
         logger.debug("_get_trash_positions: Get_trash_position.")
         if not self._takeScreenshot(delayBefore=self._devicesettings.get("post_screenshot_delay", 1)):
             logger.debug("_get_trash_positions: Failed getting screenshot")
-            return False
+            return None
 
         if os.path.isdir(self.get_screenshot_path()):
             logger.error(
                     "_get_trash_positions: screenshot.png is not a file/corrupted")
-            return False
+            return None
 
         logger.info("_get_trash_positions: checking screen")
         trashes = self._pogoWindowManager.get_trash_click_positions(self.get_screenshot_path())

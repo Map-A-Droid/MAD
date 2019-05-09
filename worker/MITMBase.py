@@ -116,6 +116,9 @@ class MITMBase(WorkerBase):
         time.sleep(2 + int(delayadd))
 
         trashcancheck = self._get_trash_positions()
+        if trashcancheck is None:
+            logger.error('Could not find any trashcan - abort')
+            return
         logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
         # get confirm box coords
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
