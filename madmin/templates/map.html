@@ -3,7 +3,7 @@
 {% block header %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
-<link rel="stylesheet" href="static/style/madmin.css" />
+<link rel="stylesheet" href="static/style/madmin.css?1557406998" />
 {% endblock %}
 
 {% block scripts %}
@@ -452,7 +452,7 @@
                 opacity: 0.7,
                 fillOpacity: 0.5,
                 id: spawn["id"]
-              }).bindPopup($this.build_spawn_popup, { 'className': 'gympopup' });
+              }).bindPopup($this.build_spawn_popup, { 'className': 'spawnpopup' });
 
               // only add them if they're set to visible
               if ($this.layers.stat.spawns) {
@@ -649,8 +649,10 @@
       build_spawn_popup(marker) {
         spawn = this.spawns[marker.options.id];
 
+
         if (spawn['endtime'] !== null) {
-          var markertext = '<strong class="text-success">Known end time</strong><br>'
+          var timeformat = 'YYYY-MM-DD HH:mm:ss';
+
           var endsplit = spawn['endtime'].split(':');
           var endMinute = parseInt(endsplit[0]);
           var endSecond = parseInt(endsplit[1]);
@@ -658,10 +660,10 @@
           var now = moment();
 
           if (spawn['spawndef'] == 15) {
-            markertext += '<br>Type: 1h spawn<br>';
+            var type = '1h';
             var timeshift = 60;
           } else {
-            markertext += '<br>Type: 30m spawn<br>';
+            var type = '30m';
             var timeshift = 30;
           }
 
@@ -677,25 +679,29 @@
             despawntime.add(1, 'h');
           }
 
-          timeformat = 'YYYY-MM-DD HH:mm:ss';
           if (now.isBetween(spawntime, despawntime)) {
-            markertext += "<br><strong>SPAWN ACTIVE</strong>"
-            markertext += "<br>Spawned at: " + spawntime.format(timeformat);
-            markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-            overlaytext = 'Despawn ' + despawntime.fromNow();
-            var color = "green";
-          } else if (spawntime.isAfter(now)) {
-            markertext += "<br>Spawns at: " + spawntime.format(timeformat);
-            markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-            overlaytext = 'Spawn ' + spawntime.fromNow();
-            var color = "blue";
+            var activeText = `<span class="text-success">(active <i class="fa fa-ghost"></i>)</span>`;
+          } else {
+            var activeText = "";
           }
+
+          var spawntiming = `
+            <div class="spawn"><i class="fa fa-hourglass-start"></i> Spawn: <strong>${spawntime.format(timeformat)} ${activeText}</strong></div>
+            <div class="despawn"><i class="fa fa-hourglass-end"></i> Despawn: <strong>${spawntime.format(timeformat)}</strong></div>`;
         } else {
-          var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
-          var color = "red";
+          var spawntiming = "";
         }
 
-        return markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>';
+        return `<div class="content">
+            <div class="spawnContent">
+            <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown"}</strong> spawnpoint</div>
+              <div class="spawnTiming">${spawntiming}</div>
+            </div>
+            <div class="id"><i class="fa fa-fingerprint"></i> <span>${spawn['id']}</span></div>
+            <div class="coords">
+              <i class="fa fa-map-pin"></i>
+              <a href="https://maps.google.com/?q=${spawn['lat']},${spawn['lon']}">${spawn['lat']}, ${spawn['lon']}</a>
+           </div>`;
       },
       getStoredSetting(name, defaultval) {
         var val = localStorage.getItem('settings');
