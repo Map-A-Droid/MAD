@@ -1,117 +1,132 @@
 html, body, div[role="main"], #app {
-	height: 100%;
+  height: 100%;
 }
 
 div.container[role="main"] {
-	max-width: 100%;
-	padding: 0px !important;
+  max-width: 100%;
+  padding: 0px !important;
 }
 
-#gymImage {
-	position: relative;
-	left: -30px;
-	top: -12.5px;
-	width: 125px;
-	height: 125px;
-	border-radius: 75px;
-	background-size: cover;
-	border: 4px solid white;
-	-webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
-	filter: drop-shadow(0px 0px 5px rgba(0,0,0,1));
+.spawnpopup .leaflet-popup-content {
+  width: 300px !important;
+  margin: 13px !important;
 }
 
-#gymName {
-	position: absolute;
-	left: 120px;
-	top: 10px;
-	width: 270px;
-	font-size: large;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+.questpopup .leaflet-popup-content,
+.gympopup .leaflet-popup-content {
+  width: 400px !important;
+  margin: 13px !important;
 }
 
-#gymID {
-	position: absolute;
-	left: 120px;
-	top: 40px;
-	width: 270px;
-	overflow: hidden;
-	white-space: nowrap;
+.leaflet-popup-content .content {
+  font-size: 13px;
 }
 
-#gymCoords {
-	position: absolute;
-	left: 120px;
-	top: 60px;
-	width: 270px;
-	overflow: hidden;
-	white-space: nowrap;
-	text-overflow: ellipsis;
+.gympopup .leaflet-popup-content .content,
+.questpopup .leaflet-popup-content .content {
+  margin-left: 100px;
+}
+
+.leaflet-popup-content .spawnContent {
+  margin-bottom: 10px;
+}
+
+.leaflet-popup-content .content svg {
+  width: 10px;
+  display: inline-block;
+}
+
+.leaflet-popup-content .coords {
+  white-space: nowrap;
+}
+
+.leaflet-popup-content .image {
+  width: 125px;
+  height: 125px;
+  border-radius: 75px;
+  background-size: cover;
+  border: 4px solid white;
+  -webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,0.5));
+  filter: drop-shadow(0px 0px 5px rgba(0,0,0,0.5));
+  display: inline-block;
+  position: absolute;
+  top: -25px;
+  left: -25px;
+}
+
+.leaflet-popup-content .name {
+  margin-bottom: 10px;
+  font-size: 15px;
+}
+
+.leaflet-popup-content .id>span {
+  display: inline-block;
+  font-family: monospace;
+  padding: 1px;
+  background: #EEE;
+  border-radius: 3px
+}
+
+.leaflet-popup-content .quest .task {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.leaflet-popup-content .quest .rewardImg {
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-color: #FFF;
+  width: 70px;
+  height: 70px;
+  border-radius: 75px;
+  border: 4px solid white;
+  -webkit-filter: drop-shadow(0px 0px 5px rgba(0,0,0,0.5));
+  filter: drop-shadow(0px 0px 5px rgba(0,0,0,0.5));
+  display: inline-block;
+  position: absolute;
+  bottom: -35px;
+  right: -35px;
 }
 
 #map {
-	width: 100%;
-	height: 100%;
-}
-
-.gympopup .leaflet-popup-tip {
-	text-align: center;
-}
-
-.gympopup .leaflet-popup-content-wrapper {
-	width: 400px;
-	text-align: center;
+  width: 100%;
+  height: 100%;
 }
 
 .spawntooltip {
-	font-weight: bold;
-	color: #FFF;
-	color: white;
-	text-shadow:
-		-1px -1px 0 #000,
-		1px -1px 0 #000,
-		-1px 1px 0 #000,
-		1px 1px 0 #000;
+  font-weight: bold;
+  color: #FFF;
+  color: white;
+  text-shadow:
+    -1px -1px 0 #000,
+    1px -1px 0 #000,
+    -1px 1px 0 #000,
+    1px 1px 0 #000;
 }
 
 .layer-item {
-	text-transform: capitalize;
-}
-
-.layer-item strong {
-	font-weight: 400;
+  text-transform: capitalize;
 }
 
 .leaflet-sidebar #settings input[type="number"] {
-	float: right;
-	width: 80px;
+  float: right;
+  width: 80px;
 }
 
 .leaflet-sidebar {
-	top: 60px;
-	z-index: 1000;
-	font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+  z-index: 1000;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
+}
+
+.leaflet-sidebar-content {
+  background-color: #FFF;
 }
 
 li.list-group-item.layer-item {
-	font-size: 12pt;
-}
-
-li.list-group-item.layer-item .custom-switch {
-	float: right;
-}
-
-.questpopup .leaflet-popup-tip {
-	text-align: center;
-}
-
-.questpopup .leaflet-popup-content-wrapper {
-	width: 400px;
-	height: 180px;
-	text-align: center;
+  font-size: 12pt;
 }
 
 .leaflet-sidebar.collapsed {
-	width: 44px !important;
+  width: 44px !important;
 }
