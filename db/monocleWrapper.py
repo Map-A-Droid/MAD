@@ -1413,7 +1413,7 @@ class MonocleWrapper(DbWrapperBase):
 
         # base query to fetch gyms
         query = (
-            "SELECT forts.id, forts.lat, forts.lon, forts.name, "
+            "SELECT forts.external_id, forts.lat, forts.lon, forts.name, "
             "forts.url, IFNULL(fort_sightings.team, 0), "
             "fort_sightings.last_modified, raids.level, raids.time_spawn, raids.time_battle, "
             "raids.time_end, raids.pokemon_id, raids.form "
@@ -1470,7 +1470,7 @@ class MonocleWrapper(DbWrapperBase):
                 "url": url,
                 "latitude": latitude,
                 "longitude": longitude,
-                "team_id": team_id,
+                "team_id": int(team_id),
                 "last_updated": last_updated,
                 "raid": raid
             }
