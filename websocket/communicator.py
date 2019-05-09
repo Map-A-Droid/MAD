@@ -94,7 +94,7 @@ class Communicator:
         self.__sendMutex.acquire()
         try:
             encoded = self.websocket_handler.send_and_wait(
-                self.id, self.worker_instance_ref, "screen single\r\n",
+                self.worker_id, self.worker_instance_ref, "screen single\r\n",
                 self.__commandTimeout
             )
         finally:
