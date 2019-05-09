@@ -87,16 +87,15 @@ class Communicator:
             logger.error("Invalid quality value passed for screenshots")
             return False
 
-        screenshot_type_str: str = "jpeg"
-        if screenshot_type == ScreenshotType.PNG:
-            screenshot_type_str = "png"
+        # screenshot_type_str: str = "jpeg"
+        # if screenshot_type == ScreenshotType.PNG:
+        #     screenshot_type_str = "png"
 
         self.__sendMutex.acquire()
         try:
             encoded = self.websocket_handler.send_and_wait(
-                    self.worker_id, self.worker_instance_ref,
-                    "screen capture {} {}\r\n".format(screenshot_type_str, quality),
-                    self.__command_timeout
+                self.id, self.worker_instance_ref, "screen single\r\n",
+                self.__commandTimeout
             )
         finally:
             self.__sendMutex.release()
