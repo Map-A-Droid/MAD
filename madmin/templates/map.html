@@ -3,7 +3,7 @@
 {% block header %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
-<link rel="stylesheet" href="static/style/madmin.css?1557406998" />
+<link rel="stylesheet" href="static/style/madmin.css?1557412980" />
 {% endblock %}
 
 {% block scripts %}
@@ -65,11 +65,9 @@
   var map;
   var mapclick = 0;
 
-  // special canvas icon layer
-  var mapIconLayer;
-
   // object to hold all the markers and elements
   var leaflet_data = {
+    tileLayer: "",
     raids: {},
     spawns: {},
     quests: {},
@@ -101,7 +99,38 @@
         }
       },
       workers: {},
+      maptiles: {
+        cartodblight: {
+          name: "CartoDB Positron",
+          url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+        },
+        cartodbdark: {
+          name: "CartoDB Darkmatter",
+          url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+        },
+        cartodbvoyager: {
+          name: "CartoDB Voyager",
+          url: "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png"
+        },
+        osm: {
+          name: "OpenStreetMap",
+          url: "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        },
+        osmhot: {
+          name: "OpenStreetMap HOT",
+          url: "https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png"
+        },
+        wikimedia: {
+          name: "Wikimedia",
+          url: "https://maps.wikimedia.org/osm-intl/{z}/{x}/{y}{r}.png"
+        },
+        hydda: {
+          name: "Hydda",
+          url: "https://{s}.tile.openstreetmap.se/hydda/full/{z}/{x}/{y}.png"
+        }
+      },
       settings: {
+        maptiles: "cartodblight",
         routes: {
           coordinateRadius: {
             raids: 490,
@@ -151,6 +180,10 @@
         handler: function() {
           this.changeDynamicLayers("routes");
         }
+      },
+      'settings.maptiles': function(newVal) {
+        this.updateStoredSetting("settings-maptiles", newVal);
+        leaflet_data.tileLayer.setUrl(this.maptiles[newVal].url);
       },
       'settings.routes.coordinateRadius': {
         deep: true,
@@ -810,24 +843,23 @@
       initMap() {
         $this = this;
 
-        // get stored center and zoom level if they exists
-        const storedZoom = this.getStoredSetting('zoomlevel', 3);
-        const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
-        const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
-
-        // get stored coordinate radius
+        // get stored settings
+        this.settings.maptiles = this.getStoredSetting("settings-maptiles", "cartodblight");
         this.settings.routes.coordinateRadius.raids = this.getStoredSetting('settings-coordinateRadius-raids', 490);
         this.settings.routes.coordinateRadius.quests = this.getStoredSetting('settings-coordinateRadius-quests', 40);
         this.settings.routes.coordinateRadius.mons = this.getStoredSetting('settings-coordinateRadius-mons', 67);
-
-        // get stored static layer settings
         var statlayers = Object.keys(this.layers.stat);
         for (index of Object.keys(this.layers.stat)) {
           this.layers.stat[index] = this.getStoredSetting("layer-stat-"+index, false);
         }
 
+        // get stored center and zoom level if they exists
+        const storedZoom = this.getStoredSetting('zoomlevel', 3);
+        const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
+        leaflet_data.tileLayer = L.tileLayer(this.maptiles[this.settings.maptiles].url);
+
         map = L.map('map', {
-          layers: [layer],
+          layers: [leaflet_data.tileLayer],
           zoomControl: false,
           updateWhenZooming: false,
           updateWhenIdle: true,
@@ -995,6 +1027,16 @@
             <div class="flex-grow-1"><strong>Quests visual radius</strong></div>
             <div class="custom-control custom-switch">
               <input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quests" max="1100" class="form-control form-control-sm" />
+            </div>
+          </li>
+          <li class="list-group-item layer-item d-flex">
+            <div class="flex-grow-1"><strong>Map tiles</strong></div>
+            <div class="form-group">
+              {% raw %}
+              <select class="form-control form-control-sm" v-model="settings.maptiles">
+                <option v-for="(maptile, index) in maptiles" v-bind:value="index">{{ maptile.name }}</option>
+              </select>
+              {% endraw %}
             </div>
           </li>
         </ul>
