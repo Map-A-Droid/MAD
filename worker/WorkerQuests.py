@@ -384,8 +384,7 @@ class WorkerQuests(MITMBase):
             if delete_allowed:
                 self._takeScreenshot(delayBefore=1)
 
-            item_text = self._pogoWindowManager.get_inventory_text(os.path.join(self._applicationArgs.temp_path,
-                                                                                'screenshot%s.png' % str(self._id)),
+            item_text = self._pogoWindowManager.get_inventory_text(self.get_screenshot_path(),
                                                                    self._id, text_x1, text_x2, text_y1, text_y2)
 
             try:

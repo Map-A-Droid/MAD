@@ -114,8 +114,8 @@ class WorkerOCR(WorkerBase):
         # curTime = time.time()
         logger.info(
             "main: Checking raidcount and copying raidscreen if raids present")
-        count_of_raids = self._pogoWindowManager.readRaidCircles(os.path.join(
-            self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, self._communicator)
+        count_of_raids = self._pogoWindowManager.readRaidCircles(self.get_screenshot_path(), self._id,
+                                                                 self._communicator)
         if count_of_raids == -1:
             logger.debug("Worker: Count present but no raid shown")
             logger.warning(
@@ -127,8 +127,8 @@ class WorkerOCR(WorkerBase):
                 logger.debug(
                     "Worker: couldn't take screenshot after opening raidtab, lock released")
                 return
-            count_of_raids = self._pogoWindowManager.readRaidCircles(os.path.join(
-                self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, self._communicator)
+            count_of_raids = self._pogoWindowManager.readRaidCircles(self.get_screenshot_path(), self._id,
+                                                                     self._communicator)
         #    elif countOfRaids == 0:
         #        emptycount += 1
         #        if emptycount > 30:
@@ -140,8 +140,7 @@ class WorkerOCR(WorkerBase):
         # detectin weather
         if self._applicationArgs.weather:
             logger.debug("Worker: Checking weather...")
-            weather = checkWeather(os.path.join(
-                self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
+            weather = checkWeather(self.get_screenshot_path())
             if weather[0]:
                 logger.debug('Submit Weather')
                 cell_id = S2Helper.lat_lng_to_cell_id(
@@ -162,10 +161,8 @@ class WorkerOCR(WorkerBase):
                 + str(count_of_raids) + '.png'
             logger.debug('Copying file: ' + copyFileName)
             logger.debug("Worker: Copying file to {}", str(copyFileName))
-            copyfile(os.path.join(self._applicationArgs.temp_path,
-                                  'screenshot%s.png' % str(self._id)), copyFileName)
-            os.remove(os.path.join(self._applicationArgs.temp_path,
-                                   'screenshot%s.png' % str(self._id)))
+            copyfile(self.get_screenshot_path(), copyFileName)
+            os.remove(self.get_screenshot_path())
 
         logger.debug("main: Releasing lock")
         self._work_mutex.release()

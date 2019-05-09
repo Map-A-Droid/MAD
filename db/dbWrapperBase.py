@@ -7,7 +7,6 @@ from threading import Lock, Semaphore
 from typing import List
 
 import mysql
-import numpy as np
 from bitstring import BitArray
 from mysql.connector.pooling import MySQLConnectionPool
 from utils.collections import Location

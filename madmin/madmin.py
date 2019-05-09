@@ -44,6 +44,14 @@ datetimeformat = None
 adb_connect = None
 
 
+def __generate_device_screenshot_path(phone_name: str):
+    screenshot_ending: str = ".jpg"
+    if device_mappings[phone_name].get("screenshot_type", "jpeg") == "png":
+        screenshot_ending = ".png"
+    screenshot_filename = "screenshot_{}{}".format(phone_name, screenshot_ending)
+    return os.path.join(conf_args.temp_path, screenshot_filename)
+
+
 def madmin_start(arg_args, arg_db_wrapper, glob_ws_server):
     global conf_args, device_mappings, db_wrapper, areas, ws_server, datetimeformat, adb_connect
     conf_args = arg_args
@@ -142,8 +150,7 @@ def get_phonescreens():
         else:
             ws_connected_phones.append(adb)
 
-        filename = os.path.join(conf_args.temp_path,
-                                'screenshot%s.png' % str(phonename))
+        filename = __generate_device_screenshot_path(phonename)
         if os.path.isfile(filename):
             image_resize(filename, os.path.join(
                 conf_args.temp_path, "madmin"), width=250)
@@ -164,13 +171,17 @@ def get_phonescreens():
                     adb_option = True
                     add_text = '<b>ADB - no WS<img src="/static/warning.png" width="20px" ' \
                                'alt="NO websocket connection!"></b>'
-                    filename = os.path.join(
-                        conf_args.temp_path, 'screenshot%s.png' % str(pho))
+                    filename = __generate_device_screenshot_path(pho)
                     if os.path.isfile(filename):
                         image_resize(filename, os.path.join(
                             conf_args.temp_path, "madmin"), width=250)
-                        screen = "/screenshot/madmin/screenshot" + \
-                            str(pho) + ".png"
+                        # TODO: help...
+                        # screen = "/screenshot/madmin/screenshot" + \
+                        #     str(pho) + ".png"
+                        screenshot_ending: str = ".jpg"
+                        if device_mappings[pho].get("screenshot_type", "jpeg") == "png":
+                            screenshot_ending = ".png"
+                        screen = "/screenshot/madming/screenshot_" + str(pho) + screenshot_ending
                         screens_phone.append(generate_phones(
                             pho, add_text, adb_option, screen, filename, datetimeformat, dummy=False)
                         )
@@ -209,20 +220,15 @@ def take_screenshot(origin=None, useadb=None):
 
     if useadb == 'True' and adb_connect.make_screenshot(adb, origin):
         logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
-    elif conf_args.use_media_projection:
-        temp_comm = ws_server.get_origin_communicator(origin)
-        temp_comm.getScreenshot(os.path.join(
-            conf_args.temp_path, 'screenshot%s.png' % str(origin)))
-    else:
-        temp_comm = ws_server.get_origin_communicator(origin)
-        temp_comm.get_screenshot_single(os.path.join(
-            conf_args.temp_path, 'screenshot%s.png' % str(origin)))
+
+    temp_comm = ws_server.get_origin_communicator(origin)
+    temp_comm.get_screenshot_single(__generate_device_screenshot_path(origin))
 
     image_resize(os.path.join(conf_args.temp_path, "screenshot" + str(origin) + ".png"),
                  os.path.join(conf_args.temp_path, "madmin"), width=250)
 
     creationdate = datetime.datetime.fromtimestamp(
-        creation_date(os.path.join(conf_args.temp_path, 'screenshot%s.png' % str(origin)))).strftime(datetimeformat)
+        creation_date(__generate_device_screenshot_path(origin))).strftime(datetimeformat)
 
     return creationdate
 
@@ -236,8 +242,7 @@ def click_screenshot():
     click_y = request.args.get('clicky')
     useadb = request.args.get('adb')
 
-    filename = os.path.join(conf_args.temp_path,
-                            'screenshot%s.png' % str(origin))
+    filename = __generate_device_screenshot_path(origin)
     img = cv2.imread(filename, 0)
     height, width = img.shape[:2]
 
@@ -268,8 +273,7 @@ def swipe_screenshot():
     click_ye = request.args.get('clickye')
     useadb = request.args.get('adb')
 
-    filename = os.path.join(conf_args.temp_path,
-                            'screenshot%s.png' % str(origin))
+    filename = __generate_device_screenshot_path(origin)
     img = cv2.imread(filename, 0)
     height, width = img.shape[:2]
 

@@ -224,8 +224,6 @@ def parseArgs():
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
-    parser.add_argument('-ump', '--use_media_projection', action='store_true', default=False,
-                        help='Use Media Projection for image transfer (OCR) (Default: False)')
 
     # adb
     parser.add_argument('-adb', '--use_adb', action='store_true', default=False,
