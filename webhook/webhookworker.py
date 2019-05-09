@@ -230,6 +230,9 @@ class WebhookWorker:
                 a_quest_condition["info"]["item_id"] = a_quest_condition["info"].pop(
                     "item"
                 )
+            # Quest condition for catching specific mons.
+            if "with_pokemon_category" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_category")
 
             quest_condition.append(a_quest_condition)
 
