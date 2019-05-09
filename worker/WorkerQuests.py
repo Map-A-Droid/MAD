@@ -542,7 +542,8 @@ class WorkerQuests(MITMBase):
             data_received = self._wait_for_data(
                     timestamp=timestamp, proto_to_wait_for=106, timeout=25)
             if data_received == LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
-                logger.info("Stop {} considered to be ignored in the next round due to failed spinnable check")
+                logger.info("Stop {}, {} considered to be ignored in the next round due to failed spinnable check",
+                            str(self.current_location.lat), str(self.current_location.lng))
                 self._walker_routemanager.add_coord_to_be_removed(self.current_location.lat, self.current_location.lng)
                 return None
         while data_received != LatestReceivedType.STOP and int(to) < 3:
