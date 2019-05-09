@@ -110,6 +110,24 @@ class Resocalculator(object):
             click_y = int(self._screen_y) - (int(self._screen_x) / 0.77)
         return click_x + self._x_offset, click_y + self._y_offset
 
+    def get_inventory_text_diff(self):
+        if float(self._xyratio) > 2.1:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.61) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.58))
+        elif float(self._xyratio) > 2:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.60) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.57))
+        elif float(self._xyratio) >= 1.9:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.62) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.59))
+        elif float(self._xyratio) >= 1.7:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.715) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.68))
+        elif float(self._xyratio) < 1.7:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.82) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.77))
+        return y1
+
     def get_delete_item_text(self):
         if float(self._xyratio) > 2.1:
             x1 = int(self._screen_x) / 1.3

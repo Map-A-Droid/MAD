@@ -24,6 +24,8 @@ class testimage(object):
         print(self._resocalc.get_x_y_ratio(
             self, self._screen_x, self._screen_y, xoffset, yoffset))
 
+        print(self._resocalc.get_inventory_text_diff(self))
+
         if self._mode == "menu":
             self._image_check = self.check_menu(self._image)
 

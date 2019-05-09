@@ -13,7 +13,7 @@ from PIL import Image
 # from numpy import round, ones, uint8
 # from tinynumpy import tinynumpy as np
 from utils.logging import logger
-
+from ocr.matching_trash import trash_image_matching
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
@@ -202,6 +202,13 @@ class PogoWindows:
         else:
             logger.debug("__readCircleCords: Found no Circle")
             return False, 0, 0, 0, 0
+
+    def get_trash_click_positions(self, filename):
+        if not os.path.isfile(filename):
+            logger.error("get_trash_click_positions: {} does not exist", str(filename))
+            return None
+
+        return self.__thread_pool.apply_async(trash_image_matching, (filename,)).get()
 
     def read_amount_raid_circles(self, filename, identifier, communicator):
         if not os.path.isfile(filename):
