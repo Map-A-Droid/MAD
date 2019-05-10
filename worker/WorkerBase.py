@@ -82,8 +82,8 @@ class WorkerBase(ABC):
 
     def get_screenshot_path(self) -> str:
         screenshot_ending: str = ".jpg"
-        # if self._devicesettings.get("screenshot_type", "jpeg") == "png":
-        #    screenshot_ending = ".png"
+        if self._devicesettings.get("screenshot_type", "jpeg") == "png":
+            screenshot_ending = ".png"
 
         screenshot_filename = "screenshot_{}{}".format(str(self._id), screenshot_ending)
         return os.path.join(
@@ -621,8 +621,8 @@ class WorkerBase(ABC):
 
         # TODO: area settings for jpg/png and quality?
         screenshot_type: ScreenshotType = ScreenshotType.JPEG
-        # if self._devicesettings.get("screenshot_type", "jpeg") == "png":
-        #    screenshot_type = ScreenshotType.PNG
+        if self._devicesettings.get("screenshot_type", "jpeg") == "png":
+            screenshot_type = ScreenshotType.PNG
 
         screenshot_quality: int = self._devicesettings.get("screenshot_quality", 80)
 
