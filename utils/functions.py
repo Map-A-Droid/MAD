@@ -2,6 +2,7 @@ import datetime
 import os
 import platform
 import calendar
+import time
 
 import cv2
 
@@ -46,10 +47,16 @@ def image_resize(image, savepath, width=None, height=None, inter=cv2.INTER_AREA)
     # resize the image
     resized = cv2.resize(image, dim, interpolation=inter)
     pre, _ = os.path.splitext(filename)
-    cv2.imwrite(os.path.join(savepath, str(pre) + '.png'),
+    cv2.imwrite(os.path.join(savepath, str(pre) + '.jpg'),
                 resized, [int(cv2.IMWRITE_PNG_COMPRESSION), 9])
 
     # return the resized image
+    return True
+
+def pngtojpg(image):
+    pre, _ = os.path.splitext(image)
+    image = cv2.imread(image, 3)
+    cv2.imwrite(pre + '.jpg', image, [int(cv2.IMWRITE_PNG_COMPRESSION), 9])
     return True
 
 
@@ -66,6 +73,7 @@ def generate_phones(phonename, add_text, adb_option, screen, filename, datetimef
         .replace('<<add_text>>', add_text)
         .replace('<<screen>>', screen)
         .replace('<<creationdate>>', creationdate)
+        .replace('<<time>>', str(int(time.time())))
     )
 
 

@@ -154,8 +154,6 @@ def get_phonescreens():
         filename = __generate_device_screenshot_path(phonename)
         if os.path.isfile(filename):
             screenshot_ending: str = ".jpg"
-            if device_mappings[phonename].get("screenshot_type", "jpeg") == "png":
-                screenshot_ending = ".png"
             image_resize(filename, os.path.join(
                 conf_args.temp_path, "madmin"), width=250)
             screen = "/screenshot/madmin/screenshot" + str(phonename) + screenshot_ending
@@ -180,9 +178,7 @@ def get_phonescreens():
                         image_resize(filename, os.path.join(
                             conf_args.temp_path, "madmin"), width=250)
                         screenshot_ending: str = ".jpg"
-                        if device_mappings[pho].get("screenshot_type", "jpeg") == "png":
-                            screenshot_ending = ".png"
-                        screen = "/screenshot/madming/screenshot_" + str(pho) + screenshot_ending
+                        screen = "/screenshot/madmin/screenshot_" + str(pho) + screenshot_ending
                         screens_phone.append(generate_phones(
                             pho, add_text, adb_option, screen, filename, datetimeformat, dummy=False)
                         )
@@ -219,9 +215,7 @@ def take_screenshot(origin=None, useadb=None):
     logger.info('MADmin: Making screenshot ({})', str(origin))
     adb = device_mappings[origin].get('adb', False)
 
-    if useadb == 'True' and adb_connect.make_screenshot(adb, origin):
-        screenshot_filename = "screenshot_{}{}".format(origin, '.png')
-        filename = os.path.join(conf_args.temp_path, screenshot_filename)
+    if useadb == 'True' and adb_connect.make_screenshot(adb, origin, "jpg"):
         logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
     else:
 
@@ -235,7 +229,7 @@ def take_screenshot(origin=None, useadb=None):
         temp_comm.get_screenshot(__generate_device_screenshot_path(origin),
                                  screenshot_quality, screenshot_type)
 
-        filename = __generate_device_screenshot_path(origin)
+    filename = __generate_device_screenshot_path(origin)
     image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=250)
 
     creationdate = datetime.datetime.fromtimestamp(

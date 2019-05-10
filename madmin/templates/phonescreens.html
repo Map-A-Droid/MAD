@@ -110,7 +110,7 @@ $("a#screenshot").bind("click", function(event) {
        url: url,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.png?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -126,7 +126,7 @@ $("a#quit").bind("click", function(event) {
        url: url,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.png?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -144,7 +144,7 @@ $(".backbutton").bind("click", function(event) {
        url: 'send_command?origin=' + origin + '&command=back&adb=' + adb,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.png?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -161,7 +161,7 @@ $(".homebutton").bind("click", function(event) {
        url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.png?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -183,7 +183,7 @@ $(".gpsbutton").bind("click", function(event) {
                url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb + '&sleeptime=' + sleeptime,
                success: function(data){
                    $('#date' + origin).text(data);
-                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.png?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
                    $('div#' + origin).unblock();
                }
            });
@@ -203,7 +203,7 @@ $(".keyboardbutton").bind("click", function(event) {
                url: 'send_text?origin=' + origin + '&text=' + text + '&adb=' + adb,
                success: function(data){
                    $('#date' + origin).text(data);
-                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.png?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
                    $('div#' + origin).unblock();
                }
            });
@@ -254,7 +254,7 @@ e.preventDefault();
        url: url,
        success: function(data){
            $('#date' + id).text(data);
-           $('img#' + id).attr('src', 'screenshot/madmin/screenshot_' + id + '.png?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('img#' + id).attr('src', 'screenshot/madmin/screenshot_' + id + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + id).unblock();
        }
     });

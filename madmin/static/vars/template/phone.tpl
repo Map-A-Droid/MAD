@@ -1,6 +1,6 @@
 <div class=screen id=<<phonename>>>
 <div class=phonename><b><<phonename>> <<add_text>></b></div>
-<img src=<<screen>> class='screenshot' id ='<<phonename>>' adb ='<<adb_option>>'>
+<img src=<<screen>>?cachebuster=<<time>> class='screenshot' id ='<<phonename>>' adb ='<<adb_option>>' >
 <div id=softbar>
 <div id=softbutton><img src=static/back.png width=20px adb=<<adb_option>> class=backbutton origin=<<phonename>> title=Back></div>
 <div id=softbutton><img src=static/home.png width=20px adb=<<adb_option>> class=homebutton origin=<<phonename>> title=Home></div>
