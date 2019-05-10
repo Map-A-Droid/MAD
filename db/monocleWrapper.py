@@ -644,13 +644,13 @@ class MonocleWrapper(DbWrapperBase):
             init = False
 
         if init:
-            logger.info("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
+            logger.debug("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
                 str(origin),
                 pokemon_data["id"],
                 latitude, longitude,
                 despawn_time))
         else:
-            logger.info("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
+            logger.debug("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
                 str(origin),
                 pokemon_data["id"],
                 latitude, longitude,
@@ -711,13 +711,13 @@ class MonocleWrapper(DbWrapperBase):
                 if getdetspawntime:
                     despawn_time = self._gen_endtime(getdetspawntime)
                     despawn_time_unix = despawn_time
-                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despawns at {4} (non-init)", str(
+                    logger.debug("{0}: adding mon (#{1}) at {2}, {3}. Despawns at {4} (non-init)", str(
                         origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
                 else:
                     despawn_time = datetime.now() + timedelta(seconds=300)
                     despawn_time_unix = int(
                         time.mktime(despawn_time.timetuple()))
-                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(
+                    logger.debug("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(
                         origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
 
                 mon_id = wild_mon['pokemon_data']['id']
@@ -886,7 +886,7 @@ class MonocleWrapper(DbWrapperBase):
 
                     now = time.time()
 
-                    logger.info("{}: adding/Updating gym {} with level {} ending at {}",
+                    logger.debug("{}: adding/Updating gym {} with level {} ending at {}",
                                 str(origin), str(gymid), str(level), str(raidendSec))
 
                     raid_vals.append(

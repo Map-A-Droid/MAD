@@ -85,8 +85,7 @@ class WorkerQuests(MITMBase):
                                                         float(
                                                                 self.current_location.lat),
                                                         float(self.current_location.lng))
-        logger.info('Moving {} meters to the next position',
-                    round(distance, 2))
+        logger.debug('Moving {} meters to the next position', round(distance, 2))
 
         delay_used = 0
         logger.debug("Getting time")
@@ -95,7 +94,7 @@ class WorkerQuests(MITMBase):
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            logger.info("main: Teleporting...")
+            logger.debug("main: Teleporting...")
             self._transporttype = 0
             self._communicator.setLocation(
                     self.current_location.lat, self.current_location.lng, 0)
@@ -250,7 +249,7 @@ class WorkerQuests(MITMBase):
                     "Timediff between now and last action time: {}", str(float(timediff)))
             delay_used = delay_used - timediff
         else:
-            logger.info("No last action time found - no calculation")
+            logger.debug("No last action time found - no calculation")
 
         if delay_used < 0:
             logger.info('No more cooldowntime - start over')

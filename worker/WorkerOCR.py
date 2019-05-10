@@ -37,14 +37,13 @@ class WorkerOCR(WorkerBase):
                                                         float(
                                                             self.current_location.lat),
                                                         float(self.current_location.lng))
-        logger.info('Moving {} meters to the next position',
-                    round(distance, 2))
+        logger.debug('Moving {} meters to the next position', round(distance, 2))
         speed = routemanager.settings.get("speed", 0)
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            logger.info("main: Teleporting...")
+            logger.debug("main: Teleporting...")
             self._communicator.setLocation(
                 self.current_location.lat, self.current_location.lng, 0)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...

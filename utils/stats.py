@@ -25,7 +25,7 @@ class PlayerStats(object):
         self.__mapping_mutex = Lock()
 
     def set_level(self, level):
-        logger.info('[{}] - set level {}', str(self._id), str(level))
+        logger.debug('[{}] - set level {}', str(self._id), str(level))
         self._level = int(level)
         return True
 
@@ -246,7 +246,7 @@ class PlayerStats(object):
                       str(quest_count)
                       )
 
-        logger.info('Submit complete stats for {} - Period: {}: {}', str(self._id), str(period), str(stats_data))
+        logger.debug('Submit complete stats for {} - Period: {}: {}', str(self._id), str(period), str(stats_data))
 
         return stats_data
 
@@ -264,7 +264,7 @@ class PlayerStats(object):
                          str(location_ok),
                          str(location_nok))
 
-        logger.info('Submit location stats for {} - Period: {}: {}', str(self._id), str(period), str(location_data))
+        logger.debug('Submit location stats for {} - Period: {}: {}', str(self._id), str(period), str(location_data))
 
         return location_data
 
@@ -276,7 +276,7 @@ class PlayerStats(object):
             for loc_raw in data['location']:
                 data_location_raw.append(loc_raw)
 
-        logger.info('Submit raw location stats for {} - Period: {} - Count: {}', str(self._id), str(period),
+        logger.debug('Submit raw location stats for {} - Period: {} - Count: {}', str(self._id), str(period),
                     str(len(data_location_raw)))
 
         return data_location_raw
@@ -336,7 +336,7 @@ class PlayerStats(object):
                                              str(int(period))
                                               ))
 
-        logger.info('Submit raw detection stats for {} - Period: {} - Count: {}', str(self._id), str(period),
+        logger.debug('Submit raw detection stats for {} - Period: {} - Count: {}', str(self._id), str(period),
                     str(len(data_location_raw)))
 
         return data_location_raw

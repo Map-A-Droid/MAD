@@ -580,7 +580,7 @@ class WorkerBase(ABC):
 
     def _reopenRaidTab(self):
         logger.debug("_reopenRaidTab: Taking screenshot...")
-        logger.info(
+        logger.debug(
                 "reopenRaidTab: Attempting to retrieve screenshot before checking raidtab")
         if not self._takeScreenshot():
             logger.debug("_reopenRaidTab: Failed getting screenshot...")
@@ -607,7 +607,7 @@ class WorkerBase(ABC):
                     "_get_trash_positions: screenshot.png is not a file/corrupted")
             return None
 
-        logger.info("_get_trash_positions: checking screen")
+        logger.debug("_get_trash_positions: checking screen")
         trashes = self._pogoWindowManager.get_trash_click_positions(self.get_screenshot_path())
 
         return trashes
@@ -690,10 +690,10 @@ class WorkerBase(ABC):
                     "_check_pogo_main_screen: screenshot.png/.jpg is not a file/corrupted")
             return False
 
-        logger.info("_check_pogo_main_screen: checking mainscreen")
+        logger.debug("_check_pogo_main_screen: checking mainscreen")
         buttoncheck = self._pogoWindowManager.look_for_button(screenshot_path, 2.20, 3.01, self._communicator)
         if buttoncheck:
-            logger.info('Found button on screen')
+            logger.debug('Found button on screen')
             self._takeScreenshot(delayBefore=self._devicesettings.get(
                     "post_screenshot_delay", 1))
         while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id):
@@ -707,27 +707,25 @@ class WorkerBase(ABC):
             # not using continue since we need to get a screen before the next round...
             found = self._pogoWindowManager.look_for_button(screenshot_path, 2.20, 3.01, self._communicator)
             if found:
-                logger.info("_check_pogo_main_screen: Found button (small)")
+                logger.debug("_check_pogo_main_screen: Found button (small)")
 
             if not found and self._pogoWindowManager.check_close_except_nearby_button(
                     self.get_screenshot_path(), self._id,
                     self._communicator, close_raid=True):
-                logger.info(
-                        "_check_pogo_main_screen: Found (X) button (except nearby)")
+                logger.debug("_check_pogo_main_screen: Found (X) button (except nearby)")
                 found = True
 
             if not found and self._pogoWindowManager.look_for_button(screenshot_path, 1.05, 2.20, self._communicator):
-                logger.info("_check_pogo_main_screen: Found button (big)")
+                logger.debug("_check_pogo_main_screen: Found button (big)")
                 found = True
 
-            logger.info(
-                    "_check_pogo_main_screen: Previous checks found popups: {}", str(found))
+            logger.debug("_check_pogo_main_screen: Previous checks found popups: {}", str(found))
 
             self._takeScreenshot(delayBefore=self._devicesettings.get(
                     "post_screenshot_delay", 1))
 
             attempts += 1
-        logger.info("_check_pogo_main_screen: done")
+        logger.debug("_check_pogo_main_screen: done")
         return True
 
     def _checkPogoButton(self):
@@ -747,18 +745,17 @@ class WorkerBase(ABC):
         attempts = 0
 
         if os.path.isdir(self.get_screenshot_path()):
-            logger.error(
-                    "checkPogoButton: screenshot.png is not a file/corrupted")
+            logger.error("checkPogoButton: screenshot.png is not a file/corrupted")
             return False
 
-        logger.info("checkPogoButton: checking for buttons")
+        logger.debug("checkPogoButton: checking for buttons")
         found = self._pogoWindowManager.look_for_button(self.get_screenshot_path(), 2.20, 3.01, self._communicator)
         if found:
             time.sleep(1)
-            logger.info("checkPogoButton: Found button (small)")
-            logger.info("checkPogoButton: done")
+            logger.debug("checkPogoButton: Found button (small)")
+            logger.debug("checkPogoButton: done")
             return True
-        logger.info("checkPogoButton: done")
+        logger.debug("checkPogoButton: done")
         return False
 
     def _checkPogoClose(self):
@@ -778,19 +775,18 @@ class WorkerBase(ABC):
         attempts = 0
 
         if os.path.isdir(self.get_screenshot_path()):
-            logger.error(
-                    "checkPogoClose: screenshot.png is not a file/corrupted")
+            logger.error("checkPogoClose: screenshot.png is not a file/corrupted")
             return False
 
-        logger.info("checkPogoClose: checking for CloseX")
+        logger.debug("checkPogoClose: checking for CloseX")
         found = self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path() , self._id,
                                                                          self._communicator)
         if found:
             time.sleep(1)
-            logger.info("checkPogoClose: Found (X) button (except nearby)")
-            logger.info("checkPogoClose: done")
+            logger.debug("checkPogoClose: Found (X) button (except nearby)")
+            logger.debug("checkPogoClose: done")
             return True
-        logger.info("checkPogoClose: done")
+        logger.debug("checkPogoClose: done")
         return False
 
     def _getToRaidscreen(self, maxAttempts, again=False):
@@ -843,23 +839,23 @@ class WorkerBase(ABC):
             # not using continue since we need to get a screen before the next round...
             found = self._pogoWindowManager.look_for_button(self.get_screenshot_path(), 2.20, 3.01, self._communicator)
             if found:
-                logger.info("getToRaidscreen: Found button (small)")
+                logger.debug("getToRaidscreen: Found button (small)")
 
             if not found and self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(),
                                                                                       self._id, self._communicator):
-                logger.info(
+                logger.debug(
                         "getToRaidscreen: Found (X) button (except nearby)")
                 found = True
 
             if not found and self._pogoWindowManager.look_for_button(self.get_screenshot_path(), 1.05, 2.20,
                                                                      self._communicator):
-                logger.info("getToRaidscreen: Found button (big)")
+                logger.debug("getToRaidscreen: Found button (big)")
                 found = True
 
-            logger.info(
+            logger.debug(
                     "getToRaidscreen: Previous checks found popups: {}", str(found))
             if not found:
-                logger.info(
+                logger.debug(
                         "getToRaidscreen: Previous checks found nothing. Checking nearby open")
                 if self._pogoWindowManager.check_nearby(self.get_screenshot_path(), self._id,
                                                         self._communicator):

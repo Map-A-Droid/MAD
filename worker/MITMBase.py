@@ -55,7 +55,7 @@ class MITMBase(WorkerBase):
             time.sleep(1)
 
         if data_requested != LatestReceivedType.UNDEFINED:
-            logger.info('Got the data requested...')
+            logger.debug('Got the data requested...')
             self._reboot_count = 0
             self._restart_count = 0
             self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")

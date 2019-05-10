@@ -633,7 +633,7 @@ class PogoWindows:
                     mainscreen += 1
 
         if mainscreen > 0:
-            logger.info("Found Avatar.")
+            logger.debug("Found avatar.")
             return True
         return False
 

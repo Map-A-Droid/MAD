@@ -34,7 +34,7 @@ class DbWrapperBase(ABC):
         self._init_pool()
 
     def _init_pool(self):
-        logger.info("Connecting pool to DB")
+        logger.info("Connecting to DB")
         self.pool_mutex.acquire()
         self.pool = MySQLConnectionPool(pool_name="db_wrapper_pool",
                                         pool_size=self.application_args.db_poolsize,

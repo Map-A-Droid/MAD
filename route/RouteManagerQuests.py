@@ -120,7 +120,8 @@ class RouteManagerQuests(RouteManagerBase):
                 logger.info("Starting routemanager {}", str(self.name))
                 stops: List[Location] = self.db_wrapper.stop_from_db_without_quests(
                     self.geofence_helper)
-                logger.info('Detected stops without quests: {}', str(stops))
+                logger.info('Detected {} stops without quests', len(stops))
+                logger.debug('Detected stops without quests: {}', str(stops))
                 self._stoplist: List[Location] = stops
 
                 self._prio_queue = None

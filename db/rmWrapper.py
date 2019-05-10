@@ -211,7 +211,6 @@ class RmWrapper(DbWrapperBase):
             if found_end_time:
                 egg_hatched = True
         else:
-            logger.info("Updating everything")
             query = (
                 "UPDATE raid "
                 "SET level = %s, spawn = FROM_UNIXTIME(%s), start = %s, end = %s, "
@@ -230,7 +229,7 @@ class RmWrapper(DbWrapperBase):
             # we need to insert the raid...
             if MonWithNoEgg:
                 # submit mon without egg info -> we have an endtime
-                logger.info("Inserting mon without egg")
+                logger.debug("Inserting mon without egg")
                 start = end - (int(self.application_args.raid_time) * 60)
                 query = (
                     "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, "
@@ -243,13 +242,12 @@ class RmWrapper(DbWrapperBase):
                         time.time())
                 )
             elif end is None and start is None:
-                logger.info("Inserting without end or start")
+                logger.debug("Inserting without end or start")
                 # no end or start time given, just inserting won't help much...
                 logger.warning("Useless to insert without endtime...")
                 return False
             else:
                 # we have start and end, mon is either with egg or we're submitting an egg
-                logger.info("Inserting everything")
                 start = int(end) - (int(self.application_args.raid_time) * 60)
                 query = (
                     "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, "
@@ -262,7 +260,7 @@ class RmWrapper(DbWrapperBase):
 
             self.execute(query, vals, commit=True)
 
-        logger.info("[Crop: {} ({})] submit_raid: Submit finished",
+        logger.debug("[Crop: {} ({})] submit_raid: Submit finished",
                     str(raid_no), str(unique_hash))
         self.refresh_times(gym, raid_no, capture_time)
 
@@ -293,12 +291,12 @@ class RmWrapper(DbWrapperBase):
             for row in res:
                 logger.debug("[Crop: {} ({})] read_raid_endtime: Found Rows: {}", str(
                     raid_no), str(unique_hash), str(number_of_rows))
-                logger.info("[Crop: {} ({})] read_raid_endtime: Endtime already submitted", str(
+                logger.debug("[Crop: {} ({})] read_raid_endtime: Endtime already submitted", str(
                     raid_no), str(unique_hash))
                 logger.debug("RmWrapper::read_raid_endtime done")
                 return True
 
-        logger.info("[Crop: {} ({})] read_raid_endtime: Endtime is new", str(
+        logger.debug("[Crop: {} ({})] read_raid_endtime: Endtime is new", str(
             raid_no), str(unique_hash))
         logger.debug("RmWrapper::read_raid_endtime done")
         return False
@@ -363,12 +361,12 @@ class RmWrapper(DbWrapperBase):
             if number_of_rows > 0:
                 logger.debug("[Crop: {} ({})] raid_exist: Found Rows: {}", str(
                     raid_no), str(unique_hash), str(number_of_rows))
-                logger.info("[Crop: {} ({})] raid_exist: Egg already submitted", str(
+                logger.debug("[Crop: {} ({})] raid_exist: Egg already submitted", str(
                     raid_no), str(unique_hash))
                 logger.debug("RmWrapper::raid_exist done")
                 return True
             else:
-                logger.info("[Crop: {} ({})] raid_exist: Egg is new",
+                logger.debug("[Crop: {} ({})] raid_exist: Egg is new",
                             str(raid_no), str(unique_hash))
                 logger.debug("RmWrapper::raid_exist done")
                 return False
@@ -393,12 +391,12 @@ class RmWrapper(DbWrapperBase):
             if number_of_rows > 0:
                 logger.debug("[Crop: {} ({})] raid_exist: Found Rows: {}", str(
                     raid_no), str(unique_hash), str(number_of_rows))
-                logger.info("[Crop: {} ({})] raid_exist: Mon already submitted", str(
+                logger.debug("[Crop: {} ({})] raid_exist: Mon already submitted", str(
                     raid_no), str(unique_hash))
                 logger.debug("RmWrapper::raid_exist done")
                 return True
             else:
-                logger.info("[Crop: {} ({})] raid_exist: Mon is new",
+                logger.debug("[Crop: {} ({})] raid_exist: Mon is new",
                             str(raid_no), str(unique_hash))
                 logger.debug("RmWrapper::raid_exist done")
                 return False
@@ -781,10 +779,10 @@ class RmWrapper(DbWrapperBase):
                     despawn_time_unix).strftime('%Y-%m-%d %H:%M:%S')
 
                 if getdetspawntime is None:
-                    logger.info("{}: adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", str(
+                    logger.debug("{}: adding mon (#{}) at {}, {}. Despawns at {} (init) ({})", str(
                         origin), mon_id, lat, lon, despawn_time, spawnid)
                 else:
-                    logger.info("{}: adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})",
+                    logger.debug("{}: adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})",
                                 str(origin), mon_id, lat, lon, despawn_time, spawnid)
 
                 mon_args.append(
@@ -949,8 +947,8 @@ class RmWrapper(DbWrapperBase):
 
                     stats.stats_collect_raid(gymid)
 
-                    logger.info("Adding/Updating gym {} with level {} ending at {}",
-                                str(gymid), str(level), str(raidend_date))
+                    logger.debug("Adding/Updating gym {} with level {} ending at {}",
+                                 str(gymid), str(level), str(raidend_date))
 
                     raid_args.append(
                         (
