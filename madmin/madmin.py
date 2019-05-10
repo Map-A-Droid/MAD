@@ -237,7 +237,7 @@ def take_screenshot(origin=None, useadb=None):
     image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=250)
 
     creationdate = datetime.datetime.fromtimestamp(
-        creation_date(filename).strftime(datetimeformat))
+        creation_date(filename)).strftime(datetimeformat)
 
     return creationdate
 
