@@ -156,13 +156,13 @@ def get_phonescreens():
             screenshot_ending: str = ".jpg"
             image_resize(filename, os.path.join(
                 conf_args.temp_path, "madmin"), width=250)
-            screen = "/screenshot/madmin/screenshot" + str(phonename) + screenshot_ending
+            screen = "screenshot/madmin/screenshot_" + str(phonename) + screenshot_ending
             screens_phone.append(
                 generate_phones(phonename, add_text, adb_option,
                                 screen, filename, datetimeformat, dummy=False)
             )
         else:
-            screen = "/static/dummy.png"
+            screen = "static/dummy.png"
             screens_phone.append(generate_phones(
                 phonename, add_text, adb_option, screen, filename, datetimeformat, dummy=True))
 
@@ -178,12 +178,12 @@ def get_phonescreens():
                         image_resize(filename, os.path.join(
                             conf_args.temp_path, "madmin"), width=250)
                         screenshot_ending: str = ".jpg"
-                        screen = "/screenshot/madmin/screenshot_" + str(pho) + screenshot_ending
+                        screen = "screenshot/madmin/screenshot_" + str(pho) + screenshot_ending
                         screens_phone.append(generate_phones(
                             pho, add_text, adb_option, screen, filename, datetimeformat, dummy=False)
                         )
                     else:
-                        screen = "/static/dummy.png"
+                        screen = "static/dummy.png"
                         screens_phone.append(
                             generate_phones(pho, add_text, adb_option, screen, filename, datetimeformat,
                                             dummy=True)
