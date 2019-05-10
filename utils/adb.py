@@ -68,7 +68,7 @@ class ADBConnect(object):
                 logger.info('MADmin: Using ADB ({})', str(origin))
                 result = device.screencap()
                 # TODO: adjust with devicesettings
-                with open(os.path.join(self._args.temp_path, 'screenshot%s.png' % str(origin)), "wb") as fp:
+                with open(os.path.join(self._args.temp_path, 'screenshot_%s.png' % str(origin)), "wb") as fp:
                     fp.write(result)
                 return True
         except Exception as e:

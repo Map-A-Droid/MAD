@@ -20,7 +20,6 @@ def generate_path(path):
 def image_resize(image, savepath, width=None, height=None, inter=cv2.INTER_AREA):
     # initialize the dimensions of the image to be resized and
     # grab the image size
-    dim = None
     filename = os.path.basename(image)
     image = cv2.imread(image, 3)
     (h, w) = image.shape[:2]
@@ -46,7 +45,8 @@ def image_resize(image, savepath, width=None, height=None, inter=cv2.INTER_AREA)
 
     # resize the image
     resized = cv2.resize(image, dim, interpolation=inter)
-    cv2.imwrite(os.path.join(savepath, str(filename)),
+    pre, _ = os.path.splitext(filename)
+    cv2.imwrite(os.path.join(savepath, str(pre) + '.png'),
                 resized, [int(cv2.IMWRITE_PNG_COMPRESSION), 9])
 
     # return the resized image

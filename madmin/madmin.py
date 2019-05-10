@@ -22,7 +22,7 @@ from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_b
 from flask_caching import Cache
 from utils.adb import ADBConnect
 from utils.functions import (creation_date, generate_path, generate_phones,
-                             image_resize, ConvertDateTimeToLocal)
+                             image_resize)
 from utils.language import i8ln, open_json_file
 from utils.logging import LogLevelChanger, logger
 from utils.mappingParser import MappingParser
@@ -220,6 +220,8 @@ def take_screenshot(origin=None, useadb=None):
     adb = device_mappings[origin].get('adb', False)
 
     if useadb == 'True' and adb_connect.make_screenshot(adb, origin):
+        screenshot_filename = "screenshot_{}{}".format(origin, '.png')
+        filename = os.path.join(conf_args.temp_path, screenshot_filename)
         logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
     else:
 
@@ -233,7 +235,7 @@ def take_screenshot(origin=None, useadb=None):
         temp_comm.get_screenshot(__generate_device_screenshot_path(origin),
                                  screenshot_quality, screenshot_type)
 
-    filename = __generate_device_screenshot_path(origin)
+        filename = __generate_device_screenshot_path(origin)
     image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=250)
 
     creationdate = datetime.datetime.fromtimestamp(
