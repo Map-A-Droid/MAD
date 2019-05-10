@@ -296,6 +296,7 @@ class WebsocketServer(object):
         self.__current_users_mutex.acquire()
         worker = self.__current_users.get(worker_id, None)
         if worker is not None:
+            worker[1].stop_worker()
             self.__current_users.pop(worker_id)
         self.__current_users_mutex.release()
         logger.info("Worker {} unregistered", str(worker_id))
