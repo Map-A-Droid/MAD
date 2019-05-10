@@ -392,7 +392,7 @@ class WorkerQuests(MITMBase):
                     stop_inventory_clear.set()
                 logger.warning('Find no item to delete: {}', str(error_counter))
                 self._communicator.touchandhold(int(200), int(300), int(200), int(100))
-                time.sleep(1)
+                time.sleep(2)
 
             trashcancheck = self._get_trash_positions()
             if trashcancheck is None:
