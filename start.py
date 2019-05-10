@@ -138,10 +138,10 @@ def get_system_infos(db_wrapper):
     gc.set_threshold(5, 1, 1)
 
     while not terminate_mad.is_set():
-        logger.info('Starting internal Cleanup')
+        logger.debug('Starting internal Cleanup')
         logger.debug('Collecting...')
         n = gc.collect()
-        logger.info('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
+        logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
                     str(n), str(gc.garbage), str(active_count()))
 
         for obj in gc.garbage:
@@ -161,7 +161,7 @@ def get_system_infos(db_wrapper):
         collected = None
         if args.stat_gc:
             collected = gc.collect()
-            logger.info("Garbage collector: collected %d objects." % collected)
+            logger.debug("Garbage collector: collected %d objects." % collected)
         zero = datetime.datetime.utcnow()
         unixnow = calendar.timegm(zero.utctimetuple())
         db_wrapper.insert_usage(args.status_name, cpuUse,

@@ -674,10 +674,10 @@ class RmWrapper(DbWrapperBase):
 
         if getdetspawntime is None:
 
-            logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
+            logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
         else:
-            logger.info("{}: updating IV mon #{} at {}, {}. Despawning at {} (non-init)",
+            logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (non-init)",
                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
 
         capture_probability = encounter_proto.get("capture_probability")
