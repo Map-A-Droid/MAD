@@ -152,9 +152,12 @@ def get_phonescreens():
 
         filename = __generate_device_screenshot_path(phonename)
         if os.path.isfile(filename):
+            screenshot_ending: str = ".jpg"
+            if device_mappings[phonename].get("screenshot_type", "jpeg") == "png":
+                screenshot_ending = ".png"
             image_resize(filename, os.path.join(
                 conf_args.temp_path, "madmin"), width=250)
-            screen = "/screenshot/madmin/screenshot" + str(phonename) + ".png"
+            screen = "/screenshot/madmin/screenshot" + str(phonename) + screenshot_ending
             screens_phone.append(
                 generate_phones(phonename, add_text, adb_option,
                                 screen, filename, datetimeformat, dummy=False)
@@ -175,9 +178,6 @@ def get_phonescreens():
                     if os.path.isfile(filename):
                         image_resize(filename, os.path.join(
                             conf_args.temp_path, "madmin"), width=250)
-                        # TODO: help...
-                        # screen = "/screenshot/madmin/screenshot" + \
-                        #     str(pho) + ".png"
                         screenshot_ending: str = ".jpg"
                         if device_mappings[pho].get("screenshot_type", "jpeg") == "png":
                             screenshot_ending = ".png"
@@ -220,15 +220,23 @@ def take_screenshot(origin=None, useadb=None):
 
     if useadb == 'True' and adb_connect.make_screenshot(adb, origin):
         logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
+    else:
 
-    temp_comm = ws_server.get_origin_communicator(origin)
-    temp_comm.get_screenshot_single(__generate_device_screenshot_path(origin))
+        screenshot_type: ScreenshotType = ScreenshotType.JPEG
+        if device_mappings[origin].get("screenshot_type", "jpeg") == "png":
+            screenshot_type = ScreenshotType.PNG
 
-    image_resize(os.path.join(conf_args.temp_path, "screenshot" + str(origin) + ".png"),
-                 os.path.join(conf_args.temp_path, "madmin"), width=250)
+        screenshot_quality: int = device_mappings[origin].get("screenshot_quality", 80)
+
+        temp_comm = ws_server.get_origin_communicator(origin)
+        temp_comm.get_screenshot(__generate_device_screenshot_path(origin),
+                                 screenshot_quality, screenshot_type)
+
+    filename = __generate_device_screenshot_path(origin)
+    image_resize(filename, os.path.join(conf_args.temp_path, "madmin"), width=250)
 
     creationdate = datetime.datetime.fromtimestamp(
-        creation_date(__generate_device_screenshot_path(origin))).strftime(datetimeformat)
+        creation_date(filename).strftime(datetimeformat)
 
     return creationdate
 
