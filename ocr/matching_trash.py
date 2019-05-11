@@ -9,52 +9,80 @@ from utils.collections import Trash
 from typing import List
 
 
+def get_delete_quest_coords(x):
+    click_x = int(x) / 1.07
+    return click_x
+
+
+def get_delete_item_coords(x):
+    click_x = int(x) / 1.09
+    return click_x
+
+
 def trash_image_matching(screen_img):
+
     clicklist: List[Trash] = []
-    screen = cv2.imread(screen_img, 3)
+    screen = cv2.imread(screen_img)
+    screen = cv2.cvtColor(screen, cv2.COLOR_BGR2GRAY)
 
     if screen is None:
         logger.error('trash_image_matching: {} appears to be corrupted', str(screen_img))
         return None
 
-    trash = cv2.imread('utils/trashcan.png', 3)
+    trash = cv2.imread('../utils/trashcan.png', 0)
 
-    height, width, _ = screen.shape
-    height_f, width_f, _ = trash.shape
+    height, width = screen.shape
+    _quest_x = get_delete_quest_coords(width)
+    _inventory_x = get_delete_item_coords(width)
 
-    trash_crop = cv2.Canny(trash, 50, 200)
-
-    if trash_crop.mean() == 255 or trash_crop.mean() == 0:
+    if trash.mean() == 255 or trash.mean() == 0:
         return clicklist
 
-    (tH, tW) = trash_crop.shape[:2]
+    (tH, tW) = trash.shape[:2]
 
-    #screen = cv2.blur(screen, (2, 2))
-    screen = cv2.Canny(screen, 50, 50)
-    for scale in np.linspace(0.1, 2, 10)[::-1]:
+    if width <= 1080:
+        sc_from = 0.5
+        sc_till = 1
+    else:
+        sc_from = 0.1
+        sc_till = 2
+
+    for scale in np.linspace(sc_from, sc_till, 15)[::-1]:
 
         resized = imutils.resize(
-            trash_crop, width=int(trash_crop.shape[1] * scale))
+            trash, width=int(trash.shape[1] * scale))
+
+        # cv2.namedWindow("output", cv2.WINDOW_KEEPRATIO)
+        # cv2.imshow("output", resized)
+        # cv2.waitKey(0)
 
         last_y_coord = 0
         res = cv2.matchTemplate(screen, resized, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.3
+        threshold = 0.45
         loc = np.where(res >= threshold)
         boxcount = 0
         for pt in zip(*loc[::-1]):
             if pt[0] > width/4*3:
-                x_coord = int(pt[0]  + tW / 2)
-                y_coord = int(pt[1]  + tH / 2)
-                # cv2.rectangle(screen, pt, (pt[0] + tW, pt[1] + tH), (255, 255, 255), 2)
+                x_coord = int(pt[0] + tW / 2)
+                y_coord = int(pt[1] + tH / 2)
+
                 if last_y_coord > 0:
                     if last_y_coord + 100 > y_coord or last_y_coord - 100 > y_coord:
-                        last_y_coord = y_coord
+                        if (_inventory_x - 50 < x_coord < _inventory_x + 50) or \
+                                (_quest_x - 50 < x_coord < _quest_x + 50):
+                            last_y_coord = y_coord
                     else:
+                        if (_inventory_x - 50 < x_coord < _inventory_x + 50) or \
+                                (_quest_x - 50 < x_coord < _quest_x + 50):
+                            clicklist.append(Trash(x_coord, y_coord))
+                            last_y_coord = y_coord
+                            # cv2.rectangle(screen, pt, (pt[0] + tW, pt[1] + tH), (255, 255, 255), 2)
+                else:
+                    if (_inventory_x - 50 < x_coord < _inventory_x + 50) or \
+                            (_quest_x - 50 < x_coord < _quest_x + 50):
                         clicklist.append(Trash(x_coord, y_coord))
                         last_y_coord = y_coord
-                else:
-                    clicklist.append(Trash(x_coord, y_coord))
-                    last_y_coord = y_coord
+                        # cv2.rectangle(screen, pt, (pt[0] + tW, pt[1] + tH), (255, 255, 255), 2)
                 boxcount += 1
 
         # cv2.namedWindow("output", cv2.WINDOW_KEEPRATIO)
@@ -70,4 +98,4 @@ if __name__ == '__main__':
     fort_id = 'raid1'
     fort_img_path = os.getcwd() + '/' + str(fort_id) + '.jpg'
     url_img_path = os.getcwd() + 'ocr/mon_img/ic_raid_egg_rare.png'
-    # print (trash_image_matching('screenshot_m7.jpg'))
+    # print (trash_image_matching('box_redmi.jpg'))
