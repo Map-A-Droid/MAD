@@ -1320,7 +1320,8 @@ class MonocleWrapper(DbWrapperBase):
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))" \
                      "as timestamp"
         if minutes:
-            minutes = datetime.now() - timedelta(minutes=int(minutes))
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(
                 minutes)
 
