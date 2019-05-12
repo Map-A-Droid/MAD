@@ -40,9 +40,13 @@ def trash_image_matching(screen_img):
 
     (tH, tW) = trash.shape[:2]
 
-    if width <= 1080:
+
+    if width <= 1080 and width > 720:
         sc_from = 0.5
         sc_till = 1
+    elif width == 720:
+        sc_from = 0.5
+        sc_till = 0.6
     else:
         sc_from = 0.1
         sc_till = 2
@@ -51,14 +55,11 @@ def trash_image_matching(screen_img):
 
         resized = imutils.resize(
             trash, width=int(trash.shape[1] * scale))
-
-        # cv2.namedWindow("output", cv2.WINDOW_KEEPRATIO)
-        # cv2.imshow("output", resized)
-        # cv2.waitKey(0)
+        (tH, tW) = resized.shape[:2]
 
         last_y_coord = 0
         res = cv2.matchTemplate(screen, resized, cv2.TM_CCOEFF_NORMED)
-        threshold = 0.45
+        threshold = 0.5
         loc = np.where(res >= threshold)
         boxcount = 0
         for pt in zip(*loc[::-1]):
@@ -98,4 +99,4 @@ if __name__ == '__main__':
     fort_id = 'raid1'
     fort_img_path = os.getcwd() + '/' + str(fort_id) + '.jpg'
     url_img_path = os.getcwd() + 'ocr/mon_img/ic_raid_egg_rare.png'
-    # print (trash_image_matching('box_redmi.jpg'))
+    # print (trash_image_matching('Quest_w.png'))
