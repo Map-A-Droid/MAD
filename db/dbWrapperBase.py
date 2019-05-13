@@ -605,7 +605,7 @@ class DbWrapperBase(ABC):
 
         res = self.execute(query)
         for row in res:
-            spawnret[row[0]] = row[1]
+            spawnret[int(row[0])] = row[1]
         return spawnret
 
     def submit_spawnpoints_map_proto(self, origin, map_proto):
