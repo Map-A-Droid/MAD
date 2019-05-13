@@ -81,6 +81,7 @@ div.container[role="main"] {
   white-space: nowrap;
 }
 
+.leaflet-popup-content .raid .raidImg,
 .leaflet-popup-content .quest .rewardImg {
   background-repeat: no-repeat;
   background-position: center center;
@@ -137,4 +138,17 @@ li.list-group-item.layer-item {
 
 .leaflet-sidebar.collapsed {
   width: 44px !important;
+}
+
+.raidIcon {
+  font-size: 12px;
+  display: block;
+  width: 20px !important;
+  height: 20px !important;
+  background: #000;
+  color: #FFF;
+  font-weight: bold;
+  border-radius: 10px;
+  text-align: center;
+  line-height: 20px;
 }

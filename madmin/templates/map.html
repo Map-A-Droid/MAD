@@ -3,11 +3,11 @@
 {% block header %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
-<link rel="stylesheet" href="static/style/madmin.css?1557740062" />
+<link rel="stylesheet" href="static/style/madmin.css?1557757593" />
 {% endblock %}
 
 {% block scripts %}
-<script src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous" defer></script>
+<script defer src="https://use.fontawesome.com/releases/v5.8.2/js/all.js" integrity="sha384-DJ25uNYET2XCl5ZF++U8eNxPWqcKohUUBUpKGlNLMchM7q4Wjg2CUpjHLaL8yYPH" crossorigin="anonymous"></script>
 <script src="https://vuejs.org/js/vue.min.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
@@ -64,6 +64,7 @@
   // main map element
   var map;
   var mapclick = 0;
+  var init = true;
 
   // object to hold all the markers and elements
   var leaflet_data = {
@@ -77,8 +78,6 @@
     workers: {}
   };
 
-  Vue.config.devtools = true;
-
   new Vue({
     el: '#app',
     data: {
@@ -91,7 +90,7 @@
           spawns: false,
           gyms: false,
           quests: false,
-          workers: false
+          workers: false,
         },
         dyn: {
           routes: {},
@@ -142,28 +141,29 @@
     },
     watch: {
       "layers.stat.gyms": function(newVal, oldVal) {
-        if (newVal) {
+        if (newVal && !init) {
           this.map_fetch_gyms(this.buildUrlFilter(true));
         }
 
+        this.changeStaticLayer("raids", oldVal, newVal);
         this.changeStaticLayer("gyms", oldVal, newVal);
       },
       "layers.stat.spawns": function(newVal, oldVal) {
-        if (newVal) {
+        if (newVal && !init) {
           this.map_fetch_spawns(this.buildUrlFilter(true));
         }
 
         this.changeStaticLayer("spawns", oldVal, newVal);
       },
       "layers.stat.workers": function(newVal, oldVal) {
-        if (newVal) {
+        if (newVal && !init) {
           this.map_fetch_workers(this.buildUrlFilter(true));
         }
 
         this.changeStaticLayer("workers", oldVal, newVal);
       },
       "layers.stat.quests": function(newVal, oldVal) {
-        if (newVal) {
+        if (newVal && !init) {
           this.map_fetch_quests(this.buildUrlFilter(true));
         }
 
@@ -245,7 +245,7 @@
             var name = worker["name"];
 
             if ($this["workers"][name]) {
-              leaflet_data["workers"][name].setLatLng([worker["lat"], worker["lon"]]);
+              leaflet_data["workers"][name].setLatLng([worker["lat"], worker["lon"]]).bringToFront();
             } else {
               $this.workers[name] = worker;
 
@@ -323,36 +323,32 @@
             if ($this["raids"][gym["id"]]) {
               /// TODO remove past raids
               // end time is different -> new raid
-              if ($this["raids"][gym["id"]]["end"] != gym["raid"]["end"]) {
+              if ($this["raids"][gym["id"]]["end"] != gym["raid"]["end"] || gym["raid"]["end"] > (new Date().getTime()/1000)) {
+                map.removeLayer(leaflet_data["raids"][gym["id"]]);
                 delete leaflet_data["raids"][gym["id"]];
               }
             }
 
-            if (gym["raid"] != null) {
-              $this["raids"][gym["id"]] = gym["raid"];
-
-              switch (gym["raid"]["level"]) {
-                case 1:
-                case 2:
-                  raidcolor = "#FF46F3";
-                  break;
-                case 3:
-                case 4:
-                  raidcolor = "#F0B87C";
-                  break;
-                case 5:
-                  raidcolor = "#222222";
-                  break;
+            if (gym["raid"] != null && gym["raid"]["end"] > (new Date().getTime()/1000)) {
+              if (map.hasLayer(leaflet_data["raids"][gym["id"]])) {
+                return;
               }
 
-              leaflet_data["raids"][gym["id"]] = L.circle([gym["lat"], gym["lon"]], {
-                id: gym["id"],
-                radius: 14,
-                color: raidcolor,
-                weight: 3,
-                opacity: 0.9,
-                fillOpacity: 0.0
+              $this["raids"][gym["id"]] = gym["raid"];
+
+              var icon = L.divIcon({
+                html: gym["raid"]["level"],
+                className: "raidIcon",
+                iconAnchor: [-1*(18 - map.getZoom()), -1*(18 - map.getZoom())]
               });
+
+              leaflet_data["raids"][gym["id"]] = L.marker([gym["lat"], gym["lon"]], {
+                id: gym["id"],
+                icon: icon,
+                interactive: false
+              });
+
+              leaflet_data["raids"][gym["id"]].addTo(map);
             }
           });
         });
@@ -683,6 +679,63 @@
       },
       build_gym_popup(marker) {
         gym = this.gyms[marker.options.id];
+        raid = this.raids[marker.options.id];
+
+        raidContent = "";
+        if (raid) {
+          var monText = "";
+          if (raid["mon"]) {
+            var mon = String.prototype.padStart.call(raid["mon"], 3, 0);
+            var form = String.prototype.padStart.call(raid["form"], 2, 0);
+            var image = `asset/pokemon_icons/pokemon_icon_${mon}_${form}.png`;
+            var monText = `<div class="monId"><i class="fas fa-ghost"></i> Mon: <strong>#${raid["mon"]}</strong></div>`
+          } else {
+            switch (raid["level"]) {
+              case 1:
+              case 2:
+                var image = "asset/static_assets/png/ic_raid_egg_normal.png";
+                break;
+              case 3:
+              case 4:
+                var image = "asset/static_assets/png/ic_raid_egg_rare.png";
+                break;
+              case 5:
+                var image = "asset/static_assets/png/ic_raid_egg_legendary.png";
+                break;
+            }
+          }
+
+          var levelStars = "";
+          for (var i = 1; i <= raid["level"]; i++) {
+            levelStars += `<i class="fas fa-star"></i>`;
+          }
+
+          var now = moment();
+          var spawn = moment(raid["spawn"]*1000);
+          var start = moment(raid["start"]*1000);
+          var end = moment(raid["end"]*1000);
+
+          var activeText = "";
+          var endText = "";
+          if (now.isAfter(start) && now.isBefore(end)) {
+            var activeText = `<span class="text-success">(active <i class="fa fa-ghost"></i>)</span>`;
+            var endText = `(${now.to(end)})`;
+          } else if (now.isBefore(start)) {
+            var activeText = `(${now.to(start)})`;
+          } else if (now.isAfter(end)) {
+            var endText = `(${end.from(now)})`;
+          }
+
+          var timeformat = 'HH:mm:ss';
+          var raidContent = `<br><div class="raid">
+              <div class="level"><i class="fas fa-arrow-circle-up"></i> Level: <strong>${levelStars}</strong></div>
+              ${monText}
+              <div class="hatch"><i class="fa fa-egg"></i> Spawn: <strong>${spawn.format(timeformat)}</strong></div>
+              <div class="start"><i class="fa fa-hourglass-start"></i> Start: <strong>${start.format(timeformat)} ${activeText}</strong></div>
+              <div class="end"><i class="fas fa-hourglass-end"></i> End: <strong>${end.format(timeformat)} ${endText}</strong></div>
+              <div class="raidImg" style="background-image: url(${image}); background-size: 100%"></div>
+            </div>`;
+        }
 
         return `<div class="content">
             <div class="image" style="background: url(${gym['img']}) center center no-repeat;"></div>
@@ -692,11 +745,11 @@
               <i class="fa fa-map-pin"></i>
               <a href="https://maps.google.com/?q=${gym['lat']},${gym['lon']}">${gym['lat']}, ${gym['lon']}</a>
            </div>
+           ${raidContent}
           </div>`;
       },
       build_spawn_popup(marker) {
         spawn = this.spawns[marker.options.id];
-
 
         if (spawn['endtime'] !== null) {
           var timeformat = 'YYYY-MM-DD HH:mm:ss';
@@ -727,10 +780,9 @@
             despawntime.add(1, 'h');
           }
 
+          var activeText = "";
           if (now.isBetween(spawntime, despawntime)) {
             var activeText = `<span class="text-success">(active <i class="fa fa-ghost"></i>)</span>`;
-          } else {
-            var activeText = "";
           }
 
           var spawntiming = `
@@ -863,7 +915,6 @@
         this.settings.routes.coordinateRadius.raids = this.getStoredSetting('settings-coordinateRadius-raids', 490);
         this.settings.routes.coordinateRadius.quests = this.getStoredSetting('settings-coordinateRadius-quests', 40);
         this.settings.routes.coordinateRadius.mons = this.getStoredSetting('settings-coordinateRadius-mons', 67);
-        var statlayers = Object.keys(this.layers.stat);
         for (index of Object.keys(this.layers.stat)) {
           this.layers.stat[index] = this.getStoredSetting("layer-stat-"+index, false);
         }
