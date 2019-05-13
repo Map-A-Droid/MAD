@@ -3,7 +3,7 @@
 {% block header %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
-<link rel="stylesheet" href="static/style/madmin.css?1557412980" />
+<link rel="stylesheet" href="static/style/madmin.css?1557740062" />
 {% endblock %}
 
 {% block scripts %}
@@ -385,6 +385,7 @@
 
             route.coordinates.forEach(function (coord) {
               circle = L.circle(coord, {
+                pane: "routes",
                 radius: cradius,
                 color: color,
                 fillColor: color,
@@ -404,7 +405,14 @@
             }
 
             // add route to layergroup
-            L.geoJSON(geojson, { style: { "color": color, "weight": 2, "opacity": 0.5 } }).addTo(group);
+            L.geoJSON(geojson, {
+              pane: "routes",
+              style: {
+                "color": color,
+                "weight": 2,
+                "opacity": 0.5
+              }
+            }).addTo(group);
 
             // add layergroup to management object
             leaflet_data["routes"][name] = group;
@@ -541,7 +549,14 @@
             }
 
             // add geofence to layergroup
-            L.geoJSON(geojson, { style: { "color": $this.getRandomColor(), "weight": 2, "opacity": 0.25 } }).addTo(group);
+            L.geoJSON(geojson, {
+              pane: "geofences",
+              style: {
+                "color": $this.getRandomColor(),
+                "weight": 2,
+                "opacity": 0.25
+              }
+            }).addTo(group);
 
             // add layergroup to management object
             leaflet_data["geofences"][name] = group;
@@ -865,6 +880,9 @@
           updateWhenIdle: true,
           preferCanvas: true
         }).setView(storedCenter.split(','), storedZoom);
+
+        map.createPane("geofences");
+        map.createPane("routes");
 
         L.control.zoom({
           position: 'bottomright'

@@ -7,6 +7,14 @@ div.container[role="main"] {
   padding: 0px !important;
 }
 
+.leaflet-routes-pane {
+  z-index: 399;
+}
+
+.leaflet-geofences-pane {
+  z-index: 398;
+}
+
 .spawnpopup .leaflet-popup-content {
   width: 300px !important;
   margin: 13px !important;
