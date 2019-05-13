@@ -980,6 +980,7 @@ def get_gymcoords():
             "lon": gym["longitude"],
             "team_id": gym["team_id"],
             "last_updated": gym["last_updated"],
+            "last_scanned": gym["last_scanned"],
             "raid": gym["raid"]
         })
 

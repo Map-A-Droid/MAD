@@ -1417,7 +1417,7 @@ class MonocleWrapper(DbWrapperBase):
             "SELECT forts.external_id, forts.lat, forts.lon, forts.name, "
             "forts.url, IFNULL(fort_sightings.team, 0), "
             "fort_sightings.last_modified, raids.level, raids.time_spawn, raids.time_battle, "
-            "raids.time_end, raids.pokemon_id, raids.form "
+            "raids.time_end, raids.pokemon_id, raids.form, fort_sightings.updated "
             "FROM forts "
             "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
             "LEFT JOIN raids ON raids.fort_id = forts.id "
@@ -1450,7 +1450,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query + query_where)
 
         for (gym_id, latitude, longitude, name, url, team_id, last_updated,
-                level, spawn, start, end, mon_id, form) in res:
+                level, spawn, start, end, mon_id, form, last_scanned) in res:
 
             # check if we found a raid and if it's still active
             if end is None or time.time() > end:
@@ -1473,6 +1473,7 @@ class MonocleWrapper(DbWrapperBase):
                 "longitude": longitude,
                 "team_id": int(team_id),
                 "last_updated": last_updated,
+                "last_scanned": last_scanned,
                 "raid": raid
             }
 

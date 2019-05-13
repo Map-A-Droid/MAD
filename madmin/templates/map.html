@@ -61,10 +61,11 @@
     }
   });
 
-  // main map element
+  // globals
   var map;
   var mapclick = 0;
   var init = true;
+  var fetchTimeout = null;
 
   // object to hold all the markers and elements
   var leaflet_data = {
@@ -655,7 +656,8 @@
             break;
         }
 
-        return `<div class="quest">
+        return `
+          <div class="quest">
             <div class="task"><i class="fa fa-question-circle"></i> Task: <strong>${quest_task}</strong></div>
             <div class="reward"><i class="fa fa-trophy"></i> Reward: <strong>${rewardtext}</strong></div>
             <div class="rewardImg" style="background-image: url(${image}); background-size: ${size}"></div>
@@ -664,15 +666,16 @@
       build_stop_popup(marker) {
         var quest = this.quests[marker.options.id];
 
-        return `<div class="content">
-            <div class="image" style="background: url(${quest['url']}) center center no-repeat;"></div>
-            <div class="name"><strong>${quest['name']}</strong></div>
-            <div class="id"><i class="fa fa-fingerprint"></i> <span>${quest['pokestop_id']}</span></div>
+        return `
+          <div class="content">
+            <div class="image" style="background: url(${quest["url"]}) center center no-repeat;"></div>
+            <div class="name"><strong>${quest["name"]}</strong></div>
+            <div class="id"><i class="fa fa-fingerprint"></i> <span>${quest["pokestop_id"]}</span></div>
             <div class="coords">
               <i class="fa fa-map-pin"></i>
-              <a href="https://maps.google.com/?q=${quest['latitude']},${quest['longitude']}">${quest['latitude']}, ${quest['longitude']}</a>
+              <a href="https://maps.google.com/?q=${quest["latitude"]},${quest["longitude"]}">${quest["latitude"]}, ${quest["longitude"]}</a>
             </div>
-            <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: ${new Date(quest['timestamp']*1000).toLocaleString()}</div>
+            <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: ${moment(quest['timestamp']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
             <br>
             ${this.build_quest(quest['quest_reward_type_raw'], quest['quest_task'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type'])}
           </div>`;
@@ -705,10 +708,7 @@
             }
           }
 
-          var levelStars = "";
-          for (var i = 1; i <= raid["level"]; i++) {
-            levelStars += `<i class="fas fa-star"></i>`;
-          }
+          var levelStars = `<i class="fas fa-star"></i>`.repeat(raid["level"]);
 
           var now = moment();
           var spawn = moment(raid["spawn"]*1000);
@@ -726,25 +726,34 @@
             var endText = `(${end.from(now)})`;
           }
 
-          var timeformat = 'HH:mm:ss';
-          var raidContent = `<br><div class="raid">
+          var raidtimeformat = "HH:mm:ss";
+          var raidContent = `
+            <br>
+            <div class="raid">
               <div class="level"><i class="fas fa-arrow-circle-up"></i> Level: <strong>${levelStars}</strong></div>
               ${monText}
-              <div class="hatch"><i class="fa fa-egg"></i> Spawn: <strong>${spawn.format(timeformat)}</strong></div>
-              <div class="start"><i class="fa fa-hourglass-start"></i> Start: <strong>${start.format(timeformat)} ${activeText}</strong></div>
-              <div class="end"><i class="fas fa-hourglass-end"></i> End: <strong>${end.format(timeformat)} ${endText}</strong></div>
+              <div class="hatch"><i class="fa fa-egg"></i> Spawn: <strong>${spawn.format(raidtimeformat)}</strong></div>
+              <div class="start"><i class="fa fa-hourglass-start"></i> Start: <strong>${start.format(raidtimeformat)} ${activeText}</strong></div>
+              <div class="end"><i class="fas fa-hourglass-end"></i> End: <strong>${end.format(raidtimeformat)} ${endText}</strong></div>
               <div class="raidImg" style="background-image: url(${image}); background-size: 100%"></div>
             </div>`;
         }
 
-        return `<div class="content">
-            <div class="image" style="background: url(${gym['img']}) center center no-repeat;"></div>
-            <div class="name"><strong>${gym['name']}</strong></div>
-            <div class="id"><i class="fa fa-fingerprint"></i> <span>${gym['id']}</span></div>
+
+        var timeformat = "YYYY-MM-DD HH:mm:ss";
+        var last_scanned = moment(gym["last_scanned"]*1000);
+        console.log(gym["last_scanned"]);
+
+        return `
+          <div class="content">
+            <div class="image" style="background: url(${gym["img"]}) center center no-repeat;"></div>
+            <div class="name"><strong>${gym["name"]}</strong></div>
+            <div class="id"><i class="fa fa-fingerprint"></i> <span>${gym["id"]}</span></div>
             <div class="coords">
               <i class="fa fa-map-pin"></i>
-              <a href="https://maps.google.com/?q=${gym['lat']},${gym['lon']}">${gym['lat']}, ${gym['lon']}</a>
+              <a href="https://maps.google.com/?q=${gym["lat"]},${gym["lon"]}">${gym["lat"]}, ${gym["lon"]}</a>
            </div>
+           <div class="timestamp"><i class="fa fa-clock"></i> Scanned: ${last_scanned.format(timeformat)}</div>
            ${raidContent}
           </div>`;
       },
@@ -752,7 +761,7 @@
         spawn = this.spawns[marker.options.id];
 
         if (spawn['endtime'] !== null) {
-          var timeformat = 'YYYY-MM-DD HH:mm:ss';
+          var timeformat = "YYYY-MM-DD HH:mm:ss";
 
           var endsplit = spawn['endtime'].split(':');
           var endMinute = parseInt(endsplit[0]);
@@ -792,16 +801,20 @@
           var spawntiming = "";
         }
 
-        return `<div class="content">
+        return `
+          <div class="content">
+            <div class="id"><i class="fa fa-fingerprint"></i> <span>${spawn["id"]}</span></div>
+            <div class="coords">
+              <i class="fa fa-map-pin"></i>
+              <a href="https://maps.google.com/?q=${spawn["lat"]},${spawn["lon"]}">${spawn["lat"].toFixed(6)}, ${spawn["lon"].toFixed(6)}</a>
+           </div>
+           <div class="timestamp"><i class="fa fa-clock"></i> Scanned: ${spawn["lastscan"]}</div>
+           <br>
             <div class="spawnContent">
             <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown"}</strong> spawnpoint</div>
               <div class="spawnTiming">${spawntiming}</div>
             </div>
-            <div class="id"><i class="fa fa-fingerprint"></i> <span>${spawn['id']}</span></div>
-            <div class="coords">
-              <i class="fa fa-map-pin"></i>
-              <a href="https://maps.google.com/?q=${spawn['lat']},${spawn['lon']}">${spawn['lat'].toFixed(6)}, ${spawn['lon'].toFixed(6)}</a>
-           </div>`;
+          </div>`;
       },
       getStoredSetting(name, defaultval) {
         var val = localStorage.getItem('settings');
@@ -843,8 +856,14 @@
         this.updateStoredSetting('center', center.lat + ',' + center.lng);
         this.updateBounds();
 
-        // TODO remove this
-        setTimeout(function() { $this.map_fetch_everything() }, 100);
+        if (fetchTimeout) {
+          clearTimeout(fetchTimeout);
+          fetchTimeout = null;
+        }
+
+        fetchTimeout = setTimeout(function() {
+          $this.map_fetch_everything();
+        }, 500);
       },
       l_event_zoomed() {
         var $this = this;
@@ -856,8 +875,14 @@
           leaflet_data["gyms"][id].setRadius(Math.pow((20 - map.getZoom()), 2.5));
         });
 
-        // TODO remove this
-        setTimeout(function() { $this.map_fetch_everything() }, 100);
+        if (fetchTimeout) {
+          clearTimeout(fetchTimeout);
+          fetchTimeout = null;
+        }
+
+        fetchTimeout = setTimeout(function() {
+          $this.map_fetch_everything();
+        }, 500);
       },
       l_event_click(e) {
         $this = this;
@@ -871,6 +896,8 @@
         }, 250);
       },
       l_event_dbclick(e) {
+        // reset click counter to 0 to make
+        // sure 
         mapclick = 0;
       },
       updateBounds(isOld) {
@@ -908,8 +935,6 @@
         return lonlat;
       },
       initMap() {
-        $this = this;
-
         // get stored settings
         this.settings.maptiles = this.getStoredSetting("settings-maptiles", "cartodblight");
         this.settings.routes.coordinateRadius.raids = this.getStoredSetting('settings-coordinateRadius-raids', 490);
@@ -918,6 +943,13 @@
         for (index of Object.keys(this.layers.stat)) {
           this.layers.stat[index] = this.getStoredSetting("layer-stat-"+index, false);
         }
+
+        // magic thingy to prevent double-loading data
+        // after we initially restored settings
+        // from stored settings
+        this.$nextTick(function() {
+          init = false;
+        });
 
         // get stored center and zoom level if they exists
         const storedZoom = this.getStoredSetting('zoomlevel', 3);
@@ -932,6 +964,8 @@
           preferCanvas: true
         }).setView(storedCenter.split(','), storedZoom);
 
+        // extra panes to make sure routes and
+        // geofences are below everything else
         map.createPane("geofences");
         map.createPane("routes");
 
@@ -968,10 +1002,6 @@
         map.on('moveend', this.l_event_moveend);
         map.on('click', this.l_event_click);
         map.on('dblclick', this.l_event_dbclick);
-
-        sidebar.on("content", function(event) {
-          $this.updateStoredSetting("sidebartab", event.id);
-        });
       },
       buildUrlFilter(force = false) {
         var oSwLat = this.getStoredSetting("oSwLat", null);

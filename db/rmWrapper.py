@@ -1510,7 +1510,7 @@ class RmWrapper(DbWrapperBase):
             "SELECT gym.gym_id, gym.latitude, gym.longitude, "
             "gymdetails.name, gymdetails.url, gym.team_id, "
             "gym.last_modified, raid.level, raid.spawn, raid.start, "
-            "raid.end, raid.pokemon_id, raid.form "
+            "raid.end, raid.pokemon_id, raid.form, gym.last_scanned "
             "FROM gym "
             "INNER JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
             "LEFT JOIN raid ON raid.gym_id = gym.gym_id "
@@ -1545,7 +1545,7 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query + query_where)
 
         for (gym_id, latitude, longitude, name, url, team_id, last_updated,
-                level, spawn, start, end, mon_id, form) in res:
+                level, spawn, start, end, mon_id, form, last_scanned) in res:
 
             nowts = datetime.utcfromtimestamp(time.time()).timestamp()
 
@@ -1569,7 +1569,8 @@ class RmWrapper(DbWrapperBase):
                 "latitude": latitude,
                 "longitude": longitude,
                 "team_id": team_id,
-                "last_updated": last_updated,
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()),
+                "last_scanned": int(last_scanned.replace(tzinfo=timezone.utc).timestamp()),
                 "raid": raid
             }
 
