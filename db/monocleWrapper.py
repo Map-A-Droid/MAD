@@ -1066,7 +1066,7 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
     def stop_from_db_without_quests(self, geofence_helper):
-        logger.debug("RmWrapper::stop_from_db_without_questsb called")
+        logger.debug("MonocleWrapper::stop_from_db_without_quests called")
         questinfo = {}
 
         query = (
