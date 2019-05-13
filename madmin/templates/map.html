@@ -3,7 +3,8 @@
 {% block header %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
-<link rel="stylesheet" href="static/style/madmin.css?1557757593" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+<link rel="stylesheet" href="static/style/madmin.css?1557778237" />
 {% endblock %}
 
 {% block scripts %}
@@ -12,8 +13,38 @@
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/js/leaflet-sidebar.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
+  var locInjectBtn = L.easyButton({
+    position: "bottomright",
+    states: [{
+      stateName: 'scanmode-activate',
+      icon: 'fa-satellite-dish',
+      title: 'Enable click-to-scan mode',
+      onClick: function(btn, map) {
+        clickToScanActive = true;
+        L.DomUtil.addClass(map._container, 'crosshair-cursor-enabled');
+        btn.state('scanmode-deactivate');
+      }
+    }, {
+      stateName: 'scanmode-deactivate',
+      icon: 'fa-satellite-dish',
+      title: 'Disable click-to-scan mode',
+      onClick: function(btn, map) {
+        clickToScanActive = false;
+        L.DomUtil.removeClass(map._container, 'crosshair-cursor-enabled');
+        btn.state('scanmode-activate');
+      }
+    }]
+  });
+
+  $(document).on("hidden.bs.modal", "#injectionModal", function(e) {
+    locInjectBtn.state("scanmode-activate");
+    clickToScanActive = false;
+    L.DomUtil.removeClass(map._container, 'crosshair-cursor-enabled');
+  });
+
   L.Marker.addInitHook(function() {
     if (this.options.virtual) {
       this.on('add', function() {
@@ -63,9 +94,9 @@
 
   // globals
   var map;
-  var mapclick = 0;
   var init = true;
   var fetchTimeout = null;
+  var clickToScanActive = false;
 
   // object to hold all the markers and elements
   var leaflet_data = {
@@ -246,7 +277,11 @@
             var name = worker["name"];
 
             if ($this["workers"][name]) {
-              leaflet_data["workers"][name].setLatLng([worker["lat"], worker["lon"]]).bringToFront();
+              leaflet_data["workers"][name].setLatLng([worker["lat"], worker["lon"]])
+
+              if (map.hasLayer(leaflet_data["workers"][name])) {
+                leaflet_data["workers"][name].bringToFront();
+              }
             } else {
               $this.workers[name] = worker;
 
@@ -885,20 +920,9 @@
         }, 500);
       },
       l_event_click(e) {
-        $this = this;
-        mapclick = mapclick + 1;
-
-        setTimeout(function() {
-          if(mapclick == 1) {
-            $('#injectionModal').data('coords', e.latlng.lat + ',' + e.latlng.lng).modal();
-            mapclick = 0;
-          }
-        }, 250);
-      },
-      l_event_dbclick(e) {
-        // reset click counter to 0 to make
-        // sure 
-        mapclick = 0;
+        if(clickToScanActive) {
+          $('#injectionModal').data('coords', e.latlng.lat + ',' + e.latlng.lng).modal();
+        }
       },
       updateBounds(isOld) {
         if (!isOld) {
@@ -964,15 +988,20 @@
           preferCanvas: true
         }).setView(storedCenter.split(','), storedZoom);
 
+        // add custom button
+        locInjectBtn.addTo(map);
+
         // extra panes to make sure routes and
         // geofences are below everything else
         map.createPane("geofences");
         map.createPane("routes");
 
+        // move zoom controls
         L.control.zoom({
           position: 'bottomright'
         }).addTo(map);
 
+        // add sidebar
         var sidebar = L.control.sidebar({
           autopan: false,
           closeButton: true,
@@ -1001,7 +1030,6 @@
         map.on('zoomend', this.l_event_zoomed);
         map.on('moveend', this.l_event_moveend);
         map.on('click', this.l_event_click);
-        map.on('dblclick', this.l_event_dbclick);
       },
       buildUrlFilter(force = false) {
         var oSwLat = this.getStoredSetting("oSwLat", null);

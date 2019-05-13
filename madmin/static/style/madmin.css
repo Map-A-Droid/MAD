@@ -152,3 +152,15 @@ li.list-group-item.layer-item {
   text-align: center;
   line-height: 20px;
 }
+
+.easy-button-button {
+  font-size: 20px;
+}
+
+.state-scanmode-deactivate {
+  color: #ccc;
+}
+
+.leaflet-container.crosshair-cursor-enabled {
+  cursor: crosshair;
+}
