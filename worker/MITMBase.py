@@ -40,9 +40,17 @@ class MITMBase(WorkerBase):
                                                 2, 0,
                                                 self._walker_routemanager.get_walker_type(), 99)
 
-    def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
-        if not timeout:
+    def _wait_for_data(self, timestamp: float = time.time(), proto_to_wait_for=106, timeout=None):
+        if timeout is None:
             timeout = self._devicesettings.get("mitm_wait_timeout", 45)
+
+        # let's fetch the latest data to add the offset to timeout (in case phone and server times are off...)
+        latest = self._mitm_mapper.request_latest(self._id)
+        timestamp_last_data = latest.get("timestamp_last_data", None)
+        timestamp_last_received = latest.get("timestamp_receiver", None)
+        if timestamp_last_data is not None and timestamp_last_received is not None:
+            # add the difference of the two timestamps to timeout
+            timeout += (timestamp_last_received - timestamp_last_data)
 
         logger.info('Waiting for data after {}',
                     datetime.fromtimestamp(timestamp))

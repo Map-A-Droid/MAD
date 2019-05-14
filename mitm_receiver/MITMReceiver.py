@@ -1,10 +1,10 @@
 import json
 import math
 import sys
-import threading
+
 import time
 from datetime import datetime
-from queue import Queue
+from multiprocessing import Queue, Process
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
@@ -80,8 +80,7 @@ class MITMReceiver(object):
         self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            t = threading.Thread(name='MITMReceiver-%s' % str(i),
-                                 target=self.received_data_worker)
+            t = Process(name='MITMReceiver-%s' % str(i), target=self.received_data_worker)
             t.start()
             self.worker_threads.append(t)
 
@@ -115,9 +114,10 @@ class MITMReceiver(object):
             logger.info("Worker {} is injected now", str(origin))
             self.__mitm_mapper.set_injection_status(origin)
         # extract timestamp from data
-        timestamp = data.get("timestamp", int(math.floor(time.time())))
+        timestamp: float = data.get("timestamp", int(math.floor(time.time())))
         self.__mitm_mapper.update_latest(
-            origin, timestamp=timestamp, key=type, values_dict=data)
+            origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
+            values_dict=data)
         self._data_queue.put(
             (timestamp, data, origin)
         )
