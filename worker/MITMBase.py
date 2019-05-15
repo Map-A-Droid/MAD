@@ -48,15 +48,21 @@ class MITMBase(WorkerBase):
         latest = self._mitm_mapper.request_latest(self._id)
         timestamp_last_data = latest.get("timestamp_last_data", None)
         timestamp_last_received = latest.get("timestamp_receiver", None)
-        if timestamp_last_data is not None and timestamp_last_received is not None:
-            # add the difference of the two timestamps to timeout
-            timeout += (timestamp_last_received - timestamp_last_data)
+
+        # we can now construct the rough estimate of the diff of time of mobile vs time of server, subtract our
+        # timestamp by the diff
+        timestamp = timestamp - (timestamp_last_received - timestamp_last_data)
+        #
+        # if timestamp_last_data is not None and timestamp_last_received is not None:
+        #     # add the difference of the two timestamps to timeout
+        #     timeout += (timestamp_last_received - timestamp_last_data)
 
         logger.info('Waiting for data after {}',
                     datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
-        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= math.floor(time.time()):
+        while (data_requested == LatestReceivedType.UNDEFINED
+                and timestamp + timeout >= math.floor(time.time() - (timestamp_last_received - timestamp_last_data))):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)

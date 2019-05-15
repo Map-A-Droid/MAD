@@ -4,7 +4,8 @@ import sys
 
 import time
 from datetime import datetime
-from multiprocessing import Queue, Process
+from queue import Queue
+from threading import Thread
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
@@ -76,11 +77,11 @@ class MITMReceiver(object):
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/', handler=self.get_addresses,
                           methods_passed=['GET'])
-        self._data_queue = Queue()
+        self._data_queue: Queue = Queue()
         self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            t = Process(name='MITMReceiver-%s' % str(i), target=self.received_data_worker)
+            t = Thread(name='MITMReceiver-%s' % str(i), target=self.received_data_worker)
             t.start()
             self.worker_threads.append(t)
 

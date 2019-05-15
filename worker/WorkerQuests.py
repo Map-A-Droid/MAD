@@ -307,9 +307,10 @@ class WorkerQuests(MITMBase):
                     "post_turn_screen_on_delay", 7))
 
         cur_time = time.time()
+        self._mitm_mapper.set_injection_status(self._id, False)
+
         start_result = False
         while not pogo_topmost:
-            self._mitm_mapper.set_injection_status(self._id, False)
             start_result = self._communicator.startApp(
                     "com.nianticlabs.pokemongo")
             time.sleep(1)
@@ -433,7 +434,7 @@ class WorkerQuests(MITMBase):
                         data_received = self._wait_for_data(
                             timestamp=curTime, proto_to_wait_for=4, timeout=35)
 
-                        if data_received is not None:
+                        if data_received != LatestReceivedType.UNDEFINED:
                             if data_received == LatestReceivedType.CLEAR:
                                 delrounds += 1
                                 stop_screen_clear.set()
@@ -487,13 +488,10 @@ class WorkerQuests(MITMBase):
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
-        self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="ids_encountered",
-                                        values_dict=self._encounter_ids)
-        self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="ids_iv",
-                                        values_dict=ids_iv)
+        self._mitm_mapper.update_latest(origin=self._id, key="ids_encountered", values_dict=self._encounter_ids)
+        self._mitm_mapper.update_latest(origin=self._id, key="ids_iv", values_dict=ids_iv)
 
-        self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
-                                        values_dict=injected_settings)
+        self._mitm_mapper.update_latest(origin=self._id, key="injected_settings", values_dict=injected_settings)
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
         latest: dict = self._mitm_mapper.request_latest(self._id)
@@ -539,7 +537,7 @@ class WorkerQuests(MITMBase):
         if not self._current_position_has_spinnable_stop(timestamp):
             # wait for GMO in case we moved too far away
             data_received = self._wait_for_data(
-                    timestamp=timestamp, proto_to_wait_for=106, timeout=25)
+                    timestamp=timestamp, proto_to_wait_for=106, timeout=35)
             if data_received == LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
                 logger.info("Stop {}, {} considered to be ignored in the next round due to failed spinnable check",
                             str(self.current_location.lat), str(self.current_location.lng))
@@ -550,7 +548,7 @@ class WorkerQuests(MITMBase):
             self._waittime_without_delays = self._stop_process_time
             self._open_gym(self._delay_add)
             data_received = self._wait_for_data(
-                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=25)
+                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
                 time.sleep(1)
@@ -581,7 +579,7 @@ class WorkerQuests(MITMBase):
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
-                timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=25)
+                timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.error('Box is full ... Next round!')
                 self.clear_thread_task = 1
