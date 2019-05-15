@@ -108,11 +108,26 @@ class MITMBase(WorkerBase):
                     self._reboot()
                     raise InternalStopWorkerException
 
+                # self._mitm_mapper.
                 self._restart_count = 0
                 self._restart_pogo(True)
 
         self.worker_stats()
         return data_requested
+
+    def _wait_for_injection(self):
+        while not self._mitm_mapper.get_injection_status(self._id):
+            if self._not_injected_count >= 20:
+                logger.error("Worker {} not get injected in time - reboot", str(self._id))
+                self._reboot()
+                return False
+            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            if self._stop_worker_event.isSet():
+                logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                return False
+            self._not_injected_count += 1
+            time.sleep(20)
+        return True
 
     @abstractmethod
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):

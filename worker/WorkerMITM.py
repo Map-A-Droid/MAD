@@ -131,8 +131,9 @@ class WorkerMITM(MITMBase):
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
+
         reached_raidtab = False
-        if start_result:
+        if start_result and self._wait_for_injection():
             logger.warning("startPogo: Starting pogo...")
             self._last_known_state["lastPogoRestart"] = cur_time
 

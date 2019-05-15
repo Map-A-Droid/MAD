@@ -315,11 +315,11 @@ class WorkerQuests(MITMBase):
                     "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
-        reached_raidtab = False
-        if start_result:
-            logger.warning("startPogo: Starting pogo...")
+        reached_mainscreen = False
+        if start_result and self._wait_for_injection():
+            logger.warning("startPogo: Started pogo successfully...")
             self._last_known_state["lastPogoRestart"] = cur_time
-            reached_mainscreen = True
+            reached_mainscreen = self._check_pogo_main_screen(10, True)
         return reached_mainscreen
 
     def _cleanup(self):
