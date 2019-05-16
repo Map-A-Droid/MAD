@@ -40,15 +40,29 @@ class MITMBase(WorkerBase):
                                                 2, 0,
                                                 self._walker_routemanager.get_walker_type(), 99)
 
-    def _wait_for_data(self, timestamp, proto_to_wait_for=106, timeout=False):
-        if not timeout:
+    def _wait_for_data(self, timestamp: float = time.time(), proto_to_wait_for=106, timeout=None):
+        if timeout is None:
             timeout = self._devicesettings.get("mitm_wait_timeout", 45)
+
+        # let's fetch the latest data to add the offset to timeout (in case phone and server times are off...)
+        latest = self._mitm_mapper.request_latest(self._id)
+        timestamp_last_data = latest.get("timestamp_last_data", None)
+        timestamp_last_received = latest.get("timestamp_receiver", None)
+
+        # we can now construct the rough estimate of the diff of time of mobile vs time of server, subtract our
+        # timestamp by the diff
+        timestamp = timestamp - (timestamp_last_received - timestamp_last_data)
+        #
+        # if timestamp_last_data is not None and timestamp_last_received is not None:
+        #     # add the difference of the two timestamps to timeout
+        #     timeout += (timestamp_last_received - timestamp_last_data)
 
         logger.info('Waiting for data after {}',
                     datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
-        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= math.floor(time.time()):
+        while (data_requested == LatestReceivedType.UNDEFINED
+                and timestamp + timeout >= math.floor(time.time() - (timestamp_last_received - timestamp_last_data))):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
@@ -94,11 +108,26 @@ class MITMBase(WorkerBase):
                     self._reboot()
                     raise InternalStopWorkerException
 
+                # self._mitm_mapper.
                 self._restart_count = 0
                 self._restart_pogo(True)
 
         self.worker_stats()
         return data_requested
+
+    def _wait_for_injection(self):
+        while not self._mitm_mapper.get_injection_status(self._id):
+            if self._not_injected_count >= 20:
+                logger.error("Worker {} not get injected in time - reboot", str(self._id))
+                self._reboot()
+                return False
+            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            if self._stop_worker_event.isSet():
+                logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                return False
+            self._not_injected_count += 1
+            time.sleep(20)
+        return True
 
     @abstractmethod
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):

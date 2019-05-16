@@ -131,8 +131,9 @@ class WorkerMITM(MITMBase):
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
+
         reached_raidtab = False
-        if start_result:
+        if start_result and self._wait_for_injection():
             logger.warning("startPogo: Starting pogo...")
             self._last_known_state["lastPogoRestart"] = cur_time
 
@@ -203,12 +204,9 @@ class WorkerMITM(MITMBase):
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
-        self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="ids_encountered",
-                                        values_dict=self._encounter_ids)
-        self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="ids_iv",
-                                        values_dict=ids_iv)
-        self._mitm_mapper.update_latest(origin=self._id, timestamp=int(time.time()), key="injected_settings",
-                                        values_dict=injected_settings)
+        self._mitm_mapper.update_latest(origin=self._id, key="ids_encountered", values_dict=self._encounter_ids)
+        self._mitm_mapper.update_latest(origin=self._id, key="ids_iv", values_dict=ids_iv)
+        self._mitm_mapper.update_latest(origin=self._id, key="injected_settings", values_dict=injected_settings)
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = LatestReceivedType.UNDEFINED

@@ -1,3 +1,4 @@
+import time
 from threading import Lock
 
 from utils.logging import logger
@@ -39,14 +40,17 @@ class MitmMapper(object):
         return result
 
     # origin, method, data, timestamp
-    def update_latest(self, origin, timestamp, key, values_dict):
+    def update_latest(self, origin, key, values_dict, timestamp_received_raw: float = time.time(),
+                      timestamp_received_receiver: float = time.time()):
         updated = False
         self.__mapping_mutex.acquire()
         if origin in self.__mapping.keys():
             logger.debug("Updating timestamp of {} with method {} to {}", str(
-                origin), str(key), str(timestamp))
+                origin), str(key), str(timestamp_received_raw))
             self.__mapping[origin][key] = {}
-            self.__mapping[origin][key]["timestamp"] = timestamp
+            self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
+            self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
+            self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
             self.__mapping[origin][key]["values"] = values_dict
             updated = True
         else:
