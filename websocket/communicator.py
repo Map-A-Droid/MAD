@@ -72,7 +72,7 @@ class Communicator:
             str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def touchandhold(self, x1, y1, x2, y2):
-        return self.__runAndOk("touch swipe %s %s %s %s 3000" % (
+        return self.__runAndOk("touch swipe %s %s %s %s 5000" % (
             str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__commandTimeout)
 
     def getscreensize(self):
