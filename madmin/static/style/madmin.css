@@ -124,7 +124,6 @@ div.container[role="main"] {
 }
 
 .leaflet-sidebar {
-  z-index: 1000;
   font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,"Noto Sans",sans-serif,"Apple Color Emoji","Segoe UI Emoji","Segoe UI Symbol","Noto Color Emoji";
 }
 
@@ -138,6 +137,16 @@ li.list-group-item.layer-item {
 
 .leaflet-sidebar.collapsed {
   width: 44px !important;
+}
+
+.leaflet-sidebar-header {
+  width: 420px;
+  z-index: 99;
+  position: fixed;
+}
+
+.sidebar-pane-content {
+  margin-top: 30px;
 }
 
 .raidIcon {
