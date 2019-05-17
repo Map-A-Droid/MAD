@@ -43,7 +43,7 @@ def trash_image_matching(screen_img):
         sc_till = 1
     elif width == 720:
         sc_from = 0.5
-        sc_till = 0.9
+        sc_till = 0.7
     else:
         sc_from = 0.1
         sc_till = 2
@@ -96,4 +96,4 @@ if __name__ == '__main__':
     fort_id = 'raid1'
     fort_img_path = os.getcwd() + '/' + str(fort_id) + '.jpg'
     url_img_path = os.getcwd() + 'ocr/mon_img/ic_raid_egg_rare.png'
-    # print (trash_image_matching('screenshot_m7.jpg'))
+    # print (trash_image_matching('screenshot_x96mini.png'))
