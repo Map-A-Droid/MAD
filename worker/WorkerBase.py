@@ -205,18 +205,6 @@ class WorkerBase(ABC):
             self._stop_worker_event.set()
             return
 
-        if self._walker_routemanager.mode != "raids_ocr":
-            while not self._mitm_mapper.get_injection_status(self._id):
-                if self._not_injected_count >= 20:
-                    logger.error("Worker {} not get injected in time - reboot", str(self._id))
-                    self._reboot()
-                logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
-                if self._stop_worker_event.isSet():
-                    logger.error("Worker {} get killed while waiting for injection", str(self._id))
-                    break
-                self._not_injected_count += 1
-                time.sleep(20)
-
         # register worker  in routemanager
         logger.info("Try to register {} in Routemanager {}", str(
                 self._id), str(self._walker_routemanager.name))
