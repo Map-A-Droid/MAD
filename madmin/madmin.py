@@ -6,10 +6,10 @@ import json
 import os
 import re
 import sys
-import threading
 import time
 from functools import update_wrapper, wraps
 from math import floor
+from multiprocessing import Process
 from pathlib import Path
 from shutil import copyfile
 
@@ -95,8 +95,8 @@ def run_job():
     except KeyboardInterrupt:
         exit(0)
 
-    t_webApp = threading.Thread(name='Web App', target=run_job)
-    t_webApp.setDaemon(True)
+    t_webApp = Process(name='Web App', target=run_job)
+    t_webApp.daemon = True
     t_webApp.start()
 
 

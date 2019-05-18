@@ -19,7 +19,7 @@ class LatestReceivedType(Enum):
     MON = 3
     CLEAR = 4
 
-#get_trash_click_positions
+
 class MITMBase(WorkerBase):
     def __init__(self, args, id, last_known_state, websocket_handler,
                  walker_routemanager, devicesettings, db_wrapper, mitm_mapper, pogoWindowManager,
@@ -34,11 +34,9 @@ class MITMBase(WorkerBase):
         self._mitm_mapper = mitm_mapper
         self._latest_encounter_update = 0
         self._encounter_ids = {}
-        self._stats = mitm_mapper.return_player_object(id)
 
-        self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
-                                                2, 0,
-                                                self._walker_routemanager.get_walker_type(), 99)
+        self._mitm_mapper.update_stats(self._id, self.current_location, 1, time.time(), 2, 0,
+                                       self._walker_routemanager.get_walker_type(), 99)
 
     def _wait_for_data(self, timestamp: float = time.time(), proto_to_wait_for=106, timeout=None):
         if timeout is None:
@@ -51,8 +49,9 @@ class MITMBase(WorkerBase):
 
         # we can now construct the rough estimate of the diff of time of mobile vs time of server, subtract our
         # timestamp by the diff
+        # TODO: discuss, probably wiser to add to timeout or get the diff of how long it takes for RGC to issue a cmd
         timestamp = timestamp - (timestamp_last_received - timestamp_last_data)
-        #
+
         # if timestamp_last_data is not None and timestamp_last_received is not None:
         #     # add the difference of the two timestamps to timeout
         #     timeout += (timestamp_last_received - timestamp_last_data)
@@ -62,7 +61,7 @@ class MITMBase(WorkerBase):
         data_requested = LatestReceivedType.UNDEFINED
 
         while (data_requested == LatestReceivedType.UNDEFINED
-                and timestamp + timeout >= math.floor(time.time() - (timestamp_last_received - timestamp_last_data))):
+                and timestamp + timeout >= math.floor(time.time())):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
@@ -74,7 +73,7 @@ class MITMBase(WorkerBase):
             self._restart_count = 0
             self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            self._stats.stats_collect_location_data(
+            self._mitm_mapper.update_stats(self._id,
                 self.current_location, 1, self._waittime_without_delays,
                 self._walker_routemanager.get_position_type(self._id),
                 time.time(),
@@ -84,7 +83,7 @@ class MITMBase(WorkerBase):
             # TODO: be more precise (timeout vs empty data)
             logger.warning("Timeout waiting for data")
 
-            self._stats.stats_collect_location_data(
+            self._mitm_mapper.update_stats(self._id,
                 self.current_location, 0, self._waittime_without_delays,
                 self._walker_routemanager.get_position_type(self._id), 0,
                 self._walker_routemanager.get_walker_type(), self._transporttype)

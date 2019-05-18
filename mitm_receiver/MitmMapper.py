@@ -1,29 +1,41 @@
 import time
-from threading import Lock
+from multiprocessing import Lock
+from multiprocessing.managers import SyncManager
 
+from db.DbFactory import DbFactory
+from db.dbWrapperBase import DbWrapperBase
+from utils.collections import Location
 from utils.logging import logger
 from utils.stats import PlayerStats
+from utils.walkerArgs import parseArgs
+
+args = parseArgs()
+
+
+class MitmMapperManager(SyncManager):
+    pass
 
 
 class MitmMapper(object):
-    def __init__(self, device_mappings, db_wrapper):
+    def __init__(self, device_mappings):
         self.__mapping = {}
-        self.playerstats = {}
+        self.__playerstats = {}
         self.__mapping_mutex = Lock()
-        self._device_mappings = device_mappings
-        self._db_wrapper = db_wrapper
-        self.injected = {}
+        self.__device_mappings = device_mappings
+        self.__injected = {}
+        self.__application_args = args
+        self.__db_wrapper: DbWrapperBase = DbFactory.get_wrapper(self.__application_args)
         if device_mappings is not None:
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}
-                self.playerstats[origin] = PlayerStats(origin, self._db_wrapper)
-                self.playerstats[origin].open_player_stats()
+                self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self.__db_wrapper)
+                self.__playerstats[origin].open_player_stats()
 
     def get_mon_ids_iv(self, origin):
-        if self._device_mappings is None or origin not in self._device_mappings.keys():
+        if self.__device_mappings is None or origin not in self.__device_mappings.keys():
             return []
         else:
-            return self._device_mappings[origin].get("mon_ids_iv", [])
+            return self.__device_mappings[origin].get("mon_ids_iv", [])
 
     def request_latest(self, origin, key=None):
         self.__mapping_mutex.acquire()
@@ -59,11 +71,47 @@ class MitmMapper(object):
         self.__mapping_mutex.release()
         return updated
 
-    def return_player_object(self, origin):
-        return self.playerstats[origin]
-
     def set_injection_status(self, origin, status=True):
-        self.injected[origin] = status
+        self.__injected[origin] = status
 
     def get_injection_status(self, origin):
-        return self.injected.get(origin, False)
+        return self.__injected.get(origin, False)
+
+    def run_stats_collector(self, origin: str):
+        if self.__playerstats.get(origin, None) is not None:
+            self.__playerstats.get(origin).stats_collector()
+
+    def update_stats(self, origin: str, location: Location, datarec, start_timestamp: float, type,
+                     rec_timestamp: float, walker, transporttype):
+        if self.__playerstats.get(origin, None) is not None:
+            self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp, type,
+                                                                       rec_timestamp, walker, transporttype)
+
+    def get_playerlevel(self, origin: str):
+        if self.__playerstats.get(origin, None) is not None:
+            return self.__playerstats.get(origin).get_level()
+        else:
+            return -1
+
+    def collect_raid_stats(self, origin: str, gym_id: str):
+        if self.__playerstats.get(origin, None) is not None:
+            self.__playerstats.get(origin).stats_collect_raid(gym_id)
+
+    def collect_mon_stats(self, origin: str, encounter_id: str):
+        if self.__playerstats.get(origin, None) is not None:
+            self.__playerstats.get(origin).stats_collect_mon(encounter_id)
+
+    def collect_mon_iv_stats(self, origin: str, encounter_id: str):
+        if self.__playerstats.get(origin, None) is not None:
+            self.__playerstats.get(origin).stats_collect_mon_iv(encounter_id)
+
+    def collect_quest_stats(self, origin: str, stop_id: str):
+        if self.__playerstats.get(origin, None) is not None:
+            self.__playerstats.get(origin).stats_collect_quest(stop_id)
+
+    def generate_player_stats(self, origin: str, inventory_proto: dict):
+        if self.__playerstats.get(origin, None) is not None:
+            self.__playerstats.get(origin).gen_player_stats(inventory_proto)
+
+
+MitmMapperManager.register('MitmMapper', MitmMapper)

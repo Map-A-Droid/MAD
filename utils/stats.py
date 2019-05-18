@@ -1,26 +1,24 @@
 import json
 import os
+from multiprocessing import Lock
 from pathlib import Path
-import time
-from threading import Lock, Thread
 
+from db.dbWrapperBase import DbWrapperBase
 from utils.logging import logger
-from utils.walkerArgs import parseArgs
-from utils.functions import get_min_period, get_now_timestamp
-
-args = parseArgs()
+from utils.functions import get_min_period
 
 
 class PlayerStats(object):
-    def __init__(self, id, db_wrapper):
+    def __init__(self, id, application_args, db_wrapper: DbWrapperBase):
         self._id = id
+        self.__application_args = application_args
         self._level = 0
         self._last_action_time = 0
         self._last_period = 0
         self._stats_collect = {}
         self._stats_collector_start = True
         self._last_processed_timestamp = 0
-        self._db_wrapper = db_wrapper
+        self._db_wrapper: DbWrapperBase = db_wrapper
         self._stats_period = 0
         self.__mapping_mutex = Lock()
 
@@ -32,10 +30,10 @@ class PlayerStats(object):
     def get_level(self):
         return self._level
 
-    def gen_player_stats(self, data):
+    def gen_player_stats(self, data: dict):
         if 'inventory_delta' not in data:
             logger.debug('gen_player_stats cannot generate new stats')
-            return True
+            return
         stats = data['inventory_delta'].get("inventory_items", None)
         if len(stats) > 0:
             for data_inventory in stats:
@@ -53,23 +51,23 @@ class PlayerStats(object):
                         'pokemons_encountered': str(data_inventory['inventory_item_data']['player_stats']['pokemons_encountered']),
                         'poke_stop_visits': str(data_inventory['inventory_item_data']['player_stats']['poke_stop_visits'])
                     })
-                    with open(os.path.join(args.file_path, str(self._id) + '.stats'), 'w') as outfile:
+                    with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'), 'w') as outfile:
                         json.dump(data, outfile, indent=4, sort_keys=True)
 
     def open_player_stats(self):
         statsfile = Path(os.path.join(
-            args.file_path, str(self._id) + '.stats'))
+            self.__application_args.file_path, str(self._id) + '.stats'))
         if not statsfile.is_file():
             logger.error('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
             return False
 
-        with open(os.path.join(args.file_path, str(self._id) + '.stats')) as f:
+        with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats')) as f:
             data = json.load(f)
 
         self.set_level(data[self._id][0]['level'])
 
-    def stats_collector(self, prototyp):
+    def stats_collector(self):
         self.__mapping_mutex.acquire()
         data_send_stats = []
         data_send_location = []
@@ -105,7 +103,7 @@ class PlayerStats(object):
 
         self.__mapping_mutex.release()
 
-    def stats_collect_mon(self, encounter_id):
+    def stats_collect_mon(self, encounter_id: str):
         period = self._stats_period
 
         if period not in self._stats_collect:
@@ -126,7 +124,7 @@ class PlayerStats(object):
         else:
             self._stats_collect[period][106]['mon'][encounter_id] += 1
 
-    def stats_collect_mon_iv(self, encounter_id):
+    def stats_collect_mon_iv(self, encounter_id: str):
         period = self._stats_period
 
         if period not in self._stats_collect:
@@ -147,7 +145,7 @@ class PlayerStats(object):
         else:
             self._stats_collect[period][102]['mon_iv'][encounter_id] += 1
 
-    def stats_collect_raid(self, gym_id):
+    def stats_collect_raid(self, gym_id: str):
         period = self._stats_period
 
         if period not in self._stats_collect:
@@ -249,8 +247,6 @@ class PlayerStats(object):
         logger.debug('Submit complete stats for {} - Period: {}: {}', str(self._id), str(period), str(stats_data))
 
         return stats_data
-
-        self._db_wrapper.submit_stats_complete(self._id, period, stats_data)
 
     def stats_location_parser(self, data, period):
 

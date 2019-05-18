@@ -1,6 +1,3 @@
-from threading import Event, Thread
-
-from route.routecalc.ClusteringHelper import ClusteringHelper
 from route.RouteManagerBase import RouteManagerBase
 from utils.logging import logger
 

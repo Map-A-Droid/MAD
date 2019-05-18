@@ -3,15 +3,15 @@ import datetime
 import gc
 import glob
 import os
-import shutil
 import sys
 import time
 from threading import Thread, active_count
 
 import psutil
-from db.monocleWrapper import MonocleWrapper
-from db.rmWrapper import RmWrapper
-from mitm_receiver.MitmMapper import MitmMapper
+
+from db.DbFactory import DbFactory
+from db.dbWrapperBase import DbWrapperBase
+from mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mitm_receiver.MITMReceiver import MITMReceiver
 from utils.logging import initLogging, logger
 from utils.madGlobals import terminate_mad
@@ -187,13 +187,7 @@ if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
 
-    if args.db_method == "rm":
-        db_wrapper = RmWrapper(args)
-    elif args.db_method == "monocle":
-        db_wrapper = MonocleWrapper(args)
-    else:
-        logger.error("Invalid db_method in config. Exiting")
-        sys.exit(1)
+    db_wrapper: DbWrapperBase = DbFactory.get_wrapper(args)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
@@ -262,7 +256,11 @@ if __name__ == "__main__":
 
             pogoWindowManager = None
 
-            mitm_mapper = MitmMapper(device_mappings, db_wrapper)
+            MitmMapperManager.register('MitmMapper', MitmMapper)
+            mitmMapperManager = MitmMapperManager()
+            mitmMapperManager.start()
+            mitm_mapper = mitmMapperManager.MitmMapper(device_mappings)
+            # mitm_mapper = MitmMapper(device_mappings, db_wrapper)
             ocr_enabled = False
 
             for routemanager in routemanagers.keys():

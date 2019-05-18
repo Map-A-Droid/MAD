@@ -4,12 +4,14 @@ import sys
 
 import time
 from datetime import datetime
-from queue import Queue
-from threading import Thread
+from multiprocessing import JoinableQueue, Process
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
 
+from db.DbFactory import DbFactory
+from db.dbWrapperBase import DbWrapperBase
+from mitm_receiver.MitmMapper import MitmMapper
 from utils.authHelper import check_auth
 from utils.logging import LogLevelChanger, logger
 
@@ -69,7 +71,7 @@ class MITMReceiver(object):
         auths = auths_passed
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
-        self.__mitm_mapper = mitm_mapper
+        self.__mitm_mapper: MitmMapper = mitm_mapper
         self.app = Flask("MITMReceiver")
         self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                           methods_passed=['POST'])
@@ -77,11 +79,11 @@ class MITMReceiver(object):
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/', handler=self.get_addresses,
                           methods_passed=['GET'])
-        self._data_queue: Queue = Queue()
+        self._data_queue: JoinableQueue = JoinableQueue()
         self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            t = Thread(name='MITMReceiver-%s' % str(i), target=self.received_data_worker)
+            t = Process(name='MITMReceiver-%s' % str(i), target=self.received_data_worker)
             t.start()
             self.worker_threads.append(t)
 
@@ -146,6 +148,9 @@ class MITMReceiver(object):
         return json.dumps(address_object)
 
     def received_data_worker(self):
+        # build a private DbWrapper instance...
+        global application_args
+        db_wrapper: DbWrapperBase = DbFactory.get_wrapper(application_args)
         while True:
             item = self._data_queue.get()
             items_left = self._data_queue.qsize()
@@ -157,16 +162,13 @@ class MITMReceiver(object):
             if item is None:
                 logger.warning("Received none from queue of data")
                 break
-            self.process_data(item[0], item[1], item[2])
+            self.process_data(db_wrapper, item[0], item[1], item[2])
             self._data_queue.task_done()
 
     @logger.catch
-    def process_data(self, received_timestamp, data, origin):
+    def process_data(self, db_wrapper: DbWrapperBase, received_timestamp, data, origin):
         global application_args
-        if origin not in self.__mitm_mapper.playerstats:
-            logger.warning(
-                "Not processing data of {} since origin is unknown", str(origin))
-            return
+
         type = data.get("type", None)
         raw = data.get("raw", False)
 
@@ -174,7 +176,7 @@ class MITMReceiver(object):
             logger.debug5("Received raw payload: {}", data["payload"])
 
         if type and not raw:
-            self.__mitm_mapper.playerstats[origin].stats_collector(type)
+            self.__mitm_mapper.run_stats_collector(origin)
 
             logger.debug4("Received payload: {}", data["payload"])
 
@@ -184,39 +186,37 @@ class MITMReceiver(object):
                     origin), str(datetime.fromtimestamp(received_timestamp)))
 
                 if application_args.weather:
-                    self._db_wrapper.submit_weather_map_proto(
+                    db_wrapper.submit_weather_map_proto(
                         origin, data["payload"], received_timestamp)
 
-                self._db_wrapper.submit_pokestops_map_proto(
+                db_wrapper.submit_pokestops_map_proto(
                     origin, data["payload"])
-                self._db_wrapper.submit_gyms_map_proto(origin, data["payload"])
-                self._db_wrapper.submit_raids_map_proto(
-                    origin, data["payload"], self.__mitm_mapper.playerstats[origin])
+                db_wrapper.submit_gyms_map_proto(origin, data["payload"])
+                db_wrapper.submit_raids_map_proto(
+                    origin, data["payload"], self.__mitm_mapper)
 
-                self._db_wrapper.submit_spawnpoints_map_proto(
+                db_wrapper.submit_spawnpoints_map_proto(
                     origin, data["payload"])
                 mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
-                self._db_wrapper.submit_mons_map_proto(
-                    origin, data["payload"], mon_ids_iv, self.__mitm_mapper.playerstats[origin])
+                db_wrapper.submit_mons_map_proto(
+                    origin, data["payload"], mon_ids_iv, self.__mitm_mapper)
             elif type == 102:
-                playerlevel = self.__mitm_mapper.playerstats[origin].get_level(
-                )
+                playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
                     logger.info("Processing Encounter received from {} at {}", str(
                         origin), str(received_timestamp))
-                    self._db_wrapper.submit_mon_iv(
-                        origin, received_timestamp, data["payload"], self.__mitm_mapper.playerstats[origin])
+                    db_wrapper.submit_mon_iv(
+                        origin, received_timestamp, data["payload"], self.__mitm_mapper)
                 else:
                     logger.debug(
                         'Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
-                self._db_wrapper.submit_quest_proto(data["payload"], self.__mitm_mapper.playerstats[origin])
+                db_wrapper.submit_quest_proto(origin, data["payload"], self.__mitm_mapper)
             elif type == 104:
-                self._db_wrapper.submit_pokestops_details_map_proto(
+                db_wrapper.submit_pokestops_details_map_proto(
                     data["payload"])
             elif type == 4:
-                self.__mitm_mapper.playerstats[origin].gen_player_stats(
-                    data["payload"])
+                self.__mitm_mapper.generate_player_stats(origin, data["payload"])
 
 
 
