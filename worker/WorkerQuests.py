@@ -57,7 +57,7 @@ class WorkerQuests(MITMBase):
 
         reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
-            if not self._restart_pogo():
+            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
 
@@ -281,7 +281,7 @@ class WorkerQuests(MITMBase):
 
             reachedMainMenu = self._check_pogo_main_screen(10, False)
             if not reachedMainMenu:
-                self._restart_pogo()
+                self._restart_pogo(mitm_mapper=self._mitm_mapper)
 
             logger.info('Open Stop')
 

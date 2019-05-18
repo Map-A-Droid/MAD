@@ -35,8 +35,8 @@ class MITMBase(WorkerBase):
         self._latest_encounter_update = 0
         self._encounter_ids = {}
 
-        self._mitm_mapper.update_stats(self._id, self.current_location, 1, time.time(), 2, 0,
-                                       self._walker_routemanager.get_walker_type(), 99)
+        self._mitm_mapper.collect_location_stats(self._id, self.current_location, 1, time.time(), 2, 0,
+                                                 self._walker_routemanager.get_walker_type(), 99)
 
     def _wait_for_data(self, timestamp: float = time.time(), proto_to_wait_for=106, timeout=None):
         if timeout is None:
@@ -73,20 +73,17 @@ class MITMBase(WorkerBase):
             self._restart_count = 0
             self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-            self._mitm_mapper.update_stats(self._id,
-                self.current_location, 1, self._waittime_without_delays,
-                self._walker_routemanager.get_position_type(self._id),
-                time.time(),
-                self._walker_routemanager.get_walker_type(), self._transporttype)
+            self._mitm_mapper.collect_location_stats(self._id, self.current_location, 1, self._waittime_without_delays,
+                                                     self._walker_routemanager.get_position_type(self._id), time.time(),
+                                                     self._walker_routemanager.get_walker_type(), self._transporttype)
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
             logger.warning("Timeout waiting for data")
 
-            self._mitm_mapper.update_stats(self._id,
-                self.current_location, 0, self._waittime_without_delays,
-                self._walker_routemanager.get_position_type(self._id), 0,
-                self._walker_routemanager.get_walker_type(), self._transporttype)
+            self._mitm_mapper.collect_location_stats(self._id, self.current_location, 0, self._waittime_without_delays,
+                                                     self._walker_routemanager.get_position_type(self._id), 0,
+                                                     self._walker_routemanager.get_walker_type(), self._transporttype)
 
             self._restart_count += 1
 
@@ -104,21 +101,22 @@ class MITMBase(WorkerBase):
                 if self._reboot_count > reboot_thresh \
                         and self._devicesettings.get("reboot", False):
                     logger.error("Rebooting {}", str(self._id))
-                    self._reboot()
+                    self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
 
                 # self._mitm_mapper.
                 self._restart_count = 0
-                self._restart_pogo(True)
+                self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()
         return data_requested
 
     def _wait_for_injection(self):
+        self._not_injected_count = 0
         while not self._mitm_mapper.get_injection_status(self._id):
             if self._not_injected_count >= 20:
                 logger.error("Worker {} not get injected in time - reboot", str(self._id))
-                self._reboot()
+                self._reboot(self._mitm_mapper)
                 return False
             logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
             if self._stop_worker_event.isSet():
