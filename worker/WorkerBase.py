@@ -519,6 +519,9 @@ class WorkerBase(ABC):
         return stop_result
 
     def _reboot(self, mitm_mapper: Optional[MitmMapper]=None):
+        if not self._devicesettings.get("reboot", True):
+            logger.warning("Reboot command to be issued to device but reboot is disabled. Skipping reboot")
+            return True
         try:
             start_result = self._communicator.reboot()
         except WebsocketWorkerRemovedException:

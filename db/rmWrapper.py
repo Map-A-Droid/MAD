@@ -996,15 +996,15 @@ class RmWrapper(DbWrapperBase):
         self.executemany(query_weather, list_of_weather_args, commit=True)
         return True
 
-    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
+    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids: Optional[List[int]]):
         if min_time_left_seconds is None or eligible_mon_ids is None:
             logger.warning("RmWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
                            "eligible mon IDs specified")
             return []
         logger.debug("Getting mons to be encountered")
         query = (
-            "SELECT latitude, longitude, encounter_id, "
-            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire, pokemon_id "
+            "SELECT latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, "
+            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire "
             "FROM pokemon "
             "WHERE individual_attack IS NULL AND individual_defense IS NULL AND individual_stamina IS NULL "
             "AND encounter_id != 0 "
@@ -1020,8 +1020,7 @@ class RmWrapper(DbWrapperBase):
         results = self.execute(query, vals, commit=False)
 
         next_to_encounter = []
-        i = 0
-        for latitude, longitude, encounter_id, expire, pokemon_id in results:
+        for latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, expire in results:
             if pokemon_id not in eligible_mon_ids:
                 continue
             elif latitude is None or longitude is None:
@@ -1033,10 +1032,20 @@ class RmWrapper(DbWrapperBase):
                 continue
 
             next_to_encounter.append(
-                (i, Location(latitude, longitude), encounter_id)
+                    (pokemon_id, Location(latitude, longitude), encounter_id)
             )
+
+        # now filter by the order of eligible_mon_ids
+        to_be_encountered = []
+        i = 0
+        for mon_prio in eligible_mon_ids:
+            for mon in next_to_encounter:
+                if mon_prio == mon[0]:
+                    to_be_encountered.append(
+                            (i, mon[1], mon[2])
+                    )
             i += 1
-        return next_to_encounter
+        return to_be_encountered
 
     def __encode_hash_json(self, team_id, latitude, longitude, name, description, url):
         return (

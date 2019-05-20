@@ -973,12 +973,20 @@ class MonocleWrapper(DbWrapperBase):
                 continue
 
             next_to_encounter.append(
-                (
-                    i, Location(lat, lon), encounter_id
-                )
+                    (pokemon_id, Location(lat, lon), encounter_id)
             )
+
+        # now filter by the order of eligible_mon_ids
+        to_be_encountered = []
+        i = 0
+        for mon_prio in eligible_mon_ids:
+            for mon in next_to_encounter:
+                if mon_prio == mon[0]:
+                    to_be_encountered.append(
+                            (i, mon[1], mon[2])
+                    )
             i += 1
-        return next_to_encounter
+        return to_be_encountered
 
     def __download_img(self, url, file_name):
         retry = 1

@@ -935,6 +935,41 @@ class DbWrapperBase(ABC):
 
         return str(json.dumps(spawn))
 
+    def get_spawntimes_of_spawn(self, spawn_ids: List[str]):
+        """
+        Retrieve a list of spawnpoints' spawntime for the given spawn_id
+        :param spawn_ids:
+        :return:
+        """
+        # TODO: this may not work...
+        query = (
+            "SELECT spawnpoint, spawndef, calc_endminsec "
+            "FROM trs_spawn "
+            "WHERE calc_endminsec IS NOT NULL and "
+            "spawnpoint = %s"
+            "DATE_FORMAT(STR_TO_DATE(calc_endminsec,'%i:%s'),'%i:%s') between DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,60,30) MINUTE),'%i:%s') and DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,70,40) MINUTE),'%i:%s') "
+        )
+        vals = (spawn_ids, )
+
+        results = self.executemany(query, vals)
+        spawntimes = {}
+        current_time_of_day = datetime.now().replace(microsecond=0)
+        for spawnpoint, spawndef, calc_endminsec in results:
+            endminsec_split = calc_endminsec.split(":")
+            minutes = int(endminsec_split[0])
+            seconds = int(endminsec_split[1])
+            temp_date = current_time_of_day.replace(
+                    minute=minutes, second=seconds)
+
+            spawn_duration_minutes = 60 if spawndef == 15 else 30
+
+            timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
+
+            spawntimes[spawnpoint] = timestamp
+        return spawntimes
+
     def retrieve_next_spawns(self, geofence_helper):
         """
         Retrieve the spawnpoints with their respective unixtimestamp that are due in the next 300 seconds

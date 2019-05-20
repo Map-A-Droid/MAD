@@ -255,7 +255,6 @@ if __name__ == "__main__":
                 sys.exit(0)
 
             pogoWindowManager = None
-
             MitmMapperManager.register('MitmMapper', MitmMapper)
             mitmMapperManager = MitmMapperManager()
             mitmMapperManager.start()
