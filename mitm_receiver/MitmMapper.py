@@ -59,6 +59,8 @@ class MitmMapper(object):
         if origin in self.__mapping.keys():
             logger.debug("Updating timestamp of {} with method {} to {}", str(
                 origin), str(key), str(timestamp_received_raw))
+            if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
+                del self.__mapping[origin][key]
             self.__mapping[origin][key] = {}
             self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
             self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
