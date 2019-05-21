@@ -64,7 +64,16 @@ class EndpointAction(object):
 
 
 class MITMReceiver(object):
-    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
+
+    def stop_receiver(self):
+        self._data_queue.join()
+        for i in range(application_args.mitmreceiver_data_workers):
+            self._data_queue.put(None)
+        for t in self.worker_threads:
+            t.join()
+
+    @staticmethod
+    def run_receiver(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
         global application_args, auths
         application_args = args_passed
         auths = auths_passed
@@ -85,20 +94,9 @@ class MITMReceiver(object):
             data_processor: MitmDataProcessor = MitmDataProcessor()
             t = Process(name='MITMReceiver-%s' % str(i), target=data_processor.received_data_worker,
                         args=(data_processor, self._data_queue,
-                        application_args, self.__mitm_mapper))
+                              application_args, self.__mitm_mapper))
             t.start()
             self.worker_threads.append(t)
-
-    def stop_receiver(self):
-        global application_args
-        self._data_queue.join()
-        for i in range(application_args.mitmreceiver_data_workers):
-            self._data_queue.put(None)
-        for t in self.worker_threads:
-            t.join()
-
-    @staticmethod
-    def run_receiver(self):
         httpsrv = WSGIServer((self.__listen_ip, int(
             self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
         httpsrv.serve_forever()

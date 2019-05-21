@@ -285,11 +285,11 @@ if __name__ == "__main__":
                 from ocr.copyMons import MonRaidImages
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
-            mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                         mitm_mapper, args, auths)
+            mitm_receiver = MITMReceiver()
             t_mitm = Process(name='mitm_receiver',
-                             target=mitm_receiver.run_receiver, args=(mitm_receiver,))
-            t_mitm.daemon = True
+                             target=mitm_receiver.run_receiver, args=(mitm_receiver, args.mitmreceiver_ip, int(args.mitmreceiver_port),
+                                         mitm_mapper, args, auths))
+            # t_mitm.daemon = True
             t_mitm.start()
             time.sleep(5)
 

@@ -27,7 +27,7 @@ class MitmDataProcessor:
             items_left = self.__queue.qsize()
             logger.debug(
                 "MITM data processing worker retrieved data. Queue length left afterwards: {}", str(items_left))
-            if items_left > 50: 
+            if items_left > 50:
                 logger.warning(
                     "MITM data processing workers are falling behind! Queue length: {}", str(items_left))
             if item is None:
