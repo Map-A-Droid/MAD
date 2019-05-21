@@ -183,7 +183,7 @@ class control(object):
         real_click_y = int(height / float(click_y))
         real_click_xe = int(width / float(click_xe))
         real_click_ye = int(height / float(click_ye))
-        adb = self._device_mappings[origin].get('adb', False)
+        adb = self._device_mapping[origin].get('adb', False)
 
         if useadb == 'True' and self._adb_connect.make_screenswipe(adb, origin, real_click_x,
                                                                    real_click_y, real_click_xe, real_click_ye):
@@ -202,7 +202,7 @@ class control(object):
     def quit_pogo(self):
         origin = request.args.get('origin')
         useadb = request.args.get('adb')
-        adb = self._device_mappings[origin].get('adb', False)
+        adb = self._device_mapping[origin].get('adb', False)
         self._logger.info('MADmin: Restart Pogo ({})', str(origin))
         if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
             self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
