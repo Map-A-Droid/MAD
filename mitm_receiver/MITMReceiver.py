@@ -8,6 +8,7 @@ from multiprocessing import JoinableQueue, Process
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
 
+from db.DbFactory import DbFactory
 from mitm_receiver.MITMDataProcessor import MitmDataProcessor
 from mitm_receiver.MitmMapper import MitmMapper
 from utils.authHelper import check_auth
@@ -63,7 +64,7 @@ class EndpointAction(object):
 
 
 class MITMReceiver(object):
-    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed, db_wrapper):
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
         global application_args, auths
         application_args = args_passed
         auths = auths_passed
@@ -78,7 +79,7 @@ class MITMReceiver(object):
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/', handler=self.get_addresses,
                           methods_passed=['GET'])
         self._data_queue: JoinableQueue = JoinableQueue()
-        self._db_wrapper = db_wrapper
+        self._db_wrapper = DbFactory.get_wrapper(args_passed)
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
             data_processor: MitmDataProcessor = MitmDataProcessor()
@@ -96,6 +97,7 @@ class MITMReceiver(object):
         for t in self.worker_threads:
             t.join()
 
+    @staticmethod
     def run_receiver(self):
         httpsrv = WSGIServer((self.__listen_ip, int(
             self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
