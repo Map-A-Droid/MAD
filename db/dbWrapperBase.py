@@ -3,12 +3,13 @@ import sys
 import time
 from abc import ABC, abstractmethod
 from datetime import datetime, timedelta
-from threading import Lock, Semaphore
-from typing import List
+from multiprocessing import Lock, Semaphore
+from typing import List, Optional
 
 import mysql
 from bitstring import BitArray
 from mysql.connector.pooling import MySQLConnectionPool
+
 from utils.collections import Location
 from utils.logging import logger
 from utils.questGen import questtask
@@ -300,14 +301,15 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         """
         Update/Insert a mon with IVs
         """
         pass
 
     @abstractmethod
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_ivs):
+    def submit_mons_map_proto(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]],
+                              mitm_mapper):
         """
         Update/Insert mons from a map_proto dict
         """
@@ -337,7 +339,7 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def submit_raids_map_proto(self, origin, map_proto):
+    def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
         """
         Update/Insert raids from a map_proto dict
         """
@@ -933,6 +935,41 @@ class DbWrapperBase(ABC):
 
         return str(json.dumps(spawn))
 
+    def get_spawntimes_of_spawn(self, spawn_ids: List[str]):
+        """
+        Retrieve a list of spawnpoints' spawntime for the given spawn_id
+        :param spawn_ids:
+        :return:
+        """
+        # TODO: this may not work...
+        query = (
+            "SELECT spawnpoint, spawndef, calc_endminsec "
+            "FROM trs_spawn "
+            "WHERE calc_endminsec IS NOT NULL and "
+            "spawnpoint = %s"
+            "DATE_FORMAT(STR_TO_DATE(calc_endminsec,'%i:%s'),'%i:%s') between DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,60,30) MINUTE),'%i:%s') and DATE_FORMAT(DATE_ADD(NOW(), "
+            "INTERVAL if(spawndef=15,70,40) MINUTE),'%i:%s') "
+        )
+        vals = (spawn_ids, )
+
+        results = self.executemany(query, vals)
+        spawntimes = {}
+        current_time_of_day = datetime.now().replace(microsecond=0)
+        for spawnpoint, spawndef, calc_endminsec in results:
+            endminsec_split = calc_endminsec.split(":")
+            minutes = int(endminsec_split[0])
+            seconds = int(endminsec_split[1])
+            temp_date = current_time_of_day.replace(
+                    minute=minutes, second=seconds)
+
+            spawn_duration_minutes = 60 if spawndef == 15 else 30
+
+            timestamp = time.mktime(temp_date.timetuple()) - spawn_duration_minutes * 60
+
+            spawntimes[spawnpoint] = timestamp
+        return spawntimes
+
     def retrieve_next_spawns(self, geofence_helper):
         """
         Retrieve the spawnpoints with their respective unixtimestamp that are due in the next 300 seconds
@@ -983,7 +1020,7 @@ class DbWrapperBase(ABC):
             )
         return next_up
 
-    def submit_quest_proto(self, map_proto, stats):
+    def submit_quest_proto(self, origin: str, map_proto: dict, mitm_mapper):
         logger.debug("DbWrapperBase::submit_quest_proto called")
         fort_id = map_proto.get("fort_id", None)
         if fort_id is None:
@@ -1014,7 +1051,7 @@ class DbWrapperBase(ABC):
 
             json_condition = json.dumps(condition)
             task = questtask(int(quest_type), json_condition, int(target))
-            stats.stats_collect_quest(fort_id)
+            mitm_mapper.collect_quest_stats(origin, fort_id)
 
             query_quests = (
                 "INSERT INTO trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "

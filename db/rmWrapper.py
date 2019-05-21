@@ -3,7 +3,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -42,7 +42,7 @@ class RmWrapper(DbWrapperBase):
         logger.debug("RmWrapper::auto_hatch_eggs called")
         now = (datetime.now())
         now_timestamp = time.mktime(datetime.utcfromtimestamp(
-            float(received_timestamp)).timetuple())
+            float(time.time())).timetuple())
 
         mon_id = self.application_args.auto_hatch_number
 
@@ -646,7 +646,7 @@ class RmWrapper(DbWrapperBase):
 
         return True
 
-    def submit_mon_iv(self, origin, timestamp, encounter_proto, stats):
+    def submit_mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -670,7 +670,7 @@ class RmWrapper(DbWrapperBase):
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
-        stats.stats_collect_mon_iv(encounter_id)
+        mitm_mapper.collect_mon_iv_stats(origin, encounter_id)
 
         if getdetspawntime is None:
 
@@ -739,7 +739,7 @@ class RmWrapper(DbWrapperBase):
 
         return True
 
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv, stats):
+    def submit_mons_map_proto(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]], mitm_mapper):
         logger.debug(
             "RmWrapper::submit_mons_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
@@ -767,7 +767,7 @@ class RmWrapper(DbWrapperBase):
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2**64
 
-                stats.stats_collect_mon(encounter_id)
+                mitm_mapper.collect_mon_stats(origin, str(encounter_id))
 
                 now = datetime.utcfromtimestamp(
                     time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -891,7 +891,7 @@ class RmWrapper(DbWrapperBase):
         logger.debug("{}: submit_gyms done", str(origin))
         return True
 
-    def submit_raids_map_proto(self, origin, map_proto, stats):
+    def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
         logger.debug(
             "RmWrapper::submit_raids_map_proto called with data received from {}", str(origin))
         cells = map_proto.get("cells", None)
@@ -945,7 +945,7 @@ class RmWrapper(DbWrapperBase):
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
 
-                    stats.stats_collect_raid(gymid)
+                    mitm_mapper.collect_raid_stats(origin, gymid)
 
                     logger.debug("Adding/Updating gym {} with level {} ending at {}",
                                  str(gymid), str(level), str(raidend_date))
@@ -996,15 +996,15 @@ class RmWrapper(DbWrapperBase):
         self.executemany(query_weather, list_of_weather_args, commit=True)
         return True
 
-    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids):
+    def get_to_be_encountered(self, geofence_helper, min_time_left_seconds, eligible_mon_ids: Optional[List[int]]):
         if min_time_left_seconds is None or eligible_mon_ids is None:
             logger.warning("RmWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
                            "eligible mon IDs specified")
             return []
         logger.debug("Getting mons to be encountered")
         query = (
-            "SELECT latitude, longitude, encounter_id, "
-            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire, pokemon_id "
+            "SELECT latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, "
+            "TIMESTAMPDIFF(SECOND, UTC_TIMESTAMP(), disappear_time) AS expire "
             "FROM pokemon "
             "WHERE individual_attack IS NULL AND individual_defense IS NULL AND individual_stamina IS NULL "
             "AND encounter_id != 0 "
@@ -1020,8 +1020,7 @@ class RmWrapper(DbWrapperBase):
         results = self.execute(query, vals, commit=False)
 
         next_to_encounter = []
-        i = 0
-        for latitude, longitude, encounter_id, expire, pokemon_id in results:
+        for latitude, longitude, encounter_id, spawnpoint_id, pokemon_id, expire in results:
             if pokemon_id not in eligible_mon_ids:
                 continue
             elif latitude is None or longitude is None:
@@ -1033,10 +1032,20 @@ class RmWrapper(DbWrapperBase):
                 continue
 
             next_to_encounter.append(
-                (i, Location(latitude, longitude), encounter_id)
+                    (pokemon_id, Location(latitude, longitude), encounter_id)
             )
+
+        # now filter by the order of eligible_mon_ids
+        to_be_encountered = []
+        i = 0
+        for mon_prio in eligible_mon_ids:
+            for mon in next_to_encounter:
+                if mon_prio == mon[0]:
+                    to_be_encountered.append(
+                            (i, mon[1], mon[2])
+                    )
             i += 1
-        return next_to_encounter
+        return to_be_encountered
 
     def __encode_hash_json(self, team_id, latitude, longitude, name, description, url):
         return (

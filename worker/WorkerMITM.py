@@ -178,7 +178,6 @@ class WorkerMITM(MITMBase):
 
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:
-            encounter_ids = {}
             (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(
                 routemanager.geofence_helper, self._latest_encounter_update)
             if encounter_ids:

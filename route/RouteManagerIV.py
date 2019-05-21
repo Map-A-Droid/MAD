@@ -1,3 +1,5 @@
+import heapq
+
 from route.RouteManagerBase import RouteManagerBase
 from utils.logging import logger
 
@@ -24,7 +26,13 @@ class RouteManagerIV(RouteManagerBase):
         for prio in latest_priorities:
             new_list.append(prio[2])
         self.encounter_ids_left = new_list
-        return latest_priorities
+
+        self._manager_mutex.acquire()
+        heapq.heapify(latest_priorities)
+        self._prio_queue = latest_priorities
+        self._manager_mutex.release()
+        return None
+        # return latest_priorities
 
     def _get_coords_post_init(self):
         # not necessary

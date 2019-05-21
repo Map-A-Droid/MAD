@@ -7,7 +7,9 @@ import time
 import datetime
 from abc import ABC, abstractmethod
 from threading import Event, Lock, Thread, current_thread
+from typing import Optional
 
+from mitm_receiver.MitmMapper import MitmMapper
 from utils.hamming import hamming_distance as hamming_dist
 from utils.logging import logger
 from utils.madGlobals import (
@@ -516,7 +518,10 @@ class WorkerBase(ABC):
             pogoTopmost = self._communicator.isPogoTopmost()
         return stop_result
 
-    def _reboot(self):
+    def _reboot(self, mitm_mapper: Optional[MitmMapper]=None):
+        if not self._devicesettings.get("reboot", True):
+            logger.warning("Reboot command to be issued to device but reboot is disabled. Skipping reboot")
+            return True
         try:
             start_result = self._communicator.reboot()
         except WebsocketWorkerRemovedException:
@@ -524,9 +529,9 @@ class WorkerBase(ABC):
                     "Could not reboot due to client already having disconnected")
             start_result = False
         time.sleep(5)
-        self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
-                                                3, 0,
-                                                self._walker_routemanager.get_walker_type(), 99)
+        if mitm_mapper is not None:
+            mitm_mapper.collect_location_stats(self._id, self.current_location, 1, time.time(), 3, 0,
+                                               self._walker_routemanager.get_walker_type(), 99)
         self._db_wrapper.save_last_reboot(self._id)
         self.stop_worker()
         return start_result
@@ -540,7 +545,7 @@ class WorkerBase(ABC):
         stopResult = self._communicator.stopApp("com.mad.pogodroid")
         return stopResult
 
-    def _restart_pogo(self, clear_cache=True):
+    def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = self._stop_pogo()
         self._db_wrapper.save_last_restart(self._id)
         logger.debug("restartPogo: stop pogo resulted in {}",
@@ -549,9 +554,9 @@ class WorkerBase(ABC):
             if clear_cache:
                 self._communicator.clearAppCache("com.nianticlabs.pokemongo")
             time.sleep(1)
-            self._stats.stats_collect_location_data(self.current_location, 1, time.time(),
-                                                    4, 0,
-                                                    self._walker_routemanager.get_walker_type(), 99)
+            if mitm_mapper is not None:
+                mitm_mapper.collect_location_stats(self._id, self.current_location, 1, time.time(), 4, 0,
+                                                   self._walker_routemanager.get_walker_type(), 99)
             return self._start_pogo()
         else:
             return False

@@ -4,7 +4,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from functools import reduce
-from typing import List
+from typing import List, Optional
 
 import requests
 
@@ -588,7 +588,7 @@ class MonocleWrapper(DbWrapperBase):
 
         self.execute(query, vals, commit=True)
 
-    def submit_mon_iv(self, origin, timestamp, encounter_proto, stats):
+    def submit_mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -608,7 +608,7 @@ class MonocleWrapper(DbWrapperBase):
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
-        stats.stats_collect_mon_iv(encounter_id)
+        mitm_mapper.collect_mon_iv_stats(origin, str(encounter_id))
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
@@ -680,7 +680,7 @@ class MonocleWrapper(DbWrapperBase):
         )
         self.execute(query_insert, vals, commit=True)
 
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv, stats):
+    def submit_mons_map_proto(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]], mitm_mapper):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -702,7 +702,7 @@ class MonocleWrapper(DbWrapperBase):
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
 
-                stats.stats_collect_mon(encounter_id)
+                mitm_mapper.collect_mon_stats(origin, str(encounter_id))
 
                 s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(
                     lat, lon, level=10)
@@ -839,7 +839,7 @@ class MonocleWrapper(DbWrapperBase):
                          vals_fort_sightings, commit=True)
         return True
 
-    def submit_raids_map_proto(self, origin, map_proto, stats):
+    def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -882,7 +882,7 @@ class MonocleWrapper(DbWrapperBase):
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
 
-                    stats.stats_collect_raid(gymid)
+                    mitm_mapper.collect_raid_stats(origin, gymid)
 
                     now = time.time()
 
@@ -973,12 +973,20 @@ class MonocleWrapper(DbWrapperBase):
                 continue
 
             next_to_encounter.append(
-                (
-                    i, Location(lat, lon), encounter_id
-                )
+                    (pokemon_id, Location(lat, lon), encounter_id)
             )
+
+        # now filter by the order of eligible_mon_ids
+        to_be_encountered = []
+        i = 0
+        for mon_prio in eligible_mon_ids:
+            for mon in next_to_encounter:
+                if mon_prio == mon[0]:
+                    to_be_encountered.append(
+                            (i, mon[1], mon[2])
+                    )
             i += 1
-        return next_to_encounter
+        return to_be_encountered
 
     def __download_img(self, url, file_name):
         retry = 1

@@ -1,26 +1,25 @@
 import json
 import os
-from pathlib import Path
 import time
-from threading import Lock, Thread
+from math import floor
+from multiprocessing import Lock
+from pathlib import Path
 
+from db.dbWrapperBase import DbWrapperBase
 from utils.logging import logger
-from utils.walkerArgs import parseArgs
-from utils.functions import get_min_period, get_now_timestamp
-
-args = parseArgs()
 
 
 class PlayerStats(object):
-    def __init__(self, id, db_wrapper):
+    def __init__(self, id, application_args, db_wrapper: DbWrapperBase):
         self._id = id
+        self.__application_args = application_args
         self._level = 0
         self._last_action_time = 0
         self._last_period = 0
-        self._stats_collect = {}
+        self.__stats_collected: dict = {}
         self._stats_collector_start = True
         self._last_processed_timestamp = 0
-        self._db_wrapper = db_wrapper
+        self._db_wrapper: DbWrapperBase = db_wrapper
         self._stats_period = 0
         self.__mapping_mutex = Lock()
 
@@ -32,10 +31,10 @@ class PlayerStats(object):
     def get_level(self):
         return self._level
 
-    def gen_player_stats(self, data):
+    def gen_player_stats(self, data: dict):
         if 'inventory_delta' not in data:
             logger.debug('gen_player_stats cannot generate new stats')
-            return True
+            return
         stats = data['inventory_delta'].get("inventory_items", None)
         if len(stats) > 0:
             for data_inventory in stats:
@@ -53,177 +52,158 @@ class PlayerStats(object):
                         'pokemons_encountered': str(data_inventory['inventory_item_data']['player_stats']['pokemons_encountered']),
                         'poke_stop_visits': str(data_inventory['inventory_item_data']['player_stats']['poke_stop_visits'])
                     })
-                    with open(os.path.join(args.file_path, str(self._id) + '.stats'), 'w') as outfile:
+                    with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'), 'w') as outfile:
                         json.dump(data, outfile, indent=4, sort_keys=True)
 
     def open_player_stats(self):
         statsfile = Path(os.path.join(
-            args.file_path, str(self._id) + '.stats'))
+            self.__application_args.file_path, str(self._id) + '.stats'))
         if not statsfile.is_file():
             logger.error('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
             return False
 
-        with open(os.path.join(args.file_path, str(self._id) + '.stats')) as f:
+        with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats')) as f:
             data = json.load(f)
 
         self.set_level(data[self._id][0]['level'])
 
-    def stats_collector(self, prototyp):
+    def stats_collector(self):
         self.__mapping_mutex.acquire()
         data_send_stats = []
         data_send_location = []
-        self._stats_period = get_min_period()
-        period = self._stats_period
 
         if not self._stats_collector_start:
-            if self._last_processed_timestamp != period:
+            if time.time() - self._last_processed_timestamp > 600:
 
-                collect_data = self._stats_collect.get(self._last_processed_timestamp, [])
+                # collect_data = self._stats_collect.get(self._last_processed_timestamp, [])
 
-                data_send_stats.append(self.stats_complete_parser(collect_data, self._last_processed_timestamp))
-                data_send_location.append(self.stats_location_parser(collect_data, self._last_processed_timestamp))
-                data_send_location_raw = self.stats_location_raw_parser(collect_data, self._last_processed_timestamp)
-                data_send_detection_raw = self.stats_detection_raw_parser(collect_data, self._last_processed_timestamp)
+                data_send_stats.append(self.stats_complete_parser(self.__stats_collected,
+                                                                  self._last_processed_timestamp))
+                data_send_location.append(self.stats_location_parser(self.__stats_collected,
+                                                                     self._last_processed_timestamp))
+                data_send_location_raw = self.stats_location_raw_parser(self.__stats_collected,
+                                                                        self._last_processed_timestamp)
+                data_send_detection_raw = self.stats_detection_raw_parser(self.__stats_collected,
+                                                                          self._last_processed_timestamp)
 
-                self._stats_collect[self._last_processed_timestamp] = None
-                del self._stats_collect[self._last_processed_timestamp]
+                del self.__stats_collected
+                self.__stats_collected = {}
 
                 self._db_wrapper.submit_stats_complete(data_send_stats)
                 self._db_wrapper.submit_stats_locations(data_send_location)
                 self._db_wrapper.submit_stats_locations_raw(data_send_location_raw)
                 self._db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
                 self._db_wrapper.cleanup_statistics()
-                self._last_processed_timestamp = period
+                self._last_processed_timestamp = time.time()
 
-        if self._stats_collector_start:
+        else:
             self._stats_collector_start = False
-            self._last_processed_timestamp = period
-
-        if period not in self._stats_collect:
-            self._stats_collect[period] = {}
+            self._last_processed_timestamp = time.time()
 
         self.__mapping_mutex.release()
 
-    def stats_collect_mon(self, encounter_id):
-        period = self._stats_period
+    def stats_collect_mon(self, encounter_id: str):
+        with self.__mapping_mutex:
+            if 106 not in self.__stats_collected:
+                self.__stats_collected[106] = {}
 
-        if period not in self._stats_collect:
-            self._stats_collect[period] = {}
+            if 'mon' not in self.__stats_collected[106]:
+                self.__stats_collected[106]['mon'] = {}
 
-        if 106 not in self._stats_collect[period]:
-            self._stats_collect[period][106] = {}
+            if 'mon_count' not in self.__stats_collected[106]:
+                self.__stats_collected[106]['mon_count'] = 0
 
-        if 'mon' not in self._stats_collect[period][106]:
-            self._stats_collect[period][106]['mon'] = {}
+            if encounter_id not in self.__stats_collected[106]['mon']:
+                self.__stats_collected[106]['mon'][encounter_id] = 1
+                self.__stats_collected[106]['mon_count'] += 1
+            else:
+                self.__stats_collected[106]['mon'][encounter_id] += 1
 
-        if 'mon_count' not in self._stats_collect[period][106]:
-            self._stats_collect[period][106]['mon_count'] = 0
+    def stats_collect_mon_iv(self, encounter_id: str):
+        with self.__mapping_mutex:
+            if 102 not in self.__stats_collected:
+                self.__stats_collected[102] = {}
+    
+            if 'mon_iv' not in self.__stats_collected[102]:
+                self.__stats_collected[102]['mon_iv'] = {}
+    
+            if 'mon_iv_count' not in self.__stats_collected[102]:
+                self.__stats_collected[102]['mon_iv_count'] = 0
+    
+            if encounter_id not in self.__stats_collected[102]['mon_iv']:
+                self.__stats_collected[102]['mon_iv'][encounter_id] = 1
+                self.__stats_collected[102]['mon_iv_count'] += 1
+            else:
+                self.__stats_collected[102]['mon_iv'][encounter_id] += 1
 
-        if encounter_id not in self._stats_collect[period][106]['mon']:
-            self._stats_collect[period][106]['mon'][encounter_id] = 1
-            self._stats_collect[period][106]['mon_count'] += 1
-        else:
-            self._stats_collect[period][106]['mon'][encounter_id] += 1
+    def stats_collect_raid(self, gym_id: str):
+        with self.__mapping_mutex:
+            if 106 not in self.__stats_collected:
+                self.__stats_collected[106] = {}
 
-    def stats_collect_mon_iv(self, encounter_id):
-        period = self._stats_period
+            if 'raid' not in self.__stats_collected[106]:
+                self.__stats_collected[106]['raid'] = {}
 
-        if period not in self._stats_collect:
-            self._stats_collect[period] = {}
+            if 'raid_count' not in self.__stats_collected[106]:
+                self.__stats_collected[106]['raid_count'] = 0
 
-        if 102 not in self._stats_collect[period]:
-            self._stats_collect[period][102] = {}
-
-        if 'mon_iv' not in self._stats_collect[period][102]:
-            self._stats_collect[period][102]['mon_iv'] = {}
-
-        if 'mon_iv_count' not in self._stats_collect[period][102]:
-            self._stats_collect[period][102]['mon_iv_count'] = 0
-
-        if encounter_id not in self._stats_collect[period][102]['mon_iv']:
-            self._stats_collect[period][102]['mon_iv'][encounter_id] = 1
-            self._stats_collect[period][102]['mon_iv_count'] += 1
-        else:
-            self._stats_collect[period][102]['mon_iv'][encounter_id] += 1
-
-    def stats_collect_raid(self, gym_id):
-        period = self._stats_period
-
-        if period not in self._stats_collect:
-            self._stats_collect[period] = {}
-
-        if 106 not in self._stats_collect[period]:
-            self._stats_collect[period][106] = {}
-
-        if 'raid' not in self._stats_collect[period][106]:
-            self._stats_collect[period][106]['raid'] = {}
-
-        if 'raid_count' not in self._stats_collect[period][106]:
-            self._stats_collect[period][106]['raid_count'] = 0
-
-        if gym_id not in self._stats_collect[period][106]['raid']:
-            self._stats_collect[period][106]['raid'][gym_id] = 1
-            self._stats_collect[period][106]['raid_count'] += 1
-        else:
-            self._stats_collect[period][106]['raid'][gym_id] += 1
+            if gym_id not in self.__stats_collected[106]['raid']:
+                self.__stats_collected[106]['raid'][gym_id] = 1
+                self.__stats_collected[106]['raid_count'] += 1
+            else:
+                self.__stats_collected[106]['raid'][gym_id] += 1
 
     def stats_collect_quest(self, stop_id):
-        period = self._stats_period
+        with self.__mapping_mutex:
+            if 106 not in self.__stats_collected:
+                self.__stats_collected[106] = {}
 
-        if period not in self._stats_collect:
-            self._stats_collect[period] = {}
+            if 'quest' not in self.__stats_collected[106]:
+                self.__stats_collected[106]['quest'] = {}
 
-        if 106 not in self._stats_collect[period]:
-            self._stats_collect[period][106] = {}
+            if 'quest_count' not in self.__stats_collected[106]:
+                self.__stats_collected[106]['quest_count'] = 0
 
-        if 'quest' not in self._stats_collect[period][106]:
-            self._stats_collect[period][106]['quest'] = {}
-
-        if 'quest_count' not in self._stats_collect[period][106]:
-            self._stats_collect[period][106]['quest_count'] = 0
-
-        if stop_id not in self._stats_collect[period][106]['quest']:
-            self._stats_collect[period][106]['quest'][stop_id] = 1
-            self._stats_collect[period][106]['quest_count'] += 1
-        else:
-            self._stats_collect[period][106]['quest'][stop_id] += 1
+            if stop_id not in self.__stats_collected[106]['quest']:
+                self.__stats_collected[106]['quest'][stop_id] = 1
+                self.__stats_collected[106]['quest_count'] += 1
+            else:
+                self.__stats_collected[106]['quest'][stop_id] += 1
 
     def stats_collect_location_data(self, location, datarec, start_timestamp, type, rec_timestamp, walker,
                                     transporttype):
-        period = self._stats_period
-        if period not in self._stats_collect:
-            self._stats_collect[period] = {}
-        if 'location' not in self._stats_collect[period]:
-            self._stats_collect[period]['location'] = []
+        with self.__mapping_mutex:
+            if 'location' not in self.__stats_collected:
+                self.__stats_collected['location'] = []
 
-        loc_data = (str(self._id),
-                    start_timestamp,
-                    location.lat,
-                    location.lng,
-                    rec_timestamp,
-                    type,
-                    walker,
-                    datarec,
-                    period,
-                    transporttype)
+            loc_data = (str(self._id),
+                        start_timestamp,
+                        location.lat,
+                        location.lng,
+                        rec_timestamp,
+                        type,
+                        walker,
+                        datarec,
+                        int(floor(time.time())),
+                        transporttype)
 
-        self._stats_collect[period]['location'].append(loc_data)
+            self.__stats_collected['location'].append(loc_data)
 
-        if 'location_count' not in self._stats_collect[period]:
-            self._stats_collect[period]['location_count'] = 1
-            self._stats_collect[period]['location_ok'] = 0
-            self._stats_collect[period]['location_nok'] = 0
-            if datarec:
-                self._stats_collect[period]['location_ok'] = 1
+            if 'location_count' not in self.__stats_collected:
+                self.__stats_collected['location_count'] = 1
+                self.__stats_collected['location_ok'] = 0
+                self.__stats_collected['location_nok'] = 0
+                if datarec:
+                    self.__stats_collected['location_ok'] = 1
+                else:
+                    self.__stats_collected['location_nok'] = 1
             else:
-                self._stats_collect[period]['location_nok'] = 1
-        else:
-            self._stats_collect[period]['location_count'] += 1
-            if datarec:
-                self._stats_collect[period]['location_ok'] += 1
-            else:
-                self._stats_collect[period]['location_nok'] += 1
+                self.__stats_collected['location_count'] += 1
+                if datarec:
+                    self.__stats_collected['location_ok'] += 1
+                else:
+                    self.__stats_collected['location_nok'] += 1
 
     def stats_complete_parser(self, data, period):
         raid_count = 0
@@ -249,8 +229,6 @@ class PlayerStats(object):
         logger.debug('Submit complete stats for {} - Period: {}: {}', str(self._id), str(period), str(stats_data))
 
         return stats_data
-
-        self._db_wrapper.submit_stats_complete(self._id, period, stats_data)
 
     def stats_location_parser(self, data, period):
 
@@ -284,7 +262,7 @@ class PlayerStats(object):
     def stats_detection_raw_parser(self, data, period):
 
         data_location_raw = []
-        # elf._stats_collect[period][106]['mon'][encounter_id]
+        # elf.__stats_collected[106]['mon'][encounter_id]
 
         if 106 in data:
             if 'mon' in data[106]:
