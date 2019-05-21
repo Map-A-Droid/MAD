@@ -23,7 +23,11 @@ class MitmDataProcessor:
         self.__application_args = application_args
         self.__mitm_mapper: MitmMapper = mitm_mapper
         while True:
-            item = self.__queue.get()
+            try:
+                item = self.__queue.get()
+            except KeyboardInterrupt as e:
+                logger.info("MITMDataProcessor received keyboard interrupt, stopping")
+                break
             items_left = self.__queue.qsize()
             logger.debug(
                 "MITM data processing worker retrieved data. Queue length left afterwards: {}", str(items_left))

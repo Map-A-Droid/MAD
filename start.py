@@ -356,8 +356,8 @@ if __name__ == "__main__":
         # TODO: check against args or init variables to None...
         if t_whw is not None:
             t_whw.join()
-        if t_mitm is not None and mitm_receiver is not None:
-            mitm_receiver.stop_receiver()
+        # if t_mitm is not None and mitm_receiver is not None:
+        #     mitm_receiver.stop_receiver()
         if ws_server is not None:
             ws_server.stop_server()
             t_ws.join()

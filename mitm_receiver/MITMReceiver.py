@@ -3,7 +3,9 @@ import math
 import sys
 
 import time
-from multiprocessing import JoinableQueue, Process
+from multiprocessing import JoinableQueue, Process, Queue
+from multiprocessing.managers import SyncManager
+from typing import Optional
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
@@ -18,6 +20,10 @@ app = Flask(__name__)
 allowed_origins = None
 auths = None
 application_args = None
+
+
+class MitmReceiverManager(SyncManager):
+    pass
 
 
 class EndpointAction(object):
@@ -64,6 +70,9 @@ class EndpointAction(object):
 
 
 class MITMReceiver(object):
+    def __init__(self):
+        self._data_queue: Optional[Queue] = None
+        self.worker_threads = []
 
     def stop_receiver(self):
         self._data_queue.join()
@@ -99,7 +108,11 @@ class MITMReceiver(object):
             self.worker_threads.append(t)
         httpsrv = WSGIServer((self.__listen_ip, int(
             self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
-        httpsrv.serve_forever()
+        try:
+            httpsrv.serve_forever()
+        except KeyboardInterrupt as e:
+            logger.info("Stopping MITMReceiver")
+            httpsrv.close()
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
         if methods_passed is None:
@@ -148,7 +161,4 @@ class MITMReceiver(object):
             address_object = json.load(f)
         return json.dumps(address_object)
 
-
-
-
-
+MitmReceiverManager.register('MITMReceiver', MITMReceiver)
