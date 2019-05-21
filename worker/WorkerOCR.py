@@ -37,14 +37,13 @@ class WorkerOCR(WorkerBase):
                                                         float(
                                                             self.current_location.lat),
                                                         float(self.current_location.lng))
-        logger.info('Moving {} meters to the next position',
-                    round(distance, 2))
+        logger.debug('Moving {} meters to the next position', round(distance, 2))
         speed = routemanager.settings.get("speed", 0)
         max_distance = routemanager.settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
-            logger.info("main: Teleporting...")
+            logger.debug("main: Teleporting...")
             self._communicator.setLocation(
                 self.current_location.lat, self.current_location.lng, 0)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
@@ -93,6 +92,7 @@ class WorkerOCR(WorkerBase):
         cur_time = time.time()
         self._devicesettings["last_location"] = self.current_location
         self.last_location = self.current_location
+        self._waittime_without_delays = time.time()
         return cur_time, True
 
     def _post_move_location_routine(self, timestamp):
@@ -113,8 +113,8 @@ class WorkerOCR(WorkerBase):
         # curTime = time.time()
         logger.info(
             "main: Checking raidcount and copying raidscreen if raids present")
-        count_of_raids = self._pogoWindowManager.readRaidCircles(os.path.join(
-            self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, self._communicator)
+        count_of_raids = self._pogoWindowManager.readRaidCircles(self.get_screenshot_path(), self._id,
+                                                                 self._communicator)
         if count_of_raids == -1:
             logger.debug("Worker: Count present but no raid shown")
             logger.warning(
@@ -126,8 +126,8 @@ class WorkerOCR(WorkerBase):
                 logger.debug(
                     "Worker: couldn't take screenshot after opening raidtab, lock released")
                 return
-            count_of_raids = self._pogoWindowManager.readRaidCircles(os.path.join(
-                self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)), self._id, self._communicator)
+            count_of_raids = self._pogoWindowManager.readRaidCircles(self.get_screenshot_path(), self._id,
+                                                                     self._communicator)
         #    elif countOfRaids == 0:
         #        emptycount += 1
         #        if emptycount > 30:
@@ -139,8 +139,7 @@ class WorkerOCR(WorkerBase):
         # detectin weather
         if self._applicationArgs.weather:
             logger.debug("Worker: Checking weather...")
-            weather = checkWeather(os.path.join(
-                self._applicationArgs.temp_path, 'screenshot%s.png' % str(self._id)))
+            weather = checkWeather(self.get_screenshot_path())
             if weather[0]:
                 logger.debug('Submit Weather')
                 cell_id = S2Helper.lat_lng_to_cell_id(
@@ -161,10 +160,8 @@ class WorkerOCR(WorkerBase):
                 + str(count_of_raids) + '.png'
             logger.debug('Copying file: ' + copyFileName)
             logger.debug("Worker: Copying file to {}", str(copyFileName))
-            copyfile(os.path.join(self._applicationArgs.temp_path,
-                                  'screenshot%s.png' % str(self._id)), copyFileName)
-            os.remove(os.path.join(self._applicationArgs.temp_path,
-                                   'screenshot%s.png' % str(self._id)))
+            copyfile(self.get_screenshot_path(), copyFileName)
+            os.remove(self.get_screenshot_path())
 
         logger.debug("main: Releasing lock")
         self._work_mutex.release()

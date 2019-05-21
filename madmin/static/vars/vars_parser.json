@@ -171,6 +171,23 @@
 						"require": "false",
 						"description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
 					}
+				},
+				{
+					"name": "screenshot_type",
+					"settings": {
+						"type": "option",
+						"require": "true",
+						"values": "jpeg|png",
+						"description": "Type of screenshot (Default: jpeg)"
+					}
+				},
+				{
+					"name": "screenshot_quality",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Quality of screenshot (Default: 80)"
+					}
 				}
 			]
 		}
@@ -319,6 +336,23 @@
 						"type": "text",
 						"require": "false",
 						"description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
+					}
+				},
+				{
+					"name": "screenshot_type",
+					"settings": {
+						"type": "option",
+						"require": "true",
+						"values": "jpeg|png",
+						"description": "Type of screenshot (Default: jpeg)"
+					}
+				},
+				{
+					"name": "screenshot_quality",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Quality of screenshot (Default: 80)"
 					}
 				}
 			]
@@ -481,7 +515,8 @@
 						"type": "text",
 						"require": "false",
 						"description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
-						"output": "int"
+						"output": "int",
+						"showmonsidpicker": true
 					}
 				},
 				{
@@ -597,7 +632,8 @@
 						"type": "text",
 						"require": "false",
 						"description": "Encounter this mon ids (Put in brakets [1,2,3] as comma separated list!)",
-						"output": "int"
+						"output": "int",
+						"showmonsidpicker": true
 					}
 				},
 				{

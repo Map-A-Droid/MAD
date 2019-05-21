@@ -57,3 +57,8 @@ def gen_despawn_timestamp(known_despawn):
     despawn_uts = int(time.mktime(despawn.timetuple()))
 
     return despawn_uts
+
+
+def calculate_iv(ind_atk, ind_def, ind_stm):
+    iv = 100.0 * (ind_atk + ind_def + ind_stm) / 45
+    return iv

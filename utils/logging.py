@@ -6,8 +6,11 @@ from loguru import logger
 
 
 def initLogging(args):
-    log_level = logLevel(args.verbose)
+    log_level = logLevel(args.log_level, args.verbose)
+    log_file_level = logLevel(args.log_file_level, args.verbose)
     log_trace = log_level <= 10
+    log_file_trace = log_file_level <= 10
+
     logconfig = {
         "levels": [
             {"name": "DEBUG2", "no": 9, "color": "<blue>"},
@@ -27,36 +30,64 @@ def initLogging(args):
             {
                 "sink": sys.stderr,
                 "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
+
                 "colorize": True,
                 "level": "ERROR",
                 "backtrace": log_trace,
                 "enqueue": True
-            },
-            {
-                "sink": os.path.join(args.log_path, args.log_filename),
-                "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
-                "level": log_level,
-                "backtrace": log_trace,
-                "rotation": "0:00",
-                "compression": "zip",
-                "retention": "10 days",
-                "enqueue": True,
-                "encoding": "UTF-8"
             }
         ]
     }
+
+    if not args.no_file_logs:
+        file_logs = {
+            "sink": os.path.join(args.log_path, args.log_filename),
+            "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
+            "level": log_file_level,
+            "backtrace": log_file_trace,
+            "enqueue": True,
+            "encoding": "UTF-8"
+        }
+
+        if args.log_file_retention != 0:
+            log_file_retention = str(args.log_file_retention) + " days"
+            file_logs["retention"] = log_file_retention
+
+        if args.log_file_rotation_size != 0:
+            log_file_rotation_size = str(args.log_file_rotation_size) + " MB"
+            file_logs["rotation"] = log_file_rotation_size
+
+        logconfig["handlers"].append(file_logs)
 
     logger.configure(**logconfig)
     logger.info("Setting log level to {}", str(log_level))
 
 
-def logLevel(debug_level):
-    if debug_level == 0:
+def logLevel(arg_log_level, arg_debug_level):
+    levelswitch = {
+        "TRACE": 5,
+        "DEBUG5": 6,
+        "DEBUG4": 7,
+        "DEBUG3": 8,
+        "DEBUG2": 9,
+        "DEBUG": 10,
+        "INFO": 20,
+        "SUCCESS": 25,
+        "WARNING": 30,
+        "ERROR": 40,
+        "CRITICAL": 50
+    }
+
+    forced_log_level = levelswitch.get(arg_log_level, None)
+    if forced_log_level:
+        return forced_log_level
+
+    if arg_debug_level == 0:
         return 20
 
     # DEBUG=10; starting with -v equals to args.verbose==1
     # starting with -vv equals to args.verbose==2 etc.
-    loglevel = 11 - debug_level
+    loglevel = 11 - arg_debug_level
     return loglevel
 
 

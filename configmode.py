@@ -65,6 +65,7 @@ if __name__ == "__main__":
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
     db_wrapper.create_usage_database_if_not_exists()
+    db_wrapper.create_statistics_databases_if_not_exists()
     version = MADVersion(args, db_wrapper)
     version.get_version()
 

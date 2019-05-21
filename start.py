@@ -1,17 +1,19 @@
 import calendar
 import datetime
+from multiprocessing import Process
+
 import gc
 import glob
 import os
-import shutil
 import sys
 import time
 from threading import Thread, active_count
 
 import psutil
-from db.monocleWrapper import MonocleWrapper
-from db.rmWrapper import RmWrapper
-from mitm_receiver.MitmMapper import MitmMapper
+
+from db.DbFactory import DbFactory
+from db.dbWrapperBase import DbWrapperBase
+from mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mitm_receiver.MITMReceiver import MITMReceiver
 from utils.logging import initLogging, logger
 from utils.madGlobals import terminate_mad
@@ -138,10 +140,10 @@ def get_system_infos(db_wrapper):
     gc.set_threshold(5, 1, 1)
 
     while not terminate_mad.is_set():
-        logger.info('Starting internal Cleanup')
+        logger.debug('Starting internal Cleanup')
         logger.debug('Collecting...')
         n = gc.collect()
-        logger.info('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
+        logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
                     str(n), str(gc.garbage), str(active_count()))
 
         for obj in gc.garbage:
@@ -161,7 +163,7 @@ def get_system_infos(db_wrapper):
         collected = None
         if args.stat_gc:
             collected = gc.collect()
-            logger.info("Garbage collector: collected %d objects." % collected)
+            logger.debug("Garbage collector: collected %d objects." % collected)
         zero = datetime.datetime.utcnow()
         unixnow = calendar.timegm(zero.utctimetuple())
         db_wrapper.insert_usage(args.status_name, cpuUse,
@@ -187,18 +189,13 @@ if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
 
-    if args.db_method == "rm":
-        db_wrapper = RmWrapper(args)
-    elif args.db_method == "monocle":
-        db_wrapper = MonocleWrapper(args)
-    else:
-        logger.error("Invalid db_method in config. Exiting")
-        sys.exit(1)
+    db_wrapper: DbWrapperBase = DbFactory.get_wrapper(args)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
     db_wrapper.create_usage_database_if_not_exists()
+    db_wrapper.create_statistics_databases_if_not_exists()
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
@@ -260,8 +257,11 @@ if __name__ == "__main__":
                 sys.exit(0)
 
             pogoWindowManager = None
-
-            mitm_mapper = MitmMapper(device_mappings)
+            MitmMapperManager.register('MitmMapper', MitmMapper)
+            mitmMapperManager = MitmMapperManager()
+            mitmMapperManager.start()
+            mitm_mapper = mitmMapperManager.MitmMapper(device_mappings)
+            # mitm_mapper = MitmMapper(device_mappings, db_wrapper)
             ocr_enabled = False
 
             for routemanager in routemanagers.keys():
@@ -279,17 +279,17 @@ if __name__ == "__main__":
 
             if not args.no_ocr:
                 from ocr.pogoWindows import PogoWindows
-                pogoWindowManager = PogoWindows(args.temp_path)
+                pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
 
             if ocr_enabled:
                 from ocr.copyMons import MonRaidImages
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
-            mitm_receiver = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                         mitm_mapper, args, auths, db_wrapper)
-            t_mitm = Thread(name='mitm_receiver',
-                            target=mitm_receiver.run_receiver)
-            t_mitm.daemon = True
+            mitm_receiver = MITMReceiver()
+            t_mitm = Process(name='mitm_receiver',
+                             target=mitm_receiver.run_receiver, args=(mitm_receiver, args.mitmreceiver_ip, int(args.mitmreceiver_port),
+                                         mitm_mapper, args, auths))
+            # t_mitm.daemon = True
             t_mitm.start()
             time.sleep(5)
 
@@ -356,8 +356,8 @@ if __name__ == "__main__":
         # TODO: check against args or init variables to None...
         if t_whw is not None:
             t_whw.join()
-        if t_mitm is not None and mitm_receiver is not None:
-            mitm_receiver.stop_receiver()
+        # if t_mitm is not None and mitm_receiver is not None:
+        #     mitm_receiver.stop_receiver()
         if ws_server is not None:
             ws_server.stop_server()
             t_ws.join()

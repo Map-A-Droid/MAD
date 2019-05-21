@@ -1,6 +1,8 @@
 import collections
 import time
+from typing import List, Dict
 
+from db.dbWrapperBase import DbWrapperBase
 from route.RouteManagerBase import RouteManagerBase
 from utils.logging import logger
 
@@ -9,16 +11,11 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 class RouteManagerQuests(RouteManagerBase):
     def generate_stop_list(self):
-        self._stoplist = []
         time.sleep(5)
         stops = self.db_wrapper.stop_from_db_without_quests(
             self.geofence_helper)
         logger.info('Detected stops without quests: {}', str(stops))
-        for stop in stops:
-            self._stoplist.append(str(stop[0]) + '#' + str(stop[1]))
-        if len(stops) == 0:
-            return []
-        return stops
+        self._stoplist: List[Location] = stops
 
     def _retrieve_latest_priority_queue(self):
         return None
@@ -42,9 +39,9 @@ class RouteManagerQuests(RouteManagerBase):
 
         self._init_route_queue()
 
-    def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, init=False,
-                 name="unknown", settings=None):
+    def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
+                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
+                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
@@ -53,8 +50,7 @@ class RouteManagerQuests(RouteManagerBase):
                                   name=name, settings=settings, mode=mode
                                   )
         self.starve_route = False
-        self._stoplist = []
-        self._unprocessed_stops = {}
+        self._stoplist: List[Location] = []
 
     def _get_coords_after_finish_route(self):
         self._manager_mutex.acquire()
@@ -66,11 +62,13 @@ class RouteManagerQuests(RouteManagerBase):
             if not self._route_queue.empty():
                 self._start_calc = False
                 return True
-            openstops = self.generate_stop_list()
-            if len(openstops) == 0:
+            self.generate_stop_list()
+            if len(self._stoplist) == 0:
                 self._start_calc = False
                 return False
-            coords = self._check_unprocessed_stops(openstops)
+            coords: List[Location] = self._check_unprocessed_stops()
+            # remove coords to be ignored from coords
+            coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
             if len(coords) > 0:
                 self.clear_coords()
                 self.add_coords_list(coords)
@@ -85,52 +83,46 @@ class RouteManagerQuests(RouteManagerBase):
         finally:
             self._manager_mutex.release()
 
-    def _check_unprocessed_stops(self, openstops):
-        self._stoplistunprocessed = []
-        if len(openstops) == 0:
-            self._unprocessed_stops = {}
-        else:
-            # Only want open stops - not maybe processed in the last round
-            self._unprocessed_stops_new = {}
-            for stop in openstops:
-                check_stop = str(stop[0]) + '#' + str(stop[1])
-                if check_stop not in self._unprocessed_stops:
-                    self._unprocessed_stops_new[check_stop] = 1
-                else:
-                    value = self._unprocessed_stops[check_stop] + 1
-                    self._unprocessed_stops_new[check_stop] = value
+    def _check_unprocessed_stops(self):
+        self._manager_mutex.acquire()
 
-            # copy back the new list
-            self._unprocessed_stops = self._unprocessed_stops_new
+        try:
+            list_of_stops_to_return: List[Location] = []
+            stops_not_processed: Dict[Location, int] = {}
 
-        for error_stop in self._unprocessed_stops:
-            # generate new location list
-            if self._unprocessed_stops[error_stop] < 4:
-                logger.warning("Found not processed Stop: {}", str(error_stop))
-                stop_split = error_stop.split("#")
-                self._stoplistunprocessed.append(
-                    [stop_split[0], stop_split[1]])
+            if len(self._stoplist) == 0:
+                return list_of_stops_to_return
             else:
-                logger.error(
-                    "Cannot process stop mit lat-lng {} 3 times - please check your db.", str(error_stop))
+                # we only want to add stops that we haven't spun yet
+                for stop in self._stoplist:
+                    if stop not in stops_not_processed:
+                        stops_not_processed[stop] = 1
+                    else:
+                        stops_not_processed[stop] += 1
 
-        if len(self._stoplistunprocessed) > 0:
-            logger.info('Retry some stops')
-            return self._stoplistunprocessed
-        else:
-            logger.info('Dont found unprocessed stops')
-            return []
+            for stop, error_count in stops_not_processed.items():
+                if error_count < 4:
+                    logger.warning("Found stop not processed yet: {}".format(str(stop)))
+                    list_of_stops_to_return.append(stop)
+                else:
+                    logger.error("Stop {} has not been processed thrice in a row, please check your DB".format(str(stop)))
+
+            if len(list_of_stops_to_return) > 0:
+                logger.info("Found stops not yet processed, retrying those in the next round")
+            return list_of_stops_to_return
+        finally:
+            self._manager_mutex.release()
 
     def _start_routemanager(self):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
                 logger.info("Starting routemanager {}", str(self.name))
-                stops = self.db_wrapper.stop_from_db_without_quests(
+                stops: List[Location] = self.db_wrapper.stop_from_db_without_quests(
                     self.geofence_helper)
-                logger.info('Detected stops without quests: {}', str(stops))
-                for stop in stops:
-                    self._stoplist.append(str(stop[0]) + '#' + str(stop[1]))
+                logger.info('Detected {} stops without quests', len(stops))
+                logger.debug('Detected stops without quests: {}', str(stops))
+                self._stoplist: List[Location] = stops
 
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
@@ -151,16 +143,16 @@ class RouteManagerQuests(RouteManagerBase):
 
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
-        self._unprocessed_stops = {}
         self._is_started = False
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:
             logger.info('Init Mode - coord is valid')
             return True
-        check_stop = str(lat) + '#' + str(lng)
-        logger.info('Checking Stop with ID {}', str(check_stop))
-        if check_stop not in self._stoplist:
+        # check_stop = str(lat) + '#' + str(lng)
+        stop = Location(lat, lng)
+        logger.info('Checking Stop with ID {}', str(stop))
+        if stop not in self._stoplist:
             logger.info('Already got this Stop')
             return False
         logger.info('Getting new Stop')

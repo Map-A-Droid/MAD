@@ -24,6 +24,8 @@ class testimage(object):
         print(self._resocalc.get_x_y_ratio(
             self, self._screen_x, self._screen_y, xoffset, yoffset))
 
+        print(self._resocalc.get_inventory_text_diff(self))
+
         if self._mode == "menu":
             self._image_check = self.check_menu(self._image)
 
@@ -89,6 +91,7 @@ class testimage(object):
 
     def open_del_item(self, image):
         print('Check Open del Item')
+
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
@@ -97,6 +100,9 @@ class testimage(object):
         print('Check Open next del Item')
         x, y = self._resocalc.get_delete_item_coords(
             self)[0], self._resocalc.get_delete_item_coords(self)[1]
+        y += self._resocalc.get_next_item_coord(self)
+        y += self._resocalc.get_next_item_coord(self)
+        y += self._resocalc.get_next_item_coord(self)
         y += self._resocalc.get_next_item_coord(self)
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 

@@ -109,6 +109,7 @@
 #pokemon_webhook             # Activate support for pokemon webhook
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
 #quest_webhook               # Activate support for quest webhook
+#quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
 
 # Dynamic Rarity
 ######################
@@ -123,7 +124,8 @@
 
 # Logging
 ######################
-#no-file-logs                # Disable logging (Default: disable)
-#log-path:                   # Path for Logs (Default: logs/)
-#log-filename:               # Filename for logs (Default: Default: %%Y%%m%%d_%%H%%M_<SN>.log)
-#cleanup-age:                # Delete logs older than X minutes (Default: 0. 0 = disable)
+#no_file_logs                # Disable file logging (Default: file logging is enabled by default)
+#log_path:                   # Defines directory to save log files to (Default: logs/)
+#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN> with the instance's status name (Default: Default: %%Y%%m%%d_%%H%%M_<SN>.log)
+#log_file_rotation_size:     # Defines the maximum size in MB for single log files. (Default: )
+#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs. Custom log levels like DEBUG[1-5] can be used too

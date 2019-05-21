@@ -20,6 +20,7 @@ case "$dbtype" in
 	details="forts"
 	pokestopDB="pokestops"
 	pokestopID="external_id"
+        imgurl="url"
 	;;
  rm)
 	gyms="gym"
@@ -27,6 +28,7 @@ case "$dbtype" in
 	details="gymdetails"
 	pokestopID="pokestop_id"
 	pokestopDB="pokestop"
+        imgurl="image"
 	;;
  *) echo "unknown dbmethod set in MAD config file." && exit 4;;
 esac
@@ -38,23 +40,22 @@ while IFS=";" read name url portalGuid
 do
  portalGuid=$(sed -e 's,\n,,' -e 's,\r,,' <<< "$portalGuid")
         echo "name: $name, url: $url, external_id: $portalGuid"
-        if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $gyms where $gymID=\"$portalGuid\";") -eq 1 ]; then
+        if [ $(mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "SELECT count(*) from $gyms where $gymID=\"$portalGuid\";") -eq 1 ]; then
                 echo "Thats a gym, updating row..."
         ((gymCount ++))
-                mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $details SET name=\"$name\", url=\"$url\" WHERE $gymID=\"$portalGuid\";"
+                mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "UPDATE $details SET name=\"$name\", url=\"$url\" WHERE $gymID=\"$portalGuid\";"
         else
                 echo "Thats NOT a gym, skipping..."
         fi
 
-        if [ "$dbtype" == "monocle" ]; then
-              if [ $(mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "SELECT count(*) from $pokestopDB where $pokestopID=\"$portalGuid\";") -eq 1 ]; then
-                      echo "Thats a pokestop, updating row..."
-              ((stopCount ++))
-                      mysql -N -s -h $dbip -P $port -u $user -p$pass -D $dbname -e "UPDATE $pokestopDB SET name=\"$name\", url=\"$url\" WHERE $pokestopID=\"$portalGuid\";"
-              else
-                      echo "Thats NOT a pokestop, skipping..."
-              fi
+        if [ $(mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "SELECT count(*) from $pokestopDB where $pokestopID=\"$portalGuid\";") -eq 1 ]; then
+                echo "Thats a pokestop, updating row..."
+        ((stopCount ++))
+                mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "UPDATE $pokestopDB SET name=\"$name\", $imgurl=\"$url\" WHERE $pokestopID=\"$portalGuid\";"
+        else
+                echo "Thats NOT a pokestop, skipping..."
         fi
-done < $1
+
+done < "$1"
 echo "$gymCount Gyms updated"
 echo "$stopCount Stops updated"

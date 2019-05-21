@@ -4,7 +4,6 @@ import multiprocessing
 import os
 import secrets
 
-import numpy as np
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
 from utils.logging import logger
@@ -132,11 +131,11 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
     export_data = []
     if routefile is not None and os.path.isfile(routefile + '.calc'):
         logger.debug('Found existing routefile {}', routefile)
-        route = open(routefile + '.calc', 'r')
-        for line in route:
-            lineSplit = line.split(',')
-            export_data.append({'lat': float(lineSplit[0].replace('\n', '')),
-                                'lng': float(lineSplit[1].replace('\n', ''))})
+        with open(routefile + '.calc', 'r') as route:
+            for line in route:
+                lineSplit = line.split(',')
+                export_data.append({'lat': float(lineSplit[0].replace('\n', '')),
+                                    'lng': float(lineSplit[1].replace('\n', ''))})
         return export_data
 
     lessCoordinates = coords
@@ -259,6 +258,7 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
                 cost_best = costs_temps[0]
                 sol_best = solutions_temp[0].copy()
             else:
+                logger.debug("Multiple solutions at once, trying to merge")
                 # multiple solutions, so much fun at once!
                 merged_sol = sol_best.copy()
                 length_sols_minus_one = len(solutions_temp) - 1

@@ -1,14 +1,18 @@
 import json
 import math
 import sys
-import threading
+
 import time
-from datetime import datetime
-from queue import Queue
+from multiprocessing import JoinableQueue, Process, Queue
+from multiprocessing.managers import SyncManager
+from typing import Optional
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
 
+from db.DbFactory import DbFactory
+from mitm_receiver.MITMDataProcessor import MitmDataProcessor
+from mitm_receiver.MitmMapper import MitmMapper
 from utils.authHelper import check_auth
 from utils.logging import LogLevelChanger, logger
 
@@ -16,6 +20,10 @@ app = Flask(__name__)
 allowed_origins = None
 auths = None
 application_args = None
+
+
+class MitmReceiverManager(SyncManager):
+    pass
 
 
 class EndpointAction(object):
@@ -62,13 +70,25 @@ class EndpointAction(object):
 
 
 class MITMReceiver(object):
-    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed, db_wrapper):
+    def __init__(self):
+        self._data_queue: Optional[Queue] = None
+        self.worker_threads = []
+
+    def stop_receiver(self):
+        self._data_queue.join()
+        for i in range(application_args.mitmreceiver_data_workers):
+            self._data_queue.put(None)
+        for t in self.worker_threads:
+            t.join()
+
+    @staticmethod
+    def run_receiver(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
         global application_args, auths
         application_args = args_passed
         auths = auths_passed
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
-        self.__mitm_mapper = mitm_mapper
+        self.__mitm_mapper: MitmMapper = mitm_mapper
         self.app = Flask("MITMReceiver")
         self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                           methods_passed=['POST'])
@@ -76,27 +96,23 @@ class MITMReceiver(object):
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/', handler=self.get_addresses,
                           methods_passed=['GET'])
-        self._data_queue = Queue()
-        self._db_wrapper = db_wrapper
+        self._data_queue: JoinableQueue = JoinableQueue()
+        self._db_wrapper = DbFactory.get_wrapper(args_passed)
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            t = threading.Thread(name='MITMReceiver-%s' % str(i),
-                                 target=self.received_data_worker)
+            data_processor: MitmDataProcessor = MitmDataProcessor()
+            t = Process(name='MITMReceiver-%s' % str(i), target=data_processor.received_data_worker,
+                        args=(data_processor, self._data_queue,
+                              application_args, self.__mitm_mapper))
             t.start()
             self.worker_threads.append(t)
-
-    def stop_receiver(self):
-        global application_args
-        self._data_queue.join()
-        for i in range(application_args.mitmreceiver_data_workers):
-            self._data_queue.put(None)
-        for t in self.worker_threads:
-            t.join()
-
-    def run_receiver(self):
         httpsrv = WSGIServer((self.__listen_ip, int(
             self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
-        httpsrv.serve_forever()
+        try:
+            httpsrv.serve_forever()
+        except KeyboardInterrupt as e:
+            logger.info("Stopping MITMReceiver")
+            httpsrv.close()
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
         if methods_passed is None:
@@ -111,9 +127,14 @@ class MITMReceiver(object):
             logger.warning(
                 "Could not read method ID. Stopping processing of proto")
             return None
-        timestamp = int(math.floor(time.time()))
+        if not self.__mitm_mapper.get_injection_status(origin):
+            logger.info("Worker {} is injected now", str(origin))
+            self.__mitm_mapper.set_injection_status(origin)
+        # extract timestamp from data
+        timestamp: float = data.get("timestamp", int(math.floor(time.time())))
         self.__mitm_mapper.update_latest(
-            origin, timestamp=timestamp, key=type, values_dict=data)
+            origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
+            values_dict=data)
         self._data_queue.put(
             (timestamp, data, origin)
         )
@@ -140,66 +161,4 @@ class MITMReceiver(object):
             address_object = json.load(f)
         return json.dumps(address_object)
 
-    def received_data_worker(self):
-        while True:
-            item = self._data_queue.get()
-            items_left = self._data_queue.qsize()
-            logger.debug(
-                "MITM data processing worker retrieved data. Queue length left afterwards: {}", str(items_left))
-            if items_left > 50:  # TODO: no magic number
-                logger.warning(
-                    "MITM data processing workers are falling behind! Queue length: {}", str(items_left))
-            if item is None:
-                logger.warning("Received none from queue of data")
-                break
-            self.process_data(item[0], item[1], item[2])
-            self._data_queue.task_done()
-
-    @logger.catch
-    def process_data(self, received_timestamp, data, origin):
-        global application_args
-        if origin not in self.__mitm_mapper.playerstats:
-            logger.warning(
-                "Not processing data of {} since origin is unknown", str(origin))
-            return
-        type = data.get("type", None)
-        if type:
-            if type == 106:
-                # process GetMapObject
-                logger.success("Processing GMO received from {}. Received at {}", str(
-                    origin), str(datetime.fromtimestamp(received_timestamp)))
-
-                if application_args.weather:
-                    self._db_wrapper.submit_weather_map_proto(
-                        origin, data["payload"], received_timestamp)
-
-                self._db_wrapper.submit_pokestops_map_proto(
-                    origin, data["payload"])
-                self._db_wrapper.submit_gyms_map_proto(origin, data["payload"])
-                self._db_wrapper.submit_raids_map_proto(
-                    origin, data["payload"])
-
-                self._db_wrapper.submit_spawnpoints_map_proto(
-                    origin, data["payload"])
-                mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
-                self._db_wrapper.submit_mons_map_proto(
-                    origin, data["payload"], mon_ids_iv)
-            elif type == 102:
-                playerlevel = self.__mitm_mapper.playerstats[origin].get_level(
-                )
-                if playerlevel >= 30:
-                    logger.info("Processing Encounter received from {} at {}", str(
-                        origin), str(received_timestamp))
-                    self._db_wrapper.submit_mon_iv(
-                        origin, received_timestamp, data["payload"])
-                else:
-                    logger.debug(
-                        'Playerlevel lower than 30 - not processing encounter Data')
-            elif type == 101:
-                self._db_wrapper.submit_quest_proto(data["payload"])
-            elif type == 104:
-                self._db_wrapper.submit_pokestops_details_map_proto(
-                    data["payload"])
-            elif type == 4:
-                self.__mitm_mapper.playerstats[origin].gen_player_stats(
-                    data["payload"])
+MitmReceiverManager.register('MITMReceiver', MITMReceiver)

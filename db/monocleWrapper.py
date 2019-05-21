@@ -4,6 +4,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from functools import reduce
+from typing import List, Optional
 
 import requests
 
@@ -473,11 +474,12 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         for (id, lat, lon, name, url, park, sponsor, team) in res:
-            gyminfo[str(id)] = self.__encode_hash_json(team,
-                                                  float(lat),
-                                                  float(lon),
-                                                  str(name).replace('"', '\\"')
-                                                  .replace('\n', '\\n'), str(url), park, sponsor)
+            gyminfo[str(id)] = self.__encode_hash_json(id,
+                                                       team,
+                                                       float(lat),
+                                                       float(lon),
+                                                       str(name).replace('"', '\\"')
+                                                       .replace('\n', '\\n'), str(url), park, sponsor)
         return gyminfo
 
     def gyms_from_db(self, geofence_helper):
@@ -489,21 +491,21 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         for (lat, lon) in res:
-            list_of_coords.append([lat, lon])
+            list_of_coords.append(Location(lat, lon))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def update_encounters_from_db(self, geofence_helper, latest=0):
         logger.debug("monocleWrapper::update_encounters_from_db called")
@@ -553,21 +555,21 @@ class MonocleWrapper(DbWrapperBase):
         )
 
         res = self.execute(query)
-        list_of_coords = []
+        list_of_coords: List[Location] = []
         for (lat, lon) in res:
-            list_of_coords.append([lat, lon])
+            list_of_coords.append(Location(lat, lon))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
                               snow_level=0, fog_level=0, wind_direction=0, weather_daytime=0):
@@ -586,7 +588,7 @@ class MonocleWrapper(DbWrapperBase):
 
         self.execute(query, vals, commit=True)
 
-    def submit_mon_iv(self, origin, timestamp, encounter_proto):
+    def submit_mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -605,6 +607,8 @@ class MonocleWrapper(DbWrapperBase):
         encounter_id = wild_pokemon['encounter_id']
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
+
+        mitm_mapper.collect_mon_iv_stats(origin, str(encounter_id))
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
@@ -640,13 +644,13 @@ class MonocleWrapper(DbWrapperBase):
             init = False
 
         if init:
-            logger.info("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
+            logger.debug("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (init)".format(
                 str(origin),
                 pokemon_data["id"],
                 latitude, longitude,
                 despawn_time))
         else:
-            logger.info("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
+            logger.debug("{0}: adding IV mon #{1} at {2}, {3}. Despawning at {4} (non-init)".format(
                 str(origin),
                 pokemon_data["id"],
                 latitude, longitude,
@@ -676,7 +680,7 @@ class MonocleWrapper(DbWrapperBase):
         )
         self.execute(query_insert, vals, commit=True)
 
-    def submit_mons_map_proto(self, origin, map_proto, mon_ids_iv):
+    def submit_mons_map_proto(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]], mitm_mapper):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -698,6 +702,8 @@ class MonocleWrapper(DbWrapperBase):
                 if encounter_id < 0:
                     encounter_id = encounter_id + 2 ** 64
 
+                mitm_mapper.collect_mon_stats(origin, str(encounter_id))
+
                 s2_weather_cell_id = S2Helper.lat_lng_to_cell_id(
                     lat, lon, level=10)
                 getdetspawntime = self.get_detected_endtime(str(spawnid))
@@ -705,13 +711,13 @@ class MonocleWrapper(DbWrapperBase):
                 if getdetspawntime:
                     despawn_time = self._gen_endtime(getdetspawntime)
                     despawn_time_unix = despawn_time
-                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despawns at {4} (non-init)", str(
+                    logger.debug("{0}: adding mon (#{1}) at {2}, {3}. Despawns at {4} (non-init)", str(
                         origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
                 else:
                     despawn_time = datetime.now() + timedelta(seconds=300)
                     despawn_time_unix = int(
                         time.mktime(despawn_time.timetuple()))
-                    logger.info("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(
+                    logger.debug("{0}: adding mon (#{1}) at {2}, {3}. Despaws at {4} (init)", str(
                         origin), wild_mon['pokemon_data']['id'], lat, lon, despawn_time)
 
                 mon_id = wild_mon['pokemon_data']['id']
@@ -833,7 +839,7 @@ class MonocleWrapper(DbWrapperBase):
                          vals_fort_sightings, commit=True)
         return True
 
-    def submit_raids_map_proto(self, origin, map_proto):
+    def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
         cells = map_proto.get("cells", None)
         if cells is None:
             return False
@@ -876,9 +882,11 @@ class MonocleWrapper(DbWrapperBase):
                     level = gym['gym_details']['raid_info']['level']
                     gymid = gym['id']
 
+                    mitm_mapper.collect_raid_stats(origin, gymid)
+
                     now = time.time()
 
-                    logger.info("{}: adding/Updating gym {} with level {} ending at {}",
+                    logger.debug("{}: adding/Updating gym {} with level {} ending at {}",
                                 str(origin), str(gymid), str(level), str(raidendSec))
 
                     raid_vals.append(
@@ -965,12 +973,20 @@ class MonocleWrapper(DbWrapperBase):
                 continue
 
             next_to_encounter.append(
-                (
-                    i, Location(lat, lon), encounter_id
-                )
+                    (pokemon_id, Location(lat, lon), encounter_id)
             )
+
+        # now filter by the order of eligible_mon_ids
+        to_be_encountered = []
+        i = 0
+        for mon_prio in eligible_mon_ids:
+            for mon in next_to_encounter:
+                if mon_prio == mon[0]:
+                    to_be_encountered.append(
+                            (i, mon[1], mon[2])
+                    )
             i += 1
-        return next_to_encounter
+        return to_be_encountered
 
     def __download_img(self, url, file_name):
         retry = 1
@@ -1058,7 +1074,7 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
     def stop_from_db_without_quests(self, geofence_helper):
-        logger.debug("RmWrapper::stop_from_db_without_questsb called")
+        logger.debug("MonocleWrapper::stop_from_db_without_quests called")
         questinfo = {}
 
         query = (
@@ -1072,24 +1088,23 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
         list_of_coords = []
         for (latitude, longitude) in res:
-            list_of_coords.append([latitude, longitude])
+            list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
             return geofenced_coords
         else:
-            import numpy as np
-            to_return = np.zeros(shape=(len(list_of_coords), 2))
-            for i in range(len(to_return)):
-                to_return[i][0] = list_of_coords[i][0]
-                to_return[i][1] = list_of_coords[i][1]
-            return to_return
+            # import numpy as np
+            # to_return = np.zeros(shape=(len(list_of_coords), 2))
+            # for i in range(len(to_return)):
+            #     to_return[i][0] = list_of_coords[i][0]
+            #     to_return[i][1] = list_of_coords[i][1]
+            return list_of_coords
 
-    def quests_from_db(self, GUID=None, timestamp=None):
+    def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
         logger.debug("MonocleWrapper::quests_from_db called")
         questinfo = {}
-        data = ()
 
         query = (
             "SELECT pokestops.external_id, pokestops.lat, pokestops.lon, trs_quest.quest_type, "
@@ -1097,21 +1112,32 @@ class MonocleWrapper(DbWrapperBase):
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, "
             "pokestops.name, pokestops.url, trs_quest.quest_target, trs_quest.quest_condition, "
             "trs_quest.quest_timestamp, trs_quest.quest_task, trs_quest.quest_template "
-            "FROM pokestops inner join trs_quest on "
-            "pokestops.external_id = trs_quest.GUID where "
-            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE()"
+            "FROM pokestops inner join trs_quest ON pokestops.external_id = trs_quest.GUID "
+            "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
         )
 
-        if GUID is not None:
-            add_query = " and trs_quest.GUID = %s"
-            query = query + add_query
-            data = (GUID,)
-        elif timestamp is not None:
-            add_query = " and trs_quest.quest_timestamp >= %s"
-            query = query + add_query
-            data = (timestamp,)
+        query_where = ""
 
-        res = self.execute(query, data)
+        if neLat is not None and neLon is not None and swLat is not None and swLon is not None:
+            oquery_where = (
+                " AND (lat >= {} AND lon >= {} "
+                " AND lat <= {} AND lon <= {}) "
+            ).format(swLat, swLon, neLat, neLon)
+
+            query_where = query_where + oquery_where
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (lat >= {} AND lon >= {} "
+                " AND lat <= {} AND lon <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+        elif timestamp is not None:
+            oquery_where = " AND trs_quest.quest_timestamp >= {}".format(timestamp)
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
 
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
@@ -1299,15 +1325,17 @@ class MonocleWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(expire_timestamp), '%y-%m-%d %k:00:00'))" \
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))" \
                      "as timestamp"
         if minutes:
-            minutes = datetime.utcnow() - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(expire_timestamp) > \'%s\' ' % str(
+            minutes = datetime.now().replace(
+                minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
+            query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(
                 minutes)
 
         query = (
-            "SELECT  %s, count(pokemon_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings %s "
+            "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM sightings join "
+            "trs_stats_detect_raw on sightings.encounter_id=trs_stats_detect_raw.type_id %s "
             "group by IV, day(FROM_UNIXTIME(expire_timestamp)), hour(FROM_UNIXTIME(expire_timestamp)) "
             "order by timestamp" %
                 (str(query_date), str(query_where))
@@ -1363,3 +1391,98 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query)
 
         return res
+
+    def get_best_pokemon_spawns(self):
+        logger.debug('Fetching best pokemon spawns from db')
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:%i:00'))"
+
+        query = (
+                "SELECT encounter_id, GROUP_CONCAT(DISTINCT worker order by worker asc SEPARATOR ', '), pokemon_id, "
+                "%s, atk_iv, def_iv, sta_iv, level, cp FROM sightings join "
+                "trs_stats_detect_raw on sightings.encounter_id=type_id WHERE "
+                "atk_iv>14 and def_iv>14 and sta_iv>14 and "
+                "trs_stats_detect_raw.type='mon' group by encounter_id "
+                "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
+                (str(query_date))
+        )
+
+        res = self.execute(query)
+        return res
+
+    def delete_stop(self, latitude: float, longitude: float):
+        logger.debug('Deleting stop from db')
+        query = (
+            "delete from pokestops where lat=%s and lon=%s"
+        )
+        del_vars = (latitude, longitude)
+        self.execute(query, del_vars, commit=True)
+
+    def get_gyms_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        gyms = {}
+
+        # base query to fetch gyms
+        query = (
+            "SELECT forts.external_id, forts.lat, forts.lon, forts.name, "
+            "forts.url, IFNULL(fort_sightings.team, 0), "
+            "fort_sightings.last_modified, raids.level, raids.time_spawn, raids.time_battle, "
+            "raids.time_end, raids.pokemon_id, raids.form, fort_sightings.updated "
+            "FROM forts "
+            "INNER JOIN fort_sightings ON forts.id = fort_sightings.fort_id "
+            "LEFT JOIN raids ON raids.fort_id = forts.id "
+        )
+
+        # fetch gyms only in a certain rectangle
+        query_where = (
+            " WHERE (lat >= {} AND lon >= {} "
+            " AND lat <= {} AND lon <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        # but don't fetch gyms from a known rectangle
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (lat >= {} AND lon >= {} "
+                " AND lat <= {} AND lon <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        # there's no old rectangle so check for a timestamp to send only updated stuff
+        elif timestamp is not None:
+            # TODO ish: until we don't show any other information like raids
+            #          we can use last_modified, since that will give us actual
+            #          changes like gym color change
+            oquery_where = " AND last_modified >= {} ".format(timestamp)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (gym_id, latitude, longitude, name, url, team_id, last_updated,
+                level, spawn, start, end, mon_id, form, last_scanned) in res:
+
+            # check if we found a raid and if it's still active
+            if end is None or time.time() > end:
+                raid = None
+            else:
+                raid = {
+                    "spawn": spawn,
+                    "start": start,
+                    "end": end,
+                    "mon": mon_id,
+                    "form": form,
+                    "level": level
+                }
+
+            gyms[gym_id] = {
+                "id": gym_id,
+                "name": name,
+                "url": url,
+                "latitude": latitude,
+                "longitude": longitude,
+                "team_id": int(team_id),
+                "last_updated": last_updated,
+                "last_scanned": last_scanned,
+                "raid": raid
+            }
+
+        return gyms

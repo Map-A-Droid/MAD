@@ -7,14 +7,18 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from queue import Queue
 from threading import Event, Lock, RLock, Thread
+from typing import List
 
 import numpy as np
+
+from db.dbWrapperBase import DbWrapperBase
 from geofence.geofenceHelper import GeofenceHelper
 from route.routecalc.calculate_route import getJsonRoute
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
 from utils.logging import logger
 from utils.walkerArgs import parseArgs
+from worker.WorkerBase import WorkerBase
 
 args = parseArgs()
 
@@ -24,43 +28,47 @@ Relation = collections.namedtuple(
 
 
 class RouteManagerBase(ABC):
-    def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, init=False,
-                 name="unknown", settings=None):
-        self.db_wrapper = db_wrapper
-        self.init = init
-        self.name = name
-        self._coords_unstructured = coords
-        self.geofence_helper = GeofenceHelper(
+    def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
+                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
+                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None):
+        self.db_wrapper: DbWrapperBase = db_wrapper
+        self.init: bool = init
+        self.name: str = name
+        self._coords_unstructured: List[Location] = coords
+        self.geofence_helper: GeofenceHelper = GeofenceHelper(
             path_to_include_geofence, path_to_exclude_geofence)
         self._routefile = os.path.join(args.file_path, routefile)
-        self._max_radius = max_radius
-        self._max_coords_within_radius = max_coords_within_radius
-        self.settings = settings
+        self._max_radius: float = max_radius
+        self._max_coords_within_radius: int = max_coords_within_radius
+        self.settings: dict = settings
         self.mode = mode
-        self._is_started = False
+        self._is_started: bool = False
         self._first_started = False
         self._route_queue = Queue()
-        self._start_calc = False
+        self._start_calc: bool = False
         self._rounds = {}
+        self._positiontyp = {}
+        self._coords_to_be_ignored = set()
 
         # we want to store the workers using the routemanager
-        self._workers_registered = []
+        self._workers_registered: List[WorkerBase] = []
         self._workers_registered_mutex = Lock()
 
-        self._last_round_prio = False
+        self._last_round_prio = {}
         self._manager_mutex = RLock()
         self._round_started_time = None
+        self._route: List[Location] = []
+
         if coords is not None:
             if init:
                 fenced_coords = coords
             else:
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
-            self._route = getJsonRoute(
+            new_coords = getJsonRoute(
                 fenced_coords, max_radius, max_coords_within_radius, routefile)
-        else:
-            self._route = None
+            for coord in new_coords:
+                self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
         self._init_mode_rounds = 0
 
@@ -89,7 +97,7 @@ class RouteManagerBase(ABC):
                 self._route_queue.queue.clear()
                 logger.debug("Creating queue for coords")
                 for latlng in self._route:
-                    self._route_queue.put((latlng['lat'], latlng['lng']))
+                    self._route_queue.put((latlng.lat, latlng.lng))
                 logger.debug("Finished creating queue")
         finally:
             self._manager_mutex.release()
@@ -111,6 +119,7 @@ class RouteManagerBase(ABC):
                             str(worker_name), str(self.name))
                 self._workers_registered.append(worker_name)
                 self._rounds[worker_name] = 0
+                self._positiontyp[worker_name] = 0
 
                 return True
         finally:
@@ -152,7 +161,7 @@ class RouteManagerBase(ABC):
             self._update_prio_queue_thread.start()
 
     # list_coords is a numpy array of arrays!
-    def add_coords_numpy(self, list_coords):
+    def add_coords_numpy(self, list_coords: np.ndarray):
         fenced_coords = self.geofence_helper.get_geofenced_coordinates(
             list_coords)
         self._manager_mutex.acquire()
@@ -163,11 +172,11 @@ class RouteManagerBase(ABC):
                 (self._coords_unstructured, fenced_coords))
         self._manager_mutex.release()
 
-    def add_coords_list(self, list_coords):
+    def add_coords_list(self, list_coords: List[Location]):
         to_be_appended = np.zeros(shape=(len(list_coords), 2))
         for i in range(len(list_coords)):
-            to_be_appended[i][0] = float(list_coords[i][0])
-            to_be_appended[i][1] = float(list_coords[i][1])
+            to_be_appended[i][0] = float(list_coords[i].lat)
+            to_be_appended[i][1] = float(list_coords[i].lng)
         self.add_coords_numpy(to_be_appended)
 
     @staticmethod
@@ -182,7 +191,8 @@ class RouteManagerBase(ABC):
     def empty_routequeue(self):
         return self._route_queue.empty()
 
-    def recalc_route(self, max_radius, max_coords_within_radius, num_procs=1, delete_old_route=False, nofile=False):
+    def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
+                     delete_old_route: bool = False, nofile: bool = False):
         current_coords = self._coords_unstructured
         if nofile:
             routefile = None
@@ -191,7 +201,9 @@ class RouteManagerBase(ABC):
         new_route = RouteManagerBase.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
                                                          routefile, delete_old_route, num_procs)
         self._manager_mutex.acquire()
-        self._route = new_route
+        self._route.clear()
+        for coord in new_route:
+            self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
         self._manager_mutex.release()
 
@@ -238,6 +250,13 @@ class RouteManagerBase(ABC):
             )
         )
         return round_completed_in
+
+    def add_coord_to_be_removed(self, lat: float, lon: float):
+        if lat < -90.0 or lat > 90.0 or lon < -180.0 or lon > 180.0:
+            return
+        self._manager_mutex.acquire()
+        self._coords_to_be_ignored.add(Location(lat, lon))
+        self._manager_mutex.release()
 
     @abstractmethod
     def _retrieve_latest_priority_queue(self):
@@ -336,7 +355,7 @@ class RouteManagerBase(ABC):
         merged = self.clustering_helper.get_clustered(latest)
         return merged
 
-    def get_next_location(self):
+    def get_next_location(self, origin):
         logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
             logger.info(
@@ -373,18 +392,21 @@ class RouteManagerBase(ABC):
         # if that is not the case, simply increase the index in route and return the location on route
 
         # determine whether we move to the next location or the prio queue top's item
-        if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio or self.starve_route)
+        if (self.delay_after_timestamp_prio is not None and ((not self._last_round_prio.get(origin, False)
+                                                              or self.starve_route)
                                                              and self._prio_queue and len(self._prio_queue) > 0
                                                              and self._prio_queue[0][0] < time.time())):
             logger.debug("{}: Priority event", str(self.name))
             next_stop = heapq.heappop(self._prio_queue)[1]
             next_lat = next_stop.lat
             next_lng = next_stop.lng
-            self._last_round_prio = True
+            self._last_round_prio[origin] = True
+            self._positiontyp[origin] = 1
             logger.info("Round of route {} is moving to {}, {} for a priority event", str(
                 self.name), str(next_lat), str(next_lng))
         else:
             logger.debug("{}: Moving on with route", str(self.name))
+            self._positiontyp[origin] = 0
             if len(self._route) == self._route_queue.qsize():
                 if self._round_started_time is not None:
                     logger.info("Round of route {} reached the first spot again. It took {}", str(
@@ -435,7 +457,7 @@ class RouteManagerBase(ABC):
                 if self._get_coords_after_finish_route():
                     # getting new coords or IV worker
                     self._manager_mutex.release()
-                    return self.get_next_location()
+                    return self.get_next_location(origin)
                 elif not self._get_coords_after_finish_route():
                     logger.info("Not getting new coords - leaving worker")
                     self._manager_mutex.release()
@@ -450,14 +472,14 @@ class RouteManagerBase(ABC):
             logger.info("{}: Moving on with location {} [{} coords left]", str(
                 self.name), str(next_coord), str(self._route_queue.qsize()))
 
-            self._last_round_prio = False
+            self._last_round_prio[origin] = False
         logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}, {}", str(
             self.name), str(next_lat), str(next_lng))
         self._manager_mutex.release()
         if self._check_coords_before_returning(next_lat, next_lng):
             return Location(next_lat, next_lng)
         else:
-            return self.get_next_location()
+            return self.get_next_location(origin)
 
     def del_from_route(self):
         logger.debug(
@@ -495,3 +517,9 @@ class RouteManagerBase(ABC):
 
     def get_registered_workers(self):
         return len(self._workers_registered)
+
+    def get_position_type(self, origin):
+        return self._positiontyp[origin]
+
+    def get_walker_type(self):
+        return self.mode
