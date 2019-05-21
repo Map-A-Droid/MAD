@@ -7,6 +7,10 @@ div.container[role="main"] {
   padding: 0px !important;
 }
 
+.navbar {
+  z-index: 2001;
+}
+
 .leaflet-routes-pane {
   z-index: 399;
 }
@@ -129,6 +133,7 @@ div.container[role="main"] {
 
 .leaflet-sidebar-content {
   background-color: #FFF;
+  overflow: 'overlay'
 }
 
 li.list-group-item.layer-item {
@@ -140,13 +145,12 @@ li.list-group-item.layer-item {
 }
 
 .leaflet-sidebar-header {
-  width: 420px;
   z-index: 99;
-  position: fixed;
+  position: sticky;
 }
 
-.sidebar-pane-content {
-  margin-top: 30px;
+.leaflet-sidebar-left .leaflet-sidebar-close {
+  right: 10px;
 }
 
 .raidIcon {
@@ -172,4 +176,8 @@ li.list-group-item.layer-item {
 
 .leaflet-container.crosshair-cursor-enabled {
   cursor: crosshair;
+}
+
+.modal {
+  top: 40px;
 }

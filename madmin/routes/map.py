@@ -40,7 +40,6 @@ class map(object):
         for route, view_func in routes:
             self._app.route(route)(view_func)
 
-
     @auth_required
     def map(self):
         setlat = request.args.get('lat', 0)
@@ -67,7 +66,6 @@ class map(object):
 
         return jsonify(positions)
 
-    @cache.cached()
     @auth_required
     def get_geofence(self):
         geofences = {}
@@ -126,7 +124,6 @@ class map(object):
 
         return jsonify(geofencexport)
 
-    @cache.cached()
     @auth_required
     def get_route(self):
         routeexport = []
@@ -182,7 +179,6 @@ class map(object):
 
         return jsonify(coords)
 
-    @cache.cached()
     @auth_required
     def get_gymcoords(self):
         neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
