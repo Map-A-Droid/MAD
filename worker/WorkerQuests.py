@@ -552,12 +552,6 @@ class WorkerQuests(MITMBase):
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
                 time.sleep(1)
-                x, y = (self._resocalc.get_close_main_button_coords(self)[0],
-                        self._resocalc.get_close_main_button_coords(self)[1])
-                self._communicator.click(int(x), int(y))
-                time.sleep(1)
-                if not self._checkPogoButton():
-                    self._checkPogoClose()
                 self._turn_map(self._delay_add)
             elif data_received == LatestReceivedType.MON:
                 time.sleep(1)
