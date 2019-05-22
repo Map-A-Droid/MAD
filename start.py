@@ -14,7 +14,7 @@ import psutil
 from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
-from mitm_receiver.MITMReceiver import MITMReceiver
+from mitm_receiver.MITMReceiver import MITMReceiver, MitmReceiverManager
 from utils.logging import initLogging, logger
 from utils.madGlobals import terminate_mad
 from utils.mappingParser import MappingParser
@@ -218,8 +218,7 @@ if __name__ == "__main__":
                      " -or    ---- only calculate routes")
         sys.exit(1)
 
-    t_mitm = None
-    mitm_receiver = None
+    mitm_receiver_process = None
     ws_server = None
     t_ws = None
     t_file_watcher = None
@@ -285,13 +284,26 @@ if __name__ == "__main__":
                 from ocr.copyMons import MonRaidImages
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
-            mitm_receiver = MITMReceiver()
-            t_mitm = Process(name='mitm_receiver',
-                             target=mitm_receiver.run_receiver, args=(mitm_receiver, args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                         mitm_mapper, args, auths))
-            # t_mitm.daemon = True
-            t_mitm.start()
-            time.sleep(5)
+            # MitmReceiverManager.register('MITMReceiver', MITMReceiver)
+            # mitm_receiver_manager = MitmReceiverManager()
+            # mitm_receiver_manager.start()
+            # mitm_receiver = mitm_receiver_manager.MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
+            #                                                    mitm_mapper, args, auths)
+            # mitm_receiver_thread = Process(name='mitm_receiver',
+            #                                target=mitm_receiver.run_receiver)
+            # mitm_receiver_thread.daemon = True
+            # mitm_receiver_thread.start()
+
+            mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
+                                                 mitm_mapper, args, auths)
+            mitm_receiver_process.start()
+            # mitm_receiver = MITMReceiver()
+            # t_mitm = Process(name='mitm_receiver',
+            #                  target=mitm_receiver.run_receiver, args=(mitm_receiver, args.mitmreceiver_ip, int(args.mitmreceiver_port),
+            #                              mitm_mapper, args, auths))
+            # # t_mitm.daemon = True
+            # t_mitm.start()
+            # time.sleep(5)
 
             logger.info('Starting scanner')
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper,
@@ -345,6 +357,7 @@ if __name__ == "__main__":
             t_usage.daemon = False
             t_usage.start()
 
+    logger.info("Running.....")
     try:
         while True:
             time.sleep(10)
@@ -356,11 +369,20 @@ if __name__ == "__main__":
         # TODO: check against args or init variables to None...
         if t_whw is not None:
             t_whw.join()
-        # if t_mitm is not None and mitm_receiver is not None:
-        #     mitm_receiver.stop_receiver()
+
+        if mitm_receiver_process is not None:
+            # mitm_receiver_thread.kill()
+            logger.info("Trying to stop receiver")
+            mitm_receiver_process.shutdown()
+            logger.info("Trying to join MITMReceiver")
+            mitm_receiver_process.join()
+            logger.info("MITMReceiver joined")
+            # mitm_receiver.stop_receiver()
+            # mitm_receiver_thread.kill()
         if ws_server is not None:
             ws_server.stop_server()
             t_ws.join()
         if t_file_watcher is not None:
             t_file_watcher.join()
+        # time.sleep(10)
         sys.exit(0)

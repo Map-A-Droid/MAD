@@ -4,7 +4,7 @@ import sys
 
 import time
 from multiprocessing import JoinableQueue, Process, Queue
-from multiprocessing.managers import SyncManager
+from multiprocessing.managers import SyncManager, BaseManager
 from typing import Optional
 
 from flask import Flask, Response, request
@@ -22,7 +22,7 @@ auths = None
 application_args = None
 
 
-class MitmReceiverManager(SyncManager):
+class MitmReceiverManager(BaseManager):
     pass
 
 
@@ -69,21 +69,10 @@ class EndpointAction(object):
         return self.response
 
 
-class MITMReceiver(object):
-    def __init__(self):
-        self._data_queue: Optional[Queue] = None
-        self.worker_threads = []
-
-    def stop_receiver(self):
-        self._data_queue.join()
-        for i in range(application_args.mitmreceiver_data_workers):
-            self._data_queue.put(None)
-        for t in self.worker_threads:
-            t.join()
-
-    @staticmethod
-    def run_receiver(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
+class MITMReceiver(Process):
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
         global application_args, auths
+        Process.__init__(self)
         application_args = args_passed
         auths = auths_passed
         self.__listen_ip = listen_ip
@@ -106,13 +95,28 @@ class MITMReceiver(object):
                               application_args, self.__mitm_mapper))
             t.start()
             self.worker_threads.append(t)
+
+    def shutdown(self):
+        logger.info("MITMReceiver stop called...")
+        self._data_queue.join()
+        logger.info("Adding None to queue")
+        for i in range(application_args.mitmreceiver_data_workers):
+            self._data_queue.put(None)
+        logger.info("Trying to join workers...")
+        for t in self.worker_threads:
+            t.join()
+        logger.info("Workers stopped...")
+
+    def run(self):
         httpsrv = WSGIServer((self.__listen_ip, int(
             self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
         try:
             httpsrv.serve_forever()
         except KeyboardInterrupt as e:
-            logger.info("Stopping MITMReceiver")
             httpsrv.close()
+            logger.info("Received STOP signal in MITMReceiver")
+        finally:
+            logger.info("Stopping MITMReceiver")
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
         if methods_passed is None:
@@ -160,5 +164,6 @@ class MITMReceiver(object):
         with open('configs/addresses.json') as f:
             address_object = json.load(f)
         return json.dumps(address_object)
+
 
 MitmReceiverManager.register('MITMReceiver', MITMReceiver)
