@@ -40,7 +40,7 @@ IF(
   '$namedefault',
   (SELECT name FROM $pstable WHERE $pstable.$psidcol = $gymtable.$gymidcol)
 )
-WHERE $gymtable.name = '';
+WHERE $gymtable.name = '$namedefault';
 EOF
 )"
 query "$(cat << EOF
