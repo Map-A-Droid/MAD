@@ -31,7 +31,7 @@ mysql -N -B -u "$user" -D "$dbname" -p"$pass" -h "$dbip" -P "$port" -e "$1"
 
 updategyminfo(){
 #update name/image for gyms that were pokestops (pokestops scan this info automagically, gyms dont)
-# thanks to TimXL73 for the query / idea
+# thanks to TiMXL73 for the query / idea
 query "$(cat << EOF
 UPDATE $gymtable
 SET $gymtable.name =
