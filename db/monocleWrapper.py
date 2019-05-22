@@ -4,6 +4,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from functools import reduce
+from multiprocessing.managers import SyncManager
 from typing import List, Optional
 
 import requests
@@ -12,6 +13,10 @@ from db.dbWrapperBase import DbWrapperBase
 from utils.collections import Location
 from utils.logging import logger
 from utils.s2Helper import S2Helper
+
+
+class MonocleWrapperManager(SyncManager):
+    pass
 
 
 class MonocleWrapper(DbWrapperBase):
@@ -422,7 +427,7 @@ class MonocleWrapper(DbWrapperBase):
         res = self.execute(query, vals)
 
         for (id, distance, latitude, longitude, name, description, url) in res:
-            data.append([gym_id, distance, latitude, longitude, name, description, url])
+            data.append([id, distance, latitude, longitude, name, description, url])
         logger.debug("{MonocleWrapper::get_near_gyms} done")
         return data
 
@@ -1486,3 +1491,6 @@ class MonocleWrapper(DbWrapperBase):
             }
 
         return gyms
+
+
+MonocleWrapperManager.register('MonocleWrapper', MonocleWrapper)

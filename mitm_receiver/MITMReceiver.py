@@ -3,9 +3,8 @@ import math
 import sys
 
 import time
-from multiprocessing import JoinableQueue, Process, Queue
-from multiprocessing.managers import SyncManager, BaseManager
-from typing import Optional
+from multiprocessing import JoinableQueue, Process
+from multiprocessing.managers import BaseManager
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
@@ -20,10 +19,6 @@ app = Flask(__name__)
 allowed_origins = None
 auths = None
 application_args = None
-
-
-class MitmReceiverManager(BaseManager):
-    pass
 
 
 class EndpointAction(object):
@@ -70,9 +65,9 @@ class EndpointAction(object):
 
 
 class MITMReceiver(Process):
-    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed, db_wrapper, name=None):
         global application_args, auths
-        Process.__init__(self)
+        Process.__init__(self, name=name)
         application_args = args_passed
         auths = auths_passed
         self.__listen_ip = listen_ip
@@ -86,15 +81,14 @@ class MITMReceiver(Process):
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/', handler=self.get_addresses,
                           methods_passed=['GET'])
         self._data_queue: JoinableQueue = JoinableQueue()
-        self._db_wrapper = DbFactory.get_wrapper(args_passed)
+        self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            data_processor: MitmDataProcessor = MitmDataProcessor()
-            t = Process(name='MITMReceiver-%s' % str(i), target=data_processor.received_data_worker,
-                        args=(data_processor, self._data_queue,
-                              application_args, self.__mitm_mapper))
-            t.start()
-            self.worker_threads.append(t)
+            data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, application_args,
+                                                                  self.__mitm_mapper, db_wrapper,
+                                                                  name='MITMReceiver-%s' % str(i))
+            data_processor.start()
+            self.worker_threads.append(data_processor)
 
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
@@ -164,6 +158,3 @@ class MITMReceiver(Process):
         with open('configs/addresses.json') as f:
             address_object = json.load(f)
         return json.dumps(address_object)
-
-
-MitmReceiverManager.register('MITMReceiver', MITMReceiver)

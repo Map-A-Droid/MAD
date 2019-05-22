@@ -17,14 +17,14 @@ class MitmMapperManager(SyncManager):
 
 
 class MitmMapper(object):
-    def __init__(self, device_mappings):
+    def __init__(self, device_mappings, db_wrapper):
         self.__mapping = {}
         self.__playerstats = {}
         self.__mapping_mutex = Lock()
         self.__device_mappings = device_mappings
         self.__injected = {}
         self.__application_args = args
-        self.__db_wrapper: DbWrapperBase = DbFactory.get_wrapper(self.__application_args)
+        self.__db_wrapper: DbWrapperBase = db_wrapper
         if device_mappings is not None:
             for origin in device_mappings.keys():
                 self.__mapping[origin] = {}

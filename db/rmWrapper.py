@@ -3,6 +3,7 @@ import sys
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
+from multiprocessing.managers import SyncManager
 from typing import List, Optional
 
 import requests
@@ -12,6 +13,10 @@ from utils.collections import Location
 from utils.gamemechanicutil import gen_despawn_timestamp
 from utils.logging import logger
 from utils.s2Helper import S2Helper
+
+
+class RmWrapperManager(SyncManager):
+    pass
 
 
 class RmWrapper(DbWrapperBase):
@@ -1584,3 +1589,6 @@ class RmWrapper(DbWrapperBase):
             }
 
         return gyms
+
+
+RmWrapperManager.register('RmWrapper', RmWrapper)

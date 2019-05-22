@@ -1,6 +1,6 @@
 import calendar
 import datetime
-from multiprocessing import Process
+from multiprocessing.managers import SyncManager
 
 import gc
 import glob
@@ -14,7 +14,7 @@ import psutil
 from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
-from mitm_receiver.MITMReceiver import MITMReceiver, MitmReceiverManager
+from mitm_receiver.MITMReceiver import MITMReceiver
 from utils.logging import initLogging, logger
 from utils.madGlobals import terminate_mad
 from utils.mappingParser import MappingParser
@@ -189,7 +189,7 @@ if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
 
-    db_wrapper: DbWrapperBase = DbFactory.get_wrapper(args)
+    db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
@@ -219,6 +219,8 @@ if __name__ == "__main__":
         sys.exit(1)
 
     mitm_receiver_process = None
+    mitm_mapper_manager = None
+
     ws_server = None
     t_ws = None
     t_file_watcher = None
@@ -259,8 +261,7 @@ if __name__ == "__main__":
             MitmMapperManager.register('MitmMapper', MitmMapper)
             mitmMapperManager = MitmMapperManager()
             mitmMapperManager.start()
-            mitm_mapper = mitmMapperManager.MitmMapper(device_mappings)
-            # mitm_mapper = MitmMapper(device_mappings, db_wrapper)
+            mitm_mapper = mitmMapperManager.MitmMapper(device_mappings, db_wrapper)
             ocr_enabled = False
 
             for routemanager in routemanagers.keys():
@@ -284,26 +285,9 @@ if __name__ == "__main__":
                 from ocr.copyMons import MonRaidImages
                 MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
-            # MitmReceiverManager.register('MITMReceiver', MITMReceiver)
-            # mitm_receiver_manager = MitmReceiverManager()
-            # mitm_receiver_manager.start()
-            # mitm_receiver = mitm_receiver_manager.MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-            #                                                    mitm_mapper, args, auths)
-            # mitm_receiver_thread = Process(name='mitm_receiver',
-            #                                target=mitm_receiver.run_receiver)
-            # mitm_receiver_thread.daemon = True
-            # mitm_receiver_thread.start()
-
             mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                                 mitm_mapper, args, auths)
+                                                 mitm_mapper, args, auths, db_wrapper)
             mitm_receiver_process.start()
-            # mitm_receiver = MITMReceiver()
-            # t_mitm = Process(name='mitm_receiver',
-            #                  target=mitm_receiver.run_receiver, args=(mitm_receiver, args.mitmreceiver_ip, int(args.mitmreceiver_port),
-            #                              mitm_mapper, args, auths))
-            # # t_mitm.daemon = True
-            # t_mitm.start()
-            # time.sleep(5)
 
             logger.info('Starting scanner')
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper,
@@ -369,7 +353,6 @@ if __name__ == "__main__":
         # TODO: check against args or init variables to None...
         if t_whw is not None:
             t_whw.join()
-
         if mitm_receiver_process is not None:
             # mitm_receiver_thread.kill()
             logger.info("Trying to stop receiver")
@@ -385,4 +368,9 @@ if __name__ == "__main__":
         if t_file_watcher is not None:
             t_file_watcher.join()
         # time.sleep(10)
+        if mitm_mapper_manager is not None:
+            mitm_mapper_manager.shutdown()
+        if db_wrapper_manager is not None:
+            db_wrapper_manager.shutdown()
+
         sys.exit(0)

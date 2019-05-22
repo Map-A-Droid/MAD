@@ -1,6 +1,5 @@
-from multiprocessing import Queue
+from multiprocessing import Queue, Process
 from datetime import datetime
-from typing import Optional
 
 from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
@@ -8,20 +7,16 @@ from mitm_receiver.MitmMapper import MitmMapper
 from utils.logging import logger
 
 
-class MitmDataProcessor:
-    def __init__(self):
-        self.__queue: Optional[Queue] = None
-        self.__db_wrapper: Optional[DbWrapperBase] = None
-        self.__application_args = None
-        self.__mitm_mapper: Optional[MitmMapper] = None
-
-    @staticmethod
-    def received_data_worker(self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper):
-        # build a private DbWrapper instance...
+class MitmDataProcessor(Process):
+    def __init__(self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper, db_wrapper, name=None):
+        Process.__init__(self, name=name)
         self.__queue: Queue = multi_proc_queue
-        self.__db_wrapper: DbWrapperBase = DbFactory.get_wrapper(application_args)
+        self.__db_wrapper: DbWrapperBase = db_wrapper
         self.__application_args = application_args
         self.__mitm_mapper: MitmMapper = mitm_mapper
+
+    def received_data_worker(self):
+        # build a private DbWrapper instance...
         while True:
             try:
                 item = self.__queue.get()
