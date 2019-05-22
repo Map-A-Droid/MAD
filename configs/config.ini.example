@@ -50,7 +50,7 @@
 # path settings
 ######################
 
-pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
+#pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)

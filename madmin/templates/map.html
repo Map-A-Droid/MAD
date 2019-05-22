@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
-<link rel="stylesheet" href="static/style/madmin.css?1558081243" />
+<link rel="stylesheet" href="static/style/madmin.css?1558455177" />
 {% endblock %}
 
 {% block scripts %}
@@ -94,6 +94,7 @@
 
   // globals
   var map;
+  var sidebar;
   var init = true;
   var fetchTimeout = null;
   var clickToScanActive = false;
@@ -777,7 +778,6 @@
 
         var timeformat = "YYYY-MM-DD HH:mm:ss";
         var last_scanned = moment(gym["last_scanned"]*1000);
-        console.log(gym["last_scanned"]);
 
         return `
           <div class="content">
@@ -1002,7 +1002,7 @@
         }).addTo(map);
 
         // add sidebar
-        var sidebar = L.control.sidebar({
+        sidebar = L.control.sidebar({
           autopan: false,
           closeButton: true,
           container: "sidebar",
@@ -1030,6 +1030,9 @@
         map.on('zoomend', this.l_event_zoomed);
         map.on('moveend', this.l_event_moveend);
         map.on('click', this.l_event_click);
+        map.on('mousedown', function() {
+          sidebar.close();
+        });
       },
       buildUrlFilter(force = false) {
         var oSwLat = this.getStoredSetting("oSwLat", null);
