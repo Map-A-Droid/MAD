@@ -1589,6 +1589,3 @@ class RmWrapper(DbWrapperBase):
             }
 
         return gyms
-
-
-RmWrapperManager.register('RmWrapper', RmWrapper)

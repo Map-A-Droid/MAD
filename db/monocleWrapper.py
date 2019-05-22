@@ -1491,6 +1491,3 @@ class MonocleWrapper(DbWrapperBase):
             }
 
         return gyms
-
-
-MonocleWrapperManager.register('MonocleWrapper', MonocleWrapper)

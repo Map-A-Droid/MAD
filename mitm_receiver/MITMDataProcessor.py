@@ -15,8 +15,9 @@ class MitmDataProcessor(Process):
         self.__application_args = application_args
         self.__mitm_mapper: MitmMapper = mitm_mapper
 
-    def received_data_worker(self):
+    def run(self):
         # build a private DbWrapper instance...
+        logger.info("Starting MITMDataProcessor")
         while True:
             try:
                 item = self.__queue.get()

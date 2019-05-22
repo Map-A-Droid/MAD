@@ -109,8 +109,6 @@ class MITMReceiver(Process):
         except KeyboardInterrupt as e:
             httpsrv.close()
             logger.info("Received STOP signal in MITMReceiver")
-        finally:
-            logger.info("Stopping MITMReceiver")
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
         if methods_passed is None:
