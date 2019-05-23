@@ -18,7 +18,7 @@ class DbFactory:
             return rm_wrapper, rm_wrapper_manager
             # return RmWrapper(args)
         elif args.db_method == "monocle":
-            MonocleWrapperManager.register('RmWrapper', RmWrapper)
+            MonocleWrapperManager.register('MonocleWrapper', MonocleWrapper)
             monocle_wrapper_manager = MonocleWrapperManager()
             monocle_wrapper_manager.start()
             monocle_wrapper = monocle_wrapper_manager.MonocleWrapper(args)
