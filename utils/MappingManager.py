@@ -455,6 +455,7 @@ class MappingManager:
                 self._areas = self.__get_latest_areas()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
+        logger.warning("Mappings have been updated")
 
     def __file_watcher(self, ws_server, webhook_worker):
         # We're on a 20-second timer.

@@ -16,7 +16,6 @@ from utils.authHelper import check_auth
 from utils.logging import LogLevelChanger, logger
 
 app = Flask(__name__)
-allowed_origins = None
 mapping_manager: Optional[MappingManager] = None
 application_args = None
 
@@ -28,14 +27,16 @@ class EndpointAction(object):
         self.response = Response(status=200, headers={})
 
     def __call__(self, *args):
-        global allowed_origins, application_args, mapping_manager
+        global application_args, mapping_manager
         origin = request.headers.get('Origin')
         abort = False
         if not origin:
             logger.warning("Missing Origin header in request")
             self.response = Response(status=500, headers={})
             abort = True
-        elif allowed_origins is not None and (origin is None or origin not in allowed_origins):
+        elif (mapping_manager.get_all_devicemappings().keys() is not None
+              and (origin is None or origin not in mapping_manager.get_all_devicemappings().keys())):
+            logger.warning("MITMReceiver request without Origin or disallowed Origin: {}".format(origin))
             self.response = Response(status=403, headers={})
             abort = True
         elif mapping_manager.get_auths() is not None:  # TODO check auth properly...

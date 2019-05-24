@@ -72,6 +72,10 @@ class MITMBase(WorkerBase):
                 latest, proto_to_wait_for, timestamp)
             time.sleep(1)
 
+        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
+        if position_type is None:
+            logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
+            raise InternalStopWorkerException
         if data_requested != LatestReceivedType.UNDEFINED:
             logger.debug('Got the data requested...')
             self._reboot_count = 0
@@ -79,8 +83,7 @@ class MITMBase(WorkerBase):
             self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
             self._mitm_mapper.collect_location_stats(self._id, self.current_location, 1, self._waittime_without_delays,
-                                                     self._mapping_manager.routemanager_get_position_type(
-                                                             self._routemanager_name, self._id), time.time(),
+                                                     position_type, time.time(),
                                                      self._mapping_manager.routemanager_get_mode(
                                                          self._routemanager_name), self._transporttype)
         else:
@@ -89,8 +92,7 @@ class MITMBase(WorkerBase):
             logger.warning("Timeout waiting for data")
 
             self._mitm_mapper.collect_location_stats(self._id, self.current_location, 0, self._waittime_without_delays,
-                                                     self._mapping_manager.routemanager_get_position_type(
-                                                             self._routemanager_name, self._id), 0,
+                                                     position_type, 0,
                                                      self._mapping_manager.routemanager_get_mode(
                                                              self._routemanager_name), self._transporttype)
 

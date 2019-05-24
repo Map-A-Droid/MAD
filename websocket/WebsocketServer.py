@@ -72,7 +72,7 @@ class WebsocketServer(object):
         asyncio.set_event_loop(self.__loop)
         self.__loop.run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
-                             origins=allowed_origins, ping_timeout=10, ping_interval=15))
+                             ping_timeout=10, ping_interval=15))
         self.__loop.run_forever()
 
     def stop_server(self):
@@ -135,11 +135,15 @@ class WebsocketServer(object):
             return False
 
         try:
-            id = str(
+            origin = str(
                 websocket_client_connection.request_headers.get_all("Origin")[0])
         except IndexError:
             logger.warning("Client from {} tried to connect without Origin header", str(
                 websocket_client_connection.request_headers.get_all("Origin")[0]))
+            return False
+
+        if origin not in self.__mapping_manager.get_all_devicemappings().keys():
+            logger.warning("Register attempt of unknown Origin: {}".format(origin))
             return False
 
         auths = self.__mapping_manager.get_auths()
@@ -154,8 +158,8 @@ class WebsocketServer(object):
 
         self.__current_users_mutex.acquire()
         try:
-            logger.debug("Checking if {} is already present", str(id))
-            user_present = self.__current_users.get(id)
+            logger.debug("Checking if {} is already present", str(origin))
+            user_present = self.__current_users.get(origin)
             if user_present is not None:
                 logger.warning("Worker with origin {} is already running, killing the running one and have client reconnect",
                                str(websocket_client_connection.request_headers.get_all("Origin")[0]))
@@ -167,18 +171,18 @@ class WebsocketServer(object):
                 return False
 
             if self._configmode:
-                worker = WorkerConfigmode(self.args, id, self)
-                logger.debug("Starting worker for {}", str(id))
+                worker = WorkerConfigmode(self.args, origin, self)
+                logger.debug("Starting worker for {}", str(origin))
                 new_worker_thread = Thread(
-                    name='worker_%s' % id, target=worker.start_worker)
-                self.__current_users[id] = [
+                    name='worker_%s' % origin, target=worker.start_worker)
+                self.__current_users[origin] = [
                     new_worker_thread, worker, websocket_client_connection, 0]
                 return True
 
             last_known_state = {}
-            client_mapping = self.__mapping_manager.get_devicemappings_of(id)
+            client_mapping = self.__mapping_manager.get_devicemappings_of(origin)
             devicesettings = client_mapping["settings"]
-            logger.info("Setting up routemanagers for {}", str(id))
+            logger.info("Setting up routemanagers for {}", str(origin))
 
             if client_mapping.get("walker", None) is not None:
                 if "walker_area_index" not in devicesettings:
@@ -227,8 +231,8 @@ class WebsocketServer(object):
                 if walker_area_name not in self.__mapping_manager.get_all_routemanager_names():
                     raise WrongAreaInWalker()
 
-                logger.debug('Devicesettings {}: {}', str(id), devicesettings)
-                logger.info('{} using walker area {} [{}/{}]', str(id), str(
+                logger.debug('Devicesettings {}: {}', str(origin), devicesettings)
+                logger.info('{} using walker area {} [{}/{}]', str(origin), str(
                     walker_area_name), str(walker_index+1), str(len(walker_area_array)))
                 walker_routemanager_mode = self.__mapping_manager.routemanager_get_mode(walker_area_name)
                 devicesettings['walker_area_index'] += 1
@@ -246,38 +250,38 @@ class WebsocketServer(object):
             if "last_location" not in devicesettings:
                 devicesettings['last_location'] = Location(0.0, 0.0)
 
-            logger.debug("Setting up worker for {}", str(id))
+            logger.debug("Setting up worker for {}", str(origin))
 
             if walker_routemanager_mode is None:
                 pass
             elif walker_routemanager_mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                worker = WorkerMITM(self.args, id, last_known_state, self, routemanager_name=walker_area_name,
+                worker = WorkerMITM(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
                                     mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
                                     db_wrapper=self.__db_wrapper,
                                     pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
             elif walker_routemanager_mode in ["raids_ocr"]:
                 from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, id, last_known_state, self, routemanager_name=walker_area_name,
+                worker = WorkerOCR(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
                                    mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
                                    pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
             elif walker_routemanager_mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, routemanager_name=walker_area_name,
+                worker = WorkerQuests(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
                                       mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
                                       db_wrapper=self.__db_wrapper, pogo_window_manager=self.__pogoWindowManager,
                                       walker=walker_settings)
             elif walker_routemanager_mode in ["idle"]:
-                worker = WorkerConfigmode(self.args, id, self)
+                worker = WorkerConfigmode(self.args, origin, self)
             else:
                 logger.error("Mode not implemented")
                 sys.exit(1)
 
-            logger.debug("Starting worker for {}", str(id))
+            logger.debug("Starting worker for {}", str(origin))
             new_worker_thread = Thread(
-                name='worker_%s' % id, target=worker.start_worker)
+                name='worker_%s' % origin, target=worker.start_worker)
 
             new_worker_thread.daemon = False
 
-            self.__current_users[id] = [new_worker_thread,
+            self.__current_users[origin] = [new_worker_thread,
                                         worker, websocket_client_connection, 0]
             new_worker_thread.start()
         except WrongAreaInWalker:

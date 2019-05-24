@@ -523,8 +523,8 @@ class RouteManagerBase(ABC):
     def get_registered_workers(self) -> int:
         return len(self._workers_registered)
 
-    def get_position_type(self, origin: str):
-        return self._positiontyp[origin]
+    def get_position_type(self, origin: str) -> Optional[str]:
+        return self._positiontyp.get(origin, None)
 
     def get_geofence_helper(self) -> Optional[GeofenceHelper]:
         return self.geofence_helper
