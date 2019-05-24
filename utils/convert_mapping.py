@@ -1,6 +1,7 @@
 import json
 import shutil
-from loguru import logger
+
+from utils.logging import logger
 
 mapping_file = './configs/mappings.json'
 save_mapping_file = './configs/mappings_org.json'
@@ -40,10 +41,13 @@ def convert_mappings():
                     del __raw_json['devices'][count]['switch']
 
             if len(timer_invert) > 0:
-                walkersetup.append({'walkerarea': daytime_area, "walkertype": "period", "walkervalue": timer_invert})
-                walkersetup.append({'walkerarea': nightime_area, "walkertype": "period", "walkervalue": timer_normal})
+                walkersetup.append(
+                    {'walkerarea': daytime_area, "walkertype": "period", "walkervalue": timer_invert})
+                walkersetup.append(
+                    {'walkerarea': nightime_area, "walkertype": "period", "walkervalue": timer_normal})
             else:
-                walkersetup.append({'walkerarea': daytime_area, "walkertype": "coords", "walkervalue": ""})
+                walkersetup.append(
+                    {'walkerarea': daytime_area, "walkertype": "coords", "walkervalue": ""})
 
             if walkername not in exist:
                 walker.append({'walkername': walkername, "setup": walkersetup})

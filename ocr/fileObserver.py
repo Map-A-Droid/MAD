@@ -4,10 +4,9 @@ import re
 import time
 from threading import Thread
 
-from loguru import logger
-
 import cv2
 import numpy as np
+from utils.logging import logger
 from watchdog.events import PatternMatchingEventHandler
 
 from .segscanner import Scanner
@@ -20,8 +19,10 @@ class RaidScan:
     def process(filename, args, db_wrapper, hash, raidno, captureTime, captureLat, captureLng, src_path, radius):
         logger.debug("Cropscanning started")
         scanner = Scanner(args, db_wrapper, hash)
-        logger.info("Initialized scanned, starting analysis of {}", str(filename))
-        checkcrop = scanner.start_detect(filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius)
+        logger.info("Initialized scanned, starting analysis of {}",
+                    str(filename))
+        checkcrop = scanner.start_detect(
+            filename, hash, raidno, captureTime, captureLat, captureLng, src_path, radius)
         return checkcrop
 
 
@@ -56,17 +57,22 @@ class checkScreenshot(PatternMatchingEventHandler):
 
         minRadius = int(((width / 4.736)) / 2)
         maxRadius = int(((width / 4.736)) / 2)
-        logger.debug('Searching for Raid Circles with Radius from {} to {} px', str(minRadius), str(maxRadius))
+        logger.debug('Searching for Raid Circles with Radius from {} to {} px', str(
+            minRadius), str(maxRadius))
 
-        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20, param1=50, param2=30, minRadius=minRadius, maxRadius=maxRadius)
+        circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, 20,
+                                   param1=50, param2=30, minRadius=minRadius, maxRadius=maxRadius)
 
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (x, y, r) in circles:
-                logger.debug('Found Circle with x:{}, y:{}, r:{}', str(x), str(y), str(r))
+                logger.debug('Found Circle with x:{}, y:{}, r:{}',
+                             str(x), str(y), str(r))
                 raidNo += 1
-                raidCropFilepath = os.path.join(self.args.temp_path, str(hash) + "_raidcrop" + str(raidNo) + ".jpg")
-                new_crop = orgScreen[y-r-int((r*2*0.03)):y+r+int((r*2*0.75)), x-r-int((r*2*0.03)):x+r+int((r*2*0.3))]
+                raidCropFilepath = os.path.join(self.args.temp_path, str(
+                    hash) + "_raidcrop" + str(raidNo) + ".jpg")
+                new_crop = orgScreen[y-r-int((r*2*0.03)):y+r+int(
+                    (r*2*0.75)), x-r-int((r*2*0.03)):x+r+int((r*2*0.3))]
                 cv2.imwrite(raidCropFilepath, new_crop)
                 logger.info("Starting processing of crop")
                 self.thread_pool.apply_async(RaidScan.process, args=(raidCropFilepath, self.args, self.db_wrapper,
@@ -91,7 +97,8 @@ class checkScreenshot(PatternMatchingEventHandler):
         # print filename
         time.sleep(2)
         # groups: 1 -> timestamp, 2 -> latitude, 3 -> longitude, 4 -> raidcount
-        raidcount = re.search(r'.*raidscreen_(\d+\.?\d*)_(-?\d+\.?\d+)_(-?\d+\.?\d+)_(\d+)(\.jpg|\.png).*', event.src_path)
+        raidcount = re.search(
+            r'.*raidscreen_(\d+\.?\d*)_(-?\d+\.?\d+)_(-?\d+\.?\d+)_(\d+)(\.jpg|\.png).*', event.src_path)
         if raidcount is None:
             # we could not read the raidcount... stop
             logger.warning("Could not read raidcount in {}", event.src_path)
@@ -115,7 +122,8 @@ class checkScreenshot(PatternMatchingEventHandler):
         processes = []
         bounds = []
 
-        self.cropImage(raidPic, captureTime, captureLat, captureLng, event.src_path)
+        self.cropImage(raidPic, captureTime, captureLat,
+                       captureLng, event.src_path)
         logger.debug("process: Done starting off processes")
 
     patterns = ['*.png', '*.jpg']

@@ -5,9 +5,9 @@ from utils.walkerArgs import parseArgs
 args = parseArgs()
 
 if args.db_method == "rm":
-    db_wrapper = RmWrapper(args, None)
+    db_wrapper = RmWrapper(args)
 elif args.db_method == "monocle":
-    db_wrapper = MonocleWrapper(args, None)
+    db_wrapper = MonocleWrapper(args)
 else:
     print("Invalid db_method in config. Exiting")
     exit(1)

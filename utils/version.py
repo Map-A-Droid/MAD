@@ -1,6 +1,8 @@
 import json
 import sys
-from loguru import logger
+
+from utils.logging import logger
+
 from .convert_mapping import convert_mappings
 
 current_version = 8
@@ -58,13 +60,15 @@ class MADVersion(object):
                     "ALTER TABLE raid "
                     "ADD form smallint(6) DEFAULT NULL"
                 )
-                column_exist = self._dbwrapper._check_column_exists('raid', 'form')
+                column_exist = self._dbwrapper._check_column_exists(
+                    'raid', 'form')
             elif self._application_args.db_method == "monocle":
                 alter_query = (
                     "ALTER TABLE raids "
                     "ADD form smallint(6) DEFAULT NULL"
                 )
-                column_exist = self._dbwrapper._check_column_exists('raids', 'form')
+                column_exist = self._dbwrapper._check_column_exists(
+                    'raids', 'form')
             else:
                 logger.error("Invalid db_method in config. Exiting")
                 sys.exit(1)
@@ -158,7 +162,8 @@ class MADVersion(object):
                 "ALTER TABLE trs_status "
                 "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
             )
-            column_exist = self._dbwrapper._check_column_exists('trs_status', 'lastPogoReboot')
+            column_exist = self._dbwrapper._check_column_exists(
+                'trs_status', 'lastPogoReboot')
             if column_exist == 0:
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
@@ -169,7 +174,8 @@ class MADVersion(object):
                 "ALTER TABLE trs_status "
                 "ADD globalrebootcount int(11) NULL DEFAULT '0'"
             )
-            column_exist = self._dbwrapper._check_column_exists('trs_status', 'globalrebootcount')
+            column_exist = self._dbwrapper._check_column_exists(
+                'trs_status', 'globalrebootcount')
             if column_exist == 0:
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
@@ -180,7 +186,8 @@ class MADVersion(object):
                 "ALTER TABLE trs_status "
                 "ADD globalrestartcount int(11) NULL DEFAULT '0'"
             )
-            column_exist = self._dbwrapper._check_column_exists('trs_status', 'globalrestartcount')
+            column_exist = self._dbwrapper._check_column_exists(
+                'trs_status', 'globalrestartcount')
             if column_exist == 0:
                 try:
                     self._dbwrapper.execute(alter_query, commit=True)
@@ -200,7 +207,8 @@ class MADVersion(object):
                 alter_query = (
                     "alter table sightings add column costume smallint(6) default 0"
                 )
-                column_exist = self._dbwrapper._check_column_exists('sightings', 'costume')
+                column_exist = self._dbwrapper._check_column_exists(
+                    'sightings', 'costume')
                 if column_exist == 0:
                     try:
                         self._dbwrapper.execute(alter_query, commit=True)
@@ -235,8 +243,18 @@ class MADVersion(object):
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
-                logger.info("Unexpected error: {}", e)
+                logger.exception("Unexpected error: {}", e)
 
+        if self._version < 9:
+            alter_query = (
+                "UPDATE trs_quest "
+                "SET quest_condition=REPLACE(quest_condition,'\\\','\"'),"
+                " quest_reward=REPLACE(quest_reward,'\\\','\"')"
+            )
+            try:
+                self._dbwrapper.execute(alter_query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
         self.set_version(current_version)
 
     def set_version(self, version):

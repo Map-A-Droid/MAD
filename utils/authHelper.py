@@ -1,5 +1,6 @@
 import base64
-from loguru import logger
+
+from utils.logging import logger
 
 
 def check_auth(authHeader, args, auths):

@@ -21,7 +21,7 @@
                 {
                     "targets": [0],
                     "render": function (data, type, row) {
-                        var matchunknowns = "<a href='match_unknows?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "'>Match Gym</a>";
+                        var matchunknowns = "<a href='match_unknowns?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "'>Match Gym</a>";
                         var deletefile = "<a href='delete_file?hash=" + row.hashvalue + "&type=gym&redirect=unknown'>Delete</a>";
                         return data + "<br /><br />" + matchunknowns + "<br />" + deletefile;
                     }
@@ -77,7 +77,7 @@
 
         $.ajax({
             type: "GET",
-            url: "get_unknows",
+            url: "get_unknowns",
             success: function (result) {
                 setGrid('#show-data', result);
             }

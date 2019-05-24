@@ -1,10 +1,12 @@
-import re
 import datetime
-from loguru import logger
+import re
+
+from utils.logging import logger
 
 
 def check_walker_value_type(value):
-    match = re.search(r'^(\d?\d:\d\d)$|^((\d?\d:\d\d)-(\d?\d:\d\d))$', value.replace(' ', ''))
+    match = re.search(
+        r'^(\d?\d:\d\d)$|^((\d?\d:\d\d)-(\d?\d:\d\d))$', value.replace(' ', ''))
     if match:
         if match.group(1):
             return check_time_till_end(value)
@@ -20,9 +22,10 @@ def check_time_till_end(exittime):
     tmNow = datetime.datetime.now()
     tmTil = datetime.datetime.now().replace(
         hour=int(timer[0]), minute=int(timer[1]), second=0, microsecond=0)
-    if tmNow > tmTil:
+    if tmNow < (tmTil + datetime.timedelta(minutes=5)):
+        return True
+    else:
         return False
-    return True
 
 
 def check_time_period(period):
@@ -36,9 +39,9 @@ def check_time_period(period):
     tmNow = datetime.datetime.now()
     if tmFrom > tmTil > tmNow:
         tmFrom = tmFrom + datetime.timedelta(days=-1)
-    if tmTil < tmFrom:
+    if (tmTil + datetime.timedelta(minutes=5)) < tmFrom:
         tmTil = tmTil + datetime.timedelta(days=1)
-    if tmFrom <= tmNow < tmTil:
+    if tmFrom <= tmNow < (tmTil + datetime.timedelta(minutes=5)):
         return True
     else:
         return False
@@ -50,9 +53,7 @@ def pre_check_value(walker_settings):
         walkervalue = walker_settings['walkervalue']
         if len(walkervalue) == 0:
             return True
-
         return check_walker_value_type(walkervalue)
-
     return True
 
 
@@ -60,11 +61,7 @@ def check_max_walkers_reached(walker_settings, routemanager):
     walkermax = walker_settings.get('walkermax', False)
     if not walkermax:
         return True
-
     reg_workers = routemanager.get_registered_workers()
-
     if int(reg_workers) > int(walkermax):
         return False
-
     return True
-

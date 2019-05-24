@@ -6,7 +6,7 @@ class Resocalculator(object):
         self._y_offset = 0
         self._x_offset = 0
 
-    def get_x_y_ratio(self, x, y, x_offset = 0, y_offset = 0):
+    def get_x_y_ratio(self, x, y, x_offset=0, y_offset=0):
         self._xyratio = float(y) / float(x)
         self._x_offset = x_offset
         self._y_offset = y_offset
@@ -15,7 +15,7 @@ class Resocalculator(object):
     def get_coords_quest_menu(self):
         click_x = (int(self._screen_x) / 1.07)
         click_y = int(self._screen_y) - (int(self._screen_x) / 3.86)
-        if self._y_offset >0:
+        if self._y_offset > 0:
             return click_x + self._x_offset, click_y - self._y_offset - 55
         else:
             return click_x, click_y
@@ -39,7 +39,7 @@ class Resocalculator(object):
     def get_close_main_button_coords(self):
         click_x = int(self._screen_x) / 2
         click_y = int(self._screen_y) - (int(self._screen_x) / 7.57)
-        if self._y_offset >0:
+        if self._y_offset > 0:
             return click_x + self._x_offset, click_y - self._y_offset - 55
         else:
             return click_x, click_y
@@ -109,6 +109,24 @@ class Resocalculator(object):
             click_x = int(self._screen_x) / 1.09
             click_y = int(self._screen_y) - (int(self._screen_x) / 0.77)
         return click_x + self._x_offset, click_y + self._y_offset
+
+    def get_inventory_text_diff(self):
+        if float(self._xyratio) > 2.1:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.61) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.58))
+        elif float(self._xyratio) > 2:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.60) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.57))
+        elif float(self._xyratio) >= 1.9:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.62) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.59))
+        elif float(self._xyratio) >= 1.7:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.715) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.68))
+        elif float(self._xyratio) < 1.7:
+            y1 = int(self._screen_y) - (int(self._screen_x) / 0.82) - \
+                 (int(self._screen_y) - (int(self._screen_x) / 0.77))
+        return y1
 
     def get_delete_item_text(self):
         if float(self._xyratio) > 2.1:

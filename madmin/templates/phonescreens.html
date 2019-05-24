@@ -104,13 +104,13 @@ $("a#screenshot").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
        $.ajax({
        type: "GET",
        url: url,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -120,13 +120,13 @@ $("a#quit").bind("click", function(event) {
        event.preventDefault();
        var origin = $(this).attr("origin");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
        $.ajax({
        type: "GET",
        url: url,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -138,13 +138,13 @@ $(".backbutton").bind("click", function(event) {
        var origin = $(this).attr("origin");
        var adb = $(this).attr("adb");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
        $.ajax({
        type: "GET",
        url: 'send_command?origin=' + origin + '&command=back&adb=' + adb,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -155,13 +155,13 @@ $(".homebutton").bind("click", function(event) {
        var origin = $(this).attr("origin");
        var adb = $(this).attr("adb");
        var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
        $.ajax({
        type: "GET",
        url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
        success: function(data){
            $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + origin).unblock();
        }
      });
@@ -177,13 +177,13 @@ $(".gpsbutton").bind("click", function(event) {
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
            var url = $(this).attr("href");
-           $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
            $.ajax({
                type: "GET",
                url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb + '&sleeptime=' + sleeptime,
                success: function(data){
                    $('#date' + origin).text(data);
-                   $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
                    $('div#' + origin).unblock();
                }
            });
@@ -197,13 +197,13 @@ $(".keyboardbutton").bind("click", function(event) {
            var origin = $(this).attr("origin");
            var adb = $(this).attr("adb");
            var url = $(this).attr("href");
-           $('div#' + origin).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
            $.ajax({
                type: "GET",
                url: 'send_text?origin=' + origin + '&text=' + text + '&adb=' + adb,
                success: function(data){
                    $('#date' + origin).text(data);
-                   $('img#' + origin).attr('src', '/screenshot/madmin/screenshot' + origin + '.png');
+                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
                    $('div#' + origin).unblock();
                }
            });
@@ -248,13 +248,13 @@ e.preventDefault();
     } else {
         var url = 'swipe_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey + '&adb=' + adb + '&clickxe=' + imagexe +'&clickye=' + imageye
     }
-    $('div#' + id).block({ message: '<img src="/static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+    $('div#' + id).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
        $.ajax({
        type: "GET",
        url: url,
        success: function(data){
            $('#date' + id).text(data);
-           $('img#' + id).attr('src', '/screenshot/madmin/screenshot' + id + '.png');
+           $('img#' + id).attr('src', 'screenshot/madmin/screenshot_' + id + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
            $('div#' + id).unblock();
        }
     });

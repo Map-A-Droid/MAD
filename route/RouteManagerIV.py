@@ -1,6 +1,7 @@
-from loguru import logger
+import heapq
 
 from route.RouteManagerBase import RouteManagerBase
+from utils.logging import logger
 
 
 class RouteManagerIV(RouteManagerBase):
@@ -17,14 +18,21 @@ class RouteManagerIV(RouteManagerBase):
     def _retrieve_latest_priority_queue(self):
         # IV is excluded from clustering, check RouteManagerBase for more info
         latest_priorities = self.db_wrapper.get_to_be_encountered(geofence_helper=self.geofence_helper,
-                                                                  min_time_left_seconds=self.settings.get("min_time_left_seconds", None),
+                                                                  min_time_left_seconds=self.settings.get(
+                                                                      "min_time_left_seconds", None),
                                                                   eligible_mon_ids=self.settings.get("mon_ids_iv", None))
         # extract the encounterIDs and set them in the routeManager...
         new_list = []
         for prio in latest_priorities:
             new_list.append(prio[2])
         self.encounter_ids_left = new_list
-        return latest_priorities
+
+        self._manager_mutex.acquire()
+        heapq.heapify(latest_priorities)
+        self._prio_queue = latest_priorities
+        self._manager_mutex.release()
+        return None
+        # return latest_priorities
 
     def _get_coords_post_init(self):
         # not necessary

@@ -4,41 +4,51 @@ import math
 import os
 import os.path
 import time
+from multiprocessing.pool import ThreadPool
 
 import cv2
+import numpy as np
+import pytesseract
+from PIL import Image
 # from numpy import round, ones, uint8
 # from tinynumpy import tinynumpy as np
-from loguru import logger
-import numpy as np
-from PIL import Image
-import pytesseract
-
-
+from utils.logging import logger
+from ocr.matching_trash import trash_image_matching
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
 
 class PogoWindows:
-    def __init__(self, tempDirPath):
+    def __init__(self, temp_dir_path, thread_count: int):
         # self.communicator = communicator
-        if not os.path.exists(tempDirPath):
-            os.makedirs(tempDirPath)
+        if not os.path.exists(temp_dir_path):
+            os.makedirs(temp_dir_path)
             logger.info('PogoWindows: Temp directory created')
-        self.tempDirPath = tempDirPath
+        self.temp_dir_path = temp_dir_path
+        self.__thread_pool = ThreadPool(processes=thread_count)
 
-    def __mostPresentColour(self, filename, maxColours):
+    def __most_present_colour(self, filename, max_colours):
         img = Image.open(filename)
-        colors = img.getcolors(maxColours)  # put a higher value if there are many colors in your image
-        max_occurence, most_present = 0, 0
+        # put a higher value if there are many colors in your image
+        colors = img.getcolors(max_colours)
+        max_occurrence, most_present = 0, 0
         try:
             for c in colors:
-                if c[0] > max_occurence:
-                    (max_occurence, most_present) = c
+                if c[0] > max_occurrence:
+                    (max_occurrence, most_present) = c
             return most_present
         except TypeError:
             return None
 
-    def isGpsSignalLost(self, filename, hash):
+    def is_gps_signal_lost(self, filename, identifier):
+        # run the check for the file here once before having the subprocess check it (as well)
+        if not os.path.isfile(filename):
+            logger.error("isGpsSignalLost: {} does not exist", str(filename))
+            return None
+
+        return self.__thread_pool.apply_async(self.__internal_is_gps_signal_lost, (filename, identifier)).get()
+
+    def __internal_is_gps_signal_lost(self, filename, identifier):
         if not os.path.isfile(filename):
             logger.error("isGpsSignalLost: {} does not exist", str(filename))
             return None
@@ -58,41 +68,42 @@ class PogoWindows:
 
         gpsError = col[0:int(math.floor(height / 7)), 0:width]
 
-        tempPathColoured = self.tempDirPath + "/" + str(hash) + "_gpsError.png"
+        tempPathColoured = self.temp_dir_path + "/" + str(identifier) + "_gpsError.png"
         cv2.imwrite(tempPathColoured, gpsError)
 
         col = Image.open(tempPathColoured)
         width, height = col.size
 
         # check for the colour of the GPS error
-        if self.__mostPresentColour(tempPathColoured, width * height) == (240, 75, 95):
+        if self.__most_present_colour(tempPathColoured, width * height) == (240, 75, 95):
             return True
         else:
             return False
 
-    def __readCircleCount(self, filename, hash, ratio, communicator, xcord=False, crop=False, click=False, canny=False,
-                          secondratio=False):
-        logger.debug("__readCircleCount: Reading circles")
+    def __read_circle_count(self, filename, identifier, ratio, communicator, xcord=False, crop=False, click=False,
+                            canny=False, secondratio=False):
+        logger.debug("__read_circle_count: Reading circles")
 
         try:
-            screenshotRead = cv2.imread(filename)
+            screenshot_read = cv2.imread(filename)
         except Exception:
             logger.error("Screenshot corrupted :(")
             return -1
 
-        if screenshotRead is None:
+        if screenshot_read is None:
             logger.error("Screenshot corrupted :(")
             return -1
 
-        height, width, _ = screenshotRead.shape
+        height, width, _ = screenshot_read.shape
 
         if crop:
-            screenshotRead = screenshotRead[int(height) - int(int(height / 4.5)):int(height),
+            screenshot_read = screenshot_read[int(height) - int(int(height / 4)):int(height),
                                             int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
                                             int(width) / 8)]
 
-        logger.debug("__readCircleCount: Determined screenshot scale: " + str(height) + " x " + str(width))
-        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        logger.debug("__read_circle_count: Determined screenshot scale: " +
+                     str(height) + " x " + str(width))
+        gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
         if not secondratio:
@@ -105,7 +116,8 @@ class PogoWindows:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
 
-        logger.debug("__readCircleCount: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
+        logger.debug("__read_circle_count: Detect radius of circle: Min " +
+                     str(radMin) + " Max " + str(radMax))
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,
                                    maxRadius=radMax)
         circle = 0
@@ -119,44 +131,51 @@ class PogoWindows:
                 if not xcord:
                     circle += 1
                     if click:
-                        logger.debug('__readCircleCount: found Circle - click it')
-                        communicator.click(width / 2, ((int(height) - int(height / 4.5))) + y)
+                        logger.debug(
+                            '__read_circle_count: found Circle - click it')
+                        communicator.click(
+                            width / 2, ((int(height) - int(height / 4.5))) + y)
                         time.sleep(2)
                 else:
                     if x >= (width / 2) - 100 and x <= (width / 2) + 100 and y >= (height - (height / 3)):
                         circle += 1
                         if click:
-                            logger.debug('__readCircleCount: found Circle - click on: it')
-                            communicator.click(width / 2, ((int(height) - int(height / 4.5))) + y)
+                            logger.debug(
+                                '__read_circle_count: found Circle - click on: it')
+                            communicator.click(
+                                width / 2, ((int(height) - int(height / 4.5))) + y)
                             time.sleep(2)
 
-            logger.debug("__readCircleCount: Determined screenshot to have " + str(circle) + " Circle.")
+            logger.debug(
+                "__read_circle_count: Determined screenshot to have " + str(circle) + " Circle.")
             return circle
         else:
-            logger.debug("__readCircleCount: Determined screenshot to have 0 Circle")
+            logger.debug(
+                "__read_circle_count: Determined screenshot to have 0 Circle")
             return -1
 
-    def __readCircleCords(self, filename, hash, ratio, crop=False, canny=False):
+    def __read_circle_coords(self, filename, identifier, ratio, crop=False, canny=False):
         logger.debug("__readCircleCords: Reading circlescords")
 
         try:
-            screenshotRead = cv2.imread(filename)
+            screenshot_read = cv2.imread(filename)
         except Exception:
             logger.error("Screenshot corrupted :(")
             return False
 
-        if screenshotRead is None:
+        if screenshot_read is None:
             logger.error("Screenshot corrupted :(")
             return False
 
-        height, width, _ = screenshotRead.shape
+        height, width, _ = screenshot_read.shape
 
         if crop:
-            screenshotRead = screenshotRead[int(height) - int(height / 5):int(height),
+            screenshot_read = screenshot_read[int(height) - int(height / 5):int(height),
                                             int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
 
-        logger.debug("__readCircleCords: Determined screenshot scale: " + str(height) + " x " + str(width))
-        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        logger.debug("__readCircleCords: Determined screenshot scale: " +
+                     str(height) + " x " + str(width))
+        gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         # detect circles in the image
 
         radMin = int((width / float(ratio) - 3) / 2)
@@ -166,7 +185,8 @@ class PogoWindows:
             gray = cv2.GaussianBlur(gray, (3, 3), 0)
             gray = cv2.Canny(gray, 100, 50, apertureSize=3)
 
-        logger.debug("__readCircleCords: Detect radius of circle: Min " + str(radMin) + " Max " + str(radMax))
+        logger.debug("__readCircleCords: Detect radius of circle: Min " +
+                     str(radMin) + " Max " + str(radMax))
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,
                                    maxRadius=radMax)
         circle = 0
@@ -176,54 +196,79 @@ class PogoWindows:
             circles = np.round(circles[0, :]).astype("int")
             # loop over the (x, y) coordinates and radius of the circles
             for (x, y, r) in circles:
-                logger.debug("__readCircleCords: Found Circle x: {} y: {}", str(width / 2), str((int(height) - int(height / 5)) + y))
+                logger.debug("__readCircleCords: Found Circle x: {} y: {}", str(
+                    width / 2), str((int(height) - int(height / 5)) + y))
                 return True, width / 2, (int(height) - int(height / 5)) + y, height, width
         else:
             logger.debug("__readCircleCords: Found no Circle")
             return False, 0, 0, 0, 0
 
-    def readRaidCircles(self, filename, hash, commuicator):
+    def get_trash_click_positions(self, filename):
+        if not os.path.isfile(filename):
+            logger.error("get_trash_click_positions: {} does not exist", str(filename))
+            return None
+
+        return self.__thread_pool.apply_async(trash_image_matching, (filename,)).get()
+
+    def read_amount_raid_circles(self, filename, identifier, communicator):
+        if not os.path.isfile(filename):
+            logger.error("read_amount_raid_circles: {} does not exist", str(filename))
+            return 0
+
+        return self.__thread_pool.apply_async(self.__internal_read_amount_raid_circles,
+                                              (filename, identifier, communicator)).get()
+
+    def __internal_read_amount_raid_circles(self, filename, identifier, commuicator):
         logger.debug("readCircles: Reading circles")
-        if not self.readAmountOfRaidsCircle(filename, hash, commuicator):
+        if not self.__check_orange_raid_circle_present(filename, identifier, commuicator):
             # no raidcount (orange circle) present...
             return 0
 
-        circle = self.__readCircleCount(filename, hash, 4.7, commuicator)
+        circle = self.__read_circle_count(filename, identifier, 4.7, commuicator)
 
         if circle > 6:
             circle = 6
 
         if circle > 0:
-            logger.debug("readCircles: Determined screenshot to have " + str(circle) + " Circle.")
+            logger.debug(
+                "readCircles: Determined screenshot to have " + str(circle) + " Circle.")
             return circle
 
-        logger.debug("readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
+        logger.debug(
+            "readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
         return -1
 
-    def lookForButton(self, filename, ratiomin, ratiomax, communicator):
+    def look_for_button(self, filename, ratiomin, ratiomax, communicator):
+        if not os.path.isfile(filename):
+            logger.error("look_for_button: {} does not exist", str(filename))
+            return False
+
+        return self.__thread_pool.apply_async(self.__internal_look_for_button,
+                                              (filename, ratiomin, ratiomax, communicator)).get()
+
+    def __internal_look_for_button(self, filename, ratiomin, ratiomax, communicator):
         logger.debug("lookForButton: Reading lines")
         disToMiddleMin = None
         try:
-            screenshotRead = cv2.imread(filename)
-            gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+            screenshot_read = cv2.imread(filename)
+            gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         except:
             logger.error("Screenshot corrupted :(")
             return False
 
-        if screenshotRead is None:
+        if screenshot_read is None:
             logger.error("Screenshot corrupted :(")
             return False
 
-        allowRatio = [1.60, 1.05, 2.20, 3.01, 2.32]
-
-        height, width, _ = screenshotRead.shape
+        height, width, _ = screenshot_read.shape
         _widthold = float(width)
-        logger.debug("lookForButton: Determined screenshot scale: " + str(height) + " x " + str(width))
+        logger.debug("lookForButton: Determined screenshot scale: " +
+                     str(height) + " x " + str(width))
 
         # resize for better line quality
         # gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
         height, width = gray.shape
-        faktor = width / _widthold
+        factor = width / _widthold
 
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
         edges = cv2.Canny(gray, 50, 200, apertureSize=3)
@@ -268,8 +313,9 @@ class PogoWindows:
 
         if 1 < lineCount <= 6:
             # recalculate click area for real resolution
-            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) / round(faktor, 2))
-            click_y = int(_y / round(faktor, 2) + height * 0.03)
+            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
+                          round(factor, 2))
+            click_y = int(_y / round(factor, 2) + height * 0.03)
             logger.debug('lookForButton: found Button - click on it')
             communicator.click(click_x, click_y)
             time.sleep(4)
@@ -277,7 +323,8 @@ class PogoWindows:
 
         elif lineCount > 6:
             logger.debug('lookForButton: found to much Buttons :) - close it')
-            communicator.click(int(width - (width / 7.2)), int(height - (height / 12.19)))
+            communicator.click(int(width - (width / 7.2)),
+                               int(height - (height / 12.19)))
             time.sleep(4)
 
             return True
@@ -285,35 +332,36 @@ class PogoWindows:
         logger.debug('lookForButton: did not found any Button')
         return False
 
-    def __checkRaidLine(self, filename, hash, communicator, leftSide=False, clickinvers=False):
-        logger.debug("__checkRaidLine: Reading lines")
+    def __check_raid_line(self, filename, identifier, communicator, leftSide=False, clickinvers=False):
+        logger.debug("__check_raid_line: Reading lines")
         if leftSide:
-            logger.debug("__checkRaidLine: Check nearby open ")
+            logger.debug("__check_raid_line: Check nearby open ")
         try:
-            screenshotRead = cv2.imread(filename)
+            screenshot_read = cv2.imread(filename)
         except Exception:
             logger.error("Screenshot corrupted :(")
             return False
-        if screenshotRead is None:
+        if screenshot_read is None:
             logger.error("Screenshot corrupted :(")
             return False
 
-        if self.__readCircleCount(os.path.join('', filename), hash, float(11), communicator, xcord=False, crop=True,
-                                  click=False, canny=True) == -1:
-            logger.debug("__checkRaidLine: Not active")
+        if self.__read_circle_count(os.path.join('', filename), identifier, float(11), communicator, xcord=False, crop=True,
+                                    click=False, canny=True) == -1:
+            logger.debug("__check_raid_line: Not active")
             return False
 
-        height, width, _ = screenshotRead.shape
-        screenshotRead = screenshotRead[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
+        height, width, _ = screenshot_read.shape
+        screenshot_read = screenshot_read[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
                                         int(0):int(width)]
-        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
-        logger.debug("__checkRaidLine: Determined screenshot scale: " + str(height) + " x " + str(width))
+        logger.debug("__check_raid_line: Determined screenshot scale: " +
+                     str(height) + " x " + str(width))
         edges = cv2.Canny(gray, 50, 150, apertureSize=3)
         maxLineLength = width / 3.30 + width * 0.03
-        logger.debug("__checkRaidLine: MaxLineLength:" + str(maxLineLength))
+        logger.debug("__check_raid_line: MaxLineLength:" + str(maxLineLength))
         minLineLength = width / 6.35 - width * 0.03
-        logger.debug("__checkRaidLine: MinLineLength:" + str(minLineLength))
+        logger.debug("__check_raid_line: MinLineLength:" + str(minLineLength))
         maxLineGap = 50
 
         lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
@@ -325,33 +373,35 @@ class PogoWindows:
                 if not leftSide:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
                             x2 - x1 >= minLineLength) and x1 > width / 2 and x2 > width / 2 and y1 < (height / 2):
-                        logger.debug("__checkRaidLine: Raid-tab is active - Line lenght: " + str(
+                        logger.debug("__check_raid_line: Raid-tab is active - Line lenght: " + str(
                             x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
                         return True
-                    # else: logger.debug("__checkRaidLine: Raid-tab is not active - Line lenght: " + str(x2-x1) + "px
+                    # else: logger.debug("__check_raid_line: Raid-tab is not active - Line lenght: " + str(x2-x1) + "px
                     # Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2)) return False
                 else:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
                             x2 - x1 >= minLineLength) and ((x1 < width / 2 and x2 < width / 2) or (x1 < width / 2 and x2 > width / 2)) and y1 < (height / 2):
-                        logger.debug("__checkRaidLine: Nearby is active - but not Raid-Tab")
+                        logger.debug(
+                            "__check_raid_line: Nearby is active - but not Raid-Tab")
                         if clickinvers:
                             xRaidTab = int(width - (x2 - x1))
-                            yRaidTab = int((int(height / 2) - int(height / 3) + y1) * 0.9)
-                            logger.debug('__checkRaidLine: open Raid-Tab')
+                            yRaidTab = int(
+                                (int(height / 2) - int(height / 3) + y1) * 0.9)
+                            logger.debug('__check_raid_line: open Raid-Tab')
                             communicator.click(xRaidTab, yRaidTab)
                             time.sleep(3)
                         return True
                     # else:
-                    # logger.debug("__checkRaidLine: Nearby not active - but maybe Raid-tab")
+                    # logger.debug("__check_raid_line: Nearby not active - but maybe Raid-tab")
                     # return False
-        logger.debug("__checkRaidLine: Not active")
+        logger.debug("__check_raid_line: Not active")
         return False
 
-    def readAmountOfRaidsCircle(self, filename, hash, communicator):
+    def __check_orange_raid_circle_present(self, filename, identifier, communicator):
         if not os.path.isfile(filename):
             return None
 
-        logger.debug("readAmountOfRaidsCircle: Cropping circle")
+        logger.debug("__check_orange_raid_circle_present: Cropping circle")
 
         try:
             image = cv2.imread(filename)
@@ -363,27 +413,41 @@ class PogoWindows:
             return False
 
         height, width, _ = image.shape
-        image = image[int(height / 2 - (height / 3)):int(height / 2 + (height / 3)), 0:int(width)]
-        cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), image)
+        image = image[int(height / 2 - (height / 3))                      :int(height / 2 + (height / 3)), 0:int(width)]
+        cv2.imwrite(os.path.join(self.temp_dir_path, str(
+            identifier) + '_AmountOfRaids.jpg'), image)
 
-        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'), hash, 18,
-                                  communicator) > 0:
-            logger.info("readAmountOfRaidsCircle: Raidcircle found, assuming raids nearby")
-            os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
+        if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_AmountOfRaids.jpg'), identifier, 18,
+                                    communicator) > 0:
+            logger.info(
+                "__check_orange_raid_circle_present: Raidcircle found, assuming raids nearby")
+            os.remove(os.path.join(self.temp_dir_path,
+                                   str(identifier) + '_AmountOfRaids.jpg'))
             return True
         else:
-            logger.info("readAmountOfRaidsCircle: No raidcircle found, assuming no raids nearby")
-            os.remove(os.path.join(self.tempDirPath, str(hash) + '_AmountOfRaids.jpg'))
+            logger.info(
+                "__check_orange_raid_circle_present: No raidcircle found, assuming no raids nearby")
+            os.remove(os.path.join(self.temp_dir_path,
+                                   str(identifier) + '_AmountOfRaids.jpg'))
             return False
 
-    # assumes we are on the general view of the game
-    def checkRaidscreen(self, filename, hash, communicator):
-        logger.debug("checkRaidscreen: Checking if RAID is present (nearby tab)")
+    def check_raidscreen(self, filename, identifier, communicator):
+        if not os.path.isfile(filename):
+            logger.error("check_raidscreen: {} does not exist", str(filename))
+            return None
 
-        if self.__checkRaidLine(filename, hash, communicator):
+        return self.__thread_pool.apply_async(self.__internal_check_raidscreen,
+                                              (filename, identifier, communicator)).get()
+
+    # assumes we are on the general view of the game
+    def __internal_check_raidscreen(self, filename, identifier, communicator):
+        logger.debug(
+            "checkRaidscreen: Checking if RAID is present (nearby tab)")
+
+        if self.__check_raid_line(filename, identifier, communicator):
             logger.debug('checkRaidscreen: RAID-tab found')
             return True
-        if self.__checkRaidLine(filename, hash, communicator, True):
+        if self.__check_raid_line(filename, identifier, communicator, True):
             logger.debug('checkRaidscreen: RAID-tab not activated')
             return False
 
@@ -391,34 +455,44 @@ class PogoWindows:
         # logger.warning('checkRaidscreen: Could not locate RAID-tab')
         return False
 
-    def checkNearby(self, filename, hash, communicator):
+    def check_nearby(self, filename, identifier, communicator):
+        if not os.path.isfile(filename):
+            logger.error("check_nearby: {} does not exist", str(filename))
+            return False
+
+        return self.__thread_pool.apply_async(self.__internal_check_nearby,
+                                              (filename, identifier, communicator)).get()
+
+    def __internal_check_nearby(self, filename, identifier, communicator):
         try:
-            screenshotRead = cv2.imread(filename)
+            screenshot_read = cv2.imread(filename)
         except Exception:
             logger.error("Screenshot corrupted :(")
             return False
-        if screenshotRead is None:
+        if screenshot_read is None:
             logger.error("Screenshot corrupted :(")
             return False
 
-        if self.__checkRaidLine(filename, hash, communicator):
+        if self.__check_raid_line(filename, identifier, communicator):
             logger.info('Nearby already open')
             return True
 
-        if self.__checkRaidLine(filename, hash, communicator, leftSide=True, clickinvers=True):
+        if self.__check_raid_line(filename, identifier, communicator, leftSide=True, clickinvers=True):
             logger.info('Raidscreen not running but nearby open')
             return False
 
-        height, width, _ = screenshotRead.shape
+        height, width, _ = screenshot_read.shape
 
         logger.info('Raidscreen not running...')
-        communicator.click(int(width - (width / 7.2)), int(height - (height / 12.19)))
+        communicator.click(int(width - (width / 7.2)),
+                           int(height - (height / 12.19)))
         time.sleep(4)
         return False
 
-    def __checkClosePresent(self, filename, hash, communicator,  radiusratio=12, Xcord=True):
+    def __check_close_present(self, filename, identifier, communicator,  radiusratio=12, Xcord=True):
         if not os.path.isfile(filename):
-            logger.warning("__checkClosePresent: {} does not exist", str(filename))
+            logger.warning(
+                "__check_close_present: {} does not exist", str(filename))
             return False
 
         try:
@@ -428,87 +502,128 @@ class PogoWindows:
             logger.error("Screenshot corrupted :(")
             return False
 
-        cv2.imwrite(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), image)
+        cv2.imwrite(os.path.join(self.temp_dir_path,
+                                 str(identifier) + '_exitcircle.jpg'), image)
 
-        if self.__readCircleCount(os.path.join(self.tempDirPath, str(hash) + '_exitcircle.jpg'), hash,
+        if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'), identifier,
                                   float(radiusratio), communicator, xcord=False, crop=True, click=True, canny=True) > 0:
             return True
 
+    def check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
+        if not os.path.isfile(filename):
+            logger.error("check_close_except_nearby_button: {} does not exist", str(filename))
+            return False
+
+        return self.__thread_pool.apply_async(self.__internal_check_close_except_nearby_button,
+                                              (filename, identifier, communicator, close_raid)).get()
+
     # checks for X button on any screen... could kill raidscreen, handle properly
-    def checkCloseExceptNearbyButton(self, filename, hash, communicator, closeraid=False):
-        logger.debug("checkCloseExceptNearbyButton: Checking close except nearby with: file {}, hash {}", filename, hash)
+    def __internal_check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
+        logger.debug(
+            "__internal_check_close_except_nearby_button: Checking close except nearby with: file {}, identifier {}",
+                filename, identifier)
         try:
-            screenshotRead = cv2.imread(filename)
+            screenshot_read = cv2.imread(filename)
         except:
             logger.error("Screenshot corrupted :(")
-            logger.debug("checkCloseExceptNearbyButton: Screenshot corrupted...")
+            logger.debug(
+                "__internal_check_close_except_nearby_button: Screenshot corrupted...")
             return False
-        if screenshotRead is None:
-            logger.error("checkCloseExceptNearbyButton: Screenshot corrupted :(")
+        if screenshot_read is None:
+            logger.error(
+                "__internal_check_close_except_nearby_button: Screenshot corrupted :(")
             return False
 
-        if not closeraid:
-            logger.debug("checkCloseExceptNearbyButton: Raid is not to be closed...")
+        if not close_raid:
+            logger.debug(
+                "__internal_check_close_except_nearby_button: Raid is not to be closed...")
             if (not os.path.isfile(filename)
-                    or self.__checkRaidLine(filename, hash, communicator)
-                    or self.__checkRaidLine(filename, hash, communicator, True)):
+                    or self.__check_raid_line(filename, identifier, communicator)
+                    or self.__check_raid_line(filename, identifier, communicator, True)):
                 # file not found or raid tab present
                 logger.debug(
-                    "checkCloseExceptNearbyButton: Not checking for close button (X). Input wrong OR nearby window open")
+                    "__internal_check_close_except_nearby_button: Not checking for close button (X). Input wrong "
+                    "OR nearby window open")
                 return False
-        logger.debug("checkCloseExceptNearbyButton: Checking for close button (X). Input wrong OR nearby window open")
+        logger.debug(
+            "__internal_check_close_except_nearby_button: Checking for close button (X). Input wrong OR nearby "
+            "window open")
 
-        if self.__checkClosePresent(filename, hash, communicator, 10, True):
-            logger.debug("Found close button (X). Closing the window - Ratio: 10")
+        if self.__check_close_present(filename, identifier, communicator, 10, True):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 10")
             return True
-        if self.__checkClosePresent(filename, hash, communicator, 11, True):
-            logger.debug("Found close button (X). Closing the window - Ratio: 11")
+        if self.__check_close_present(filename, identifier, communicator, 11, True):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 11")
             return True
-        elif self.__checkClosePresent(filename, hash, communicator, 12, True):
-            logger.debug("Found close button (X). Closing the window - Ratio: 12")
+        elif self.__check_close_present(filename, identifier, communicator, 12, True):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 12")
             return True
-        elif self.__checkClosePresent(filename, hash, communicator, 14, True):
-            logger.debug("Found close button (X). Closing the window - Ratio: 14")
+        elif self.__check_close_present(filename, identifier, communicator, 14, True):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 14")
             return True
-        elif self.__checkClosePresent(filename, hash, communicator, 13, True):
-            logger.debug("Found close button (X). Closing the window - Ratio: 13")
+        elif self.__check_close_present(filename, identifier, communicator, 13, True):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 13")
             return True
         else:
             logger.debug("Could not find close button (X).")
             return False
+        
+    def get_inventory_text(self, filename, identifier, x1, x2, y1, y2):
+        if not os.path.isfile(filename):
+            logger.error("get_inventory_text: {} does not exist", str(filename))
+            return ""
 
-    def get_inventory_text(self, filename, hash, x1, x2, y1, y2):
-        screenshotRead = cv2.imread(filename)
-        tempPathitem = self.tempDirPath + "/" + str(hash) + "_inventory.png"
+        return self.__thread_pool.apply_async(self.__internal_get_inventory_text,
+                                              (filename, identifier, x1, x2, y1, y2)).get()
+
+    def __internal_get_inventory_text(self, filename, identifier, x1, x2, y1, y2):
+        screenshot_read = cv2.imread(filename)
+        temp_path_item = self.temp_dir_path + "/" + str(identifier) + "_inventory.png"
         h = x1 - x2
         w = y1 - y2
-        gray = cv2.cvtColor(screenshotRead, cv2.COLOR_BGR2GRAY)
+        gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = gray[int(y2):(int(y2) + int(w)), int(x2):(int(x2) + int(h))]
-        cv2.imwrite(tempPathitem, gray)
-        text = pytesseract.image_to_string(Image.open(tempPathitem))
+        cv2.imwrite(temp_path_item, gray)
+        text = pytesseract.image_to_string(Image.open(temp_path_item))
         return text
 
-    def checkpogomainscreen(self, filename, hash):
-        logger.debug("checkpogomainscreen: Checking close except nearby with: file {}, hash {}", filename, hash)
-        mainscreen = 0
-        try:
-            screenshotRead = cv2.imread(filename)
-        except Exception:
-            logger.error("Screenshot corrupted :(")
-            logger.debug("checkCloseExceptNearbyButton: Screenshot corrupted...")
-            return False
-        if screenshotRead is None:
-            logger.error("checkCloseExceptNearbyButton: Screenshot corrupted :(")
+    def check_pogo_mainscreen(self, filename, identifier):
+        if not os.path.isfile(filename):
+            logger.error("check_pogo_mainscreen: {} does not exist", str(filename))
             return False
 
-        height, width, _ = screenshotRead.shape
-        gray = screenshotRead[int(height) - int(round(height / 6)):int(height),
-                              0: int(int(width) / 4)]
+        return self.__thread_pool.apply_async(self.__internal_check_pogo_mainscreen,
+                                              (filename, identifier)).get()
+
+    def __internal_check_pogo_mainscreen(self, filename, identifier):
+        logger.debug("__internal_check_pogo_mainscreen: Checking close except nearby with: file {}, identifier {}",
+                     filename, identifier)
+        mainscreen = 0
+        try:
+            screenshot_read = cv2.imread(filename)
+        except Exception:
+            logger.error("Screenshot corrupted :(")
+            logger.debug(
+                "__internal_check_pogo_mainscreen: Screenshot corrupted...")
+            return False
+        if screenshot_read is None:
+            logger.error(
+                "__internal_check_pogo_mainscreen: Screenshot corrupted :(")
+            return False
+
+        height, width, _ = screenshot_read.shape
+        gray = screenshot_read[int(height) - int(round(height / 5)):int(height),
+                               0: int(int(width) / 4)]
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
         radMax = int((width / float(6) + 3) / 2)
         gray = cv2.GaussianBlur(gray, (3, 3), 0)
-        gray = cv2.Canny(gray, 100, 50, apertureSize=3)
+        gray = cv2.Canny(gray, 200, 50, apertureSize=3)
         circles = cv2.HoughCircles(gray, cv2.HOUGH_GRADIENT, 1, width / 8, param1=100, param2=15, minRadius=radMin,
                                    maxRadius=radMax)
         if circles is not None:
@@ -518,41 +633,49 @@ class PogoWindows:
                     mainscreen += 1
 
         if mainscreen > 0:
-            logger.info("Found Avatar.")
+            logger.debug("Found avatar.")
             return True
         return False
 
-    def checkCloseButton(self, filename, hash, communicator):
-        logger.debug("checkCloseButton: Checking close with: file {}, hash {}", filename, hash)
+    def checkCloseButton(self, filename, identifier, communicator):
+        # TODO: unused method, maybe remove it?
+        logger.debug(
+            "checkCloseButton: Checking close with: file {}, identifier {}", filename, identifier)
         try:
-            screenshotRead = cv2.imread(filename)
+            screenshot_read = cv2.imread(filename)
         except Exception:
             logger.error("Screenshot corrupted :(")
             logger.debug("checkCloseButton: Screenshot corrupted...")
             return False
-        if screenshotRead is None:
+        if screenshot_read is None:
             logger.error("checkCloseButton: Screenshot corrupted :(")
             return False
 
-        if self.__readCircleCount(filename, hash,
+        if self.__read_circle_count(filename, identifier,
                                   float(7.7), communicator, xcord=False, crop=True, click=True, canny=True) > 0:
-            logger.debug("Found close button (X). Closing the window - Ratio: 10")
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 10")
             return True
 
-        if self.__checkClosePresent(filename, hash, 10, False):
-            logger.debug("Found close button (X). Closing the window - Ratio: 10")
+        if self.__check_close_present(filename, identifier, 10, False):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 10")
             return True
-        if self.__checkClosePresent(filename, hash, 8, False):
-            logger.debug("Found close button (X). Closing the window - Ratio: 8")
+        if self.__check_close_present(filename, identifier, 8, False):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 8")
             return True
-        elif self.__checkClosePresent(filename, hash, 12, False):
-            logger.debug("Found close button (X). Closing the window - Ratio: 12")
+        elif self.__check_close_present(filename, identifier, 12, False):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 12")
             return True
-        elif self.__checkClosePresent(filename, hash, 14, False):
-            logger.debug("Found close button (X). Closing the window - Ratio: 14")
+        elif self.__check_close_present(filename, identifier, 14, False):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 14")
             return True
-        elif self.__checkClosePresent(filename, hash, 13, False):
-            logger.debug("Found close button (X). Closing the window - Ratio: 13")
+        elif self.__check_close_present(filename, identifier, 13, False):
+            logger.debug(
+                "Found close button (X). Closing the window - Ratio: 13")
             return True
         else:
             logger.debug("Could not find close button (X).")

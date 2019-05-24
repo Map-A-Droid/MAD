@@ -1,8 +1,5 @@
-from loguru import logger
-
 from route.RouteManagerBase import RouteManagerBase
-from route.routecalc.ClusteringHelper import ClusteringHelper
-from threading import Event, Thread
+from utils.logging import logger
 
 
 class RouteManagerMon(RouteManagerBase):
@@ -39,7 +36,8 @@ class RouteManagerMon(RouteManagerBase):
             coords = self.db_wrapper.get_detected_spawns(self.geofence_helper)
         else:
             logger.info("Reading unknown Spawnpoints from DB")
-            coords = self.db_wrapper.get_undetected_spawns(self.geofence_helper)
+            coords = self.db_wrapper.get_undetected_spawns(
+                self.geofence_helper)
         return coords
 
     def _cluster_priority_queue_criteria(self):

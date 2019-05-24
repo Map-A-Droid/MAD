@@ -1,18 +1,19 @@
 import json
-import requests
 import time
 
-from loguru import logger
+import requests
 
-from utils.gamemechanicutil import calculate_mon_level
-from utils.gamemechanicutil import get_raid_boss_cp
-from utils.s2Helper import S2Helper
+from geofence.geofenceHelper import GeofenceHelper
+from utils.gamemechanicutil import calculate_mon_level, get_raid_boss_cp
+from utils.logging import logger
 from utils.madGlobals import terminate_mad
 from utils.questGen import generate_quest
+from utils.s2Helper import S2Helper
 
 
 class WebhookWorker:
     __IV_MON = []
+    __geofence_helpers = []
 
     def __init__(self, args, db_wrapper, routemanagers, rarity):
         self.__worker_interval_sec = 10
@@ -22,12 +23,14 @@ class WebhookWorker:
         self.__last_check = int(time.time())
 
         self.__build_ivmon_list(routemanagers)
+        self.__build_geofence_helpers(routemanagers)
 
         if self.__args.webhook_start_time != 0:
             self.__last_check = int(self.__args.webhook_start_time)
 
     def update_settings(self, routemanagers):
         self.__build_ivmon_list(routemanagers)
+        self.__build_geofence_helpers(routemanagers)
 
     def __payload_type_count(self, payload):
         count = {}
@@ -39,9 +42,16 @@ class WebhookWorker:
 
     def __payload_chunk(self, payload, size):
         if size == 0:
-            return [payload, ]
+            return [payload]
 
-        return [payload[x:x+size] for x in range(0, len(payload), size)]
+        return [payload[x : x + size] for x in range(0, len(payload), size)]
+
+    def __is_in_excluded_area(self, coordinate):
+        for gfh in self.__geofence_helpers:
+            if gfh.is_coord_inside_include_geofence(coordinate):
+                return True
+
+        return False
 
     def __send_webhook(self, payload):
         if len(payload) == 0:
@@ -72,12 +82,16 @@ class WebhookWorker:
                 payloadToSend = payload
 
             if len(payloadToSend) == 0:
-                logger.debug("Payload empty. Skip sending to: {} (Filter: {})", url, subTypes)
+                logger.debug(
+                    "Payload empty. Skip sending to: {} (Filter: {})", url, subTypes
+                )
                 continue
             else:
                 logger.debug("Sending to webhook url: {} (Filter: {})", url, subTypes)
 
-            payload_list = self.__payload_chunk(payloadToSend, self.__args.webhook_max_payload_size)
+            payload_list = self.__payload_chunk(
+                payloadToSend, self.__args.webhook_max_payload_size
+            )
 
             current_pl_num = 1
             for payload_chunk in payload_list:
@@ -92,15 +106,22 @@ class WebhookWorker:
                     )
 
                     if response.status_code != 200:
-                        logger.warning("Got status code other than 200 OK from webhook destination: {}", str(response.status_code))
+                        logger.warning(
+                            "Got status code other than 200 OK from webhook destination: {}",
+                            str(response.status_code),
+                        )
                     else:
                         if webhook_count > 1:
-                            whcount_text = " [wh {}/{}]".format(current_wh_num, webhook_count)
+                            whcount_text = " [wh {}/{}]".format(
+                                current_wh_num, webhook_count
+                            )
                         else:
                             whcount_text = ""
 
                         if len(payload_list) > 1:
-                            whchunk_text = " [pl {}/{}]".format(current_pl_num, len(payload_list))
+                            whchunk_text = " [pl {}/{}]".format(
+                                current_pl_num, len(payload_list)
+                            )
                         else:
                             whchunk_text = ""
 
@@ -108,44 +129,127 @@ class WebhookWorker:
                             "Successfully sent payload to webhook{}{}. Stats: {}",
                             whchunk_text,
                             whcount_text,
-                            json.dumps(self.__payload_type_count(payload_chunk))
+                            json.dumps(self.__payload_type_count(payload_chunk)),
                         )
                 except Exception as e:
-                    logger.warning("Exception occured while sending webhook: {}", str(e))
+                    logger.warning(
+                        "Exception occured while sending webhook: {}", str(e)
+                    )
 
                 current_pl_num += 1
             current_wh_num += 1
 
     def __prepare_quest_data(self, quest_data):
         ret = []
+        for stopid in quest_data:
+            stop = quest_data[str(stopid)]
 
-        for pokestopid in quest_data:
-            quest = generate_quest(quest_data[str(pokestopid)])
-            quest_payload = {
-                "pokestop_id": quest['pokestop_id'],
-                "latitude": quest['latitude'],
-                "longitude": quest['longitude'],
-                "quest_type": quest['quest_type'],
-                "quest_type_raw": quest['quest_type_raw'],
-                "item_type": quest['item_type'],
-                "name": quest['name'].replace('"', '\\"').replace('\n', '\\n'),
-                "url": quest['url'],
-                "timestamp": quest['timestamp'],
-                "quest_reward_type": quest['quest_reward_type'],
-                "quest_reward_type_raw": quest['quest_reward_type_raw'],
-                "quest_target": quest['quest_target'],
-                "pokemon_id": int(quest['pokemon_id']),
-                "item_amount": quest['item_amount'],
-                "item_id": quest['item_id'],
-                "quest_task": quest['quest_task'],
-                "quest_condition": quest['quest_condition'].replace('\'', '"').lower(),
-                "quest_template": quest['quest_template']
-            }
+            if self.__is_in_excluded_area([stop["latitude"], stop["longitude"]]):
+                continue
 
-            entire_payload = {"type": "quest", "message": quest_payload}
-            ret.append(entire_payload)
+            try:
+                quest = generate_quest(quest_data[str(stopid)])
+                quest_payload = self.__construct_quest_payload(quest)
+
+                entire_payload = {"type": "quest", "message": quest_payload}
+                ret.append(entire_payload)
+            except Exception as e:
+                logger.warning(
+                    "Exception occured while generating quest webhook: {}", str(e)
+                )
 
         return ret
+
+    def __construct_quest_payload(self, quest):
+        if self.__args.quest_webhook_flavor == "default":
+            return {
+                "pokestop_id": quest["pokestop_id"],
+                "latitude": quest["latitude"],
+                "longitude": quest["longitude"],
+                "quest_type": quest["quest_type"],
+                "quest_type_raw": quest["quest_type_raw"],
+                "item_type": quest["item_type"],
+                "name": quest["name"].replace('"', '\\"').replace("\n", "\\n"),
+                "url": quest["url"],
+                "timestamp": quest["timestamp"],
+                "quest_reward_type": quest["quest_reward_type"],
+                "quest_reward_type_raw": quest["quest_reward_type_raw"],
+                "quest_target": quest["quest_target"],
+                "pokemon_id": int(quest["pokemon_id"]),
+                "item_amount": quest["item_amount"],
+                "item_id": quest["item_id"],
+                "quest_task": quest["quest_task"],
+                "quest_condition": quest["quest_condition"].replace("'", '"').lower(),
+                "quest_template": quest["quest_template"],
+            }
+
+        # Other known type is Poracle/RDM compatible.
+
+        # For some reason we aren't saving JSON in our databse, so we gotta replace ' with ".
+        # Pray that we never save strings that contain ' inside them.
+        quest_conditions = json.loads(quest["quest_condition"].replace("'", '"'))
+        quest_condition = []
+        quest_rewards = []
+        a_quest_type = quest["quest_reward_type_raw"]
+        a_quest_reward = {}
+        quest_rewards.append(a_quest_reward)
+        a_quest_reward["info"] = {}
+        a_quest_reward["type"] = a_quest_type
+
+        if a_quest_type == 2:
+            a_quest_reward["info"]["item_id"] = quest["item_id"]
+            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
+        if a_quest_type == 3:
+            a_quest_reward["info"]["amount"] = int(quest["item_amount"])
+        if a_quest_type == 7:
+            a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
+            a_quest_reward["info"]["shiny"] = 0
+
+        for a_quest_condition in quest_conditions:
+            # Quest condition for special type of pokemon.
+            if "with_pokemon_type" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_type")
+                a_quest_condition["info"]["pokemon_type_ids"] = a_quest_condition[
+                    "info"
+                ].pop("pokemon_type")
+            # Quest condition for raid level(s).
+            if "with_raid_level" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_raid_level")
+                a_quest_condition["info"]["raid_levels"] = a_quest_condition[
+                    "info"
+                ].pop("raid_level")
+            # Quest condition for throw type.
+            if "with_throw_type" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_throw_type")
+                a_quest_condition["info"]["throw_type_id"] = a_quest_condition[
+                    "info"
+                ].pop("throw_type")
+            # Quest condition for use of special items
+            if "with_item" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_item")
+                a_quest_condition["info"]["item_id"] = a_quest_condition["info"].pop(
+                    "item"
+                )
+            # Quest condition for catching specific mons.
+            if "with_pokemon_category" in a_quest_condition:
+                a_quest_condition["info"] = a_quest_condition.pop("with_pokemon_category")
+
+            quest_condition.append(a_quest_condition)
+
+        return {
+            "pokestop_id": quest["pokestop_id"],
+            "pokestop_name": quest["name"].replace('"', '\\"').replace("\n", "\\n"),
+            "template": quest["quest_template"],
+            "pokestop_url": quest["url"],
+            "conditions": quest_condition,
+            "type": quest["quest_type_raw"],
+            "latitude": quest["latitude"],
+            "longitude": quest["longitude"],
+            "rewards": quest_rewards,
+            "target": quest["quest_target"],
+            "timestamp": quest["timestamp"],
+            "quest_task": quest["quest_task"],
+        }
 
     def __prepare_weather_data(self, weather_data):
         ret = []
@@ -176,7 +280,8 @@ class WebhookWorker:
 
             if weather.get("coords", None) is None:
                 weather_payload["coords"] = S2Helper.coords_of_cell(
-                    weather["s2_cell_id"])
+                    weather["s2_cell_id"]
+                )
             else:
                 weather_payload["coords"] = weather["coords"]
 
@@ -189,8 +294,13 @@ class WebhookWorker:
         ret = []
 
         for raid in raid_data:
+            if self.__is_in_excluded_area([raid["latitude"], raid["longitude"]]):
+                continue
+
             # skip ex raid mon if disabled
-            is_exclusive = raid["is_exclusive"] is not None and raid["is_exclusive"] != 0
+            is_exclusive = (
+                raid["is_exclusive"] is not None and raid["is_exclusive"] != 0
+            )
             if not self.__args.webhook_submit_exraids and is_exclusive:
                 continue
 
@@ -205,7 +315,7 @@ class WebhookWorker:
                 "move_2": raid["move_2"],
                 "start": raid["start"],
                 "end": raid["end"],
-                "name": raid["name"]
+                "name": raid["name"],
             }
 
             if raid["cp"] is None:
@@ -241,6 +351,9 @@ class WebhookWorker:
         ret = []
 
         for mon in mon_data:
+            if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
+                continue
+
             if mon["pokemon_id"] in self.__IV_MON and (
                 mon["individual_attack"] is None
                 and mon["individual_defense"] is None
@@ -256,6 +369,7 @@ class WebhookWorker:
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
                 "disappear_time": mon["disappear_time"],
+                "verified": mon["spawn_verified"],
             }
 
             # get rarity
@@ -318,6 +432,9 @@ class WebhookWorker:
         ret = []
 
         for gym in gym_data:
+            if self.__is_in_excluded_area([gym["latitude"], gym["longitude"]]):
+                continue
+
             gym_payload = {
                 "gym_id": gym["gym_id"],
                 "latitude": gym["latitude"],
@@ -353,20 +470,48 @@ class WebhookWorker:
                 # TODO check if area/routemanager is actually active before adding the IDs
                 self.__IV_MON = self.__IV_MON + list(set(ivlist) - set(self.__IV_MON))
 
-    def run_worker(self):
-        logger.info("Starting webhook worker thread")
+    def __build_geofence_helpers(self, routemanagers):
+        self.__geofence_helpers = []
 
-        while not terminate_mad.is_set():
-            # the payload that is about to be sent
-            full_payload = []
+        if self.__args.webhook_excluded_areas == "":
+            pass
 
+        area_names = self.__args.webhook_excluded_areas.split(",")
+
+        for area_name in area_names:
+            if area_name.endswith("*"):
+                for name, rmgr in routemanagers.items():
+                    if not name.startswith(area_name[:-1]):
+                        continue
+
+                    self.__geofence_helpers.append(
+                        GeofenceHelper(
+                            rmgr["geofence_included"], rmgr["geofence_excluded"]
+                        )
+                    )
+
+            else:
+                area = routemanagers.get(area_name, None)
+
+                if area is None:
+                    continue
+
+                self.__geofence_helpers.append(
+                    GeofenceHelper(area["geofence_included"], area["geofence_excluded"])
+                )
+
+    def __create_payload(self):
+        # the payload that is about to be sent
+        full_payload = []
+
+        try:
             # raids
             raids = self.__prepare_raid_data(
                 self.__db_wrapper.get_raids_changed_since(self.__last_check)
             )
             full_payload += raids
 
-            # quest
+            # quests
             if self.__args.quest_webhook:
                 quest = self.__prepare_quest_data(
                     self.__db_wrapper.quests_from_db(timestamp=self.__last_check)
@@ -393,6 +538,17 @@ class WebhookWorker:
                     self.__db_wrapper.get_mon_changed_since(self.__last_check)
                 )
                 full_payload += mon
+        except Exception:
+            logger.exception("Error while creating webhook payload")
+
+        return full_payload
+
+    def run_worker(self):
+        logger.info("Starting webhook worker thread")
+
+        while not terminate_mad.is_set():
+            # fetch data and create payload
+            full_payload = self.__create_payload()
 
             # send our payload
             self.__send_webhook(full_payload)

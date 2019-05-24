@@ -1,6 +1,6 @@
 import sys
 
-from loguru import logger
+from utils.logging import logger
 
 # Most of the code is from RocketMap
 # https://github.com/RocketMap/RocketMap
@@ -25,7 +25,8 @@ class GeofenceHelper:
                 pathToIncludeGeofence, excluded=False)
             self.excluded_areas = self.parse_geofences_file(
                 pathToExcludeGeofence, excluded=True)
-            logger.log("DEBUG2", 'Loaded {} geofenced and {} excluded areas.', len(self.geofenced_areas), len(self.excluded_areas))
+            logger.debug2("Loaded {} geofenced and {} excluded areas.", len(
+                self.geofenced_areas), len(self.excluded_areas))
 
     def get_polygon_from_fence(self):
         maxLat, minLat, maxLon, minLon = -90, 90, -180, 180
@@ -60,8 +61,8 @@ class GeofenceHelper:
 
     def get_geofenced_coordinates(self, coordinates):
 
-        #Import: We are working with n-tuples in some functions be carefull
-        #and do not break compatibility
+        # Import: We are working with n-tuples in some functions be carefull
+        # and do not break compatibility
         logger.debug('Using matplotlib: {}.', self.use_matplotlib)
         logger.debug('Found {} coordinates to geofence.', len(coordinates))
 
@@ -80,7 +81,8 @@ class GeofenceHelper:
             else:
                 geofenced_coordinates.append(c)
 
-        logger.log("DEBUG2", 'Geofenced to {} coordinates', len(geofenced_coordinates))
+        logger.debug2("Geofenced to {} coordinates",
+                      len(geofenced_coordinates))
         return geofenced_coordinates
 
     def is_enabled(self):
@@ -165,9 +167,9 @@ class GeofenceHelper:
                     point['lat'] <= max(lat1, lat2)):
                 if lon1 != lon2:
                     latIntersection = (
-                            (point['lon'] - lon1) *
-                            (lat2 - lat1) / (lon2 - lon1) +
-                            lat1)
+                        (point['lon'] - lon1) *
+                        (lat2 - lat1) / (lon2 - lon1) +
+                        lat1)
 
                 if lat1 == lat2 or point['lat'] <= latIntersection:
                     inside = not inside

@@ -100,10 +100,10 @@ def parseArgs():
                         help=('Path to Pogo Asset.'
                               'See https://github.com/ZeChrales/PogoAssets/'))
 
-    parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots', # TODO: check if user appended / or not and deal accordingly (rmeove it?)
+    parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots',  # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
-    parser.add_argument('-unkpath', '--unknown_path', default='unknown',
+    parser.add_argument('-unkpath', '--unknown_path', default='ocr/unknown',
                         help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
@@ -150,18 +150,24 @@ def parseArgs():
                         help='Set the number of hours for the calculation of pokemon rarity (Default: 72)')
     parser.add_argument('-ruf', '--rarity_update_frequency', type=int, default=60,
                         help='Update frequency for dynamic rarity in minutes (Default: 60)')
-
     # webhook
     parser.add_argument('-wh', '--webhook', action='store_true', default=False,
                         help='Activate webhook support')
     parser.add_argument('-whurl', '--webhook_url', default='',
-                        help='URL endpoint/s for webhooks (seperated by commas) with [<type>] for restriction like [mon|weather|raid]http://example.org/foo/bar - urls have to start with http*')
+                        help='URL endpoint/s for webhooks (seperated by commas) with [<type>] '
+                             'for restriction like [mon|weather|raid]http://example.org/foo/bar '
+                             '- urls have to start with http*')
+
+    parser.add_argument('-whea', '--webhook_excluded_areas', default="",
+                        help='Comma-separated list of area names to exclude elements from within to be sent to a webhook')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
                         help='Activate weather webhook support')
     parser.add_argument('-qwh', '--quest_webhook', action='store_true', default=False,
                         help='Activate quest webhook support')
+    parser.add_argument('-qwhf', '--quest_webhook_flavor', choices=['default', 'poracle'], default='default',
+                        help='Webhook format for Quests: default or poracle compatible')
     parser.add_argument('-gwh', '--gym_webhook', action='store_true', default=False,
                         help='Activate gym webhook support')
     parser.add_argument('-whser', '--webhook_submit_exraids', action='store_true', default=False,
@@ -178,7 +184,6 @@ def parseArgs():
     parser.add_argument('--file_path',
                         help='Defines directory to save worker stats- and position files and calculated routes',
                         default='files')
-
 
     # Statistics
     parser.add_argument('-stco', '--stat_gc', action='store_true', default=False,
@@ -219,8 +224,6 @@ def parseArgs():
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
-    parser.add_argument('-ump', '--use_media_projection', action='store_true', default=False,
-                        help='Use Media Projection for image transfer (OCR) (Default: False)')
 
     # adb
     parser.add_argument('-adb', '--use_adb', action='store_true', default=False,
@@ -232,25 +235,34 @@ def parseArgs():
                         help='Port of ADB server (Default: 5037)')
 
     # log settings
-    parser.add_argument('--no-file-logs',
-                        help=('Disable logging to files. ' +
-                              'Does not disable --access-logs.'),
-                        action='store_true', default=False)
-    parser.add_argument('--log-path',
-                        help='Defines directory to save log files to.',
-                        default='logs/')
-    parser.add_argument('--log-filename',
-                        help=('Defines the log filename to be saved.'
-                              ' Allows date formatting, and replaces <SN>'
+    parser.add_argument('--no_file_logs', action='store_true', default=False,
+                        help="Disable file logging (Default: file logging is enabled by default)")
+    parser.add_argument('--log_path', default="logs/",
+                        help="Defines directory to save log files to.")
+    parser.add_argument('--log_level',
+                        help=("Forces a certain log level. By default"
+                              " it's set to INFO while being modified"
+                              " by the -v command to show DEBUG logs."
+                              " Custom log levels like DEBUG[1-5] can"
+                              " be used too."))
+    parser.add_argument("--log_file_rotation_size", default="50",
+                        help=("Maximum log file size before rotation creates a"
+                              " new log file. Set to 0 to disable. (Default: 50)"))
+    parser.add_argument("--log_file_level",
+                        help="File logging level. See description for --log_level.")
+    parser.add_argument("--log_file_retention", default="10",
+                        help=("Amount of days to keep file logs. Set to 0 to"
+                              " keep them forever (Default: 10)"))
+    parser.add_argument('--log_filename', default='%Y%m%d_%H%M_<SN>.log', 
+                        help=("Defines the log filename to be saved."
+                              " Allows date formatting, and replaces <SN>"
                               " with the instance's status name. Read the"
-                              ' python time module docs for details.'
-                              ' Default: %%Y%%m%%d_%%H%%M_<SN>.log.'),
-                        default='%Y%m%d_%H%M_<SN>.log')
+                              " python time module docs for details."
+                              " Default: %%Y%%m%%d_%%H%%M_<SN>.log."))
+
     parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
                         help=('Enable status page database update using ' +
                               'STATUS_NAME as main worker name.'))
-    parser.add_argument('-cla', '--cleanup-age', default=0, type=int,
-                        help='Delete logs older than X minutes. Default: 0')
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
                         help='Activate auto hatch of level 5 eggs')
@@ -259,17 +271,20 @@ def parseArgs():
                         help='Auto hatch of level 5 Pokemon ID')
 
     verbose = parser.add_mutually_exclusive_group()
-    verbose.add_argument('-v',
-                         help='Show debug messages',
-                         action='count', default=0, dest='verbose')
+    verbose.add_argument('-v', action='count', default=0, dest='verbose',
+                         help=("Show debug messages. Has no effect, if"
+                               "--log_level has been set."))
+
     verbose.add_argument('--verbosity',
                          help='Show debug messages',
                          type=int, dest='verbose')
     parser.set_defaults(DEBUG=False)
 
     args = parser.parse_args()
+
     # Allow status name and date formatting in log filename.
     args.log_filename = strftime(args.log_filename)
     args.log_filename = args.log_filename.replace('<sn>', '<SN>')
     args.log_filename = args.log_filename.replace('<SN>', args.status_name)
+
     return args
