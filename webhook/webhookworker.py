@@ -1,9 +1,11 @@
 import json
 import time
+from typing import Optional, List
 
 import requests
 
 from geofence.geofenceHelper import GeofenceHelper
+from utils.MappingManager import MappingManager
 from utils.gamemechanicutil import calculate_mon_level, get_raid_boss_cp
 from utils.logging import logger
 from utils.madGlobals import terminate_mad
@@ -12,25 +14,25 @@ from utils.s2Helper import S2Helper
 
 
 class WebhookWorker:
-    __IV_MON = []
-    __geofence_helpers = []
+    __IV_MON: List[int] = List[int]
+    __geofence_helpers: List[GeofenceHelper] = List[GeofenceHelper]
 
-    def __init__(self, args, db_wrapper, routemanagers, rarity):
+    def __init__(self, args, db_wrapper, mapping_manager: MappingManager, rarity):
         self.__worker_interval_sec = 10
         self.__args = args
         self.__db_wrapper = db_wrapper
         self.__rarity = rarity
         self.__last_check = int(time.time())
 
-        self.__build_ivmon_list(routemanagers)
-        self.__build_geofence_helpers(routemanagers)
+        self.__build_ivmon_list(mapping_manager)
+        self.__build_geofence_helpers(mapping_manager)
 
         if self.__args.webhook_start_time != 0:
             self.__last_check = int(self.__args.webhook_start_time)
 
-    def update_settings(self, routemanagers):
-        self.__build_ivmon_list(routemanagers)
-        self.__build_geofence_helpers(routemanagers)
+    def update_settings(self, mapping_manager: MappingManager):
+        self.__build_ivmon_list(mapping_manager)
+        self.__build_geofence_helpers(mapping_manager)
 
     def __payload_type_count(self, payload):
         count = {}
@@ -458,20 +460,18 @@ class WebhookWorker:
 
         return ret
 
-    def __build_ivmon_list(self, routemanagers):
-        self.__IV_MON = []
+    def __build_ivmon_list(self, mapping_manager: MappingManager):
+        self.__IV_MON: List[int] = List[int]
 
-        for routemanager in routemanagers:
-            manager = routemanagers[routemanager].get("routemanager", None)
+        for routemanager_name in mapping_manager.get_all_routemanager_names():
+            ids_iv_list: Optional[List[int]] = mapping_manager.routemanager_get_ids_iv(routemanager_name)
 
-            if manager is not None:
-                ivlist = manager.settings.get("mon_ids_iv", [])
-
+            if ids_iv_list is not None:
                 # TODO check if area/routemanager is actually active before adding the IDs
-                self.__IV_MON = self.__IV_MON + list(set(ivlist) - set(self.__IV_MON))
+                self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
-    def __build_geofence_helpers(self, routemanagers):
-        self.__geofence_helpers = []
+    def __build_geofence_helpers(self, mapping_manager: MappingManager):
+        self.__geofence_helpers: List[GeofenceHelper] = List[GeofenceHelper]
 
         if self.__args.webhook_excluded_areas == "":
             pass
@@ -480,25 +480,21 @@ class WebhookWorker:
 
         for area_name in area_names:
             if area_name.endswith("*"):
-                for name, rmgr in routemanagers.items():
+                routemanager_names = mapping_manager.get_all_routemanager_names()
+                for name in routemanager_names:
                     if not name.startswith(area_name[:-1]):
                         continue
-
-                    self.__geofence_helpers.append(
-                        GeofenceHelper(
-                            rmgr["geofence_included"], rmgr["geofence_excluded"]
-                        )
-                    )
-
+                    geofence_helper_of_area: Optional[GeofenceHelper] = \
+                        mapping_manager.routemanager_get_geofence_helper(name)
+                    if geofence_helper_of_area is not None:
+                        self.__geofence_helpers.append(geofence_helper_of_area)
             else:
-                area = routemanagers.get(area_name, None)
+                geofence_helper_of_area = mapping_manager.routemanager_get_geofence_helper(area_name)
 
-                if area is None:
+                if geofence_helper_of_area is None:
                     continue
 
-                self.__geofence_helpers.append(
-                    GeofenceHelper(area["geofence_included"], area["geofence_excluded"])
-                )
+                self.__geofence_helpers.append(geofence_helper_of_area)
 
     def __create_payload(self):
         # the payload that is about to be sent

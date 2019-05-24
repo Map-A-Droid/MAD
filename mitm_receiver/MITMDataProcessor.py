@@ -21,20 +21,21 @@ class MitmDataProcessor(Process):
         while True:
             try:
                 item = self.__queue.get()
+
+                items_left = self.__queue.qsize()
+                logger.debug(
+                    "MITM data processing worker retrieved data. Queue length left afterwards: {}", str(items_left))
+                if items_left > 50:
+                    logger.warning(
+                        "MITM data processing workers are falling behind! Queue length: {}", str(items_left))
+                if item is None:
+                    logger.warning("Received none from queue of data")
+                    break
+                self.process_data(item[0], item[1], item[2])
+                self.__queue.task_done()
             except KeyboardInterrupt as e:
                 logger.info("MITMDataProcessor received keyboard interrupt, stopping")
                 break
-            items_left = self.__queue.qsize()
-            logger.debug(
-                "MITM data processing worker retrieved data. Queue length left afterwards: {}", str(items_left))
-            if items_left > 50:
-                logger.warning(
-                    "MITM data processing workers are falling behind! Queue length: {}", str(items_left))
-            if item is None:
-                logger.warning("Received none from queue of data")
-                break
-            self.process_data(item[0], item[1], item[2])
-            self.__queue.task_done()
 
     @logger.catch
     def process_data(self, received_timestamp, data, origin):

@@ -3,7 +3,10 @@ import time
 from shutil import copyfile
 from threading import Event, Thread
 
+from db.dbWrapperBase import DbWrapperBase
 from ocr.checkWeather import checkWeather
+from ocr.pogoWindows import PogoWindows
+from utils.MappingManager import MappingManager
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.logging import logger
 from utils.madGlobals import (InternalStopWorkerException,
@@ -27,9 +30,10 @@ class WorkerOCR(WorkerBase):
         self.__start_speed_weather_check_event.set()
 
     def _move_to_location(self):
-        routemanager = self._walker_routemanager
-        if routemanager is None:
+        if not self._mapping_manager.routemanager_present(self._routemanager_name):
             raise InternalStopWorkerException
+        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+
         # get the distance from our current position (last) to the next gym (cur)
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
                                                         float(
@@ -38,8 +42,8 @@ class WorkerOCR(WorkerBase):
                                                             self.current_location.lat),
                                                         float(self.current_location.lng))
         logger.debug('Moving {} meters to the next position', round(distance, 2))
-        speed = routemanager.settings.get("speed", 0)
-        max_distance = routemanager.settings.get("max_distance", None)
+        speed = routemanager_settings.get("speed", 0)
+        max_distance = routemanager_settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
@@ -48,9 +52,9 @@ class WorkerOCR(WorkerBase):
                 self.current_location.lat, self.current_location.lng, 0)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
-            delay_used = self._devicesettings.get('post_teleport_delay', 7)
+            delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
             # Test for cooldown / teleported distance TODO: check this block...
-            if self._devicesettings.get('cool_down_sleep', False):
+            if self.get_devicesettings_value('cool_down_sleep', False):
                 if distance > 2500:
                     delay_used = 8
                 elif distance > 5000:
@@ -61,7 +65,7 @@ class WorkerOCR(WorkerBase):
                     "Need more sleep after Teleport: {} seconds!", str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
 
-            if 0 < self._devicesettings.get('walk_after_teleport_distance', 0) < distance:
+            if 0 < self.get_devicesettings_value('walk_after_teleport_distance', 0) < distance:
                 # TODO: actually use to_walk for distance
                 to_walk = get_distance_of_two_points_in_meters(float(self.current_location.lat),
                                                                float(
@@ -86,11 +90,11 @@ class WorkerOCR(WorkerBase):
                                           self.current_location.lat,
                                           self.current_location.lng, speed)
             # cur_time = math.floor(time.time())  # the time we will take as a starting point to wait for data...
-            delay_used = self._devicesettings.get('post_walk_delay', 7)
+            delay_used = self.get_devicesettings_value('post_walk_delay', 7)
         logger.info("Sleeping {}", str(delay_used))
         time.sleep(float(delay_used))
         cur_time = time.time()
-        self._devicesettings["last_location"] = self.current_location
+        self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
         self._waittime_without_delays = time.time()
         return cur_time, True
@@ -176,8 +180,7 @@ class WorkerOCR(WorkerBase):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             logger.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._devicesettings.get(
-                "post_turn_screen_on_delay", 7))
+            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
         curTime = time.time()
         startResult = False
@@ -189,7 +192,7 @@ class WorkerOCR(WorkerBase):
         reachedRaidtab = False
         if startResult:
             logger.warning("startPogo: Starting pogo...")
-            time.sleep(self._devicesettings.get("post_pogo_start_delay", 60))
+            time.sleep(self.get_devicesettings_value("post_pogo_start_delay", 60))
             self._last_known_state["lastPogoRestart"] = curTime
 
             # let's handle the login and stuff
@@ -244,10 +247,11 @@ class WorkerOCR(WorkerBase):
             logger.debug("Speedweather: released lock")
             time.sleep(1)
 
-    def __init__(self, args, id, lastKnownState, websocketHandler, walker_routemanager,
-                 devicesettings, db_wrapper, pogoWindowManager, walker):
+    def __init__(self, args, id, lastKnownState, websocketHandler, mapping_manager: MappingManager,
+                 routemanager_name: str, db_wrapper: DbWrapperBase, pogo_window_manager: PogoWindows, walker):
         WorkerBase.__init__(self, args, id, lastKnownState, websocketHandler,
-                            walker_routemanager, devicesettings, db_wrapper=db_wrapper,
-                            pogoWindowManager=pogoWindowManager, walker=walker)
+                            mapping_manager=mapping_manager, routemanager_name=routemanager_name,
+                            db_wrapper=db_wrapper,
+                            pogoWindowManager=pogo_window_manager, walker=walker)
         self.__speed_weather_check_thread = None
         self.__start_speed_weather_check_event = Event()

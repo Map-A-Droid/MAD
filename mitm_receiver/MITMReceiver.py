@@ -4,20 +4,20 @@ import sys
 
 import time
 from multiprocessing import JoinableQueue, Process
-from multiprocessing.managers import BaseManager
+from typing import Optional
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
 
-from db.DbFactory import DbFactory
 from mitm_receiver.MITMDataProcessor import MitmDataProcessor
 from mitm_receiver.MitmMapper import MitmMapper
+from utils.MappingManager import MappingManager
 from utils.authHelper import check_auth
 from utils.logging import LogLevelChanger, logger
 
 app = Flask(__name__)
 allowed_origins = None
-auths = None
+mapping_manager: Optional[MappingManager] = None
 application_args = None
 
 
@@ -28,7 +28,7 @@ class EndpointAction(object):
         self.response = Response(status=200, headers={})
 
     def __call__(self, *args):
-        global allowed_origins, application_args, auths
+        global allowed_origins, application_args, mapping_manager
         origin = request.headers.get('Origin')
         abort = False
         if not origin:
@@ -38,9 +38,9 @@ class EndpointAction(object):
         elif allowed_origins is not None and (origin is None or origin not in allowed_origins):
             self.response = Response(status=403, headers={})
             abort = True
-        elif auths is not None:  # TODO check auth properly...
+        elif mapping_manager.get_auths() is not None:  # TODO check auth properly...
             auth = request.headers.get('Authorization', None)
-            if auth is None or not check_auth(auth, application_args, auths):
+            if auth is None or not check_auth(auth, application_args, mapping_manager.get_auths()):
                 logger.warning(
                     "Unauthorized attempt to POST from {}", str(request.remote_addr))
                 self.response = Response(status=403, headers={})
@@ -65,11 +65,12 @@ class EndpointAction(object):
 
 
 class MITMReceiver(Process):
-    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed, db_wrapper, name=None):
-        global application_args, auths
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager_arg: MappingManager,
+                 db_wrapper, name=None):
+        global application_args, mapping_manager
         Process.__init__(self, name=name)
         application_args = args_passed
-        auths = auths_passed
+        mapping_manager = mapping_manager_arg
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
         self.__mitm_mapper: MitmMapper = mitm_mapper
@@ -99,6 +100,7 @@ class MITMReceiver(Process):
         logger.info("Trying to join workers...")
         for t in self.worker_threads:
             t.join()
+        self._data_queue.close()
         logger.info("Workers stopped...")
 
     def run(self):

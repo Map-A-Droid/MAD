@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from queue import Queue
 from threading import Event, Lock, RLock, Thread
-from typing import List
+from typing import List, Optional, Tuple
 
 import numpy as np
 
@@ -18,7 +18,6 @@ from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
 from utils.logging import logger
 from utils.walkerArgs import parseArgs
-from worker.WorkerBase import WorkerBase
 
 args = parseArgs()
 
@@ -51,7 +50,7 @@ class RouteManagerBase(ABC):
         self._coords_to_be_ignored = set()
 
         # we want to store the workers using the routemanager
-        self._workers_registered: List[WorkerBase] = []
+        self._workers_registered: List[str] = []
         self._workers_registered_mutex = Lock()
 
         self._last_round_prio = {}
@@ -85,6 +84,12 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._stop_update_thread = Event()
 
+    def get_ids_iv(self) -> Optional[List[int]]:
+        if self.settings is not None:
+            return self.settings.get("mon_ids_iv", [])
+        else:
+            return None
+
     def stop_routemanager(self):
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
@@ -102,12 +107,12 @@ class RouteManagerBase(ABC):
         finally:
             self._manager_mutex.release()
 
-    def clear_coords(self):
+    def _clear_coords(self):
         self._manager_mutex.acquire()
         self._coords_unstructured = None
         self._manager_mutex.release()
 
-    def register_worker(self, worker_name):
+    def register_worker(self, worker_name) -> bool:
         self._workers_registered_mutex.acquire()
         try:
             if worker_name in self._workers_registered:
@@ -355,7 +360,7 @@ class RouteManagerBase(ABC):
         merged = self.clustering_helper.get_clustered(latest)
         return merged
 
-    def get_next_location(self, origin):
+    def get_next_location(self, origin: str) -> Optional[Location]:
         logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
             logger.info(
@@ -435,7 +440,7 @@ class RouteManagerBase(ABC):
                     self._manager_mutex.release()
                     return None
                 self._start_calc = True
-                self.clear_coords()
+                self._clear_coords()
                 coords = self._get_coords_post_init()
                 logger.debug("Setting {} coords to as new points in route of {}", str(
                     len(coords)), str(self.name))
@@ -492,7 +497,7 @@ class RouteManagerBase(ABC):
             logger.info('No more coords are available... Sleeping.')
         self._manager_mutex.release()
 
-    def change_init_mapping(self, name_area):
+    def change_init_mapping(self, name_area: str):
         with open('configs/mappings.json') as f:
             vars = json.load(f)
 
@@ -503,23 +508,32 @@ class RouteManagerBase(ABC):
         with open('configs/mappings.json', 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
 
-    def get_route_status(self):
+    def get_route_status(self) -> Tuple[int, int]:
         if self._route:
             return (len(self._route) - self._route_queue.qsize()), len(self._route)
         return 1, 1
 
-    def get_rounds(self, origin):
+    def get_rounds(self, origin: str) -> int:
         return self._rounds.get(origin, 999)
 
     def add_route_to_origin(self):
         for origin in self._rounds:
             self._rounds[origin] += 1
 
-    def get_registered_workers(self):
+    def get_registered_workers(self) -> int:
         return len(self._workers_registered)
 
-    def get_position_type(self, origin):
+    def get_position_type(self, origin: str):
         return self._positiontyp[origin]
 
-    def get_walker_type(self):
+    def get_geofence_helper(self) -> Optional[GeofenceHelper]:
+        return self.geofence_helper
+
+    def get_init(self) -> bool:
+        return self.init
+
+    def get_mode(self):
         return self.mode
+
+    def get_settings(self) -> Optional[dict]:
+        return self.settings

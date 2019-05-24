@@ -8,6 +8,8 @@ import logging
 from threading import Event, Lock, Thread
 
 import websockets
+
+from utils.MappingManager import MappingManager
 from utils.authHelper import check_auth
 from utils.logging import logger, InterceptHandler
 from utils.madGlobals import (WebsocketWorkerRemovedException,
@@ -28,7 +30,7 @@ logging.getLogger('websockets.protocol').addHandler(InterceptHandler())
 
 
 class WebsocketServer(object):
-    def __init__(self, args, mitm_mapper, db_wrapper, routemanagers, device_mappings, auths, pogoWindowManager,
+    def __init__(self, args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager,
                  configmode=False):
         self.__current_users = {}
         self.__current_users_mutex = Lock()
@@ -46,9 +48,7 @@ class WebsocketServer(object):
         self.__requests_mutex = Lock()
 
         self.__db_wrapper = db_wrapper
-        self.__device_mappings = device_mappings
-        self.__routemanagers = routemanagers
-        self.__auths = auths
+        self.__mapping_manager: MappingManager = mapping_manager
         self.__pogoWindowManager = pogoWindowManager
         self.__mitm_mapper = mitm_mapper
 
@@ -63,10 +63,10 @@ class WebsocketServer(object):
         self.__loop = asyncio.new_event_loop()
         # build list of origin IDs
         allowed_origins = []
-        for device in self.__device_mappings.keys():
+        for device in self.__mapping_manager.get_all_devicemappings().keys():
             allowed_origins.append(device)
 
-        logger.debug("Device mappings: {}", str(self.__device_mappings))
+        logger.debug("Device mappings: {}", str(self.__mapping_manager.get_all_devicemappings()))
         logger.debug("Allowed origins derived: {}", str(allowed_origins))
 
         asyncio.set_event_loop(self.__loop)
@@ -93,11 +93,8 @@ class WebsocketServer(object):
             else:
                 self.__current_users_mutex.release()
                 time.sleep(1)
-        for routemanager in self.__routemanagers.keys():
-            area = self.__routemanagers.get(routemanager, None)
-            if area is None:
-                continue
-            area["routemanager"].stop_routemanager()
+        for routemanager in self.__mapping_manager.get_all_routemanager_names():
+            self.__mapping_manager.routemanager_stop(routemanager)
 
         if self.__loop is not None:
             self.__loop.call_soon_threadsafe(self.__loop.stop)
@@ -145,7 +142,8 @@ class WebsocketServer(object):
                 websocket_client_connection.request_headers.get_all("Origin")[0]))
             return False
 
-        if self.__auths:
+        auths = self.__mapping_manager.get_auths()
+        if auths:
             try:
                 authBase64 = str(
                     websocket_client_connection.request_headers.get_all("Authorization")[0])
@@ -163,7 +161,7 @@ class WebsocketServer(object):
                                str(websocket_client_connection.request_headers.get_all("Origin")[0]))
                 user_present[1].stop_worker()
                 return False
-            elif self.__auths and authBase64 and not check_auth(authBase64, self.args, self.__auths):
+            elif auths and authBase64 and not check_auth(authBase64, self.args, auths):
                 logger.warning("Invalid auth details received from {}", str(
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
@@ -178,7 +176,7 @@ class WebsocketServer(object):
                 return True
 
             last_known_state = {}
-            client_mapping = self.__device_mappings[id]
+            client_mapping = self.__mapping_manager.get_devicemappings_of(id)
             devicesettings = client_mapping["settings"]
             logger.info("Setting up routemanagers for {}", str(id))
 
@@ -226,15 +224,13 @@ class WebsocketServer(object):
 
                 walker_area_name = walker_area_array[walker_index]['walkerarea']
 
-                if walker_area_name not in self.__routemanagers:
+                if walker_area_name not in self.__mapping_manager.get_all_routemanager_names():
                     raise WrongAreaInWalker()
 
                 logger.debug('Devicesettings {}: {}', str(id), devicesettings)
                 logger.info('{} using walker area {} [{}/{}]', str(id), str(
                     walker_area_name), str(walker_index+1), str(len(walker_area_array)))
-                walker_routemanager = \
-                    self.__routemanagers[walker_area_name].get(
-                        "routemanager", None)
+                walker_routemanager_mode = self.__mapping_manager.routemanager_get_mode(walker_area_name)
                 devicesettings['walker_area_index'] += 1
                 devicesettings['finished'] = False
                 if walker_index >= len(walker_area_array) - 1:
@@ -242,33 +238,34 @@ class WebsocketServer(object):
 
                 # set global mon_iv
                 client_mapping['mon_ids_iv'] = \
-                    self.__routemanagers[walker_area_name].get(
-                        "routemanager").settings.get("mon_ids_iv", [])
+                    self.__mapping_manager.routemanager_get_settings(walker_area_name).get("mon_ids_iv", [])
 
             else:
-                walker_routemanager = None
+                walker_routemanager_mode = None
 
             if "last_location" not in devicesettings:
                 devicesettings['last_location'] = Location(0.0, 0.0)
 
             logger.debug("Setting up worker for {}", str(id))
 
-            if walker_routemanager is None:
+            if walker_routemanager_mode is None:
                 pass
-            elif walker_routemanager.mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                worker = WorkerMITM(self.args, id, last_known_state, self, walker_routemanager,
-                                    self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper,
-                                    pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
-            elif walker_routemanager.mode in ["raids_ocr"]:
+            elif walker_routemanager_mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+                worker = WorkerMITM(self.args, id, last_known_state, self, routemanager_name=walker_area_name,
+                                    mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
+                                    db_wrapper=self.__db_wrapper,
+                                    pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
+            elif walker_routemanager_mode in ["raids_ocr"]:
                 from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, id, last_known_state, self, walker_routemanager,
-                                   devicesettings, db_wrapper=self.__db_wrapper,
-                                   pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
-            elif walker_routemanager.mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, id, last_known_state, self, walker_routemanager,
-                                      self.__mitm_mapper, devicesettings, db_wrapper=self.__db_wrapper,
-                                      pogoWindowManager=self.__pogoWindowManager, walker=walker_settings)
-            elif walker_routemanager.mode in ["idle"]:
+                worker = WorkerOCR(self.args, id, last_known_state, self, routemanager_name=walker_area_name,
+                                   mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
+                                   pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
+            elif walker_routemanager_mode in ["pokestops"]:
+                worker = WorkerQuests(self.args, id, last_known_state, self, routemanager_name=walker_area_name,
+                                      mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
+                                      db_wrapper=self.__db_wrapper, pogo_window_manager=self.__pogoWindowManager,
+                                      walker=walker_settings)
+            elif walker_routemanager_mode in ["idle"]:
                 worker = WorkerConfigmode(self.args, id, self)
             else:
                 logger.error("Mode not implemented")

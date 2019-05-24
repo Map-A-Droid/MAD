@@ -4,6 +4,7 @@ from multiprocessing.managers import SyncManager
 
 from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
+from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.logging import logger
 from utils.stats import PlayerStats
@@ -17,25 +18,26 @@ class MitmMapperManager(SyncManager):
 
 
 class MitmMapper(object):
-    def __init__(self, device_mappings, db_wrapper):
+    def __init__(self, mapping_manager: MappingManager, db_wrapper):
         self.__mapping = {}
         self.__playerstats = {}
         self.__mapping_mutex = Lock()
-        self.__device_mappings = device_mappings
+        self.__mapping_manager: MappingManager = mapping_manager
         self.__injected = {}
         self.__application_args = args
         self.__db_wrapper: DbWrapperBase = db_wrapper
-        if device_mappings is not None:
-            for origin in device_mappings.keys():
+        if mapping_manager is not None:
+            for origin in mapping_manager.get_all_devicemappings().keys():
                 self.__mapping[origin] = {}
                 self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self.__db_wrapper)
                 self.__playerstats[origin].open_player_stats()
 
     def get_mon_ids_iv(self, origin):
-        if self.__device_mappings is None or origin not in self.__device_mappings.keys():
+        devicemapping_of_origin = self.__mapping_manager.get_devicemappings_of(origin)
+        if devicemapping_of_origin is None:
             return []
         else:
-            return self.__device_mappings[origin].get("mon_ids_iv", [])
+            return devicemapping_of_origin.get("mon_ids_iv", [])
 
     def request_latest(self, origin, key=None):
         self.__mapping_mutex.acquire()
@@ -52,7 +54,7 @@ class MitmMapper(object):
         return result
 
     # origin, method, data, timestamp
-    def update_latest(self, origin, key, values_dict, timestamp_received_raw: float = time.time(),
+    def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = time.time(),
                       timestamp_received_receiver: float = time.time()):
         updated = False
         self.__mapping_mutex.acquire()
