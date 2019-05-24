@@ -461,7 +461,7 @@ class WebhookWorker:
         return ret
 
     def __build_ivmon_list(self, mapping_manager: MappingManager):
-        self.__IV_MON: List[int] = List[int]
+        self.__IV_MON: List[int] = []
 
         for routemanager_name in mapping_manager.get_all_routemanager_names():
             ids_iv_list: Optional[List[int]] = mapping_manager.routemanager_get_ids_iv(routemanager_name)
@@ -471,7 +471,7 @@ class WebhookWorker:
                 self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
     def __build_geofence_helpers(self, mapping_manager: MappingManager):
-        self.__geofence_helpers: List[GeofenceHelper] = List[GeofenceHelper]
+        self.__geofence_helpers: List[GeofenceHelper] = []
 
         if self.__args.webhook_excluded_areas == "":
             pass
