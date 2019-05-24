@@ -414,6 +414,9 @@ class WebhookWorker:
             if mon["gender"] is not None:
                 mon_payload["gender"] = mon["gender"]
 
+            if mon["is_shiny"] is not None:
+                mon_payload["is_shiny"] = mon["is_shiny"]
+
             if pokemon_rarity is not None:
                 mon_payload["rarity"] = pokemon_rarity
 
