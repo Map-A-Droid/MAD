@@ -537,3 +537,6 @@ class RouteManagerBase(ABC):
 
     def get_settings(self) -> Optional[dict]:
         return self.settings
+
+    def get_current_route(self) -> List[Location]:
+        return self._route

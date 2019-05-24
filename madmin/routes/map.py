@@ -1,11 +1,14 @@
 import json
 import os
+from typing import List, Optional
+
 from flask import (Flask, jsonify, render_template, request)
 from flask_caching import Cache
 
 from db.dbWrapperBase import DbWrapperBase
 from madmin.functions import auth_required, getCoordFloat, getBoundParameter
 from utils.MappingManager import MappingManager
+from utils.collections import Location
 from utils.questGen import generate_quest
 from pathlib import Path
 from utils.mappingParser import MappingParser
@@ -52,18 +55,27 @@ class map(object):
     def get_position(self):
         positions = []
         devicemappings = self._mapping_manager.get_all_devicemappings()
-        for name, device in devicemappings.items():
-            try:
-                with open(os.path.join(self._args.file_path, name + '.position'), 'r') as f:
-                    latlon = f.read().strip().split(', ')
-                    worker = {
-                        'name': str(name),
-                        'lat': getCoordFloat(latlon[0]),
-                        'lon': getCoordFloat(latlon[1])
-                    }
-                    positions.append(worker)
-            except OSError:
-                pass
+        for name, values in devicemappings.items():
+            lat = values.get("last_location", {}).get("lat", 0.0)
+            lon = values.get("last_location", {}).get("lon", 0.0)
+
+            worker = {
+                "name": str(name),
+                "lat": getCoordFloat(lat),
+                "lon": getCoordFloat(lon)
+            }
+            positions.append(worker)
+            # try:
+            #     with open(os.path.join(self._args.file_path, name + '.position'), 'r') as f:
+            #         latlon = f.read().strip().split(', ')
+            #         worker = {
+            #             'name': str(name),
+            #             'lat': getCoordFloat(latlon[0]),
+            #             'lon': getCoordFloat(latlon[1])
+            #         }
+            #         positions.append(worker)
+            # except OSError:
+            #     pass
 
         return jsonify(positions)
 
@@ -130,22 +142,26 @@ class map(object):
     def get_route(self):
         routeexport = []
 
-        areas = self._mapping_manager.get_areas()
-        for name, area in areas.items():
-            route = []
-            try:
-                with open(os.path.join(self._args.file_path, area['routecalc'] + '.calc'), 'r') as f:
-                    for line in f.readlines():
-                        latlon = line.strip().split(', ')
-                        route.append([
-                            getCoordFloat(latlon[0]),
-                            getCoordFloat(latlon[1])
-                        ])
-                    routeexport.append(
-                        {'name': str(name), 'mode': area['mode'], 'coordinates': route})
-            # ignore missing routes files
-            except OSError:
-                pass
+        routemanager_names = self._mapping_manager.get_all_routemanager_names()
+
+        # areas = self._mapping_manager.get_areas()
+        for routemanager in routemanager_names:
+            mode = self._mapping_manager.routemanager_get_mode(routemanager)
+            route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_route(routemanager)
+
+            if route is None:
+                continue
+            route_serialized = []
+
+            for location in route:
+                route_serialized.append([
+                    getCoordFloat(location.lat), getCoordFloat(location.lng)
+                ])
+            routeexport.append({
+                "name": routemanager,
+                "mode": mode,
+                "coordinates": route_serialized
+            })
 
         return jsonify(routeexport)
 

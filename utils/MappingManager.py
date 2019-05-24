@@ -202,6 +202,14 @@ class MappingManager:
             else:
                 return None
 
+    def routemanager_get_current_route(self, routemanager_name: str) -> Optional[List[Location]]:
+        with self.__mappings_mutex:
+            routemanager: dict = self._routemanagers.get(routemanager_name, None)
+            if routemanager is not None:
+                return routemanager.get("routemanager").get_current_route()
+            else:
+                return None
+
     def routemanager_get_settings(self, routemanager_name: str) -> Optional[dict]:
         with self.__mappings_mutex:
             routemanager: dict = self._routemanagers.get(routemanager_name, None)
