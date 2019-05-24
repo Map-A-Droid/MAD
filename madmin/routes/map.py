@@ -2,7 +2,10 @@ import json
 import os
 from flask import (Flask, jsonify, render_template, request)
 from flask_caching import Cache
+
+from db.dbWrapperBase import DbWrapperBase
 from madmin.functions import auth_required, getCoordFloat, getBoundParameter
+from utils.MappingManager import MappingManager
 from utils.questGen import generate_quest
 from pathlib import Path
 from utils.mappingParser import MappingParser
@@ -11,8 +14,8 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class map(object):
-    def __init__(self, db, args, mapping_parser, app):
-        self._db = db
+    def __init__(self, db: DbWrapperBase, args, mapping_manager: MappingManager, app):
+        self._db: DbWrapperBase = db
         self._args = args
         self._app = app
         if self._args.madmin_time == "12":
@@ -20,9 +23,7 @@ class map(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
 
-        self._mapping_parser = mapping_parser
-        self._device_mapping = self._mapping_parser.get_devicemappings()
-        self._areas = self._mapping_parser.get_areas()
+        self._mapping_manager: MappingManager = mapping_manager
 
         cache.init_app(self._app)
         self.add_route()
@@ -50,8 +51,8 @@ class map(object):
     @auth_required
     def get_position(self):
         positions = []
-
-        for name, device in self._device_mapping.items():
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+        for name, device in devicemappings.items():
             try:
                 with open(os.path.join(self._args.file_path, name + '.position'), 'r') as f:
                     latlon = f.read().strip().split(', ')
@@ -70,7 +71,8 @@ class map(object):
     def get_geofence(self):
         geofences = {}
 
-        for name, area in self._areas.items():
+        areas = self._mapping_manager.get_areas()
+        for name, area in areas.items():
             geofence_include = {}
             geofence_exclude = {}
             geofence_name = 'Unknown'
@@ -128,7 +130,8 @@ class map(object):
     def get_route(self):
         routeexport = []
 
-        for name, area in self._areas.items():
+        areas = self._mapping_manager.get_areas()
+        for name, area in areas.items():
             route = []
             try:
                 with open(os.path.join(self._args.file_path, area['routecalc'] + '.calc'), 'r') as f:

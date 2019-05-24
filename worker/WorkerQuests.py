@@ -15,7 +15,8 @@ from utils.geo import (
 from utils.logging import logger
 from utils.madGlobals import (
     InternalStopWorkerException,
-    WebsocketWorkerRemovedException
+    WebsocketWorkerRemovedException,
+    WebsocketWorkerTimeoutException
 )
 from worker.MITMBase import MITMBase, LatestReceivedType
 
@@ -353,7 +354,7 @@ class WorkerQuests(MITMBase):
                         self.clear_thread_task = 0
                     time.sleep(1)
                     self._start_inventory_clear.clear()
-                except WebsocketWorkerRemovedException as e:
+                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) as e:
                     logger.error("Worker removed while clearing quest/box")
                     self._stop_worker_event.set()
                     return

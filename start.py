@@ -24,7 +24,6 @@ from mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mitm_receiver.MITMReceiver import MITMReceiver
 from utils.logging import initLogging, logger
 from utils.madGlobals import terminate_mad
-from utils.mappingParser import MappingParser
 from utils.rarity import Rarity
 from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
@@ -96,9 +95,9 @@ def start_ocr_observer(args, db_helper):
     observer.start()
 
 
-def start_madmin(args, db_wrapper, ws_server):
+def start_madmin(args, db_wrapper, ws_server, mapping_manager: MappingManager):
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, ws_server)
+    madmin_start(args, db_wrapper, ws_server, mapping_manager)
 
 
 def generate_mappingjson():
@@ -111,9 +110,6 @@ def generate_mappingjson():
     newfile['devicesettings'] = []
     with open('configs/mappings.json', 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
-
-
-
 
 
 def find_referring_graphs(obj):
@@ -310,7 +306,7 @@ if __name__ == "__main__":
     if args.with_madmin:
         logger.info('Starting Madmin on Port: {}', str(args.madmin_port))
         t_flask = Thread(name='madmin', target=start_madmin,
-                         args=(args, db_wrapper, ws_server,))
+                         args=(args, db_wrapper, ws_server, mapping_manager,))
         t_flask.daemon = True
         t_flask.start()
 
