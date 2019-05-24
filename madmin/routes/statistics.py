@@ -172,6 +172,28 @@ class statistics(object):
                  'location_info': location_info}
         return jsonify(stats)
 
+         # shiny_spawns avg
+        shiny_spawns = []
+        data = self._db.get_shiny_pokemon_spawns()
+        for dat in data:
+            mon = "%03d" % dat[2]
+            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+            monName_raw = (get_raid_boss_cp(dat[2]))
+            monName = i8ln(monName_raw['name'])
+            if self._args.db_method == "rm":
+                lvl = calculate_mon_level(dat[7])
+            else:
+                lvl = dat[7]
+            shiny_spawns.append({'id': dat[2], 'shiny': data[9],
+                                'lvl': lvl, 'cp': dat[8], 'img': monPic,
+                                'name': monName,
+                                'periode': datetime.datetime.fromtimestamp(dat[3]).strftime(self._datetimeformat)})
+
+        stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
+                 'quest': quest, 'stop': stop, 'usage': usage, 'shiny_spawns': shiny_spawns,
+                 'location_info': location_info}
+        return jsonify(stats)
+
     @auth_required
     def statistics_detection_worker_data(self):
         minutes = request.args.get('minutes', 120)
@@ -289,4 +311,3 @@ class statistics(object):
     def get_status(self):
         data = json.loads(self._db.download_status())
         return jsonify(data)
-

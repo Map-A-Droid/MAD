@@ -117,6 +117,7 @@
                 stop = result.stop
                 usage = result.usage
                 good_spawns = result.good_spawns
+		shiny_spawns = result.siny_spawns
                 detection = result.detection
                 detection_empty = result.detection_empty
                 location_info = result.location_info
@@ -125,6 +126,24 @@
                     { data: 'id', title: 'Mon-ID' },
                     { data: 'name', title: 'Name' },
                     { data: null, title: 'Pic' },
+                    { data: 'iv', title: 'IV' },
+                    { data: 'lvl', title: 'Level' },
+                    { data: 'cp', title: 'CP' },
+                    { data: 'periode', title: 'Scantime' },
+                ], [
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " width=100>";
+                    }
+                }
+                ]);
+
+                setGrid('#show-data-shiny-pokemon', shiny_spawns, [
+                    { data: 'id', title: 'Mon-ID' },
+                    { data: 'name', title: 'Name' },
+                    { data: null, title: 'Pic' },
+                    { data: 'is_shiny', title: 'Shiny' },
                     { data: 'iv', title: 'IV' },
                     { data: 'lvl', title: 'Level' },
                     { data: 'cp', title: 'CP' },
@@ -491,4 +510,6 @@
 <br>
 <h2>Recent Perfect Pokemon</h2>
 <table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
+<h2>Recent Shiny Pokemon</h2>
+<table id="show-data-shiny-pokemon" class="table" style="width:100%;"></table>
 {% endblock %}

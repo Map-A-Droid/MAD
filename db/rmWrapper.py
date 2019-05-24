@@ -696,9 +696,9 @@ class RmWrapper(DbWrapperBase):
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
             "weight, height, gender, catch_prob_1, catch_prob_2, catch_prob_3, rating_attack, rating_defense, "
-            "weather_boosted_condition, last_modified, costume, form) "
+            "weather_boosted_condition, last_modified, costume, form,is_shiny) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-            "%s, %s, %s, %s, %s) "
+            "%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time), "
             "individual_attack=VALUES(individual_attack), individual_defense=VALUES(individual_defense), "
             "individual_stamina=VALUES(individual_stamina), move_1=VALUES(move_1), move_2=VALUES(move_2), "
@@ -706,7 +706,7 @@ class RmWrapper(DbWrapperBase):
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form)"
+            "costume=VALUES(costume), form=VALUES(form),is_shiny=VALUES(is_shiny)"
         )
 
         vals = (
@@ -731,7 +731,8 @@ class RmWrapper(DbWrapperBase):
             pokemon_display.get('weather_boosted_value', None),
             now,
             pokemon_display.get("costume_value", None),
-            pokemon_display.get("form_value", None)
+            pokemon_display.get("form_value", None),
+            pokemon_display.get("is_shiny", None)
         )
 
         self.execute(query, vals, commit=True)
@@ -749,9 +750,9 @@ class RmWrapper(DbWrapperBase):
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
             "weight, height, gender, catch_prob_1, catch_prob_2, catch_prob_3, rating_attack, rating_defense, "
-            "weather_boosted_condition, last_modified, costume, form) "
+            "weather_boosted_condition, last_modified, costume, form,is_shiny) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, "
-            "%s, %s, %s, %s, %s) "
+            "%s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_modified=VALUES(last_modified), disappear_time=VALUES(disappear_time)"
         )
 
@@ -795,7 +796,7 @@ class RmWrapper(DbWrapperBase):
                         None, None, None, None, None,
                         wild_mon['pokemon_data']['display']['weather_boosted_value'],
                         now, wild_mon['pokemon_data']['display']['costume_value'],
-                        wild_mon['pokemon_data']['display']['form_value']
+                        wild_mon['pokemon_data']['display']['form_value'],wild_mon['pokemon_data']['display']['is_shiny']
                     )
                 )
 
@@ -1282,7 +1283,7 @@ class RmWrapper(DbWrapperBase):
         query = (
             "SELECT encounter_id, spawnpoint_id, pokemon_id, pokemon.latitude, pokemon.longitude, "
             "disappear_time, individual_attack, individual_defense, individual_stamina, "
-            "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume, "
+            "move_1, move_2, cp, cp_multiplier, weight, height, gender, form, costume,is_shiny, "
             "weather_boosted_condition, last_modified, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified "
             "FROM pokemon "
@@ -1298,7 +1299,7 @@ class RmWrapper(DbWrapperBase):
         for (encounter_id, spawnpoint_id, pokemon_id, latitude,
                 longitude, disappear_time, individual_attack,
                 individual_defense, individual_stamina, move_1, move_2,
-                cp, cp_multiplier, weight, height, gender, form, costume,
+                cp, cp_multiplier, weight, height, gender, form, costume,is_shiny,
                 weather_boosted_condition, last_modified, verified) in res:
             ret.append({
                 "encounter_id": encounter_id,
@@ -1318,6 +1319,7 @@ class RmWrapper(DbWrapperBase):
                 "gender": gender,
                 "form": form,
                 "costume": costume,
+                "is_shiny": is_shiny,
                 "height": height,
                 "weight": weight,
                 "weather_boosted_condition": weather_boosted_condition,
@@ -1495,6 +1497,23 @@ class RmWrapper(DbWrapperBase):
                 "%s, individual_attack, individual_defense, individual_stamina, cp_multiplier, cp FROM pokemon join "
                 "trs_stats_detect_raw on pokemon.encounter_id=type_id WHERE "
                 "individual_attack>14 and individual_defense>14 and individual_stamina>14 and "
+                "trs_stats_detect_raw.type='mon' group by encounter_id "
+                "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
+                (str(query_date))
+        )
+
+        res = self.execute(query)
+        return res
+
+    def get_shiny_pokemon_spawns(self):
+        logger.debug('Fetching shiny pokemon spawns from db')
+        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:%i:00'))"
+
+        query = (
+                "SELECT encounter_id, GROUP_CONCAT(DISTINCT worker order by worker asc SEPARATOR ', '), pokemon_id, "
+                "%s, individual_attack, individual_defense, individual_stamina, cp_multiplier, cp,is_shiny FROM pokemon join "
+                "trs_stats_detect_raw on pokemon.encounter_id=type_id WHERE "
+                "is_shiny = true and "
                 "trs_stats_detect_raw.type='mon' group by encounter_id "
                 "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
                 (str(query_date))
