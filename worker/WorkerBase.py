@@ -483,9 +483,7 @@ class WorkerBase(ABC):
             time.sleep(int(self._geofix_sleeptime))
             self._geofix_sleeptime = 0
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id)
-        self.set_devicesettings_value("last_location", {"lat": self.current_location.lat,
-                                                        "lon": self.current_location.lng
-                                                        })
+        self.set_devicesettings_value("last_location", self.current_location)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
     def _init_routine(self):
