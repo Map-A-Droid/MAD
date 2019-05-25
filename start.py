@@ -1,14 +1,14 @@
 import sys
-from multiprocessing import Process
-from typing import Optional
-
-from utils.MappingManager import MappingManager, MappingManagerManager
-
 py_version = sys.version_info
 if py_version.major < 3 or (py_version.major < 3 and py_version.minor < 6):
     print("MAD requires at least python 3.6! Your version: {}.{}"
           .format(py_version.major, py_version.minor))
     sys.exit(1)
+from multiprocessing import Process
+from typing import Optional
+
+from utils.MappingManager import MappingManager, MappingManagerManager
+
 import calendar
 import datetime
 import gc
@@ -195,9 +195,8 @@ if __name__ == "__main__":
     create_folder(args.raidscreen_path)
     create_folder(args.file_path)
 
-    if not args.only_scan and not args.with_madmin and not args.only_ocr and not args.only_routes:
+    if not args.only_scan and not args.only_ocr and not args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"
-                     " -wm    ---- start madmin (browserbased monitoring/configuration)\n"
                      " -os    ---- start scanner/devicecontroller\n"
                      " -oo    ---- start OCR analysis of screenshots\n"
                      " -or    ---- only calculate routes")
@@ -222,13 +221,11 @@ if __name__ == "__main__":
         mapping_manager_stop_event = mapping_manager_manager.Event()
         mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
                                                                                  mapping_manager_stop_event, False)
-
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
-            if not args.with_madmin:
-                logger.error(
-                    "No mappings.json found - start madmin with with_madmin in config or copy example")
-                sys.exit(1)
+            logger.error(
+                "No mappings.json found - start madmin with with_madmin in config or copy example")
+            sys.exit(1)
 
             logger.error(
                 "No mappings.json found - starting setup mode with madmin.")
