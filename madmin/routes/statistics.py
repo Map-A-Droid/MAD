@@ -152,7 +152,9 @@ class statistics(object):
 
         # good_spawns avg
         good_spawns = []
+        shiny_spawns = []
         data = self._db.get_best_pokemon_spawns()
+        shinyData = self._db.get_shiny_pokemon_spawns()
         for dat in data:
             mon = "%03d" % dat[2]
             monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
@@ -166,16 +168,7 @@ class statistics(object):
                                 'lvl': lvl, 'cp': dat[8], 'img': monPic,
                                 'name': monName,
                                 'periode': datetime.datetime.fromtimestamp(dat[3]).strftime(self._datetimeformat)})
-
-        stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
-                 'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
-                 'location_info': location_info}
-        return jsonify(stats)
-
-         # shiny_spawns avg
-        shiny_spawns = []
-        data = self._db.get_shiny_pokemon_spawns()
-        for dat in data:
+        for dat in shinyData:
             mon = "%03d" % dat[2]
             monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
             monName_raw = (get_raid_boss_cp(dat[2]))
@@ -184,14 +177,14 @@ class statistics(object):
                 lvl = calculate_mon_level(dat[7])
             else:
                 lvl = dat[7]
-            shiny_spawns.append({'id': dat[2], 'shiny': data[9],
+            shiny_spawns.append({'id': dat[2], 'iv': round(calculate_iv(dat[4], dat[5], dat[6]), 0), 'shiny': data[9],
                                 'lvl': lvl, 'cp': dat[8], 'img': monPic,
                                 'name': monName,
                                 'periode': datetime.datetime.fromtimestamp(dat[3]).strftime(self._datetimeformat)})
 
         stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
-                 'quest': quest, 'stop': stop, 'usage': usage, 'shiny_spawns': shiny_spawns,
-                 'location_info': location_info}
+                 'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
+                 'location_info': location_info,'shiny_spawns': shiny_spawns,}
         return jsonify(stats)
 
     @auth_required
@@ -251,7 +244,7 @@ class statistics(object):
         else:
             loctionratio.append({'label': '', 'data': 0})
 
-        # all spaws
+        # all spawns
         all_spawns = []
         data = self._db.statistics_get_detection_count(grouped=False, worker=worker)
         all_spawns.append({'type': 'Mon', 'amount': int(data[0][2])})
