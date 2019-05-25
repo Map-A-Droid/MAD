@@ -6,13 +6,14 @@ from functools import update_wrapper, wraps
 from math import floor
 from utils.walkerArgs import parseArgs
 
-args = parseArgs()
+mapping_args = parseArgs()
+
 
 def auth_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
-        username = getattr(args, 'madmin_user', '')
-        password = getattr(args, 'madmin_password', '')
+        username = getattr(mapping_args, 'madmin_user', '')
+        password = getattr(mapping_args, 'madmin_password', '')
         if not username:
             return func(*args, **kwargs)
         if request.authorization:
