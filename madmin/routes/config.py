@@ -1,3 +1,4 @@
+import ast
 import os
 import json
 from flask import (render_template, request, redirect)
@@ -794,7 +795,9 @@ class config(object):
                 else:
                     editsettings = '<td></td>'
                 delete = '<td><a href="delsetting?type=' + str(mode) + '&area=' + str(
-                    _typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true">[Delete]</a></td>'
+                    _typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true" class="confirm" ' \
+                                                                                 'title="Do you really want to delete this?">' \
+                                                                                 '[Delete]</a></td>'
 
                 line = line + '<tr><td><b>' + \
                        str(output[_field]) + '</b></td>' + str(edit) + \
@@ -808,7 +811,8 @@ class config(object):
 
                     quickline = quickline + '<tr><td></td><td colspan="3" class="quick">' + \
                                 str(
-                                    quickadd) + ' </td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td>'
+                                    quickadd) + ' </td><td style="display: none;"></td><td style="display: none;">' \
+                                                '</td><td style="display: none;"></td>'
 
                 elif _quick:
                     for quickfield in _quick.split('|'):

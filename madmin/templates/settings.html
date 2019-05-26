@@ -52,6 +52,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
 <script>
     $(document).ready(function () {
         $("#navsetting").addClass("active");
@@ -64,6 +65,7 @@
             "bInfo": false,
             "ordering": false
         });
+        $('body').Aplus();
     });
 </script>
 
