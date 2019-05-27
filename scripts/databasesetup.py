@@ -5,8 +5,8 @@ import re
 
 print("Welcome! This script will import the right database schema for you.")
 
-monocle_url = 'https://raw.githubusercontent.com/whitewillem/PMSF/master/sql/cleandb.sql'
-rm_url = 'https://gist.githubusercontent.com/sn0opy/fb654915180cfbd07d5a30407c286995/raw/8467212e1371cc3f6a385e0bc7c3f63daa7a488a/rocketmap-osm-cec.sql'
+monocle_sql = open('../SQL/monocle.sql')
+rm_sql = open('../SQL/rocketmap.sql')
 configfile = open("../configs/config.ini", "r")
 config = configfile.read()
 
@@ -29,11 +29,12 @@ print("dbname: ",dbname.group(1))
 if db_method.group(1) not in ('rm', 'monocle'):
     sys.exit("Wrong db_method in config.ini, use ether \"rm\" or \"monocle\"")
 elif db_method.group(1) in 'rm':
-    response = requests.get(rm_url)
+    sql_file = rm_sql.read()
 else:
-    response = requests.get(monocle_url)
+    sql_file = monocle_sql.read()
 
-schema = response.text.splitlines()      
+schema = sql_file.splitlines()      
+#schema = response.text.readlines()      
 connection = mysql.connector.connect(
         host = dbip.group(1),
         port = port,
