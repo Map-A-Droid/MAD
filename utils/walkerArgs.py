@@ -162,6 +162,8 @@ def parseArgs():
                         help='Comma-separated list of area names to exclude elements from within to be sent to a webhook')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
+    parser.add_argument('-swh', '--pokestop_webhook', action='store_true', default=False,
+                        help='Activate pokestop webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
                         help='Activate weather webhook support')
     parser.add_argument('-qwh', '--quest_webhook', action='store_true', default=False,

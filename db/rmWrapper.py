@@ -812,10 +812,11 @@ class RmWrapper(DbWrapperBase):
 
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "last_updated) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+            "last_updated, active_fort_modifier) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
-            "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude)"
+            "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
+            "active_fort_modifier=VALUES(active_fort_modifier) "
         )
 
         for cell in cells:
@@ -1085,7 +1086,13 @@ class RmWrapper(DbWrapperBase):
             stop_data['last_modified_timestamp_ms']/1000).strftime("%Y-%m-%d %H:%M:%S")
         # lure isn't present anymore...
         lure = '1970-01-01 00:00:00'
-        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now
+        active_fort_modifier = None
+        if len(stop_data['active_fort_modifier']) > 0:
+            active_fort_modifier = stop_data['active_fort_modifier'][0]
+            lure = datetime.utcfromtimestamp( 30 * 60 +
+                (stop_data['last_modified_timestamp_ms']/1000)).strftime("%Y-%m-%d %H:%M:%S")
+
+        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
         now = datetime.utcfromtimestamp(
@@ -1214,6 +1221,30 @@ class RmWrapper(DbWrapperBase):
                 'task': quest_task, 'quest_template': quest_template})
 
         return questinfo
+        
+    def get_pokestops_changed_since(self, timestamp):
+        query = (
+            "SELECT pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier "
+            "FROM pokestop "
+            "WHERE DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 AND last_updated >= %s"
+        )
+
+        tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
+        res = self.execute(query, (tsdt, ))
+
+        ret = []
+        for (pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier) in res:
+            ret.append({
+                'pokestop_id': pokestop_id, 
+                'latitude': latitude, 
+                'longitude': longitude,
+                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()), 
+                'name': name, 
+                'image': image,
+                'active_fort_modifier': active_fort_modifier
+            })
+
+        return ret
 
     def submit_pokestops_details_map_proto(self, map_proto):
         logger.debug("RmWrapper::submit_pokestops_details_map_proto called")
