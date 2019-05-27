@@ -3,27 +3,21 @@ import math
 import sys
 
 import time
-from multiprocessing import JoinableQueue, Process, Queue
-from multiprocessing.managers import SyncManager
+from multiprocessing import JoinableQueue, Process
 from typing import Optional
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
 
-from db.DbFactory import DbFactory
 from mitm_receiver.MITMDataProcessor import MitmDataProcessor
 from mitm_receiver.MitmMapper import MitmMapper
+from utils.MappingManager import MappingManager
 from utils.authHelper import check_auth
 from utils.logging import LogLevelChanger, logger
 
 app = Flask(__name__)
-allowed_origins = None
-auths = None
+mapping_manager: Optional[MappingManager] = None
 application_args = None
-
-
-class MitmReceiverManager(SyncManager):
-    pass
 
 
 class EndpointAction(object):
@@ -33,19 +27,21 @@ class EndpointAction(object):
         self.response = Response(status=200, headers={})
 
     def __call__(self, *args):
-        global allowed_origins, application_args, auths
+        global application_args, mapping_manager
         origin = request.headers.get('Origin')
         abort = False
         if not origin:
             logger.warning("Missing Origin header in request")
             self.response = Response(status=500, headers={})
             abort = True
-        elif allowed_origins is not None and (origin is None or origin not in allowed_origins):
+        elif (mapping_manager.get_all_devicemappings().keys() is not None
+              and (origin is None or origin not in mapping_manager.get_all_devicemappings().keys())):
+            logger.warning("MITMReceiver request without Origin or disallowed Origin: {}".format(origin))
             self.response = Response(status=403, headers={})
             abort = True
-        elif auths is not None:  # TODO check auth properly...
+        elif mapping_manager.get_auths() is not None:  # TODO check auth properly...
             auth = request.headers.get('Authorization', None)
-            if auth is None or not check_auth(auth, application_args, auths):
+            if auth is None or not check_auth(auth, application_args, mapping_manager.get_auths()):
                 logger.warning(
                     "Unauthorized attempt to POST from {}", str(request.remote_addr))
                 self.response = Response(status=403, headers={})
@@ -69,23 +65,13 @@ class EndpointAction(object):
         return self.response
 
 
-class MITMReceiver(object):
-    def __init__(self):
-        self._data_queue: Optional[Queue] = None
-        self.worker_threads = []
-
-    def stop_receiver(self):
-        self._data_queue.join()
-        for i in range(application_args.mitmreceiver_data_workers):
-            self._data_queue.put(None)
-        for t in self.worker_threads:
-            t.join()
-
-    @staticmethod
-    def run_receiver(self, listen_ip, listen_port, mitm_mapper, args_passed, auths_passed):
-        global application_args, auths
+class MITMReceiver(Process):
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager_arg: MappingManager,
+                 db_wrapper, name=None):
+        global application_args, mapping_manager
+        Process.__init__(self, name=name)
         application_args = args_passed
-        auths = auths_passed
+        mapping_manager = mapping_manager_arg
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
         self.__mitm_mapper: MitmMapper = mitm_mapper
@@ -97,22 +83,35 @@ class MITMReceiver(object):
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/', handler=self.get_addresses,
                           methods_passed=['GET'])
         self._data_queue: JoinableQueue = JoinableQueue()
-        self._db_wrapper = DbFactory.get_wrapper(args_passed)
+        self._db_wrapper = db_wrapper
         self.worker_threads = []
         for i in range(application_args.mitmreceiver_data_workers):
-            data_processor: MitmDataProcessor = MitmDataProcessor()
-            t = Process(name='MITMReceiver-%s' % str(i), target=data_processor.received_data_worker,
-                        args=(data_processor, self._data_queue,
-                              application_args, self.__mitm_mapper))
-            t.start()
-            self.worker_threads.append(t)
+            data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, application_args,
+                                                                  self.__mitm_mapper, db_wrapper,
+                                                                  name='MITMReceiver-%s' % str(i))
+            data_processor.start()
+            self.worker_threads.append(data_processor)
+
+    def shutdown(self):
+        logger.info("MITMReceiver stop called...")
+        self._data_queue.join()
+        logger.info("Adding None to queue")
+        for i in range(application_args.mitmreceiver_data_workers):
+            self._data_queue.put(None)
+        logger.info("Trying to join workers...")
+        for t in self.worker_threads:
+            t.join()
+        self._data_queue.close()
+        logger.info("Workers stopped...")
+
+    def run(self):
         httpsrv = WSGIServer((self.__listen_ip, int(
             self.__listen_port)), self.app.wsgi_app, log=LogLevelChanger)
         try:
             httpsrv.serve_forever()
         except KeyboardInterrupt as e:
-            logger.info("Stopping MITMReceiver")
             httpsrv.close()
+            logger.info("Received STOP signal in MITMReceiver")
 
     def add_endpoint(self, endpoint=None, endpoint_name=None, handler=None, options=None, methods_passed=None):
         if methods_passed is None:
@@ -160,5 +159,3 @@ class MITMReceiver(object):
         with open('configs/addresses.json') as f:
             address_object = json.load(f)
         return json.dumps(address_object)
-
-MitmReceiverManager.register('MITMReceiver', MITMReceiver)

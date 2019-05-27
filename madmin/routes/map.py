@@ -1,8 +1,14 @@
 import json
 import os
+from typing import List, Optional
+
 from flask import (Flask, jsonify, render_template, request)
 from flask_caching import Cache
+
+from db.dbWrapperBase import DbWrapperBase
 from madmin.functions import auth_required, getCoordFloat, getBoundParameter
+from utils.MappingManager import MappingManager
+from utils.collections import Location
 from utils.questGen import generate_quest
 from pathlib import Path
 from utils.mappingParser import MappingParser
@@ -11,8 +17,8 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class map(object):
-    def __init__(self, db, args, mapping_parser, app):
-        self._db = db
+    def __init__(self, db: DbWrapperBase, args, mapping_manager: MappingManager, app):
+        self._db: DbWrapperBase = db
         self._args = args
         self._app = app
         if self._args.madmin_time == "12":
@@ -20,9 +26,7 @@ class map(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
 
-        self._mapping_parser = mapping_parser
-        self._device_mapping = self._mapping_parser.get_devicemappings()
-        self._areas = self._mapping_parser.get_areas()
+        self._mapping_manager: MappingManager = mapping_manager
 
         cache.init_app(self._app)
         self.add_route()
@@ -50,19 +54,28 @@ class map(object):
     @auth_required
     def get_position(self):
         positions = []
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+        for name, values in devicemappings.items():
+            lat = values.get("last_location", Location(0.0, 0.0)).lat
+            lon = values.get("last_location", Location(0.0, 0.0)).lng
 
-        for name, device in self._device_mapping.items():
-            try:
-                with open(os.path.join(self._args.file_path, name + '.position'), 'r') as f:
-                    latlon = f.read().strip().split(', ')
-                    worker = {
-                        'name': str(name),
-                        'lat': getCoordFloat(latlon[0]),
-                        'lon': getCoordFloat(latlon[1])
-                    }
-                    positions.append(worker)
-            except OSError:
-                pass
+            worker = {
+                "name": str(name),
+                "lat": getCoordFloat(lat),
+                "lon": getCoordFloat(lon)
+            }
+            positions.append(worker)
+            # try:
+            #     with open(os.path.join(self._args.file_path, name + '.position'), 'r') as f:
+            #         latlon = f.read().strip().split(', ')
+            #         worker = {
+            #             'name': str(name),
+            #             'lat': getCoordFloat(latlon[0]),
+            #             'lon': getCoordFloat(latlon[1])
+            #         }
+            #         positions.append(worker)
+            # except OSError:
+            #     pass
 
         return jsonify(positions)
 
@@ -70,7 +83,8 @@ class map(object):
     def get_geofence(self):
         geofences = {}
 
-        for name, area in self._areas.items():
+        areas = self._mapping_manager.get_areas()
+        for name, area in areas.items():
             geofence_include = {}
             geofence_exclude = {}
             geofence_name = 'Unknown'
@@ -128,21 +142,26 @@ class map(object):
     def get_route(self):
         routeexport = []
 
-        for name, area in self._areas.items():
-            route = []
-            try:
-                with open(os.path.join(self._args.file_path, area['routecalc'] + '.calc'), 'r') as f:
-                    for line in f.readlines():
-                        latlon = line.strip().split(', ')
-                        route.append([
-                            getCoordFloat(latlon[0]),
-                            getCoordFloat(latlon[1])
-                        ])
-                    routeexport.append(
-                        {'name': str(name), 'mode': area['mode'], 'coordinates': route})
-            # ignore missing routes files
-            except OSError:
-                pass
+        routemanager_names = self._mapping_manager.get_all_routemanager_names()
+
+        # areas = self._mapping_manager.get_areas()
+        for routemanager in routemanager_names:
+            mode = self._mapping_manager.routemanager_get_mode(routemanager)
+            route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_route(routemanager)
+
+            if route is None:
+                continue
+            route_serialized = []
+
+            for location in route:
+                route_serialized.append([
+                    getCoordFloat(location.lat), getCoordFloat(location.lng)
+                ])
+            routeexport.append({
+                "name": routemanager,
+                "mode": mode,
+                "coordinates": route_serialized
+            })
 
         return jsonify(routeexport)
 

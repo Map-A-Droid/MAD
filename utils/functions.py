@@ -11,7 +11,7 @@ with open('madmin/static/vars/template/phone.tpl', 'r') as file:
 
 
 def creation_date(path_to_file):
-    return os.path.getctime(path_to_file)
+    return os.path.getmtime(path_to_file)
 
 
 def generate_path(path):
@@ -52,6 +52,7 @@ def image_resize(image, savepath, width=None, height=None, inter=cv2.INTER_AREA)
 
     # return the resized image
     return True
+
 
 def pngtojpg(image):
     pre, _ = os.path.splitext(image)

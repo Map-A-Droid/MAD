@@ -70,7 +70,7 @@ class RouteManagerQuests(RouteManagerBase):
             # remove coords to be ignored from coords
             coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
             if len(coords) > 0:
-                self.clear_coords()
+                self._clear_coords()
                 self.add_coords_list(coords)
                 self._recalc_route_workertype()
                 self._start_calc = False

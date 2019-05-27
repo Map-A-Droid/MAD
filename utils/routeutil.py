@@ -1,6 +1,7 @@
 import datetime
 import re
 
+from utils.MappingManager import MappingManager
 from utils.logging import logger
 
 
@@ -56,12 +57,3 @@ def pre_check_value(walker_settings):
         return check_walker_value_type(walkervalue)
     return True
 
-
-def check_max_walkers_reached(walker_settings, routemanager):
-    walkermax = walker_settings.get('walkermax', False)
-    if not walkermax:
-        return True
-    reg_workers = routemanager.get_registered_workers()
-    if int(reg_workers) > int(walkermax):
-        return False
-    return True

@@ -2,10 +2,11 @@ import os
 import sys
 from threading import Thread
 
+from db.dbWrapperBase import DbWrapperBase
 from db.monocleWrapper import MonocleWrapper
 from db.rmWrapper import RmWrapper
+from utils.MappingManager import MappingManagerManager, MappingManager
 from utils.logging import initLogging, logger
-from utils.mappingParser import MappingParser
 from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
 from websocket.WebsocketServer import WebsocketServer
@@ -27,17 +28,9 @@ def generate_mappingjson():
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 
-def start_madmin(args, db_wrapper, ws_server):
+def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager):
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, ws_server)
-
-
-def load_mappings(db_wrapper):
-    mapping_parser = MappingParser(db_wrapper, args, configmode=True)
-    device_mappings = mapping_parser.get_devicemappings()
-    routemanagers = mapping_parser.get_routemanagers()
-    auths = mapping_parser.get_auths()
-    return (device_mappings, routemanagers, auths)
+    madmin_start(args, db_wrapper, ws_server, mapping_manager)
 
 
 if __name__ == "__main__":
@@ -69,19 +62,14 @@ if __name__ == "__main__":
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
-    try:
-        (device_mappings, routemanagers, auths) = load_mappings(db_wrapper)
-    except KeyError as e:
-        logger.error(
-            "Could not parse mappings. Please check those. Reason: {}", str(e))
-        sys.exit(1)
-    except RuntimeError as e:
-        logger.error(
-            "There is something wrong with your mappings. Reason: {}", str(e))
-        sys.exit(1)
+    MappingManagerManager.register('MappingManager', MappingManager)
+    mapping_manager_manager = MappingManagerManager()
+    mapping_manager_manager.start()
+    mapping_manager_stop_event = mapping_manager_manager.Event()
+    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
+                                                                             mapping_manager_stop_event, False)
 
-    ws_server = WebsocketServer(args, None, db_wrapper,
-                                routemanagers, device_mappings, auths, None, True)
+    ws_server = WebsocketServer(args, None, db_wrapper, mapping_manager, None, True)
     t_ws = Thread(name='scanner', target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()
@@ -89,6 +77,6 @@ if __name__ == "__main__":
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
     t_flask = Thread(name='madmin', target=start_madmin,
-                     args=(args, db_wrapper, ws_server))
+                     args=(args, db_wrapper, ws_server, mapping_manager,))
     t_flask.daemon = False
     t_flask.start()

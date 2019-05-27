@@ -1,7 +1,10 @@
 import math
 import time
 
-from route.RouteManagerIV import RouteManagerIV
+from db.dbWrapperBase import DbWrapperBase
+from mitm_receiver.MitmMapper import MitmMapper
+from ocr.pogoWindows import PogoWindows
+from utils.MappingManager import MappingManager
 from utils.geo import (get_distance_of_two_points_in_meters,
                        get_lat_lng_offsets_by_distance)
 from utils.logging import logger
@@ -26,9 +29,9 @@ class WorkerMITM(MITMBase):
         self._wait_for_data(timestamp)
 
     def _move_to_location(self):
-        routemanager = self._walker_routemanager
-        if routemanager is None:
+        if not self._mapping_manager.routemanager_present(self._routemanager_name):
             raise InternalStopWorkerException
+        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
         # get the distance from our current position (last) to the next gym (cur)
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
                                                         float(
@@ -37,9 +40,8 @@ class WorkerMITM(MITMBase):
                                                             self.current_location.lat),
                                                         float(self.current_location.lng))
         logger.debug('Moving {} meters to the next position', round(distance, 2))
-        delay_used = 0
-        speed = routemanager.settings.get("speed", 0)
-        max_distance = routemanager.settings.get("max_distance", None)
+        speed = routemanager_settings.get("speed", 0)
+        max_distance = routemanager_settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
@@ -50,9 +52,9 @@ class WorkerMITM(MITMBase):
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
-            delay_used = self._devicesettings.get('post_teleport_delay', 7)
+            delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
             # Test for cooldown / teleported distance TODO: check this block...
-            if self._devicesettings.get('cool_down_sleep', False):
+            if self.get_devicesettings_value('cool_down_sleep', False):
                 if distance > 2500:
                     delay_used = 8
                 elif distance > 5000:
@@ -62,8 +64,7 @@ class WorkerMITM(MITMBase):
                 logger.debug(
                     "Need more sleep after Teleport: {} seconds!", str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
-            walk_distance_post_teleport = self._devicesettings.get(
-                'walk_after_teleport_distance', 0)
+            walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
             if 0 < walk_distance_post_teleport < distance:
                 # TODO: actually use to_walk for distance
                 lat_offset, lng_offset = get_lat_lng_offsets_by_distance(
@@ -98,9 +99,9 @@ class WorkerMITM(MITMBase):
                                           self.current_location.lat, self.current_location.lng, speed)
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
-            delay_used = self._devicesettings.get('post_walk_delay', 7)
+            delay_used = self.get_devicesettings_value('post_walk_delay', 7)
         time.sleep(float(delay_used))
-        self._devicesettings["last_location"] = self.current_location
+        self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
         self._waittime_without_delays = time.time()
         return cur_time, True
@@ -120,8 +121,7 @@ class WorkerMITM(MITMBase):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             logger.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._devicesettings.get(
-                "post_turn_screen_on_delay", 7))
+            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
         cur_time = time.time()
         start_result = False
@@ -142,11 +142,13 @@ class WorkerMITM(MITMBase):
 
         return reached_raidtab
 
-    def __init__(self, args, id, last_known_state, websocket_handler, walker_routemanager,
-                 mitm_mapper, devicesettings, db_wrapper, pogoWindowManager, walker):
+    def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
+                 routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapperBase,
+                 pogo_window_manager: PogoWindows, walker):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler,
-                          walker_routemanager, devicesettings, db_wrapper=db_wrapper, NoOcr=True,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogoWindowManager, walker=walker)
+                          mapping_manager=mapping_manager, routemanager_name=routemanager_name,
+                          db_wrapper=db_wrapper, NoOcr=True,
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker)
 
         # TODO: own InjectionSettings class
         self._injection_settings = {}
@@ -156,30 +158,37 @@ class WorkerMITM(MITMBase):
         injected_settings = {}
 
         # don't try catch here, the injection settings update is called in the main loop anyway...
-        routemanager = self._walker_routemanager
-        if routemanager is None:
+        routemanager_mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+
+        ids_iv = []
+        if routemanager_mode is None:
             # worker has to sleep, just empty out the settings...
-            ids_iv = {}
+            ids_iv = []
             scanmode = "nothing"
-        elif routemanager.mode == "mon_mitm":
+        elif routemanager_mode == "mon_mitm":
             scanmode = "mons"
-            ids_iv = routemanager.settings.get("mon_ids_iv", None)
-        elif routemanager.mode == "raids_mitm":
+            routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+            if routemanager_settings is not None:
+                ids_iv = routemanager_settings.get("mon_ids_iv", None)
+        elif routemanager_mode == "raids_mitm":
             scanmode = "raids"
-            ids_iv = routemanager.settings.get("mon_ids_iv", None)
-        elif routemanager.mode == "iv_mitm" and isinstance(routemanager, RouteManagerIV):
+            routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+            if routemanager_settings is not None:
+                ids_iv = routemanager_settings.get("mon_ids_iv", None)
+        elif routemanager_mode == "iv_mitm":
             scanmode = "ivs"
-            ids_iv = routemanager.encounter_ids_left
+            ids_iv = self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_name)
         else:
             # TODO: should we throw an exception here?
-            ids_iv = {}
+            ids_iv = []
             scanmode = "nothing"
         injected_settings["scanmode"] = scanmode
 
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv:
             (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(
-                routemanager.geofence_helper, self._latest_encounter_update)
+                    self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
+                    self._latest_encounter_update)
             if encounter_ids:
                 logger.debug("Found {} new encounter_ids", len(encounter_ids))
                 for encounter_id, disappear in encounter_ids.items():
@@ -192,7 +201,7 @@ class WorkerMITM(MITMBase):
 
             remove = []
             for key, value in self._encounter_ids.items():
-                if (value < max_age):
+                if value < max_age:
                     remove.append(key)
                     logger.debug("removing encounterid: {} mon despawned", key)
 
@@ -222,8 +231,7 @@ class WorkerMITM(MITMBase):
             # TODO: int vs str-key?
             latest_proto = latest.get(proto_to_wait_for, None)
 
-            current_routemanager = self._walker_routemanager
-            current_mode = current_routemanager.mode
+            mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
             latest_timestamp = latest_proto.get("timestamp", 0)
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
@@ -231,7 +239,7 @@ class WorkerMITM(MITMBase):
                 if latest_data is None:
                     time.sleep(0.5)
                     return LatestReceivedType.UNDEFINED
-                elif current_mode in ["mon_mitm", "iv_mitm"]:
+                elif mode in ["mon_mitm", "iv_mitm"]:
                     # check if the GMO contains mons
                     for data_extract in latest_data['payload']['cells']:
                         for WP in data_extract['wild_pokemon']:
@@ -242,7 +250,7 @@ class WorkerMITM(MITMBase):
                     if data_requested is None:
                         logger.debug("No spawnpoints in data requested")
                         time.sleep(1)
-                elif current_mode in ["raids_mitm"]:
+                elif mode in ["raids_mitm"]:
                     for data_extract in latest_data['payload']['cells']:
                         for forts in data_extract['forts']:
                             if forts['id']:

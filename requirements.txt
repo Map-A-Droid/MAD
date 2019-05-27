@@ -8,7 +8,7 @@ imutils
 matplotlib
 mysql-connector
 mysqlclient
-websockets
+websockets>=7
 requests
 geopy
 s2sphere
