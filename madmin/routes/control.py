@@ -3,7 +3,10 @@ import time
 import os
 import cv2
 from flask import (render_template, request, redirect)
+
+from db.dbWrapperBase import DbWrapperBase
 from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache)
+from utils.MappingManager import MappingManager
 from utils.functions import (creation_date, generate_phones,
                              image_resize)
 
@@ -12,8 +15,8 @@ from utils.madGlobals import ScreenshotType
 
 
 class control(object):
-    def __init__(self, db, args, mapping_parser, websocket, logger, app):
-        self._db = db
+    def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app):
+        self._db: DbWrapperBase = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
@@ -21,15 +24,13 @@ class control(object):
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._adb_connect = ADBConnect(self._args)
 
-        self._mapping_parser = mapping_parser
-        self._device_mapping = self._mapping_parser.get_devicemappings()
+        self._mapping_manager: MappingManager = mapping_manager
 
         self._ws_server = websocket
         self._ws_connected_phones: list = []
         self._logger = logger
         self._app = app
         self.add_route()
-
 
     def add_route(self):
         routes = [
@@ -58,11 +59,13 @@ class control(object):
             phones = self._ws_server.get_reg_origins().copy()
         else:
             phones = []
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
         for phonename in phones:
             ws_connected_phones.append(phonename)
             add_text = ""
             adb_option = False
-            adb = self._device_mapping[phonename].get('adb', False)
+            adb = devicemappings.get(phonename, {}).get('adb', False)
             if adb is not None and self._adb_connect.check_adb_status(adb) is not None:
                 self._ws_connected_phones.append(adb)
                 adb_option = True
@@ -70,7 +73,7 @@ class control(object):
             else:
                 self._ws_connected_phones.append(adb)
 
-            filename = generate_device_screenshot_path(phonename, self._device_mapping, self._args)
+            filename = generate_device_screenshot_path(phonename, devicemappings, self._args)
             if os.path.isfile(filename):
                 screenshot_ending: str = ".jpg"
                 image_resize(filename, os.path.join(
@@ -87,12 +90,13 @@ class control(object):
 
         for phonename in self._adb_connect.return_adb_devices():
             if phonename.serial not in self._ws_connected_phones:
-                for pho in self._device_mapping:
-                    if phonename.serial == self._device_mapping[pho].get('adb', False):
+                devicemappings = self._mapping_manager.get_all_devicemappings()
+                for pho in devicemappings:
+                    if phonename.serial == devicemappings[pho].get('adb', False):
                         adb_option = True
                         add_text = '<b>ADB - no WS<img src="/static/warning.png" width="20px" ' \
                                    'alt="NO websocket connection!"></b>'
-                        filename = generate_device_screenshot_path(pho, self._device_mapping, self._args)
+                        filename = generate_device_screenshot_path(pho, devicemappings, self._args)
                         if os.path.isfile(filename):
                             image_resize(filename, os.path.join(
                                 self._args.temp_path, "madmin"), width=250)
@@ -116,23 +120,25 @@ class control(object):
         origin = request.args.get('origin')
         useadb = request.args.get('adb', False)
         self._logger.info('MADmin: Making screenshot ({})', str(origin))
-        adb = self._device_mapping[origin].get('adb', False)
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
+        adb = devicemappings.get(origin, {}).get('adb', False)
 
         if useadb == 'True' and self._adb_connect.make_screenshot(adb, origin, "jpg"):
             self._logger.info('MADMin: ADB screenshot successfully ({})', str(origin))
         else:
 
             screenshot_type: ScreenshotType = ScreenshotType.JPEG
-            if self._device_mapping[origin].get("screenshot_type", "jpeg") == "png":
+            if devicemappings.get(origin, {}).get("screenshot_type", "jpeg") == "png":
                 screenshot_type = ScreenshotType.PNG
 
-            screenshot_quality: int = self._device_mapping[origin].get("screenshot_quality", 80)
+            screenshot_quality: int = devicemappings.get(origin, {}).get("screenshot_quality", 80)
 
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.get_screenshot(generate_device_screenshot_path(origin, self._device_mapping, self._args),
+            temp_comm.get_screenshot(generate_device_screenshot_path(origin, devicemappings, self._args),
                                      screenshot_quality, screenshot_type)
 
-        filename = generate_device_screenshot_path(origin, self._device_mapping, self._args)
+        filename = generate_device_screenshot_path(origin, devicemappings, self._args)
         image_resize(filename, os.path.join(self._args.temp_path, "madmin"), width=250)
 
         creationdate = datetime.datetime.fromtimestamp(
@@ -146,14 +152,15 @@ class control(object):
         click_x = request.args.get('clickx')
         click_y = request.args.get('clicky')
         useadb = request.args.get('adb')
+        devicemappings = self._mapping_manager.get_all_devicemappings()
 
-        filename = generate_device_screenshot_path(origin, self._device_mapping, self._args)
+        filename = generate_device_screenshot_path(origin, devicemappings, self._args)
         img = cv2.imread(filename, 0)
         height, width = img.shape[:2]
 
         real_click_x = int(width / float(click_x))
         real_click_y = int(height / float(click_y))
-        adb = self._device_mapping[origin].get('adb', False)
+        adb = devicemappings.get(origin, {}).get('adb', False)
 
         if useadb == 'True' and self._adb_connect.make_screenclick(adb, origin, real_click_x, real_click_y):
             self._logger.info('MADMin: ADB screenclick successfully ({})', str(origin))
@@ -175,7 +182,9 @@ class control(object):
         click_ye = request.args.get('clickye')
         useadb = request.args.get('adb')
 
-        filename = generate_device_screenshot_path(origin, self._device_mapping, self._args)
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
+        filename = generate_device_screenshot_path(origin, devicemappings, self._args)
         img = cv2.imread(filename, 0)
         height, width = img.shape[:2]
 
@@ -183,7 +192,7 @@ class control(object):
         real_click_y = int(height / float(click_y))
         real_click_xe = int(width / float(click_xe))
         real_click_ye = int(height / float(click_ye))
-        adb = self._device_mapping[origin].get('adb', False)
+        adb = devicemappings.get(origin, {}).get('adb', False)
 
         if useadb == 'True' and self._adb_connect.make_screenswipe(adb, origin, real_click_x,
                                                                    real_click_y, real_click_xe, real_click_ye):
@@ -202,7 +211,9 @@ class control(object):
     def quit_pogo(self):
         origin = request.args.get('origin')
         useadb = request.args.get('adb')
-        adb = self._device_mapping[origin].get('adb', False)
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
+        adb = devicemappings.get(origin, {}).get('adb', False)
         self._logger.info('MADmin: Restart Pogo ({})', str(origin))
         if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
             self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
@@ -218,10 +229,13 @@ class control(object):
     def restart_phone(self):
         origin = request.args.get('origin')
         useadb = request.args.get('adb')
-        adb = self._device_mapping[origin].get('adb', False)
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
+        adb = devicemappings.get(origin, {}).get('adb', False)
         self._logger.info('MADmin: Restart Phone ({})', str(origin))
-        if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin,
-                                                               "am broadcast -a android.intent.action.BOOT_COMPLETED"):
+        if (useadb == 'True' and
+                self._adb_connect.send_shell_command(
+                        adb, origin,"am broadcast -a android.intent.action.BOOT_COMPLETED")):
             self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
@@ -231,10 +245,11 @@ class control(object):
     @auth_required
     def send_gps(self):
         origin = request.args.get('origin')
+        devicemappings = self._mapping_manager.get_all_devicemappings()
 
         useadb = request.args.get('adb')
         if useadb is None:
-            useadb = self._device_mapping[origin].get('adb', False)
+            useadb = devicemappings.get(origin, {}).get('adb', False)
 
         coords = request.args.get('coords').replace(' ', '').split(',')
         sleeptime = request.args.get('sleeptime', "0")
@@ -261,7 +276,9 @@ class control(object):
         origin = request.args.get('origin')
         useadb = request.args.get('adb')
         text = request.args.get('text')
-        adb = self._device_mapping[origin].get('adb', False)
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
+        adb = devicemappings.get(origin, {}).get('adb', False)
         if len(text) == 0:
             return 'Empty text'
         self._logger.info('MADmin: Send text ({})', str(origin))
@@ -279,7 +296,9 @@ class control(object):
         origin = request.args.get('origin')
         useadb = request.args.get('adb')
         command = request.args.get('command')
-        adb = self._device_mapping[origin].get('adb', False)
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
+        adb = devicemappings.get(origin, {}).get('adb', False)
         self._logger.info('MADmin: Sending Command ({})', str(origin))
         if command == 'home':
             cmd = "input keyevent 3"

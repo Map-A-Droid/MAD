@@ -59,7 +59,6 @@
 # other settings
 ######################
 
-#cleanup_age:                # Delete Screenshots older than X minutes (Default: 1440. 0 to disable)
 #last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
 #npValue:                    # Matching Zoom - Max Value (Default: 0.5 [for width = 720px]. 1.5 for width = 1080px)
 #npFrom:                     # Matching Zoom - Start Value (Default: 0.2 [for width = 720px]. 0.5 for width = 1080px)
@@ -126,6 +125,9 @@
 ######################
 #no_file_logs                # Disable file logging (Default: file logging is enabled by default)
 #log_path:                   # Defines directory to save log files to (Default: logs/)
-#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN> with the instance's status name (Default: Default: %%Y%%m%%d_%%H%%M_<SN>.log)
-#log_file_rotation_size:     # Defines the maximum size in MB for single log files. (Default: )
-#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs. Custom log levels like DEBUG[1-5] can be used too
+#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN> 
+                             #  with the instance's status name (Default: Default: %Y%m%d_%H%M_<SN>.log)
+#log_file_rotation:          # This parameter expects a human-readable value like '18:00', 'sunday', 'weekly', 'monday 
+                             #  at 12:00' or a maximum file size like '100 MB' or '0.5 GB'. Set to '0' to disable completely. (Default: 50 MB)
+#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs. 
+                             #  Custom log levels like DEBUG[1-5] can be used too

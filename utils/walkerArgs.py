@@ -245,9 +245,11 @@ def parseArgs():
                               " by the -v command to show DEBUG logs."
                               " Custom log levels like DEBUG[1-5] can"
                               " be used too."))
-    parser.add_argument("--log_file_rotation_size", default="50",
-                        help=("Maximum log file size before rotation creates a"
-                              " new log file. Set to 0 to disable. (Default: 50)"))
+    parser.add_argument("--log_file_rotation", default="50 MB",
+                        help=("This parameter expects a human-readable value like"
+                              " '18:00', 'sunday', 'weekly', 'monday at 12:00' or"
+                              " a maximum file size like '100 MB' or '0.5 GB'."
+                              " Set to '0' to disable completely. (Default: 50 MB)"))
     parser.add_argument("--log_file_level",
                         help="File logging level. See description for --log_level.")
     parser.add_argument("--log_file_retention", default="10",
@@ -260,9 +262,9 @@ def parseArgs():
                               " python time module docs for details."
                               " Default: %%Y%%m%%d_%%H%%M_<SN>.log."))
 
-    parser.add_argument('-sn', '--status-name', default=str(os.getpid()),
-                        help=('Enable status page database update using ' +
-                              'STATUS_NAME as main worker name.'))
+    parser.add_argument("-sn", "--status-name", default="mad",
+                        help=("Enable status page database update using"
+                              " STATUS_NAME as main worker name."))
 
     parser.add_argument('-ah', '--auto_hatch', action='store_true', default=False,
                         help='Activate auto hatch of level 5 eggs')
