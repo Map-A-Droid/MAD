@@ -4,7 +4,6 @@
 ![MAD-Banner](static/banner_small_web.png)
 
 Map'A'Droid is a scanner for PoGo based on Android devices.
-Visit our [Wiki Page](https://github.com/Map-A-Droid/MAD/wiki for an installation guide and more.
 
 ## Information
 * [Website](https://www.maddev.de/) - For general information
