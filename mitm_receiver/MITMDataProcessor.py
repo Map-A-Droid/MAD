@@ -22,7 +22,7 @@ class MitmDataProcessor(Process):
             try:
                 item = self.__queue.get()
 
-                items_left = self.__queue.qsize()
+                items_left = 10
                 logger.debug(
                     "MITM data processing worker retrieved data. Queue length left afterwards: {}", str(items_left))
                 if items_left > 50:

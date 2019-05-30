@@ -88,6 +88,15 @@ class MappingManager:
             if self._devicemappings.get(device_name, None) is not None:
                 self._devicemappings[device_name][key] = value
 
+    def get_devicesettings_of(self, device_name: str) -> Optional[dict]:
+        with self.__mappings_mutex:
+            return self._devicemappings.get(device_name, None).get('settings', None)
+
+    def set_devicesetting_value_of(self, device_name: str, key: str, value):
+        with self.__mappings_mutex:
+            if self._devicemappings.get(device_name, None) is not None:
+                self._devicemappings[device_name]['settings'][key] = value
+
     def get_all_devicemappings(self) -> Optional[dict]:
         with self.__mappings_mutex:
             return self._devicemappings
@@ -444,6 +453,18 @@ class MappingManager:
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
 
+            # restoring old devicesettings
+            for dev in self._devicemappings:
+                if "last_location" in self._devicemappings[dev]['settings']:
+                    devicemappings_tmp[dev]['settings']["last_location"] = \
+                        self._devicemappings[dev]['settings']["last_location"]
+                if "walker_area_index" in self._devicemappings[dev]['settings']:
+                    devicemappings_tmp[dev]['settings']["walker_area_index"] = \
+                        self._devicemappings[dev]['settings']["walker_area_index"]
+                if "last_mode" in self._devicemappings[dev]['settings']:
+                    devicemappings_tmp[dev]['settings']["last_mode"] = \
+                        self._devicemappings[dev]['settings']["last_mode"]
+
             with self.__mappings_mutex:
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp
@@ -455,6 +476,7 @@ class MappingManager:
                 self._areas = self.__get_latest_areas()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
+
         logger.warning("Mappings have been updated")
 
     def __file_watcher(self, ws_server, webhook_worker):

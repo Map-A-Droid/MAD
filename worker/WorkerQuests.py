@@ -605,7 +605,7 @@ class WorkerQuests(MITMBase):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
                     self.clear_thread_task = 2
                     break
-                self._close_gym(self._delay_add)
+                # self._close_gym(self._delay_add)
 
                 self._turn_map(self._delay_add)
                 time.sleep(1)

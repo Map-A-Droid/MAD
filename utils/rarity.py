@@ -62,7 +62,7 @@ class Rarity(object):
             logger.info('Updated dynamic rarity. It took {}s for {} entries.', round(
                 duration, 2), total)
             logger.debug(
-                'Waiting %d minutes before next dynamic rarity update.', refresh_time_sec / 60)
+                'Waiting {} minutes before next dynamic rarity update.', refresh_time_sec / 60)
             time.sleep(refresh_time_sec)
 
     def rarity_by_id(self, pokemonid):

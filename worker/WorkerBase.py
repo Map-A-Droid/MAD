@@ -81,7 +81,7 @@ class WorkerBase(ABC):
         self.workerstart = None
 
     def set_devicesettings_value(self, key: str, value):
-        self._mapping_manager.set_devicemapping_value_of(self._id, key, value)
+        self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
 
     def get_devicesettings_value(self, key: str, default_value: object = None):
         devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
@@ -483,7 +483,6 @@ class WorkerBase(ABC):
             time.sleep(int(self._geofix_sleeptime))
             self._geofix_sleeptime = 0
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id)
-        self.set_devicesettings_value("last_location", self.current_location)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
     def _init_routine(self):
