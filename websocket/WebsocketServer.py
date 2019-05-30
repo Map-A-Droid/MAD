@@ -516,38 +516,6 @@ class WebsocketServer(object):
         self.__requests.pop(message_id)
         self.__requests_mutex.release()
 
-    def update_settings(self, routemanagers, device_mappings, auths):
-
-        print(self.__mapping_manager.get_all_devicemappings())
-
-        for dev in self.__mapping_manager.get_all_devicemappings():
-            if "last_location" in self.__device_mappings[dev]['settings']:
-                self.__mapping_manager.set_devicesetting_value_of(dev, 'last_location', walker_index + 1)
-                device_mappings[dev]['settings']["last_location"] = \
-                    self.__device_mappings[dev]['settings']["last_location"]
-            if "walker_area_index" in self.__device_mappings[dev]['settings']:
-                device_mappings[dev]['settings']["walker_area_index"] = \
-                    self.__device_mappings[dev]['settings']["walker_area_index"]
-            if "last_mode" in self.__device_mappings[dev]['settings']:
-
-                device_mappings[dev]['settings']["last_mode"] = \
-                    self.__device_mappings[dev]['settings']["last_mode"]
-        self.__current_users_mutex.acquire()
-        # save reference to old routemanagers to stop them
-        old_routemanagers = routemanagers
-        self.__device_mappings = device_mappings
-        self.__routemanagers = routemanagers
-        self.__auths = auths
-        for id, worker in self.__current_users.items():
-            logger.info('Stopping worker {} to apply new mappings.', id)
-            worker[1].stop_worker()
-        self.__current_users_mutex.release()
-        for routemanager in old_routemanagers.keys():
-            area = routemanagers.get(routemanager, None)
-            if area is None:
-                continue
-            area["routemanager"].stop_routemanager()
-
     def get_reg_origins(self):
         return self.__current_users
 

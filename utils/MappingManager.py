@@ -453,14 +453,11 @@ class MappingManager:
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
 
-            # restoring old devicesettings
+            logger.info("Restoring old devicesettings")
             for dev in self._devicemappings:
                 if "last_location" in self._devicemappings[dev]['settings']:
                     devicemappings_tmp[dev]['settings']["last_location"] = \
                         self._devicemappings[dev]['settings']["last_location"]
-                if "walker_area_index" in self._devicemappings[dev]['settings']:
-                    devicemappings_tmp[dev]['settings']["walker_area_index"] = \
-                        self._devicemappings[dev]['settings']["walker_area_index"]
                 if "last_mode" in self._devicemappings[dev]['settings']:
                     devicemappings_tmp[dev]['settings']["last_mode"] = \
                         self._devicemappings[dev]['settings']["last_mode"]
@@ -477,7 +474,7 @@ class MappingManager:
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
 
-        logger.warning("Mappings have been updated")
+        logger.info("Mappings have been updated")
 
     def __file_watcher(self, ws_server, webhook_worker):
         # We're on a 20-second timer.

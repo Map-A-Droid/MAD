@@ -52,6 +52,9 @@ class WorkerQuests(MITMBase):
         self._start_inventory_clear = Event()
         self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
+        self._clear_quest_counter = 0
+        # initial cleanup old quests
+        self.clear_thread_task = 2
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -590,7 +593,11 @@ class WorkerQuests(MITMBase):
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
                 logger.info('Received new Quest or have previously spun the stop')
-                self.clear_thread_task = 2
+                self._clear_quest_counter += 1
+                if self._clear_quest_counter == 3:
+                    logger.info('Getting 3 quests - clean them')
+                    self.clear_thread_task = 2
+                    self._clear_quest_counter = 0
                 break
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
                   FortSearchResultTypes.OUT_OF_RANGE):
