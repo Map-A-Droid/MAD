@@ -3,6 +3,14 @@ import math
 from utils.collections import Location
 
 
+def get_lat_lng_offsets_by_distance(distance):
+    earth = 6373.0
+    m = (1 / ((2 * math.pi / 360) * earth)) / 1000  # meter in degree
+    lat_offset = distance * m
+    lng_offset = (distance * m) / math.cos((math.pi / 180))
+    return lat_offset, lng_offset
+
+
 def get_distance_of_two_points_in_meters(startLat, startLng, destLat, destLng):
     # approximate radius of earth in km
     R = 6373.0
@@ -15,7 +23,8 @@ def get_distance_of_two_points_in_meters(startLat, startLng, destLat, destLng):
     dlon = lon2 - lon1
     dlat = lat2 - lat1
 
-    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * math.cos(lat2) * math.sin(dlon / 2) ** 2
+    a = math.sin(dlat / 2) ** 2 + math.cos(lat1) * \
+        math.cos(lat2) * math.sin(dlon / 2) ** 2
     c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
 
     distance = R * c

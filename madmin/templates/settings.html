@@ -3,7 +3,8 @@
 {% block header %}
 <style>
     input[type=text],
-    select {
+    select,
+    textarea {
         width: 100%;
         padding: 12px 20px;
         margin: 8px 0;
@@ -34,35 +35,37 @@
     }
 
     table.dataTable {
-        width: 90%;
+        width: 100%;
     }
 
     td.quick {
         font-style: italic;
         font-size: 9px;
     }
+
+    td.header {
+    background-color: lightgrey;
+    }
+
+}
 </style>
 {% endblock %}
 
 {% block scripts %}
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
 <script>
     $(document).ready(function () {
         $("#navsetting").addClass("active");
 
         $("table").addClass("table");
         $('table').DataTable({
-            drawCallback: function () {
-                $("img.lazy").lazyload();
-            },
             "autoWidth": true,
             "searching": false,
             "paging": false,
             "bInfo": false,
-            "ordering": false,
-            columnDefs: [
-                { width: '25%', targets: 0 }
-            ]
+            "ordering": false
         });
+        $('body').Aplus();
     });
 </script>
 

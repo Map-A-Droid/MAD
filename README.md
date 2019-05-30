@@ -3,21 +3,23 @@
 
 ![MAD-Banner](static/banner_small_web.png)
 
-Map'A'Droid is a Raid & Pokémon scanner for Pokémon GO, based on Android devices.
+Map'A'Droid is a scanner for PoGo based on Android devices.
 
 ## Information
 * [Website](https://www.maddev.de/) - For general information
 * [Discord](https://discord.gg/7TT58jU) - For general support
 * [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
 * [Supported Devices](https://github.com/Map-A-Droid/MAD-device-list) - Supported devices by MAD
+* [Wiki Page](https://github.com/Map-A-Droid/MAD/wiki) - For new stuff & How-to guides.
 
 ## Requirements
 - Python **3.6**
 - MySQL database, with RocketMap or Monocle structure
 - Rooted Android device
 - PogoDroid token (only necessary for MITM Mode), obtainable [via Patreon](https://www.patreon.com/user?u=14159560)
+- Game running in English, Deutsch or Français (for Quest mode)
 
->MAD is compatible with [this Monocle schema](https://github.com/whitewillem/PMSF/blob/master/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
+>MAD is compatible with [this Monocle schema](https://raw.githubusercontent.com/whitewillem/PMSF/master/sql/cleandb.sql) and [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap). Please use them or change your database accordingly.
 
 ## Setup
 ### Ubuntu/Debian
@@ -37,25 +39,25 @@ Make sure you're in the directory of MAD and run:
 ```bash
 pip3 install -r requirements.txt
 ```
-If you want to use OCR to scan raids, run with `requirements_ocr.txt` and install additional packages: `apt-get install tesseract-ocr python-opencv`
+If you want to use OCR to scan raids or scanning for Quests, run with `requirements_ocr.txt` and install additional packages: `apt-get install tesseract-ocr python-opencv`
 
 
 ## MAD concept
 ![MAD concept graphic](static/concept.jpg)
 
-**RGC (Remote GPS Controller)** is responsible for receiving the GPS commands from your server, taking screenshots (if OCR is enabled) and managing Pokémon Go on the phone (restarting, detecting if POGO is opened, etc)
+**RGC (Remote GPS Controller)** is responsible for receiving the GPS commands from your server, taking screenshots (if OCR is enabled) and managing PoGo on the phone (restarting, detecting if PoGo is opened, etc)
 
-**PogoDroid** is the MITM (Man in the middle) App for reading the data from Pokémon Go and send it to your server. If you use the OCR method, you don’t need this app.
+**PogoDroid** is the MITM (Man in the middle) App for reading the data from the game and send it to your server. If you use the OCR method, you don’t need this app.
 
 ## Configuration
-Inside the `config` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
+Inside the `configs` folder, duplicate the `config.ini.example` and rename it to `config.ini`. Then populate it with at least the database and websocket configurations.
 
 ### Mappings.json
 In order to map devices to areas, do the same with `mappings_example.json` and rename it to `mappings.json`
 Refer to mappings_example.json for examples or run `python3 start.py -wm` and open the MADMIN mappings editor (http://localhost:5000).
 
 #### IV
-MAD can scan for IVs with two different modes: `iv_mitm` scans already scanned Pokémon specified by `mon_ids_iv`. A typical usecase is to just IV check rare spawns with it. The second mode is `mon_mitm`. That is just like regular Pokémon scanning but every encounter defined in `mon_ids_iv` gets IV checked automatically with the same scanner - one encounter per location. Every other config parameter is explained in MADmin. 
+MAD can scan for IVs with two different modes: `iv_mitm` scans already scanned mon specified by `mon_ids_iv`. A typical usecase is to just IV check rare spawns with it. The second mode is `mon_mitm`. That is just like regular mon scanning but every encounter defined in `mon_ids_iv` gets IV checked automatically with the same scanner - one encounter per location. Every other config parameter is explained in MADmin. 
 
 ### Geofence
 Each area *requires* `geofence_included`. A geofence can easily be created with [geo.jesparke.net](http://geo.jasparke.net/)
@@ -64,8 +66,8 @@ Each area *requires* `geofence_included`. A geofence can easily be created with 
 ## Phone Setup
 #### Rooting
 1. Ensure your phone has an unlocked bootloader and is able to support root. [Lineage OS](https://lineageos.org/) is a good place to start for a custom ROM and they have good installation instruction for each device.  
-2. Install [Magisk](https://www.xda-developers.com/how-to-install-magisk/) to root the phone via recovery. Repackage the MagiskManager App and add Pokémon Go to Magisk Hide. Make sure to delete the folder `/sdcard/MagiskManager` after repackaging.
->It's necessary to pass the Safetynet check to run Pokémon Go on rooted phones. Check the Safetynet status in the MagiskManager App.
+2. Install [Magisk](https://www.xda-developers.com/how-to-install-magisk/) to root the phone via recovery. Repackage the MagiskManager App and add PoGo to Magisk Hide. Make sure to delete the folder `/sdcard/MagiskManager` after repackaging.
+>It's necessary to pass the Safetynet check to run the game on rooted phones. Check the Safetynet status in the MagiskManager App.
 
 #### Applications
 Install [RGC (Remote GPS Controller)](https://github.com/Map-A-Droid/MAD/blob/master/APK/RemoteGpsController.apk) and [PogoDroid](https://www.maddev.de/apk/PogoDroid.apk) (only necessary for MITM mode) on the phone. RGC must be installed as a system app. Best practice is to convert it to a system app with [link2sd](https://play.google.com/store/apps/details?id=com.buak.Link2SD).
@@ -90,7 +92,6 @@ If you are experiencing weird and quick GPS jumps to the actual location from th
  - Set the device to GPS only
  - Disable Wi-Fi location (same settings tab as GPS)
  - Try flightmode with only Wi-Fi enabled
- - Disable FusedLocation inside Google Play Services via [Service Disabler](https://play.google.com/store/apps/details?id=com.kunkunsoft.rootservicedisabler)
 
 ## Launching MAD
 Make sure you're in the directory of MAD and run:
