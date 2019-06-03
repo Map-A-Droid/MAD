@@ -42,7 +42,7 @@ class DbWrapperBase(ABC):
                                         **self.dbconfig)
         self.pool_mutex.release()
 
-    def _check_column_exists(self, table, column):
+    def check_column_exists(self, table, column):
         query = (
             "SELECT count(*) "
             "FROM information_schema.columns "
@@ -59,7 +59,7 @@ class DbWrapperBase(ABC):
         return int(self.execute(query, vals)[0][0])
 
     def _check_create_column(self, field):
-        if self._check_column_exists(field["table"], field["column"]) == 1:
+        if self.check_column_exists(field["table"], field["column"]) == 1:
             return
 
         alter_query = (
@@ -70,7 +70,7 @@ class DbWrapperBase(ABC):
 
         self.execute(alter_query, commit=True)
 
-        if self._check_column_exists(field["table"], field["column"]) == 1:
+        if self.check_column_exists(field["table"], field["column"]) == 1:
             logger.info("Successfully added '{}.{}' column",
                         field["table"], field["column"])
             return
