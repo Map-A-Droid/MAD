@@ -3,8 +3,7 @@ import sys
 from threading import Thread
 
 from db.dbWrapperBase import DbWrapperBase
-from db.monocleWrapper import MonocleWrapper
-from db.rmWrapper import RmWrapper
+from db.DbFactory import DbFactory
 from utils.MappingManager import MappingManagerManager, MappingManager
 from utils.logging import initLogging, logger
 from utils.version import MADVersion
@@ -45,13 +44,7 @@ if __name__ == "__main__":
     if not os.path.exists(filename):
         generate_mappingjson()
 
-    if args.db_method == "rm":
-        db_wrapper = RmWrapper(args)
-    elif args.db_method == "monocle":
-        db_wrapper = MonocleWrapper(args)
-    else:
-        logger.error("Invalid db_method in config. Exiting")
-        sys.exit(1)
+    db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
 
     db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
