@@ -29,7 +29,8 @@ Relation = collections.namedtuple(
 class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None):
+                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+                 level: bool = False):
         self.db_wrapper: DbWrapperBase = db_wrapper
         self.init: bool = init
         self.name: str = name
@@ -48,6 +49,7 @@ class RouteManagerBase(ABC):
         self._rounds = {}
         self._positiontyp = {}
         self._coords_to_be_ignored = set()
+        self._level = level
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
@@ -142,6 +144,22 @@ class RouteManagerBase(ABC):
                 # TODO: handle differently?
                 logger.info("Worker {} failed unregistering from routemanager {} since subscription was previously lifted", str(
                     worker_name), str(self.name))
+            if len(self._workers_registered) == 0 and self._is_started:
+                logger.info(
+                    "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
+                self._quit_route()
+        finally:
+            self._workers_registered_mutex.release()
+
+    def stop_worker(self):
+        self._workers_registered_mutex.acquire()
+        try:
+            for worker in self._workers_registered:
+                logger.info("Worker {} stopped from routemanager {}", str(
+                    worker), str(self.name))
+                worker.stop_worker()
+                self._workers_registered.remove(worker)
+                del self._rounds[worker]
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
@@ -540,3 +558,6 @@ class RouteManagerBase(ABC):
 
     def get_current_route(self) -> List[Location]:
         return self._route
+
+    def get_level_mode(self):
+        return self._level

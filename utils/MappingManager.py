@@ -195,6 +195,14 @@ class MappingManager:
             else:
                 return False
 
+    def routemanager_get_level(self, routemanager_name: str) -> bool:
+        with self.__mappings_mutex:
+            routemanager: dict = self._routemanagers.get(routemanager_name, None)
+            if routemanager is not None:
+                return routemanager.get("routemanager").get_level_mode()
+            else:
+                return False
+
     def routemanager_get_mode(self, routemanager_name: str) -> Optional[str]:
         with self.__mappings_mutex:
             routemanager: dict = self._routemanagers.get(routemanager_name, None)
@@ -300,6 +308,7 @@ class MappingManager:
                                                                  mode=mode, settings=area.get("settings", None),
                                                                  init=area.get("init", False),
                                                                  name=area.get("name", "unknown"),
+                                                                 level=area.get("level", False),
                                                                  coords_spawns_known=area.get(
                                                                          "coords_spawns_known", False),
                                                                  routefile=area["routecalc"]
@@ -467,6 +476,16 @@ class MappingManager:
                 self._devicemappings = devicemappings_tmp
                 self._routemanagers = routemanagers_tmp
                 self._auths = auths_tmp
+
+            # stopping routemanager / worker
+            for routemanager in routemanagers_tmp.keys():
+
+                area = routemanagers_tmp.get(routemanager, None)
+                if area is None:
+                    continue
+                area["routemanager"].stop_worker()
+                area["routemanager"].stop_routemanager()
+
         else:
             with self.__mappings_mutex:
                 self._routemanagers = self.__get_latest_routemanagers()
@@ -499,12 +518,6 @@ class MappingManager:
                     logger.info(
                             'Change found in {}. Updating device mappings.', filename)
                     self.__update()
-                    # logger.info('Propagating new mappings to all clients.')
-                    # ws_server.update_settings(
-                    #         routemanagers, device_mappings, auths)
-
-                    # if webhook_worker is not None:
-                    #     webhook_worker.update_settings(routemanagers)
                 else:
                     logger.debug('No change found in {}.', filename)
             except KeyboardInterrupt as e:

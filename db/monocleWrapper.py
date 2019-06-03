@@ -1078,17 +1078,20 @@ class MonocleWrapper(DbWrapperBase):
             logger.debug('Pokestop has not a quest with CURDATE()')
             return False
 
-    def stop_from_db_without_quests(self, geofence_helper):
+    def stop_from_db_without_quests(self, geofence_helper, levelmode):
         logger.debug("MonocleWrapper::stop_from_db_without_quests called")
-        questinfo = {}
 
         query = (
             "SELECT pokestops.lat, pokestops.lon "
             "FROM pokestops left join trs_quest on "
-            "pokestops.external_id = trs_quest.GUID where "
-            "DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
-            "or trs_quest.GUID IS NULL"
+            "pokestops.external_id = trs_quest.GUID  "
         )
+
+        if not levelmode:
+            query_addon = "where DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "\
+                          "or trs_quest.GUID IS NULL"
+
+            query = query + query_addon
 
         res = self.execute(query)
         list_of_coords = []

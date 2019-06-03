@@ -55,6 +55,9 @@ class WorkerQuests(MITMBase):
         self._clear_quest_counter = 0
         # initial cleanup old quests
         self.clear_thread_task = 2
+        self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        if self._level_mode:
+            logger.info("Starting Level Mode")
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -86,7 +89,8 @@ class WorkerQuests(MITMBase):
     def _move_to_location(self):
         if not self._mapping_manager.routemanager_present(self._routemanager_name):
             raise InternalStopWorkerException
-        if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
+        if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng) \
+                and not self._level_mode:
             return False, False
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
@@ -353,7 +357,7 @@ class WorkerQuests(MITMBase):
                         self.clear_box(self._delay_add)
                         self.clear_thread_task = 0
                         self.set_devicesettings_value('last_cleanup_time', time.time())
-                    elif self.clear_thread_task == 2:
+                    elif self.clear_thread_task == 2 and not self._level_mode:
                         logger.info("Clearing quest")
                         self._clear_quests(self._delay_add)
                         self.clear_thread_task = 0
@@ -534,6 +538,11 @@ class WorkerQuests(MITMBase):
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
                     return False
+                if self._level_mode:
+                    visited: bool = fort.get("visited", False)
+                    if visited:
+                        logger.info("Levelmode: Stop already visited - skipping it")
+                        return False
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
@@ -548,6 +557,8 @@ class WorkerQuests(MITMBase):
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         if not self._current_position_has_spinnable_stop(timestamp):
+            if self._level_mode:
+                return None
             # wait for GMO in case we moved too far away
             data_received = self._wait_for_data(
                     timestamp=timestamp, proto_to_wait_for=106, timeout=35)

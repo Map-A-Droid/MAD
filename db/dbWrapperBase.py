@@ -368,7 +368,7 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def stop_from_db_without_quests(self, geofence_helper):
+    def stop_from_db_without_quests(self, geofence_helper, levelmode: bool = False):
         pass
 
     @abstractmethod

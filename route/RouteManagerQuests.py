@@ -13,7 +13,7 @@ class RouteManagerQuests(RouteManagerBase):
     def generate_stop_list(self):
         time.sleep(5)
         stops = self.db_wrapper.stop_from_db_without_quests(
-            self.geofence_helper)
+            self.geofence_helper, self._level)
         logger.info('Detected stops without quests: {}', str(stops))
         self._stoplist: List[Location] = stops
 
@@ -41,18 +41,22 @@ class RouteManagerQuests(RouteManagerBase):
 
     def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None):
+                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+                 level: bool = False):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode
+                                  name=name, settings=settings, mode=mode, level=level
                                   )
         self.starve_route = False
         self._stoplist: List[Location] = []
 
     def _get_coords_after_finish_route(self):
+        if self._level:
+            logger.info("Level Mode - switch to next area")
+            return False
         self._manager_mutex.acquire()
         try:
             if self._start_calc:
@@ -119,7 +123,7 @@ class RouteManagerQuests(RouteManagerBase):
             if not self._is_started:
                 logger.info("Starting routemanager {}", str(self.name))
                 stops: List[Location] = self.db_wrapper.stop_from_db_without_quests(
-                    self.geofence_helper)
+                    self.geofence_helper, self._level)
                 logger.info('Detected {} stops without quests', len(stops))
                 logger.debug('Detected stops without quests: {}', str(stops))
                 self._stoplist: List[Location] = stops
@@ -152,7 +156,7 @@ class RouteManagerQuests(RouteManagerBase):
         # check_stop = str(lat) + '#' + str(lng)
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', str(stop))
-        if stop not in self._stoplist:
+        if stop not in self._stoplist and not self._level:
             logger.info('Already got this Stop')
             return False
         logger.info('Getting new Stop')
