@@ -588,6 +588,13 @@ class PogoWindows:
         w = y1 - y2
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = gray[int(y2):(int(y2) + int(w)), int(x2):(int(x2) + int(h))]
+        scale_percent = 200  # percent of original size
+        width = int(gray.shape[1] * scale_percent / 100)
+        height = int(gray.shape[0] * scale_percent / 100)
+        dim = (width, height)
+
+        # resize image
+        gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
         cv2.imwrite(temp_path_item, gray)
         text = pytesseract.image_to_string(Image.open(temp_path_item))
         return text
