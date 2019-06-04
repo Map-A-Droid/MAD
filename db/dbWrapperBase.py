@@ -380,6 +380,10 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def check_stop_quest_level(self, worker, latitude, longitude):
+        pass
+
+    @abstractmethod
     def get_quests_changed_since(self, timestamp):
         pass
 

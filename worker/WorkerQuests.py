@@ -89,9 +89,15 @@ class WorkerQuests(MITMBase):
     def _move_to_location(self):
         if not self._mapping_manager.routemanager_present(self._routemanager_name):
             raise InternalStopWorkerException
-        if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng) \
-                and not self._level_mode:
-            return False, False
+        if not self._level_mode:
+            # check if stop has a quest from today
+            if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
+                return False, False
+        else:
+            # checking again global stats (visited in the last 7 days)
+            if self._db_wrapper.check_stop_quest_level(self._id, self.current_location.lat, self.current_location.lng):
+                return False, False
+
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),

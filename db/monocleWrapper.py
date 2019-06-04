@@ -1494,3 +1494,22 @@ class MonocleWrapper(DbWrapperBase):
             }
 
         return gyms
+
+    def check_stop_quest_level(self, worker, latitude, longitude):
+        logger.debug("RmWrapper::stops_from_db called")
+        query = (
+            "SELECT trs_stats_detect_raw.type_id "
+            "from trs_stats_detect_raw inner join pokestops on pokestops.external_id = trs_stats_detect_raw.type_id "
+            "where pokestops.lat=%s and pokestops.lon=%s and trs_stats_detect_raw.worker=%s"
+        )
+        data = (latitude, longitude, worker)
+
+        res = self.execute(query, data)
+        number_of_rows = len(res)
+        if number_of_rows > 0:
+            logger.debug('Pokestop already visited')
+            return True
+        else:
+            logger.debug('Pokestop not visited till now')
+            return False
+
