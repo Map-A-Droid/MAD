@@ -30,7 +30,7 @@ class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False):
+                 level: bool = False, calctype: str = "optimized"):
         self.db_wrapper: DbWrapperBase = db_wrapper
         self.init: bool = init
         self.name: str = name
@@ -50,6 +50,7 @@ class RouteManagerBase(ABC):
         self._positiontyp = {}
         self._coords_to_be_ignored = set()
         self._level = level
+        self._calctype = calctype
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
@@ -67,7 +68,8 @@ class RouteManagerBase(ABC):
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
             new_coords = getJsonRoute(
-                fenced_coords, max_radius, max_coords_within_radius, routefile)
+                fenced_coords, max_radius, max_coords_within_radius, routefile,
+                algorithm=calctype)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
@@ -202,13 +204,13 @@ class RouteManagerBase(ABC):
             to_be_appended[i][1] = float(list_coords[i].lng)
         self.add_coords_numpy(to_be_appended)
 
-    @staticmethod
-    def calculate_new_route(coords, max_radius, max_coords_within_radius, routefile, delete_old_route, num_procs=0):
+    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, routefile, delete_old_route,
+                            num_procs=0):
         if delete_old_route and os.path.exists(str(routefile) + ".calc"):
             logger.debug("Deleting routefile...")
             os.remove(str(routefile) + ".calc")
         new_route = getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
-                                 routefile=routefile)
+                                 routefile=routefile, algorithm=self._calctype)
         return new_route
 
     def empty_routequeue(self):
@@ -221,8 +223,8 @@ class RouteManagerBase(ABC):
             routefile = None
         else:
             routefile = self._routefile
-        new_route = RouteManagerBase.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                                         routefile, delete_old_route, num_procs)
+        new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
+                                             routefile, delete_old_route, num_procs)
         self._manager_mutex.acquire()
         self._route.clear()
         for coord in new_route:

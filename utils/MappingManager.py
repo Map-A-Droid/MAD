@@ -311,7 +311,8 @@ class MappingManager:
                                                                  level=area.get("level", False),
                                                                  coords_spawns_known=area.get(
                                                                          "coords_spawns_known", False),
-                                                                 routefile=area["routecalc"]
+                                                                 routefile=area["routecalc"],
+                                                                 calctype=area.get("route_calc_algorithm", "optimized")
                                                                  )
 
             if mode not in ("iv_mitm", "idle"):

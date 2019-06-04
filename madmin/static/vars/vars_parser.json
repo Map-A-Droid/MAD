@@ -354,6 +354,15 @@
 						"require": "false",
 						"description": "Quality of screenshot (Default: 80)"
 					}
+				},
+				{
+					"name": "route_calc_algorithm",
+					"settings": {
+						"type": "option",
+						"values": "optimized|quick",
+						"require": "false",
+						"description": "Method of calculation for routes. (Default optimized)"
+					}
 				}
 			]
 		}
@@ -702,6 +711,15 @@
 						"require": "true",
 						"values": "false|true",
 						"description": "Level up an account mode"
+					}
+				},
+				{
+					"name": "route_calc_algorithm",
+					"settings": {
+						"type": "option",
+						"values": "optimized|quick",
+						"require": "false",
+						"description": "Method of calculation for routes. (Default optimized)"
 					}
 				}
 			],

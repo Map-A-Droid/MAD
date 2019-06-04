@@ -42,13 +42,13 @@ class RouteManagerQuests(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False):
+                 level: bool = False, calctype: str = "optimized"):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, level=level
+                                  name=name, settings=settings, mode=mode, level=level, calctype=calctype
                                   )
         self.starve_route = False
         self._stoplist: List[Location] = []
