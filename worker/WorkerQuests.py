@@ -53,11 +53,13 @@ class WorkerQuests(MITMBase):
         self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
         self._clear_quest_counter = 0
-        # initial cleanup old quests
-        self.clear_thread_task = 2
+
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
         if self._level_mode:
             logger.info("Starting Level Mode")
+        else:
+            # initial cleanup old quests
+            self.clear_thread_task = 2
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
