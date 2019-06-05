@@ -60,7 +60,7 @@ def trash_image_matching(screen_img):
         loc = np.where(res >= threshold)
         boxcount = 0
         for pt in zip(*loc[::-1]):
-            if pt[0] > width/4*3:
+            if pt[0] > width/4*3 and pt[1] < height/5*4:
                 x_coord = int(pt[0] + tW / 2)
                 y_coord = int(pt[1] + tH / 2)
 

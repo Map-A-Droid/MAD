@@ -899,7 +899,8 @@ class DbWrapperBase(ABC):
         self.execute(query_trs_spawn, commit=True)
         self.execute(query_trs_spawnsightings, commit=True)
 
-    def download_spawns(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+    def download_spawns(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None,
+                        oSwLat=None, oSwLon=None, timestamp=None):
         logger.debug("dbWrapper::download_spawns")
         spawn = {}
 

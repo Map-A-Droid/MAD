@@ -8,6 +8,7 @@ from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper
 from ocr.pogoWindows import PogoWindows
 from utils.MappingManager import MappingManager
+from difflib import SequenceMatcher
 from utils.geo import (
     get_distance_of_two_points_in_meters,
     get_lat_lng_offsets_by_distance
@@ -33,6 +34,10 @@ class FortSearchResultTypes(Enum):
 
 
 class WorkerQuests(MITMBase):
+
+    def similar(self, a, b):
+        return SequenceMatcher(None, a, b).ratio()
+
     def _valid_modes(self):
         return ["pokestops"]
 
@@ -435,7 +440,11 @@ class WorkerQuests(MITMBase):
                                                                        check_y_text_starter)
 
                     logger.info("Found item {}", str(item_text))
-                    if item_text in not_allow:
+                    match_one_item : bool = False
+                    for text in not_allow:
+                        if self.similar(text, item_text) > 0.5:
+                            match_one_item = True
+                    if not match_one_item:
                         logger.info('Could not delete this item - check next one')
                         trash += 1
                     else:

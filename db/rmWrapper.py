@@ -1170,7 +1170,8 @@ class RmWrapper(DbWrapperBase):
             #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
-    def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+    def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
+                       oSwLat=None, oSwLon=None, timestamp=None):
         logger.debug("RmWrapper::quests_from_db called")
         questinfo = {}
 
