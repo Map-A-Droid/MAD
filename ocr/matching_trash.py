@@ -96,4 +96,7 @@ def trash_image_matching(screen_img):
 
 
 if __name__ == '__main__':
+    fort_id = 'raid1'
+    fort_img_path = os.getcwd() + '/' + str(fort_id) + '.jpg'
+    url_img_path = os.getcwd() + 'ocr/mon_img/ic_raid_egg_rare.png'
     # print (trash_image_matching('Metallmantel_SamsungS6.jpg'))
