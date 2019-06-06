@@ -594,7 +594,7 @@ class WorkerQuests(MITMBase):
                     timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
-                time.sleep(1)
+                time.sleep(5)
                 if not self._checkPogoButton():
                     self._checkPogoClose()
                 time.sleep(1)
