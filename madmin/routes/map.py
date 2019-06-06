@@ -56,8 +56,8 @@ class map(object):
         positions = []
         devicemappings = self._mapping_manager.get_all_devicemappings()
         for name, values in devicemappings.items():
-            lat = values.get("last_location", Location(0.0, 0.0)).lat
-            lon = values.get("last_location", Location(0.0, 0.0)).lng
+            lat = values.get("settings").get("last_location", Location(0.0, 0.0)).lat
+            lon = values.get("settings").get("last_location", Location(0.0, 0.0)).lng
 
             worker = {
                 "name": str(name),
