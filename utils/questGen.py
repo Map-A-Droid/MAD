@@ -137,6 +137,8 @@ def questtask(typeid, condition, target):
             text = _('Catch {0} {poke}.')
     elif typeid == 5:
         text = _("Spin {0} Pokestops or Gyms.")
+        if re.search(r'"type": 12', condition) is not None:
+            text = _("Spin {0} never visited Pokestops or Gyms.")
     elif typeid == 6:
         text = _("Hatch {0} Eggs.")
     elif typeid == 7:
