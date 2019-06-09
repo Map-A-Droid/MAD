@@ -131,6 +131,7 @@ class RouteManagerBase(ABC):
                 self._positiontyp[worker_name] = 0
 
                 return True
+
         finally:
             self._workers_registered_mutex.release()
 

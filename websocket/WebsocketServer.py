@@ -210,7 +210,7 @@ class WebsocketServer(object):
                 while not pre_check_value(walker_settings) and walker_index-1 <= len(walker_area_array):
                     walker_area_name = walker_area_array[walker_index]['walkerarea']
                     logger.info(
-                        '{} dont using area {} - Walkervalue out of range', str(id), str(walker_area_name))
+                        '{} dont using area {} - Walkervalue out of range', str(origin), str(walker_area_name))
                     if walker_index >= len(walker_area_array) - 1:
                         logger.error(
                             'Dont find any working area - check your config')
