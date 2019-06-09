@@ -1,6 +1,7 @@
 import json
 import os
 import time
+import datetime
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
@@ -68,13 +69,19 @@ class PlayerStats(object):
 
         self.set_level(data[self._id][0]['level'])
 
+    def compare_hour(selfs, timestamp):
+        if datetime.datetime.fromtimestamp(int(time.time())).strftime('%H') != \
+                datetime.datetime.fromtimestamp(int(timestamp)).strftime('%H'):
+            return True
+        return False
+
     def stats_collector(self):
         self.__mapping_mutex.acquire()
         data_send_stats = []
         data_send_location = []
 
         if not self._stats_collector_start:
-            if time.time() - self._last_processed_timestamp > 600:
+            if time.time() - self._last_processed_timestamp > 600 or self.compare_hour(self._last_processed_timestamp):
 
                 # collect_data = self._stats_collect.get(self._last_processed_timestamp, [])
 
