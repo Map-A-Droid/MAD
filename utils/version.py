@@ -248,8 +248,8 @@ class MADVersion(object):
         if self._version < 9:
             alter_query = (
                 "UPDATE trs_quest "
-                "SET quest_condition=REPLACE(quest_condition,'\\\','\"'),"
-                " quest_reward=REPLACE(quest_reward,'\\\','\"')"
+                "SET quest_condition=REPLACE(quest_condition,'\\\'','\"'),"
+                " quest_reward=REPLACE(quest_reward,'\\\'','\"')"
             )
             try:
                 self._dbwrapper.execute(alter_query, commit=True)
