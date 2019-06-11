@@ -1409,7 +1409,7 @@ class MonocleWrapper(DbWrapperBase):
                 "%s, atk_iv, def_iv, sta_iv, level, cp FROM sightings join "
                 "trs_stats_detect_raw on sightings.encounter_id=type_id WHERE "
                 "atk_iv>14 and def_iv>14 and sta_iv>14 and "
-                "trs_stats_detect_raw.type='mon' group by encounter_id "
+                "trs_stats_detect_raw.type in ('mon', 'mon_iv') group by encounter_id "
                 "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
                 (str(query_date))
         )

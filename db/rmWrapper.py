@@ -1504,7 +1504,7 @@ class RmWrapper(DbWrapperBase):
                 "%s, individual_attack, individual_defense, individual_stamina, cp_multiplier, cp FROM pokemon join "
                 "trs_stats_detect_raw on pokemon.encounter_id=type_id WHERE "
                 "individual_attack>14 and individual_defense>14 and individual_stamina>14 and "
-                "trs_stats_detect_raw.type='mon' group by encounter_id "
+                "trs_stats_detect_raw.type in ('mon', 'mon_iv') group by encounter_id "
                 "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
                 (str(query_date))
         )
