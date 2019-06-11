@@ -392,7 +392,7 @@ class WorkerQuests(MITMBase):
         stop_inventory_clear = Event()
         stop_screen_clear = Event()
         logger.info('Cleanup Box')
-        not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'FrenchNameForLuckyEgg',
+        not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
