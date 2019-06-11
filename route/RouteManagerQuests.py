@@ -141,6 +141,15 @@ class RouteManagerQuests(RouteManagerBase):
                 else:
                     logger.info("Restoring original route")
                     self._route = self._routecopy.copy()
+
+                for route_location in self._stoplist:
+                    if route_location not in self._route:
+                        logger.warning("Stop with coords {} seems new and not in route.", str(route_location))
+
+                self._route = set(self._route) - (set(self._route) - set(stops))
+
+                logger.info('Getting {} positions in route', len(self._route))
+
                 self._init_route_queue()
         finally:
             self._manager_mutex.release()
