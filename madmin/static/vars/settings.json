@@ -4,7 +4,7 @@
 		"could_edit": "true",
 		"field": "name",
 		"description": "Setting up scannertypes with geofence and other options.",
-		"quickview": "mode|geofence_included|routecalc",
+		"quickview": "mode|geofence_included|routecalc|level",
 		"quickview_settings": "speed|max_distance|delay_after_prio_event|priority_queue_clustering_timedelta|remove_from_queue_backlog|starve_route"
 	},
 	"walker": {

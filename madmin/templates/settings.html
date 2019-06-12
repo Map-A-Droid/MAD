@@ -74,6 +74,16 @@
 {% block content %}
 <h2>Mapping Editor</h2>
 
+<nav>
+  <div class="nav nav-tabs" id="nav-tab" role="tablist">
+      <a class="nav-item nav-link {% if tabarea == "devices" %}active{% endif %}" id="nav-devices-tab" data-toggle="tab" href="#nav-devices" role="tab" aria-controls="nav-devices" aria-selected="true">Devices</a>
+      <a class="nav-item nav-link {% if tabarea == "devicesettings" %}active{% endif %}" id="nav-devicesettings-tab" data-toggle="tab" href="#nav-devicesettings" role="tab" aria-controls="nav-devicesettings" aria-selected="false">Devicesettings</a>
+      <a class="nav-item nav-link {% if tabarea == "walker" %}active{% endif %}" id="nav-walker-tab" data-toggle="tab" href="#nav-walker" role="tab" aria-controls="nav-walker" aria-selected="false">Walker</a>
+      <a class="nav-item nav-link {% if tabarea == "areas" %}active{% endif %}" id="nav-areas-tab" data-toggle="tab" href="#nav-areas" role="tab" aria-controls="nav-areas" aria-selected="false">Areas</a>
+      <a class="nav-item nav-link {% if tabarea == "auth" %}active{% endif %}" id="nav-auth-tab" data-toggle="tab" href="#nav-auth" role="tab" aria-controls="nav-auth" aria-selected="false">Auth</a>
+  </div>
+</nav>
+<div class="tab-content" id="nav-tabContent">
 {{settings | safe }}
-
+</div>
 {% endblock %}

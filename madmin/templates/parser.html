@@ -60,9 +60,11 @@
   crossorigin="anonymous"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js" integrity="sha256-Z3MmjesRY6rcd+sYj8tTwb/+EV/4msqGW7EZiQc3TK8="
   crossorigin="anonymous"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
 
 <script>
   $(document).ready(function () {
+    $('body').Aplus();
     $("#navsetting").addClass("active");
 
     $("#settings").validate({
@@ -158,7 +160,7 @@ jQuery.validator.addMethod("validatewalkervalue", function(value, element) {
 
 <h2>{{header | safe }}</h2>
 
-<h4><a href="showsettings">Back to editor</a></h4>
+<h4><a href="showsettings?area={{ tabarea }}">Back to editor</a></h4>
 <div id="inputdata">
   {% for item in editform %}
   {{item | safe }}
