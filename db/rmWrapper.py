@@ -1496,7 +1496,7 @@ class RmWrapper(DbWrapperBase):
         return {'pokemon': res, 'total': total}
 
     def get_best_pokemon_spawns(self):
-        logger.debug('Fetching best pokemon spawns from db')"
+        logger.debug('Fetching best pokemon spawns from db')
 
         query = (
                 "SELECT encounter_id, pokemon_id, unix_timestamp(last_modified),"
