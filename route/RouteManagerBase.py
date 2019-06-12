@@ -51,6 +51,7 @@ class RouteManagerBase(ABC):
         self._coords_to_be_ignored = set()
         self._level = level
         self._calctype = calctype
+        self._overwrite_calculation: bool = False
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
@@ -207,11 +208,17 @@ class RouteManagerBase(ABC):
 
     def calculate_new_route(self, coords, max_radius, max_coords_within_radius, routefile, delete_old_route,
                             num_procs=0):
+        if self._overwrite_calculation:
+            calctype = 'quick'
+        else:
+            calctype = self._calctype
+
         if delete_old_route and os.path.exists(str(routefile) + ".calc"):
             logger.debug("Deleting routefile...")
             os.remove(str(routefile) + ".calc")
         new_route = getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
-                                 routefile=routefile, algorithm=self._calctype)
+                                 routefile=routefile, algorithm=calctype)
+        if self._overwrite_calculation: self._overwrite_calculation = False
         return new_route
 
     def empty_routequeue(self):

@@ -76,6 +76,7 @@ class RouteManagerQuests(RouteManagerBase):
             if len(coords) > 0:
                 self._clear_coords()
                 self.add_coords_list(coords)
+                self._overwrite_calculation = True
                 self._recalc_route_workertype()
                 self._start_calc = False
             else:
@@ -146,11 +147,26 @@ class RouteManagerQuests(RouteManagerBase):
                     if route_location not in self._route:
                         logger.warning("Stop with coords {} seems new and not in route.", str(route_location))
 
-                self._route = set(self._route) - (set(self._route) - set(stops))
+                if len(stops) == 0:
+                    logger.info('No unprocessed  Stops detected - quit worker')
+                    self._route: List[Location] = []
+
+                if 0 < len(stops) < len(self._route) \
+                        and (len(stops)-len(self._route)) * 100 / len(stops) < 80:
+                    # Calculating new route because 80 percent of stops are processed
+                    logger.info('There are less stops without quest than routepositions - recalc')
+                    self._route = list(set(self._route) - (set(self._route) - set(stops)))
+                    coords = self._route
+                    self._clear_coords()
+                    self.add_coords_list(coords)
+                    self._overwrite_calculation = True
+                    self._recalc_route_workertype()
+                else:
+                    self._init_route_queue()
 
                 logger.info('Getting {} positions in route', len(self._route))
 
-                self._init_route_queue()
+
         finally:
             self._manager_mutex.release()
 
@@ -162,7 +178,6 @@ class RouteManagerQuests(RouteManagerBase):
         if self.init:
             logger.info('Init Mode - coord is valid')
             return True
-        # check_stop = str(lat) + '#' + str(lng)
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', str(stop))
         if stop not in self._stoplist and not self._level:
