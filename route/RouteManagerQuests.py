@@ -143,9 +143,10 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.info("Restoring original route")
                     self._route = self._routecopy.copy()
 
-                for route_location in self._stoplist:
-                    if route_location not in self._route:
-                        logger.warning("Stop with coords {} seems new and not in route.", str(route_location))
+                new_stops = set(stops) - set(self._route)
+                if len(new_stops) > 0:
+                    for stop in new_stops:
+                        logger.warning("Stop with coords {} seems new and not in route.", str(stop))
 
                 if len(stops) == 0:
                     logger.info('No unprocessed  Stops detected - quit worker')

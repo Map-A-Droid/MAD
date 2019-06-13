@@ -115,6 +115,7 @@ class MITMBase(WorkerBase):
 
                 # self._mitm_mapper.
                 self._restart_count = 0
+                logger.error("Restarting Pogo {}", str(self._id))
                 self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()
@@ -132,7 +133,13 @@ class MITMBase(WorkerBase):
                 logger.error("Worker {} get killed while waiting for injection", str(self._id))
                 return False
             self._not_injected_count += 1
-            time.sleep(20)
+            wait_time = 0
+            while wait_time < 20:
+                wait_time += 1
+                if self._stop_worker_event.isSet():
+                    logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                    return False
+                time.sleep(1)
         return True
 
     @abstractmethod
