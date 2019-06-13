@@ -55,20 +55,17 @@ if __name__ == "__main__":
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
-    #MappingManagerManager.register('MappingManager', MappingManager)
-    #mapping_manager_manager = MappingManagerManager()
-    #mapping_manager_manager.start()
-    #mapping_manager_stop_event = mapping_manager_manager.Event()
-    #mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
-    #                                                                         mapping_manager_stop_event, False)
+    MappingManagerManager.register('MappingManager', MappingManager)
+    mapping_manager_manager = MappingManagerManager()
+    mapping_manager_manager.start()
+    mapping_manager_stop_event = mapping_manager_manager.Event()
+    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
+                                                                             mapping_manager_stop_event, False)
 
-    #ws_server = WebsocketServer(args, None, db_wrapper, mapping_manager, None, True)
-    #t_ws = Thread(name='scanner', target=ws_server.start_server)
-    #t_ws.daemon = False
-    #t_ws.start()
-
-    ws_server = None
-    mapping_manager = None
+    ws_server = WebsocketServer(args, None, db_wrapper, mapping_manager, None, True)
+    t_ws = Thread(name='scanner', target=ws_server.start_server)
+    t_ws.daemon = False
+    t_ws.start()
 
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
