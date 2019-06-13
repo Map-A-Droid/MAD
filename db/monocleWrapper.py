@@ -1321,8 +1321,7 @@ class MonocleWrapper(DbWrapperBase):
 
         return ret
 
-    def get_pokestops_changed_since(self, timestamp):
-
+    def get_stops_changed_since(self, timestamp):
         # no lured support for monocle now!
 
         ret = []

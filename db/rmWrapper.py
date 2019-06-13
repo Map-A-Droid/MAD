@@ -1230,10 +1230,11 @@ class RmWrapper(DbWrapperBase):
                 'task': quest_task, 'quest_template': quest_template})
 
         return questinfo
-        
-    def get_pokestops_changed_since(self, timestamp):
+
+    def get_stops_changed_since(self, timestamp):
         query = (
-            "SELECT pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier "
+            "SELECT pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier, "
+            "last_modified, last_updated "
             "FROM pokestop "
             "WHERE DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 AND last_updated >= %s"
         )
@@ -1242,15 +1243,18 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query, (tsdt, ))
 
         ret = []
-        for (pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier) in res:
+        for (pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier,
+                last_modified, last_updated) in res:
             ret.append({
-                'pokestop_id': pokestop_id, 
-                'latitude': latitude, 
+                'pokestop_id': pokestop_id,
+                'latitude': latitude,
                 'longitude': longitude,
-                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()), 
-                'name': name, 
+                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()),
+                'name': name,
                 'image': image,
-                'active_fort_modifier': active_fort_modifier
+                'active_fort_modifier': active_fort_modifier,
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp())
             })
 
         return ret

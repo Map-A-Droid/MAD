@@ -97,7 +97,8 @@ class WebhookWorker:
 
             current_pl_num = 1
             for payload_chunk in payload_list:
-                logger.debug("Payload: {}", str(json.dumps(payload_chunk)))
+                logger.debug4("Python data for payload: {}", str(payload_chunk))
+                logger.debug3("Payload: {}", str(json.dumps(payload_chunk)))
 
                 try:
                     response = requests.post(
@@ -460,7 +461,7 @@ class WebhookWorker:
 
         return ret
 
-    def __prepare_pokestops_data(self, pokestop_data):
+    def __prepare_stops_data(self, pokestop_data):
         ret = []
 
         for pokestop in pokestop_data:
@@ -468,17 +469,17 @@ class WebhookWorker:
                 continue
 
             pokestop_payload = {
+                "name": pokestop["name"],
                 "pokestop_id": pokestop["pokestop_id"],
                 "latitude": pokestop["latitude"],
                 "longitude": pokestop["longitude"],
                 "lure_expiration": pokestop["lure_expiration"],
-                "active_fort_modifier": pokestop["active_fort_modifier"],
+                "lure_id": pokestop["active_fort_modifier"],
+                "updated": pokestop["last_updated"],
+                "last_modified": pokestop["last_modified"]
             }
 
-            if pokestop["name"] is not None:
-                pokestop_payload["name"] = pokestop["name"]
-
-            if pokestop["image"] is not None:
+            if pokestop["image"]:
                 pokestop_payload["url"] = pokestop["image"]
 
             entire_payload = {"type": "pokestop", "message": pokestop_payload}
@@ -556,8 +557,8 @@ class WebhookWorker:
 
             # stops
             if self.__args.pokestop_webhook:
-                pokestops = self.__prepare_pokestops_data(
-                    self.__db_wrapper.get_pokestops_changed_since(self.__last_check)
+                pokestops = self.__prepare_stops_data(
+                    self.__db_wrapper.get_stops_changed_since(self.__last_check)
                 )
                 full_payload += pokestops
 

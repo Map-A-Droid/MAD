@@ -376,7 +376,7 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def get_pokestops_changed_since(self, timestamp):
+    def get_stops_changed_since(self, timestamp):
         pass
 
     @abstractmethod
