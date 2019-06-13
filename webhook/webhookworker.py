@@ -460,6 +460,32 @@ class WebhookWorker:
 
         return ret
 
+    def __prepare_pokestops_data(self, pokestop_data):
+        ret = []
+
+        for pokestop in pokestop_data:
+            if self.__is_in_excluded_area([pokestop["latitude"], pokestop["longitude"]]):
+                continue
+
+            pokestop_payload = {
+                "pokestop_id": pokestop["pokestop_id"],
+                "latitude": pokestop["latitude"],
+                "longitude": pokestop["longitude"],
+                "lure_expiration": pokestop["lure_expiration"],
+                "active_fort_modifier": pokestop["active_fort_modifier"],
+            }
+
+            if pokestop["name"] is not None:
+                pokestop_payload["name"] = pokestop["name"]
+
+            if pokestop["image"] is not None:
+                pokestop_payload["url"] = pokestop["image"]
+
+            entire_payload = {"type": "pokestop", "message": pokestop_payload}
+            ret.append(entire_payload)
+
+        return ret
+
     def __build_ivmon_list(self, mapping_manager: MappingManager):
         self.__IV_MON: List[int] = []
 
@@ -527,6 +553,13 @@ class WebhookWorker:
                     self.__db_wrapper.get_gyms_changed_since(self.__last_check)
                 )
                 full_payload += gyms
+
+            # stops
+            if self.__args.pokestop_webhook:
+                pokestops = self.__prepare_pokestops_data(
+                    self.__db_wrapper.get_pokestops_changed_since(self.__last_check)
+                )
+                full_payload += pokestops
 
             # mon
             if self.__args.pokemon_webhook:
