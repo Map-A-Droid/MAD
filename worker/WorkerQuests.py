@@ -97,14 +97,6 @@ class WorkerQuests(MITMBase):
         if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                 or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
-        if not self._level_mode:
-            # check if stop has a quest from today
-            if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
-                return False, False
-        else:
-            # checking again global stats (visited in the last 7 days)
-            if self._db_wrapper.check_stop_quest_level(self._id, self.current_location.lat, self.current_location.lng):
-                return False, False
 
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
@@ -294,6 +286,10 @@ class WorkerQuests(MITMBase):
                 if delay_used > 200 and cleanupbox:
                     self.clear_thread_task = 1
                     cleanupbox = False
+                if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                        or self._stop_worker_event.is_set():
+                    logger.error("Worker {} get killed while sleeping", str(self._id))
+                    raise InternalStopWorkerException
                 time.sleep(1)
 
         self.set_devicesettings_value("last_location", self.current_location)
