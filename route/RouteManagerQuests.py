@@ -68,6 +68,7 @@ class RouteManagerQuests(RouteManagerBase):
                 return True
             self.generate_stop_list()
             if len(self._stoplist) == 0:
+                self._restore_original_route()
                 self._start_calc = False
                 return False
             coords: List[Location] = self._check_unprocessed_stops()
@@ -83,10 +84,15 @@ class RouteManagerQuests(RouteManagerBase):
                 self._start_calc = False
                 return False
             if len(self._route) == 0:
+                self._restore_original_route()
                 return False
             return True
         finally:
             self._manager_mutex.release()
+
+    def _restore_original_route(self):
+        logger.info("Restoring original route")
+        self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
         self._manager_mutex.acquire()
@@ -150,6 +156,7 @@ class RouteManagerQuests(RouteManagerBase):
 
                 if len(stops) == 0:
                     logger.info('No unprocessed  Stops detected - quit worker')
+                    self._restore_original_route()
                     self._route: List[Location] = []
 
                 if 0 < len(stops) < len(self._route) \
@@ -166,7 +173,6 @@ class RouteManagerQuests(RouteManagerBase):
                     self._init_route_queue()
 
                 logger.info('Getting {} positions in route', len(self._route))
-
 
         finally:
             self._manager_mutex.release()
