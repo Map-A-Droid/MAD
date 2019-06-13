@@ -1339,7 +1339,7 @@ class MonocleWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))" \
+        query_date = "FORMAT(unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')),0)" \
                      "as timestamp"
         if minutes:
             minutes = datetime.now().replace(

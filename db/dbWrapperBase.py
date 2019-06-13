@@ -1419,7 +1419,7 @@ class DbWrapperBase(ABC):
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' and (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
+        query_date = "FORMAT(unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00')),0)"
 
         query = (
             "SELECT %s, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
@@ -1449,7 +1449,7 @@ class DbWrapperBase(ABC):
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
+        query_date = "FORMAT(unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')),0)"
 
         query = (
             "SELECT %s, worker, sum(location_count), sum(location_ok), sum(location_nok) from trs_stats_location "
@@ -1476,7 +1476,7 @@ class DbWrapperBase(ABC):
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
+        query_date = "FORMAT(unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00')),0)"
 
         query = (
             "SELECT %s, worker, count(period), if(type=0,if(success=1,'OK-Normal','NOK-Normal'),"
@@ -1515,7 +1515,7 @@ class DbWrapperBase(ABC):
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (timestamp_scan) >= unix_timestamp(\'%s\') ' % str(minutes)
 
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
+        query_date = "FORMAT(unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')),0)"
 
         query = (
             "SELECT %s, type, type_id, count FROM trs_stats_detect_raw %s %s order by id asc" %
@@ -1538,7 +1538,7 @@ class DbWrapperBase(ABC):
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
             query_where = ' where (period) >= unix_timestamp(\'%s\') ' % str(minutes)
 
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
+        query_date = "FORMAT(unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00')),0)"
 
         query = (
                 "SELECT %s, lat, lng, if(type=0,'Normal',if(type=1,'PrioQ', if(type=2,'Startup',"
