@@ -1304,7 +1304,7 @@ class DbWrapperBase(ABC):
     def statistics_get_quests_count(self, days):
         logger.debug('Fetching quests count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %k:00:00')) * 1000 " \
+        query_date = "cast(unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(quest_timestamp), '%y-%m-%d %k:00:00')) AS INT)" \
             "as Timestamp"
 
         if days:

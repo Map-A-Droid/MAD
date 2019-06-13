@@ -76,7 +76,13 @@ class statistics(object):
             stop.append({'label': dat[0], 'data': dat[1]})
 
         # Quest
-        quest = self._db.statistics_get_quests_count(1)
+        quest: list = []
+        quest_db = self._db.statistics_get_quests_count(1)
+        for ts, count in quest_db:
+            quest_raw = (ts*1000, count)
+            quest.append(quest_raw)
+
+
 
         # Usage
         insta = {}

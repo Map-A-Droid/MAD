@@ -1,6 +1,6 @@
 import collections
 import time
-from typing import List, Dict
+from typing import List
 
 from db.dbWrapperBase import DbWrapperBase
 from route.RouteManagerBase import RouteManagerBase
@@ -99,19 +99,18 @@ class RouteManagerQuests(RouteManagerBase):
 
         try:
             list_of_stops_to_return: List[Location] = []
-            stops_not_processed: Dict[Location, int] = {}
 
             if len(self._stoplist) == 0:
                 return list_of_stops_to_return
             else:
                 # we only want to add stops that we haven't spun yet
                 for stop in self._stoplist:
-                    if stop not in stops_not_processed:
-                        stops_not_processed[stop] = 1
+                    if stop not in self._stops_not_processed:
+                        self._stops_not_processed[stop] = 1
                     else:
-                        stops_not_processed[stop] += 1
+                        self._stops_not_processed[stop] += 1
 
-            for stop, error_count in stops_not_processed.items():
+            for stop, error_count in self._stops_not_processed.items():
                 if error_count < 4:
                     logger.warning("Found stop not processed yet: {}".format(str(stop)))
                     list_of_stops_to_return.append(stop)

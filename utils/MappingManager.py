@@ -479,6 +479,8 @@ class MappingManager:
                     if area is None:
                         continue
                     area["routemanager"].stop_routemanager()
+                    area["routemanager"].stop_worker()
+
 
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp

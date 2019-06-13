@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from queue import Queue
 from threading import Event, Lock, RLock, Thread
-from typing import List, Optional, Tuple
+from typing import List, Optional, Tuple, Dict
 
 import numpy as np
 
@@ -52,6 +52,7 @@ class RouteManagerBase(ABC):
         self._level = level
         self._calctype = calctype
         self._overwrite_calculation: bool = False
+        self._stops_not_processed: Dict[Location, int] = {}
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []

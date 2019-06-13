@@ -30,7 +30,8 @@ class WorkerOCR(WorkerBase):
         self.__start_speed_weather_check_event.set()
 
     def _move_to_location(self):
-        if not self._mapping_manager.routemanager_present(self._routemanager_name):
+        if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 

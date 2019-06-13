@@ -29,7 +29,8 @@ class WorkerMITM(MITMBase):
         self._wait_for_data(timestamp)
 
     def _move_to_location(self):
-        if not self._mapping_manager.routemanager_present(self._routemanager_name):
+        if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
         # get the distance from our current position (last) to the next gym (cur)
