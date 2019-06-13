@@ -1497,16 +1497,12 @@ class RmWrapper(DbWrapperBase):
 
     def get_best_pokemon_spawns(self):
         logger.debug('Fetching best pokemon spawns from db')
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:%i:00'))"
 
         query = (
-                "SELECT encounter_id, GROUP_CONCAT(DISTINCT worker order by worker asc SEPARATOR ', '), pokemon_id, "
-                "%s, individual_attack, individual_defense, individual_stamina, cp_multiplier, cp FROM pokemon join "
-                "trs_stats_detect_raw on pokemon.encounter_id=type_id WHERE "
-                "individual_attack>14 and individual_defense>14 and individual_stamina>14 and "
-                "trs_stats_detect_raw.type in ('mon', 'mon_iv') group by encounter_id "
-                "order by trs_stats_detect_raw.timestamp_scan desc limit 30" %
-                (str(query_date))
+                "SELECT encounter_id, pokemon_id, unix_timestamp(last_modified),"
+                " individual_attack, individual_defense, individual_stamina, cp_multiplier, cp FROM pokemon"
+                " WHERE individual_attack>14 and individual_defense>14 and individual_stamina>14"
+                " GROUP BY encounter_id ORDER BY last_modified DESC LIMIT 30"
         )
 
         res = self.execute(query)
