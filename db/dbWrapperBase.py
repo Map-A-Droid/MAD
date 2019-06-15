@@ -1584,3 +1584,24 @@ class DbWrapperBase(ABC):
             "delete from trs_stats_location_raw where period < (UNIX_TIMESTAMP() - 604800)"
         )
         self.execute(query, commit=True)
+
+    def submit_nearby_map_proto(self, origin: str, map_proto: dict):
+        query = "REPLACE INTO trs_nearbymon VALUES (%s, %s, %s, %s, UNIX_TIMESTAMP())"
+
+        for cell in map_proto["cells"]:
+            for mon in cell["nearby_pokemon"]:
+                if not mon["fort_id"]:
+                    continue
+
+                vals = (cell["id"],
+                        mon["encounter_id"],
+                        mon["fort_id"],
+                        mon["id"]
+                        )
+                self.execute(query, vals, commit=True)
+
+    @abstractmethod
+    def get_nearbymon_in_rectangle(self, neLat, neLon, swLat, swLon,
+                                   oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        pass
+

@@ -161,6 +161,19 @@ class MappingParser(object):
                                                    settings=area.get(
                                                        "settings", None)
                                                    )
+            elif mode == "mon_mitm_nearby":
+                route_manager = RouteManagerMon(self.db_wrapper, None, 800, 99999999,
+                                                area["geofence_included"], area.get(
+                                                    "geofence_excluded", None),
+                                                area["routecalc"], mode=area["mode"],
+                                                coords_spawns_known=area.get(
+                                                    "coords_spawns_known", False),
+                                                init=area.get("init", False),
+                                                name=area.get(
+                                                    "name", "unknown"),
+                                                settings=area.get(
+                                                    "settings", None)
+                                                )
             else:
                 raise RuntimeError("Invalid mode found in mapping parser.")
 
@@ -182,6 +195,8 @@ class MappingParser(object):
                             coords = self.db_wrapper.get_undetected_spawns(
                                 geofence_helper)
                     elif mode == "pokestops":
+                        coords = self.db_wrapper.stops_from_db(geofence_helper)
+                    elif mode == "mon_mitm_nearby":
                         coords = self.db_wrapper.stops_from_db(geofence_helper)
                     else:
                         logger.error("Mode not implemented yet: {}", str(mode))

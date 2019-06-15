@@ -39,7 +39,8 @@ class map(object):
             ("/get_route", self.get_route),
             ("/get_spawns", self.get_spawns),
             ("/get_gymcoords", self.get_gymcoords),
-            ("/get_quests", self.get_quests)
+            ("/get_quests", self.get_quests),
+            ("/get_nearby_mon", self.get_nearby_mon)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -256,5 +257,36 @@ class map(object):
         for pokestopid in data:
             quest = data[str(pokestopid)]
             coords.append(generate_quest(quest))
+
+        return jsonify(coords)
+
+    @auth_required
+    def get_nearby_mon(self):
+        coords = []
+
+        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        timestamp = request.args.get("timestamp", None)
+
+        data = self._db.get_nearbymon_in_rectangle(
+            neLat=neLat,
+            neLon=neLon,
+            swLat=swLat,
+            swLon=swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+        )
+
+        for encounter in data:
+            mon = data[str(encounter)]
+
+            coords.append({
+                "encounter": encounter,
+                "mon_id": mon["mon"],
+                "lat": mon["latitude"],
+                "lon": mon["longitude"],
+            })
 
         return jsonify(coords)

@@ -1642,3 +1642,37 @@ class RmWrapper(DbWrapperBase):
         else:
             logger.debug('Pokestop not visited till now')
             return False
+
+    def get_nearbymon_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        mon = {}
+
+        query = (
+            "SELECT trs_nearbymon.encounter_id, pokestop.latitude, pokestop.longitude, "
+            "trs_nearbymon.mon_id "
+            "FROM trs_nearbymon "
+            "LEFT JOIN pokestop ON trs_nearbymon.stop_id = pokestop.pokestop_id "
+        )
+
+        query_where = (
+            " WHERE (latitude >= {} AND longitude >= {} "
+            " AND latitude <= {} AND longitude <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (encounter_id, latitude, longitude, mon_id) in res:
+            mon[str(encounter_id)] = {
+                "latitude": latitude,
+                "longitude": longitude,
+                "mon": mon_id
+            }
+
+        return mon

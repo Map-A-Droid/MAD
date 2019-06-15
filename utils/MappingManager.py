@@ -45,7 +45,13 @@ mode_mapping = {
         "range":      0,
         "range_init": 0,
         "max_count":  999999
+    },
+    "mon_mitm_nearby": {
+        "range":      800,
+        "range_init": 800,
+        "max_count":  999999
     }
+
 }
 
 
@@ -412,7 +418,7 @@ class MappingManager:
                     logger.debug("Reading unknown Spawnpoints from DB")
                     coords = self.__db_wrapper.get_undetected_spawns(
                             geofence_helper)
-            elif mode == "pokestops":
+            elif mode == "pokestops" or mode == "mon_mitm_nearby":
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
             else:
                 logger.error("Mode not implemented yet: {}", str(mode))

@@ -108,7 +108,9 @@
     gyms: {},
     routes: {},
     geofences: {},
-    workers: {}
+    workers: {},
+    nearbymon: {},
+    monIcons: {}
   };
 
   new Vue({
@@ -118,12 +120,14 @@
       gyms: {},
       quests: {},
       spawns: {},
+      nearbymon: {},
       layers: {
         stat: {
           spawns: false,
           gyms: false,
           quests: false,
           workers: false,
+          nearbymon: false
         },
         dyn: {
           routes: {},
@@ -202,6 +206,13 @@
 
         this.changeStaticLayer("quests", oldVal, newVal);
       },
+      "layers.stat.nearbymon": function(newVal, oldVal) {
+        if (newVal && !init) {
+          this.map_fetch_nearby_mon(this.buildUrlFilter(true));
+        }
+
+        this.changeStaticLayer("nearbymon", oldVal, newVal);
+      },
       "layers.dyn.geofences": {
         deep: true,
         handler: function() {
@@ -267,8 +278,38 @@
         this.map_fetch_geofences();
         this.map_fetch_spawns(urlFilter);
         this.map_fetch_quests(urlFilter);
+        this.map_fetch_nearby_mon(urlFilter);
 
         this.updateBounds(true);
+      },
+      map_fetch_nearby_mon(urlFilter) {
+        var $this = this;
+
+        if (!$this.layers.stat.nearbymon) {
+          return;
+        }
+
+        axios.get("get_nearby_mon" + urlFilter).then(function (res) {
+          res.data.forEach(function (mon) {
+            var id = mon["encounter"]+"";
+
+            if ($this.nearbymon[id]) {
+              return;
+            }
+
+            $this.nearbymon[id] = mon;
+
+            leaflet_data["nearbymon"][id] = L.marker([$this.jitterCoord(mon["lat"]), $this.jitterCoord(mon["lon"])], {
+              id: mon["encounter"],
+              virtual: true,
+              icon: $this.build_mon_icon(mon["mon_id"])
+            });
+
+            if ($this.layers.stat.nearbymon) {
+              leaflet_data["nearbymon"][id].addTo(map);
+            }
+          });
+        });
       },
       map_fetch_workers() {
         var $this = this;
@@ -635,6 +676,22 @@
           color += letters[Math.floor(Math.random() * 10)];
         }
         return color;
+      },
+      jitterCoord(coord) {
+        var min = coord - 0.0002;
+        var max = coord + 0.0002;
+
+        return Math.random() * (max - min) + min;
+      },
+      build_mon_icon(mon_id) {
+        if (!leaflet_data["monIcons"][mon_id+""]) {
+          leaflet_data["monIcons"][mon_id+""] = L.icon({
+            iconUrl: "asset/pokemon_icons/pokemon_icon_" + String.prototype.padStart.call(mon_id, 3, 0) + "_00.png",
+            iconSize: [50, 50]
+          });
+        }
+
+        return leaflet_data["monIcons"][mon_id+""];
       },
       build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
         switch (quest_reward_type_raw) {

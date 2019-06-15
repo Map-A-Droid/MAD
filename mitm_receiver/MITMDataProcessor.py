@@ -76,6 +76,7 @@ class MitmDataProcessor(Process):
                 mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
                 self.__db_wrapper.submit_mons_map_proto(
                     origin, data["payload"], mon_ids_iv, self.__mitm_mapper)
+                self.__db_wrapper.submit_nearby_map_proto(origin, data["payload"])
             elif type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
