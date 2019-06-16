@@ -258,7 +258,7 @@ class WebsocketServer(object):
 
             if walker_routemanager_mode is None:
                 pass
-            elif walker_routemanager_mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
+            elif walker_routemanager_mode in ["raids_mitm", "mon_mitm", "iv_mitm", "mon_mitm_nearby"]:
                 worker = WorkerMITM(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
                                     mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
                                     db_wrapper=self.__db_wrapper,

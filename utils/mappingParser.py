@@ -194,9 +194,7 @@ class MappingParser(object):
                             logger.debug("Reading unknown Spawnpoints from DB")
                             coords = self.db_wrapper.get_undetected_spawns(
                                 geofence_helper)
-                    elif mode == "pokestops":
-                        coords = self.db_wrapper.stops_from_db(geofence_helper)
-                    elif mode == "mon_mitm_nearby":
+                    elif mode == "pokestops" or mode == "mon_mitm_nearby":
                         coords = self.db_wrapper.stops_from_db(geofence_helper)
                     else:
                         logger.error("Mode not implemented yet: {}", str(mode))

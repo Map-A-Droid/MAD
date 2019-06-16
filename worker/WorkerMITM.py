@@ -14,7 +14,7 @@ from worker.MITMBase import MITMBase, LatestReceivedType
 
 class WorkerMITM(MITMBase):
     def _valid_modes(self):
-        return ["iv_mitm", "raids_mitm", "mon_mitm"]
+        return ["iv_mitm", "raids_mitm", "mon_mitm", "mon_mitm_nearby"]
 
     def _health_check(self):
         logger.debug("_health_check: called")
@@ -166,6 +166,10 @@ class WorkerMITM(MITMBase):
             # worker has to sleep, just empty out the settings...
             ids_iv = []
             scanmode = "nothing"
+        elif routemanager_mode == "mon_mitm_nearby":
+            scanmode = "nearby mons"
+            routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+            ids_iv = []
         elif routemanager_mode == "mon_mitm":
             scanmode = "mons"
             routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
@@ -259,6 +263,15 @@ class WorkerMITM(MITMBase):
                                 break
                     if data_requested is None:
                         logger.debug("No forts in data received")
+                        time.sleep(0.5)
+                elif mode in ["mon_mitm_nearby"]:
+                    for data_extract in latest_data["payload"]["cells"]:
+                        for nearby_mon in data_extract["nearby_pokemon"]:
+                            if nearby_mon["encounter_id"]:
+                                data_requested = latest_data
+                                break
+                    if data_requested is None:
+                        logger.debug("No nearby mon in data received")
                         time.sleep(0.5)
                 else:
                     logger.warning(

@@ -745,6 +745,49 @@
 			]
 		},
 		{
+			"name": "mon_mitm_nearby",
+			"description": "Overlay scanner (MITM) for detecting mons appearing in the 'nearby' window.",
+			"fields": [
+				{
+					"name": "name",
+					"settings": {
+						"type": "text",
+						"require": "true",
+						"description": "Name of area",
+						"lockonedit": "true"
+					}
+				},
+				{
+					"name": "geofence_included",
+					"settings": {
+						"type": "text",
+						"require": "true",
+						"empty": "null",
+						"description": "Including geofence for scanarea"
+					}
+				},
+				{
+					"name": "geofence_excluded",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"empty": "null",
+						"description": "Excluding geofence for scanarea"
+					}
+				},
+				{
+					"name": "routecalc",
+					"settings": {
+						"type": "text",
+						"require": "true",
+						"description": "Name of routefile"
+					}
+				}
+			],
+			"settings": [
+			]
+		},
+		{
 			"name": "raids_mitm",
 			"description": "Overlay scanner (MITM) for detecting raids",
 			"fields": [

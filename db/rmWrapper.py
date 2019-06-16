@@ -1665,6 +1665,9 @@ class RmWrapper(DbWrapperBase):
             ).format(oSwLat, oSwLon, oNeLat, oNeLon)
 
             query_where = query_where + oquery_where
+        elif timestamp is not None:
+            oquery_where = " AND detection_timestamp >= '{}' ".format(timestamp)
+            query_where = query_where + oquery_where
 
         res = self.execute(query + query_where)
 
