@@ -1410,7 +1410,7 @@ class MonocleWrapper(DbWrapperBase):
         logger.debug('Fetching best pokemon spawns from db')
 
         query = (
-                "SELECT encounter_id, updated, pokemon_id, "
+                "SELECT encounter_id, pokemon_id, updated, "
                 "atk_iv, def_iv, sta_iv, level, cp FROM sightings "
                 "WHERE atk_iv>14 and def_iv>14 and sta_iv>14 "
                 "group by encounter_id order by updated desc limit 30"
