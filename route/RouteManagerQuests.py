@@ -149,7 +149,7 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.info("Restoring original route")
                     self._route = self._routecopy.copy()
 
-                new_stops = set(stops) - set(self._route)
+                new_stops = list(set(stops) - set(self._route))
                 if len(new_stops) > 0:
                     for stop in new_stops:
                         logger.warning("Stop with coords {} seems new and not in route.", str(stop))
