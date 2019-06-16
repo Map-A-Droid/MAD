@@ -116,7 +116,7 @@ class RouteManagerQuests(RouteManagerBase):
                     list_of_stops_to_return.append(stop)
                 else:
                     logger.error("Stop {} has not been processed thrice in a row, please check your DB".format(str(stop)))
-                    self._coords_to_be_ignored.append(stop)
+                    self._coords_to_be_ignored.add(stop)
 
             if len(list_of_stops_to_return) > 0:
                 logger.info("Found stops not yet processed, retrying those in the next round")
