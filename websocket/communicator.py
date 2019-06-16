@@ -106,7 +106,7 @@ class Communicator:
             logger.debug("Screenshot response not binary")
             if "KO: " in encoded:
                 logger.error(
-                        "get_screenshot: Could not retrieve screenshot. Check if mediaprojection is enabled!")
+                        "get_screenshot: Could not retrieve screenshot. Make sure your RGC is updated.")
                 return False
             elif "OK:" not in encoded:
                 logger.error("get_screenshot: response not OK")
