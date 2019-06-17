@@ -851,13 +851,13 @@ class MonocleWrapper(DbWrapperBase):
         raid_vals = []
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form, last_updated, is_exclusive) "
+            "time_end, cp, move_1, move_2, form, last_updated, is_exclusive, gender) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
-            "form=VALUES(form), last_updated=VALUES(last_updated)"
+            "form=VALUES(form), last_updated=VALUES(last_updated), gender=VALUES(gender)"
         )
 
         for cell in cells:
@@ -869,12 +869,14 @@ class MonocleWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
+                        gender = gym['gym_details']['raid_info']['raid_pokemon']['display']['gender_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
                         form = None
+                        gender = None
 
                     raidendSec = int(gym['gym_details']
                                      ['raid_info']['raid_end'] / 1000)
@@ -906,7 +908,8 @@ class MonocleWrapper(DbWrapperBase):
                             cp, move_1, move_2,
                             form,
                             int(now),
-                            is_exclusive
+                            is_exclusive,
+                            gender
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -1183,7 +1186,7 @@ class MonocleWrapper(DbWrapperBase):
         query = (
             "SELECT forts.external_id, level, time_spawn, time_battle, time_end, "
             "pokemon_id, cp, move_1, move_2, last_updated, form, is_exclusive, name, url, "
-            "lat, lon, team, weather.condition, is_ex_raid_eligible "
+            "lat, lon, team, weather.condition, is_ex_raid_eligible, gender "
             "FROM raids "
             "LEFT JOIN fort_sightings ON raids.fort_id = fort_sightings.fort_id "
             "LEFT JOIN forts ON raids.fort_id = forts.id "
@@ -1197,7 +1200,7 @@ class MonocleWrapper(DbWrapperBase):
         for (gym_id, level, spawn, start, end, pokemon_id,
                 cp, move_1, move_2, last_scanned, form, is_exclusive,
                 name, url, latitude, longitude, team_id,
-                weather_boosted_condition, is_ex_raid_eligible) in res:
+                weather_boosted_condition, is_ex_raid_eligible, gender) in res:
             ret.append({
                 "gym_id": gym_id,
                 "level": level,
@@ -1217,7 +1220,8 @@ class MonocleWrapper(DbWrapperBase):
                 "team_id": team_id,
                 "weather_boosted_condition": weather_boosted_condition,
                 "is_exclusive": is_exclusive,
-                "is_ex_raid_eligible": is_ex_raid_eligible
+                "is_ex_raid_eligible": is_ex_raid_eligible,
+                "gender": gender
             })
 
         return ret
