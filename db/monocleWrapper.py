@@ -38,6 +38,11 @@ class MonocleWrapper(DbWrapperBase):
                 "ctype": "tinyint(1) NULL"
             },
             {
+                "table": "raids",
+                "column": "gender",
+                "ctype": "tinyint(1) NULL"
+            },
+            {
                 "table": "fort_sightings",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NULL"
