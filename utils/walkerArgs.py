@@ -222,6 +222,9 @@ def parseArgs():
     parser.add_argument('-ugd', '--unknown_gym_distance', default='10',
                         help='Show matchable gyms for unknwon with this radius (in km!) (Default: 10)')
 
+    parser.add_argument('-qpub', '--quests_public', action='store_true', default=False,
+                        help='Enables MADmin /quests_pub endpoint for public quests overview')
+
     # etc
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,

@@ -90,6 +90,7 @@ class path(object):
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", running_ocr=(self._args.only_ocr))
 
+    @auth_required
     def quest_pub(self):
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
