@@ -17,7 +17,7 @@ def auth_required(func):
         quests_pub_enabled = getattr(mapping_args, 'quests_public', False)
         if not username:
             return func(*args, **kwargs)
-        if quests_pub_enabled and func.__name__ in ['get_quests', 'quest_pub']:
+        if quests_pub_enabled and func.__name__ in ['get_quests', 'quest_pub', 'pushAssets']:
             return func(*args, **kwargs)
         if request.authorization:
             if (request.authorization.username == username) and (
