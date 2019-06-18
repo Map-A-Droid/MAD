@@ -1553,7 +1553,7 @@ class DbWrapperBase(ABC):
 
     def statistics_get_location_info(self):
         logger.debug('Fetching all empty locations from db')
-        query =(
+        query = (
             "select worker, sum(location_count), sum(location_ok), sum(location_nok), "
             "sum(location_nok) / sum(location_count) * 100 as Loc_fail_rate "
             "from trs_stats_location "
@@ -1588,17 +1588,18 @@ class DbWrapperBase(ABC):
     def submit_nearby_map_proto(self, origin: str, map_proto: dict):
         query = "REPLACE INTO trs_nearbymon VALUES (%s, %s, %s, %s, UNIX_TIMESTAMP())"
 
+        nearby_mon_args = []
         for cell in map_proto["cells"]:
             for mon in cell["nearby_pokemon"]:
                 if not mon["fort_id"]:
                     continue
 
-                vals = (cell["id"],
-                        mon["encounter_id"],
-                        mon["fort_id"],
-                        mon["id"]
-                        )
-                self.execute(query, vals, commit=True)
+                nearby_mon_args.append((cell["id"],
+                                       mon["encounter_id"],
+                                       mon["fort_id"],
+                                       mon["id"]
+                                        ))
+        self.executemany(query, nearby_mon_args, commit=True)
 
     @abstractmethod
     def get_nearbymon_in_rectangle(self, neLat, neLon, swLat, swLon,
