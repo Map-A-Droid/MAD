@@ -34,6 +34,11 @@ class RmWrapper(DbWrapperBase):
                 "ctype": "tinyint(1) NULL"
             },
             {
+                "table": "raid",
+                "column": "gender",
+                "ctype": "tinyint(1) NULL"
+            },
+            {
                 "table": "gym",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
@@ -908,12 +913,12 @@ class RmWrapper(DbWrapperBase):
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive, gender) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
             "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned), is_exclusive=VALUES(is_exclusive), "
-            "form=VALUES(form)"
+            "form=VALUES(form), gender=VALUES(gender)"
         )
 
         for cell in cells:
@@ -926,12 +931,14 @@ class RmWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
+                        gender = gym['gym_details']['raid_info']['raid_pokemon']['display']['gender_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
                         form = None
+                        gender = None
 
                     raidendSec = int(gym['gym_details']
                                      ['raid_info']['raid_end'] / 1000)
@@ -965,7 +972,8 @@ class RmWrapper(DbWrapperBase):
                             raidend_date,
                             pokemon_id, cp, move_1, move_2, now,
                             form,
-                            is_exclusive
+                            is_exclusive,
+                            gender
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)
@@ -1280,7 +1288,7 @@ class RmWrapper(DbWrapperBase):
     def get_raids_changed_since(self, timestamp):
         query = (
             "SELECT raid.gym_id, raid.level, raid.spawn, raid.start, raid.end, raid.pokemon_id, "
-            "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, "
+            "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, raid.gender, "
             "gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
             "gym.team_id, weather_boosted_condition, gym.is_ex_raid_eligible "
             "FROM raid "
@@ -1295,7 +1303,7 @@ class RmWrapper(DbWrapperBase):
         ret = []
 
         for (gym_id, level, spawn, start, end, pokemon_id,
-                cp, move_1, move_2, last_scanned, form, is_exclusive,
+                cp, move_1, move_2, last_scanned, form, is_exclusive, gender,
                 name, url, latitude, longitude, team_id,
                 weather_boosted_condition, is_ex_raid_eligible) in res:
             ret.append({
@@ -1317,6 +1325,7 @@ class RmWrapper(DbWrapperBase):
                 "team_id": team_id,
                 "weather_boosted_condition": weather_boosted_condition,
                 "is_exclusive": is_exclusive,
+                "gender": gender,
                 "is_ex_raid_eligible": is_ex_raid_eligible
             })
 
