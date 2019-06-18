@@ -111,7 +111,10 @@ class RouteManagerQuests(RouteManagerBase):
                         self._stops_not_processed[stop] += 1
 
             for stop, error_count in self._stops_not_processed.items():
-                if error_count < 4:
+                if stop not in self._stoplist:
+                    logger.info("Location {} is no longer in our stoplist and will be ignored".format(str(stop)))
+                    self._coords_to_be_ignored.add(stop)
+                elif error_count < 4:
                     logger.warning("Found stop not processed yet: {}".format(str(stop)))
                     list_of_stops_to_return.append(stop)
                 else:
