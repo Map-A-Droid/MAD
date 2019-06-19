@@ -1119,7 +1119,7 @@
               <div class="flex-grow-1">{{ index }}</div>
               <span class="badge badge-secondary" style="margin-right: 5px;">{{ route.mode }}</span>
               <div class="custom-control custom-switch">
-                <input :id="index" type="checkbox" v-model="layers.dyn[index].show" class="custom-control-input" />
+                <input :id="index" type="checkbox" v-model="layers.dyn.routes[index].show" class="custom-control-input" />
                 <label :for="index" class="custom-control-label"></label>
               </div>
             </li>
@@ -1136,7 +1136,7 @@
             <li v-for="(fence, index) in layers.dyn.geofences" class="list-group-item layer-item d-flex">
               <div class="flex-grow-1">{{ index }}</div>
               <div class="custom-control custom-switch">
-                <input :id="'fence'+index" type="checkbox" v-model="fence.show" class="custom-control-input" />
+                <input :id="'fence'+index" type="checkbox" v-model="layers.dyn.geofences[index].show" class="custom-control-input" />
                 <label :for="'fence'+index" class="custom-control-label"></label>
               </div>
             </li>
