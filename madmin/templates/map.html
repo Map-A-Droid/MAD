@@ -1101,8 +1101,8 @@
             <li v-for="(item, index) in layers.stat" class="list-group-item layer-item d-flex">
               <div class="flex-grow-1">{{ index }}</div>
               <div class="custom-control custom-switch">
-                <input :id="index" type="checkbox" v-model="layers.stat[index]" class="custom-control-input" />
-                <label :for="index" class="custom-control-label"></label>
+                <input :id="'layers-stat-'+index" type="checkbox" v-model="layers.stat[index]" class="custom-control-input" />
+                <label :for="'layers-stat-'+index" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}
@@ -1119,8 +1119,8 @@
               <div class="flex-grow-1">{{ index }}</div>
               <span class="badge badge-secondary" style="margin-right: 5px;">{{ route.mode }}</span>
               <div class="custom-control custom-switch">
-                <input :id="index" type="checkbox" v-model="layers.dyn.routes[index].show" class="custom-control-input" />
-                <label :for="index" class="custom-control-label"></label>
+                <input :id="'layers-dyn-routes-'+index" type="checkbox" v-model="layers.dyn.routes[index].show" class="custom-control-input" />
+                <label :for="'layers-dyn-routes-'+index" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}
@@ -1129,15 +1129,15 @@
       </div>
 
       <div class="leaflet-sidebar-pane" id="geofences">
-        <h1 class="leaflet-sidebar-header bg-dark">Geofences<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <h1 class="leaflet-sideb ar-header bg-dark">Geofences<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
         <div class="sidebar-pane-content">
           <ul class="list-group list-group-flush">
             {% raw %}
             <li v-for="(fence, index) in layers.dyn.geofences" class="list-group-item layer-item d-flex">
               <div class="flex-grow-1">{{ index }}</div>
               <div class="custom-control custom-switch">
-                <input :id="'fence'+index" type="checkbox" v-model="layers.dyn.geofences[index].show" class="custom-control-input" />
-                <label :for="'fence'+index" class="custom-control-label"></label>
+                <input :id="'layers-dyn-geofences-'+index" type="checkbox" v-model="layers.dyn.geofences[index].show" class="custom-control-input" />
+                <label :for="'layers-dyn-geofences-'+index" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}
