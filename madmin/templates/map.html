@@ -1119,7 +1119,7 @@
               <div class="flex-grow-1">{{ index }}</div>
               <span class="badge badge-secondary" style="margin-right: 5px;">{{ route.mode }}</span>
               <div class="custom-control custom-switch">
-                <input :id="index" type="checkbox" v-model="route.show" class="custom-control-input" />
+                <input :id="index" type="checkbox" v-model="layers.dyn[index].show" class="custom-control-input" />
                 <label :for="index" class="custom-control-label"></label>
               </div>
             </li>
