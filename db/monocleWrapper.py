@@ -1566,7 +1566,7 @@ class MonocleWrapper(DbWrapperBase):
 
         for (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
                 disappear_time, individual_attack, individual_defense,
-                individual_stamina, move_1, move_2, cp, cp_multiplier,
+                individual_stamina, move_1, move_2, cp,
                 weight, height, gender, form, costume,
                 weather_boosted_condition, updated) in res:
 
