@@ -1547,7 +1547,7 @@ class RmWrapper(DbWrapperBase):
             " individual_attack, individual_defense, individual_stamina, cp_multiplier, cp"
             " FROM pokemon"
             " WHERE individual_attack>14 and individual_defense>14 and individual_stamina>14"
-            " ORDER BY UNIX_TIMESTAMP(last_modified) DESC LIMIT 30"
+            " ORDER BY UNIX_TIMESTAMP(last_modified) DESC LIMIT 300"
         )
 
         res = self.execute(query)
