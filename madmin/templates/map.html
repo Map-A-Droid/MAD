@@ -4,7 +4,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
-<link rel="stylesheet" href="static/style/madmin.css?1558455177" />
+<link rel="stylesheet" href="static/style/madmin.css?1561125653674" />
 {% endblock %}
 
 {% block scripts %}
@@ -108,7 +108,9 @@
     gyms: {},
     routes: {},
     geofences: {},
-    workers: {}
+    workers: {},
+    mons: {},
+    monicons: {}
   };
 
   new Vue({
@@ -118,12 +120,14 @@
       gyms: {},
       quests: {},
       spawns: {},
+      mons: {},
       layers: {
         stat: {
           spawns: false,
           gyms: false,
           quests: false,
           workers: false,
+          mons: false
         },
         dyn: {
           routes: {},
@@ -202,6 +206,13 @@
 
         this.changeStaticLayer("quests", oldVal, newVal);
       },
+      "layers.stat.mons": function(newVal, oldVal) {
+        if (newVal && !init) {
+          this.map_fetch_mons(this.buildUrlFilter(true));
+        }
+
+        this.changeStaticLayer("mons", oldVal, newVal);
+      },
       "layers.dyn.geofences": {
         deep: true,
         handler: function() {
@@ -267,6 +278,7 @@
         this.map_fetch_geofences();
         this.map_fetch_spawns(urlFilter);
         this.map_fetch_quests(urlFilter);
+        this.map_fetch_mons(urlFilter);
 
         this.updateBounds(true);
       },
@@ -310,7 +322,7 @@
         }
 
         axios.get('get_gymcoords' + urlFilter).then(function (res) {
-          res.data.forEach(function (gym) {
+           res.data.forEach(function (gym) {
             switch (gym['team_id']) {
               default:
                 color = '#888';
@@ -602,6 +614,57 @@
           });
         });
       },
+      map_fetch_mons(urlFilter) {
+        var $this = this;
+
+        if (!$this.layers.stat.mons) {
+          return;
+        }
+
+        axios.get('get_map_mons' + urlFilter).then(function (res) {
+          res.data.forEach(function (mon) {
+
+            var noskip = true;
+            if ($this["mons"][mon["encounter_id"]]) {
+              if ($this["mons"][mon["encounter_id"]]["last_modified"] != mon["last_modified"]) {
+                map.removeLayer(leaflet_data["mons"][mon["encounter_id"]]);
+                delete leaflet_data["mons"][mon["encounter_id"]];
+              } else {
+                noskip = false;
+              }
+            }
+
+            if (noskip) {
+              // store meta data
+              $this["mons"][mon["encounter_id"]] = mon;
+
+              if (leaflet_data["monicons"][mon["mon_id"]]) {
+                var icon = leaflet_data["monicons"][mon["mon_id"]];
+              } else {
+                var form = String.prototype.padStart.call(mon["form"], 2, 0)
+                var image = `asset/pokemon_icons/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+                var icon = L.icon({
+                  iconUrl: image,
+                  iconSize: [50, 50],
+                });
+
+                leaflet_data["monicons"][mon["mon_id"]] = icon;
+              }
+
+              leaflet_data["mons"][mon["encounter_id"]] = L.marker([mon["latitude"], mon["longitude"]], {
+                id: mon["encounter_id"],
+                virtual: true,
+                icon: icon
+              }).bindPopup($this.build_mon_popup, { "className": "monpopup" });
+
+              // only add them if they're set to visible
+              if ($this.layers.stat.mons) {
+                leaflet_data["mons"][mon["encounter_id"]].addTo(map);
+              }
+            }
+          });
+        });
+      },
       changeDynamicLayers(type) {
         for (k in this.layers.dyn[type]) {
           tlayer = this.layers.dyn[type][k];
@@ -716,7 +779,7 @@
             ${this.build_quest(quest['quest_reward_type_raw'], quest['quest_task'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type'])}
           </div>`;
       },
-      build_gym_popup(marker) {
+      build_gym_popup(marker) {o
         gym = this.gyms[marker.options.id];
         raid = this.raids[marker.options.id];
 
@@ -771,7 +834,7 @@
               <div class="hatch"><i class="fa fa-egg"></i> Spawn: <strong>${spawn.format(raidtimeformat)}</strong></div>
               <div class="start"><i class="fa fa-hourglass-start"></i> Start: <strong>${start.format(raidtimeformat)} ${activeText}</strong></div>
               <div class="end"><i class="fas fa-hourglass-end"></i> End: <strong>${end.format(raidtimeformat)} ${endText}</strong></div>
-              <div class="raidImg" style="background-image: url(${image}); background-size: 100%"></div>
+              <div class="monImg" style="background-image: url(${image}); background-size: 100%"></div>
             </div>`;
         }
 
@@ -838,18 +901,64 @@
 
         return `
           <div class="content">
-            <div class="id"><i class="fa fa-fingerprint"></i> <span>${spawn["id"]}</span></div>
+            <div  class="id"><i class="fa fa-fingerprint"></i> <span>${spawn["id"]}</span></div>
             <div class="coords">
-              <i class="fa fa-map-pin"></i>
+              <i class ="fa fa-map-pin"></i>
               <a href="https://maps.google.com/?q=${spawn["lat"]},${spawn["lon"]}">${spawn["lat"].toFixed(6)}, ${spawn["lon"].toFixed(6)}</a>
            </div>
            <div class="timestamp"><i class="fa fa-clock"></i> Scanned: ${spawn["lastscan"]}</div>
            <br>
-            <div class="spawnContent">
+            <div cla ss="spawnContent">
             <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown"}</strong> spawnpoint</div>
               <div class="spawnTiming">${spawntiming}</div>
             </div>
           </div>`;
+      },
+      build_mon_popup(marker) {
+        mon = this.mons[marker.options.id];
+
+        var monpad = String.prototype.padStart.call(mon["mon_id"], 3, 0);
+        var formpad = String.prototype.padStart.call(mon["form"], 2, 0);
+        var image = `asset/pokemon_icons/pokemon_icon_${monpad}_${formpad}.png`;
+
+        var iv = (mon["individual_attack"] + mon["individual_defense"] + mon["individual_stamina"])*100/45;
+        var end = moment(mon["disappear_time"]*1000);
+
+        if (iv == 100) {
+          var ivcolor = "lime";
+        } else if (iv >= 82) {
+          var ivcolor =  "green";
+        } else if (iv >= 66) {
+          var ivcolor =  "olive";
+        } else if (iv >= 51) {
+          var ivcolor = "orange";
+        } else {
+          var ivcolor = "red";
+        }
+
+        return `
+          <div class="content">
+            <div class="name">#${mon["mon_id"]} ${mon["gender"]==1?'<i class="fas fa-mars"></i>':'<i class="fas fa-venus"></i>'}</div>
+            <div class="id"><i class="fa fa-fingerprint"></i> <span>${mon["encounter_id"]}</span></div>
+            <div class="coords">
+              <i class="fa fa-map-pin"></i>
+              <a href="https://maps.google.com/?q=${mon["latitude"]},${mon["longitude"]}">${mon["latitude"].toFixed(6)}, ${mon["longitude"].toFixed(6)}</a>
+           </div>
+            <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
+            <br>
+            <div class="iv">
+              <i class="fas fa-award"></i> IV: <strong style="color: ${ivcolor}">${Math.round(iv * 100) / 100}%</strong>
+              (Att: <strong>${mon["individual_attack"]}</strong> | Def: <strong>${mon["individual_defense"]}</strong> | Sta: <strong>${mon["individual_stamina"]}</strong>)
+            </div>
+            <div class="measurements">
+              <i class="fas fa-ruler-vertical"></i> Height: <strong>${mon["height"].toFixed(2)}</strong>
+              <i class="fas fa-weight-hanging"></i> Weight: <strong>${mon["weight"].toFixed(2)}</strong>
+            </div>
+            <br>
+          <div class="end"><i class="fas fa-hourglass-end"></i> Despawn: <strong>${end.format("YYYY-MM-DD HH:mm:ss")} (${end.from(moment())})</strong></div>
+          <div class="monImg" style="background-image: url(${image}); background-size: 100%"></div>
+          </div>
+        `;
       },
       getStoredSetting(name, defaultval) {
         var val = localStorage.getItem('settings');

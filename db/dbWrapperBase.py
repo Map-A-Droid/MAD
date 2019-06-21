@@ -409,6 +409,11 @@ class DbWrapperBase(ABC):
         """
         pass
 
+    @abstractmethod
+    def get_mons_in_rectangle(self, neLat, neLon, swLat, swLon,
+                              oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        pass
+
     def statistics_get_pokemon_count(self, days):
         pass
 

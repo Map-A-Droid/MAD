@@ -39,7 +39,8 @@ class map(object):
             ("/get_route", self.get_route),
             ("/get_spawns", self.get_spawns),
             ("/get_gymcoords", self.get_gymcoords),
-            ("/get_quests", self.get_quests)
+            ("/get_quests", self.get_quests),
+            ("/get_map_mons", self.get_map_mons)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -253,8 +254,28 @@ class map(object):
             timestamp=timestamp
         )
 
-        for pokestopid in data:
-            quest = data[str(pokestopid)]
+        for stopid in data:
+            quest = data[str(stopid)]
             coords.append(generate_quest(quest))
 
         return jsonify(coords)
+
+    @auth_required
+    def get_map_mons(self):
+        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        timestamp = request.args.get("timestamp", None)
+
+        data = self._db.get_mons_in_rectangle(
+            neLat=neLat,
+            neLon=neLon,
+            swLat=swLat,
+            swLon=swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+        )
+
+        return jsonify(data)
+

@@ -1652,3 +1652,71 @@ class RmWrapper(DbWrapperBase):
         else:
             logger.debug('Pokestop not visited till now')
             return False
+
+    def get_mons_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        mons = []
+
+        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+        query = (
+            "SELECT encounter_id, spawnpoint_id, pokemon_id, latitude, "
+            "longitude, disappear_time, individual_attack, individual_defense, "
+            "individual_stamina, move_1, move_2, cp, weight, "
+            "height, gender, form, costume, weather_boosted_condition, "
+            "last_modified "
+            "FROM pokemon "
+            "WHERE disappear_time > '{}'"
+        ).format(now)
+
+        query_where = (
+            " AND (latitude >= {} AND longitude >= {} "
+            " AND latitude <= {} AND longitude <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        # there's no old rectangle so check for a timestamp to send only updated stuff
+        elif timestamp is not None:
+            tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
+
+            oquery_where = " AND last_modified >= '{}' ".format(tsdt)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
+                disappear_time, individual_attack, individual_defense,
+                individual_stamina, move_1, move_2, cp,
+                weight, height, gender, form, costume,
+                weather_boosted_condition, last_modified) in res:
+
+            mons.append({
+                "encounter_id": encounter_id,
+                "spawnpoint_id": spawnpoint_id,
+                "mon_id": pokemon_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "disappear_time": int(disappear_time.replace(tzinfo=timezone.utc).timestamp()),
+                "individual_attack": individual_attack,
+                "individual_defense": individual_defense,
+                "individual_stamina": individual_stamina,
+                "move_1": move_1,
+                "move_2": move_2,
+                "cp": cp,
+                "weight": weight,
+                "height": height,
+                "gender": gender,
+                "form": form,
+                "costume": costume,
+                "weather_boosted_condition": weather_boosted_condition,
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp())
+            })
+
+        return mons
