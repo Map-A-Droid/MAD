@@ -597,7 +597,7 @@ class WorkerQuests(MITMBase):
                     timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
-                time.sleep(5)
+                time.sleep(10)
                 if not self._checkPogoButton():
                     self._checkPogoClose()
                 time.sleep(1)
@@ -608,6 +608,7 @@ class WorkerQuests(MITMBase):
                 time.sleep(.5)
                 self._turn_map(self._delay_add)
             elif data_received == LatestReceivedType.UNDEFINED:
+                logger.info('Getting timeout - or other unknown error. Try again')
                 if not self._checkPogoButton():
                     self._checkPogoClose()
 
@@ -639,6 +640,7 @@ class WorkerQuests(MITMBase):
                   FortSearchResultTypes.OUT_OF_RANGE):
                 logger.error('Softban - waiting...')
                 time.sleep(10)
+                self._stop_process_time = math.floor(time.time())
                 if self._open_pokestop(timestamp) is None:
                     return
             else:
@@ -651,6 +653,7 @@ class WorkerQuests(MITMBase):
 
                 self._turn_map(self._delay_add)
                 time.sleep(1)
+                self._stop_process_time = math.floor(time.time())
                 if self._open_pokestop(timestamp) is None:
                     return
                 to += 1
@@ -665,9 +668,11 @@ class WorkerQuests(MITMBase):
             logger.debug(
                     "No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
-        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp:
+        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp and \
+                not latest[104].get('timestamp', 0) >= timestamp:
             return LatestReceivedType.GYM
-        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
+        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp and \
+                not latest[104].get('timestamp', 0) >= timestamp:
             return LatestReceivedType.MON
         else:
             # proto has previously been received, let's check the timestamp...
