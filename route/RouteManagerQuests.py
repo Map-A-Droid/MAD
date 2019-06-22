@@ -183,6 +183,7 @@ class RouteManagerQuests(RouteManagerBase):
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
         self._is_started = False
+        self._round_started_time = None
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:
