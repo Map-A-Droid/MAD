@@ -69,6 +69,7 @@
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #use_media_projection        # Use Mediaprojection for transfering images (OCR)
 #language:                   # Language for quests (default:en - others: de (more soon))
+#mitm_status_password:       # Header Authorization password for MITM /status/ page
 
 # MADmin statistics
 ######################

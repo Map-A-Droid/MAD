@@ -141,6 +141,9 @@ def parseArgs():
     parser.add_argument('-npf', '--npFrom', type=float, default=0.2,
                         help='Matching zoom start value. (Based on resolution)')
 
+    parser.add_argument('-mspass', '--mitm_status_password', default='',
+                        help='Header Authorization password for MITM /status/ page')
+
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')

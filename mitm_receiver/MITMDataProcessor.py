@@ -42,6 +42,13 @@ class MitmDataProcessor(Process):
                 logger.info("MITMDataProcessor received keyboard interrupt, stopping")
                 break
 
+    def get_queue_items(self):
+        try:
+            items_left = self.__queue.qsize()
+        except NotImplementedError:
+            items_left = 0
+        return items_left
+
     @logger.catch
     def process_data(self, received_timestamp, data, origin):
 
