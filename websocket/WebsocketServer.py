@@ -165,6 +165,7 @@ class WebsocketServer(object):
                 logger.warning("Worker with origin {} is already running, killing the running one and have client reconnect",
                                str(websocket_client_connection.request_headers.get_all("Origin")[0]))
                 user_present[1].stop_worker()
+                time.sleep(10)
                 return False
             elif auths and authBase64 and not check_auth(authBase64, self.args, auths):
                 logger.warning("Invalid auth details received from {}", str(
@@ -476,7 +477,7 @@ class WebsocketServer(object):
             # TODO: why is the user removed here?
             new_count = self.__increase_fail_counter(id)
             if new_count > 5:
-                logger.error("5 consecutive timeouts to {}, cleanup", str(id))
+                logger.error("5 consecutive timeouts to {} or origin is not longer connected, cleanup", str(id))
                 # TODO: signal worker to stop and NOT cleanup the websocket by itself!
                 self.clean_up_user(id, None)
                 raise WebsocketWorkerTimeoutException
