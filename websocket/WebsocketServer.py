@@ -157,6 +157,9 @@ class WebsocketServer(object):
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
+        # reset pref. error counter if exist
+        self.__reset_fail_counter(origin)
+
         self.__current_users_mutex.acquire()
         try:
             logger.debug("Checking if {} is already present", str(origin))
@@ -480,6 +483,7 @@ class WebsocketServer(object):
                 logger.error("5 consecutive timeouts to {} or origin is not longer connected, cleanup", str(id))
                 # TODO: signal worker to stop and NOT cleanup the websocket by itself!
                 self.clean_up_user(id, None)
+                self.__reset_fail_counter(id)
                 raise WebsocketWorkerTimeoutException
 
         self.__remove_request(message_id)
