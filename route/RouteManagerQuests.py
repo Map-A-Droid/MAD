@@ -163,8 +163,8 @@ class RouteManagerQuests(RouteManagerBase):
                     self._route: List[Location] = []
 
                 if 0 < len(stops) < len(self._route) \
-                        and (len(stops)-len(self._route)) * 100 / len(stops) < 80:
-                    # Calculating new route because 80 percent of stops are processed
+                        and len(stops)/len(self._route) <= 0.3:
+                    # Calculating new route because 70 percent of stops are processed
                     logger.info('There are less stops without quest than routepositions - recalc')
                     self._route = list(set(self._route) - (set(self._route) - set(stops)))
                     coords = self._route
