@@ -307,6 +307,8 @@
                 fillOpacity: 0.9
               }).bindPopup(name);
 
+              $this.addMouseEventPopup(leaflet_data["workers"][name]);
+
               if ($this.layers.stat.workers) {
                 leaflet_data["workers"][worker["name"]].addTo(map);
               }
@@ -362,6 +364,8 @@
                 opacity: 1.0,
                 fillOpacity: 0.8,
               }).bindPopup($this.build_gym_popup, { 'className': 'gympopup'});
+
+              $this.addMouseEventPopup(leaflet_data["gyms"][gym["id"]]);
 
               // only add them if they're set to visible
               if ($this.layers.stat.gyms) {
@@ -540,6 +544,8 @@
                 id: spawn["id"]
               }).bindPopup($this.build_spawn_popup, { 'className': 'spawnpopup' });
 
+              $this.addMouseEventPopup(leaflet_data["spawns"][spawn["id"]]);
+
               // only add them if they're set to visible
               if ($this.layers.stat.spawns) {
                 leaflet_data["spawns"][spawn["id"]].addTo(map);
@@ -568,6 +574,8 @@
               virtual: true,
               icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])
             }).bindPopup($this.build_stop_popup, { "className": "questpopup"});
+
+            $this.addMouseEventPopup(leaflet_data["quests"][quest["pokestop_id"]]);
 
             if ($this.layers.stat.quests) {
               leaflet_data["quests"][quest["pokestop_id"]].addTo(map);
@@ -642,10 +650,11 @@
                 var icon = leaflet_data["monicons"][mon["mon_id"]];
               } else {
                 var form = String.prototype.padStart.call(mon["form"], 2, 0)
-                var image = `asset/pokemon_icons/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+                //var image = `asset/pokemon_icons/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+                var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
                 var icon = L.icon({
                   iconUrl: image,
-                  iconSize: [50, 50],
+                  iconSize: [40, 40],
                 });
 
                 leaflet_data["monicons"][mon["mon_id"]] = icon;
@@ -656,6 +665,8 @@
                 virtual: true,
                 icon: icon
               }).bindPopup($this.build_mon_popup, { "className": "monpopup" });
+
+              $this.addMouseEventPopup(leaflet_data["mons"][mon["encounter_id"]]);
 
               // only add them if they're set to visible
               if ($this.layers.stat.mons) {
@@ -917,9 +928,9 @@
       build_mon_popup(marker) {
         mon = this.mons[marker.options.id];
 
-        var monpad = String.prototype.padStart.call(mon["mon_id"], 3, 0);
-        var formpad = String.prototype.padStart.call(mon["form"], 2, 0);
-        var image = `asset/pokemon_icons/pokemon_icon_${monpad}_${formpad}.png`;
+        var form = String.prototype.padStart.call(mon["form"], 2, 0);
+        //var image = `asset/pokemon_icons/pokemon_icon_${monpad}_${formpad}.png`;
+        var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
 
         var iv = (mon["individual_attack"] + mon["individual_defense"] + mon["individual_stamina"])*100/45;
         var end = moment(mon["disappear_time"]*1000);
@@ -935,7 +946,20 @@
         } else {
           var ivcolor = "red";
         }
-  if (iv !== 0) {
+
+        var ivtext = "";
+        if (iv !== 0) {
+          ivtext = `
+              <div class="iv">
+                <i class="fas fa-award"></i> IV: <strong style="color: ${ivcolor}">${Math.round(iv * 100) / 100}%</strong>
+                (Att: <strong>${mon["individual_attack"]}</strong> | Def: <strong>${mon["individual_defense"]}</strong> | Sta: <strong>${mon["individual_stamina"]}</strong>)
+              </div>
+              <div class="measurements">
+                <i class="fas fa-ruler-vertical"></i> Height: <strong>${mon["height"].toFixed(2)}</strong>
+                <i class="fas fa-weight-hanging"></i> Weight: <strong>${mon["weight"].toFixed(2)}</strong>
+              </div>
+              <br>`;
+        }
 
         return `
           <div class="content">
@@ -947,35 +971,11 @@
            </div>
             <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
             <br>
-            <div class="iv">
-              <i class="fas fa-award"></i> IV: <strong style="color: ${ivcolor}">${Math.round(iv * 100) / 100}%</strong>
-              (Att: <strong>${mon["individual_attack"]}</strong> | Def: <strong>${mon["individual_defense"]}</strong> | Sta: <strong>${mon["individual_stamina"]}</strong>)
-            </div>
-            <div class="measurements">
-              <i class="fas fa-ruler-vertical"></i> Height: <strong>${mon["height"].toFixed(2)}</strong>
-              <i class="fas fa-weight-hanging"></i> Weight: <strong>${mon["weight"].toFixed(2)}</strong>
-            </div>
-            <br>
+            ${ivtext}
           <div class="end"><i class="fas fa-hourglass-end"></i> Despawn: <strong>${end.format("YYYY-MM-DD HH:mm:ss")} (${end.from(moment())})</strong></div>
           <div class="monImg" style="background-image: url(${image}); background-size: 100%"></div>
           </div>
         `;
-      } else {
-        return `
-          <div class="content">
-            <div class="name">#${mon["mon_id"]} ${mon["gender"]==1?'<i class="fas fa-mars"></i>':'<i class="fas fa-venus"></i>'}</div>
-            <div class="id"><i class="fa fa-fingerprint"></i> <span>${mon["encounter_id"]}</span></div>
-            <div class="coords">
-              <i class="fa fa-map-pin"></i>
-              <a href="https://maps.google.com/?q=${mon["latitude"]},${mon["longitude"]}">${mon["latitude"].toFixed(6)}, ${mon["longitude"].toFixed(6)}</a>
-           </div>
-            <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
-            <br>
-          <div class="end"><i class="fas fa-hourglass-end"></i> Despawn: <strong>${end.format("YYYY-MM-DD HH:mm:ss")} (${end.from(moment())})</strong></div>
-          <div class="monImg" style="background-image: url(${image}); background-size: 100%"></div>
-          </div>
-        `;
-      }
       },
       getStoredSetting(name, defaultval) {
         var val = localStorage.getItem('settings');
@@ -1049,6 +1049,27 @@
         if(clickToScanActive) {
           $('#injectionModal').data('coords', e.latlng.lat + ',' + e.latlng.lng).modal();
         }
+      },
+      addMouseEventPopup(marker) {
+        marker.on("mouseover", function(e) {
+          marker.openPopup();
+        });
+
+        marker.on("mouseout", function(e) {
+          if (!marker.keepPopupOpen) {
+            marker.closePopup();
+          }
+        });
+
+        marker.on("click", function(e) {
+          if (!marker.isPopupOpen()) {
+            marker.openPopup();
+            marker.keepPopupOpen = true;
+          } else {
+            marker.keepPopupOpen = false;
+            marker.closePopup();
+          }
+        });
       },
       updateBounds(isOld) {
         if (!isOld) {
