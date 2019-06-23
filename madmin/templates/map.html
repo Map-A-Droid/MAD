@@ -39,6 +39,14 @@
     }]
   });
 
+  function copyClipboard(text) {
+      navigator.clipboard.writeText(text.replace("|", ",")).then(function() {
+          alert('Copying to clipboard was successful!');
+      }, function(err) {
+          alert('Could not copy text: ', err);
+      });
+  };
+
   $(document).on("hidden.bs.modal", "#injectionModal", function(e) {
     locInjectBtn.state("scanmode-activate");
     clickToScanActive = false;
@@ -878,6 +886,7 @@
             <div class="coords">
               <i class="fa fa-map-pin"></i>
               <a href="https://maps.google.com/?q=${quest["latitude"]},${quest["longitude"]}">${quest["latitude"]}, ${quest["longitude"]}</a>
+              <a onclick=copyClipboard("${quest["latitude"].toFixed(6)}|${quest["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
             </div>
             <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: ${moment(quest['timestamp']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
             <br>
@@ -955,6 +964,7 @@
             <div class="coords">
               <i class="fa fa-map-pin"></i>
               <a href="https://maps.google.com/?q=${gym["lat"]},${gym["lon"]}">${gym["lat"]}, ${gym["lon"]}</a>
+              <a onclick=copyClipboard("${gym["lat"].toFixed(6)}|${gym["lon"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
            </div>
            <div class="timestamp"><i class="fa fa-clock"></i> Scanned: ${last_scanned.format(timeformat)}</div>
            ${raidContent}
@@ -1062,6 +1072,7 @@
             <div class="coords">
               <i class="fa fa-map-pin"></i>
               <a href="https://maps.google.com/?q=${mon["latitude"]},${mon["longitude"]}">${mon["latitude"].toFixed(6)}, ${mon["longitude"].toFixed(6)}</a>
+              <a onclick=copyClipboard("${mon["latitude"].toFixed(6)}|${mon["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
            </div>
             <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
             <br>
