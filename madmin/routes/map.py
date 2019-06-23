@@ -37,6 +37,7 @@ class map(object):
             ("/get_position", self.get_position),
             ("/get_geofence", self.get_geofence),
             ("/get_route", self.get_route),
+            ("/get_prioroute", self.get_prioroute),
             ("/get_spawns", self.get_spawns),
             ("/get_gymcoords", self.get_gymcoords),
             ("/get_quests", self.get_quests),
@@ -149,6 +150,33 @@ class map(object):
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
             route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_route(routemanager)
+
+            if route is None:
+                continue
+            route_serialized = []
+
+            for location in route:
+                route_serialized.append([
+                    getCoordFloat(location.lat), getCoordFloat(location.lng)
+                ])
+            routeexport.append({
+                "name": routemanager,
+                "mode": mode,
+                "coordinates": route_serialized
+            })
+
+        return jsonify(routeexport)
+
+    @auth_required
+    def get_prioroute(self):
+        routeexport = []
+
+        routemanager_names = self._mapping_manager.get_all_routemanager_names()
+
+        # areas = self._mapping_manager.get_areas()
+        for routemanager in routemanager_names:
+            mode = self._mapping_manager.routemanager_get_mode(routemanager)
+            route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_prioroute(routemanager)
 
             if route is None:
                 continue
