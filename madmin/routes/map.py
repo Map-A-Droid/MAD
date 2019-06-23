@@ -184,8 +184,9 @@ class map(object):
 
             for location in route:
                 route_serialized.append([
-                    getCoordFloat(location.lat), getCoordFloat(location.lng)
+                    getCoordFloat(location[1].lat), getCoordFloat(location[1].lng)
                 ])
+
             routeexport.append({
                 "name": routemanager,
                 "mode": mode,
