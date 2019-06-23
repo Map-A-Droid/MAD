@@ -107,6 +107,7 @@
     quests: {},
     gyms: {},
     routes: {},
+    prioroutes: {},
     geofences: {},
     workers: {},
     mons: {},
@@ -131,6 +132,7 @@
         },
         dyn: {
           routes: {},
+          prioroutes: {},
           geofences: {}
         }
       },
@@ -225,6 +227,12 @@
           this.changeDynamicLayers("routes");
         }
       },
+      "layers.dyn.prioroutes": {
+        deep: true,
+        handler: function() {
+          this.changeDynamicLayers("prioroutes");
+        }
+      },
       'settings.maptiles': function(newVal) {
         this.updateStoredSetting("settings-maptiles", newVal);
         leaflet_data.tileLayer.setUrl(this.maptiles[newVal].url);
@@ -279,6 +287,7 @@
         this.map_fetch_spawns(urlFilter);
         this.map_fetch_quests(urlFilter);
         this.map_fetch_mons(urlFilter);
+        this.map_fetch_prioroutes();
 
         this.updateBounds(true);
       },
@@ -472,6 +481,77 @@
             };
 
             $this.$set($this.layers.dyn.routes, name, settings);
+          });
+        });
+      },
+      map_fetch_prioroutes() {
+        var $this = this;
+
+        axios.get("get_prioroute").then(function (res) {
+          res.data.forEach(function (route) {
+            var group = L.layerGroup();
+            var coords = [];
+
+            var name = route.name;
+
+            if ($this.layers.dyn.prioroutes[name]) {
+              map.removeLayer(leaflet_data["prioroutes"][name]);
+            }
+
+            if (route.mode == "mon_mitm") {
+              mode = "mons";
+              cradius = $this.settings.routes.coordinateRadius.mons;
+            } else if (route.mode == "pokestops") {
+              mode = "quests";
+              cradius = $this.settings.routes.coordinateRadius.quests;
+            } else if (route.mode == "raids_mitm" || route.mode == "raids_ocr") {
+              mode = "raids";
+              cradius = $this.settings.routes.coordinateRadius.raids;
+            }
+
+            route.coordinates.forEach(function(coord, index) {
+              var color = $this.getPercentageColor((index+1) * 100 / route.coordinates.length);
+              var weight = index == 0 ? 5 : 1;
+
+              circle = L.circle(coord, {
+                pane: "routes",
+                radius: cradius,
+                color: color,
+                fillColor: color,
+                fillOpacity: 1,
+                weight: weight,
+                opacity: 0.6,
+                fillOpacity: 0.3
+              });
+
+              circle.addTo(group);
+              coords.push(circle);
+            });
+
+            var geojson = {
+              "type": "LineString",
+              "coordinates": $this.convertToLonLat(route.coordinates)
+            }
+
+            // add route to layergroup
+            L.geoJSON(geojson, {
+              pane: "routes",
+              style: {
+                "color": "#000000",
+                "weight": 2,
+                "opacity": 0.2
+              }
+            }).addTo(group);
+
+            // add layergroup to management object
+            leaflet_data["prioroutes"][name] = group;
+
+            var settings = {
+              "show": $this.getStoredSetting("layers-dyn-prioroutes-" + name, false),
+              "mode": mode
+            };
+
+            $this.$set($this.layers.dyn.prioroutes, name, settings);
           });
         });
       },
@@ -709,6 +789,20 @@
           color += letters[Math.floor(Math.random() * 10)];
         }
         return color;
+      },
+      getPercentageColor(percentage) {
+        var r, g, b = 0;
+
+        if (percentage < 50) {
+          r = 255;
+          g = Math.round(5.1 * percentage);
+        } else {
+          g = 255;
+          r = Math.round(510 - 5.10 * percentage);
+        }
+
+        var h = r * 0x10000 + g * 0x100 + b * 0x1;
+        return "#" + ("000000" + h.toString(16)).slice(-6);
       },
       build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
         switch (quest_reward_type_raw) {
@@ -1234,6 +1328,7 @@
       <ul role="tablist">
         <li><a href="#points" role="tab"><i class="fa fa-map-marker"></i></a></li>
         <li><a href="#routes" role="tab"><i class="fa fa-route"></i></a></li>
+        <li><a href="#prioroutes" role="tab"><i class="fas fa-sort-numeric-up"></i></a></li>
         <li><a href="#geofences" role="tab"><i class="fa fa-draw-polygon"></i></a></li>
         <li><a href="#settings" role="tab"><i class="fa fa-cog"></i></a></li>
       </ul>
@@ -1268,6 +1363,24 @@
               <div class="custom-control custom-switch">
                 <input :id="'layers-dyn-routes-'+index" type="checkbox" v-model="layers.dyn.routes[index].show" class="custom-control-input" />
                 <label :for="'layers-dyn-routes-'+index" class="custom-control-label"></label>
+              </div>
+            </li>
+            {% endraw %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="leaflet-sidebar-pane" id="prioroutes">
+        <h1 class="leaflet-sidebar-header bg-dark">Priority routes<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            {% raw %}
+            <li v-for="(route, index) in layers.dyn.prioroutes" class="list-group-item layer-item justify-content-between d-flex align-items-center">
+              <div class="flex-grow-1">{{ index }}</div>
+              <span class="badge badge-secondary" style="margin-right: 5px;">{{ route.mode }}</span>
+              <div class="custom-control custom-switch">
+                <input :id="'layers-dyn-prioroutes-'+index" type="checkbox" v-model="layers.dyn.prioroutes[index].show" class="custom-control-input" />
+                <label :for="'layers-dyn-prioroutes-'+index" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}
