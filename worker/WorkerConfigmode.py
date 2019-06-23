@@ -1,6 +1,4 @@
 import time
-from threading import Event, Lock, Thread, current_thread
-
 from utils.logging import logger
 from websocket.communicator import Communicator
 
@@ -9,7 +7,6 @@ class WorkerConfigmode(object):
     def __init__(self, args, id, websocket_handler):
         self._communicator = Communicator(
             websocket_handler, id, self, args.websocket_command_timeout)
-        self._stop_worker_event = Event()
         self._id = id
 
     def get_communicator(self):
