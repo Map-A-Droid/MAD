@@ -2,7 +2,6 @@ import json
 import os
 import time
 import datetime
-from threading import Event, Thread
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
