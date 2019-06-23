@@ -706,8 +706,7 @@ class WorkerBase(ABC):
         if buttoncheck:
             logger.debug('Found button on screen')
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1))
-        while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id) or \
-                not self._stop_worker_event.is_set():
+        while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id):
             logger.error("_check_pogo_main_screen: not on Mainscreen...")
             if attempts > maxAttempts:
                 # could not reach raidtab in given maxAttempts
