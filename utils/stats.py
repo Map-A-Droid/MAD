@@ -2,9 +2,11 @@ import json
 import os
 import time
 import datetime
+from threading import Event, Thread
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
+from copy import deepcopy
 
 from db.dbWrapperBase import DbWrapperBase
 from utils.logging import logger
@@ -76,39 +78,40 @@ class PlayerStats(object):
         return False
 
     def stats_collector(self):
-        self.__mapping_mutex.acquire()
-        data_send_stats = []
-        data_send_location = []
 
         if not self._stats_collector_start:
             if time.time() - self._last_processed_timestamp > 600 or self.compare_hour(self._last_processed_timestamp):
+                self.__mapping_mutex.acquire()
+                stats_collected_tmp: dict = {}
+                try:
+                    stats_collected_tmp = deepcopy(self.__stats_collected)
+                    del self.__stats_collected
+                    self.__stats_collected = {}
+                    self._last_processed_timestamp = time.time()
+                finally:
+                    self.__mapping_mutex.release()
 
-                # collect_data = self._stats_collect.get(self._last_processed_timestamp, [])
-
-                data_send_stats.append(self.stats_complete_parser(self.__stats_collected,
-                                                                  self._last_processed_timestamp))
-                data_send_location.append(self.stats_location_parser(self.__stats_collected,
-                                                                     self._last_processed_timestamp))
-                data_send_location_raw = self.stats_location_raw_parser(self.__stats_collected,
-                                                                        self._last_processed_timestamp)
-                data_send_detection_raw = self.stats_detection_raw_parser(self.__stats_collected,
-                                                                          self._last_processed_timestamp)
-
-                del self.__stats_collected
-                self.__stats_collected = {}
-
-                self._db_wrapper.submit_stats_complete(data_send_stats)
-                self._db_wrapper.submit_stats_locations(data_send_location)
-                self._db_wrapper.submit_stats_locations_raw(data_send_location_raw)
-                self._db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
-                self._db_wrapper.cleanup_statistics()
-                self._last_processed_timestamp = time.time()
+                self._process_stats(stats_collected_tmp)
 
         else:
             self._stats_collector_start = False
             self._last_processed_timestamp = time.time()
 
-        self.__mapping_mutex.release()
+    def _process_stats(self, stats):
+        logger.info("Processing stats and write to db")
+        data_send_stats = []
+        data_send_location = []
+
+        data_send_stats.append(self.stats_complete_parser(stats, self._last_processed_timestamp))
+        data_send_location.append(self.stats_location_parser(stats, self._last_processed_timestamp))
+        data_send_location_raw = self.stats_location_raw_parser(stats, self._last_processed_timestamp)
+        data_send_detection_raw = self.stats_detection_raw_parser(stats, self._last_processed_timestamp)
+
+        self._db_wrapper.submit_stats_complete(data_send_stats)
+        self._db_wrapper.submit_stats_locations(data_send_location)
+        self._db_wrapper.submit_stats_locations_raw(data_send_location_raw)
+        self._db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
+        self._db_wrapper.cleanup_statistics()
 
     def stats_collect_mon(self, encounter_id: str):
         with self.__mapping_mutex:
