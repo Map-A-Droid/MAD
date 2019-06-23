@@ -74,7 +74,8 @@ class WorkerQuests(MITMBase):
         self.clear_thread.daemon = False
         self.clear_thread.start()
         self._get_screen_size()
-        self._wait_for_injection()
+        if not self._wait_for_injection():
+            raise InternalStopWorkerException
 
         reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:

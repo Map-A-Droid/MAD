@@ -34,6 +34,8 @@ class WebsocketServer(object):
                  configmode=False):
         self.__current_users = {}
         self.__current_users_mutex = Lock()
+        self.__connected_users: list = []
+        self.__connected_users_mutex = Lock()
         self.__stop_server = Event()
 
         self.args = args
@@ -157,20 +159,34 @@ class WebsocketServer(object):
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
+        self.__connected_users_mutex.acquire()
+        try:
+            logger.debug("Checking if {} is already present", str(origin))
+            if origin in self.__connected_users:
+                logger.warning(
+                    "Worker with origin {} is already running, killing the running one and have client reconnect",
+                    str(origin))
+                self.__current_users.get(origin)[1].stop_worker()
+                # self.__connected_users.remove(origin)
+                while origin in self.__current_users:
+                    if self.__stop_server.is_set():
+                        logger.info(
+                            "MAD is set to shut down, not accepting new connection")
+                        return False
+                    # waiting for shutdown present worker
+                    logger.warning('Old websocket session still online - waiting')
+                    time.sleep(1)
+                return
+        finally:
+            self.__connected_users_mutex.release()
+
         # reset pref. error counter if exist
         self.__reset_fail_counter(origin)
+        self.__connected_users.append(origin)
 
         self.__current_users_mutex.acquire()
         try:
-            logger.debug("Checking if {} is already present", str(origin))
-            user_present = self.__current_users.get(origin)
-            if user_present is not None:
-                logger.warning("Worker with origin {} is already running, killing the running one and have client reconnect",
-                               str(websocket_client_connection.request_headers.get_all("Origin")[0]))
-                user_present[1].stop_worker()
-                time.sleep(10)
-                return False
-            elif auths and authBase64 and not check_auth(authBase64, self.args, auths):
+            if auths and authBase64 and not check_auth(authBase64, self.args, auths):
                 logger.warning("Invalid auth details received from {}", str(
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
@@ -300,14 +316,17 @@ class WebsocketServer(object):
         return True
 
     async def __unregister(self, websocket_client_connection):
-        worker_id = str(
-            websocket_client_connection.request_headers.get_all("Origin")[0])
-        self.__current_users_mutex.acquire()
-        worker = self.__current_users.get(worker_id, None)
-        if worker is not None:
-            worker[1].stop_worker()
-            self.__current_users.pop(worker_id)
-        self.__current_users_mutex.release()
+
+        self.__connected_users_mutex.acquire()
+        try:
+            worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
+            worker = self.__current_users.get(worker_id, None)
+            self.__connected_users.remove(worker_id)
+            if worker is not None:
+                worker[1].stop_worker()
+                self.__current_users.pop(worker_id)
+        finally:
+            self.__connected_users_mutex.release()
         logger.info("Worker {} unregistered", str(worker_id))
 
     async def __producer_handler(self, websocket_client_connection):

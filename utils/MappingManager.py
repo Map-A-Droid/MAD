@@ -482,13 +482,13 @@ class MappingManager:
 
             with self.__mappings_mutex:
                 # stopping routemanager / worker
+                logger.info('Restarting Worker')
                 for routemanager in self._routemanagers.keys():
-                    area = routemanagers_tmp.get(routemanager, None)
+                    area = self._routemanagers.get(routemanager, None)
                     if area is None:
                         continue
-                    area["routemanager"].stop_routemanager()
-                    area["routemanager"].stop_worker()
-
+                    #area["routemanager"].stop_routemanager()
+                    #area["routemanager"].stop_worker()
 
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp

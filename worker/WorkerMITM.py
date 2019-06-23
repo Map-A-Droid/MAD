@@ -112,6 +112,8 @@ class WorkerMITM(MITMBase):
 
     def _pre_work_loop(self):
         logger.info("MITM worker starting")
+        if not self._wait_for_injection():
+            raise InternalStopWorkerException
 
     def _start_pogo(self):
         pogo_topmost = self._communicator.isPogoTopmost()
