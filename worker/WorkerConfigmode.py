@@ -18,7 +18,7 @@ class WorkerConfigmode(object):
     def start_worker(self):
         logger.info("Worker {} started in configmode", str(self._id))
         while not self._stop_worker_event.isSet():
-            time.sleep(1)
+            time.sleep(60)
         self._communicator.cleanup_websocket()
         logger.info("Internal cleanup of {} finished", str(self._id))
 
