@@ -166,7 +166,7 @@ class MADVersion(object):
                 'trs_status', 'lastPogoReboot')
             if column_exist == 0:
                 try:
-                    self.wrapper.execute(alter_query, commit=True)
+                    self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
                     logger.info("Unexpected error: {}", e)
 
