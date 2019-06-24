@@ -518,7 +518,13 @@
             }
 
             route.coordinates.forEach(function(coord, index) {
-              var color = $this.getPercentageColor((index+1) * 100 / route.coordinates.length);
+              var maxcolored = 10;
+              var color = "#BBB";
+
+              if (index < maxcolored) {
+                color = $this.getPercentageColor((index+1) * 100 / maxcolored);
+              }
+
               var weight = index == 0 ? 5 : 1;
 
               circle = L.circle(coord, {
@@ -528,8 +534,8 @@
                 fillColor: color,
                 fillOpacity: 1,
                 weight: weight,
-                opacity: 0.6,
-                fillOpacity: 0.3
+                opacity: 0.8,
+                fillOpacity: 0.5
               });
 
               circle.addTo(group);
