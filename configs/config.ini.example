@@ -14,9 +14,9 @@
 
 #db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
 #dbip:                       # IP adress or hostname of the mysql server
-#dbusername:                 # Username of database
+#dbusername:                 # USERname for database
+#dbpassword:                 # Password for that username
 #dbname:                     # Name of the database
-#dbpassword:                 # Password of database
 
 #dbport:                     # Port of the database (Default: 3306)
 #db_poolsize:                # Amount of connections to keep open to the DB. Default: 2
@@ -107,7 +107,7 @@
                              #  possible types are: pokemon, raid, gym, weather
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
 #webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
-#weather_webhook             # Activate support for weather webhook (remember to enable weather in other settings too!)
+#weather_webhook             # Activate support for weather webhook (remember to enable weather support in other settings section too!)
 #pokemon_webhook             # Activate support for pokemon webhook
 #pokestop_webhook            # Activate support for pokestop webhook (lures)
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
