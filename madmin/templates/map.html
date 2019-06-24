@@ -1193,21 +1193,24 @@
         marker.on("mouseover", function(e) {
           marker.keepPopupOpen = false;
           marker.openPopup();
+          marker.popupOpen = true;
         });
 
         marker.on("mouseout", function(e) {
           if (!marker.keepPopupOpen) {
             marker.closePopup();
+            marker.popupOpen = false;
           }
         });
 
         marker.on("click", function(e) {
-          if (!marker.isPopupOpen()) {
+          if (marker.popupOpen) {
             marker.openPopup();
             marker.keepPopupOpen = true;
           } else {
             marker.keepPopupOpen = false;
             marker.closePopup();
+            marker.popupOpen = false;
           }
         });
       },
