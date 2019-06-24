@@ -1163,6 +1163,7 @@
       },
       addMouseEventPopup(marker) {
         marker.on("mouseover", function(e) {
+          marker.keepPopupOpen = false;
           marker.openPopup();
         });
 
