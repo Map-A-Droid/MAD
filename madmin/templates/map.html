@@ -100,12 +100,28 @@
     }
   });
 
+  // fix gaps in tile rendering
+  (function(){
+    var originalInitTile = L.GridLayer.prototype._initTile
+    L.GridLayer.include({
+      _initTile: function (tile) {
+        originalInitTile.call(this, tile);
+
+        var tileSize = this.getTileSize();
+
+        tile.style.width = tileSize.x + 1 + 'px';
+        tile.style.height = tileSize.y + 1 + 'px';
+      }
+    });
+  })()
+
   // globals
   var map;
   var sidebar;
   var init = true;
   var fetchTimeout = null;
   var clickToScanActive = false;
+  var cleanupInterval = null;
 
   // object to hold all the markers and elements
   var leaflet_data = {
@@ -148,11 +164,19 @@
       maptiles: {
         cartodblight: {
           name: "CartoDB Positron",
-          url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}.png"
+          url: "https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png"
+        },
+        cartodblightnolabel: {
+          name: "CartoDB Positron nolabel",
+          url: "https://{s}.basemaps.cartocdn.com/rastertiles/light_nolabels/{z}/{x}/{y}.png"
         },
         cartodbdark: {
           name: "CartoDB Darkmatter",
-          url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png"
+          url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png"
+        },
+        cartodbdarknolabel: {
+          name: "CartoDB Darkmatter",
+          url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}.png"
         },
         cartodbvoyager: {
           name: "CartoDB Voyager",
@@ -176,6 +200,7 @@
         }
       },
       settings: {
+        cleanup: true,
         maptiles: "cartodblight",
         routes: {
           coordinateRadius: {
@@ -245,6 +270,15 @@
         this.updateStoredSetting("settings-maptiles", newVal);
         leaflet_data.tileLayer.setUrl(this.maptiles[newVal].url);
       },
+      'settings.cleanup': function(newVal) {
+        this.updateStoredSetting("settings-cleanup", newVal);
+
+        if (newVal) {
+          this.cleanup();
+        } else {
+          clearInterval(cleanupInterval);
+        }
+      },
       'settings.routes.coordinateRadius': {
         deep: true,
         handler: function () {
@@ -277,12 +311,6 @@
 
       // init our map first
       this.initMap();
-
-      // initial load
-      this.map_fetch_everything();
-
-      // frequently fetch updated data
-      setInterval(this.map_fetch_everything, 6000);
     },
     methods: {
       map_fetch_everything() {
@@ -1217,8 +1245,71 @@
         });
         return lonlat;
       },
+      buildUrlFilter(force = false) {
+        var oSwLat = this.getStoredSetting("oSwLat", null);
+        var oSwLon = this.getStoredSetting("oSwLon", null);
+        var oNeLat = this.getStoredSetting("oNeLat", null);
+        var oNeLon = this.getStoredSetting("oNeLon", null);
+
+        var old = {};
+        if (oSwLat && oSwLon && oNeLat && oNeLon && !force) {
+          old = {
+            "oSwLat": oSwLat,
+            "oSwLon": oSwLon,
+            "oNeLat": oNeLat,
+            "oNeLon": oNeLon
+          };
+        }
+
+        var timestamp = this.getStoredSetting("fetchTimestamp", null);
+        if (timestamp && !force) {
+          old["timestamp"] = timestamp;
+        }
+
+        var swLat = this.getStoredSetting("swLat", null);
+        var swLon = this.getStoredSetting("swLon", null);
+        var neLat = this.getStoredSetting("neLat", null);
+        var neLon = this.getStoredSetting("neLon", null);
+
+        var bounds = {
+          "swLat": swLat,
+          "swLon": swLon,
+          "neLat": neLat,
+          "neLon": neLon
+        };
+
+        Object.keys(old).forEach(function(key) { bounds[key] = old[key]; });
+        var querystring = new URLSearchParams(bounds).toString();
+
+        // temp: update last update timestamp
+        this.updateStoredSetting("fetchTimestamp", Math.floor(Date.now() / 1000))
+
+        return "?" + querystring;
+      },
+      cleanup() {
+        var $this = this;
+        var now = moment();
+
+        if (!cleanupInterval) {
+          cleanupInterval = setInterval(this.cleanup, 14000);
+        }
+
+        Object.keys(this["mons"]).forEach(function(key) {
+          var mon = $this.mons[key];
+          var end = moment(mon["disappear_time"]*1000);
+
+          if (!now.isAfter(end)) {
+            return;
+          }
+
+          map.removeLayer(leaflet_data["mons"][mon["encounter_id"]]);
+          delete leaflet_data["mons"][mon["encounter_id"]];
+          delete $this.mons[mon["encounter_id"]];
+        });
+      },
       initMap() {
         // get stored settings
+        this.settings.cleanup = this.getStoredSetting("settings-cleanup", true);
         this.settings.maptiles = this.getStoredSetting("settings-maptiles", "cartodblight");
         this.settings.routes.coordinateRadius.raids = this.getStoredSetting('settings-coordinateRadius-raids', 490);
         this.settings.routes.coordinateRadius.quests = this.getStoredSetting('settings-coordinateRadius-quests', 40);
@@ -1292,47 +1383,15 @@
         map.on('mousedown', function() {
           sidebar.close();
         });
-      },
-      buildUrlFilter(force = false) {
-        var oSwLat = this.getStoredSetting("oSwLat", null);
-        var oSwLon = this.getStoredSetting("oSwLon", null);
-        var oNeLat = this.getStoredSetting("oNeLat", null);
-        var oNeLon = this.getStoredSetting("oNeLon", null);
 
-        var old = {};
-        if (oSwLat && oSwLon && oNeLat && oNeLon && !force) {
-          old = {
-            "oSwLat": oSwLat,
-            "oSwLon": oSwLon,
-            "oNeLat": oNeLat,
-            "oNeLon": oNeLon
-          };
+        // initial load
+        this.map_fetch_everything();
+
+        // iuntervals
+        setInterval(this.map_fetch_everything, 6000);
+        if (this.settings.cleanup) {
+          this.cleanup();
         }
-
-        var timestamp = this.getStoredSetting("fetchTimestamp", null);
-        if (timestamp && !force) {
-          old["timestamp"] = timestamp;
-        }
-
-        var swLat = this.getStoredSetting("swLat", null);
-        var swLon = this.getStoredSetting("swLon", null);
-        var neLat = this.getStoredSetting("neLat", null);
-        var neLon = this.getStoredSetting("neLon", null);
-
-        var bounds = {
-          "swLat": swLat,
-          "swLon": swLon,
-          "neLat": neLat,
-          "neLon": neLon
-        };
-
-        Object.keys(old).forEach(function(key) { bounds[key] = old[key]; });
-        var querystring = new URLSearchParams(bounds).toString();
-
-        // temp: update last update timestamp
-        this.updateStoredSetting("fetchTimestamp", Math.floor(Date.now() / 1000))
-
-        return "?" + querystring;
       }
     }
   });
@@ -1428,25 +1487,32 @@
         <div class="sidebar-pane-content">
           <ul class="list-group list-group-flush">
             <li class="list-group-item layer-item d-flex">
-              <div class="flex-grow-1"><strong>Raids visual radius</strong></div>
+              <div class="flex-grow-1">Cleanup</div>
+              <div class="custom-control custom-switch">
+                <input :id="settings-cleanup" type="checkbox" v-model="settings.cleanup" class="custom-control-input" />
+                <label :for="settings-cleanup" class="custom-control-label"></label>
+              </div>
+            </li>
+            <li class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">Raids visual radius</div>
               <div class="custom-control custom-switch">
                 <input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raids" max="1100" class="form-control form-control-sm" />
               </div>
             </li>
             <li class="list-group-item layer-item d-flex">
-              <div class="flex-grow-1"><strong>Mons visual radius</strong></div>
+              <div class="flex-grow-1">Mons visual radius</div>
               <div class="custom-control custom-switch">
                 <input id="moncoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mons" max="1100" class="form-control form-control-sm" />
               </div>
             </li>
             <li class="list-group-item layer-item d-flex">
-              <div class="flex-grow-1"><strong>Quests visual radius</strong></div>
+              <div class="flex-grow-1">Quests visual radius</div>
               <div class="custom-control custom-switch">
                 <input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quests" max="1100" class="form-control form-control-sm" />
               </div>
             </li>
             <li class="list-group-item layer-item d-flex">
-              <div class="flex-grow-1"><strong>Map tiles</strong></div>
+              <div class="flex-grow-1">Map tiles</div>
               <div class="form-group">
                 {% raw %}
                 <select class="form-control form-control-sm" v-model="settings.maptiles">
