@@ -95,11 +95,6 @@ def start_ocr_observer(args, db_helper):
     observer.start()
 
 
-def start_madmin(args, db_wrapper, ws_server, mapping_manager: MappingManager):
-    from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, ws_server, mapping_manager)
-
-
 def generate_mappingjson():
     import json
     newfile = {}
@@ -301,11 +296,9 @@ if __name__ == "__main__":
         t_observ.start()
 
     if args.with_madmin:
+        from madmin.madmin import madmin_start
         logger.info('Starting Madmin on Port: {}', str(args.madmin_port))
-        t_flask = Thread(name='madmin', target=start_madmin,
-                         args=(args, db_wrapper, ws_server, mapping_manager,))
-        t_flask.daemon = True
-        t_flask.start()
+        madmin_start(args, db_wrapper, ws_server, mapping_manager)
 
     if args.statistic:
         if args.only_ocr or args.only_scan:
