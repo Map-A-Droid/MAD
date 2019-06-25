@@ -23,7 +23,11 @@ class WorkerConfigmode(object):
         logger.info("Internal cleanup of {} finished", str(self._id))
 
     def stop_worker(self):
-        self._stop_worker_event.set()
+        if self._stop_worker_event.set():
+            logger.info('Worker {} already stopped - waiting for it', str(self._id))
+        else:
+            self._stop_worker_event.set()
+            logger.warning("Worker {} stop called", str(self._id))
 
     def set_geofix_sleeptime(self, sleeptime):
         return True

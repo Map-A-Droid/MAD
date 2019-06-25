@@ -211,8 +211,11 @@ class WorkerBase(ABC):
         return self._last_known_state
 
     def stop_worker(self):
-        self._stop_worker_event.set()
-        logger.warning("Worker {} stop called", str(self._id))
+        if self._stop_worker_event.set():
+            logger.info('Worker {} already stopped - waiting for it', str(self._id))
+        else:
+            self._stop_worker_event.set()
+            logger.warning("Worker {} stop called", str(self._id))
 
     def _internal_pre_work(self):
         current_thread().name = self._id

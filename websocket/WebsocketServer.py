@@ -35,6 +35,7 @@ class WebsocketServer(object):
         self.__current_users = {}
         self.__current_users_mutex = Lock()
         self.__connected_users: list = []
+        self.__connected_users_mutex = Lock()
         self.__stop_server = Event()
 
         self.args = args
@@ -158,21 +159,17 @@ class WebsocketServer(object):
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
-        logger.debug("Checking if {} is already present", str(origin))
-        if origin in self.__connected_users:
-            logger.warning(
-                "Worker with origin {} is already running, killing the running one and have client reconnect",
-                str(origin))
-            self.__current_users.get(origin)[1].stop_worker()
-            while origin in self.__connected_users:
-                if self.__stop_server.is_set():
-                    logger.info(
-                           "MAD is set to shut down, not accepting new connection")
-                    return False
-                # waiting for shutdown present worker
-                logger.warning('Old websocket session of origin {} still online - waiting', str(origin))
-                time.sleep(10)
-            return
+        self.__connected_users_mutex.acquire()
+        try:
+            logger.debug("Checking if {} is already present", str(origin))
+            if origin in self.__connected_users:
+                logger.warning(
+                    "Worker with origin {} is already running, killing the running one and have client reconnect",
+                    str(origin))
+                self.__current_users.get(origin)[1].stop_worker()
+                return
+        finally:
+            self.__connected_users_mutex.release()
 
         # reset pref. error counter if exist
         self.__reset_fail_counter(origin)
