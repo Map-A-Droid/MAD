@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
+import math
 sys.path.append("..")
 from utils.resolution import Resocalculator
 
@@ -55,6 +56,13 @@ class testimage(object):
 
         if self._mode == "open_gym":
             self._image_check = self.get_gym_click_coords(self._image)
+
+        if self._mode == "check_button_big":
+            self._image_check = self.look_for_button(self._image, 1.05, 2.20)
+                                                     #2.20, 3.01)
+
+        if self._mode == "check_button_small":
+            self._image_check = self.look_for_button(self._image, 2.20, 3.01)
 
         if self._mode == "find_pokeball":
             self._image_check = self.find_pokeball(self._image)
@@ -211,6 +219,81 @@ class testimage(object):
         if mainscreen > 0:
             print("Found Avatar.")
             return True
+        return False
+
+    def look_for_button(self, filename, ratiomin, ratiomax):
+        print("lookForButton: Reading lines")
+        disToMiddleMin = None
+
+        gray = cv2.cvtColor(filename, cv2.COLOR_BGR2GRAY)
+
+        height, width, _ = filename.shape
+        _widthold = float(width)
+        print("lookForButton: Determined screenshot scale: " +
+                     str(height) + " x " + str(width))
+
+        # resize for better line quality
+        # gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
+        height, width = gray.shape
+        factor = width / _widthold
+
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        edges = cv2.Canny(gray, 50, 200, apertureSize=3)
+        # checking for all possible button lines
+
+        maxLineLength = (width / ratiomin) + (width * 0.18)
+        print("lookForButton: MaxLineLength:" + str(maxLineLength))
+        minLineLength = (width / ratiomax) - (width * 0.02)
+        print("lookForButton: MinLineLength:" + str(minLineLength))
+
+        kernel = np.ones((2, 2), np.uint8)
+        # kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
+
+        maxLineGap = 50
+        lineCount = 0
+        lines = []
+        _x = 0
+        _y = height
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
+                                maxLineGap=2)
+        if lines is None:
+            return False
+
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+
+                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and \
+                        y1 > (height / 2)+(height / 7) \
+                        and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
+
+                    lineCount += 1
+                    __y = y2
+                    __x1 = x1
+                    __x2 = x2
+                    if __y < _y:
+                        _y = __y
+                        _x1 = __x1
+                        _x2 = __x2
+
+                    print("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
+                        x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+
+                    cv2.line(filename, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 5)
+
+        if 1 < lineCount <= 6:
+            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
+                          round(factor, 2))
+            click_y = int(_y / round(factor, 2) + height * 0.03)
+            print('lookForButton: found Button - click on it')
+            return cv2.circle(filename, (int(click_x), int(click_y)), 20, (0, 0, 255), -1)
+
+        elif lineCount > 6:
+            print('lookForButton: found to much Buttons :) - close it')
+            return cv2.circle(filename, (int(width - (width / 7.2)), int(height - (height / 12.19))),
+                              20, (0, 0, 255), -1)
+
+        print('lookForButton: did not found any Button')
         return False
 
 
