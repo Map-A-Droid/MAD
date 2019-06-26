@@ -33,9 +33,9 @@ class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager,
                  configmode=False):
         self.__current_users = {}
-        self.__current_users_mutex = Lock()
-        self.__connected_users: list = []
-        self.__connected_users_mutex = Lock()
+        self.__users_mutex = Lock()
+        self.__users_connecting = []
+
         self.__stop_server = Event()
 
         self.args = args
@@ -80,20 +80,20 @@ class WebsocketServer(object):
     def stop_server(self):
         # TODO: cleanup workers...
         self.__stop_server.set()
-        self.__current_users_mutex.acquire()
+        self.__users_mutex.acquire()
         for id, worker in self.__current_users.items():
             logger.info('Stopping worker {} to apply new mappings.', id)
             worker[1].stop_worker()
-        self.__current_users_mutex.release()
+        self.__users_mutex.release()
 
         # wait for all workers to be stopped...
         while True:
-            self.__current_users_mutex.acquire()
+            self.__users_mutex.acquire()
             if len(self.__current_users) == 0:
-                self.__current_users_mutex.release()
+                self.__users_mutex.release()
                 break
             else:
-                self.__current_users_mutex.release()
+                self.__users_mutex.release()
                 time.sleep(1)
         for routemanager in self.__mapping_manager.get_all_routemanager_names():
             self.__mapping_manager.routemanager_stop(routemanager)
@@ -149,6 +149,10 @@ class WebsocketServer(object):
             logger.warning("Register attempt of unknown Origin: {}".format(origin))
             return False
 
+        if origin in self.__users_connecting:
+            logger.info("Client {} is already connecting".format(origin))
+            return False
+
         auths = self.__mapping_manager.get_auths()
         if auths:
             try:
@@ -159,36 +163,35 @@ class WebsocketServer(object):
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
-        self.__connected_users_mutex.acquire()
+        self.__users_mutex.acquire()
         try:
             logger.debug("Checking if {} is already present", str(origin))
-            if origin in self.__connected_users:
+            if origin in self.__current_users:
                 logger.warning(
                     "Worker with origin {} is already running, killing the running one and have client reconnect",
                     str(origin))
                 self.__current_users.get(origin)[1].stop_worker()
                 return
+            # reset pref. error counter if exist
+            self.__reset_fail_counter(origin)
+            self.__users_connecting.append(origin)
         finally:
-            self.__connected_users_mutex.release()
+            self.__users_mutex.release()
 
-        # reset pref. error counter if exist
-        self.__reset_fail_counter(origin)
-        self.__connected_users.append(origin)
-
-        self.__current_users_mutex.acquire()
         try:
             if auths and authBase64 and not check_auth(authBase64, self.args, auths):
                 logger.warning("Invalid auth details received from {}", str(
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
-
+            logger.info("Starting worker {}".format(origin))
             if self._configmode:
                 worker = WorkerConfigmode(self.args, origin, self)
                 logger.debug("Starting worker for {}", str(origin))
                 new_worker_thread = Thread(
                     name='worker_%s' % origin, target=worker.start_worker)
-                self.__current_users[origin] = [
-                    new_worker_thread, worker, websocket_client_connection, 0]
+                with self.__users_mutex:
+                    self.__current_users[origin] = [
+                        new_worker_thread, worker, websocket_client_connection, 0]
                 return True
 
             last_known_state = {}
@@ -297,29 +300,28 @@ class WebsocketServer(object):
                 name='worker_%s' % origin, target=worker.start_worker)
 
             new_worker_thread.daemon = False
-
-            self.__current_users[origin] = [new_worker_thread,
-                                        worker, websocket_client_connection, 0]
+            with self.__users_mutex:
+                self.__current_users[origin] = [new_worker_thread,
+                                            worker, websocket_client_connection, 0]
             new_worker_thread.start()
         except WrongAreaInWalker:
             logger.error('Unknown Area in Walker settings - check config')
         finally:
-            self.__current_users_mutex.release()
-
+            with self.__users_mutex:
+                self.__users_connecting.remove(origin)
         return True
 
     async def __unregister(self, websocket_client_connection):
 
-        self.__current_users_mutex.acquire()
+        self.__users_mutex.acquire()
         try:
             worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
             worker = self.__current_users.get(worker_id, None)
-            self.__connected_users.remove(worker_id)
             if worker is not None:
                 worker[1].stop_worker()
                 self.__current_users.pop(worker_id)
         finally:
-            self.__current_users_mutex.release()
+            self.__users_mutex.release()
         logger.info("Worker {} unregistered", str(worker_id))
 
     async def __producer_handler(self, websocket_client_connection):
@@ -368,9 +370,8 @@ class WebsocketServer(object):
             except websockets.exceptions.ConnectionClosed as cc:
                 logger.warning(
                     "Connection to {} was closed, stopping worker", str(worker_id))
-                self.__current_users_mutex.acquire()
-                worker = self.__current_users.get(worker_id, None)
-                self.__current_users_mutex.release()
+                with self.__users_mutex:
+                    worker = self.__current_users.get(worker_id, None)
                 if worker is not None:
                     # TODO: do it abruptly in the worker, maybe set a flag to be checked for in send_and_wait to
                     # TODO: throw an exception
@@ -389,17 +390,15 @@ class WebsocketServer(object):
         :param worker_instance: None if the cleanup is called from within the websocket server
         :return:
         """
-        self.__current_users_mutex.acquire()
-        if worker_id in self.__current_users.keys() and (worker_instance is None
-                                                         or self.__current_users[worker_id][1] == worker_instance):
-            if self.__current_users[worker_id][2].open:
-                logger.info("Calling close for {}...", str(worker_id))
-                asyncio.ensure_future(
-                    self.__current_users[worker_id][2].close(), loop=self.__loop)
-            self.__current_users.pop(worker_id)
-            self.__connected_users.remove(worker_id)
-            logger.info("Info of {} removed in websocket", str(worker_id))
-        self.__current_users_mutex.release()
+        with self.__users_mutex:
+            if worker_id in self.__current_users.keys() and (worker_instance is None
+                                                             or self.__current_users[worker_id][1] == worker_instance):
+                if self.__current_users[worker_id][2].open:
+                    logger.info("Calling close for {}...", str(worker_id))
+                    asyncio.ensure_future(
+                        self.__current_users[worker_id][2].close(), loop=self.__loop)
+                self.__current_users.pop(worker_id)
+                logger.info("Info of {} removed in websocket", str(worker_id))
 
     async def __on_message(self, message):
         id = -1
@@ -457,9 +456,8 @@ class WebsocketServer(object):
 
     def send_and_wait(self, id, worker_instance, message, timeout):
         logger.debug("{} sending command: {}", str(id), message.strip())
-        self.__current_users_mutex.acquire()
-        user_entry = self.__current_users.get(id, None)
-        self.__current_users_mutex.release()
+        with self.__users_mutex:
+            user_entry = self.__current_users.get(id, None)
 
         if user_entry is None or user_entry[1] != worker_instance and worker_instance != 'madmin':
             raise WebsocketWorkerRemovedException
@@ -508,19 +506,17 @@ class WebsocketServer(object):
         self.__requests_mutex.release()
 
     def __reset_fail_counter(self, id):
-        self.__current_users_mutex.acquire()
-        if id in self.__current_users.keys():
-            self.__current_users[id][3] = 0
-        self.__current_users_mutex.release()
+        with self.__users_mutex:
+            if id in self.__current_users.keys():
+                self.__current_users[id][3] = 0
 
     def __increase_fail_counter(self, id):
-        self.__current_users_mutex.acquire()
-        if id in self.__current_users.keys():
-            new_count = self.__current_users[id][3] + 1
-            self.__current_users[id][3] = new_count
-        else:
-            new_count = 100
-        self.__current_users_mutex.release()
+        with self.__users_mutex:
+            if id in self.__current_users.keys():
+                new_count = self.__current_users[id][3] + 1
+                self.__current_users[id][3] = new_count
+            else:
+                new_count = 100
         return new_count
 
     def __remove_request(self, message_id):
