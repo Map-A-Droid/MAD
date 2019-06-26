@@ -1,6 +1,7 @@
 import time
 from multiprocessing import Lock
 from multiprocessing.managers import SyncManager
+from typing import Dict
 
 from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
@@ -20,17 +21,22 @@ class MitmMapperManager(SyncManager):
 class MitmMapper(object):
     def __init__(self, mapping_manager: MappingManager, db_wrapper):
         self.__mapping = {}
-        self.__playerstats = {}
+        self.__playerstats: Dict[str, PlayerStats] = {}
         self.__mapping_mutex = Lock()
         self.__mapping_manager: MappingManager = mapping_manager
         self.__injected = {}
         self.__application_args = args
         self.__db_wrapper: DbWrapperBase = db_wrapper
-        if mapping_manager is not None:
-            for origin in mapping_manager.get_all_devicemappings().keys():
+        if self.__mapping_manager is not None:
+            for origin in self.__mapping_manager.get_all_devicemappings().keys():
                 self.__mapping[origin] = {}
                 self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self.__db_wrapper)
                 self.__playerstats[origin].open_player_stats()
+
+    def shutdown(self):
+        if self.__mapping_manager is not None:
+            for origin in self.__mapping_manager.get_all_devicemappings().keys():
+                self.__playerstats[origin].shutdown()
 
     def get_mon_ids_iv(self, origin):
         devicemapping_of_origin = self.__mapping_manager.get_devicemappings_of(origin)
@@ -40,6 +46,7 @@ class MitmMapper(object):
             return devicemapping_of_origin.get("mon_ids_iv", [])
 
     def request_latest(self, origin, key=None):
+        logger.debug("Request latest called with origin {}".format(str(origin)))
         self.__mapping_mutex.acquire()
         result = None
         retrieved = self.__mapping.get(origin, None)
@@ -51,6 +58,7 @@ class MitmMapper(object):
         elif retrieved is not None:
             result = retrieved.get(key, None)
         self.__mapping_mutex.release()
+        logger.debug("Request latest done with origin {}".format(str(origin)))
         return result
 
     # origin, method, data, timestamp

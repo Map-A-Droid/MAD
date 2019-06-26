@@ -4,8 +4,10 @@ import time
 import datetime
 from math import floor
 from multiprocessing import Lock
+from multiprocessing.pool import ThreadPool
 from pathlib import Path
 from copy import deepcopy
+from typing import Optional
 
 from db.dbWrapperBase import DbWrapperBase
 from utils.logging import logger
@@ -24,6 +26,12 @@ class PlayerStats(object):
         self._db_wrapper: DbWrapperBase = db_wrapper
         self._stats_period = 0
         self.__mapping_mutex = Lock()
+        self.__thread_pool: ThreadPool = ThreadPool(1)
+        self.__last_result_callback = None
+
+    def shutdown(self):
+        if self.__thread_pool is not None:
+            self.__thread_pool.close()
 
     def set_level(self, level):
         logger.debug('[{}] - set level {}', str(self._id), str(level))
@@ -90,8 +98,9 @@ class PlayerStats(object):
                 finally:
                     self.__mapping_mutex.release()
 
-                self._process_stats(stats_collected_tmp)
-
+                if self.__last_result_callback is not None:
+                    self.__last_result_callback.get()
+                self.__last_result_callback = self.__thread_pool.map_async(self._process_stats, (stats_collected_tmp,))
         else:
             self._stats_collector_start = False
             self._last_processed_timestamp = time.time()

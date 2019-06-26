@@ -1,7 +1,6 @@
 from multiprocessing import Queue, Process
 from datetime import datetime
 
-from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper
 from utils.logging import logger

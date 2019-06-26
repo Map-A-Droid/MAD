@@ -235,9 +235,9 @@ if __name__ == "__main__":
 
             pogoWindowManager = None
             MitmMapperManager.register('MitmMapper', MitmMapper)
-            mitmMapperManager = MitmMapperManager()
-            mitmMapperManager.start()
-            mitm_mapper = mitmMapperManager.MitmMapper(mapping_manager, db_wrapper)
+            mitm_mapper_manager = MitmMapperManager()
+            mitm_mapper_manager.start()
+            mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
             ocr_enabled = False
 
             # for name, routemanager in mapping_manager.get_all_routemanagers().items():
@@ -338,6 +338,7 @@ if __name__ == "__main__":
             mapping_manager_manager.shutdown()
         # time.sleep(10)
         if mitm_mapper_manager is not None:
+            mitm_mapper.shutdown()
             mitm_mapper_manager.shutdown()
         if db_wrapper_manager is not None:
             db_wrapper_manager.shutdown()
