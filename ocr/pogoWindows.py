@@ -293,15 +293,18 @@ class PogoWindows:
         if lines is None:
             return False
 
+        lines = self.check_lines(lines)
+
         for line in lines:
             for x1, y1, x2, y2 in line:
 
-                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and \
-                        y1 > (height / 2)+(height / 7) \
-                        and (x2-x1)/2 + x1 < width/2+100 and (x2 - x1)/2+x1 > width/2-100:
-
+                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and y1 > (height / 2) \
+                        and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
                     lineCount += 1
-                    __y = y2
+                    ___y = (y1 - _last_y)
+                    _last_y = y1
+                    __y = (y1 - ___y)
+
                     __x1 = x1
                     __x2 = x2
                     if __y < _y:
@@ -316,7 +319,7 @@ class PogoWindows:
             # recalculate click area for real resolution
             click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
                           round(factor, 2))
-            click_y = int(_y / round(factor, 2) + height * 0.03)
+            click_y = int(__y / round(factor, 2) + height * 0.03)
             logger.debug('lookForButton: found Button - click on it')
             communicator.click(click_x, click_y)
             time.sleep(4)
@@ -332,6 +335,28 @@ class PogoWindows:
 
         logger.debug('lookForButton: did not found any Button')
         return False
+
+    def check_lines(self, lines):
+        temp_lines = []
+        sort_lines = []
+        old_y1 = 0
+        index = 0
+
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                temp_lines.append([y1, y2, x1, x2])
+
+        temp_lines = np.array(temp_lines)
+        sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
+
+        for line in sort_arr:
+            if int(old_y1 + 10) < int(line[0]):
+                if int(line[0]) == int(line[1]):
+                    sort_lines.append([line[2], line[0], line[3], line[1]])
+                    old_y1 = line[0]
+            index += 1
+
+        return np.asarray(sort_lines, dtype=np.int32)
 
     def __check_raid_line(self, filename, identifier, communicator, leftSide=False, clickinvers=False):
         logger.debug("__check_raid_line: Reading lines")
