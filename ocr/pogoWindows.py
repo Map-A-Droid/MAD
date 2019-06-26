@@ -295,6 +295,7 @@ class PogoWindows:
 
         lines = self.check_lines(lines)
 
+        _last_y = 0
         for line in lines:
             line = [line]
             for x1, y1, x2, y2 in line:
