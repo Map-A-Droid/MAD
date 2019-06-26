@@ -1,15 +1,20 @@
 import time
 import math
-from threading import Event
 
+from threading import Event
+from typing import Optional
 from utils.logging import logger
 from websocket.communicator import Communicator
 from utils.routeutil import check_walker_value_type
 from utils.MappingManager import MappingManager
+from mitm_receiver.MitmMapper import MitmMapper
+from db.dbWrapperBase import DbWrapperBase
+from utils.madGlobals import WebsocketWorkerRemovedException
 
 
 class WorkerConfigmode(object):
-    def __init__(self, args, id, websocket_handler, walker, mapping_manager):
+    def __init__(self, args, id, websocket_handler, walker, mapping_manager,
+                 mitm_mapper: MitmMapper, db_wrapper: DbWrapperBase):
         self._communicator = Communicator(
             websocket_handler, id, self, args.websocket_command_timeout)
         self._stop_worker_event = Event()
@@ -17,9 +22,17 @@ class WorkerConfigmode(object):
         self._walker = walker
         self.workerstart = None
         self._mapping_manager: MappingManager = mapping_manager
+        self._mitm_mapper = mitm_mapper
+        self._db_wrapper = db_wrapper
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
+
+    def get_devicesettings_value(self, key: str, default_value: object = None):
+        devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
+        if devicemappings is None:
+            return default_value
+        return devicemappings.get("settings", {}).get(key, default_value)
 
     def get_communicator(self):
         return self._communicator
@@ -27,7 +40,7 @@ class WorkerConfigmode(object):
     def start_worker(self):
         logger.info("Worker {} started in configmode", str(self._id))
         while not self._stop_worker_event.isSet() or self.check_walker():
-            time.sleep(60)
+            time.sleep(10)
         self.set_devicesettings_value('finished', True)
         self._communicator.cleanup_websocket()
         logger.info("Internal cleanup of {} finished", str(self._id))
@@ -102,3 +115,80 @@ class WorkerConfigmode(object):
         else:
             logger.error("Unknown walker mode! Killing worker")
             return False
+
+    def _stop_pogo(self):
+        attempts = 0
+        stop_result = self._communicator.stopApp("com.nianticlabs.pokemongo")
+        pogoTopmost = self._communicator.isPogoTopmost()
+        while pogoTopmost:
+            attempts += 1
+            if attempts > 10:
+                return False
+            stop_result = self._communicator.stopApp(
+                    "com.nianticlabs.pokemongo")
+            time.sleep(1)
+            pogoTopmost = self._communicator.isPogoTopmost()
+        return stop_result
+
+    def _start_pogo(self):
+        pogo_topmost = self._communicator.isPogoTopmost()
+        if pogo_topmost:
+            return True
+
+        if not self._communicator.isScreenOn():
+            self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
+            logger.warning("Turning screen on")
+            self._communicator.turnScreenOn()
+            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
+
+        start_result = False
+        while not pogo_topmost:
+            self._mitm_mapper.set_injection_status(self._id, False)
+            start_result = self._communicator.startApp(
+                "com.nianticlabs.pokemongo")
+            time.sleep(1)
+            pogo_topmost = self._communicator.isPogoTopmost()
+
+        reached_raidtab = False
+        if start_result and self._wait_for_injection():
+            logger.warning("startPogo: Starting pogo...")
+            reached_raidtab = True
+
+        return reached_raidtab
+
+    def _wait_for_injection(self):
+        self._not_injected_count = 0
+        while not self._mitm_mapper.get_injection_status(self._id):
+            if self._not_injected_count >= 20:
+                logger.error("Worker {} not get injected in time - reboot", str(self._id))
+                self._reboot()
+                return False
+            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            if self._stop_worker_event.isSet():
+                logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                return False
+            self._not_injected_count += 1
+            wait_time = 0
+            while wait_time < 20:
+                wait_time += 1
+                if self._stop_worker_event.isSet():
+                    logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                    return False
+                time.sleep(1)
+        return True
+
+    def _reboot(self):
+        if not self.get_devicesettings_value("reboot", True):
+            logger.warning("Reboot command to be issued to device but reboot is disabled. Skipping reboot")
+            return True
+        try:
+            start_result = self._communicator.reboot()
+        except WebsocketWorkerRemovedException:
+            logger.error(
+                    "Could not reboot due to client already having disconnected")
+            start_result = False
+        time.sleep(5)
+        self._db_wrapper.save_last_reboot(self._id)
+        self.stop_worker()
+        return start_result
+
