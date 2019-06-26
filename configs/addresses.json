@@ -1,4 +1,32 @@
 {
+  "0.147.1": {
+    "gRo": "0xF8A16C",
+    "gSo": "0xF76EF8",
+    "gSao": "0x1938D94",
+    "gMCo": "0x145D2B0",
+    "rF_gIo": "0x1D33C60",
+    "cMcP_gWPo": "0x155E8E4",
+    "wPp_gEIo": "0x16282FC",
+    "wPp_gPo": "0x1628050",
+    "pP_gPIo": "0x1508DE8",
+    "pIs_sSRo": "0x745F5C",
+    "pIs_Io": "0x745B20",
+    "wAp_gSo": "0xFA1050",
+    "wDcT_gSo": "0x1624EE4",
+    "uIwR_gSo": "0x1621538",
+    "wAp_gWWo": "0xFA1060",
+    "uIwR_gAAo": "0x1621528",
+    "sS_gScSo": "0x75003C",
+    "wMp_uDo": "0x761E14",
+    "mP_oTo": "0x724118",
+    "wMp_gPIo": "0x761C44",
+    "wMp_gEIo": "0x761BBC",
+    "sS_sDWo": "0x750680",
+    "sS_sDW1o": "0x75074C",
+    "wRg_Io": "0xC50470",
+    "wMp_sERo": "0x762218",
+    "iEoP_gRo": "0x13D9D70"
+}
   "0.147.0": {
     "gRo": "0xFBCF48",
     "gSo": "0xFA9CD4",
