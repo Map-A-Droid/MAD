@@ -172,12 +172,13 @@ class WebsocketServer(object):
                     str(origin))
                 self.__current_users.get(origin)[1].stop_worker()
                 return
-            # reset pref. error counter if exist
-            self.__reset_fail_counter(origin)
+
             self.__users_connecting.append(origin)
         finally:
             self.__users_mutex.release()
 
+        # reset pref. error counter if exist
+        self.__reset_fail_counter(origin)
         try:
             if auths and authBase64 and not check_auth(authBase64, self.args, auths):
                 logger.warning("Invalid auth details received from {}", str(
