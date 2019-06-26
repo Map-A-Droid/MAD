@@ -233,7 +233,7 @@ class WebsocketServer(object):
                         walker_index = 0
                         self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index)
                         walker_settings = walker_area_array[walker_index]
-                        break
+                        return
                     walker_index += 1
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index)
                     walker_settings = walker_area_array[walker_index]
@@ -291,7 +291,8 @@ class WebsocketServer(object):
                                       walker=walker_settings)
             elif walker_routemanager_mode in ["idle"]:
                 worker = WorkerConfigmode(self.args, origin, self, walker=walker_settings,
-                                          mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper)
+                                          mapping_manager=self.__mapping_manager, mitm_mapper=self.__mitm_mapper,
+                                          db_wrapper=self.__db_wrapper)
             else:
                 logger.error("Mode not implemented")
                 sys.exit(1)

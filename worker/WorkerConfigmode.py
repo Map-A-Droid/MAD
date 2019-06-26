@@ -39,7 +39,7 @@ class WorkerConfigmode(object):
 
     def start_worker(self):
         logger.info("Worker {} started in configmode", str(self._id))
-        while not self._stop_worker_event.isSet() or self.check_walker():
+        while self.check_walker() and not self._stop_worker_event.is_set():
             time.sleep(10)
         self.set_devicesettings_value('finished', True)
         self._communicator.cleanup_websocket()
@@ -106,7 +106,7 @@ class WorkerConfigmode(object):
             if check_walker_value_type(sleeptime):
                 self._stop_pogo()
                 killpogo = True
-            while not self._stop_worker_event.isSet() and check_walker_value_type(sleeptime):
+            while check_walker_value_type(sleeptime) and not self._stop_worker_event.isSet():
                 time.sleep(1)
             logger.info('{} just woke up', str(self._id))
             if killpogo:
