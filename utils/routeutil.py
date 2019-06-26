@@ -57,3 +57,4 @@ def pre_check_value(walker_settings):
         return check_walker_value_type(walkervalue)
     return True
 
+

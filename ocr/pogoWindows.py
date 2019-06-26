@@ -296,6 +296,7 @@ class PogoWindows:
         lines = self.check_lines(lines)
 
         for line in lines:
+            line = [line]
             for x1, y1, x2, y2 in line:
 
                 if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and y1 > (height / 2) \

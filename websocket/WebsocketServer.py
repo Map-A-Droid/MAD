@@ -286,7 +286,8 @@ class WebsocketServer(object):
                                       db_wrapper=self.__db_wrapper, pogo_window_manager=self.__pogoWindowManager,
                                       walker=walker_settings)
             elif walker_routemanager_mode in ["idle"]:
-                worker = WorkerConfigmode(self.args, origin, self)
+                worker = WorkerConfigmode(self.args, origin, self, walker=walker_settings,
+                                          mapping_manager=self.__mapping_manager)
             else:
                 logger.error("Mode not implemented")
                 sys.exit(1)
