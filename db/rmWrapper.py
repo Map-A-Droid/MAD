@@ -608,10 +608,14 @@ class RmWrapper(DbWrapperBase):
     def stops_from_db(self, geofence_helper):
         logger.debug("RmWrapper::stops_from_db called")
 
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
         query = (
             "SELECT latitude, longitude "
-            "FROM pokestop"
-        )
+            "FROM pokestop "
+            "WHERE (latitude >= {} AND longitude >= {} "
+            "AND latitude <= {} AND longitude <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)
         list_of_coords: List[Location] = []

@@ -745,10 +745,15 @@ class DbWrapperBase(ABC):
     def get_detected_spawns(self, geofence_helper) -> List[Location]:
         logger.debug("DbWrapperBase::get_detected_spawns called")
 
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
         query = (
             "SELECT latitude, longitude "
-            "FROM trs_spawn"
-        )
+            "FROM trs_spawn "
+            "WHERE (latitude >= {} AND longitude >= {} "
+            "AND latitude <= {} AND longitude <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
+
         list_of_coords: List[Location] = []
         logger.debug(
             "DbWrapperBase::get_detected_spawns executing select query")

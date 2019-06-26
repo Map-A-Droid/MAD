@@ -19,32 +19,31 @@ from utils.s2Helper import S2Helper
 mode_mapping = {
     "raids_mitm": {
         "s2_cell_level": 13,
-        "range":         490,
-        "range_init":    490,
-        "max_count":     100000
-
+        "range": 490,
+        "range_init": 490,
+        "max_count": 100000
     },
-    "mon_mitm":   {
+    "mon_mitm": {
         "s2_cell_level": 17,
-        "range":         67,
-        "range_init":    67,
-        "max_count":     100000
+        "range": 67,
+        "range_init": 67,
+        "max_count": 100000
     },
     "raids_ocr": {
-        "range":         490,
-        "range_init":    490,
-        "max_count":     7
+        "range": 490,
+        "range_init": 490,
+        "max_count": 7
     },
-    "pokestops":  {
+    "pokestops": {
         "s2_cell_level": 13,
-        "range":         0.001,
-        "range_init":    490,
-        "max_count":     100000
+        "range": 0.001,
+        "range_init": 490,
+        "max_count": 100000
     },
     "iv_mitm": {
-        "range":      0,
+        "range": 0,
         "range_init": 0,
-        "max_count":  999999
+        "max_count": 999999
     }
 }
 
@@ -414,12 +413,10 @@ class MappingManager:
             elif mode == "mon_mitm":
                 if coords_spawns_known:
                     logger.debug("Reading known Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_detected_spawns(
-                            geofence_helper)
+                    coords = self.__db_wrapper.get_detected_spawns(geofence_helper)
                 else:
                     logger.debug("Reading unknown Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_undetected_spawns(
-                            geofence_helper)
+                    coords = self.__db_wrapper.get_undetected_spawns(geofence_helper)
             elif mode == "pokestops":
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
             else:

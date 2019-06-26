@@ -564,10 +564,14 @@ class MonocleWrapper(DbWrapperBase):
     def stops_from_db(self, geofence_helper):
         logger.info('Downloading pokestop coords from DB')
 
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
         query = (
             "SELECT lat, lon "
-            "FROM pokestops"
-        )
+            "FROM pokestops "
+            "WHERE (lat >= {} AND lon >= {} "
+            "AND lat <= {} AND lon <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)
         list_of_coords: List[Location] = []
