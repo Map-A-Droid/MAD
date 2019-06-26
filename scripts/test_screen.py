@@ -267,16 +267,10 @@ class testimage(object):
                         y1 > (height / 2) \
                         and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
                     lineCount += 1
-                    ___y = (y1 - _last_y)
+                    click_y = _last_y + ((y1 - _last_y) / 2)
                     _last_y = y1
-                    __y = (y1 - ___y)
-
-                    __x1 = x1
-                    __x2 = x2
-                    if __y < _y:
-                        _y = __y
-                        _x1 = __x1
-                        _x2 = __x2
+                    _x1 = x1
+                    _x2 = x2
 
                     print("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
@@ -286,7 +280,7 @@ class testimage(object):
         if 1 < lineCount <= 6:
             click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
                           round(factor, 2))
-            click_y = int(__y / round(factor, 2) + height * 0.03)
+            click_y =  int(click_y)
             print('lookForButton: found Button - click on it')
             return cv2.circle(filename, (int(click_x), int(click_y)), 20, (0, 0, 255), -1)
 
@@ -313,14 +307,13 @@ class testimage(object):
         sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
 
         for line in sort_arr:
-            if int(old_y1+10) < int(line[0]):
+            if int(old_y1+80) < int(line[0]):
                 if int(line[0]) == int(line[1]):
                     sort_lines.append([line[2],line[0],line[3],line[1]])
                     old_y1 = line[0]
             index += 1
 
         return np.asarray(sort_lines, dtype=np.int32)
-
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True, help="Path to the image")
