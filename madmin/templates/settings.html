@@ -71,12 +71,10 @@
         });
         $('body').Aplus();
         $("#reload").click(function() {
-        var confirm1 = confirm('Dialogue');
+        var confirm1 = confirm('Do you really want reload mappings?');
         if (confirm1) {
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
             $(location).attr('href', 'reload')
-        } else {
-            $.unblockUI();
         }
         });
     });
