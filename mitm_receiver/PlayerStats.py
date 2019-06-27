@@ -81,7 +81,7 @@ class PlayerStats(object):
     def stats_collector(self):
 
         if not self._stats_collector_start:
-            if time.time() - self._last_processed_timestamp > 60 or self.compare_hour(self._last_processed_timestamp):
+            if time.time() - self._last_processed_timestamp > 600 or self.compare_hour(self._last_processed_timestamp):
                 self.__mapping_mutex.acquire()
                 stats_collected_tmp: dict = {}
                 try:
