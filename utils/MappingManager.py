@@ -67,12 +67,12 @@ class MappingManager:
         self.__mappings_mutex: Lock = Lock()
         self.__stop_mad_event: Event = global_stop_mad_event
 
-        self.__update(full_lock=True)
+        self.update(full_lock=True)
         logger.info("Starting file watcher for mappings.json changes.")
-        self.__t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher,
-                                       args=(None, None))
-        self.__t_file_watcher.daemon = False
-        self.__t_file_watcher.start()
+        #self.__t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher,
+        #                               args=(None, None))
+        #self.__t_file_watcher.daemon = False
+        #self.__t_file_watcher.start()
 
     def get_auths(self) -> Optional[dict]:
         with self.__mappings_mutex:
@@ -456,7 +456,7 @@ class MappingManager:
             areas[area['name']] = area_dict
         return areas
 
-    def __update(self, full_lock=False):
+    def update(self, full_lock=False):
         """
         Updates the internal mappings and routemanagers
         :return:
