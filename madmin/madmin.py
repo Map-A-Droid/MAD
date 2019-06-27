@@ -31,6 +31,7 @@ def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
     ocr(db_wrapper, args, logger, app)
     path(db_wrapper, args, app)
 
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
     app.logger.removeHandler(default_handler)
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
     app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
@@ -44,4 +45,3 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
-
