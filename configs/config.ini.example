@@ -84,6 +84,11 @@
 #adb_server_ip:               # IP address of ADB server (Default: 127.0.0.1)
 #adb_server_port:             # Port of ADB server (Default: 5037)
 
+# auto reload mappings
+######################
+#auto_reload_config          # Auto reload mappings configuration
+#auto_reload_delay           # Auto reload mappings configuration delay in seconds (Default: 60)
+
 # MADmin
 ######################
 #with_madmin                 # Start Madmin
@@ -99,7 +104,6 @@
 
 # webhook
 ######################
-
 #webhook                     # Activate support for webhook
 #webhook_url:                # webhook endpoint (multiple seperated by comma)
                              #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com

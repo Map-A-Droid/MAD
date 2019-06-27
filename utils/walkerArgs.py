@@ -233,6 +233,16 @@ def parseArgs():
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
 
+    # mappings.json auto reloader
+
+    parser.add_argument('-arc', '--auto_reload_config', action='store_true', default=False,
+                        help='Auto reload mappings configuration')
+
+    parser.add_argument('-ard', '--auto_reload_delay', default=60,
+                        help='Auto reload mappings configuration sleeptimer (Default: 60)')
+
+
+
     # adb
     parser.add_argument('-adb', '--use_adb', action='store_true', default=False,
                         help='Use ADB for phonecontrol (Default: False)')

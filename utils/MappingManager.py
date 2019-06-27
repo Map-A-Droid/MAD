@@ -68,11 +68,12 @@ class MappingManager:
         self.__stop_mad_event: Event = global_stop_mad_event
 
         self.update(full_lock=True)
-        logger.info("Starting file watcher for mappings.json changes.")
-        #self.__t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher,
-        #                               args=(None, None))
-        #self.__t_file_watcher.daemon = False
-        #self.__t_file_watcher.start()
+
+        if self.__args.auto_reload_config:
+            logger.info("Starting file watcher for mappings.json changes.")
+            self.__t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher,)
+            self.__t_file_watcher.daemon = False
+            self.__t_file_watcher.start()
 
     def get_auths(self) -> Optional[dict]:
         with self.__mappings_mutex:
@@ -484,8 +485,6 @@ class MappingManager:
                     area = self._routemanagers.get(routemanager, None)
                     if area is None:
                         continue
-                    #area["routemanager"].stop_routemanager()
-                    #area["routemanager"].stop_worker()
 
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp
@@ -501,10 +500,11 @@ class MappingManager:
 
         logger.info("Mappings have been updated")
 
-    def __file_watcher(self, ws_server, webhook_worker):
+    def __file_watcher(self):
         # We're on a 20-second timer.
-        refresh_time_sec = 20
+        refresh_time_sec = self.__args.auto_reload_delay
         filename = 'configs/mappings.json'
+        logger.info('Mappings.json reload delay: {} seconds', refresh_time_sec)
 
         while not self.__stop_mad_event.is_set():
             # Wait (x-1) seconds before refresh, min. 1s.
@@ -523,7 +523,7 @@ class MappingManager:
                 if time_diff_sec < refresh_time_sec:
                     logger.info(
                             'Change found in {}. Updating device mappings.', filename)
-                    self.__update()
+                    self.update()
                 else:
                     logger.debug('No change found in {}.', filename)
             except KeyboardInterrupt as e:

@@ -862,7 +862,7 @@ class config(object):
                                settings=tab_content,
                                tabarea=tabarea,
                                title="Mapping Editor", responsive=str(self._args.madmin_noresponsive).lower(),
-                               running_ocr=(self._args.only_ocr))
+                               running_ocr=self._args.only_ocr, autoreloadconfig=self._args.auto_reload_config)
 
     @auth_required
     def addnew(self):
@@ -969,7 +969,8 @@ class config(object):
 
     @auth_required
     def reload(self):
-        self._mapping_mananger.update()
+        if not self._args.auto_reload_config:
+            self._mapping_mananger.update()
         return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
