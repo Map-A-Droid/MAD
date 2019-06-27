@@ -400,7 +400,7 @@ class WebsocketServer(object):
                 self.__current_users.pop(worker_id)
                 logger.info("Info of {} removed in websocket", str(worker_id))
 
-    def cleanup_user(self, worker_id, worker_instance):
+    def clean_up_user(self, worker_id, worker_instance):
         future = asyncio.run_coroutine_threadsafe(
                 self.__internal_clean_up_user(worker_id, worker_instance), self.__loop)
         future.result()
