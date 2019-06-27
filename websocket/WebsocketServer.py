@@ -376,7 +376,7 @@ class WebsocketServer(object):
                     # TODO: do it abruptly in the worker, maybe set a flag to be checked for in send_and_wait to
                     # TODO: throw an exception
                     worker[1].stop_worker()
-                await self.clean_up_user(worker_id, None)
+                await self.__internal_clean_up_user(worker_id, None)
                 return
 
             if message is not None:
@@ -384,7 +384,7 @@ class WebsocketServer(object):
         logger.warning(
             "Connection of {} closed in consumer_handler", str(worker_id))
 
-    async def clean_up_user(self, worker_id, worker_instance):
+    async def __internal_clean_up_user(self, worker_id, worker_instance):
         """
         :param worker_id: The ID/Origin of the worker
         :param worker_instance: None if the cleanup is called from within the websocket server
@@ -399,6 +399,11 @@ class WebsocketServer(object):
                         self.__current_users[worker_id][2].close(), loop=self.__loop)
                 self.__current_users.pop(worker_id)
                 logger.info("Info of {} removed in websocket", str(worker_id))
+
+    def cleanup_user(self, worker_id, worker_instance):
+        future = asyncio.run_coroutine_threadsafe(
+                self.__internal_clean_up_user(worker_id, worker_instance), self.__loop)
+        future.result()
 
     async def __on_message(self, message):
         id = -1
@@ -479,7 +484,7 @@ class WebsocketServer(object):
             new_count = await self.__increase_fail_counter(id)
             if new_count > 5:
                 logger.error("5 consecutive timeouts to {} or origin is not longer connected, cleanup", str(id))
-                await self.clean_up_user(id, None)
+                await self.__internal_clean_up_user(id, None)
                 await self.__reset_fail_counter(id)
                 await self.__remove_request(message_id)
                 raise WebsocketWorkerTimeoutException
