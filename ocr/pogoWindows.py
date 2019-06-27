@@ -293,7 +293,7 @@ class PogoWindows:
         if lines is None:
             return False
 
-        lines = self.check_lines(lines)
+        lines = self.check_lines(lines,height)
 
         _last_y = 0
         for line in lines:
@@ -332,7 +332,7 @@ class PogoWindows:
         logger.debug('lookForButton: did not found any Button')
         return False
 
-    def check_lines(self, lines):
+    def check_lines(self, lines, height):
         temp_lines = []
         sort_lines = []
         old_y1 = 0
@@ -345,8 +345,10 @@ class PogoWindows:
         temp_lines = np.array(temp_lines)
         sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
 
+        button_value = height / 40
+
         for line in sort_arr:
-            if int(old_y1 + 80) < int(line[0]):
+            if int(old_y1 + int(button_value)) < int(line[0]):
                 if int(line[0]) == int(line[1]):
                     sort_lines.append([line[2], line[0], line[3], line[1]])
                     old_y1 = line[0]
