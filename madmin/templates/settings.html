@@ -71,7 +71,13 @@
         });
         $('body').Aplus();
         $("#reload").click(function() {
+        var confirm1 = confirm('Dialogue');
+        if (confirm1) {
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+            $(location).attr('href', 'reload')
+        } else {
+            $.unblockUI();
+        }
         });
     });
 </script>
@@ -88,7 +94,7 @@
       <a class="nav-item nav-link {% if tabarea == "walker" %}active{% endif %}" id="nav-walker-tab" data-toggle="tab" href="#nav-walker" role="tab" aria-controls="nav-walker" aria-selected="false">Walker</a>
       <a class="nav-item nav-link {% if tabarea == "areas" %}active{% endif %}" id="nav-areas-tab" data-toggle="tab" href="#nav-areas" role="tab" aria-controls="nav-areas" aria-selected="false">Areas</a>
       <a class="nav-item nav-link {% if tabarea == "auth" %}active{% endif %}" id="nav-auth-tab" data-toggle="tab" href="#nav-auth" role="tab" aria-controls="nav-auth" aria-selected="false">Auth</a>
-      <a href="reload" id ="reload" class="btn btn-success confirm" title="Do you really want to reload mapping?">Reload Mapping</a>
+      <a href="#" id ="reload" class="btn btn-success">Reload Mapping</a>
   </div>
 </nav>
 <div class="tab-content" id="nav-tabContent">
