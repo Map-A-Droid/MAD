@@ -39,6 +39,7 @@ class EndpointAction(object):
             else:
                 abort = False
         else:
+            logger.debug3("HTTP Request by {}".format(str(request.remote_addr)))
             if not origin:
                 logger.warning("Missing Origin header in request")
                 self.response = Response(status=500, headers={})
@@ -134,6 +135,7 @@ class MITMReceiver(Process):
                               EndpointAction(handler), methods=methods_passed)
 
     def proto_endpoint(self, origin, data):
+        logger.debug2("Receiving proto from {}".format(origin))
         type = data.get("type", None)
         if type is None or type == 0:
             logger.warning(
@@ -147,6 +149,7 @@ class MITMReceiver(Process):
         self.__mitm_mapper.update_latest(
             origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
             values_dict=data)
+        logger.debug3("Placing data received by {} to data_queue".format(origin))
         self._data_queue.put(
             (timestamp, data, origin)
         )

@@ -86,17 +86,17 @@ class MitmMapper(object):
 
     def request_latest(self, origin, key=None):
         logger.debug("Request latest called with origin {}".format(str(origin)))
-        self.__mapping_mutex.acquire()
-        result = None
-        retrieved = self.__mapping.get(origin, None)
-        if retrieved is not None:
-            # copy in case references are overwritten... who knows TODO: double check what python does in the background
-            retrieved = retrieved.copy()
-        if key is None:
-            result = retrieved
-        elif retrieved is not None:
-            result = retrieved.get(key, None)
-        self.__mapping_mutex.release()
+        with self.__mapping_mutex:
+            result = None
+            retrieved = self.__mapping.get(origin, None)
+            if retrieved is not None:
+                # copy in case references are overwritten... who knows
+                # TODO: double check what python does in the background
+                retrieved = retrieved.copy()
+            if key is None:
+                result = retrieved
+            elif retrieved is not None:
+                result = retrieved.get(key, None)
         logger.debug("Request latest done with origin {}".format(str(origin)))
         return result
 
@@ -104,22 +104,23 @@ class MitmMapper(object):
     def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = time.time(),
                       timestamp_received_receiver: float = time.time()):
         updated = False
-        self.__mapping_mutex.acquire()
-        if origin in self.__mapping.keys():
-            logger.debug("Updating timestamp of {} with method {} to {}", str(
-                origin), str(key), str(timestamp_received_raw))
-            if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
-                del self.__mapping[origin][key]
-            self.__mapping[origin][key] = {}
-            self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
-            self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
-            self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
-            self.__mapping[origin][key]["values"] = values_dict
-            updated = True
-        else:
-            logger.warning(
-                "Not updating timestamp of {} since origin is unknown", str(origin))
-        self.__mapping_mutex.release()
+        logger.debug3("Trying to acquire lock and update proto {} received by {}".format(origin, key))
+        with self.__mapping_mutex:
+            if origin in self.__mapping.keys():
+                logger.debug("Updating timestamp of {} with method {} to {}", str(
+                    origin), str(key), str(timestamp_received_raw))
+                if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
+                    del self.__mapping[origin][key]
+                self.__mapping[origin][key] = {}
+                self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
+                self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
+                self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
+                self.__mapping[origin][key]["values"] = values_dict
+                updated = True
+            else:
+                logger.warning(
+                    "Not updating timestamp of {} since origin is unknown", str(origin))
+        logger.debug3("Done updating proto {} of {}".format(key, origin))
         return updated
 
     def set_injection_status(self, origin, status=True):
