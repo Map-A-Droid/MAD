@@ -9,7 +9,7 @@ from utils.routeutil import check_walker_value_type
 from utils.MappingManager import MappingManager
 from mitm_receiver.MitmMapper import MitmMapper
 from db.dbWrapperBase import DbWrapperBase
-from utils.madGlobals import WebsocketWorkerRemovedException
+from utils.madGlobals import(WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException)
 
 
 class WorkerConfigmode(object):
@@ -42,8 +42,11 @@ class WorkerConfigmode(object):
         while self.check_walker() and not self._stop_worker_event.is_set():
             time.sleep(10)
         self.set_devicesettings_value('finished', True)
-        self._communicator.cleanup_websocket()
-        logger.info("Internal cleanup of {} finished", str(self._id))
+        try:
+            self._communicator.cleanup_websocket()
+        finally:
+            logger.info("Internal cleanup of {} finished", str(self._id))
+        return
 
     def stop_worker(self):
         if self._stop_worker_event.set():
@@ -110,7 +113,10 @@ class WorkerConfigmode(object):
                 time.sleep(1)
             logger.info('{} just woke up', str(self._id))
             if killpogo:
-                self._start_pogo()
+                try:
+                    self._start_pogo()
+                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    logger.error("Timeout during init of worker {}", str(self._id))
             return False
         else:
             logger.error("Unknown walker mode! Killing worker")
