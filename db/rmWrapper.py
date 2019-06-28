@@ -543,7 +543,6 @@ class RmWrapper(DbWrapperBase):
             logger.error("No geofence_helper! Not fetching gyms.")
             return []
 
-        #(minLat, minLon, maxLat, maxLon)
         logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
 
@@ -1049,9 +1048,7 @@ class RmWrapper(DbWrapperBase):
                     latitude), str(longitude))
                 continue
 
-            next_to_encounter.append(
-                    (pokemon_id, Location(latitude, longitude), encounter_id)
-            )
+            next_to_encounter.append((pokemon_id, Location(latitude, longitude), encounter_id))
 
         # now filter by the order of eligible_mon_ids
         to_be_encountered = []
@@ -1059,9 +1056,7 @@ class RmWrapper(DbWrapperBase):
         for mon_prio in eligible_mon_ids:
             for mon in next_to_encounter:
                 if mon_prio == mon[0]:
-                    to_be_encountered.append(
-                            (i, mon[1], mon[2])
-                    )
+                    to_be_encountered.append((i, mon[1], mon[2]))
             i += 1
         return to_be_encountered
 
@@ -1085,7 +1080,7 @@ class RmWrapper(DbWrapperBase):
             except KeyboardInterrupt:
                 logger.info('Ctrl-C interrupted')
                 sys.exit(1)
-            except Exception as e:
+            except Exception:
                 retry = retry + 1
                 logger.info('Download error', url)
                 if retry <= 5:
@@ -1100,14 +1095,13 @@ class RmWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
         last_modified = datetime.utcfromtimestamp(
-            stop_data['last_modified_timestamp_ms']/1000).strftime("%Y-%m-%d %H:%M:%S")
+            stop_data['last_modified_timestamp_ms'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
         # lure isn't present anymore...
         lure = '1970-01-01 00:00:00'
         active_fort_modifier = None
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
-            lure = datetime.utcfromtimestamp( 30 * 60 +
-                (stop_data['last_modified_timestamp_ms']/1000)).strftime("%Y-%m-%d %H:%M:%S")
+            lure = datetime.utcfromtimestamp(30 * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
 
         return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier
 
@@ -1138,7 +1132,7 @@ class RmWrapper(DbWrapperBase):
         )
 
     def check_stop_quest(self, latitude, longitude):
-        logger.debug("RmWrapper::stops_from_db called")
+        logger.debug("RmWrapper::check_stop_quest called")
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
@@ -1158,17 +1152,21 @@ class RmWrapper(DbWrapperBase):
             return False
 
     def stop_from_db_without_quests(self, geofence_helper, levelmode):
-        logger.debug("RmWrapper::stop_from_db_without_questsb called")
+        logger.debug("RmWrapper::stop_from_db_without_quests called")
+
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
 
         query = (
             "SELECT pokestop.latitude, pokestop.longitude "
-            "FROM pokestop left join trs_quest on "
-            "pokestop.pokestop_id = trs_quest.GUID  "
-        )
+            "FROM pokestop "
+            "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
+            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
+            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         if not levelmode:
-            query_addon = "where DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "\
-                          "or trs_quest.GUID IS NULL"
+            query_addon = ("AND DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+                           "OR trs_quest.GUID IS NULL")
 
             query = query + query_addon
 
@@ -1182,11 +1180,6 @@ class RmWrapper(DbWrapperBase):
                 list_of_coords)
             return geofenced_coords
         else:
-            # import numpy as np
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
     def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
@@ -1640,7 +1633,7 @@ class RmWrapper(DbWrapperBase):
         return gyms
 
     def check_stop_quest_level(self, worker, latitude, longitude):
-        logger.debug("RmWrapper::stops_from_db called")
+        logger.debug("RmWrapper::check_stop_quest_level called")
         query = (
             "SELECT trs_stats_detect_raw.type_id "
             "from trs_stats_detect_raw inner join pokestop on pokestop.pokestop_id = trs_stats_detect_raw.type_id "

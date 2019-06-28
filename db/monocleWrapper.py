@@ -1099,15 +1099,19 @@ class MonocleWrapper(DbWrapperBase):
     def stop_from_db_without_quests(self, geofence_helper, levelmode):
         logger.debug("MonocleWrapper::stop_from_db_without_quests called")
 
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
         query = (
             "SELECT pokestops.lat, pokestops.lon "
             "FROM pokestops left join trs_quest on "
-            "pokestops.external_id = trs_quest.GUID  "
-        )
+            "pokestops.external_id = trs_quest.GUID "
+            "WHERE (pokestops.lat >= {} AND pokestops.lon >= {} "
+            "AND pokestops.lat <= {} AND pokestops.lon <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         if not levelmode:
-            query_addon = "where DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "\
-                          "or trs_quest.GUID IS NULL"
+            query_addon = ("AND DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+                           "OR trs_quest.GUID IS NULL ")
 
             query = query + query_addon
 
@@ -1121,11 +1125,6 @@ class MonocleWrapper(DbWrapperBase):
                 list_of_coords)
             return geofenced_coords
         else:
-            # import numpy as np
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
     def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
