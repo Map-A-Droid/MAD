@@ -79,24 +79,20 @@ class PlayerStats(object):
         return False
 
     def stats_collector(self):
-
-        if not self._stats_collector_start:
-            if time.time() - self._last_processed_timestamp > 600 or self.compare_hour(self._last_processed_timestamp):
-                self.__mapping_mutex.acquire()
-                stats_collected_tmp: dict = {}
-                try:
+        logger.debug2("Creating stats_collector task for {}".format(self._id))
+        with self.__mapping_mutex:
+            if not self._stats_collector_start:
+                if time.time() - self._last_processed_timestamp > 600 or self.compare_hour(self._last_processed_timestamp):
                     stats_collected_tmp = deepcopy(self.__stats_collected)
                     del self.__stats_collected
                     self.__stats_collected = {}
                     self._last_processed_timestamp = time.time()
-                finally:
-                    self.__mapping_mutex.release()
 
-                self.__mitm_mapper_parent.add_stats_to_process(self._id, stats_collected_tmp,
-                                                               self._last_processed_timestamp)
-        else:
-            self._stats_collector_start = False
-            self._last_processed_timestamp = time.time()
+                    self.__mitm_mapper_parent.add_stats_to_process(self._id, stats_collected_tmp,
+                                                                   self._last_processed_timestamp)
+            else:
+                self._stats_collector_start = False
+                self._last_processed_timestamp = time.time()
 
     def stats_collect_mon(self, encounter_id: str):
         with self.__mapping_mutex:
