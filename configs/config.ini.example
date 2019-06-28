@@ -89,6 +89,11 @@
 #auto_reload_config          # Auto reload mappings configuration
 #auto_reload_delay           # Auto reload mappings configuration delay in seconds (Default: 60)
 
+# Game Stats
+######################
+#game_stats                  # Generate worker stats
+#game_stats_raw              # Generate worker raw stats (only with --game_stats)')
+
 # MADmin
 ######################
 #with_madmin                 # Start Madmin

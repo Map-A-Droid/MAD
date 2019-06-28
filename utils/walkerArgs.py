@@ -241,7 +241,13 @@ def parseArgs():
     parser.add_argument('-ard', '--auto_reload_delay', default=60,
                         help='Auto reload mappings configuration sleeptimer (Default: 60)')
 
+    # stats
 
+    parser.add_argument('-ggs', '--game_stats', action='store_true', default=False,
+                        help='Generate worker stats')
+
+    parser.add_argument('-ggrs', '--game_stats_raw', action='store_true', default=False,
+                        help='Generate worker raw stats (only with --game_stats)')
 
     # adb
     parser.add_argument('-adb', '--use_adb', action='store_true', default=False,

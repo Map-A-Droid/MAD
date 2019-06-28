@@ -41,8 +41,9 @@ class MitmMapper(object):
         self.__playerstats_db_update_consumer.start()
 
     def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
-        with self.__playerstats_db_update_mutex:
-            self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
+        if self.__application_args.game_stats:
+            with self.__playerstats_db_update_mutex:
+                self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
 
     def __internal_playerstats_db_update_consumer(self):
         while not self.__playerstats_db_update_stop.is_set():
@@ -57,19 +58,20 @@ class MitmMapper(object):
                 self.__process_stats(stats, client_id, last_processed_timestamp)
 
     def __process_stats(self, stats, client_id: int, last_processed_timestamp: float):
-        logger.info("Processing stats and write to db")
+        logger.info('Submitting stats for origin {}', str(client_id))
         data_send_stats = []
         data_send_location = []
 
         data_send_stats.append(PlayerStats.stats_complete_parser(client_id, stats, last_processed_timestamp))
         data_send_location.append(PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp))
-        data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats, last_processed_timestamp)
-        data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats, last_processed_timestamp)
 
         self.__db_wrapper.submit_stats_complete(data_send_stats)
         self.__db_wrapper.submit_stats_locations(data_send_location)
-        self.__db_wrapper.submit_stats_locations_raw(data_send_location_raw)
-        self.__db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
+        if self.__application_args.game_stats_raw:
+            data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats, last_processed_timestamp)
+            data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats, last_processed_timestamp)
+            self.__db_wrapper.submit_stats_locations_raw(data_send_location_raw)
+            self.__db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
         self.__db_wrapper.cleanup_statistics()
 
     def shutdown(self):
