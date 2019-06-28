@@ -136,6 +136,7 @@ class MITMReceiver(Process):
 
     def proto_endpoint(self, origin, data):
         logger.debug2("Receiving proto from {}".format(origin))
+        logger.debug4("Proto data received from {}: {}".format(origin, str(data)))
         type = data.get("type", None)
         if type is None or type == 0:
             logger.warning(
