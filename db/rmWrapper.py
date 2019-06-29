@@ -1097,7 +1097,7 @@ class RmWrapper(DbWrapperBase):
         last_modified = datetime.utcfromtimestamp(
             stop_data['last_modified_timestamp_ms'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
         # lure isn't present anymore...
-        lure = '1970-01-01 00:00:00'
+        lure = None
         active_fort_modifier = None
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
