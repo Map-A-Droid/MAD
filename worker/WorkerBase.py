@@ -200,7 +200,7 @@ class WorkerBase(ABC):
     def start_worker(self):
         # async_result = self.thread_pool.apply_async(self._main_work_thread, ())
         t_main_work = Thread(target=self._main_work_thread)
-        t_main_work.daemon = False
+        t_main_work.daemon = True
         t_main_work.start()
         # do some other stuff in the main process
         while not self._stop_worker_event.isSet():
@@ -238,7 +238,7 @@ class WorkerBase(ABC):
 
         self._async_io_looper_thread = Thread(name=str(self._id) + '_asyncio_' + self._id,
                                               target=self._start_asyncio_loop)
-        self._async_io_looper_thread.daemon = False
+        self._async_io_looper_thread.daemon = True
         self._async_io_looper_thread.start()
 
         self.loop_started.wait()

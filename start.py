@@ -324,6 +324,9 @@ if __name__ == "__main__":
         # TODO: check against args or init variables to None...
         if t_whw is not None:
             t_whw.join()
+        if ws_server is not None:
+            ws_server.stop_server()
+            t_ws.join()
         if mitm_receiver_process is not None:
             # mitm_receiver_thread.kill()
             logger.info("Trying to stop receiver")
@@ -334,9 +337,6 @@ if __name__ == "__main__":
             logger.info("MITMReceiver joined")
             # mitm_receiver.stop_receiver()
             # mitm_receiver_thread.kill()
-        if ws_server is not None:
-            ws_server.stop_server()
-            t_ws.join()
         # if t_file_watcher is not None:
         #     t_file_watcher.join()
         if mapping_manager_manager is not None:

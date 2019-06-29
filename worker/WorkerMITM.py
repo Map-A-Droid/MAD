@@ -100,7 +100,9 @@ class WorkerMITM(MITMBase):
                                           self.current_location.lat, self.current_location.lng, speed)
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
+            logger.debug2("Done walking, fetching time to sleep")
             delay_used = self.get_devicesettings_value('post_walk_delay', 7)
+        logger.debug2("Sleeping for {}s".format(str(delay_used)))
         time.sleep(float(delay_used))
         self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location

@@ -300,7 +300,7 @@ class WebsocketServer(object):
             new_worker_thread = Thread(
                 name='worker_%s' % origin, target=worker.start_worker)
 
-            new_worker_thread.daemon = False
+            new_worker_thread.daemon = True
             async with self.__users_mutex:
                 self.__current_users[origin] = [new_worker_thread,
                                             worker, websocket_client_connection, 0]
@@ -322,6 +322,7 @@ class WebsocketServer(object):
             worker = self.__current_users.get(worker_id, None)
             if worker is not None:
                 worker[1].stop_worker()
+                worker[0].join()
                 self.__current_users.pop(worker_id)
         logger.info("Worker {} unregistered", str(worker_id))
 
@@ -515,6 +516,7 @@ class WebsocketServer(object):
             logger.error("Sending message failed due to timeout ({})".format(id))
             raise WebsocketWorkerTimeoutException
 
+        logger.debug2("Returning {} to {}".format(str(result), id))
         return result
 
     async def __set_request(self, id, event):
