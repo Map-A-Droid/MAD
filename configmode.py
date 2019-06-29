@@ -59,8 +59,7 @@ if __name__ == "__main__":
     mapping_manager_manager = MappingManagerManager()
     mapping_manager_manager.start()
     mapping_manager_stop_event = mapping_manager_manager.Event()
-    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
-                                                                             mapping_manager_stop_event, False)
+    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, True)
 
     ws_server = WebsocketServer(args, None, db_wrapper, mapping_manager, None, True)
     t_ws = Thread(name='scanner', target=ws_server.start_server)
@@ -70,6 +69,6 @@ if __name__ == "__main__":
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
     t_flask = Thread(name='madmin', target=start_madmin,
-                     args=(args, db_wrapper, ws_server, mapping_manager,))
+                     args=(args, db_wrapper, ws_server, mapping_manager))
     t_flask.daemon = False
     t_flask.start()

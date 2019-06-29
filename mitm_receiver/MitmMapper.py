@@ -1,5 +1,5 @@
 import time
-from _queue import Empty
+from queue import Empty
 from multiprocessing import Lock, Queue
 from multiprocessing.managers import SyncManager
 from threading import Thread, Event

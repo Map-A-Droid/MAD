@@ -183,7 +183,9 @@ class WebsocketServer(object):
                 return False
             logger.info("Starting worker {}".format(origin))
             if self._configmode:
-                worker = WorkerConfigmode(self.args, origin, self)
+                worker = WorkerConfigmode(self.args, origin, self, walker = None,
+                                          mapping_manager = self.__mapping_manager, mitm_mapper = self.__mitm_mapper,
+                                          db_wrapper = self.__db_wrapper)
                 logger.debug("Starting worker for {}", str(origin))
                 new_worker_thread = Thread(
                     name='worker_%s' % origin, target=worker.start_worker)
