@@ -74,14 +74,15 @@ class WorkerQuests(MITMBase):
         self.clear_thread.daemon = False
         self.clear_thread.start()
         self._get_screen_size()
-        if not self._wait_for_injection():
-            raise InternalStopWorkerException
-
+        
         reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
+
+        if not self._wait_for_injection():
+            raise InternalStopWorkerException
 
     def _health_check(self):
         """
