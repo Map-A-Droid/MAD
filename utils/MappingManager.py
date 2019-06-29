@@ -53,7 +53,7 @@ class MappingManagerManager(SyncManager):
 
 
 class MappingManager:
-    def __init__(self, db_wrapper: DbWrapperBase, args, global_stop_mad_event: Event, configmode: bool = False):
+    def __init__(self, db_wrapper: DbWrapperBase, args, configmode: bool = False):
         self.__db_wrapper: DbWrapperBase = db_wrapper
         self.__args = args
         self.__configmode: bool = configmode
@@ -62,10 +62,10 @@ class MappingManager:
         self._areas: Optional[dict] = None
         self._routemanagers: Optional[Dict[str, dict]] = None
         self._auths: Optional[dict] = None
+        self.__stop_file_watcher_event: Event = Event()
 
         self.__raw_json: Optional[dict] = None
         self.__mappings_mutex: Lock = Lock()
-        self.__stop_mad_event: Event = global_stop_mad_event
 
         self.update(full_lock=True)
 
@@ -74,6 +74,11 @@ class MappingManager:
             self.__t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher,)
             self.__t_file_watcher.daemon = False
             self.__t_file_watcher.start()
+
+    def shutdown(self):
+        logger.fatal("MappingManager exiting")
+        self.__stop_file_watcher_event.set()
+        self.__t_file_watcher.join()
 
     def get_auths(self) -> Optional[dict]:
         with self.__mappings_mutex:
@@ -506,7 +511,7 @@ class MappingManager:
         filename = 'configs/mappings.json'
         logger.info('Mappings.json reload delay: {} seconds', refresh_time_sec)
 
-        while not self.__stop_mad_event.is_set():
+        while not self.__stop_file_watcher_event.is_set():
             # Wait (x-1) seconds before refresh, min. 1s.
             try:
                 time.sleep(max(1, refresh_time_sec - 1))

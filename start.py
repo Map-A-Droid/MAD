@@ -202,7 +202,6 @@ if __name__ == "__main__":
 
     mapping_manager_manager = None
     mapping_manager: Optional[MappingManager] = None
-    mapping_manager_stop_event = None
 
     ws_server = None
     t_ws = None
@@ -213,9 +212,7 @@ if __name__ == "__main__":
         MappingManagerManager.register('MappingManager', MappingManager)
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
-        mapping_manager_stop_event = mapping_manager_manager.Event()
-        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
-                                                                                 mapping_manager_stop_event, False)
+        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, False)
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
             logger.error(
@@ -308,17 +305,21 @@ if __name__ == "__main__":
         logger.info("Starting Madmin on Port: {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
                           args=(args, db_wrapper, ws_server, mapping_manager))
-        t_madmin.daemon = False
+        t_madmin.daemon = True
         t_madmin.start()
 
     logger.info("Running.....")
     try:
         while True:
             time.sleep(10)
+    except KeyboardInterrupt or Exception:
+        logger.info("Shutdown signal received")
     finally:
         db_wrapper = None
         logger.success("Stop called")
         terminate_mad.set()
+        # mitm_mapper.shutdown()
+
         # now cleanup all threads...
         # TODO: check against args or init variables to None...
         if t_whw is not None:
@@ -327,6 +328,7 @@ if __name__ == "__main__":
             # mitm_receiver_thread.kill()
             logger.info("Trying to stop receiver")
             mitm_receiver_process.shutdown()
+            mitm_receiver_process.terminate()
             logger.info("Trying to join MITMReceiver")
             mitm_receiver_process.join()
             logger.info("MITMReceiver joined")
@@ -337,14 +339,17 @@ if __name__ == "__main__":
             t_ws.join()
         # if t_file_watcher is not None:
         #     t_file_watcher.join()
-        if mapping_manager_stop_event is not None:
-            # mapping_manager_stop_event.set()
+        if mapping_manager_manager is not None:
             mapping_manager_manager.shutdown()
         # time.sleep(10)
         if mitm_mapper_manager is not None:
-            mitm_mapper.shutdown()
+            # mitm_mapper.shutdown()
+            logger.debug("Calling mitm_mapper shutdown")
             mitm_mapper_manager.shutdown()
         if db_wrapper_manager is not None:
+            logger.debug("Calling db_wrapper shutdown")
             db_wrapper_manager.shutdown()
-
+            logger.debug("Done shutting down db_wrapper")
+        logger.debug("Done shutting down")
+        logger.debug(str(sys.exc_info()))
         sys.exit(0)

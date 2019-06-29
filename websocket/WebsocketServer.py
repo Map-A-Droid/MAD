@@ -76,31 +76,30 @@ class WebsocketServer(object):
                              ping_timeout=10, ping_interval=15))
         self.__loop.run_forever()
 
-    def stop_server(self):
+    async def __internal_stop_server(self):
         # TODO: cleanup workers...
         self.__stop_server.set()
-        future = asyncio.run_coroutine_threadsafe(self.__users_mutex.acquire(), self.__loop)
-        future.result()
-        for id, worker in self.__current_users.items():
-            logger.info('Stopping worker {} to apply new mappings.', id)
-            worker[1].stop_worker()
-        self.__users_mutex.release()
+        async with self.__users_mutex:
+            for id, worker in self.__current_users.items():
+                logger.info('Stopping worker {} to apply new mappings.', id)
+                worker[1].stop_worker()
 
         # wait for all workers to be stopped...
-        while True:
-            future = asyncio.run_coroutine_threadsafe(self.__users_mutex.acquire(), self.__loop)
-            future.result()
-            if len(self.__current_users) == 0:
-                self.__users_mutex.release()
-                break
-            else:
-                self.__users_mutex.release()
-                time.sleep(1)
-        for routemanager in self.__mapping_manager.get_all_routemanager_names():
-            self.__mapping_manager.routemanager_stop(routemanager)
+        try:
+            while True:
+                async with self.__current_users:
+                    if len(self.__current_users) == 0:
+                        break
+                    else:
+                        time.sleep(1)
+            for routemanager in self.__mapping_manager.get_all_routemanager_names():
+                self.__mapping_manager.routemanager_stop(routemanager)
+        finally:
+            if self.__loop is not None:
+                self.__loop.call_soon_threadsafe(self.__loop.stop)
 
-        if self.__loop is not None:
-            self.__loop.call_soon_threadsafe(self.__loop.stop)
+    def stop_server(self):
+        asyncio.run_coroutine_threadsafe(self.__internal_stop_server(), self.__loop)
 
     async def handler(self, websocket_client_connection, path):
         logger.info("Waiting for connection...")

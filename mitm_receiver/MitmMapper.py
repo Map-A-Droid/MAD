@@ -1,7 +1,7 @@
 import time
-from multiprocessing import Lock
+from _queue import Empty
+from multiprocessing import Lock, Queue
 from multiprocessing.managers import SyncManager
-from queue import Queue, Empty
 from threading import Thread, Event
 from typing import Dict
 
@@ -38,6 +38,7 @@ class MitmMapper(object):
                 self.__mapping[origin] = {}
                 self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self.__db_wrapper, self)
                 self.__playerstats[origin].open_player_stats()
+        self.__playerstats_db_update_consumer.daemon = True
         self.__playerstats_db_update_consumer.start()
 
     def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
@@ -46,16 +47,20 @@ class MitmMapper(object):
                 self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
 
     def __internal_playerstats_db_update_consumer(self):
-        while not self.__playerstats_db_update_stop.is_set():
-            try:
-                with self.__playerstats_db_update_mutex:
-                    next_item = self.__playerstats_db_update_queue.get_nowait()
-            except Empty:
-                time.sleep(0.5)
-                continue
-            if next_item is not None:
-                client_id, stats, last_processed_timestamp = next_item
-                self.__process_stats(stats, client_id, last_processed_timestamp)
+        try:
+            while not self.__playerstats_db_update_stop.is_set():
+                try:
+                    with self.__playerstats_db_update_mutex:
+                        next_item = self.__playerstats_db_update_queue.get_nowait()
+                except Empty:
+                    time.sleep(0.5)
+                    continue
+                if next_item is not None:
+                    client_id, stats, last_processed_timestamp = next_item
+                    self.__process_stats(stats, client_id, last_processed_timestamp)
+        except Exception as e:
+            logger.fatal("Playerstats consumer stopping because of {}".format(str(e)))
+        logger.fatal("Shutting down Playerstats update consumer")
 
     def __process_stats(self, stats, client_id: int, last_processed_timestamp: float):
         logger.info('Submitting stats for origin {}', str(client_id))
@@ -77,7 +82,8 @@ class MitmMapper(object):
     def shutdown(self):
         self.__playerstats_db_update_stop.set()
         self.__playerstats_db_update_consumer.join()
-        self.__playerstats_db_update_queue.join()
+        self.__playerstats_db_update_queue.close()
+        # self.__playerstats_db_update_queue.join()
 
     def get_mon_ids_iv(self, origin):
         devicemapping_of_origin = self.__mapping_manager.get_devicemappings_of(origin)

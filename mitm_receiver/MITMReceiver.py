@@ -114,6 +114,7 @@ class MITMReceiver(Process):
             self._data_queue.put(None)
         logger.info("Trying to join workers...")
         for t in self.worker_threads:
+            t.terminate()
             t.join()
         self._data_queue.close()
         logger.info("Workers stopped...")
