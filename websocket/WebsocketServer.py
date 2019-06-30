@@ -75,6 +75,7 @@ class WebsocketServer(object):
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
                              ping_timeout=10, ping_interval=15))
         self.__loop.run_forever()
+        logger.info("Websocketserver stopping...")
 
     async def __internal_stop_server(self):
         # TODO: cleanup workers...
@@ -316,7 +317,7 @@ class WebsocketServer(object):
         return True
 
     async def __unregister(self, websocket_client_connection):
-        worker_thread: Thread = None
+        # worker_thread: Thread = None
         async with self.__users_mutex:
             worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
             worker = self.__current_users.get(worker_id, None)

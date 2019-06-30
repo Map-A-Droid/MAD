@@ -108,7 +108,6 @@ class MITMReceiver(Process):
 
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
-        self._data_queue.join()
         logger.info("Adding None to queue")
         for i in range(application_args.mitmreceiver_data_workers):
             self._data_queue.put(None)
