@@ -1,5 +1,6 @@
 import datetime
 import json
+import time
 from flask import (jsonify, render_template, request)
 from madmin.functions import auth_required
 from utils.language import i8ln
@@ -142,14 +143,14 @@ class statistics(object):
         data = self._db.statistics_get_pokemon_count(minutes_spawn)
         for dat in data:
             if dat[2] == 1:
-                iv.append([(dat[0] * 1000), dat[1]])
+                iv.append([(self.utc2local(dat[0]) * 1000), dat[1]])
             else:
-                noniv.append([(dat[0] * 1000), dat[1]])
+                noniv.append([(self.utc2local(dat[0]) * 1000), dat[1]])
 
-            if (dat[0] * 1000) in sumup:
-                sumup[(dat[0] * 1000)] += dat[1]
+            if (self.utc2local(dat[0]) * 1000) in sumup:
+                sumup[(self.utc2local(dat[0]) * 1000)] += dat[1]
             else:
-                sumup[(dat[0] * 1000)] = dat[1]
+                sumup[(self.utc2local(dat[0]) * 1000)] = dat[1]
 
         for dat in sumup:
             sum.append([dat, sumup[dat]])
@@ -177,6 +178,12 @@ class statistics(object):
                  'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
                  'location_info': location_info}
         return jsonify(stats)
+
+    def utc2local(self, ts):
+        utc = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        offset = time.mktime(now.timetuple()) - time.mktime(utc.timetuple())
+        return ts + offset
 
     @auth_required
     def statistics_detection_worker_data(self):

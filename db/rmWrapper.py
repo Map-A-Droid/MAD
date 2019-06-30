@@ -1466,22 +1466,16 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp"
+        query_date = "UNIX_TIMESTAMP(DATE_FORMAT(last_modified, '%y-%m-%d %k:00:00')) as timestamp"
         if minutes:
-            minutes = datetime.now().replace(
+            minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(minutes)
-
-        # SELECT unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp,
-        # count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join trs_stats_detect_raw
-        # on pokemon.encounter_id=trs_stats_detect_raw.type_id where FROM_UNIXTIME(timestamp_scan)
-        # > '2019-05-04 10:47:47.259159' group by IV, day(FROM_UNIXTIME(timestamp_scan)),
-        # hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp
+            query_where = ' where last_modified > \'%s\' ' % str(minutes)
 
         query = (
-            "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join "
-            "trs_stats_detect_raw on pokemon.encounter_id=trs_stats_detect_raw.type_id %s "
-            "group by IV, day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp" %
+            "SELECT  %s, count(DISTINCT encounter_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon "
+            " %s "
+            "group by IV, day(TIMESTAMP(last_modified)), hour(TIMESTAMP(last_modified)) order by timestamp" %
                 (str(query_date), str(query_where))
         )
 
