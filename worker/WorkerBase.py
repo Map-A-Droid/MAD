@@ -239,8 +239,6 @@ class WorkerBase(ABC):
 
         self._work_mutex.release()
 
-
-
         self._async_io_looper_thread = Thread(name=str(self._id) + '_asyncio_' + self._id,
                                               target=self._start_asyncio_loop)
         self._async_io_looper_thread.daemon = True
@@ -540,7 +538,7 @@ class WorkerBase(ABC):
         self._communicator.click(int(x), int(y))
 
         buttoncheck = self._checkPogoButton()
-        while not buttoncheck:
+        while not buttoncheck and not self._stop_worker_event.isSet():
             time.sleep(5)
             buttoncheck = self._checkPogoButton()
 

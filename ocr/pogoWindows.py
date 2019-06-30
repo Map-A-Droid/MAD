@@ -263,7 +263,6 @@ class PogoWindows:
 
         print(text)
 
-
     def look_for_button(self, filename, ratiomin, ratiomax, communicator):
         if not os.path.isfile(filename):
             logger.error("look_for_button: {} does not exist", str(filename))

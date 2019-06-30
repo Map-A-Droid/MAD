@@ -40,7 +40,6 @@ class Resocalculator(object):
         temp_offset = int(self._screen_y) / 24.61
         click_x = int(self._screen_x) / 2
         click_y = (int(self._screen_y) / 2) + int(temp_offset)
-        print (temp_offset, click_y, click_x)
         return click_x, click_y
 
     def get_close_main_button_coords(self):
