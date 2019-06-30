@@ -511,7 +511,7 @@ new Vue({
       var $this = this;
 
       axios.get("get_prioroute").then(function (res) {
-        res.data.forEach(function (route) {
+        res.data.forEach(function(route) {
           var group = L.layerGroup();
           var coords = [];
 
@@ -532,18 +532,22 @@ new Vue({
             cradius = $this.settings.routes.coordinateRadius.raids;
           }
 
-          route.coordinates.forEach(function(coord, index) {
-            var maxcolored = 10;
-            var color = "#BBB";
+          var maxcolored = 10;
+          var color = "#BBB";
 
+          var linecoords = [];
+
+          // only display first 10 entries of the queue
+          route.coordinates.slice(0, 9).forEach(function(coord, index) {
             if (index < maxcolored) {
               color = $this.getPercentageColor((index+1) * 100 / maxcolored);
             }
 
             var weight = index == 0 ? 5 : 1;
 
-            circle = L.circle(coord, {
-              pane: "routes",
+            circle = L.circle([coord.latitude, coord.longitude], {
+              ctimestamp: coord.timestamp,
+              //pane: "routes",
               radius: cradius,
               color: color,
               fillColor: color,
@@ -551,20 +555,21 @@ new Vue({
               weight: weight,
               opacity: 0.8,
               fillOpacity: 0.5
-            });
+            }).bindPopup($this.build_prioq_popup);
 
             circle.addTo(group);
             coords.push(circle);
+            linecoords.push([coord.latitude, coord.longitude]);
           });
 
           var geojson = {
             "type": "LineString",
-            "coordinates": $this.convertToLonLat(route.coordinates)
+            "coordinates": $this.convertToLonLat(linecoords)
           }
 
           // add route to layergroup
           L.geoJSON(geojson, {
-            pane: "routes",
+            //pane: "routes",
             style: {
               "color": "#000000",
               "weight": 2,
@@ -832,6 +837,10 @@ new Vue({
 
       var h = r * 0x10000 + g * 0x100 + b * 0x1;
       return "#" + ("000000" + h.toString(16)).slice(-6);
+    },
+    build_prioq_popup(marker) {
+      var time = moment(marker.options.ctimestamp*1000);
+      return `Due: ${time.format("YYYY-MM-DD HH:mm:ss")} (${marker.options.ctimestamp})`;
     },
     build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
       switch (quest_reward_type_raw) {

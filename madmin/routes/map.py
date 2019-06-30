@@ -181,9 +181,11 @@ class map(object):
             route_serialized = []
 
             for location in route:
-                route_serialized.append([
-                    getCoordFloat(location[1].lat), getCoordFloat(location[1].lng)
-                ])
+                route_serialized.append({
+                    "timestamp": location[0],
+                    "latitude": getCoordFloat(location[1].lat),
+                    "longitude": getCoordFloat(location[1].lng)
+                })
 
             routeexport.append({
                 "name": routemanager,
