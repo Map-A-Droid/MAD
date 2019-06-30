@@ -78,29 +78,18 @@ class WebsocketServer(object):
         logger.info("Websocketserver stopping...")
 
     async def __internal_stop_server(self):
-        # TODO: cleanup workers...
         self.__stop_server.set()
         async with self.__users_mutex:
             for id, worker in self.__current_users.items():
-                logger.info('Stopping worker {} to apply new mappings.', id)
-                worker[1].stop_worker()
+                logger.info('Closing connections to device {}.', id)
+                worker[2].close()
 
-        # wait for all workers to be stopped...
-        try:
-            while True:
-                async with self.__current_users:
-                    if len(self.__current_users) == 0:
-                        break
-                    else:
-                        time.sleep(1)
-            for routemanager in self.__mapping_manager.get_all_routemanager_names():
-                self.__mapping_manager.routemanager_stop(routemanager)
-        finally:
-            if self.__loop is not None:
-                self.__loop.call_soon_threadsafe(self.__loop.stop)
+        if self.__loop is not None:
+            self.__loop.call_soon_threadsafe(self.__loop.stop)
 
     def stop_server(self):
-        asyncio.run_coroutine_threadsafe(self.__internal_stop_server(), self.__loop)
+        future = asyncio.run_coroutine_threadsafe(self.__internal_stop_server(), self.__loop)
+        future.result()
 
     async def handler(self, websocket_client_connection, path):
         logger.info("Waiting for connection...")
@@ -398,8 +387,7 @@ class WebsocketServer(object):
                                                              or self.__current_users[worker_id][1] == worker_instance):
                 if self.__current_users[worker_id][2].open:
                     logger.info("Calling close for {}...", str(worker_id))
-                    asyncio.ensure_future(
-                        self.__current_users[worker_id][2].close(), loop=self.__loop)
+                    await self.__current_users[worker_id][2].close()
                 self.__current_users.pop(worker_id)
                 logger.info("Info of {} removed in websocket", str(worker_id))
 

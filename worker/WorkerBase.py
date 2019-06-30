@@ -84,6 +84,7 @@ class WorkerBase(ABC):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
 
     def get_devicesettings_value(self, key: str, default_value: object = None):
+        logger.debug2("Fetching devicemappings of {}".format(self._id))
         devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
         if devicemappings is None:
             return default_value
@@ -206,7 +207,7 @@ class WorkerBase(ABC):
         while not self._stop_worker_event.isSet():
             time.sleep(1)
         t_main_work.join()
-        logger.info("Worker {} stopping gracefully", str(self._id))
+        logger.info("Worker {} stopped gracefully", str(self._id))
         # async_result.get()
         return self._last_known_state
 
