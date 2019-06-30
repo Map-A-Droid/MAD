@@ -626,11 +626,6 @@ class RmWrapper(DbWrapperBase):
                 list_of_coords)
             return geofenced_coords
         else:
-            # import numpy as np
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
@@ -660,10 +655,11 @@ class RmWrapper(DbWrapperBase):
         return True
 
     def submit_mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
-        logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
             return
+
+        logger.debug("Updating IV sent by {} for encounter {}", str(origin))
 
         now = datetime.utcfromtimestamp(
             time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -686,16 +682,14 @@ class RmWrapper(DbWrapperBase):
         mitm_mapper.collect_mon_iv_stats(origin, encounter_id)
 
         if getdetspawntime is None:
-
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
-                        str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
+                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
         else:
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (non-init)",
-                        str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
+                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
 
         capture_probability = encounter_proto.get("capture_probability")
-        capture_probability_list = capture_probability.get(
-            "capture_probability_list")
+        capture_probability_list = capture_probability.get("capture_probability_list")
         if capture_probability_list is not None:
             capture_probability_list = capture_probability_list.replace(
                 "[", "").replace("]", "").split(",")
@@ -796,7 +790,7 @@ class RmWrapper(DbWrapperBase):
                         origin), mon_id, lat, lon, despawn_time, spawnid)
                 else:
                     logger.debug("{}: adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})",
-                                str(origin), mon_id, lat, lon, despawn_time, spawnid)
+                                 str(origin), mon_id, lat, lon, despawn_time, spawnid)
 
                 mon_args.append(
                     (
@@ -877,7 +871,7 @@ class RmWrapper(DbWrapperBase):
                     latitude = gym['latitude']
                     longitude = gym['longitude']
                     slots_available = gym['gym_details']['slots_available']
-                    last_modified_ts = gym['last_modified_timestamp_ms']/1000
+                    last_modified_ts = gym['last_modified_timestamp_ms'] / 1000
                     last_modified = datetime.utcfromtimestamp(
                         last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
                     is_ex_raid_eligible = gym['gym_details']['is_ex_raid_eligible']

@@ -162,7 +162,7 @@ new Vue({
         url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_all/{z}/{x}/{y}.png"
       },
       cartodbdarknolabel: {
-        name: "CartoDB Darkmatter",
+        name: "CartoDB Darkmatter nolabel",
         url: "https://{s}.basemaps.cartocdn.com/rastertiles/dark_nolabels/{z}/{x}/{y}.png"
       },
       cartodbvoyager: {

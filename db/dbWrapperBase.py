@@ -575,7 +575,6 @@ class DbWrapperBase(ABC):
         vals = (str(ids), str(type))
         logger.debug(query)
 
-
         self.execute(query, vals, commit=True)
         return True
 
