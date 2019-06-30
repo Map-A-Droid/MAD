@@ -4,7 +4,7 @@ import math
 import sys
 import time
 import logging
-from threading import Thread, Event
+from threading import Event, Thread
 
 import websockets
 
@@ -316,15 +316,15 @@ class WebsocketServer(object):
         return True
 
     async def __unregister(self, websocket_client_connection):
-
+        worker_thread: Thread = None
         async with self.__users_mutex:
             worker_id = str(websocket_client_connection.request_headers.get_all("Origin")[0])
             worker = self.__current_users.get(worker_id, None)
             if worker is not None:
                 worker[1].stop_worker()
-                worker[0].join()
                 self.__current_users.pop(worker_id)
         logger.info("Worker {} unregistered", str(worker_id))
+        # TODO ? worker_thread.join()
 
     async def __producer_handler(self, websocket_client_connection):
         while websocket_client_connection.open:

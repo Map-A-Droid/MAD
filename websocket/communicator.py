@@ -179,20 +179,17 @@ class Communicator:
     # This blocks!
     #######
     def walkFromTo(self, startLat, startLng, destLat, destLng, speed):
-        self.__sendMutex.acquire()
-        # calculate the time it will take to walk and add it to the timeout!
-        distance = get_distance_of_two_points_in_meters(
-                startLat, startLng, destLat, destLng)
-        # speed is in kmph, distance in m
-        # we want m/s -> speed / 3.6
-        speed_meters = speed / 3.6
-        seconds_traveltime = distance / speed_meters
-        try:
+        with self.__sendMutex:
+            # calculate the time it will take to walk and add it to the timeout!
+            distance = get_distance_of_two_points_in_meters(
+                    startLat, startLng, destLat, destLng)
+            # speed is in kmph, distance in m
+            # we want m/s -> speed / 3.6
+            speed_meters = speed / 3.6
+            seconds_traveltime = distance / speed_meters
             response = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref,
                                                             "geo walk {} {} {} {} {}\r\n".format(startLat, startLng,
                                                                                                  destLat, destLng,
                                                                                                  speed),
                                                             self.__command_timeout + seconds_traveltime)
             return response
-        finally:
-            self.__sendMutex.release()
