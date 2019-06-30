@@ -238,6 +238,32 @@ class PogoWindows:
             "readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
         return -1
 
+    def look_for_ggl_login(self, filename, communicator):
+        if not os.path.isfile(filename):
+            logger.error("look_for_button: {} does not exist", str(filename))
+            return False
+
+        return self.__thread_pool.apply_async(self.__internal_look_for_ggl_login,
+                                              (filename, communicator)).get()
+
+    def __internal_look_for_ggl_login(self, filename, communicator):
+        logger.debug("lookForButton: Look for ggl login")
+        try:
+            screenshot_read = cv2.imread(filename)
+            gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
+        except:
+            logger.error("Screenshot corrupted :(")
+            return False
+
+        if screenshot_read is None:
+            logger.error("Screenshot corrupted :(")
+            return False
+
+        text = pytesseract.image_to_string(Image.open(filename))
+
+        print(text)
+
+
     def look_for_button(self, filename, ratiomin, ratiomax, communicator):
         if not os.path.isfile(filename):
             logger.error("look_for_button: {} does not exist", str(filename))

@@ -223,6 +223,8 @@ class WorkerBase(ABC):
 
         self._work_mutex.acquire()
         try:
+            self._get_screen_size()
+            self._check_ggl_login()
             self._turn_screen_on_and_start_pogo()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -236,6 +238,8 @@ class WorkerBase(ABC):
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
 
         self._work_mutex.release()
+
+
 
         self._async_io_looper_thread = Thread(name=str(self._id) + '_asyncio_' + self._id,
                                               target=self._start_asyncio_loop)
@@ -523,6 +527,24 @@ class WorkerBase(ABC):
             logger.warning("Turning screen on")
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
+
+    def _check_ggl_login(self):
+        if not "AccountPickerActivity" in self._communicator.topmostApp():
+            logger.info ('No GGL Login Window found on {}', str(self._id))
+            return
+
+        logger.info('GGL Login Window found on {} - processing', str(self._id))
+
+        x, y = self._resocalc.get_ggl_account_coords(self)[0], \
+               self._resocalc.get_ggl_account_coords(self)[1]
+        self._communicator.click(int(x), int(y))
+
+        buttoncheck = self._checkPogoButton()
+        while not buttoncheck:
+            time.sleep(5)
+            buttoncheck = self._checkPogoButton()
+
+        return
 
     def _stop_pogo(self):
         attempts = 0

@@ -153,6 +153,16 @@ class Communicator:
         finally:
             self.__sendMutex.release()
 
+    def topmostApp(self) -> str:
+        self.__sendMutex.acquire()
+        try:
+            topmost = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref,
+                                                           "more topmost app\r\n", self.__command_timeout)
+
+            return topmost
+        finally:
+            self.__sendMutex.release()
+
     def setLocation(self, lat, lng, alt):
         self.__sendMutex.acquire()
         try:

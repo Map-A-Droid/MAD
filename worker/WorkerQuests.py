@@ -73,7 +73,6 @@ class WorkerQuests(MITMBase):
                 self._id), target=self._clear_thread)
         self.clear_thread.daemon = False
         self.clear_thread.start()
-        self._get_screen_size()
         
         reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
