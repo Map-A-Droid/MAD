@@ -34,7 +34,7 @@ class Rarity(object):
 
         t = Thread(target=self.dynamic_rarity_refresher,
                    name='dynamic_rarity')
-        t.daemon = False
+        t.daemon = True
         t.start()
 
     def dynamic_rarity_refresher(self):

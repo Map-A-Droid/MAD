@@ -1,10 +1,12 @@
 import asyncio
 import collections
+import functools
 import math
 import sys
 import time
 import logging
-from threading import Event, Thread
+from asyncio import Handle
+from threading import Event, Thread, current_thread, Lock
 
 import websockets
 
@@ -58,6 +60,19 @@ class WebsocketServer(object):
         self._configmode = configmode
 
         self.__loop = None
+        self.__loop_tid = None
+        self.__loop_mutex = Lock()
+
+    def _add_task_to_loop(self, coro):
+        f = functools.partial(self.__loop.create_task, coro)
+        if current_thread() == self.__loop_tid:
+            # We can call directly if we're not going between threads.
+            return f()
+        else:
+            # We're in a non-event loop thread so we use a Future
+            # to get the task from the event loop thread once
+            # it's ready.
+            return self.__loop.call_soon_threadsafe(f)
 
     def start_server(self):
         logger.info("Starting websocket server...")
@@ -74,6 +89,7 @@ class WebsocketServer(object):
         self.__loop.run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
                              ping_timeout=10, ping_interval=15))
+        self.__loop_tid = current_thread()
         self.__loop.run_forever()
         logger.info("Websocketserver stopping...")
 
@@ -88,7 +104,8 @@ class WebsocketServer(object):
             self.__loop.call_soon_threadsafe(self.__loop.stop)
 
     def stop_server(self):
-        future = asyncio.run_coroutine_threadsafe(self.__internal_stop_server(), self.__loop)
+        with self.__loop_mutex:
+            future = asyncio.run_coroutine_threadsafe(self.__internal_stop_server(), self.__loop)
         future.result()
 
     async def handler(self, websocket_client_connection, path):
@@ -393,8 +410,9 @@ class WebsocketServer(object):
 
     def clean_up_user(self, worker_id, worker_instance):
         logger.debug2("Cleanup of {} called with ref {}".format(worker_id, str(worker_instance)))
-        future = asyncio.run_coroutine_threadsafe(
-                self.__internal_clean_up_user(worker_id, worker_instance), self.__loop)
+        with self.__loop_mutex:
+            future = asyncio.run_coroutine_threadsafe(
+                    self.__internal_clean_up_user(worker_id, worker_instance), self.__loop)
         future.result()
 
     async def __on_message(self, message):
@@ -496,8 +514,11 @@ class WebsocketServer(object):
     def send_and_wait(self, id, worker_instance, message, timeout):
         logger.debug("{} sending command: {}", str(id), message.strip())
         try:
-            future = asyncio.run_coroutine_threadsafe(
-                    self.__send_and_wait_internal(id, worker_instance, message, timeout), self.__loop)
+            # future: Handle = self._add_task_to_loop(self.__send_and_wait_internal(id, worker_instance, message,
+            #                                                                       timeout))
+            with self.__loop_mutex:
+                future = asyncio.run_coroutine_threadsafe(
+                        self.__send_and_wait_internal(id, worker_instance, message, timeout), self.__loop)
             result = future.result()
         except WebsocketWorkerRemovedException:
             logger.error("Worker {} was removed, propagating exception".format(id))

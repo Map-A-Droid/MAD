@@ -20,7 +20,7 @@ class Timer(object):
         if self._switch:
             self.__t_switchtimer = Thread(name='switchtimer_%s' % str(self._id),
                                           target=self.switchtimer)
-            self.__t_switchtimer.daemon = False
+            self.__t_switchtimer.daemon = True
             self.__t_switchtimer.start()
 
     def set_switch(self, switch):

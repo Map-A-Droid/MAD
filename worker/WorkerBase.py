@@ -87,8 +87,8 @@ class WorkerBase(ABC):
         logger.debug2("Fetching devicemappings of {}".format(self._id))
         try:
             devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
-        except EOFError as e:
-            logger.warning("EOFError fetching devicemappings in worker {} with description: {}. Stopping worker"
+        except (EOFError, FileNotFoundError) as e:
+            logger.warning("Failed fetching devicemappings in worker {} with description: {}. Stopping worker"
                            .format(str(self._id), str(e)))
             self._stop_worker_event.set()
             return None

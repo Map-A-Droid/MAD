@@ -71,7 +71,7 @@ class WorkerQuests(MITMBase):
             return
         self.clear_thread = Thread(name="clear_thread_%s" % str(
                 self._id), target=self._clear_thread)
-        self.clear_thread.daemon = False
+        self.clear_thread.daemon = True
         self.clear_thread.start()
         
         reached_main_menu = self._check_pogo_main_screen(10, True)

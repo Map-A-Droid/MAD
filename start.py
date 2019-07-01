@@ -278,7 +278,7 @@ if __name__ == "__main__":
                     args, db_wrapper, mapping_manager, rarity)
                 t_whw = Thread(name="webhook_worker",
                                target=webhook_worker.run_worker)
-                t_whw.daemon = False
+                t_whw.daemon = True
                 t_whw.start()
 
     if args.only_ocr:
@@ -297,7 +297,7 @@ if __name__ == "__main__":
             logger.info("Starting statistics collector")
             t_usage = Thread(name='system',
                              target=get_system_infos, args=(db_wrapper,))
-            t_usage.daemon = False
+            t_usage.daemon = True
             t_usage.start()
 
     if args.with_madmin:
