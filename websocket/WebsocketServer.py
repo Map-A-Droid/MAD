@@ -505,8 +505,6 @@ class WebsocketServer(object):
         except WebsocketWorkerTimeoutException:
             logger.error("Sending message failed due to timeout ({})".format(id))
             raise WebsocketWorkerTimeoutException
-
-        logger.debug2("Returning {} to {}".format(str(result), id))
         return result
 
     async def __set_request(self, id, event):
