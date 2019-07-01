@@ -540,7 +540,7 @@ class WorkerBase(ABC):
 
     def _check_ggl_login(self):
         if not "AccountPickerActivity" in self._communicator.topmostApp():
-            logger.info ('No GGL Login Window found on {}', str(self._id))
+            logger.info('No GGL Login Window found on {}', str(self._id))
             return False
 
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
