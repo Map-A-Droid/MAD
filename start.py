@@ -103,7 +103,7 @@ def generate_mappingjson():
     newfile['devices'] = []
     newfile['walker'] = []
     newfile['devicesettings'] = []
-    with open('configs/mappings.json', 'w') as outfile:
+    with open(args.mappings, 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 
@@ -213,7 +213,7 @@ if __name__ == "__main__":
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
         mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, False)
-        filename = os.path.join('configs', 'mappings.json')
+        filename = args.mappings
         if not os.path.exists(filename):
             logger.error(
                 "No mappings.json found - start madmin with with_madmin in config or copy example")

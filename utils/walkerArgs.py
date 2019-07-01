@@ -30,6 +30,10 @@ def parseArgs():
         auto_env_var_prefix='THERAIDMAPPER_')
     parser.add_argument('-cf', '--config',
                         is_config_file=True, help='Set configuration file')
+    parser.add_argument('-mf', '--mappings', default=os.getenv('MAD_CONFIG',
+                            os.path.join(os.path.dirname(__file__),
+                            '../configs/mappings.json')),
+                        help='Set mappings file')
 
     # MySQL
     parser.add_argument('-dbm', '--db_method', required=False,

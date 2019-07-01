@@ -55,6 +55,7 @@
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
 #file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
+#mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
 
 # other settings
 ######################
