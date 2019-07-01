@@ -392,6 +392,7 @@ class WebsocketServer(object):
                 logger.info("Info of {} removed in websocket", str(worker_id))
 
     def clean_up_user(self, worker_id, worker_instance):
+        logger.debug2("Cleanup of {} called with ref {}".format(worker_id, str(worker_instance)))
         future = asyncio.run_coroutine_threadsafe(
                 self.__internal_clean_up_user(worker_id, worker_instance), self.__loop)
         future.result()

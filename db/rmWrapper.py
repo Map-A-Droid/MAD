@@ -659,7 +659,7 @@ class RmWrapper(DbWrapperBase):
         if wild_pokemon is None:
             return
 
-        logger.debug("Updating IV sent by {} for encounter {}", str(origin))
+        logger.debug("Updating IV sent by {} for encounter at {}".format(str(origin), str(timestamp)))
 
         now = datetime.utcfromtimestamp(
             time.time()).strftime('%Y-%m-%d %H:%M:%S')
