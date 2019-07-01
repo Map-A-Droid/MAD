@@ -37,7 +37,7 @@ if __name__ == "__main__":
     filename = os.path.join('configs', 'config.ini')
     if not os.path.exists(filename):
         logger.error(
-            'Config.ini not found - check configs folder and copy .example')
+            'config.ini file not found - check configs folder and copy .example')
         sys.exit(1)
 
     filename = os.path.join('configs', 'mappings.json')
