@@ -540,21 +540,24 @@ class WorkerBase(ABC):
 
     def _check_ggl_login(self):
         if not "AccountPickerActivity" in self._communicator.topmostApp():
-            logger.info('No GGL Login Window found on {}', str(self._id))
-            return
+            logger.info ('No GGL Login Window found on {}', str(self._id))
+            return False
+
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+            logger.error("_check_ggl_login: Failed getting screenshot")
+            return False
 
         logger.info('GGL Login Window found on {} - processing', str(self._id))
-
-        x, y = self._resocalc.get_ggl_account_coords(self)[0], \
-               self._resocalc.get_ggl_account_coords(self)[1]
-        self._communicator.click(int(x), int(y))
+        if not self._pogoWindowManager.look_for_ggl_login(self.get_screenshot_path(), self._communicator):
+            logger.error("_check_ggl_login: Failed reading screenshot")
+            return False
 
         buttoncheck = self._checkPogoButton()
         while not buttoncheck and not self._stop_worker_event.isSet():
             time.sleep(5)
             buttoncheck = self._checkPogoButton()
 
-        return
+        return True
 
     def _stop_pogo(self):
         attempts = 0

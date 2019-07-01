@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 import cv2
 import numpy as np
 import pytesseract
+from pytesseract import Output
 from PIL import Image
 # from numpy import round, ones, uint8
 # from tinynumpy import tinynumpy as np
@@ -240,7 +241,7 @@ class PogoWindows:
 
     def look_for_ggl_login(self, filename, communicator):
         if not os.path.isfile(filename):
-            logger.error("look_for_button: {} does not exist", str(filename))
+            logger.error("look_for_ggl_login: {} does not exist", str(filename))
             return False
 
         return self.__thread_pool.apply_async(self.__internal_look_for_ggl_login,
@@ -250,7 +251,6 @@ class PogoWindows:
         logger.debug("lookForButton: Look for ggl login")
         try:
             screenshot_read = cv2.imread(filename)
-            gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         except:
             logger.error("Screenshot corrupted :(")
             return False
@@ -259,9 +259,20 @@ class PogoWindows:
             logger.error("Screenshot corrupted :(")
             return False
 
-        text = pytesseract.image_to_string(Image.open(filename))
+        img = cv2.imread(filename)
 
-        print(text)
+        d = pytesseract.image_to_data(img, output_type=Output.DICT)
+
+        n_boxes = len(d['level'])
+        for i in range(n_boxes):
+            if '@gmail.com' in (d['text'][i]):
+                (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
+                click_x, click_y = x + w / 2, y + h / 2
+                communicator.click(click_x, click_y)
+                time.sleep(5)
+                return True
+
+        return false
 
     def look_for_button(self, filename, ratiomin, ratiomax, communicator):
         if not os.path.isfile(filename):
