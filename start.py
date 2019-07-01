@@ -237,18 +237,6 @@ if __name__ == "__main__":
             mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
             ocr_enabled = False
 
-            # for name, routemanager in mapping_manager.get_all_routemanagers().items():
-            #     if routemanager is None:
-            #         continue
-            #     if "ocr" in area.get("mode", ""):
-            #         ocr_enabled = True
-            #     if ("ocr" in area.get("mode", "") or "pokestop" in area.get("mode", "")) and args.no_ocr:
-            #         logger.error(
-            #             'No-OCR Mode is activated - No OCR Mode possible.')
-            #         logger.error(
-            #             'Check your config.ini and be sure that CV2 and Tesseract is installed')
-            #         sys.exit(1)
-
             if not args.no_ocr:
                 from ocr.pogoWindows import PogoWindows
                 pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
