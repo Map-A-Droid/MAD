@@ -919,6 +919,7 @@ class WorkerBase(ABC):
         screen = self._communicator.getscreensize()
         if screen is None:
             raise WebsocketWorkerRemovedException
+        screen = screen.strip().split(' ')
         self._screen_x = screen[0]
         self._screen_y = screen[1]
         x_offset = self.get_devicesettings_value("screenshot_x_offset", 0)
