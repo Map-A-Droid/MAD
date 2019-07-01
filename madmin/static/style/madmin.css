@@ -24,6 +24,7 @@ div.container[role="main"] {
   margin: 13px !important;
 }
 
+.cellpopup .leaflet-popup-content,
 .questpopup .leaflet-popup-content,
 .gympopup .leaflet-popup-content,
 .monpopup .leaflet-popup-content {

@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 8
+current_version = 9
 
 
 class MADVersion(object):
@@ -255,6 +255,22 @@ class MADVersion(object):
                 self.dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+
+        if self._version < 10:
+            query = (
+                "CREATE TABLE IF NOT EXISTS trs_s2cells ( "
+                "id bigint(20) unsigned NOT NULL, "
+                "level int(11) NOT NULL, "
+                "center_latitude double NOT NULL, "
+                "center_longitude double NOT NULL, "
+                "updated int(11) NOT NULL, "
+                "PRIMARY KEY (id)) "
+            )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+
         self.set_version(current_version)
 
     def set_version(self, version):
