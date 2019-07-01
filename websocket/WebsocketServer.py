@@ -7,6 +7,7 @@ import time
 import logging
 from asyncio import Handle
 from threading import Event, Thread, current_thread, Lock
+from typing import Optional
 
 import websockets
 
@@ -34,7 +35,6 @@ class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager,
                  configmode=False):
         self.__current_users = {}
-        self.__users_mutex = asyncio.Lock()
         self.__users_connecting = []
 
         self.__stop_server = Event()
@@ -43,12 +43,14 @@ class WebsocketServer(object):
         self.__listen_address = args.ws_ip
         self.__listen_port = int(args.ws_port)
 
-        self.__send_queue: asyncio.Queue = asyncio.Queue()
-
         self.__received = {}
-        self.__received_mutex = asyncio.Lock()
         self.__requests = {}
-        self.__requests_mutex = asyncio.Lock()
+
+        self.__users_mutex: Optional[asyncio.Lock] = None
+        self.__id_mutex: Optional[asyncio.Lock] = None
+        self.__send_queue: Optional[asyncio.Queue] = None
+        self.__received_mutex: Optional[asyncio.Lock] = None
+        self.__requests_mutex: Optional[asyncio.Lock] = None
 
         self.__db_wrapper = db_wrapper
         self.__mapping_manager: MappingManager = mapping_manager
@@ -56,7 +58,6 @@ class WebsocketServer(object):
         self.__mitm_mapper = mitm_mapper
 
         self.__next_id = 0
-        self.__id_mutex = asyncio.Lock()
         self._configmode = configmode
 
         self.__loop = None
@@ -74,6 +75,13 @@ class WebsocketServer(object):
             # it's ready.
             return self.__loop.call_soon_threadsafe(f)
 
+    async def __setup_first_loop(self):
+        self.__users_mutex = asyncio.Lock()
+        self.__id_mutex = asyncio.Lock()
+        self.__send_queue: asyncio.Queue = asyncio.Queue()
+        self.__received_mutex = asyncio.Lock()
+        self.__requests_mutex = asyncio.Lock()
+
     def start_server(self):
         logger.info("Starting websocket server...")
         self.__loop = asyncio.new_event_loop()
@@ -86,6 +94,7 @@ class WebsocketServer(object):
         logger.debug("Allowed origins derived: {}", str(allowed_origins))
 
         asyncio.set_event_loop(self.__loop)
+        self._add_task_to_loop(self.__setup_first_loop())
         self.__loop.run_until_complete(
             websockets.serve(self.handler, self.__listen_address, self.__listen_port, max_size=2 ** 25,
                              ping_timeout=10, ping_interval=15))
@@ -516,6 +525,7 @@ class WebsocketServer(object):
         try:
             # future: Handle = self._add_task_to_loop(self.__send_and_wait_internal(id, worker_instance, message,
             #                                                                       timeout))
+            logger.debug("Appending send_and_wait to {}".format(str(self.__loop)))
             with self.__loop_mutex:
                 future = asyncio.run_coroutine_threadsafe(
                         self.__send_and_wait_internal(id, worker_instance, message, timeout), self.__loop)
