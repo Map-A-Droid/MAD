@@ -295,6 +295,9 @@ class map(object):
             timestamp=timestamp
         )
 
+        for i, mon in enumerate(data):
+            data[i]["encounter_id"] = str(data[i]["encounter_id"])
+
         return jsonify(data)
 
     @auth_required
