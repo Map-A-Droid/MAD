@@ -357,9 +357,16 @@ class WebsocketServer(object):
 
     async def __send_specific(self, websocket_client_connection, id, message):
         # await websocket_client_connection.send(message)
-        for key, value in self.__current_users.items():
-            if key == id and value[2].open:
-                await value[2].send(message)
+        try:
+            user = None
+            async with self.__users_mutex:
+                for key, value in self.__current_users.items():
+                    if key == id and value[2].open:
+                        user = value
+            if user is not None:
+                await user[2].send(message)
+        except Exception as e:
+            logger.error("Failed sending message in send_specific: {}".format(str(e)))
 
     async def __retrieve_next_send(self, websocket_client_connection):
         found = None
