@@ -548,7 +548,8 @@ class WorkerBase(ABC):
             logger.debug('No GGL Login Window found on {}', str(self._id))
             return False
 
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                    delayAfter=10):
             logger.error("_check_ggl_login: Failed getting screenshot")
             return False
 

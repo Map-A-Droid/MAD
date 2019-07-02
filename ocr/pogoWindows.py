@@ -268,11 +268,12 @@ class PogoWindows:
             if '@gmail.com' in (d['text'][i]):
                 (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
                 click_x, click_y = x + w / 2, y + h / 2
+                logger.info('Found GGL Mail - click on it ({}, {},', (str(click_x), str(click_y)))
                 communicator.click(click_x, click_y)
                 time.sleep(5)
                 return True
 
-        return false
+        return False
 
     def look_for_button(self, filename, ratiomin, ratiomax, communicator):
         if not os.path.isfile(filename):
