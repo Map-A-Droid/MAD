@@ -559,6 +559,7 @@ class WorkerBase(ABC):
             return False
 
         buttontimeout = 0
+        logger.info('Waiting for News Popup ...')
 
         buttoncheck = self._checkPogoButton()
         while not buttoncheck and not self._stop_worker_event.isSet() and buttontimeout < 6:
