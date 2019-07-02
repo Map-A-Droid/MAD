@@ -541,8 +541,11 @@ class WorkerBase(ABC):
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
     def _check_ggl_login(self):
+        topmostapp = self._communicator.topmostApp()
+        if not topmostapp: return False
+
         if not "AccountPickerActivity" in self._communicator.topmostApp():
-            logger.info('No GGL Login Window found on {}', str(self._id))
+            logger.debug('No GGL Login Window found on {}', str(self._id))
             return False
 
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
@@ -554,10 +557,15 @@ class WorkerBase(ABC):
             logger.error("_check_ggl_login: Failed reading screenshot")
             return False
 
+        buttontimeout = 0
+
         buttoncheck = self._checkPogoButton()
-        while not buttoncheck and not self._stop_worker_event.isSet():
+        while not buttoncheck and not self._stop_worker_event.isSet() and buttontimeout < 6:
             time.sleep(5)
             buttoncheck = self._checkPogoButton()
+            buttontimeout += 1
+            if buttontimeout == 5:
+                logger.info('Timeout while waiting for after-login Button')
 
         return True
 

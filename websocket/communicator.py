@@ -147,7 +147,6 @@ class Communicator:
             topmost = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref,
                                                            "more topmost app\r\n", self.__command_timeout)
             if topmost is None:
-
                 return False
             return "com.nianticlabs.pokemongo" in topmost
         finally:
@@ -158,7 +157,8 @@ class Communicator:
         try:
             topmost = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref,
                                                            "more topmost app\r\n", self.__command_timeout)
-
+            if topmost is None:
+                return False
             return topmost
         finally:
             self.__sendMutex.release()
