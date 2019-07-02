@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 9
+current_version = 10
 
 
 class MADVersion(object):
@@ -248,8 +248,8 @@ class MADVersion(object):
         if self._version < 9:
             alter_query = (
                 "UPDATE trs_quest "
-                "SET quest_condition=REPLACE(quest_condition,'\\\','\"'),"
-                " quest_reward=REPLACE(quest_reward,'\\\','\"')"
+                "SET quest_condition=REPLACE(quest_condition,'\\\"','\"'),"
+                " quest_reward=REPLACE(quest_reward,'\\\"','\"')"
             )
             try:
                 self.dbwrapper.execute(alter_query, commit=True)
