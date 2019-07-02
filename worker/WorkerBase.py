@@ -274,6 +274,8 @@ class WorkerBase(ABC):
                 pogo_started = self._start_pogo()
         else:
             pogo_started = self._start_pogo()
+
+        self._check_ggl_login()
         self._work_mutex.release()
         logger.debug("_internal_health_check: worker lock released")
         return pogo_started
