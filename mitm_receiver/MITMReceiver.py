@@ -4,7 +4,6 @@ import sys
 
 import time
 from multiprocessing import JoinableQueue, Process
-from typing import Optional
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
@@ -16,42 +15,41 @@ from utils.authHelper import check_auth
 from utils.logging import LogLevelChanger, logger
 
 app = Flask(__name__)
-mapping_manager: Optional[MappingManager] = None
-application_args = None
 
 
 class EndpointAction(object):
 
-    def __init__(self, action):
+    def __init__(self, action, application_args, mapping_manager: MappingManager):
         self.action = action
         self.response = Response(status=200, headers={})
+        self.application_args = application_args
+        self.mapping_manager: MappingManager = mapping_manager
 
     def __call__(self, *args):
-        global application_args, mapping_manager
+        logger.debug3("HTTP Request by {}".format(str(request.remote_addr)))
         origin = request.headers.get('Origin')
         abort = False
         if str(request.url_rule) == '/status/':
             auth = request.headers.get('Authorization', False)
-            if application_args.mitm_status_password != "" and \
-                    (not auth or auth != application_args.mitm_status_password):
+            if self.application_args.mitm_status_password != "" and \
+                    (not auth or auth != self.application_args.mitm_status_password):
                 self.response = Response(status=500, headers={})
                 abort = True
             else:
                 abort = False
         else:
-            logger.debug3("HTTP Request by {}".format(str(request.remote_addr)))
             if not origin:
                 logger.warning("Missing Origin header in request")
                 self.response = Response(status=500, headers={})
                 abort = True
-            elif (mapping_manager.get_all_devicemappings().keys() is not None
-                  and (origin is None or origin not in mapping_manager.get_all_devicemappings().keys())):
+            elif (self.mapping_manager.get_all_devicemappings().keys() is not None
+                  and (origin is None or origin not in self.mapping_manager.get_all_devicemappings().keys())):
                 logger.warning("MITMReceiver request without Origin or disallowed Origin: {}".format(origin))
                 self.response = Response(status=403, headers={})
                 abort = True
-            elif mapping_manager.get_auths() is not None:  # TODO check auth properly...
+            elif self.mapping_manager.get_auths() is not None:
                 auth = request.headers.get('Authorization', None)
-                if auth is None or not check_auth(auth, application_args, mapping_manager.get_auths()):
+                if auth is None or not check_auth(auth, self.application_args, self.mapping_manager.get_auths()):
                     logger.warning(
                         "Unauthorized attempt to POST from {}", str(request.remote_addr))
                     self.response = Response(status=403, headers={})
@@ -77,12 +75,11 @@ class EndpointAction(object):
 
 
 class MITMReceiver(Process):
-    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager_arg: MappingManager,
+    def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
                  db_wrapper, name=None):
-        global application_args, mapping_manager
         Process.__init__(self, name=name)
-        application_args = args_passed
-        mapping_manager = mapping_manager_arg
+        self.__application_args = args_passed
+        self.__mapping_manager = mapping_manager
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
         self.__mitm_mapper: MitmMapper = mitm_mapper
@@ -99,8 +96,8 @@ class MITMReceiver(Process):
         self._data_queue: JoinableQueue = JoinableQueue()
         self._db_wrapper = db_wrapper
         self.worker_threads = []
-        for i in range(application_args.mitmreceiver_data_workers):
-            data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, application_args,
+        for i in range(self.__application_args.mitmreceiver_data_workers):
+            data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, self.__application_args,
                                                                   self.__mitm_mapper, db_wrapper,
                                                                   name='MITMReceiver-%s' % str(i))
             data_processor.start()
@@ -109,7 +106,7 @@ class MITMReceiver(Process):
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
         logger.info("Adding None to queue")
-        for i in range(application_args.mitmreceiver_data_workers):
+        for i in range(self.__application_args.mitmreceiver_data_workers):
             self._data_queue.put(None)
         logger.info("Trying to join workers...")
         for t in self.worker_threads:
@@ -132,7 +129,8 @@ class MITMReceiver(Process):
             logger.error("Invalid REST method specified")
             sys.exit(1)
         self.app.add_url_rule(endpoint, endpoint_name,
-                              EndpointAction(handler), methods=methods_passed)
+                              EndpointAction(handler, self.__application_args, self.__mapping_manager),
+                              methods=methods_passed)
 
     def proto_endpoint(self, origin, data):
         logger.debug2("Receiving proto from {}".format(origin))
@@ -178,12 +176,11 @@ class MITMReceiver(Process):
         return json.dumps(address_object)
 
     def status(self, origin, data):
-        global application_args, mapping_manager
         origin_return: dict = {}
         process_return: dict = {}
         data_return: dict = {}
         process_count: int = 0
-        for origin in mapping_manager.get_all_devicemappings().keys():
+        for origin in self.__mapping_manager.get_all_devicemappings().keys():
             origin_return[origin] = {}
             origin_return[origin]['injection_status'] = self.__mitm_mapper.get_injection_status(origin)
             origin_return[origin]['latest_data'] = self.__mitm_mapper.request_latest(origin, 'timestamp_last_data')
