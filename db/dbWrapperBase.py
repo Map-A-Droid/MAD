@@ -1603,9 +1603,14 @@ class DbWrapperBase(ABC):
                  )
 
         for cell in protocells:
-            lat, lng, alt = S2Helper.get_position_from_cell(cell["id"])
+            cell_id = cell["id"]
 
-            cells.append((cell["id"], 15, lat, lng, cell["current_timestamp"] / 1000))
+            if cell_id < 0:
+                cell_id = cell_id + 2 ** 64
+
+            lat, lng, alt = S2Helper.get_position_from_cell(cell_id)
+
+            cells.append((cell_id, 15, lat, lng, cell["current_timestamp"] / 1000))
 
         self.executemany(query, cells, commit=True)
 
