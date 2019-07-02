@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 8
+current_version = 10
 
 
 class MADVersion(object):
@@ -166,7 +166,7 @@ class MADVersion(object):
                 'trs_status', 'lastPogoReboot')
             if column_exist == 0:
                 try:
-                    self.wrapper.execute(alter_query, commit=True)
+                    self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
                     logger.info("Unexpected error: {}", e)
 
@@ -248,13 +248,29 @@ class MADVersion(object):
         if self._version < 9:
             alter_query = (
                 "UPDATE trs_quest "
-                "SET quest_condition=REPLACE(quest_condition,'\\\','\"'),"
-                " quest_reward=REPLACE(quest_reward,'\\\','\"')"
+                "SET quest_condition=REPLACE(quest_condition,'\\\"','\"'),"
+                " quest_reward=REPLACE(quest_reward,'\\\"','\"')"
             )
             try:
                 self.dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+
+        if self._version < 10:
+            query = (
+                "CREATE TABLE IF NOT EXISTS trs_s2cells ( "
+                "id bigint(20) unsigned NOT NULL, "
+                "level int(11) NOT NULL, "
+                "center_latitude double NOT NULL, "
+                "center_longitude double NOT NULL, "
+                "updated int(11) NOT NULL, "
+                "PRIMARY KEY (id)) "
+            )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+
         self.set_version(current_version)
 
     def set_version(self, version):

@@ -84,7 +84,14 @@ class WorkerBase(ABC):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
 
     def get_devicesettings_value(self, key: str, default_value: object = None):
-        devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
+        logger.debug2("Fetching devicemappings of {}".format(self._id))
+        try:
+            devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
+        except (EOFError, FileNotFoundError) as e:
+            logger.warning("Failed fetching devicemappings in worker {} with description: {}. Stopping worker"
+                           .format(str(self._id), str(e)))
+            self._stop_worker_event.set()
+            return None
         if devicemappings is None:
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
@@ -200,25 +207,30 @@ class WorkerBase(ABC):
     def start_worker(self):
         # async_result = self.thread_pool.apply_async(self._main_work_thread, ())
         t_main_work = Thread(target=self._main_work_thread)
-        t_main_work.daemon = False
+        t_main_work.daemon = True
         t_main_work.start()
         # do some other stuff in the main process
         while not self._stop_worker_event.isSet():
             time.sleep(1)
         t_main_work.join()
-        logger.info("Worker {} stopping gracefully", str(self._id))
+        logger.info("Worker {} stopped gracefully", str(self._id))
         # async_result.get()
         return self._last_known_state
 
     def stop_worker(self):
-        self._stop_worker_event.set()
-        logger.warning("Worker {} stop called", str(self._id))
+        if self._stop_worker_event.set():
+            logger.info('Worker {} already stopped - waiting for it', str(self._id))
+        else:
+            self._stop_worker_event.set()
+            logger.warning("Worker {} stop called", str(self._id))
 
     def _internal_pre_work(self):
         current_thread().name = self._id
 
         self._work_mutex.acquire()
         try:
+            self._get_screen_size()
+            self._check_ggl_login()
             self._turn_screen_on_and_start_pogo()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -235,7 +247,7 @@ class WorkerBase(ABC):
 
         self._async_io_looper_thread = Thread(name=str(self._id) + '_asyncio_' + self._id,
                                               target=self._start_asyncio_loop)
-        self._async_io_looper_thread.daemon = False
+        self._async_io_looper_thread.daemon = True
         self._async_io_looper_thread.start()
 
         self.loop_started.wait()
@@ -262,6 +274,8 @@ class WorkerBase(ABC):
                 pogo_started = self._start_pogo()
         else:
             pogo_started = self._start_pogo()
+
+        self._check_ggl_login()
         self._work_mutex.release()
         logger.debug("_internal_health_check: worker lock released")
         return pogo_started
@@ -274,15 +288,15 @@ class WorkerBase(ABC):
         logger.info(
                 "Internal cleanup of {} signalling end to websocketserver", str(self._id))
         self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
+        self._communicator.cleanup_websocket()
 
-        logger.info("Stopping Route")
+        logger.info("Stopped Route")
         # self.stop_worker()
         if self._async_io_looper_thread is not None:
             logger.info("Stopping worker's asyncio loop")
             self.loop.call_soon_threadsafe(self.loop.stop)
             self._async_io_looper_thread.join()
 
-        self._communicator.cleanup_websocket()
         logger.info("Internal cleanup of {} finished", str(self._id))
 
     def _main_work_thread(self):
@@ -320,7 +334,9 @@ class WorkerBase(ABC):
                 self._health_check()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
                 logger.error(
-                        "Websocket connection to {} lost while running healthchecks, connection terminated exceptionally", str(self._id))
+                        "Websocket connection to {} lost while running healthchecks, connection terminated "
+                        "exceptionally",
+                        str(self._id))
                 break
 
             try:
@@ -329,7 +345,8 @@ class WorkerBase(ABC):
                     continue
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
                 logger.warning(
-                        "Worker of {} does not support mode that's to be run, connection terminated exceptionally", str(self._id))
+                        "Worker of {} does not support mode that's to be run, connection terminated exceptionally",
+                        str(self._id))
                 break
 
             try:
@@ -346,7 +363,9 @@ class WorkerBase(ABC):
                 self._pre_location_update()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
                 logger.warning(
-                        "Worker of {} stopping because of stop signal in pre_location_update, connection terminated exceptionally", str(self._id))
+                        "Worker of {} stopping because of stop signal in pre_location_update, connection terminated "
+                        "exceptionally",
+                        str(self._id))
                 break
 
             try:
@@ -358,7 +377,8 @@ class WorkerBase(ABC):
                 time_snapshot, process_location = self._move_to_location()
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
                 logger.warning(
-                        "Worker {} failed moving to new location, stopping worker, connection terminated exceptionally", str(self._id))
+                        "Worker {} failed moving to new location, stopping worker, connection terminated exceptionally",
+                        str(self._id))
                 break
 
             if process_location:
@@ -520,6 +540,37 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
+    def _check_ggl_login(self):
+        topmostapp = self._communicator.topmostApp()
+        if not topmostapp: return False
+
+        if not "AccountPickerActivity" in self._communicator.topmostApp():
+            logger.debug('No GGL Login Window found on {}', str(self._id))
+            return False
+
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                    delayAfter=10):
+            logger.error("_check_ggl_login: Failed getting screenshot")
+            return False
+
+        logger.info('GGL Login Window found on {} - processing', str(self._id))
+        if not self._pogoWindowManager.look_for_ggl_login(self.get_screenshot_path(), self._communicator):
+            logger.error("_check_ggl_login: Failed reading screenshot")
+            return False
+
+        buttontimeout = 0
+        logger.info('Waiting for News Popup ...')
+
+        buttoncheck = self._checkPogoButton()
+        while not buttoncheck and not self._stop_worker_event.isSet() and buttontimeout < 6:
+            time.sleep(5)
+            buttoncheck = self._checkPogoButton()
+            buttontimeout += 1
+            if buttontimeout == 5:
+                logger.info('Timeout while waiting for after-login Button')
+
+        return True
+
     def _stop_pogo(self):
         attempts = 0
         stop_result = self._communicator.stopApp("com.nianticlabs.pokemongo")
@@ -534,7 +585,7 @@ class WorkerBase(ABC):
             pogoTopmost = self._communicator.isPogoTopmost()
         return stop_result
 
-    def _reboot(self, mitm_mapper: Optional[MitmMapper]=None):
+    def _reboot(self, mitm_mapper: Optional[MitmMapper] = None):
         if not self.get_devicesettings_value("reboot", True):
             logger.warning("Reboot command to be issued to device but reboot is disabled. Skipping reboot")
             return True
@@ -788,7 +839,7 @@ class WorkerBase(ABC):
             return False
 
         logger.debug("checkPogoClose: checking for CloseX")
-        found = self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path() , self._id,
+        found = self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(), self._id,
                                                                          self._communicator)
         if found:
             time.sleep(1)
@@ -878,7 +929,12 @@ class WorkerBase(ABC):
         return True
 
     def _get_screen_size(self):
-        screen = self._communicator.getscreensize().split(' ')
+        if self._stop_worker_event.is_set():
+            raise WebsocketWorkerRemovedException
+        screen = self._communicator.getscreensize()
+        if screen is None:
+            raise WebsocketWorkerRemovedException
+        screen = screen.strip().split(' ')
         self._screen_x = screen[0]
         self._screen_y = screen[1]
         x_offset = self.get_devicesettings_value("screenshot_x_offset", 0)

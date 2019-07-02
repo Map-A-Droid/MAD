@@ -95,11 +95,6 @@ def start_ocr_observer(args, db_helper):
     observer.start()
 
 
-def start_madmin(args, db_wrapper, ws_server, mapping_manager: MappingManager):
-    from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, ws_server, mapping_manager)
-
-
 def generate_mappingjson():
     import json
     newfile = {}
@@ -207,7 +202,6 @@ if __name__ == "__main__":
 
     mapping_manager_manager = None
     mapping_manager: Optional[MappingManager] = None
-    mapping_manager_stop_event = None
 
     ws_server = None
     t_ws = None
@@ -218,9 +212,7 @@ if __name__ == "__main__":
         MappingManagerManager.register('MappingManager', MappingManager)
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
-        mapping_manager_stop_event = mapping_manager_manager.Event()
-        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
-                                                                                 mapping_manager_stop_event, False)
+        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, False)
         filename = os.path.join('configs', 'mappings.json')
         if not os.path.exists(filename):
             logger.error(
@@ -240,22 +232,10 @@ if __name__ == "__main__":
 
             pogoWindowManager = None
             MitmMapperManager.register('MitmMapper', MitmMapper)
-            mitmMapperManager = MitmMapperManager()
-            mitmMapperManager.start()
-            mitm_mapper = mitmMapperManager.MitmMapper(mapping_manager, db_wrapper)
+            mitm_mapper_manager = MitmMapperManager()
+            mitm_mapper_manager.start()
+            mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
             ocr_enabled = False
-
-            # for name, routemanager in mapping_manager.get_all_routemanagers().items():
-            #     if routemanager is None:
-            #         continue
-            #     if "ocr" in area.get("mode", ""):
-            #         ocr_enabled = True
-            #     if ("ocr" in area.get("mode", "") or "pokestop" in area.get("mode", "")) and args.no_ocr:
-            #         logger.error(
-            #             'No-OCR Mode is activated - No OCR Mode possible.')
-            #         logger.error(
-            #             'Check your config.ini and be sure that CV2 and Tesseract is installed')
-            #         sys.exit(1)
 
             if not args.no_ocr:
                 from ocr.pogoWindows import PogoWindows
@@ -286,7 +266,7 @@ if __name__ == "__main__":
                     args, db_wrapper, mapping_manager, rarity)
                 t_whw = Thread(name="webhook_worker",
                                target=webhook_worker.run_worker)
-                t_whw.daemon = False
+                t_whw.daemon = True
                 t_whw.start()
 
     if args.only_ocr:
@@ -300,53 +280,64 @@ if __name__ == "__main__":
         t_observ.daemon = True
         t_observ.start()
 
-    if args.with_madmin:
-        logger.info('Starting Madmin on Port: {}', str(args.madmin_port))
-        t_flask = Thread(name='madmin', target=start_madmin,
-                         args=(args, db_wrapper, ws_server, mapping_manager,))
-        t_flask.daemon = True
-        t_flask.start()
-
     if args.statistic:
         if args.only_ocr or args.only_scan:
+            logger.info("Starting statistics collector")
             t_usage = Thread(name='system',
                              target=get_system_infos, args=(db_wrapper,))
-            t_usage.daemon = False
+            t_usage.daemon = True
             t_usage.start()
+
+    if args.with_madmin:
+        from madmin.madmin import madmin_start
+        logger.info("Starting Madmin on Port: {}", str(args.madmin_port))
+        t_madmin = Thread(name="madmin", target=madmin_start,
+                          args=(args, db_wrapper, ws_server, mapping_manager))
+        t_madmin.daemon = True
+        t_madmin.start()
 
     logger.info("Running.....")
     try:
         while True:
             time.sleep(10)
+    except KeyboardInterrupt or Exception:
+        logger.info("Shutdown signal received")
     finally:
         db_wrapper = None
         logger.success("Stop called")
         terminate_mad.set()
+        # mitm_mapper.shutdown()
+
         # now cleanup all threads...
         # TODO: check against args or init variables to None...
         if t_whw is not None:
             t_whw.join()
+        if ws_server is not None:
+            ws_server.stop_server()
+            t_ws.join()
         if mitm_receiver_process is not None:
             # mitm_receiver_thread.kill()
             logger.info("Trying to stop receiver")
             mitm_receiver_process.shutdown()
+            mitm_receiver_process.terminate()
             logger.info("Trying to join MITMReceiver")
             mitm_receiver_process.join()
             logger.info("MITMReceiver joined")
             # mitm_receiver.stop_receiver()
             # mitm_receiver_thread.kill()
-        if ws_server is not None:
-            ws_server.stop_server()
-            t_ws.join()
         # if t_file_watcher is not None:
         #     t_file_watcher.join()
-        if mapping_manager_stop_event is not None:
-            # mapping_manager_stop_event.set()
+        if mapping_manager_manager is not None:
             mapping_manager_manager.shutdown()
         # time.sleep(10)
         if mitm_mapper_manager is not None:
+            # mitm_mapper.shutdown()
+            logger.debug("Calling mitm_mapper shutdown")
             mitm_mapper_manager.shutdown()
         if db_wrapper_manager is not None:
+            logger.debug("Calling db_wrapper shutdown")
             db_wrapper_manager.shutdown()
-
+            logger.debug("Done shutting down db_wrapper")
+        logger.debug("Done shutting down")
+        logger.debug(str(sys.exc_info()))
         sys.exit(0)

@@ -111,12 +111,15 @@ class RouteManagerQuests(RouteManagerBase):
                         self._stops_not_processed[stop] += 1
 
             for stop, error_count in self._stops_not_processed.items():
-                if error_count < 4:
+                if stop not in self._stoplist:
+                    logger.info("Location {} is no longer in our stoplist and will be ignored".format(str(stop)))
+                    self._coords_to_be_ignored.add(stop)
+                elif error_count < 4:
                     logger.warning("Found stop not processed yet: {}".format(str(stop)))
                     list_of_stops_to_return.append(stop)
                 else:
                     logger.error("Stop {} has not been processed thrice in a row, please check your DB".format(str(stop)))
-                    self._coords_to_be_ignore.append(stop)
+                    self._coords_to_be_ignored.add(stop)
 
             if len(list_of_stops_to_return) > 0:
                 logger.info("Found stops not yet processed, retrying those in the next round")
@@ -149,7 +152,7 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.info("Restoring original route")
                     self._route = self._routecopy.copy()
 
-                new_stops = set(stops) - set(self._route)
+                new_stops = list(set(stops) - set(self._route))
                 if len(new_stops) > 0:
                     for stop in new_stops:
                         logger.warning("Stop with coords {} seems new and not in route.", str(stop))
@@ -160,8 +163,8 @@ class RouteManagerQuests(RouteManagerBase):
                     self._route: List[Location] = []
 
                 if 0 < len(stops) < len(self._route) \
-                        and (len(stops)-len(self._route)) * 100 / len(stops) < 80:
-                    # Calculating new route because 80 percent of stops are processed
+                        and len(stops)/len(self._route) <= 0.3:
+                    # Calculating new route because 70 percent of stops are processed
                     logger.info('There are less stops without quest than routepositions - recalc')
                     self._route = list(set(self._route) - (set(self._route) - set(stops)))
                     coords = self._route
@@ -180,6 +183,7 @@ class RouteManagerQuests(RouteManagerBase):
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
         self._is_started = False
+        self._round_started_time = None
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:

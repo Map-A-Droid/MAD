@@ -1,13 +1,15 @@
 import time
-from multiprocessing import Lock
+from queue import Empty
+from multiprocessing import Lock, Queue
 from multiprocessing.managers import SyncManager
+from threading import Thread, Event
+from typing import Dict
 
-from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.logging import logger
-from utils.stats import PlayerStats
+from mitm_receiver.PlayerStats import PlayerStats
 from utils.walkerArgs import parseArgs
 
 args = parseArgs()
@@ -20,17 +22,68 @@ class MitmMapperManager(SyncManager):
 class MitmMapper(object):
     def __init__(self, mapping_manager: MappingManager, db_wrapper):
         self.__mapping = {}
-        self.__playerstats = {}
+        self.__playerstats: Dict[str, PlayerStats] = {}
         self.__mapping_mutex = Lock()
         self.__mapping_manager: MappingManager = mapping_manager
         self.__injected = {}
         self.__application_args = args
         self.__db_wrapper: DbWrapperBase = db_wrapper
-        if mapping_manager is not None:
-            for origin in mapping_manager.get_all_devicemappings().keys():
+        self.__playerstats_db_update_stop: Event = Event()
+        self.__playerstats_db_update_queue: Queue = Queue()
+        self.__playerstats_db_update_mutex: Lock = Lock()
+        self.__playerstats_db_update_consumer: Thread = Thread(
+                name="playerstats_update_consumer", target=self.__internal_playerstats_db_update_consumer)
+        if self.__mapping_manager is not None:
+            for origin in self.__mapping_manager.get_all_devicemappings().keys():
                 self.__mapping[origin] = {}
-                self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self.__db_wrapper)
+                self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self.__db_wrapper, self)
                 self.__playerstats[origin].open_player_stats()
+        self.__playerstats_db_update_consumer.daemon = True
+        self.__playerstats_db_update_consumer.start()
+
+    def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
+        if self.__application_args.game_stats:
+            with self.__playerstats_db_update_mutex:
+                self.__playerstats_db_update_queue.put((client_id, stats, last_processed_timestamp))
+
+    def __internal_playerstats_db_update_consumer(self):
+        try:
+            while not self.__playerstats_db_update_stop.is_set():
+                try:
+                    with self.__playerstats_db_update_mutex:
+                        next_item = self.__playerstats_db_update_queue.get_nowait()
+                except Empty:
+                    time.sleep(0.5)
+                    continue
+                if next_item is not None:
+                    client_id, stats, last_processed_timestamp = next_item
+                    self.__process_stats(stats, client_id, last_processed_timestamp)
+        except Exception as e:
+            logger.fatal("Playerstats consumer stopping because of {}".format(str(e)))
+        logger.fatal("Shutting down Playerstats update consumer")
+
+    def __process_stats(self, stats, client_id: int, last_processed_timestamp: float):
+        logger.info('Submitting stats for origin {}', str(client_id))
+        data_send_stats = []
+        data_send_location = []
+
+        data_send_stats.append(PlayerStats.stats_complete_parser(client_id, stats, last_processed_timestamp))
+        data_send_location.append(PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp))
+
+        self.__db_wrapper.submit_stats_complete(data_send_stats)
+        self.__db_wrapper.submit_stats_locations(data_send_location)
+        if self.__application_args.game_stats_raw:
+            data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats, last_processed_timestamp)
+            data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats, last_processed_timestamp)
+            self.__db_wrapper.submit_stats_locations_raw(data_send_location_raw)
+            self.__db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
+        self.__db_wrapper.cleanup_statistics()
+
+    def shutdown(self):
+        self.__playerstats_db_update_stop.set()
+        self.__playerstats_db_update_consumer.join()
+        self.__playerstats_db_update_queue.close()
+        # self.__playerstats_db_update_queue.join()
 
     def get_mon_ids_iv(self, origin):
         devicemapping_of_origin = self.__mapping_manager.get_devicemappings_of(origin)
@@ -40,39 +93,42 @@ class MitmMapper(object):
             return devicemapping_of_origin.get("mon_ids_iv", [])
 
     def request_latest(self, origin, key=None):
-        self.__mapping_mutex.acquire()
-        result = None
-        retrieved = self.__mapping.get(origin, None)
-        if retrieved is not None:
-            # copy in case references are overwritten... who knows TODO: double check what python does in the background
-            retrieved = retrieved.copy()
-        if key is None:
-            result = retrieved
-        elif retrieved is not None:
-            result = retrieved.get(key, None)
-        self.__mapping_mutex.release()
+        logger.debug("Request latest called with origin {}".format(str(origin)))
+        with self.__mapping_mutex:
+            result = None
+            retrieved = self.__mapping.get(origin, None)
+            if retrieved is not None:
+                # copy in case references are overwritten... who knows
+                # TODO: double check what python does in the background
+                retrieved = retrieved.copy()
+            if key is None:
+                result = retrieved
+            elif retrieved is not None:
+                result = retrieved.get(key, None)
+        logger.debug("Request latest done with origin {}".format(str(origin)))
         return result
 
     # origin, method, data, timestamp
     def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = time.time(),
                       timestamp_received_receiver: float = time.time()):
         updated = False
-        self.__mapping_mutex.acquire()
-        if origin in self.__mapping.keys():
-            logger.debug("Updating timestamp of {} with method {} to {}", str(
-                origin), str(key), str(timestamp_received_raw))
-            if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
-                del self.__mapping[origin][key]
-            self.__mapping[origin][key] = {}
-            self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
-            self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
-            self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
-            self.__mapping[origin][key]["values"] = values_dict
-            updated = True
-        else:
-            logger.warning(
-                "Not updating timestamp of {} since origin is unknown", str(origin))
-        self.__mapping_mutex.release()
+        logger.debug3("Trying to acquire lock and update proto {} received by {}".format(origin, key))
+        with self.__mapping_mutex:
+            if origin in self.__mapping.keys():
+                logger.debug("Updating timestamp of {} with method {} to {}", str(
+                    origin), str(key), str(timestamp_received_raw))
+                if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
+                    del self.__mapping[origin][key]
+                self.__mapping[origin][key] = {}
+                self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
+                self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
+                self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
+                self.__mapping[origin][key]["values"] = values_dict
+                updated = True
+            else:
+                logger.warning(
+                    "Not updating timestamp of {} since origin is unknown", str(origin))
+        logger.debug3("Done updating proto {} of {}".format(key, origin))
         return updated
 
     def set_injection_status(self, origin, status=True):

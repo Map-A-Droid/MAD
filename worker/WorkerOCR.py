@@ -20,7 +20,7 @@ class WorkerOCR(WorkerBase):
     def _pre_work_loop(self):
         self.__speed_weather_check_thread = Thread(name='speedWeatherCheckThread%s' % self._id,
                                                    target=self._speed_weather_check_thread)
-        self.__speed_weather_check_thread.daemon = False
+        self.__speed_weather_check_thread.daemon = True
         self.__speed_weather_check_thread.start()
 
     def _health_check(self):

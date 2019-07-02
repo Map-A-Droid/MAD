@@ -70,6 +70,12 @@ class MITMBase(WorkerBase):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
+
+            if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                    or self._stop_worker_event.is_set():
+                logger.error("Worker {} get killed while sleeping", str(self._id))
+                raise InternalStopWorkerException
+
             time.sleep(1)
 
         position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)

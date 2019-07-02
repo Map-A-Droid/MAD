@@ -24,8 +24,10 @@ div.container[role="main"] {
   margin: 13px !important;
 }
 
+.cellpopup .leaflet-popup-content,
 .questpopup .leaflet-popup-content,
-.gympopup .leaflet-popup-content {
+.gympopup .leaflet-popup-content,
+.monpopup .leaflet-popup-content {
   width: 400px !important;
   margin: 13px !important;
 }
@@ -85,7 +87,7 @@ div.container[role="main"] {
   white-space: nowrap;
 }
 
-.leaflet-popup-content .raid .raidImg,
+.leaflet-popup-content .monImg,
 .leaflet-popup-content .quest .rewardImg {
   background-repeat: no-repeat;
   background-position: center center;

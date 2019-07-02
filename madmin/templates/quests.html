@@ -133,6 +133,8 @@
 {% endblock %}
 
 {% block content %}
+{% if not pub %}
 <h2>Quests</h2>
+{% endif %}
 <table id="show-data" class="table"></table>
 {% endblock %}

@@ -1,11 +1,12 @@
 import sys
 
-from flask import (Flask)
-from gevent.pywsgi import WSGIServer
+import logging
+from flask import Flask
+from flask.logging import default_handler
 
 from db.dbWrapperBase import DbWrapperBase
 from utils.MappingManager import MappingManager
-from utils.logging import LogLevelChanger, logger
+from utils.logging import InterceptHandler, logger
 
 # routes
 from madmin.routes.statistics import statistics
@@ -21,18 +22,19 @@ app = Flask(__name__)
 log = logger
 
 
-def madmin_start(arg_args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager):
+def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager):
     # load routes
-    statistics(db_wrapper, arg_args, app)
-    control(db_wrapper, arg_args, mapping_manager, ws_server, logger, app)
-    map(db_wrapper, arg_args, mapping_manager, app)
-    config(db_wrapper, arg_args, logger, app)
-    ocr(db_wrapper, arg_args, logger, app)
-    path(db_wrapper, arg_args, app)
+    statistics(db_wrapper, args, app)
+    control(db_wrapper, args, mapping_manager, ws_server, logger, app)
+    map(db_wrapper, args, mapping_manager, app)
+    config(db_wrapper, args, logger, app, mapping_manager)
+    ocr(db_wrapper, args, logger, app)
+    path(db_wrapper, args, app)
 
-    httpsrv = WSGIServer((arg_args.madmin_ip, int(
-        arg_args.madmin_port)), app.wsgi_app, log=LogLevelChanger)
-    httpsrv.serve_forever()
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+    app.logger.removeHandler(default_handler)
+    logging.basicConfig(handlers=[InterceptHandler()], level=0)
+    app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
 
 
 @app.after_request
@@ -43,4 +45,3 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
-

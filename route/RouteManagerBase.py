@@ -570,5 +570,8 @@ class RouteManagerBase(ABC):
     def get_current_route(self) -> List[Location]:
         return self._route
 
+    def get_current_prioroute(self) -> List[Location]:
+        return self._prio_queue
+
     def get_level_mode(self):
         return self._level

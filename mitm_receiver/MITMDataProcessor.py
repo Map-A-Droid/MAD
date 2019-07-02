@@ -1,7 +1,6 @@
 from multiprocessing import Queue, Process
 from datetime import datetime
 
-from db.DbFactory import DbFactory
 from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper
 from utils.logging import logger
@@ -42,20 +41,27 @@ class MitmDataProcessor(Process):
                 logger.info("MITMDataProcessor received keyboard interrupt, stopping")
                 break
 
+    def get_queue_items(self):
+        try:
+            items_left = self.__queue.qsize()
+        except NotImplementedError:
+            items_left = 0
+        return items_left
+
     @logger.catch
     def process_data(self, received_timestamp, data, origin):
 
         type = data.get("type", None)
         raw = data.get("raw", False)
-
+        logger.debug2("Processing data of {}".format(origin))
         if raw:
             logger.debug5("Received raw payload: {}", data["payload"])
 
         if type and not raw:
+            logger.debug2("Running stats collector of {}".format(origin))
             self.__mitm_mapper.run_stats_collector(origin)
 
             logger.debug4("Received payload: {}", data["payload"])
-
             if type == 106:
                 # process GetMapObject
                 logger.success("Processing GMO received from {}. Received at {}", str(
@@ -76,7 +82,9 @@ class MitmDataProcessor(Process):
                 mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
                 self.__db_wrapper.submit_mons_map_proto(
                     origin, data["payload"], mon_ids_iv, self.__mitm_mapper)
+                self.__db_wrapper.submit_cells(origin, data["payload"])
                 self.__db_wrapper.submit_nearby_map_proto(origin, data["payload"])
+                logger.debug2("Done processing GMO of {}".format(origin))
             elif type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
@@ -84,13 +92,20 @@ class MitmDataProcessor(Process):
                         origin), str(received_timestamp))
                     self.__db_wrapper.submit_mon_iv(
                         origin, received_timestamp, data["payload"], self.__mitm_mapper)
+                    logger.debug2("Done processing encounter of {}".format(origin))
                 else:
                     logger.debug(
                         'Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
+                logger.debug2("Processing proto 101 of {}".format(origin))
                 self.__db_wrapper.submit_quest_proto(origin, data["payload"], self.__mitm_mapper)
+                logger.debug2("Done processing proto 101 of {}".format(origin))
             elif type == 104:
+                logger.debug2("Processing proto 104 of {}".format(origin))
                 self.__db_wrapper.submit_pokestops_details_map_proto(
                     data["payload"])
+                logger.debug2("Done processing proto 104 of {}".format(origin))
             elif type == 4:
+                logger.debug2("Processing proto 4 of {}".format(origin))
                 self.__mitm_mapper.generate_player_stats(origin, data["payload"])
+                logger.debug2("Done processing proto 4 of {}".format(origin))

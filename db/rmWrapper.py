@@ -34,6 +34,11 @@ class RmWrapper(DbWrapperBase):
                 "ctype": "tinyint(1) NULL"
             },
             {
+                "table": "raid",
+                "column": "gender",
+                "ctype": "tinyint(1) NULL"
+            },
+            {
                 "table": "gym",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
@@ -538,7 +543,6 @@ class RmWrapper(DbWrapperBase):
             logger.error("No geofence_helper! Not fetching gyms.")
             return []
 
-        #(minLat, minLon, maxLat, maxLon)
         logger.debug("Filtering with rectangle")
         rectangle = geofence_helper.get_polygon_from_fence()
 
@@ -603,10 +607,14 @@ class RmWrapper(DbWrapperBase):
     def stops_from_db(self, geofence_helper):
         logger.debug("RmWrapper::stops_from_db called")
 
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
         query = (
             "SELECT latitude, longitude "
-            "FROM pokestop"
-        )
+            "FROM pokestop "
+            "WHERE (latitude >= {} AND longitude >= {} "
+            "AND latitude <= {} AND longitude <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)
         list_of_coords: List[Location] = []
@@ -618,11 +626,6 @@ class RmWrapper(DbWrapperBase):
                 list_of_coords)
             return geofenced_coords
         else:
-            # import numpy as np
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
     def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
@@ -652,10 +655,11 @@ class RmWrapper(DbWrapperBase):
         return True
 
     def submit_mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
-        logger.debug("Updating IV sent by {}", str(origin))
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
             return
+
+        logger.debug("Updating IV sent by {} for encounter at {}".format(str(origin), str(timestamp)))
 
         now = datetime.utcfromtimestamp(
             time.time()).strftime('%Y-%m-%d %H:%M:%S')
@@ -678,16 +682,14 @@ class RmWrapper(DbWrapperBase):
         mitm_mapper.collect_mon_iv_stats(origin, encounter_id)
 
         if getdetspawntime is None:
-
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
-                        str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
+                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
         else:
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (non-init)",
-                        str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
+                         str(origin), pokemon_data["id"], latitude, longitude, despawn_time)
 
         capture_probability = encounter_proto.get("capture_probability")
-        capture_probability_list = capture_probability.get(
-            "capture_probability_list")
+        capture_probability_list = capture_probability.get("capture_probability_list")
         if capture_probability_list is not None:
             capture_probability_list = capture_probability_list.replace(
                 "[", "").replace("]", "").split(",")
@@ -788,7 +790,7 @@ class RmWrapper(DbWrapperBase):
                         origin), mon_id, lat, lon, despawn_time, spawnid)
                 else:
                     logger.debug("{}: adding mon (#{}) at {}, {}. Despawns at {} (non-init) ({})",
-                                str(origin), mon_id, lat, lon, despawn_time, spawnid)
+                                 str(origin), mon_id, lat, lon, despawn_time, spawnid)
 
                 mon_args.append(
                     (
@@ -869,7 +871,7 @@ class RmWrapper(DbWrapperBase):
                     latitude = gym['latitude']
                     longitude = gym['longitude']
                     slots_available = gym['gym_details']['slots_available']
-                    last_modified_ts = gym['last_modified_timestamp_ms']/1000
+                    last_modified_ts = gym['last_modified_timestamp_ms'] / 1000
                     last_modified = datetime.utcfromtimestamp(
                         last_modified_ts).strftime("%Y-%m-%d %H:%M:%S")
                     is_ex_raid_eligible = gym['gym_details']['is_ex_raid_eligible']
@@ -908,12 +910,12 @@ class RmWrapper(DbWrapperBase):
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive, gender) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
             "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned), is_exclusive=VALUES(is_exclusive), "
-            "form=VALUES(form)"
+            "form=VALUES(form), gender=VALUES(gender)"
         )
 
         for cell in cells:
@@ -926,12 +928,14 @@ class RmWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
+                        gender = gym['gym_details']['raid_info']['raid_pokemon']['display']['gender_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
                         form = None
+                        gender = None
 
                     raidendSec = int(gym['gym_details']
                                      ['raid_info']['raid_end'] / 1000)
@@ -965,7 +969,8 @@ class RmWrapper(DbWrapperBase):
                             raidend_date,
                             pokemon_id, cp, move_1, move_2, now,
                             form,
-                            is_exclusive
+                            is_exclusive,
+                            gender
                         )
                     )
         self.executemany(query_raid, raid_args, commit=True)
@@ -1037,9 +1042,7 @@ class RmWrapper(DbWrapperBase):
                     latitude), str(longitude))
                 continue
 
-            next_to_encounter.append(
-                    (pokemon_id, Location(latitude, longitude), encounter_id)
-            )
+            next_to_encounter.append((pokemon_id, Location(latitude, longitude), encounter_id))
 
         # now filter by the order of eligible_mon_ids
         to_be_encountered = []
@@ -1047,9 +1050,7 @@ class RmWrapper(DbWrapperBase):
         for mon_prio in eligible_mon_ids:
             for mon in next_to_encounter:
                 if mon_prio == mon[0]:
-                    to_be_encountered.append(
-                            (i, mon[1], mon[2])
-                    )
+                    to_be_encountered.append((i, mon[1], mon[2]))
             i += 1
         return to_be_encountered
 
@@ -1073,7 +1074,7 @@ class RmWrapper(DbWrapperBase):
             except KeyboardInterrupt:
                 logger.info('Ctrl-C interrupted')
                 sys.exit(1)
-            except Exception as e:
+            except Exception:
                 retry = retry + 1
                 logger.info('Download error', url)
                 if retry <= 5:
@@ -1088,14 +1089,13 @@ class RmWrapper(DbWrapperBase):
         now = datetime.utcfromtimestamp(
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
         last_modified = datetime.utcfromtimestamp(
-            stop_data['last_modified_timestamp_ms']/1000).strftime("%Y-%m-%d %H:%M:%S")
+            stop_data['last_modified_timestamp_ms'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
         # lure isn't present anymore...
         lure = '1970-01-01 00:00:00'
         active_fort_modifier = None
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
-            lure = datetime.utcfromtimestamp( 30 * 60 +
-                (stop_data['last_modified_timestamp_ms']/1000)).strftime("%Y-%m-%d %H:%M:%S")
+            lure = datetime.utcfromtimestamp(30 * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
 
         return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier
 
@@ -1126,7 +1126,7 @@ class RmWrapper(DbWrapperBase):
         )
 
     def check_stop_quest(self, latitude, longitude):
-        logger.debug("RmWrapper::stops_from_db called")
+        logger.debug("RmWrapper::check_stop_quest called")
         query = (
             "SELECT trs_quest.GUID "
             "from trs_quest inner join pokestop on pokestop.pokestop_id = trs_quest.GUID where "
@@ -1146,17 +1146,21 @@ class RmWrapper(DbWrapperBase):
             return False
 
     def stop_from_db_without_quests(self, geofence_helper, levelmode):
-        logger.debug("RmWrapper::stop_from_db_without_questsb called")
+        logger.debug("RmWrapper::stop_from_db_without_quests called")
+
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
 
         query = (
             "SELECT pokestop.latitude, pokestop.longitude "
-            "FROM pokestop left join trs_quest on "
-            "pokestop.pokestop_id = trs_quest.GUID  "
-        )
+            "FROM pokestop "
+            "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
+            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
+            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         if not levelmode:
-            query_addon = "where DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "\
-                          "or trs_quest.GUID IS NULL"
+            query_addon = ("AND DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+                           "OR trs_quest.GUID IS NULL")
 
             query = query + query_addon
 
@@ -1170,11 +1174,6 @@ class RmWrapper(DbWrapperBase):
                 list_of_coords)
             return geofenced_coords
         else:
-            # import numpy as np
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
     def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
@@ -1280,7 +1279,7 @@ class RmWrapper(DbWrapperBase):
     def get_raids_changed_since(self, timestamp):
         query = (
             "SELECT raid.gym_id, raid.level, raid.spawn, raid.start, raid.end, raid.pokemon_id, "
-            "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, "
+            "raid.cp, raid.move_1, raid.move_2, raid.last_scanned, raid.form, raid.is_exclusive, raid.gender, "
             "gymdetails.name, gymdetails.url, gym.latitude, gym.longitude, "
             "gym.team_id, weather_boosted_condition, gym.is_ex_raid_eligible "
             "FROM raid "
@@ -1295,7 +1294,7 @@ class RmWrapper(DbWrapperBase):
         ret = []
 
         for (gym_id, level, spawn, start, end, pokemon_id,
-                cp, move_1, move_2, last_scanned, form, is_exclusive,
+                cp, move_1, move_2, last_scanned, form, is_exclusive, gender,
                 name, url, latitude, longitude, team_id,
                 weather_boosted_condition, is_ex_raid_eligible) in res:
             ret.append({
@@ -1317,6 +1316,7 @@ class RmWrapper(DbWrapperBase):
                 "team_id": team_id,
                 "weather_boosted_condition": weather_boosted_condition,
                 "is_exclusive": is_exclusive,
+                "gender": gender,
                 "is_ex_raid_eligible": is_ex_raid_eligible
             })
 
@@ -1460,22 +1460,16 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_pokemon_count(self, minutes):
         logger.debug('Fetching pokemon spawns count from db')
         query_where = ''
-        query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp"
+        query_date = "UNIX_TIMESTAMP(DATE_FORMAT(last_modified, '%y-%m-%d %k:00:00')) as timestamp"
         if minutes:
-            minutes = datetime.now().replace(
+            minutes = datetime.utcnow().replace(
                 minute=0, second=0, microsecond=0) - timedelta(minutes=int(minutes))
-            query_where = ' where FROM_UNIXTIME(timestamp_scan) > \'%s\' ' % str(minutes)
-
-        # SELECT unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00')) as timestamp,
-        # count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join trs_stats_detect_raw
-        # on pokemon.encounter_id=trs_stats_detect_raw.type_id where FROM_UNIXTIME(timestamp_scan)
-        # > '2019-05-04 10:47:47.259159' group by IV, day(FROM_UNIXTIME(timestamp_scan)),
-        # hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp
+            query_where = ' where last_modified > \'%s\' ' % str(minutes)
 
         query = (
-            "SELECT  %s, count(DISTINCT type_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon join "
-            "trs_stats_detect_raw on pokemon.encounter_id=trs_stats_detect_raw.type_id %s "
-            "group by IV, day(FROM_UNIXTIME(timestamp_scan)), hour(FROM_UNIXTIME(timestamp_scan)) order by timestamp" %
+            "SELECT  %s, count(DISTINCT encounter_id) as Count, if(CP is NULL, 0, 1) as IV FROM pokemon "
+            " %s "
+            "group by IV, day(TIMESTAMP(last_modified)), hour(TIMESTAMP(last_modified)) order by timestamp" %
                 (str(query_date), str(query_where))
         )
 
@@ -1534,10 +1528,11 @@ class RmWrapper(DbWrapperBase):
         logger.debug('Fetching best pokemon spawns from db')
 
         query = (
-                "SELECT encounter_id, pokemon_id, unix_timestamp(last_modified),"
-                " individual_attack, individual_defense, individual_stamina, cp_multiplier, cp FROM pokemon"
-                " WHERE individual_attack>14 and individual_defense>14 and individual_stamina>14"
-                " GROUP BY encounter_id ORDER BY last_modified DESC LIMIT 30"
+            "SELECT encounter_id, pokemon_id, unix_timestamp(last_modified),"
+            " individual_attack, individual_defense, individual_stamina, cp_multiplier, cp"
+            " FROM pokemon"
+            " WHERE individual_attack>14 and individual_defense>14 and individual_stamina>14"
+            " ORDER BY UNIX_TIMESTAMP(last_modified) DESC LIMIT 300"
         )
 
         res = self.execute(query)
@@ -1626,7 +1621,7 @@ class RmWrapper(DbWrapperBase):
         return gyms
 
     def check_stop_quest_level(self, worker, latitude, longitude):
-        logger.debug("RmWrapper::stops_from_db called")
+        logger.debug("RmWrapper::check_stop_quest_level called")
         query = (
             "SELECT trs_stats_detect_raw.type_id "
             "from trs_stats_detect_raw inner join pokestop on pokestop.pokestop_id = trs_stats_detect_raw.type_id "
@@ -1642,6 +1637,74 @@ class RmWrapper(DbWrapperBase):
         else:
             logger.debug('Pokestop not visited till now')
             return False
+
+    def get_mons_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        mons = []
+
+        now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
+
+        query = (
+            "SELECT encounter_id, spawnpoint_id, pokemon_id, latitude, "
+            "longitude, disappear_time, individual_attack, individual_defense, "
+            "individual_stamina, move_1, move_2, cp, weight, "
+            "height, gender, form, costume, weather_boosted_condition, "
+            "last_modified "
+            "FROM pokemon "
+            "WHERE disappear_time > '{}'"
+        ).format(now)
+
+        query_where = (
+            " AND (latitude >= {} AND longitude >= {} "
+            " AND latitude <= {} AND longitude <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        # there's no old rectangle so check for a timestamp to send only updated stuff
+        elif timestamp is not None:
+            tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
+
+            oquery_where = " AND last_modified >= '{}' ".format(tsdt)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
+                disappear_time, individual_attack, individual_defense,
+                individual_stamina, move_1, move_2, cp,
+                weight, height, gender, form, costume,
+                weather_boosted_condition, last_modified) in res:
+
+            mons.append({
+                "encounter_id": encounter_id,
+                "spawnpoint_id": spawnpoint_id,
+                "mon_id": pokemon_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "disappear_time": int(disappear_time.replace(tzinfo=timezone.utc).timestamp()),
+                "individual_attack": individual_attack,
+                "individual_defense": individual_defense,
+                "individual_stamina": individual_stamina,
+                "move_1": move_1,
+                "move_2": move_2,
+                "cp": cp,
+                "weight": weight,
+                "height": height,
+                "gender": gender,
+                "form": form,
+                "costume": costume,
+                "weather_boosted_condition": weather_boosted_condition,
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp())
+            })
+
+        return mons
 
     def get_nearbymon_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
         mon = {}

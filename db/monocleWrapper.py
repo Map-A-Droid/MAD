@@ -38,9 +38,19 @@ class MonocleWrapper(DbWrapperBase):
                 "ctype": "tinyint(1) NULL"
             },
             {
+                "table": "raids",
+                "column": "gender",
+                "ctype": "tinyint(1) NULL"
+            },
+            {
                 "table": "fort_sightings",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NULL"
+            },
+            {
+                "table": "sightings",
+                "column": "height",
+                "ctype": "float NULL"
             }
         ]
 
@@ -554,10 +564,14 @@ class MonocleWrapper(DbWrapperBase):
     def stops_from_db(self, geofence_helper):
         logger.info('Downloading pokestop coords from DB')
 
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
         query = (
             "SELECT lat, lon "
-            "FROM pokestops"
-        )
+            "FROM pokestops "
+            "WHERE (lat >= {} AND lon >= {} "
+            "AND lat <= {} AND lon <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)
         list_of_coords: List[Location] = []
@@ -602,11 +616,11 @@ class MonocleWrapper(DbWrapperBase):
         query_insert = (
             "INSERT sightings (pokemon_id, spawn_id, expire_timestamp, encounter_id, "
             "lat, lon, updated, gender, form, costume, weather_boosted_condition, weather_cell_id, "
-            "atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight) "
-            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "atk_iv, def_iv, sta_iv, move_1, move_2, cp, level, weight, height) "
+            "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), atk_iv=VALUES(atk_iv), def_iv=VALUES(def_iv), "
             "sta_iv=VALUES(sta_iv), move_1=VALUES(move_1), move_2=VALUES(move_2), cp=VALUES(cp), "
-            "level=VALUES(level), weight=VALUES(weight), costume=VALUES(costume)"
+            "level=VALUES(level), weight=VALUES(weight), costume=VALUES(costume), height=VALUES(height)"
         )
 
         encounter_id = wild_pokemon['encounter_id']
@@ -682,6 +696,7 @@ class MonocleWrapper(DbWrapperBase):
             pokemon_data.get("cp"),
             pokemon_level,
             pokemon_data.get("weight"),
+            pokemon_data.get("height"),
         )
         self.execute(query_insert, vals, commit=True)
 
@@ -851,13 +866,13 @@ class MonocleWrapper(DbWrapperBase):
         raid_vals = []
         query_raid = (
             "INSERT INTO raids (external_id, fort_id, level, pokemon_id, time_spawn, time_battle, "
-            "time_end, cp, move_1, move_2, form, last_updated, is_exclusive) "
+            "time_end, cp, move_1, move_2, form, last_updated, is_exclusive, gender) "
             "VALUES( (SELECT id FROM forts WHERE forts.external_id=%s), "
-            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "(SELECT id FROM forts WHERE forts.external_id=%s), %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), pokemon_id=VALUES(pokemon_id), "
             "time_spawn=VALUES(time_spawn), time_battle=VALUES(time_battle), time_end=VALUES(time_end), "
             "cp=VALUES(cp), move_1=VALUES(move_1), move_2=VALUES(move_2), "
-            "form=VALUES(form), last_updated=VALUES(last_updated)"
+            "form=VALUES(form), last_updated=VALUES(last_updated), gender=VALUES(gender)"
         )
 
         for cell in cells:
@@ -869,12 +884,14 @@ class MonocleWrapper(DbWrapperBase):
                         move_1 = gym['gym_details']['raid_info']['raid_pokemon']['move_1']
                         move_2 = gym['gym_details']['raid_info']['raid_pokemon']['move_2']
                         form = gym['gym_details']['raid_info']['raid_pokemon']['display']['form_value']
+                        gender = gym['gym_details']['raid_info']['raid_pokemon']['display']['gender_value']
                     else:
                         pokemon_id = None
                         cp = 0
                         move_1 = 1
                         move_2 = 2
                         form = None
+                        gender = None
 
                     raidendSec = int(gym['gym_details']
                                      ['raid_info']['raid_end'] / 1000)
@@ -906,7 +923,8 @@ class MonocleWrapper(DbWrapperBase):
                             cp, move_1, move_2,
                             form,
                             int(now),
-                            is_exclusive
+                            is_exclusive,
+                            gender
                         )
                     )
         self.executemany(query_raid, raid_vals, commit=True)
@@ -1081,15 +1099,19 @@ class MonocleWrapper(DbWrapperBase):
     def stop_from_db_without_quests(self, geofence_helper, levelmode):
         logger.debug("MonocleWrapper::stop_from_db_without_quests called")
 
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
         query = (
             "SELECT pokestops.lat, pokestops.lon "
             "FROM pokestops left join trs_quest on "
-            "pokestops.external_id = trs_quest.GUID  "
-        )
+            "pokestops.external_id = trs_quest.GUID "
+            "WHERE (pokestops.lat >= {} AND pokestops.lon >= {} "
+            "AND pokestops.lat <= {} AND pokestops.lon <= {}) "
+        ).format(minLat, minLon, maxLat, maxLon)
 
         if not levelmode:
-            query_addon = "where DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "\
-                          "or trs_quest.GUID IS NULL"
+            query_addon = ("AND DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+                           "OR trs_quest.GUID IS NULL ")
 
             query = query + query_addon
 
@@ -1103,11 +1125,6 @@ class MonocleWrapper(DbWrapperBase):
                 list_of_coords)
             return geofenced_coords
         else:
-            # import numpy as np
-            # to_return = np.zeros(shape=(len(list_of_coords), 2))
-            # for i in range(len(to_return)):
-            #     to_return[i][0] = list_of_coords[i][0]
-            #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
     def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
@@ -1183,7 +1200,7 @@ class MonocleWrapper(DbWrapperBase):
         query = (
             "SELECT forts.external_id, level, time_spawn, time_battle, time_end, "
             "pokemon_id, cp, move_1, move_2, last_updated, form, is_exclusive, name, url, "
-            "lat, lon, team, weather.condition, is_ex_raid_eligible "
+            "lat, lon, team, weather.condition, is_ex_raid_eligible, gender "
             "FROM raids "
             "LEFT JOIN fort_sightings ON raids.fort_id = fort_sightings.fort_id "
             "LEFT JOIN forts ON raids.fort_id = forts.id "
@@ -1197,7 +1214,7 @@ class MonocleWrapper(DbWrapperBase):
         for (gym_id, level, spawn, start, end, pokemon_id,
                 cp, move_1, move_2, last_scanned, form, is_exclusive,
                 name, url, latitude, longitude, team_id,
-                weather_boosted_condition, is_ex_raid_eligible) in res:
+                weather_boosted_condition, is_ex_raid_eligible, gender) in res:
             ret.append({
                 "gym_id": gym_id,
                 "level": level,
@@ -1217,7 +1234,8 @@ class MonocleWrapper(DbWrapperBase):
                 "team_id": team_id,
                 "weather_boosted_condition": weather_boosted_condition,
                 "is_exclusive": is_exclusive,
-                "is_ex_raid_eligible": is_ex_raid_eligible
+                "is_ex_raid_eligible": is_ex_raid_eligible,
+                "gender": gender
             })
 
         return ret
@@ -1225,7 +1243,7 @@ class MonocleWrapper(DbWrapperBase):
     def get_mon_changed_since(self, timestamp):
         query = (
             "SELECT encounter_id, spawn_id, pokemon_id, lat, lon, expire_timestamp, "
-            "atk_iv, def_iv, sta_iv, move_1, move_2, cp, weight, gender, form, costume, "
+            "atk_iv, def_iv, sta_iv, move_1, move_2, cp, weight, height, gender, form, costume, "
             "weather_boosted_condition, updated, level, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified "
             "FROM sightings "
@@ -1239,7 +1257,7 @@ class MonocleWrapper(DbWrapperBase):
         for (encounter_id, spawnpoint_id, pokemon_id, latitude,
                 longitude, disappear_time, individual_attack,
                 individual_defense, individual_stamina, move_1, move_2,
-                cp, weight, gender, form, costume, weather_boosted_condition,
+                cp, weight, height, gender, form, costume, weather_boosted_condition,
                 last_modified, level, verified) in res:
             ret.append({
                 "encounter_id": encounter_id,
@@ -1259,6 +1277,7 @@ class MonocleWrapper(DbWrapperBase):
                 "form": form,
                 "costume": costume,
                 "weight": weight,
+                "height": height,
                 "weather_boosted_condition": weather_boosted_condition,
                 "level": level,
                 "spawn_verified": verified == 1
@@ -1410,7 +1429,7 @@ class MonocleWrapper(DbWrapperBase):
         logger.debug('Fetching best pokemon spawns from db')
 
         query = (
-                "SELECT encounter_id, updated, pokemon_id, "
+                "SELECT encounter_id, pokemon_id, updated, "
                 "atk_iv, def_iv, sta_iv, level, cp FROM sightings "
                 "WHERE atk_iv>14 and def_iv>14 and sta_iv>14 "
                 "group by encounter_id order by updated desc limit 30"
@@ -1514,4 +1533,67 @@ class MonocleWrapper(DbWrapperBase):
         else:
             logger.debug('Pokestop not visited till now')
             return False
+
+    def get_mons_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        mons = []
+
+        query = (
+            "SELECT encounter_id, spawn_id, pokemon_id, lat, "
+            "lon, expire_timestamp, atk_iv, def_iv, "
+            "sta_iv, move_1, move_2, cp, weight, height, "
+            "gender, form, costume, weather_boosted_condition, updated "
+            "FROM sightings "
+            "WHERE expire_timestamp > {}"
+        ).format(time.time())
+
+        query_where = (
+            " AND (lat >= {} AND lon >= {} "
+            " AND lat <= {} AND lon <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (lat >= {} AND lon >= {} "
+                " AND lat <= {} AND lon <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        # there's no old rectangle so check for a timestamp to send only updated stuff
+        elif timestamp is not None:
+            oquery_where = " AND updated >= {} ".format(timestamp)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude,
+                disappear_time, individual_attack, individual_defense,
+                individual_stamina, move_1, move_2, cp,
+                weight, height, gender, form, costume,
+                weather_boosted_condition, updated) in res:
+
+            mons.append({
+                "encounter_id": encounter_id,
+                "spawnpoint_id": spawnpoint_id,
+                "mon_id": pokemon_id,
+                "latitude": latitude,
+                "longitude": longitude,
+                "disappear_time": disappear_time,
+                "individual_attack": individual_attack,
+                "individual_defense": individual_defense,
+                "individual_stamina": individual_stamina,
+                "move_1": move_1,
+                "move_2": move_2,
+                "cp": cp,
+                "weight": weight,
+                "height": height,
+                "gender": gender,
+                "form": form,
+                "costume": costume,
+                "weather_boosted_condition": weather_boosted_condition,
+                "last_modified": updated
+            })
+
+        return mons
 

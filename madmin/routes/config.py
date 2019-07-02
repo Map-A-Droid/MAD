@@ -5,10 +5,11 @@ from flask import (render_template, request, redirect)
 from madmin.functions import auth_required, getBasePath
 from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
+from utils.MappingManager import MappingManager
 
 
 class config(object):
-    def __init__(self, db, args, logger, app):
+    def __init__(self, db, args, logger, app, mapping_manager: MappingManager):
         self._db = db
         self._args = args
         if self._args.madmin_time == "12":
@@ -20,6 +21,7 @@ class config(object):
         self._logger = logger
 
         self._app = app
+        self._mapping_mananger = mapping_manager
         self.add_route()
 
     def add_route(self):
@@ -32,7 +34,8 @@ class config(object):
             ("/addnew", self.addnew),
             ("/showmonsidpicker", self.showmonsidpicker),
             ("/addedit", self.addedit),
-            ("/showsettings", self.showsettings)
+            ("/showsettings", self.showsettings),
+            ("/reload", self.reload)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -859,7 +862,7 @@ class config(object):
                                settings=tab_content,
                                tabarea=tabarea,
                                title="Mapping Editor", responsive=str(self._args.madmin_noresponsive).lower(),
-                               running_ocr=(self._args.only_ocr))
+                               running_ocr=self._args.only_ocr, autoreloadconfig=self._args.auto_reload_config)
 
     @auth_required
     def addnew(self):
@@ -963,6 +966,12 @@ class config(object):
         return render_template('showmonsidpicker.html', backurl=backurl, formhiddeninput=formhiddeninput,
                                current_mons_list=current_mons_list, stripped_mondata=stripped_mondata, header=header,
                                title=title)
+
+    @auth_required
+    def reload(self):
+        if not self._args.auto_reload_config:
+            self._mapping_mananger.update()
+        return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
 

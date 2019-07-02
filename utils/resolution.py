@@ -36,6 +36,12 @@ class Resocalculator(object):
         click_x2 = int(self._screen_x) - int(click_x1)
         return click_x1 + self._x_offset, click_x2 + self._x_offset, click_y + self._y_offset
 
+    def get_ggl_account_coords(self):
+        temp_offset = int(self._screen_y) / 24.61
+        click_x = int(self._screen_x) / 2
+        click_y = (int(self._screen_y) / 2) + int(temp_offset)
+        return click_x, click_y
+
     def get_close_main_button_coords(self):
         click_x = int(self._screen_x) / 2
         click_y = int(self._screen_y) - (int(self._screen_x) / 7.57)
