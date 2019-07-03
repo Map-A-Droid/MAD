@@ -10,6 +10,7 @@ from typing import Optional, List, Dict, Tuple
 
 from db.dbWrapperBase import DbWrapperBase
 from geofence.geofenceHelper import GeofenceHelper
+from route import RouteManagerBase
 from route.RouteManagerFactory import RouteManagerFactory
 from route.RouteManagerIV import RouteManagerIV
 from utils.collections import Location
@@ -80,8 +81,11 @@ class MappingManager:
         self.__stop_file_watcher_event.set()
         self.__t_file_watcher.join()
 
-    def get_auths(self) -> Optional[dict]:
-        with self.__mappings_mutex:
+    def get_auths(self, lock: bool = True) -> Optional[dict]:
+        if lock:
+            with self.__mappings_mutex:
+                return self._auths
+        else:
             return self._auths
 
     def get_devicemappings_of(self, device_name: str) -> Optional[dict]:
@@ -97,13 +101,21 @@ class MappingManager:
         with self.__mappings_mutex:
             return self._devicemappings.get(device_name, None).get('settings', None)
 
-    def set_devicesetting_value_of(self, device_name: str, key: str, value):
-        with self.__mappings_mutex:
+    def set_devicesetting_value_of(self, device_name: str, key: str, value, lock: bool = True):
+        if lock:
+            with self.__mappings_mutex:
+                if self._devicemappings.get(device_name, None) is not None:
+                    self._devicemappings[device_name]['settings'][key] = value
+        else:
+            # unsafe, should only be used in MITMReceiver and websocket where locking hurts us - and MADMIN...
             if self._devicemappings.get(device_name, None) is not None:
                 self._devicemappings[device_name]['settings'][key] = value
 
-    def get_all_devicemappings(self) -> Optional[dict]:
-        with self.__mappings_mutex:
+    def get_all_devicemappings(self, lock: bool = True) -> Optional[dict]:
+        if lock:
+            with self.__mappings_mutex:
+                return self._devicemappings
+        else:
             return self._devicemappings
 
     def get_areas(self) -> Optional[dict]:
@@ -111,8 +123,7 @@ class MappingManager:
             return self._areas
 
     def get_all_routemanager_names(self):
-        with self.__mappings_mutex:
-            return self._routemanagers.keys()
+        return self._routemanagers.keys()
 
     def routemanager_present(self, routemanager_name: str) -> bool:
         with self.__mappings_mutex:
@@ -209,12 +220,11 @@ class MappingManager:
                 return False
 
     def routemanager_get_mode(self, routemanager_name: str) -> Optional[str]:
-        with self.__mappings_mutex:
-            routemanager: dict = self._routemanagers.get(routemanager_name, None)
-            if routemanager is not None:
-                return routemanager.get("routemanager").get_mode()
-            else:
-                return None
+        routemanager: dict = self._routemanagers.get(routemanager_name, None)
+        if routemanager is not None:
+            return routemanager.get("routemanager").get_mode()
+        else:
+            return None
 
     def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
         with self.__mappings_mutex:
@@ -488,14 +498,15 @@ class MappingManager:
                 if "last_mode" in self._devicemappings[dev]['settings']:
                     devicemappings_tmp[dev]['settings']["last_mode"] = \
                         self._devicemappings[dev]['settings']["last_mode"]
-
+            logger.info("Acquiring lock to update mappings")
             with self.__mappings_mutex:
                 # stopping routemanager / worker
-                logger.info('Restarting Worker')
-                for routemanager in self._routemanagers.keys():
-                    area = self._routemanagers.get(routemanager, None)
-                    if area is None:
-                        continue
+                # logger.info('Restarting Worker')
+                # for routemanager in self._routemanagers.keys():
+                #     area: RouteManagerBase = self._routemanagers.get(routemanager, None)
+                #     if area is None:
+                #         continue
+                #     area.stop_routemanager()
 
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp
@@ -503,6 +514,7 @@ class MappingManager:
                 self._auths = auths_tmp
 
         else:
+            logger.info("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
                 self._routemanagers = self.__get_latest_routemanagers()
                 self._areas = self.__get_latest_areas()

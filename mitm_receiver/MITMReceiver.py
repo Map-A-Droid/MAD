@@ -26,10 +26,10 @@ class EndpointAction(object):
         self.mapping_manager: MappingManager = mapping_manager
 
     def __call__(self, *args):
-        logger.debug3("HTTP Request by {}".format(str(request.remote_addr)))
+        logger.debug3("HTTP Request from {}".format(str(request.remote_addr)))
         origin = request.headers.get('Origin')
         abort = False
-        if str(request.url_rule) == '/status/':
+        if request.url_rule is not None and str(request.url_rule) == '/status/':
             auth = request.headers.get('Authorization', False)
             if self.application_args.mitm_status_password != "" and \
                     (not auth or auth != self.application_args.mitm_status_password):
@@ -42,14 +42,14 @@ class EndpointAction(object):
                 logger.warning("Missing Origin header in request")
                 self.response = Response(status=500, headers={})
                 abort = True
-            elif (self.mapping_manager.get_all_devicemappings().keys() is not None
-                  and (origin is None or origin not in self.mapping_manager.get_all_devicemappings().keys())):
+            elif (self.mapping_manager.get_all_devicemappings(False).keys() is not None
+                  and (origin is None or origin not in self.mapping_manager.get_all_devicemappings(False).keys())):
                 logger.warning("MITMReceiver request without Origin or disallowed Origin: {}".format(origin))
                 self.response = Response(status=403, headers={})
                 abort = True
-            elif self.mapping_manager.get_auths() is not None:
+            elif self.mapping_manager.get_auths(False) is not None:
                 auth = request.headers.get('Authorization', None)
-                if auth is None or not check_auth(auth, self.application_args, self.mapping_manager.get_auths()):
+                if auth is None or not check_auth(auth, self.application_args, self.mapping_manager.get_auths(False)):
                     logger.warning(
                         "Unauthorized attempt to POST from {}", str(request.remote_addr))
                     self.response = Response(status=403, headers={})
@@ -180,7 +180,7 @@ class MITMReceiver(Process):
         process_return: dict = {}
         data_return: dict = {}
         process_count: int = 0
-        for origin in self.__mapping_manager.get_all_devicemappings().keys():
+        for origin in self.__mapping_manager.get_all_devicemappings(False).keys():
             origin_return[origin] = {}
             origin_return[origin]['injection_status'] = self.__mitm_mapper.get_injection_status(origin)
             origin_return[origin]['latest_data'] = self.__mitm_mapper.request_latest(origin, 'timestamp_last_data')
