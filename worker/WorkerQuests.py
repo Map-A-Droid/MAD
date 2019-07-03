@@ -413,7 +413,7 @@ class WorkerQuests(MITMBase):
         delete_allowed = False
         error_counter = 0
 
-        while int(delrounds) <= 8 and not stop_inventory_clear.is_set():
+        while int(delrounds) <= 10 and not stop_inventory_clear.is_set():
 
             trash = 0
             if not first_round and not delete_allowed:
@@ -421,10 +421,11 @@ class WorkerQuests(MITMBase):
                 if error_counter > 3:
                     stop_inventory_clear.set()
                 logger.warning('Find no item to delete - scrolling ({} times)', str(error_counter))
-                self._communicator.touchandhold(int(200), int(400), int(200), int(100))
+                self._communicator.touchandhold(int(200), int(600), int(200), int(100))
                 time.sleep(2)
 
             trashcancheck = self._get_trash_positions()
+
             if trashcancheck is None:
                 logger.error('Could not find any trashcan - abort')
                 return
