@@ -330,7 +330,7 @@ class PogoWindows:
         if lines is None:
             return False
 
-        lines = self.check_lines(lines,height)
+        lines = self.check_lines(lines, height)
 
         _last_y = 0
         for line in lines:
@@ -339,6 +339,7 @@ class PogoWindows:
 
                 if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and y1 > (height / 2) \
                         and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
+
                     lineCount += 1
                     click_y = _last_y + ((y1 - _last_y) / 2)
                     _last_y = y1
