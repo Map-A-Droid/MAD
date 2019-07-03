@@ -12,7 +12,6 @@ from db.dbWrapperBase import DbWrapperBase
 from geofence.geofenceHelper import GeofenceHelper
 from route import RouteManagerBase
 from route.RouteManagerFactory import RouteManagerFactory
-from route.RouteManagerIV import RouteManagerIV
 from utils.collections import Location
 from utils.logging import logger
 from utils.s2Helper import S2Helper
@@ -115,7 +114,7 @@ class MappingManager:
     def get_all_routemanager_names(self):
         return self._routemanagers.keys()
 
-    def __fetch_routemanager(self, routemanager_name: str) -> Optional[RouteManagerBase]:
+    def __fetch_routemanager(self, routemanager_name: str) -> Optional[RouteManagerBase.RouteManagerBase]:
         with self.__mappings_mutex:
             routemanager_dict: dict = self._routemanagers.get(routemanager_name, None)
             if routemanager_dict is not None:
