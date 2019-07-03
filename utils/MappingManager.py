@@ -10,7 +10,7 @@ from typing import Optional, List, Dict, Tuple
 
 from db.dbWrapperBase import DbWrapperBase
 from geofence.geofenceHelper import GeofenceHelper
-from route import RouteManagerBase
+from route import RouteManagerBase, RouteManagerIV
 from route.RouteManagerFactory import RouteManagerFactory
 from utils.collections import Location
 from utils.logging import logger
@@ -108,7 +108,7 @@ class MappingManager:
     def get_all_devicemappings(self) -> Optional[dict]:
         return self._devicemappings
 
-    def get_areas(self, lock: bool) -> Optional[dict]:
+    def get_areas(self) -> Optional[dict]:
         return self._areas
 
     def get_all_routemanager_names(self):
@@ -182,7 +182,10 @@ class MappingManager:
 
     def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
-        return routemanager.get_encounter_ids_left() if routemanager is not None else None
+        if routemanager is not None and isinstance(routemanager, RouteManagerIV.RouteManagerIV):
+            return routemanager.get_encounter_ids_left()
+        else:
+            return None
 
     def routemanager_get_current_route(self, routemanager_name: str) -> Optional[List[Location]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
