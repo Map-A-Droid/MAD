@@ -344,7 +344,7 @@ class WorkerQuests(MITMBase):
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
         reached_mainscreen = False
-        if start_result and self._wait_for_injection():
+        if start_result:
             logger.warning("startPogo: Started pogo successfully...")
             self._last_known_state["lastPogoRestart"] = cur_time
             reached_mainscreen = self._check_pogo_main_screen(10, True)

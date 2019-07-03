@@ -545,7 +545,7 @@ class WorkerBase(ABC):
         if not topmostapp: return False
 
         if "AccountPickerActivity" in topmostapp or 'SignInActivity' in topmostapp:
-            
+
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                         delayAfter=10):
                 logger.error("_check_ggl_login: Failed getting screenshot")
