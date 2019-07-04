@@ -93,8 +93,8 @@ class map(object):
                     else:  # Coordinate line.
                         lat, lon = line.split(",")
                         geofence_include[geofence_name].append([
-                            getCoordFloat(lon),
-                            getCoordFloat(lat)
+                            getCoordFloat(lat),
+                            getCoordFloat(lon)
                         ])
 
             if area['geofence_excluded']:
@@ -113,8 +113,8 @@ class map(object):
                         else:  # Coordinate line.
                             lat, lon = line.split(",")
                             geofence_exclude[geofence_name].append([
-                                getCoordFloat(lon),
-                                getCoordFloat(lat)
+                                getCoordFloat(lat),
+                                getCoordFloat(lon)
                             ])
 
             geofences[name] = {'include': geofence_include,

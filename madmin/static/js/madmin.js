@@ -549,21 +549,27 @@ new Vue({
           var linecoords = [];
 
           // only display first 10 entries of the queue
-          route.coordinates.slice(0, 9).forEach(function(coord, index) {
-            if (index < maxcolored) {
-              color = $this.getPercentageColor((index+1) * 100 / maxcolored);
+          const now = Math.round((new Date()).getTime() / 1000);
+          route.coordinates.slice(0, 14).forEach(function(coord, index) {
+            let until = coord.timestamp - now;
+
+            if (until < 0) {
+              var hue = 0;
+              var sat = 100;
+            } else {
+              var hue = 120;
+              var sat = (index * 100) / 15;
             }
 
-            var weight = index == 0 ? 5 : 1;
+            var color = `hsl(${hue}, ${sat}%, 50%)`;
 
             circle = L.circle([coord.latitude, coord.longitude], {
               ctimestamp: coord.timestamp,
-              //pane: "routes",
               radius: cradius,
               color: color,
               fillColor: color,
               fillOpacity: 1,
-              weight: weight,
+              weight: 1,
               opacity: 0.8,
               fillOpacity: 0.5
             }).bindPopup($this.build_prioq_popup);
@@ -721,20 +727,14 @@ new Vue({
             return;
           }
 
-          var geojson = {
-            "type": "MultiPolygon",
-            "coordinates": geofence.coordinates
-          }
-
           // add geofence to layergroup
-          L.geoJSON(geojson, {
-            pane: "geofences",
-            style: {
+          var group = L.polygon(geofence.coordinates, { pane: "geofences",})
+            .setStyle({
               "color": $this.getRandomColor(),
               "weight": 2,
-              "opacity": 0.25
-            }
-          }).addTo(group);
+              "opacity": 0.5
+            })
+            .addTo(map);
 
           // add layergroup to management object
           leaflet_data["geofences"][name] = group;
