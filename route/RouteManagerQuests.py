@@ -82,6 +82,7 @@ class RouteManagerQuests(RouteManagerBase):
                 self._start_calc = False
             else:
                 self._start_calc = False
+                self._restore_original_route()
                 return False
             if len(self._route) == 0:
                 self._restore_original_route()
@@ -184,6 +185,7 @@ class RouteManagerQuests(RouteManagerBase):
         logger.info('Shutdown Route {}', str(self.name))
         self._is_started = False
         self._round_started_time = None
+        self._restore_original_route()
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:

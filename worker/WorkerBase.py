@@ -275,7 +275,6 @@ class WorkerBase(ABC):
         else:
             pogo_started = self._start_pogo()
 
-        self._check_ggl_login()
         self._work_mutex.release()
         logger.debug("_internal_health_check: worker lock released")
         return pogo_started
@@ -317,6 +316,8 @@ class WorkerBase(ABC):
             return
 
         while not self._stop_worker_event.isSet():
+            # check for ggl login
+            self._check_ggl_login()
             try:
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 walkercheck = self.check_walker()
