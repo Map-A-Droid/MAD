@@ -774,8 +774,7 @@ new Vue({
             if (leaflet_data["monicons"][mon["mon_id"]]) {
               var icon = leaflet_data["monicons"][mon["mon_id"]];
             } else {
-              var form = String.prototype.padStart.call(mon["form"], 2, 0)
-              //var image = `asset/pokemon_icons/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+              var form = mon["form"] == 0 ? "00" : mon["form"];
               var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
               var icon = L.icon({
                 iconUrl: image,
@@ -1137,8 +1136,7 @@ new Vue({
     build_mon_popup(marker) {
       mon = this.mons[marker.options.id];
 
-      var form = String.prototype.padStart.call(mon["form"], 2, 0);
-      //var image = `asset/pokemon_icons/pokemon_icon_${monpad}_${formpad}.png`;
+      var form = mon["form"] == 0 ? "00" : mon["form"];
       var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
 
       var iv = (mon["individual_attack"] + mon["individual_defense"] + mon["individual_stamina"])*100/45;
