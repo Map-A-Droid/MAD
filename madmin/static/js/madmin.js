@@ -1169,7 +1169,7 @@ new Vue({
 
       return `
         <div class="content">
-          <div class="name">#${mon["mon_id"]} ${mon["gender"]==1?'<i class="fas fa-mars"></i>':'<i class="fas fa-venus"></i>'}</div>
+          <div class="name"><strong>${mon["name"]}</strong> #${mon["mon_id"]} ${mon["gender"]==1?'<i class="fas fa-mars"></i>':'<i class="fas fa-venus"></i>'}</div>
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${mon["encounter_id"]}</span></div>
           <div class="coords">
             <i class="fa fa-map-pin"></i>
