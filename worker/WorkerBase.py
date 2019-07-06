@@ -761,7 +761,7 @@ class WorkerBase(ABC):
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1))
         while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id):
             logger.error("_check_pogo_main_screen: not on Mainscreen...")
-            if attempts > maxAttempts:
+            if attempts == maxAttempts:
                 # could not reach raidtab in given maxAttempts
                 logger.error(
                         "_check_pogo_main_screen: Could not get to Mainscreen within {} attempts", str(maxAttempts))
@@ -819,6 +819,19 @@ class WorkerBase(ABC):
             return True
         logger.debug("checkPogoButton: done")
         return False
+
+    def _wait_pogo_start_delay(self):
+        delay_count: int = 0
+        pogo_start_delay: int = self.get_devicesettings_value("post_pogo_start_delay", 60)
+        logger.info('Waiting for pogo start: {} seconds', str(pogo_start_delay))
+
+        while delay_count <= pogo_start_delay:
+            if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                    or self._stop_worker_event.is_set():
+                logger.error("Worker {} get killed while waiting for pogo start", str(self._id))
+                raise InternalStopWorkerException
+            time.sleep(1)
+            delay_count += 1
 
     def _checkPogoClose(self):
         logger.debug("checkPogoClose: Trying to find closeX")

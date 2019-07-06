@@ -146,6 +146,8 @@ class WorkerMITM(MITMBase):
             # let's handle the login and stuff
             reached_raidtab = True
 
+        self._wait_pogo_start_delay()
+
         return reached_raidtab
 
     def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,

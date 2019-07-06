@@ -15,6 +15,7 @@ class RouteManagerQuests(RouteManagerBase):
         stops = self.db_wrapper.stop_from_db_without_quests(
             self.geofence_helper, self._level)
         logger.info('Detected stops without quests: {}', str(stops))
+        logger.debug('Detected stops without quests: {}', str(stops))
         self._stoplist: List[Location] = stops
 
     def _retrieve_latest_priority_queue(self):
@@ -133,12 +134,8 @@ class RouteManagerQuests(RouteManagerBase):
         try:
             if not self._is_started:
                 logger.info("Starting routemanager {}", str(self.name))
-                stops: List[Location] = self.db_wrapper.stop_from_db_without_quests(
-                    self.geofence_helper, self._level)
-                logger.info('Detected {} stops without quests', len(stops))
-                logger.debug('Detected stops without quests: {}', str(stops))
-                self._stoplist: List[Location] = stops
-
+                self.generate_stop_list()
+                stops = self._stoplist
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
                 self.starve_route = False
@@ -167,10 +164,8 @@ class RouteManagerQuests(RouteManagerBase):
                         and len(stops)/len(self._route) <= 0.3:
                     # Calculating new route because 70 percent of stops are processed
                     logger.info('There are less stops without quest than routepositions - recalc')
-                    self._route = list(set(self._route) - (set(self._route) - set(stops)))
-                    coords = self._route
                     self._clear_coords()
-                    self.add_coords_list(coords)
+                    self.add_coords_list(stops)
                     self._overwrite_calculation = True
                     self._recalc_route_workertype()
                 else:
