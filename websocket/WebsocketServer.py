@@ -248,6 +248,7 @@ class WebsocketServer(object):
                         walker_index = 0
                         self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index, False)
                         walker_settings = walker_area_array[walker_index]
+                        await websocket_client_connection.close()
                         return
                     walker_index += 1
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index, False)
@@ -264,6 +265,7 @@ class WebsocketServer(object):
                 walker_area_name = walker_area_array[walker_index]['walkerarea']
 
                 if walker_area_name not in self.__mapping_manager.get_all_routemanager_names():
+                    await websocket_client_connection.close()
                     raise WrongAreaInWalker()
 
                 logger.debug('Devicesettings {}: {}', str(origin), devicesettings)
@@ -286,7 +288,7 @@ class WebsocketServer(object):
                 devicesettings['last_location'] = Location(0.0, 0.0)
 
             logger.debug("Setting up worker for {}", str(origin))
-
+            worker = None
             if walker_routemanager_mode is None:
                 pass
             elif walker_routemanager_mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
@@ -312,20 +314,26 @@ class WebsocketServer(object):
                 logger.error("Mode not implemented")
                 sys.exit(1)
 
-            logger.debug("Starting worker for {}", str(origin))
-            new_worker_thread = Thread(
-                name='worker_%s' % origin, target=worker.start_worker)
+            if worker is None:
+                logger.error("Invalid walker mode for {}. Closing connection".format(str(origin)))
+                await websocket_client_connection.close()
+            else:
+                logger.debug("Starting worker for {}", str(origin))
+                new_worker_thread = Thread(
+                    name='worker_%s' % origin, target=worker.start_worker)
 
-            new_worker_thread.daemon = True
-            async with self.__users_mutex:
-                self.__current_users[origin] = [new_worker_thread,
-                                            worker, websocket_client_connection, 0]
-            new_worker_thread.start()
+                new_worker_thread.daemon = True
+                async with self.__users_mutex:
+                    self.__current_users[origin] = [new_worker_thread,
+                                                worker, websocket_client_connection, 0]
+                new_worker_thread.start()
         except WrongAreaInWalker:
             logger.error('Unknown Area in Walker settings - check config')
+            await websocket_client_connection.close()
         except Exception as e:
             exc_type, exc_value, exc_trace = sys.exc_info()
             logger.error("Other unhandled exception during register: {}\n{}".format(e.with_traceback(None), exc_value))
+            await websocket_client_connection.close()
         finally:
             async with self.__users_mutex:
                 self.__users_connecting.remove(origin)
