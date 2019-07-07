@@ -61,7 +61,7 @@ class MitmMapper(object):
                     self.__process_stats(stats, client_id, last_processed_timestamp)
         except Exception as e:
             logger.error("Playerstats consumer stopping because of {}".format(str(e)))
-        logger.fatal("Shutting down Playerstats update consumer")
+        logger.info("Shutting down Playerstats update consumer")
 
     def __process_stats(self, stats, client_id: int, last_processed_timestamp: float):
         logger.info('Submitting stats for origin {}', str(client_id))
