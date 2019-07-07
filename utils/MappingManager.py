@@ -106,7 +106,7 @@ class MappingManager:
             try:
                 set_settings = self.__devicesettings_setter_queue.get_nowait()
             except Empty as e:
-                time.sleep(0.5)
+                time.sleep(0.2)
                 continue
             except (EOFError, KeyboardInterrupt) as e:
                 logger.info("Devicesettings setter thread noticed shutdown")

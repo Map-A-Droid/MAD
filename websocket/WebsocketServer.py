@@ -232,11 +232,12 @@ class WebsocketServer(object):
 
             if client_mapping.get("walker", None) is not None:
                 if devicesettings is not None and "walker_area_index" not in devicesettings:
+                    logger.debug("Initializing devicesettings")
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', 0)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'finished', False)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_action_time', None)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_cleanup_time', None)
-
+                    await asyncio.sleep(1) # give the settings a moment... (dirty "workaround" against race condition)
                 walker_index = devicesettings.get('walker_area_index', 0)
 
                 if walker_index > 0:
@@ -270,9 +271,10 @@ class WebsocketServer(object):
                     walker_settings = walker_area_array[walker_index]
 
                 devicesettings = self.__mapping_manager.get_devicesettings_of(origin)
-
-                if devicesettings['walker_area_index'] >= len(walker_area_array):
-                    # check if array is smaller then expected - f.e. on the fly changes in mappings.json
+                logger.debug("Checking walker_area_index length")
+                if (devicesettings.get("walker_area_index", None) is None
+                        or devicesettings['walker_area_index'] >= len(walker_area_array)):
+                    # check if array is smaller than expected - f.e. on the fly changes in mappings.json
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', 0)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'finished', False)
                     walker_index = 0
