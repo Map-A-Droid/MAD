@@ -64,7 +64,7 @@ class WorkerQuests(MITMBase):
             logger.info("Starting Level Mode")
         else:
             # initial cleanup old quests
-            self.clear_thread_task = 2
+            if not self._init: self.clear_thread_task = 2
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -319,7 +319,8 @@ class WorkerQuests(MITMBase):
             if data_received is not None and data_received == LatestReceivedType.STOP:
                 self._handle_stop(timestamp)
         else:
-            logger.info('Currently in INIT Mode - no Stop processing')
+            logger.debug('Currently in INIT Mode - no Stop processing')
+            time.sleep(5)
         logger.debug("Releasing lock")
         self._work_mutex.release()
 
@@ -603,18 +604,19 @@ class WorkerQuests(MITMBase):
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
                 time.sleep(10)
-                if not self._checkPogoButton():
-                    self._checkPogoClose()
+                self._checkPogoClose()
                 time.sleep(1)
                 if not self._checkPogoButton():
                     self._checkPogoClose()
                 time.sleep(1)
                 self._turn_map(self._delay_add)
+                time.sleep(1)
             elif data_received == LatestReceivedType.MON:
                 time.sleep(1)
                 logger.info('Clicking MON')
                 time.sleep(.5)
                 self._turn_map(self._delay_add)
+                time.sleep(1)
             elif data_received == LatestReceivedType.UNDEFINED:
                 logger.info('Getting timeout - or other unknown error. Try again')
                 if not self._checkPogoButton():

@@ -14,7 +14,7 @@ class RouteManagerQuests(RouteManagerBase):
         time.sleep(5)
         stops = self.db_wrapper.stop_from_db_without_quests(
             self.geofence_helper, self._level)
-        logger.info('Detected stops without quests: {}', str(stops))
+        logger.info('Detected stops without quests: {}', str(len(stops)))
         logger.debug('Detected stops without quests: {}', str(stops))
         self._stoplist: List[Location] = stops
 
@@ -93,8 +93,9 @@ class RouteManagerQuests(RouteManagerBase):
             self._manager_mutex.release()
 
     def _restore_original_route(self):
-        logger.info("Restoring original route")
-        self._route = self._routecopy.copy()
+        if not self._tempinit:
+            logger.info("Restoring original route")
+            self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
         self._manager_mutex.acquire()
@@ -141,6 +142,14 @@ class RouteManagerQuests(RouteManagerBase):
                 self.starve_route = False
                 self._is_started = True
                 self._first_round_finished = False
+                self._tempinit: bool = False
+
+                if self.init:
+                    logger.info('Starting init mode')
+                    self._init_route_queue()
+                    self._tempinit = True
+                    return
+
                 if not self._first_started:
                     logger.info(
                         "First starting quest route - copying original route for later use")
@@ -180,11 +189,12 @@ class RouteManagerQuests(RouteManagerBase):
         logger.info('Shutdown Route {}', str(self.name))
         self._is_started = False
         self._round_started_time = None
+        if self.init: self._first_started = False
         self._restore_original_route()
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:
-            logger.info('Init Mode - coord is valid')
+            logger.debug('Init Mode - coord is valid')
             return True
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', str(stop))
