@@ -231,7 +231,7 @@ class WebsocketServer(object):
             logger.info("Setting up routemanagers for {}", str(origin))
 
             if client_mapping.get("walker", None) is not None:
-                if "walker_area_index" not in devicesettings:
+                if devicesettings is not None and "walker_area_index" not in devicesettings:
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', 0)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'finished', False)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_action_time', None)

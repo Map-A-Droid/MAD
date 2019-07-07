@@ -116,6 +116,8 @@ class MappingManager:
                 device_name, key, value = set_settings
                 with self.__mappings_mutex:
                     if self._devicemappings.get(device_name, None) is not None:
+                        if self._devicemappings[device_name].get("settings", None) is None:
+                            self._devicemappings[device_name]["settings"] = {}
                         self._devicemappings[device_name]['settings'][key] = value
 
     def set_devicesetting_value_of(self, device_name: str, key: str, value):
