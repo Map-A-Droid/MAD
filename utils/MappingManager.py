@@ -1,7 +1,8 @@
 import json
 import os
 import time
-from multiprocessing import Lock, Event
+from _queue import Empty
+from multiprocessing import Lock, Event, Queue
 from multiprocessing.managers import SyncManager
 from multiprocessing.pool import ThreadPool
 from pathlib import Path
@@ -74,11 +75,17 @@ class MappingManager:
             self.__t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher,)
             self.__t_file_watcher.daemon = False
             self.__t_file_watcher.start()
+        self.__devicesettings_setter_queue: Queue = Queue()
+        self.__devicesettings_setter_consumer_thread: Thread = Thread(name='devicesettings_setter_consumer',
+                                                                      target=self.__devicesettings_setter_consumer)
+        self.__devicesettings_setter_consumer_thread.daemon = True
+        self.__devicesettings_setter_consumer_thread.start()
 
     def shutdown(self):
         logger.fatal("MappingManager exiting")
         self.__stop_file_watcher_event.set()
         self.__t_file_watcher.join()
+        self.__devicesettings_setter_consumer_thread.join()
 
     def get_auths(self) -> Optional[dict]:
         return self._auths
@@ -94,16 +101,26 @@ class MappingManager:
     def get_devicesettings_of(self, device_name: str) -> Optional[dict]:
         return self._devicemappings.get(device_name, None).get('settings', None)
 
-    def set_devicesetting_value_of(self, device_name: str, key: str, value, lock: bool = True):
-        if lock:
-            with self.__mappings_mutex:
-                if self._devicemappings.get(device_name, None) is not None:
-                    self._devicemappings[device_name]['settings'][key] = value
-        else:
-            # unsafe, should only be used in MITMReceiver and websocket where locking hurts us - and MADMIN...
-            # TODO: consider queue/consumer+producer
-            if self._devicemappings.get(device_name, None) is not None:
-                self._devicemappings[device_name]['settings'][key] = value
+    def __devicesettings_setter_consumer(self):
+        while not self.__stop_file_watcher_event.is_set():
+            try:
+                set_settings = self.__devicesettings_setter_queue.get_nowait()
+            except Empty as e:
+                time.sleep(0.5)
+                continue
+            except (EOFError, KeyboardInterrupt) as e:
+                logger.info("Devicesettings setter thread noticed shutdown")
+                return
+
+            if set_settings is not None:
+                device_name, key, value = set_settings
+                with self.__mappings_mutex:
+                    if self._devicemappings.get(device_name, None) is not None:
+                        self._devicemappings[device_name]['settings'][key] = value
+
+    def set_devicesetting_value_of(self, device_name: str, key: str, value):
+        if self._devicemappings.get(device_name, None) is not None:
+            self.__devicesettings_setter_queue.put((device_name, key, value))
 
     def get_all_devicemappings(self) -> Optional[dict]:
         return self._devicemappings
