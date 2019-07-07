@@ -59,6 +59,7 @@ class MitmMapper(object):
                     client_id, stats, last_processed_timestamp = next_item
                     logger.info("Running stats processing on {}".format(str(client_id)))
                     self.__process_stats(stats, client_id, last_processed_timestamp)
+                    self.__playerstats_db_update_queue.task_done()
         except Exception as e:
             logger.fatal("Playerstats consumer stopping because of {}".format(str(e)))
         logger.fatal("Shutting down Playerstats update consumer")
