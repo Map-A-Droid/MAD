@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from _queue import Empty
+from queue import Empty
 from multiprocessing import Lock, Event, Queue
 from multiprocessing.managers import SyncManager
 from multiprocessing.pool import ThreadPool
