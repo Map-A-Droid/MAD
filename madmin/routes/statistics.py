@@ -1,5 +1,6 @@
 import datetime
 import json
+import time
 from flask import (jsonify, render_template, request)
 from madmin.functions import auth_required
 from utils.language import i8ln
@@ -76,7 +77,11 @@ class statistics(object):
             stop.append({'label': dat[0], 'data': dat[1]})
 
         # Quest
-        quest = self._db.statistics_get_quests_count(1)
+        quest: list = []
+        quest_db = self._db.statistics_get_quests_count(1)
+        for ts, count in quest_db:
+            quest_raw = (ts * 1000, count)
+            quest.append(quest_raw)
 
         # Usage
         insta = {}
@@ -136,14 +141,14 @@ class statistics(object):
         data = self._db.statistics_get_pokemon_count(minutes_spawn)
         for dat in data:
             if dat[2] == 1:
-                iv.append([(dat[0] * 1000), dat[1]])
+                iv.append([(self.utc2local(dat[0]) * 1000), dat[1]])
             else:
-                noniv.append([(dat[0] * 1000), dat[1]])
+                noniv.append([(self.utc2local(dat[0]) * 1000), dat[1]])
 
-            if (dat[0] * 1000) in sumup:
-                sumup[(dat[0] * 1000)] += dat[1]
+            if (self.utc2local(dat[0]) * 1000) in sumup:
+                sumup[(self.utc2local(dat[0]) * 1000)] += dat[1]
             else:
-                sumup[(dat[0] * 1000)] = dat[1]
+                sumup[(self.utc2local(dat[0]) * 1000)] = dat[1]
 
         for dat in sumup:
             sum.append([dat, sumup[dat]])
@@ -154,23 +159,29 @@ class statistics(object):
         good_spawns = []
         data = self._db.get_best_pokemon_spawns()
         for dat in data:
-            mon = "%03d" % dat[2]
+            mon = "%03d" % dat[1]
             monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
-            monName_raw = (get_raid_boss_cp(dat[2]))
+            monName_raw = (get_raid_boss_cp(dat[1]))
             monName = i8ln(monName_raw['name'])
             if self._args.db_method == "rm":
-                lvl = calculate_mon_level(dat[7])
+                lvl = calculate_mon_level(dat[6])
             else:
-                lvl = dat[7]
-            good_spawns.append({'id': dat[2], 'iv': round(calculate_iv(dat[4], dat[5], dat[6]), 0),
-                                'lvl': lvl, 'cp': dat[8], 'img': monPic,
+                lvl = dat[6]
+            good_spawns.append({'id': dat[1], 'iv': round(calculate_iv(dat[3], dat[4], dat[5]), 0),
+                                'lvl': lvl, 'cp': dat[7], 'img': monPic,
                                 'name': monName,
-                                'periode': datetime.datetime.fromtimestamp(dat[3]).strftime(self._datetimeformat)})
+                                'periode': datetime.datetime.fromtimestamp(dat[2]).strftime(self._datetimeformat)})
 
         stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
                  'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
                  'location_info': location_info}
         return jsonify(stats)
+
+    def utc2local(self, ts):
+        utc = datetime.datetime.utcnow()
+        now = datetime.datetime.now()
+        offset = time.mktime(now.timetuple()) - time.mktime(utc.timetuple())
+        return ts + offset
 
     @auth_required
     def statistics_detection_worker_data(self):

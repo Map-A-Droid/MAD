@@ -5,10 +5,11 @@ from flask import (render_template, request, redirect)
 from madmin.functions import auth_required, getBasePath
 from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
+from utils.MappingManager import MappingManager
 
 
 class config(object):
-    def __init__(self, db, args, logger, app):
+    def __init__(self, db, args, logger, app, mapping_manager: MappingManager):
         self._db = db
         self._args = args
         if self._args.madmin_time == "12":
@@ -20,6 +21,7 @@ class config(object):
         self._logger = logger
 
         self._app = app
+        self._mapping_mananger = mapping_manager
         self.add_route()
 
     def add_route(self):
@@ -32,7 +34,8 @@ class config(object):
             ("/addnew", self.addnew),
             ("/showmonsidpicker", self.showmonsidpicker),
             ("/addedit", self.addedit),
-            ("/showsettings", self.showsettings)
+            ("/showsettings", self.showsettings),
+            ("/reload", self.reload)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -50,7 +53,7 @@ class config(object):
 
         walkernr = request.args.get('walkernr')
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -95,7 +98,7 @@ class config(object):
                     mapping['walker'][int(walkernr)]['setup'].insert(
                         999, walkerlist)
 
-            with open('configs/mappings.json', 'w') as outfile:
+            with open(self._args.mappings, 'w') as outfile:
                 json.dump(mapping, outfile, indent=4, sort_keys=True)
 
                 return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit="
@@ -133,7 +136,7 @@ class config(object):
         _temp = '<div class="form-group"><label>Area</label><br /><small class="form-text text-muted">Select the Area' \
                 '</small><select class="form-control" name="walkerarea" ' + \
                 lockvalue + ' ' + req + '>'
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -213,7 +216,7 @@ class config(object):
         edit = request.args.get('edit')
         datavalue = []
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -227,7 +230,7 @@ class config(object):
 
         mapping['walker'][int(walkernr)]['setup'] = datavalue
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
         return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(edit),
@@ -239,14 +242,14 @@ class config(object):
         walkernr = request.args.get('walkernr')
         walkerposition = request.args.get('walkerposition')
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
 
         del mapping['walker'][int(walkernr)]['setup'][int(walkerposition)]
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
         return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(walker),
@@ -264,6 +267,7 @@ class config(object):
         type = request.args.get('type')
         block = request.args.get('block')
         area = request.args.get('area')
+        tabarea=area
         fieldwebsite.append('<form action="addedit" id="settings" method="post">')
         fieldwebsite.append(
             '<input type="hidden" name="block" value="' + block + '" />')
@@ -274,7 +278,7 @@ class config(object):
         if edit:
             fieldwebsite.append(
                 '<input type="hidden" name="edit" value="' + edit + '" />')
-            with open('configs/mappings.json') as f:
+            with open(self._args.mappings) as f:
                 mapping = json.load(f)
                 if 'walker' not in mapping:
                     mapping['walker'] = []
@@ -395,7 +399,10 @@ class config(object):
                                     val[i].get('walkermax', '')) + '</td><td>'
                                                                    '<a href="delwalker?walker=' + str(
                                     edit) + '&walkernr=' + str(
-                                    _walkernr) + '&walkerposition=' + str(i) + '">Delete</a><br>'
+                                    _walkernr) + '&walkerposition=' + str(i) + '" class="confirm" '\
+                                                                               'title="Do you really want to delete '
+                                                                               'this?">'\
+                                                                               'Delete</a><br>'
                                                                                '<a href="addwalker?walker=' + str(
                                     edit) + '&walkernr=' + str(_walkernr) + '&walkerposition=' + str(
                                     i) + '&edit=True">Edit</a></form></td></tr>')
@@ -433,7 +440,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'walker' not in mapping:
                         mapping['walker'] = []
@@ -500,7 +507,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'walker' not in mapping:
                         mapping['walker'] = []
@@ -524,7 +531,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'devicesettings' not in mapping:
                         mapping['devicesettings'] = []
@@ -549,7 +556,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + ' size=10 multiple=multiple>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'walker' not in mapping:
                         mapping['walker'] = []
@@ -600,7 +607,7 @@ class config(object):
                 '<button type="submit" class="btn btn-primary">Save</button></form>')
 
         return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings",
-                               walkernr=_walkernr, edit=edit, running_ocr=(self._args.only_ocr))
+                               walkernr=_walkernr, edit=edit, tabarea=tabarea, running_ocr=(self._args.only_ocr))
 
     @auth_required
     def delsetting(self):
@@ -608,7 +615,7 @@ class config(object):
         edit = request.args.get('edit')
         area = request.args.get('area')
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -628,7 +635,7 @@ class config(object):
             if str(edit) == str(entry[_checkfield]):
                 del mapping[area][key]
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
         return redirect(getBasePath(request) + "/showsettings", code=302)
@@ -654,7 +661,7 @@ class config(object):
         area = datavalue.get("area", False)
         mode = datavalue.get("mode", False)
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -718,11 +725,11 @@ class config(object):
                     new['settings'] = {}
                 mapping[area].append(new)
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
 
-        return redirect(getBasePath(request) + "/showsettings", code=302)
+        return redirect(getBasePath(request) + "/showsettings?area=" + str(area), code=302)
 
     def match_type(self, value):
         if '[' in value and ']' in value:
@@ -752,8 +759,9 @@ class config(object):
 
     @auth_required
     def showsettings(self):
-        table = ''
-        with open('configs/mappings.json') as f:
+        tab_content = ''
+        tabarea = request.args.get("area", 'devices')
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -837,12 +845,24 @@ class config(object):
 
                 line = line + quickline
 
-            table = table + header + subheader + line
+            if str(tabarea) == str(var):
+                _active = 'show active'
+            else:
+                _active = ""
+
+            _tab_starter = '<div class="tab-pane fade ' + str(_active) + '"  id="nav-' + str(var) \
+                           + '" role="tabpanel" aria-labelledby="nav-' + str(var) + '-tab">'
+
+            table = str(_tab_starter) + '<table>' + str(globalheader) + '<tbody>' + str(header) + str(subheader) + str(line) \
+                     + '</tbody></table></div>'
+
+            tab_content = tab_content + table
 
         return render_template('settings.html',
-                               settings='<table>' + globalheader + '<tbody>' + table + '</tbody></table>',
+                               settings=tab_content,
+                               tabarea=tabarea,
                                title="Mapping Editor", responsive=str(self._args.madmin_noresponsive).lower(),
-                               running_ocr=(self._args.only_ocr))
+                               running_ocr=self._args.only_ocr, autoreloadconfig=self._args.auto_reload_config)
 
     @auth_required
     def addnew(self):
@@ -871,7 +891,7 @@ class config(object):
             return render_template('showmonsidpicker.html', error_msg="How did you end up here? Missing params.",
                                    header=header, title=title)
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
 
         if "areas" not in mapping:
@@ -908,7 +928,7 @@ class config(object):
 
             mapping["areas"][this_area_index]["settings"]["mon_ids_iv"] = ast.literal_eval(new_mons_list)
 
-            with open('configs/mappings.json', 'w') as outfile:
+            with open(self._args.mappings, 'w') as outfile:
                 json.dump(mapping, outfile, indent=4, sort_keys=True)
             return redirect(backurl, code=302)
 
@@ -946,6 +966,12 @@ class config(object):
         return render_template('showmonsidpicker.html', backurl=backurl, formhiddeninput=formhiddeninput,
                                current_mons_list=current_mons_list, stripped_mondata=stripped_mondata, header=header,
                                title=title)
+
+    @auth_required
+    def reload(self):
+        if not self._args.auto_reload_config:
+            self._mapping_mananger.update()
+        return redirect(getBasePath(request) + "/showsettings", code=302)
 
 
 

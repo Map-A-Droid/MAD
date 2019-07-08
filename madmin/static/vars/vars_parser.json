@@ -354,6 +354,15 @@
 						"require": "false",
 						"description": "Quality of screenshot (Default: 80)"
 					}
+				},
+				{
+					"name": "route_calc_algorithm",
+					"settings": {
+						"type": "option",
+						"values": "optimized|quick",
+						"require": "false",
+						"description": "Method of calculation for routes. (Default optimized)"
+					}
 				}
 			]
 		}
@@ -693,6 +702,24 @@
 						"require": "true",
 						"values": "false|true",
 						"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+					}
+				},
+				{
+					"name": "level",
+					"settings": {
+						"type": "option",
+						"require": "true",
+						"values": "false|true",
+						"description": "Level up an account mode"
+					}
+				},
+				{
+					"name": "route_calc_algorithm",
+					"settings": {
+						"type": "option",
+						"values": "optimized|quick",
+						"require": "false",
+						"description": "Method of calculation for routes. (Default optimized)"
 					}
 				}
 			],

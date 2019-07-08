@@ -7,7 +7,7 @@ from abc import ABC, abstractmethod
 from datetime import datetime
 from queue import Queue
 from threading import Event, Lock, RLock, Thread
-from typing import List
+from typing import List, Optional, Tuple, Dict
 
 import numpy as np
 
@@ -18,7 +18,6 @@ from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
 from utils.logging import logger
 from utils.walkerArgs import parseArgs
-from worker.WorkerBase import WorkerBase
 
 args = parseArgs()
 
@@ -30,7 +29,8 @@ Relation = collections.namedtuple(
 class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None):
+                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+                 level: bool = False, calctype: str = "optimized"):
         self.db_wrapper: DbWrapperBase = db_wrapper
         self.init: bool = init
         self.name: str = name
@@ -49,9 +49,13 @@ class RouteManagerBase(ABC):
         self._rounds = {}
         self._positiontyp = {}
         self._coords_to_be_ignored = set()
+        self._level = level
+        self._calctype = calctype
+        self._overwrite_calculation: bool = False
+        self._stops_not_processed: Dict[Location, int] = {}
 
         # we want to store the workers using the routemanager
-        self._workers_registered: List[WorkerBase] = []
+        self._workers_registered: List[str] = []
         self._workers_registered_mutex = Lock()
 
         self._last_round_prio = {}
@@ -66,7 +70,8 @@ class RouteManagerBase(ABC):
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
             new_coords = getJsonRoute(
-                fenced_coords, max_radius, max_coords_within_radius, routefile)
+                fenced_coords, max_radius, max_coords_within_radius, routefile,
+                algorithm=calctype)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
@@ -85,6 +90,12 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._stop_update_thread = Event()
 
+    def get_ids_iv(self) -> Optional[List[int]]:
+        if self.settings is not None:
+            return self.settings.get("mon_ids_iv", [])
+        else:
+            return None
+
     def stop_routemanager(self):
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
@@ -102,12 +113,12 @@ class RouteManagerBase(ABC):
         finally:
             self._manager_mutex.release()
 
-    def clear_coords(self):
+    def _clear_coords(self):
         self._manager_mutex.acquire()
         self._coords_unstructured = None
         self._manager_mutex.release()
 
-    def register_worker(self, worker_name):
+    def register_worker(self, worker_name) -> bool:
         self._workers_registered_mutex.acquire()
         try:
             if worker_name in self._workers_registered:
@@ -122,6 +133,7 @@ class RouteManagerBase(ABC):
                 self._positiontyp[worker_name] = 0
 
                 return True
+
         finally:
             self._workers_registered_mutex.release()
 
@@ -137,6 +149,22 @@ class RouteManagerBase(ABC):
                 # TODO: handle differently?
                 logger.info("Worker {} failed unregistering from routemanager {} since subscription was previously lifted", str(
                     worker_name), str(self.name))
+            if len(self._workers_registered) == 0 and self._is_started:
+                logger.info(
+                    "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
+                self._quit_route()
+        finally:
+            self._workers_registered_mutex.release()
+
+    def stop_worker(self):
+        self._workers_registered_mutex.acquire()
+        try:
+            for worker in self._workers_registered:
+                logger.info("Worker {} stopped from routemanager {}", str(
+                    worker), str(self.name))
+                worker.stop_worker()
+                self._workers_registered.remove(worker)
+                del self._rounds[worker]
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
@@ -179,13 +207,19 @@ class RouteManagerBase(ABC):
             to_be_appended[i][1] = float(list_coords[i].lng)
         self.add_coords_numpy(to_be_appended)
 
-    @staticmethod
-    def calculate_new_route(coords, max_radius, max_coords_within_radius, routefile, delete_old_route, num_procs=0):
+    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, routefile, delete_old_route,
+                            num_procs=0):
+        if self._overwrite_calculation:
+            calctype = 'quick'
+        else:
+            calctype = self._calctype
+
         if delete_old_route and os.path.exists(str(routefile) + ".calc"):
             logger.debug("Deleting routefile...")
             os.remove(str(routefile) + ".calc")
         new_route = getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
-                                 routefile=routefile)
+                                 routefile=routefile, algorithm=calctype)
+        if self._overwrite_calculation: self._overwrite_calculation = False
         return new_route
 
     def empty_routequeue(self):
@@ -198,8 +232,8 @@ class RouteManagerBase(ABC):
             routefile = None
         else:
             routefile = self._routefile
-        new_route = RouteManagerBase.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                                         routefile, delete_old_route, num_procs)
+        new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
+                                             routefile, delete_old_route, num_procs)
         self._manager_mutex.acquire()
         self._route.clear()
         for coord in new_route:
@@ -355,7 +389,7 @@ class RouteManagerBase(ABC):
         merged = self.clustering_helper.get_clustered(latest)
         return merged
 
-    def get_next_location(self, origin):
+    def get_next_location(self, origin: str) -> Optional[Location]:
         logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
             logger.info(
@@ -435,7 +469,7 @@ class RouteManagerBase(ABC):
                     self._manager_mutex.release()
                     return None
                 self._start_calc = True
-                self.clear_coords()
+                self._clear_coords()
                 coords = self._get_coords_post_init()
                 logger.debug("Setting {} coords to as new points in route of {}", str(
                     len(coords)), str(self.name))
@@ -492,34 +526,52 @@ class RouteManagerBase(ABC):
             logger.info('No more coords are available... Sleeping.')
         self._manager_mutex.release()
 
-    def change_init_mapping(self, name_area):
-        with open('configs/mappings.json') as f:
+    def change_init_mapping(self, name_area: str):
+        with open(args.mappings) as f:
             vars = json.load(f)
 
         for var in vars['areas']:
             if (var['name']) == name_area:
                 var['init'] = bool(False)
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(args.mappings, 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
 
-    def get_route_status(self):
+    def get_route_status(self) -> Tuple[int, int]:
         if self._route:
             return (len(self._route) - self._route_queue.qsize()), len(self._route)
         return 1, 1
 
-    def get_rounds(self, origin):
+    def get_rounds(self, origin: str) -> int:
         return self._rounds.get(origin, 999)
 
     def add_route_to_origin(self):
         for origin in self._rounds:
             self._rounds[origin] += 1
 
-    def get_registered_workers(self):
+    def get_registered_workers(self) -> int:
         return len(self._workers_registered)
 
-    def get_position_type(self, origin):
-        return self._positiontyp[origin]
+    def get_position_type(self, origin: str) -> Optional[str]:
+        return self._positiontyp.get(origin, None)
 
-    def get_walker_type(self):
+    def get_geofence_helper(self) -> Optional[GeofenceHelper]:
+        return self.geofence_helper
+
+    def get_init(self) -> bool:
+        return self.init
+
+    def get_mode(self):
         return self.mode
+
+    def get_settings(self) -> Optional[dict]:
+        return self.settings
+
+    def get_current_route(self) -> List[Location]:
+        return self._route
+
+    def get_current_prioroute(self) -> List[Location]:
+        return self._prio_queue
+
+    def get_level_mode(self):
+        return self._level

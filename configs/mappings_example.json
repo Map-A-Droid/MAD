@@ -8,6 +8,7 @@
             "mode": "mon_mitm",
             "name": "test123",
             "routecalc": "test123",
+            "route_calc_algorithm": "optimized",
             "settings": {
                 "delay_after_prio_event": null,
                 "max_distance": 200,
@@ -24,6 +25,7 @@
             "mode": "raids_mitm",
             "name": "huehuedurr",
             "routecalc": "nd_raid",
+            "route_calc_algorithm": "quick",
             "settings": {
                 "delay_after_prio_event": 50,
                 "max_distance": 200,
@@ -139,7 +141,8 @@
                 "reboot": true,
                 "reboot_thresh": 5,
                 "restart_pogo": 0,
-                "restart_thresh": 5
+                "restart_thresh": 5,
+                "route_calc_algorithm": "optimized"
             }
         }
     ],

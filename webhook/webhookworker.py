@@ -1,9 +1,11 @@
 import json
 import time
+from typing import Optional, List
 
 import requests
 
 from geofence.geofenceHelper import GeofenceHelper
+from utils.MappingManager import MappingManager
 from utils.gamemechanicutil import calculate_mon_level, get_raid_boss_cp
 from utils.logging import logger
 from utils.madGlobals import terminate_mad
@@ -12,25 +14,25 @@ from utils.s2Helper import S2Helper
 
 
 class WebhookWorker:
-    __IV_MON = []
-    __geofence_helpers = []
+    __IV_MON: List[int] = List[int]
+    __geofence_helpers: List[GeofenceHelper] = List[GeofenceHelper]
 
-    def __init__(self, args, db_wrapper, routemanagers, rarity):
+    def __init__(self, args, db_wrapper, mapping_manager: MappingManager, rarity):
         self.__worker_interval_sec = 10
         self.__args = args
         self.__db_wrapper = db_wrapper
         self.__rarity = rarity
         self.__last_check = int(time.time())
 
-        self.__build_ivmon_list(routemanagers)
-        self.__build_geofence_helpers(routemanagers)
+        self.__build_ivmon_list(mapping_manager)
+        self.__build_geofence_helpers(mapping_manager)
 
         if self.__args.webhook_start_time != 0:
             self.__last_check = int(self.__args.webhook_start_time)
 
-    def update_settings(self, routemanagers):
-        self.__build_ivmon_list(routemanagers)
-        self.__build_geofence_helpers(routemanagers)
+    def update_settings(self, mapping_manager: MappingManager):
+        self.__build_ivmon_list(mapping_manager)
+        self.__build_geofence_helpers(mapping_manager)
 
     def __payload_type_count(self, payload):
         count = {}
@@ -95,7 +97,8 @@ class WebhookWorker:
 
             current_pl_num = 1
             for payload_chunk in payload_list:
-                logger.debug("Payload: {}", str(json.dumps(payload_chunk)))
+                logger.debug4("Python data for payload: {}", str(payload_chunk))
+                logger.debug3("Payload: {}", str(json.dumps(payload_chunk)))
 
                 try:
                     response = requests.post(
@@ -176,6 +179,7 @@ class WebhookWorker:
                 "quest_reward_type_raw": quest["quest_reward_type_raw"],
                 "quest_target": quest["quest_target"],
                 "pokemon_id": int(quest["pokemon_id"]),
+                "pokemon_form": int(quest["pokemon_form"]),
                 "item_amount": quest["item_amount"],
                 "item_id": quest["item_id"],
                 "quest_task": quest["quest_task"],
@@ -204,6 +208,7 @@ class WebhookWorker:
         if a_quest_type == 7:
             a_quest_reward["info"]["pokemon_id"] = int(quest["pokemon_id"])
             a_quest_reward["info"]["shiny"] = 0
+            a_quest_reward["info"]["form"] = int(quest["pokemon_form"])
 
         for a_quest_condition in quest_conditions:
             # Quest condition for special type of pokemon.
@@ -339,6 +344,9 @@ class WebhookWorker:
             if raid["is_ex_raid_eligible"] is not None:
                 raid_payload["is_ex_raid_eligible"] = raid["is_ex_raid_eligible"]
 
+            if raid["gender"] is not None:
+                raid_payload["gender"] = raid["gender"]
+
             # create final message
             entire_payload = {"type": "raid", "message": raid_payload}
 
@@ -458,20 +466,44 @@ class WebhookWorker:
 
         return ret
 
-    def __build_ivmon_list(self, routemanagers):
-        self.__IV_MON = []
+    def __prepare_stops_data(self, pokestop_data):
+        ret = []
 
-        for routemanager in routemanagers:
-            manager = routemanagers[routemanager].get("routemanager", None)
+        for pokestop in pokestop_data:
+            if self.__is_in_excluded_area([pokestop["latitude"], pokestop["longitude"]]):
+                continue
 
-            if manager is not None:
-                ivlist = manager.settings.get("mon_ids_iv", [])
+            pokestop_payload = {
+                "name": pokestop["name"],
+                "pokestop_id": pokestop["pokestop_id"],
+                "latitude": pokestop["latitude"],
+                "longitude": pokestop["longitude"],
+                "lure_expiration": pokestop["lure_expiration"],
+                "lure_id": pokestop["active_fort_modifier"],
+                "updated": pokestop["last_updated"],
+                "last_modified": pokestop["last_modified"]
+            }
 
+            if pokestop["image"]:
+                pokestop_payload["url"] = pokestop["image"]
+
+            entire_payload = {"type": "pokestop", "message": pokestop_payload}
+            ret.append(entire_payload)
+
+        return ret
+
+    def __build_ivmon_list(self, mapping_manager: MappingManager):
+        self.__IV_MON: List[int] = []
+
+        for routemanager_name in mapping_manager.get_all_routemanager_names():
+            ids_iv_list: Optional[List[int]] = mapping_manager.routemanager_get_ids_iv(routemanager_name)
+
+            if ids_iv_list is not None:
                 # TODO check if area/routemanager is actually active before adding the IDs
-                self.__IV_MON = self.__IV_MON + list(set(ivlist) - set(self.__IV_MON))
+                self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
-    def __build_geofence_helpers(self, routemanagers):
-        self.__geofence_helpers = []
+    def __build_geofence_helpers(self, mapping_manager: MappingManager):
+        self.__geofence_helpers: List[GeofenceHelper] = []
 
         if self.__args.webhook_excluded_areas == "":
             pass
@@ -480,25 +512,21 @@ class WebhookWorker:
 
         for area_name in area_names:
             if area_name.endswith("*"):
-                for name, rmgr in routemanagers.items():
+                routemanager_names = mapping_manager.get_all_routemanager_names()
+                for name in routemanager_names:
                     if not name.startswith(area_name[:-1]):
                         continue
-
-                    self.__geofence_helpers.append(
-                        GeofenceHelper(
-                            rmgr["geofence_included"], rmgr["geofence_excluded"]
-                        )
-                    )
-
+                    geofence_helper_of_area: Optional[GeofenceHelper] = \
+                        mapping_manager.routemanager_get_geofence_helper(name)
+                    if geofence_helper_of_area is not None:
+                        self.__geofence_helpers.append(geofence_helper_of_area)
             else:
-                area = routemanagers.get(area_name, None)
+                geofence_helper_of_area = mapping_manager.routemanager_get_geofence_helper(area_name)
 
-                if area is None:
+                if geofence_helper_of_area is None:
                     continue
 
-                self.__geofence_helpers.append(
-                    GeofenceHelper(area["geofence_included"], area["geofence_excluded"])
-                )
+                self.__geofence_helpers.append(geofence_helper_of_area)
 
     def __create_payload(self):
         # the payload that is about to be sent
@@ -531,6 +559,13 @@ class WebhookWorker:
                     self.__db_wrapper.get_gyms_changed_since(self.__last_check)
                 )
                 full_payload += gyms
+
+            # stops
+            if self.__args.pokestop_webhook:
+                pokestops = self.__prepare_stops_data(
+                    self.__db_wrapper.get_stops_changed_since(self.__last_check)
+                )
+                full_payload += pokestops
 
             # mon
             if self.__args.pokemon_webhook:

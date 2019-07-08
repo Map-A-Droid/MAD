@@ -9,6 +9,7 @@ from multiprocessing.pool import ThreadPool
 import cv2
 import numpy as np
 import pytesseract
+from pytesseract import Output
 from PIL import Image
 # from numpy import round, ones, uint8
 # from tinynumpy import tinynumpy as np
@@ -238,6 +239,42 @@ class PogoWindows:
             "readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
         return -1
 
+    def look_for_ggl_login(self, filename, communicator):
+        if not os.path.isfile(filename):
+            logger.error("look_for_ggl_login: {} does not exist", str(filename))
+            return False
+
+        return self.__thread_pool.apply_async(self.__internal_look_for_ggl_login,
+                                              (filename, communicator)).get()
+
+    def __internal_look_for_ggl_login(self, filename, communicator):
+        logger.debug("lookForButton: Look for ggl login")
+        try:
+            screenshot_read = cv2.imread(filename)
+        except:
+            logger.error("Screenshot corrupted :(")
+            return False
+
+        if screenshot_read is None:
+            logger.error("Screenshot corrupted :(")
+            return False
+
+        img = cv2.imread(filename)
+
+        d = pytesseract.image_to_data(img, output_type=Output.DICT)
+
+        n_boxes = len(d['level'])
+        for i in range(n_boxes):
+            if '@gmail.com' in (d['text'][i]):
+                (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
+                click_x, click_y = x + w / 2, y + h / 2
+                logger.info('Found GGL Mail - click on it (' + str(click_x) + ', ' + str(click_y) + ')')
+                communicator.click(click_x, click_y)
+                time.sleep(5)
+                return True
+
+        return False
+
     def look_for_button(self, filename, ratiomin, ratiomax, communicator):
         if not os.path.isfile(filename):
             logger.error("look_for_button: {} does not exist", str(filename))
@@ -301,7 +338,8 @@ class PogoWindows:
             for x1, y1, x2, y2 in line:
 
                 if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and y1 > (height / 2) \
-                        and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
+                        and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
+
                     lineCount += 1
                     click_y = _last_y + ((y1 - _last_y) / 2)
                     _last_y = y1
@@ -355,9 +393,6 @@ class PogoWindows:
             index += 1
 
         return np.asarray(sort_lines, dtype=np.int32)
-
-        logger.debug('lookForButton: did not found any Button')
-        return False
 
     def __check_raid_line(self, filename, identifier, communicator, leftSide=False, clickinvers=False):
         logger.debug("__check_raid_line: Reading lines")
@@ -615,6 +650,13 @@ class PogoWindows:
         w = y1 - y2
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = gray[int(y2):(int(y2) + int(w)), int(x2):(int(x2) + int(h))]
+        scale_percent = 200  # percent of original size
+        width = int(gray.shape[1] * scale_percent / 100)
+        height = int(gray.shape[0] * scale_percent / 100)
+        dim = (width, height)
+
+        # resize image
+        gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
         cv2.imwrite(temp_path_item, gray)
         text = pytesseract.image_to_string(Image.open(temp_path_item))
         return text

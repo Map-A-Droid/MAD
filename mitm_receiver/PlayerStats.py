@@ -1,16 +1,19 @@
 import json
 import os
 import time
+import datetime
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
+from copy import deepcopy
 
 from db.dbWrapperBase import DbWrapperBase
+from mitm_receiver import MitmMapper
 from utils.logging import logger
 
 
 class PlayerStats(object):
-    def __init__(self, id, application_args, db_wrapper: DbWrapperBase):
+    def __init__(self, id, application_args, db_wrapper: DbWrapperBase, mitm_mapper_parent: MitmMapper):
         self._id = id
         self.__application_args = application_args
         self._level = 0
@@ -22,6 +25,7 @@ class PlayerStats(object):
         self._db_wrapper: DbWrapperBase = db_wrapper
         self._stats_period = 0
         self.__mapping_mutex = Lock()
+        self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent
 
     def set_level(self, level):
         logger.debug('[{}] - set level {}', str(self._id), str(level))
@@ -68,40 +72,27 @@ class PlayerStats(object):
 
         self.set_level(data[self._id][0]['level'])
 
+    def compare_hour(selfs, timestamp):
+        if datetime.datetime.fromtimestamp(int(time.time())).strftime('%H') != \
+                datetime.datetime.fromtimestamp(int(timestamp)).strftime('%H'):
+            return True
+        return False
+
     def stats_collector(self):
-        self.__mapping_mutex.acquire()
-        data_send_stats = []
-        data_send_location = []
+        logger.debug2("Creating stats_collector task for {}".format(self._id))
+        with self.__mapping_mutex:
+            if not self._stats_collector_start:
+                if time.time() - self._last_processed_timestamp > 600 or self.compare_hour(self._last_processed_timestamp):
+                    stats_collected_tmp = deepcopy(self.__stats_collected)
+                    del self.__stats_collected
+                    self.__stats_collected = {}
+                    self._last_processed_timestamp = time.time()
 
-        if not self._stats_collector_start:
-            if time.time() - self._last_processed_timestamp > 600:
-
-                # collect_data = self._stats_collect.get(self._last_processed_timestamp, [])
-
-                data_send_stats.append(self.stats_complete_parser(self.__stats_collected,
-                                                                  self._last_processed_timestamp))
-                data_send_location.append(self.stats_location_parser(self.__stats_collected,
-                                                                     self._last_processed_timestamp))
-                data_send_location_raw = self.stats_location_raw_parser(self.__stats_collected,
-                                                                        self._last_processed_timestamp)
-                data_send_detection_raw = self.stats_detection_raw_parser(self.__stats_collected,
-                                                                          self._last_processed_timestamp)
-
-                del self.__stats_collected
-                self.__stats_collected = {}
-
-                self._db_wrapper.submit_stats_complete(data_send_stats)
-                self._db_wrapper.submit_stats_locations(data_send_location)
-                self._db_wrapper.submit_stats_locations_raw(data_send_location_raw)
-                self._db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
-                self._db_wrapper.cleanup_statistics()
+                    self.__mitm_mapper_parent.add_stats_to_process(self._id, stats_collected_tmp,
+                                                                   self._last_processed_timestamp)
+            else:
+                self._stats_collector_start = False
                 self._last_processed_timestamp = time.time()
-
-        else:
-            self._stats_collector_start = False
-            self._last_processed_timestamp = time.time()
-
-        self.__mapping_mutex.release()
 
     def stats_collect_mon(self, encounter_id: str):
         with self.__mapping_mutex:
@@ -205,7 +196,8 @@ class PlayerStats(object):
                 else:
                     self.__stats_collected['location_nok'] += 1
 
-    def stats_complete_parser(self, data, period):
+    @staticmethod
+    def stats_complete_parser(client_id: int, data, period):
         raid_count = 0
         mon_count = 0
         mon_iv_count = 0
@@ -218,7 +210,7 @@ class PlayerStats(object):
 
         if 102 in data:
             mon_iv_count = data[102].get('mon_iv_count', 0)
-        stats_data = (str(self._id),
+        stats_data = (str(client_id),
                       str(int(period)),
                       str(raid_count),
                       str(mon_count),
@@ -226,27 +218,29 @@ class PlayerStats(object):
                       str(quest_count)
                       )
 
-        logger.debug('Submit complete stats for {} - Period: {}: {}', str(self._id), str(period), str(stats_data))
+        logger.debug('Submit complete stats for {} - Period: {}: {}', str(client_id), str(period), str(stats_data))
 
         return stats_data
 
-    def stats_location_parser(self, data, period):
+    @staticmethod
+    def stats_location_parser(client_id: int, data, period):
 
         location_count = data.get('location_count', 0)
         location_ok = data.get('location_ok', 0)
         location_nok = data.get('location_nok', 0)
 
-        location_data = (str(self._id),
+        location_data = (str(client_id),
                          str(int(period)),
                          str(location_count),
                          str(location_ok),
                          str(location_nok))
 
-        logger.debug('Submit location stats for {} - Period: {}: {}', str(self._id), str(period), str(location_data))
+        logger.debug('Submit location stats for {} - Period: {}: {}', str(client_id), str(period), str(location_data))
 
         return location_data
 
-    def stats_location_raw_parser(self, data, period):
+    @staticmethod
+    def stats_location_raw_parser(client_id: int, data, period):
 
         data_location_raw = []
 
@@ -254,12 +248,13 @@ class PlayerStats(object):
             for loc_raw in data['location']:
                 data_location_raw.append(loc_raw)
 
-        logger.debug('Submit raw location stats for {} - Period: {} - Count: {}', str(self._id), str(period),
+        logger.debug('Submit raw location stats for {} - Period: {} - Count: {}', str(client_id), str(period),
                     str(len(data_location_raw)))
 
         return data_location_raw
 
-    def stats_detection_raw_parser(self, data, period):
+    @staticmethod
+    def stats_detection_raw_parser(client_id: int, data, period):
 
         data_location_raw = []
         # elf.__stats_collected[106]['mon'][encounter_id]
@@ -270,7 +265,7 @@ class PlayerStats(object):
                     type_id = str(mon_id)
                     type_count = int(data[106]['mon'][mon_id])
 
-                    data_location_raw.append((str(self._id),
+                    data_location_raw.append((str(client_id),
                                              str(type_id),
                                              'mon',
                                              str(type_count),
@@ -282,7 +277,7 @@ class PlayerStats(object):
                     type_id = str(gym_id)
                     type_count = int(data[106]['raid'][gym_id])
 
-                    data_location_raw.append((str(self._id),
+                    data_location_raw.append((str(client_id),
                                              str(type_id),
                                              'raid',
                                              str(type_count),
@@ -294,7 +289,7 @@ class PlayerStats(object):
                     type_id = str(stop_id)
                     type_count = int(data[106]['quest'][stop_id])
 
-                    data_location_raw.append((str(self._id),
+                    data_location_raw.append((str(client_id),
                                              str(type_id),
                                              'quest',
                                              str(type_count),
@@ -307,14 +302,14 @@ class PlayerStats(object):
                     type_id = str(mon_id)
                     type_count = int(data[102]['mon_iv'][mon_id])
 
-                    data_location_raw.append((str(self._id),
+                    data_location_raw.append((str(client_id),
                                              str(type_id),
                                              'mon_iv',
                                              str(type_count),
                                              str(int(period))
                                               ))
 
-        logger.debug('Submit raw detection stats for {} - Period: {} - Count: {}', str(self._id), str(period),
+        logger.debug('Submit raw detection stats for {} - Period: {} - Count: {}', str(client_id), str(period),
                     str(len(data_location_raw)))
 
         return data_location_raw

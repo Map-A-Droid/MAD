@@ -5,25 +5,28 @@
 # A different config-files can be included directly in processes by "--config" or "-cf" and path
 # Value without # are needed for this script
 
-# MySql Settings
+# MySQL Settings
 ######################
 
-# if you intend to use the priority queue functionality these settings are required
-#db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
+# You really need to fill those. Most of the times you want to have frontend (RM/PMSF) already installed before running MAD.
+# You need to have MySQL Database and User/Grants already created!
+# If you just need clean schema you can install it via scripts/databasesetup.py
 
+#db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
 #dbip:                       # IP adress or hostname of the mysql server
-#dbusername:                 # Username of database
-#dbpassword:                 # Password of database
+#dbusername:                 # USERname for database
+#dbpassword:                 # Password for that username
 #dbname:                     # Name of the database
+
 #dbport:                     # Port of the database (Default: 3306)
 #db_poolsize:                # Amount of connections to keep open to the DB. Default: 2
 
 # Websocket Settings (RGC receiver)
 ######################
 
-#ws_ip:                     # IP for websockt to listen on (for RGC). Default: 0.0.0.0'
+#ws_ip:                     # IP for websockt to listen on (for RGC). Default: 0.0.0.0
 #ws_port:                   # Port of the websocket to listen on. Default: 8080
-#websocket_command_timeout:         # The max time to wait for a command to return (in seconds). Default: 30 seconds.
+#websocket_command_timeout: # The max time to wait for a command to return (in seconds). Default: 30 seconds.
 
 # MITM Receiver (Pogodroid data)
 ######################
@@ -50,26 +53,25 @@
 # path settings
 ######################
 
-#pogoasset:                   # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
+#pogoasset:                  # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
 #file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
+#mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
 
 # other settings
 ######################
 
-#cleanup_age:                # Delete Screenshots older than X minutes (Default: 1440. 0 to disable)
 #last_scanned                # Submit last scanned locations to RM database (if your fork support this!)
 #npValue:                    # Matching Zoom - Max Value (Default: 0.5 [for width = 720px]. 1.5 for width = 1080px)
 #npFrom:                     # Matching Zoom - Start Value (Default: 0.2 [for width = 720px]. 0.5 for width = 1080px)
 #gym_scan_distance:          # Distance of scanned Gyms (Default: 6) - reduce if you scan an area with many gyms at one place
 #weather                     # Detect weather - if your frontend support this!
-#route_file:                 # Filename for Route Cache without extension (Default: route)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
-#use_media_projection        # Use Mediaprojection for transfering images (OCR)
 #language:                   # Language for quests (default:en - others: de (more soon))
+#mitm_status_password: SetPls # Header Authorization password for MITM /status/ page
 
 # MADmin statistics
 ######################
@@ -84,6 +86,16 @@
 #adb_server_ip:               # IP address of ADB server (Default: 127.0.0.1)
 #adb_server_port:             # Port of ADB server (Default: 5037)
 
+# auto reload mappings
+######################
+#auto_reload_config          # Auto reload mappings configuration
+#auto_reload_delay           # Auto reload mappings configuration delay in seconds (Default: 60)
+
+# Game Stats
+######################
+#game_stats                  # Generate worker stats
+#game_stats_raw              # Generate worker raw stats (only with --game_stats)')
+
 # MADmin
 ######################
 #with_madmin                 # Start Madmin
@@ -95,18 +107,19 @@
 #unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
 #madmin_user: madmin         # MADmin username for login
 #madmin_password: MySecret   # MADmin password for login
+#quests_public               # Disables login for /quests_pub, /get_quests and /asset to use /quests_pub as public quest overview
 
 # webhook
 ######################
-
 #webhook                     # Activate support for webhook
 #webhook_url:                # webhook endpoint (multiple seperated by comma)
                              #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
-                             #  possible types are: pokemon, raid, gym, weather
+                             #  possible types are: pokemon, raid, gym, weather, pokestop
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
 #webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
-#weather_webhook             # Activate support for weather webhook
+#weather_webhook             # Activate support for weather webhook (remember to enable weather support in other settings section too!)
 #pokemon_webhook             # Activate support for pokemon webhook
+#pokestop_webhook            # Activate support for pokestop webhook (lures)
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
 #quest_webhook               # Activate support for quest webhook
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
@@ -126,6 +139,9 @@
 ######################
 #no_file_logs                # Disable file logging (Default: file logging is enabled by default)
 #log_path:                   # Defines directory to save log files to (Default: logs/)
-#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN> with the instance's status name (Default: Default: %%Y%%m%%d_%%H%%M_<SN>.log)
-#log_file_rotation_size:     # Defines the maximum size in MB for single log files. (Default: )
-#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs. Custom log levels like DEBUG[1-5] can be used too
+#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN> 
+                             #  with the instance's status name (Default: Default: %Y%m%d_%H%M_<SN>.log)
+#log_file_rotation:          # This parameter expects a human-readable value like '18:00', 'sunday', 'weekly', 'monday 
+                             #  at 12:00' or a maximum file size like '100 MB' or '0.5 GB'. Set to '0' to disable completely. (Default: 50 MB)
+#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs. 
+                             #  Custom log levels like DEBUG[1-5] can be used too

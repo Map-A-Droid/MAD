@@ -1,4 +1,5 @@
 import gettext
+import json
 import re
 
 from utils.language import i8ln, open_json_file
@@ -22,6 +23,7 @@ def generate_quest(quest):
     item_amount = 1
     pokemon_id = '000'
     pokemon_name = ''
+    pokemon_form = extractForm(quest["quest_reward"])
 
     if quest_reward_type == _('Item'):
         item_amount = quest['quest_item_amount']
@@ -53,6 +55,7 @@ def generate_quest(quest):
         'item_type': item_type,
         'pokemon_id': pokemon_id,
         'pokemon_name': pokemon_name,
+        'pokemon_form': pokemon_form,
         'quest_type': quest_type,
         'quest_type_raw': quest['quest_type'],
         'quest_reward_type': quest_reward_type,
@@ -63,6 +66,17 @@ def generate_quest(quest):
         'quest_template': quest['quest_template']
     })
     return quest_raw
+
+
+def extractForm(quest_reward_json):
+    quest_reward = json.loads(quest_reward_json)
+
+    if len(quest_reward) == 0:
+        return 0
+
+    if "pokemon_encounter" in quest_reward[0]:
+        encounter = quest_reward[0]["pokemon_encounter"]
+        return encounter["pokemon_display"]["form_value"]
 
 
 def questreward(quest_reward_type):

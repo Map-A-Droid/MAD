@@ -6,6 +6,7 @@ import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
+import math
 sys.path.append("..")
 from utils.resolution import Resocalculator
 
@@ -55,6 +56,13 @@ class testimage(object):
 
         if self._mode == "open_gym":
             self._image_check = self.get_gym_click_coords(self._image)
+
+        if self._mode == "check_button_big":
+            self._image_check = self.look_for_button(self._image, 1.05, 2.20)
+                                                     #2.20, 3.01)
+
+        if self._mode == "check_button_small":
+            self._image_check = self.look_for_button(self._image, 2.20, 3.01)
 
         if self._mode == "find_pokeball":
             self._image_check = self.find_pokeball(self._image)
@@ -213,6 +221,101 @@ class testimage(object):
             return True
         return False
 
+    def look_for_button(self, filename, ratiomin, ratiomax):
+        print("lookForButton: Reading lines")
+        disToMiddleMin = None
+        gray = cv2.cvtColor(filename, cv2.COLOR_BGR2GRAY)
+        height, width, _ = filename.shape
+        _widthold = float(width)
+        print("lookForButton: Determined screenshot scale: " +
+                     str(height) + " x " + str(width))
+
+        # resize for better line quality
+        # gray = cv2.resize(gray, (0,0), fx=width*0.001, fy=width*0.001)
+        height, width = gray.shape
+        factor = width / _widthold
+
+        gray = cv2.GaussianBlur(gray, (3, 3), 0)
+        edges = cv2.Canny(gray, 50, 200, apertureSize=3)
+        # checking for all possible button lines
+
+        maxLineLength = (width / ratiomin) + (width * 0.18)
+        print("lookForButton: MaxLineLength:" + str(maxLineLength))
+        minLineLength = (width / ratiomax) - (width * 0.02)
+        print("lookForButton: MinLineLength:" + str(minLineLength))
+
+        kernel = np.ones((2, 2), np.uint8)
+        # kernel = np.zeros(shape=(2, 2), dtype=np.uint8)
+        edges = cv2.morphologyEx(edges, cv2.MORPH_GRADIENT, kernel)
+
+        maxLineGap = 50
+        lineCount = 0
+        _x = 0
+        _y = height
+        lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
+                                maxLineGap=2)
+        if lines is None:
+            return False
+
+        lines= (self.check_lines(lines, height))
+
+        _last_y = 0
+        for line in lines:
+            line = [line]
+            for x1, y1, x2, y2 in line:
+                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and \
+                        y1 > (height / 2) \
+                        and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
+                    lineCount += 1
+                    click_y = _last_y + ((y1 - _last_y) / 2)
+                    _last_y = y1
+                    _x1 = x1
+                    _x2 = x2
+
+                    print("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
+                        x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))
+
+                    cv2.line(filename, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 5)
+
+        if 1 < lineCount <= 6:
+            click_x = int(((width - _x2) + ((_x2 - _x1) / 2)) /
+                          round(factor, 2))
+            click_y =  int(click_y)
+            print('lookForButton: found Button - click on it')
+            return cv2.circle(filename, (int(click_x), int(click_y)), 20, (0, 0, 255), -1)
+
+        elif lineCount > 6:
+            print('lookForButton: found to much Buttons :) - close it')
+            return cv2.circle(filename, (int(width - (width / 7.2)), int(height - (height / 12.19))),
+                              20, (0, 0, 255), -1)
+
+        print('lookForButton: did not found any Button')
+        return False
+
+
+    def check_lines(self, lines, height):
+        temp_lines = []
+        sort_lines = []
+        old_y1 = 0
+        index = 0
+
+        for line in lines:
+            for x1, y1, x2, y2 in line:
+                temp_lines.append([y1, y2, x1, x2])
+
+        temp_lines = np.array(temp_lines)
+        sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
+
+        button_value = height / 40
+
+        for line in sort_arr:
+            if int(old_y1+int(button_value)) < int(line[0]):
+                if int(line[0]) == int(line[1]):
+                    sort_lines.append([line[2],line[0],line[3],line[1]])
+                    old_y1 = line[0]
+            index += 1
+
+        return np.asarray(sort_lines, dtype=np.int32)
 
 ap = argparse.ArgumentParser()
 ap.add_argument("-i", "--image", required=True, help="Path to the image")

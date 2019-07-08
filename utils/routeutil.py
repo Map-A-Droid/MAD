@@ -36,12 +36,13 @@ def check_time_period(period):
         hour=int(sts1[0]), minute=int(sts1[1]), second=0, microsecond=0)
     tmTil = datetime.datetime.now().replace(
         hour=int(sts2[0]), minute=int(sts2[1]), second=0, microsecond=0)
+
     tmNow = datetime.datetime.now()
     if tmFrom > tmTil > tmNow:
         tmFrom = tmFrom + datetime.timedelta(days=-1)
-    if (tmTil + datetime.timedelta(minutes=5)) < tmFrom:
+    if (tmTil + datetime.timedelta(minutes=3)) < tmFrom:
         tmTil = tmTil + datetime.timedelta(days=1)
-    if tmFrom <= tmNow < (tmTil + datetime.timedelta(minutes=5)):
+    if tmFrom <= tmNow <= tmTil:
         return True
     else:
         return False
@@ -57,11 +58,3 @@ def pre_check_value(walker_settings):
     return True
 
 
-def check_max_walkers_reached(walker_settings, routemanager):
-    walkermax = walker_settings.get('walkermax', False)
-    if not walkermax:
-        return True
-    reg_workers = routemanager.get_registered_workers()
-    if int(reg_workers) > int(walkermax):
-        return False
-    return True

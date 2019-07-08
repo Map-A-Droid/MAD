@@ -19,8 +19,10 @@ class ADBConnect(object):
                 pass
             self.check_adblib = 'adb.client' in sys.modules
             if not self.check_adblib:
-                logger.error(
-                    'Could not find pure-python-adb lib - no support for ADB')
+                logger.warning(
+                    "Could not find pure-python-adb library - no support for ADB."
+                    "If you have no idea what ADB is or not planning to use it - IGNORE :)"
+                )
                 self._useadb = False
             else:
                 self._client = AdbClient(

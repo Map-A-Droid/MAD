@@ -1,9 +1,14 @@
 import math
-import os
 import time
 from enum import Enum
 from threading import Event, Thread
+from typing import List
 
+from db.dbWrapperBase import DbWrapperBase
+from mitm_receiver.MitmMapper import MitmMapper
+from ocr.pogoWindows import PogoWindows
+from utils.MappingManager import MappingManager
+from difflib import SequenceMatcher
 from utils.geo import (
     get_distance_of_two_points_in_meters,
     get_lat_lng_offsets_by_distance
@@ -11,7 +16,8 @@ from utils.geo import (
 from utils.logging import logger
 from utils.madGlobals import (
     InternalStopWorkerException,
-    WebsocketWorkerRemovedException
+    WebsocketWorkerRemovedException,
+    WebsocketWorkerTimeoutException
 )
 from worker.MITMBase import MITMBase, LatestReceivedType
 
@@ -28,14 +34,20 @@ class FortSearchResultTypes(Enum):
 
 
 class WorkerQuests(MITMBase):
+
+    def similar(self, a, b):
+        return SequenceMatcher(None, a, b).ratio()
+
     def _valid_modes(self):
         return ["pokestops"]
 
-    def __init__(self, args, id, last_known_state, websocket_handler, walker_routemanager,
-                 mitm_mapper, devicesettings, db_wrapper, pogoWindowManager, walker):
+    def __init__(self, args, id, last_known_state, websocket_handler,  mapping_manager: MappingManager,
+                 routemanager_name: str, db_wrapper: DbWrapperBase, pogo_window_manager: PogoWindows, walker,
+                 mitm_mapper: MitmMapper):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler,
-                          walker_routemanager, devicesettings, db_wrapper=db_wrapper, NoOcr=False,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogoWindowManager, walker=walker)
+                          mapping_manager=mapping_manager, routemanager_name=routemanager_name,
+                          db_wrapper=db_wrapper, NoOcr=False,
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker)
 
         self.clear_thread = None
         # 0 => None
@@ -43,23 +55,34 @@ class WorkerQuests(MITMBase):
         # 2 => clear quest
         self.clear_thread_task = 0
         self._start_inventory_clear = Event()
-        self._delay_add = int(self._devicesettings.get("vps_delay", 0))
+        self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
+        self._clear_quest_counter = 0
+
+        self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        if self._level_mode:
+            logger.info("Starting Level Mode")
+        else:
+            # initial cleanup old quests
+            if not self._init: self.clear_thread_task = 2
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
             return
         self.clear_thread = Thread(name="clear_thread_%s" % str(
                 self._id), target=self._clear_thread)
-        self.clear_thread.daemon = False
+        self.clear_thread.daemon = True
         self.clear_thread.start()
-        self._get_screen_size()
+        self._check_ggl_login()
 
         reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
+
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
 
     def _health_check(self):
         """
@@ -73,11 +96,11 @@ class WorkerQuests(MITMBase):
         self._update_injection_settings()
 
     def _move_to_location(self):
-        routemanager = self._walker_routemanager
-        if routemanager is None:
+        if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
-        if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
-            return False, False
+
+        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
                                                         float(
@@ -89,8 +112,8 @@ class WorkerQuests(MITMBase):
 
         delay_used = 0
         logger.debug("Getting time")
-        speed = routemanager.settings.get("speed", 0)
-        max_distance = routemanager.settings.get("max_distance", None)
+        speed = routemanager_settings.get("speed", 0)
+        max_distance = routemanager_settings.get("max_distance", None)
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
@@ -101,12 +124,12 @@ class WorkerQuests(MITMBase):
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
-            delay_used = self._devicesettings.get('post_teleport_delay', 7)
+            delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
             speed = 16.67  # Speed can be 60 km/h up to distances of 3km
 
             if self.last_location.lat == 0.0 and self.last_location.lng == 0.0:
                 logger.info('Starting fresh round - using lower delay')
-                delay_used = self._devicesettings.get('post_teleport_delay', 7)
+                delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
             else:
                 if distance >= 1335000:
                     speed = 180.43  # Speed can be abt 650 km/h
@@ -205,10 +228,9 @@ class WorkerQuests(MITMBase):
                                           self.current_location.lng, speed)
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
-            delay_used = self._devicesettings.get('post_walk_delay', 7)
+            delay_used = self.get_devicesettings_value('post_walk_delay', 7)
 
-        walk_distance_post_teleport = self._devicesettings.get(
-                'walk_after_teleport_distance', 0)
+        walk_distance_post_teleport = self.get_devicesettings_value('walk_after_teleport_distance', 0)
         if 0 < walk_distance_post_teleport < distance:
             # TODO: actually use to_walk for distance
             lat_offset, lng_offset = get_lat_lng_offsets_by_distance(
@@ -243,21 +265,21 @@ class WorkerQuests(MITMBase):
         if self._init:
             delay_used = 5
 
-        if self._devicesettings.get('last_action_time', None) is not None:
-            timediff = time.time() - self._devicesettings['last_action_time']
+        if self.get_devicesettings_value('last_action_time', None) is not None:
+            timediff = time.time() - self.get_devicesettings_value('last_action_time', 0)
             logger.info(
                     "Timediff between now and last action time: {}", str(float(timediff)))
             delay_used = delay_used - timediff
         else:
             logger.debug("No last action time found - no calculation")
+            delay_used = -1
 
         if delay_used < 0:
             logger.info('No more cooldowntime - start over')
         else:
             logger.info("Real sleep time: {} seconds!", str(delay_used))
             cleanupbox = False
-            lastcleanupbox = self._devicesettings.get(
-                    'last_cleanup_time', None)
+            lastcleanupbox = self.get_devicesettings_value('last_cleanup_time', None)
             if lastcleanupbox is not None:
                 if time.time() - lastcleanupbox > 900:
                     # just cleanup if last cleanup time > 15 minutes ago
@@ -266,17 +288,25 @@ class WorkerQuests(MITMBase):
                 if delay_used > 200 and cleanupbox:
                     self.clear_thread_task = 1
                     cleanupbox = False
+                if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                        or self._stop_worker_event.is_set():
+                    logger.error("Worker {} get killed while sleeping", str(self._id))
+                    raise InternalStopWorkerException
                 time.sleep(1)
 
-        self._devicesettings["last_location"] = self.current_location
+        self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
         return cur_time, True
 
     def _post_move_location_routine(self, timestamp: float):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
+        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
+        if position_type is None:
+            logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
+            raise InternalStopWorkerException
         self._work_mutex.acquire()
-        if not self._walker_routemanager.init:
+        if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
             logger.info("Processing Stop / Quest...")
 
             reachedMainMenu = self._check_pogo_main_screen(10, False)
@@ -289,11 +319,13 @@ class WorkerQuests(MITMBase):
             if data_received is not None and data_received == LatestReceivedType.STOP:
                 self._handle_stop(timestamp)
         else:
-            logger.info('Currently in INIT Mode - no Stop processing')
+            logger.debug('Currently in INIT Mode - no Stop processing')
+            time.sleep(5)
         logger.debug("Releasing lock")
         self._work_mutex.release()
 
     def _start_pogo(self):
+        self._check_ggl_login()
         pogo_topmost = self._communicator.isPogoTopmost()
         if pogo_topmost:
             return True
@@ -303,8 +335,7 @@ class WorkerQuests(MITMBase):
             self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
             logger.warning("Turning screen on")
             self._communicator.turnScreenOn()
-            time.sleep(self._devicesettings.get(
-                    "post_turn_screen_on_delay", 7))
+            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
         cur_time = time.time()
         self._mitm_mapper.set_injection_status(self._id, False)
@@ -315,12 +346,13 @@ class WorkerQuests(MITMBase):
                     "com.nianticlabs.pokemongo")
             time.sleep(1)
             pogo_topmost = self._communicator.isPogoTopmost()
-        reached_mainscreen = False
-        if start_result and self._wait_for_injection():
+
+        if start_result:
             logger.warning("startPogo: Started pogo successfully...")
             self._last_known_state["lastPogoRestart"] = cur_time
-            reached_mainscreen = self._check_pogo_main_screen(10, True)
-        return reached_mainscreen
+
+        self._wait_pogo_start_delay()
+        return start_result
 
     def _cleanup(self):
         if self.clear_thread is not None:
@@ -329,6 +361,7 @@ class WorkerQuests(MITMBase):
     def _clear_thread(self):
         logger.info('Starting clear Quest Thread')
         while not self._stop_worker_event.is_set():
+            time.sleep(0.5)
             # wait for event signal
             while not self._start_inventory_clear.is_set():
                 if self._stop_worker_event.is_set():
@@ -343,14 +376,14 @@ class WorkerQuests(MITMBase):
                         logger.info("Clearing box")
                         self.clear_box(self._delay_add)
                         self.clear_thread_task = 0
-                        self._devicesettings['last_cleanup_time'] = time.time()
-                    elif self.clear_thread_task == 2:
+                        self.set_devicesettings_value('last_cleanup_time', time.time())
+                    elif self.clear_thread_task == 2 and not self._level_mode:
                         logger.info("Clearing quest")
                         self._clear_quests(self._delay_add)
                         self.clear_thread_task = 0
                     time.sleep(1)
                     self._start_inventory_clear.clear()
-                except WebsocketWorkerRemovedException as e:
+                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) as e:
                     logger.error("Worker removed while clearing quest/box")
                     self._stop_worker_event.set()
                     return
@@ -360,7 +393,7 @@ class WorkerQuests(MITMBase):
         stop_inventory_clear = Event()
         stop_screen_clear = Event()
         logger.info('Cleanup Box')
-        not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'FrenchNameForLuckyEgg',
+        not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
@@ -384,18 +417,19 @@ class WorkerQuests(MITMBase):
         delete_allowed = False
         error_counter = 0
 
-        while int(delrounds) <= 8 and not stop_inventory_clear.is_set():
+        while int(delrounds) <= 10 and not stop_inventory_clear.is_set():
 
             trash = 0
             if not first_round and not delete_allowed:
                 error_counter += 1
                 if error_counter > 3:
                     stop_inventory_clear.set()
-                logger.warning('Find no item to delete: {}', str(error_counter))
-                self._communicator.touchandhold(int(200), int(300), int(200), int(100))
+                logger.warning('Find no item to delete - scrolling ({} times)', str(error_counter))
+                self._communicator.touchandhold(int(200), int(600), int(200), int(100))
                 time.sleep(2)
 
             trashcancheck = self._get_trash_positions()
+
             if trashcancheck is None:
                 logger.error('Could not find any trashcan - abort')
                 return
@@ -414,7 +448,11 @@ class WorkerQuests(MITMBase):
                                                                        check_y_text_starter)
 
                     logger.info("Found item {}", str(item_text))
-                    if item_text in not_allow:
+                    match_one_item : bool = False
+                    for text in not_allow:
+                        if self.similar(text, item_text) > 0.5:
+                            match_one_item = True
+                    if match_one_item:
                         logger.info('Could not delete this item - check next one')
                         trash += 1
                     else:
@@ -460,11 +498,15 @@ class WorkerQuests(MITMBase):
         injected_settings = {}
         scanmode = "quests"
         injected_settings["scanmode"] = scanmode
-        ids_iv = self._walker_routemanager.settings.get("mon_ids_iv", None)
+        routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+        ids_iv: List[int] = []
+        if routemanager_settings is not None:
+            ids_iv = routemanager_settings.get("mon_ids_iv", None)
         # if iv ids are specified we will sync the workers encountered ids to newest time.
-        if ids_iv:
+        if ids_iv is not None:
             (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(
-                    self._walker_routemanager.geofence_helper, self._latest_encounter_update)
+                    self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name),
+                    self._latest_encounter_update)
             if encounter_ids:
                 logger.debug("Found {} new encounter_ids", len(encounter_ids))
                 for encounter_id, disappear in encounter_ids.items():
@@ -521,6 +563,11 @@ class WorkerQuests(MITMBase):
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
                     return False
+                if self._level_mode:
+                    visited: bool = fort.get("visited", False)
+                    if visited:
+                        logger.info("Levelmode: Stop already visited - skipping it")
+                        return False
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
@@ -535,33 +582,43 @@ class WorkerQuests(MITMBase):
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         if not self._current_position_has_spinnable_stop(timestamp):
+            if self._level_mode:
+                return None
             # wait for GMO in case we moved too far away
             data_received = self._wait_for_data(
                     timestamp=timestamp, proto_to_wait_for=106, timeout=35)
             if data_received == LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
                 logger.info("Stop {}, {} considered to be ignored in the next round due to failed spinnable check",
                             str(self.current_location.lat), str(self.current_location.lng))
-                self._walker_routemanager.add_coord_to_be_removed(self.current_location.lat, self.current_location.lng)
+                self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+                                                                            self.current_location.lat,
+                                                                            self.current_location.lng)
                 return None
         while data_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time
             self._open_gym(self._delay_add)
+            self.set_devicesettings_value('last_action_time', time.time())
             data_received = self._wait_for_data(
                     timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
+                time.sleep(10)
+                self._checkPogoClose()
                 time.sleep(1)
                 if not self._checkPogoButton():
                     self._checkPogoClose()
                 time.sleep(1)
                 self._turn_map(self._delay_add)
+                time.sleep(1)
             elif data_received == LatestReceivedType.MON:
                 time.sleep(1)
                 logger.info('Clicking MON')
                 time.sleep(.5)
                 self._turn_map(self._delay_add)
+                time.sleep(1)
             elif data_received == LatestReceivedType.UNDEFINED:
+                logger.info('Getting timeout - or other unknown error. Try again')
                 if not self._checkPogoButton():
                     self._checkPogoClose()
 
@@ -583,14 +640,18 @@ class WorkerQuests(MITMBase):
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
                 logger.info('Received new Quest or have previously spun the stop')
-                self.clear_thread_task = 2
+                self._clear_quest_counter += 1
+                if self._clear_quest_counter == 3:
+                    logger.info('Getting 3 quests - clean them')
+                    self.clear_thread_task = 2
+                    self._clear_quest_counter = 0
                 break
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
                   FortSearchResultTypes.OUT_OF_RANGE):
                 logger.error('Softban - waiting...')
                 time.sleep(10)
+                self._stop_process_time = math.floor(time.time())
                 if self._open_pokestop(timestamp) is None:
-                    self._devicesettings['last_action_time'] = time.time()
                     return
             else:
                 logger.info("Likely already spun this stop or brief softban, trying again")
@@ -598,16 +659,16 @@ class WorkerQuests(MITMBase):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
                     self.clear_thread_task = 2
                     break
-                self._close_gym(self._delay_add)
+                # self._close_gym(self._delay_add)
 
                 self._turn_map(self._delay_add)
                 time.sleep(1)
+                self._stop_process_time = math.floor(time.time())
                 if self._open_pokestop(timestamp) is None:
-                    self._devicesettings['last_action_time'] = time.time()
                     return
                 to += 1
 
-        self._devicesettings['last_action_time'] = time.time()
+        self.set_devicesettings_value('last_action_time', time.time())
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         if latest is None:
@@ -617,9 +678,11 @@ class WorkerQuests(MITMBase):
             logger.debug(
                     "No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
-        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp:
+        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp and \
+                not latest[104].get('timestamp', 0) >= timestamp:
             return LatestReceivedType.GYM
-        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
+        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp and \
+                not latest[104].get('timestamp', 0) >= timestamp:
             return LatestReceivedType.MON
         else:
             # proto has previously been received, let's check the timestamp...
@@ -629,6 +692,7 @@ class WorkerQuests(MITMBase):
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
+                logger.debug4("Latest data received: {}".format(str(latest_data)))
                 if latest_data is None:
                     time.sleep(0.5)
                     return None

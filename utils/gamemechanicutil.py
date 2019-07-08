@@ -31,8 +31,14 @@ def gen_despawn_timestamp(known_despawn):
         time.mktime(despawn_time.timetuple())
     ).strftime("%Y-%m-%d %H:%M:%S")
 
+    # despawn time is unknown
     if known_despawn is False:
-        return int(time.time()) + 3 * 60
+        # just set despawn time to now + 3 minutes
+        # after that round down to full minutes to fix
+        # possible re-scan issue updating the seconds
+        # causing the timestmap to change and thus causing
+        # a resend via webhook. This kinde fixes that. Kinda.
+        return int(int(time.time() + 3 * 60) // 60 * 60)
 
     hrmi = known_despawn.split(":")
     known_despawn = datetime.now().replace(

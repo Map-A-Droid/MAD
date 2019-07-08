@@ -53,13 +53,17 @@ def initLogging(args):
             log_file_retention = str(args.log_file_retention) + " days"
             file_logs["retention"] = log_file_retention
 
-        if args.log_file_rotation_size != 0:
-            log_file_rotation_size = str(args.log_file_rotation_size) + " MB"
-            file_logs["rotation"] = log_file_rotation_size
+        if str(args.log_file_rotation) != "0":
+            file_logs["rotation"] = str(args.log_file_rotation)
 
         logconfig["handlers"].append(file_logs)
 
-    logger.configure(**logconfig)
+    try:
+        logger.configure(**logconfig)
+    except ValueError:
+        logger.error("Logging parameters/configuration is invalid.")
+        sys.exit(1)
+
     logger.info("Setting log level to {}", str(log_level))
 
 
