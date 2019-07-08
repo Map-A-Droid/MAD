@@ -481,7 +481,7 @@ class MappingManager:
 
     def __file_watcher(self):
         # We're on a 20-second timer.
-        refresh_time_sec = self.__args.auto_reload_delay
+        refresh_time_sec = int(self.__args.auto_reload_delay)
         filename = self.__args.mappings
         logger.info('Mappings.json reload delay: {} seconds', refresh_time_sec)
 
@@ -489,7 +489,7 @@ class MappingManager:
             # Wait (x-1) seconds before refresh, min. 1s.
             try:
                 time.sleep(max(1, refresh_time_sec - 1))
-            except KeyboardInterrupt as e:
+            except KeyboardInterrupt:
                 logger.info("Mappings.json watch got interrupted, stopping")
                 break
             try:
