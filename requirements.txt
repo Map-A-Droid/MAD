@@ -16,3 +16,5 @@ psutil
 watchdog
 loguru
 gevent
+opencv-python
+pytesseract
