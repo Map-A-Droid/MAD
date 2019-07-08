@@ -122,7 +122,8 @@ var leaflet_data = {
   geofences: {},
   workers: {},
   mons: {},
-  monicons: {}
+  monicons: {},
+  cellupdates: {}
 };
 
 new Vue({
@@ -133,13 +134,15 @@ new Vue({
     quests: {},
     spawns: {},
     mons: {},
+    cellupdates: {},
     layers: {
       stat: {
         spawns: false,
         gyms: false,
         quests: false,
         workers: false,
-        mons: false
+        mons: false,
+        cellupdates: false
       },
       dyn: {
         routes: {},
@@ -235,6 +238,13 @@ new Vue({
 
       this.changeStaticLayer("mons", oldVal, newVal);
     },
+    "layers.stat.cellupdates": function(newVal, oldVal) {
+      if (newVal && !init) {
+        this.map_fetch_cells(this.buildUrlFilter(true));
+      }
+
+      this.changeStaticLayer("cellupdates", oldVal, newVal);
+    },
     "layers.dyn.geofences": {
       deep: true,
       handler: function() {
@@ -311,6 +321,7 @@ new Vue({
       this.map_fetch_quests(urlFilter);
       this.map_fetch_mons(urlFilter);
       this.map_fetch_prioroutes();
+      this.map_fetch_cells(urlFilter);
 
       this.updateBounds(true);
     },
@@ -538,21 +549,27 @@ new Vue({
           var linecoords = [];
 
           // only display first 10 entries of the queue
-          route.coordinates.slice(0, 9).forEach(function(coord, index) {
-            if (index < maxcolored) {
-              color = $this.getPercentageColor((index+1) * 100 / maxcolored);
+          const now = Math.round((new Date()).getTime() / 1000);
+          route.coordinates.slice(0, 14).forEach(function(coord, index) {
+            let until = coord.timestamp - now;
+
+            if (until < 0) {
+              var hue = 0;
+              var sat = 100;
+            } else {
+              var hue = 120;
+              var sat = (index * 100) / 15;
             }
 
-            var weight = index == 0 ? 5 : 1;
+            var color = `hsl(${hue}, ${sat}%, 50%)`;
 
             circle = L.circle([coord.latitude, coord.longitude], {
               ctimestamp: coord.timestamp,
-              //pane: "routes",
               radius: cradius,
               color: color,
               fillColor: color,
               fillOpacity: 1,
-              weight: weight,
+              weight: 1,
               opacity: 0.8,
               fillOpacity: 0.5
             }).bindPopup($this.build_prioq_popup);
@@ -710,20 +727,14 @@ new Vue({
             return;
           }
 
-          var geojson = {
-            "type": "MultiPolygon",
-            "coordinates": geofence.coordinates
-          }
-
           // add geofence to layergroup
-          L.geoJSON(geojson, {
-            pane: "geofences",
-            style: {
+          var group = L.polygon(geofence.coordinates, { pane: "geofences",})
+            .setStyle({
               "color": $this.getRandomColor(),
               "weight": 2,
-              "opacity": 0.25
-            }
-          }).addTo(group);
+              "opacity": 0.5
+            })
+            .addTo(map);
 
           // add layergroup to management object
           leaflet_data["geofences"][name] = group;
@@ -763,8 +774,7 @@ new Vue({
             if (leaflet_data["monicons"][mon["mon_id"]]) {
               var icon = leaflet_data["monicons"][mon["mon_id"]];
             } else {
-              var form = String.prototype.padStart.call(mon["form"], 2, 0)
-              //var image = `asset/pokemon_icons/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+              var form = mon["form"] == 0 ? "00" : mon["form"];
               var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
               var icon = L.icon({
                 iconUrl: image,
@@ -788,6 +798,38 @@ new Vue({
             }
           }
         });
+      });
+    },
+    map_fetch_cells(urlFilter) {
+      var $this = this;
+
+      if (!$this.layers.stat.cellupdates) {
+        return;
+      }
+
+      axios.get('get_cells' + urlFilter).then(function (res) {
+        const now = Math.round((new Date()).getTime() / 1000);
+
+        res.data.forEach(function(cell) {
+          var noskip = true;
+          if ($this.cellupdates[cell.id]) {
+            if ($this.cellupdates[cell.id].updated != cell.updated) {
+              map.removeLayer(leaflet_data.cellupdates[cell.id]);
+              delete leaflet_data.cellupdates[cell.id];
+            } else {
+              noskip = false;
+            }
+          }
+
+          if (noskip) {
+            $this.cellupdates[cell.id] = cell;
+
+            leaflet_data.cellupdates[cell.id] = L.polygon(cell.polygon, {id: cell.id})
+              .setStyle($this.getCellStyle(now, cell.updated))
+              .bindPopup($this.build_cell_popup, {className: "cellpopup"})
+              .addTo(map);
+          }
+        })
       });
     },
     changeDynamicLayers(type) {
@@ -815,6 +857,27 @@ new Vue({
 
       this.updateStoredSetting("layer-stat-"+name, newState);
     },
+    getCellStyle(now, cell_updated) {
+      // credits to RDM for this
+
+      let ago = now - cell_updated;
+      let value;
+
+      if (ago <= 150) {
+        value = 0;
+      } else {
+        value = Math.min((ago - 150) / 750, 1);
+      }
+
+      const hue = ((1-value)*120).toString(10);
+      return {
+        fillColor: `hsl(${hue}, 100%, 50%)`,
+        color: "#333",
+        opacity: 0.65,
+        fillOpacity: 0.4,
+        weight: 1
+      };
+    },
     getRandomColor() {
       // generates only dark colors for better contrast
       var letters = '0123456789'.split('');
@@ -837,6 +900,15 @@ new Vue({
 
       var h = r * 0x10000 + g * 0x100 + b * 0x1;
       return "#" + ("000000" + h.toString(16)).slice(-6);
+    },
+    build_cell_popup(marker) {
+      var cell = this.cellupdates[marker.options.id];
+
+      return `
+        <div class="content">
+          <div class="id"><i class="fa fa-fingerprint"></i> <span>${cell["id"]}</span></div>
+          <div id="updated"><i class="fa fa-clock"></i> Updated: ${moment(cell['updated']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
+        </div>`;
     },
     build_prioq_popup(marker) {
       var time = moment(marker.options.ctimestamp*1000);
@@ -1064,8 +1136,7 @@ new Vue({
     build_mon_popup(marker) {
       mon = this.mons[marker.options.id];
 
-      var form = String.prototype.padStart.call(mon["form"], 2, 0);
-      //var image = `asset/pokemon_icons/pokemon_icon_${monpad}_${formpad}.png`;
+      var form = mon["form"] == 0 ? "00" : mon["form"];
       var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
 
       var iv = (mon["individual_attack"] + mon["individual_defense"] + mon["individual_stamina"])*100/45;
@@ -1098,7 +1169,7 @@ new Vue({
 
       return `
         <div class="content">
-          <div class="name">#${mon["mon_id"]} ${mon["gender"]==1?'<i class="fas fa-mars"></i>':'<i class="fas fa-venus"></i>'}</div>
+          <div class="name"><strong>${mon["name"]}</strong> #${mon["mon_id"]} ${mon["gender"]==1?'<i class="fas fa-mars"></i>':'<i class="fas fa-venus"></i>'}</div>
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${mon["encounter_id"]}</span></div>
           <div class="coords">
             <i class="fa fa-map-pin"></i>

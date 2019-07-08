@@ -7,6 +7,7 @@ from multiprocessing import Lock, Semaphore
 from typing import List, Optional
 
 import mysql
+from utils.s2Helper import S2Helper
 from bitstring import BitArray
 from mysql.connector.pooling import MySQLConnectionPool
 
@@ -1500,13 +1501,12 @@ class DbWrapperBase(ABC):
 
     def statistics_get_all_empty_scanns(self):
         logger.debug('Fetching all empty locations from db')
-        query =(
-            "SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
-            "SEPARATOR ', '), if(b.type=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
-            "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) as successcount from "
-            "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 and successcount=0 "
-            "ORDER BY count(id) DESC"
-        )
+        query = ("SELECT count(b.id) as Count, b.lat, b.lng, GROUP_CONCAT(DISTINCT b.worker order by worker asc "
+                 "SEPARATOR ', '), if(b.type=0,'Normal','PrioQ'), max(b.period), (select count(c.id) "
+                 "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) as successcount from "
+                 "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 and successcount=0 "
+                 "ORDER BY count(id) DESC"
+                 )
 
         res = self.execute(query)
         return res
@@ -1549,20 +1549,19 @@ class DbWrapperBase(ABC):
 
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(period), '%y-%m-%d %k:00:00'))"
 
-        query = (
-                "SELECT %s, lat, lng, if(type=0,'Normal',if(type=1,'PrioQ', if(type=2,'Startup',"
-                "if(type=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
-                "if(data_ts=0,fix_ts,data_ts), count, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
-                "'other')) from trs_stats_location_raw %s %s order by id asc" %
-                (str(query_date), (query_where), str(worker_where))
-        )
+        query = ("SELECT %s, lat, lng, if(type=0,'Normal',if(type=1,'PrioQ', if(type=2,'Startup',"
+                 "if(type=3,'Reboot','Restart')))), if(success=1,'OK','NOK'), fix_ts, "
+                 "if(data_ts=0,fix_ts,data_ts), count, if(transporttype=0,'Teleport',if(transporttype=1,'Walk', "
+                 "'other')) from trs_stats_location_raw %s %s order by id asc" %
+                 (str(query_date), (query_where), str(worker_where))
+                 )
 
         res = self.execute(query)
         return res
 
     def statistics_get_location_info(self):
         logger.debug('Fetching all empty locations from db')
-        query =(
+        query = (
             "select worker, sum(location_count), sum(location_ok), sum(location_nok), "
             "sum(location_nok) / sum(location_count) * 100 as Loc_fail_rate "
             "from trs_stats_location "
@@ -1593,3 +1592,64 @@ class DbWrapperBase(ABC):
             "delete from trs_stats_location_raw where period < (UNIX_TIMESTAMP() - 604800)"
         )
         self.execute(query, commit=True)
+
+    def submit_cells(self, origin: str, map_proto: dict):
+        cells = []
+        protocells = map_proto.get("cells", [])
+
+        query = ("INSERT INTO trs_s2cells (id, level, center_latitude, center_longitude, updated) "
+                 "VALUES (%s, %s, %s, %s, %s) ON DUPLICATE KEY UPDATE "
+                 "updated=VALUES(updated)"
+                 )
+
+        for cell in protocells:
+            cell_id = cell["id"]
+
+            if cell_id < 0:
+                cell_id = cell_id + 2 ** 64
+
+            lat, lng, alt = S2Helper.get_position_from_cell(cell_id)
+
+            cells.append((cell_id, 15, lat, lng, cell["current_timestamp"] / 1000))
+
+        self.executemany(query, cells, commit=True)
+
+    def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
+                               oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        query = (
+            "SELECT id, level, center_latitude, center_longitude, updated "
+            "FROM trs_s2cells "
+        )
+
+        query_where = (
+            " WHERE (center_latitude >= {} AND center_longitude >= {} "
+            " AND center_latitude <= {} AND center_longitude <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (center_latitude >= {} AND center_longitude >= {} "
+                " AND center_latitude <= {} AND center_longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        elif timestamp is not None:
+            tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
+            oquery_where = " AND updated >= '{}' ".format(tsdt)
+
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        cells = []
+        for (id, level, center_latitude, center_longitude, updated) in res:
+            cells.append({
+                "id": id,
+                "level": level,
+                "center_latitude": center_latitude,
+                "center_longitude": center_longitude,
+                "updated": updated
+            })
+
+        return cells

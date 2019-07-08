@@ -87,8 +87,8 @@ class WorkerBase(ABC):
         logger.debug2("Fetching devicemappings of {}".format(self._id))
         try:
             devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
-        except EOFError as e:
-            logger.warning("EOFError fetching devicemappings in worker {} with description: {}. Stopping worker"
+        except (EOFError, FileNotFoundError) as e:
+            logger.warning("Failed fetching devicemappings in worker {} with description: {}. Stopping worker"
                            .format(str(self._id), str(e)))
             self._stop_worker_event.set()
             return None
@@ -274,6 +274,7 @@ class WorkerBase(ABC):
                 pogo_started = self._start_pogo()
         else:
             pogo_started = self._start_pogo()
+
         self._work_mutex.release()
         logger.debug("_internal_health_check: worker lock released")
         return pogo_started
@@ -315,6 +316,8 @@ class WorkerBase(ABC):
             return
 
         while not self._stop_worker_event.isSet():
+            # check for ggl login
+            self._check_ggl_login()
             try:
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 walkercheck = self.check_walker()
@@ -539,25 +542,36 @@ class WorkerBase(ABC):
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
     def _check_ggl_login(self):
-        if not "AccountPickerActivity" in self._communicator.topmostApp():
-            logger.info('No GGL Login Window found on {}', str(self._id))
-            return False
+        topmostapp = self._communicator.topmostApp()
+        if not topmostapp: return False
 
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
-            logger.error("_check_ggl_login: Failed getting screenshot")
-            return False
+        if "AccountPickerActivity" in topmostapp or 'SignInActivity' in topmostapp:
 
-        logger.info('GGL Login Window found on {} - processing', str(self._id))
-        if not self._pogoWindowManager.look_for_ggl_login(self.get_screenshot_path(), self._communicator):
-            logger.error("_check_ggl_login: Failed reading screenshot")
-            return False
+            if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                        delayAfter=10):
+                logger.error("_check_ggl_login: Failed getting screenshot")
+                return False
 
-        buttoncheck = self._checkPogoButton()
-        while not buttoncheck and not self._stop_worker_event.isSet():
-            time.sleep(5)
+            logger.info('GGL Login Window found on {} - processing', str(self._id))
+            if not self._pogoWindowManager.look_for_ggl_login(self.get_screenshot_path(), self._communicator):
+                logger.error("_check_ggl_login: Failed reading screenshot")
+                return False
+
+            buttontimeout = 0
+            logger.info('Waiting for News Popup ...')
+
             buttoncheck = self._checkPogoButton()
+            while not buttoncheck and not self._stop_worker_event.isSet() and buttontimeout < 6:
+                time.sleep(5)
+                buttoncheck = self._checkPogoButton()
+                buttontimeout += 1
+                if buttontimeout == 5:
+                    logger.info('Timeout while waiting for after-login Button')
 
-        return True
+            return True
+
+        logger.debug('No GGL Login Window found on {}', str(self._id))
+        return False
 
     def _stop_pogo(self):
         attempts = 0
@@ -747,7 +761,7 @@ class WorkerBase(ABC):
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1))
         while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id):
             logger.error("_check_pogo_main_screen: not on Mainscreen...")
-            if attempts > maxAttempts:
+            if attempts == maxAttempts:
                 # could not reach raidtab in given maxAttempts
                 logger.error(
                         "_check_pogo_main_screen: Could not get to Mainscreen within {} attempts", str(maxAttempts))
@@ -805,6 +819,19 @@ class WorkerBase(ABC):
             return True
         logger.debug("checkPogoButton: done")
         return False
+
+    def _wait_pogo_start_delay(self):
+        delay_count: int = 0
+        pogo_start_delay: int = self.get_devicesettings_value("post_pogo_start_delay", 60)
+        logger.info('Waiting for pogo start: {} seconds', str(pogo_start_delay))
+
+        while delay_count <= pogo_start_delay:
+            if not self._mapping_manager.routemanager_present(self._routemanager_name) \
+                    or self._stop_worker_event.is_set():
+                logger.error("Worker {} get killed while waiting for pogo start", str(self._id))
+                raise InternalStopWorkerException
+            time.sleep(1)
+            delay_count += 1
 
     def _checkPogoClose(self):
         logger.debug("checkPogoClose: Trying to find closeX")

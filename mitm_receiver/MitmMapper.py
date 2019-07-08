@@ -57,10 +57,11 @@ class MitmMapper(object):
                     continue
                 if next_item is not None:
                     client_id, stats, last_processed_timestamp = next_item
+                    logger.info("Running stats processing on {}".format(str(client_id)))
                     self.__process_stats(stats, client_id, last_processed_timestamp)
         except Exception as e:
-            logger.fatal("Playerstats consumer stopping because of {}".format(str(e)))
-        logger.fatal("Shutting down Playerstats update consumer")
+            logger.error("Playerstats consumer stopping because of {}".format(str(e)))
+        logger.info("Shutting down Playerstats update consumer")
 
     def __process_stats(self, stats, client_id: int, last_processed_timestamp: float):
         logger.info('Submitting stats for origin {}', str(client_id))

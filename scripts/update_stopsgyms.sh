@@ -29,7 +29,41 @@ query(){
 mysql -N -B -u "$user" -D "$dbname" -p"$pass" -h "$dbip" -P "$port" -e "$1"
 }
 
+updategyminfo(){
+#update name/image for gyms that were pokestops (pokestops scan this info automagically, gyms dont)
+# thanks to TiMXL73 for the query / idea
+query "$(cat << EOF
+UPDATE $gymtable
+SET $gymtable.name =
+IF(
+  (SELECT name FROM $pstable WHERE $pstable.$psidcol = $gymtable.$gymidcol) IS NULL,
+  '$namedefault',
+  (SELECT name FROM $pstable WHERE $pstable.$psidcol = $gymtable.$gymidcol)
+)
+WHERE $gymtable.name = '$namedefault';
+EOF
+)"
+query "$(cat << EOF
+UPDATE $gymtable
+SET $gymtable.url =
+IF(
+  (SELECT $psurlcol FROM $pstable WHERE $pstable.$psidcol = $gymtable.$gymidcol) IS NULL,
+  '',
+  (SELECT $psurlcol FROM $pstable WHERE $pstable.$psidcol = $gymtable.$gymidcol)
+)
+WHERE $gymtable.url = '';
+EOF
+)"
+}
+
 update_mon(){
+gymtable=forts
+pstable=pokestops
+psidcol=external_id
+gymidcol=external_id
+unset namedefault
+psurlcol=url
+updategyminfo
 while read -r eid ;do     # delete pokestops that are now gyms
  query "delete from pokestops where external_id='$eid'"
  echo "deleted pokestop with external_id $eid"
@@ -43,6 +77,13 @@ done < <(query "select g.external_id, f.fort_id from forts as g join fort_sighti
 }
 
 update_rm(){
+gymtable=gymdetails
+pstable=pokestop
+psidcol=pokestop_id
+gymidcol=gym_id
+namedefault=unknown
+psurlcol=image
+updategyminfo
 while read -r eid ;do # delete pokestops that are now gyms
  query "delete from pokestop where pokestop_id='$eid'"
  echo "deleted pokestop with external_id $eid"

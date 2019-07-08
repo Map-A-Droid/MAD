@@ -114,7 +114,8 @@ class WorkerMITM(MITMBase):
 
     def _pre_work_loop(self):
         logger.info("MITM worker starting")
-        if not self._wait_for_injection():
+        self._check_ggl_login()
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
     def _start_pogo(self):
@@ -138,12 +139,14 @@ class WorkerMITM(MITMBase):
             pogo_topmost = self._communicator.isPogoTopmost()
 
         reached_raidtab = False
-        if start_result and self._wait_for_injection():
+        if start_result:
             logger.warning("startPogo: Starting pogo...")
             self._last_known_state["lastPogoRestart"] = cur_time
 
             # let's handle the login and stuff
             reached_raidtab = True
+
+        self._wait_pogo_start_delay()
 
         return reached_raidtab
 
@@ -196,9 +199,6 @@ class WorkerMITM(MITMBase):
                     self._latest_encounter_update)
             if encounter_ids:
                 logger.debug("Found {} new encounter_ids", len(encounter_ids))
-                for encounter_id, disappear in encounter_ids.items():
-                    logger.debug("id: {}, despawn: {}",
-                                 encounter_id, disappear)
             self._encounter_ids = {**encounter_ids, **self._encounter_ids}
             # allow one minute extra life time, because the clock on some devices differs, newer got why this problem
             # apears but it is a fact.
@@ -208,7 +208,6 @@ class WorkerMITM(MITMBase):
             for key, value in self._encounter_ids.items():
                 if value < max_age:
                     remove.append(key)
-                    logger.debug("removing encounterid: {} mon despawned", key)
 
             for key in remove:
                 del self._encounter_ids[key]
