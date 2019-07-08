@@ -89,7 +89,7 @@
 # auto reload mappings
 ######################
 #auto_reload_config          # Auto reload mappings configuration
-#auto_reload_delay           # Auto reload mappings configuration delay in seconds (Default: 60)
+#auto_reload_delay:           # Auto reload mappings configuration delay in seconds (Default: 60)
 
 # Game Stats
 ######################
