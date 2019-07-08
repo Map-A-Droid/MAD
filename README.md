@@ -12,7 +12,9 @@ Map'A'Droid is a scanner for PoGo based on Android devices.
 * [Discord](https://discord.gg/7TT58jU) - For general support
 * [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
 * [Supported Devices](https://github.com/Map-A-Droid/MAD-device-list) - Supported devices by MAD
+* [github wiki page](https://github.com/Map-A-Droid/MAD/wiki)
 * [Wiki Page](https://mad-docs.readthedocs.io/en/latest/) - For Installation instructions and other stuff
+* [ATV boxes](https://github.com/Map-A-Droid/MAD-ATV/wiki) - For information about running MAD on cheap ATV boxes
 
 ## Requirements
 
