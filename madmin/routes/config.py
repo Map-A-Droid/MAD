@@ -53,7 +53,7 @@ class config(object):
 
         walkernr = request.args.get('walkernr')
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -98,7 +98,7 @@ class config(object):
                     mapping['walker'][int(walkernr)]['setup'].insert(
                         999, walkerlist)
 
-            with open('configs/mappings.json', 'w') as outfile:
+            with open(self._args.mappings, 'w') as outfile:
                 json.dump(mapping, outfile, indent=4, sort_keys=True)
 
                 return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit="
@@ -136,7 +136,7 @@ class config(object):
         _temp = '<div class="form-group"><label>Area</label><br /><small class="form-text text-muted">Select the Area' \
                 '</small><select class="form-control" name="walkerarea" ' + \
                 lockvalue + ' ' + req + '>'
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -216,7 +216,7 @@ class config(object):
         edit = request.args.get('edit')
         datavalue = []
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -230,7 +230,7 @@ class config(object):
 
         mapping['walker'][int(walkernr)]['setup'] = datavalue
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
         return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(edit),
@@ -242,14 +242,14 @@ class config(object):
         walkernr = request.args.get('walkernr')
         walkerposition = request.args.get('walkerposition')
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
 
         del mapping['walker'][int(walkernr)]['setup'][int(walkerposition)]
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
         return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(walker),
@@ -278,7 +278,7 @@ class config(object):
         if edit:
             fieldwebsite.append(
                 '<input type="hidden" name="edit" value="' + edit + '" />')
-            with open('configs/mappings.json') as f:
+            with open(self._args.mappings) as f:
                 mapping = json.load(f)
                 if 'walker' not in mapping:
                     mapping['walker'] = []
@@ -440,7 +440,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'walker' not in mapping:
                         mapping['walker'] = []
@@ -507,7 +507,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'walker' not in mapping:
                         mapping['walker'] = []
@@ -531,7 +531,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'devicesettings' not in mapping:
                         mapping['devicesettings'] = []
@@ -556,7 +556,7 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + ' size=10 multiple=multiple>'
-                with open('configs/mappings.json') as f:
+                with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'walker' not in mapping:
                         mapping['walker'] = []
@@ -615,7 +615,7 @@ class config(object):
         edit = request.args.get('edit')
         area = request.args.get('area')
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -635,7 +635,7 @@ class config(object):
             if str(edit) == str(entry[_checkfield]):
                 del mapping[area][key]
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
         return redirect(getBasePath(request) + "/showsettings", code=302)
@@ -661,7 +661,7 @@ class config(object):
         area = datavalue.get("area", False)
         mode = datavalue.get("mode", False)
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -725,7 +725,7 @@ class config(object):
                     new['settings'] = {}
                 mapping[area].append(new)
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
 
@@ -761,7 +761,7 @@ class config(object):
     def showsettings(self):
         tab_content = ''
         tabarea = request.args.get("area", 'devices')
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
                 mapping['walker'] = []
@@ -891,7 +891,7 @@ class config(object):
             return render_template('showmonsidpicker.html', error_msg="How did you end up here? Missing params.",
                                    header=header, title=title)
 
-        with open('configs/mappings.json') as f:
+        with open(self._args.mappings) as f:
             mapping = json.load(f)
 
         if "areas" not in mapping:
@@ -928,7 +928,7 @@ class config(object):
 
             mapping["areas"][this_area_index]["settings"]["mon_ids_iv"] = ast.literal_eval(new_mons_list)
 
-            with open('configs/mappings.json', 'w') as outfile:
+            with open(self._args.mappings, 'w') as outfile:
                 json.dump(mapping, outfile, indent=4, sort_keys=True)
             return redirect(backurl, code=302)
 

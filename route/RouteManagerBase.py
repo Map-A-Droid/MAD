@@ -527,14 +527,14 @@ class RouteManagerBase(ABC):
         self._manager_mutex.release()
 
     def change_init_mapping(self, name_area: str):
-        with open('configs/mappings.json') as f:
+        with open(args.mappings) as f:
             vars = json.load(f)
 
         for var in vars['areas']:
             if (var['name']) == name_area:
                 var['init'] = bool(False)
 
-        with open('configs/mappings.json', 'w') as outfile:
+        with open(args.mappings, 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
 
     def get_route_status(self) -> Tuple[int, int]:

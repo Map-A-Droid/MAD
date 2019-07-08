@@ -2,9 +2,11 @@ import json
 import shutil
 
 from utils.logging import logger
+from utils.walkerArgs import parseArgs
 
-mapping_file = './configs/mappings.json'
-save_mapping_file = './configs/mappings_org.json'
+args = parseArgs()
+mapping_file = args.mappings
+save_mapping_file = args.mappings.replace('.json', '_org.json')
 
 
 def convert_mappings():

@@ -223,7 +223,7 @@ class MappingManager:
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
     def __read_mappings_file(self):
-        with open('configs/mappings.json') as f:
+        with open(self.__args.mappings) as f:
             self.__raw_json = json.load(f)
             if 'walker' not in self.__raw_json:
                 self.__raw_json['walker'] = []
@@ -482,7 +482,7 @@ class MappingManager:
     def __file_watcher(self):
         # We're on a 20-second timer.
         refresh_time_sec = self.__args.auto_reload_delay
-        filename = 'configs/mappings.json'
+        filename = self.__args.mappings
         logger.info('Mappings.json reload delay: {} seconds', refresh_time_sec)
 
         while not self.__stop_file_watcher_event.is_set():

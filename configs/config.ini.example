@@ -54,10 +54,11 @@
 ######################
 
 #pogoasset:                  # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
-#temp_path:                  # Path for generated temporary files (Default: temp/)
-#raidscreen_path:            # [OCR only]Path for taken screenshots (Default: ocr/screenshots/)
-#unknown_path:               # [OCR only] Path for not automaticly detected gyms or mons (Default: unknown/)
-#file_path:                  # Defines directory to save worker stats, position files and calculated routes (Default: files/)
+#temp_path:                  # Path for generated files while detecting raids (Default: temp/)
+#raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
+#unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
+#file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
+#mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
 
 # other settings
 ######################

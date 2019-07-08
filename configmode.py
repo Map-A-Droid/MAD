@@ -23,7 +23,7 @@ def generate_mappingjson():
     newfile['devices'] = []
     newfile['walker'] = []
     newfile['devicesettings'] = []
-    with open('configs/mappings.json', 'w') as outfile:
+    with open(args.mappings, 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 
@@ -40,7 +40,7 @@ if __name__ == "__main__":
             'config.ini file not found - check configs folder and copy .example')
         sys.exit(1)
 
-    filename = os.path.join('configs', 'mappings.json')
+    filename = args.mappings
     if not os.path.exists(filename):
         generate_mappingjson()
 
