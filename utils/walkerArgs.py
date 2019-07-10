@@ -245,6 +245,10 @@ def parseArgs():
     parser.add_argument('-ard', '--auto_reload_delay', default=60,
                         help='Auto reload mappings configuration sleeptimer (Default: 60)')
 
+    # custom google domain for GGL login if not using gmails
+    parser.add_argument('-cgd', '--custom_google_domain', default=False, type=str, required=False,
+                        help="Custom Google Apps domain used for Google Accounts in-game login (if not using GMail)")
+
     # stats
 
     parser.add_argument('-ggs', '--game_stats', action='store_true', default=False,

@@ -72,6 +72,7 @@
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #language:                   # Language for quests (default:en - others: de (more soon))
 #mitm_status_password: SetPls # Header Authorization password for MITM /status/ page
+#custom_google_domain:       # Domain you are using for Google Apps accounts (not GMails) to login in GGL
 
 # MADmin statistics
 ######################
@@ -89,7 +90,7 @@
 # auto reload mappings
 ######################
 #auto_reload_config          # Auto reload mappings configuration
-#auto_reload_delay:           # Auto reload mappings configuration delay in seconds (Default: 60)
+#auto_reload_delay:          # Auto reload mappings configuration delay in seconds (Default: 60)
 
 # Game Stats
 ######################

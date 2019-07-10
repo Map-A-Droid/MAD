@@ -20,13 +20,14 @@ Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
 
 class PogoWindows:
-    def __init__(self, temp_dir_path, thread_count: int):
+    def __init__(self, temp_dir_path, thread_count: int, args):
         # self.communicator = communicator
         if not os.path.exists(temp_dir_path):
             os.makedirs(temp_dir_path)
             logger.info('PogoWindows: Temp directory created')
         self.temp_dir_path = temp_dir_path
         self.__thread_pool = ThreadPool(processes=thread_count)
+        self._args = args
 
     def __most_present_colour(self, filename, max_colours):
         img = Image.open(filename)
@@ -265,7 +266,7 @@ class PogoWindows:
 
         n_boxes = len(d['level'])
         for i in range(n_boxes):
-            if '@gmail.com' in (d['text'][i]):
+            if '@gmail.com' in (d['text'][i]) or (self._args.custom_google_domain and self._args.custom_google_domain in (d['text'][i])):
                 (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
                 click_x, click_y = x + w / 2, y + h / 2
                 logger.info('Found GGL Mail - click on it (' + str(click_x) + ', ' + str(click_y) + ')')
