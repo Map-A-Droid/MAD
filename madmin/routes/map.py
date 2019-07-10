@@ -214,7 +214,8 @@ class map(object):
                 "lat": spawn["lat"],
                 "lon": spawn["lon"],
                 "spawndef": spawn["spawndef"],
-                "lastscan": spawn["lastscan"]
+                "lastscan": spawn["lastscan"],
+                "first_detection": spawn["first_detection"]
             })
 
         return jsonify(coords)

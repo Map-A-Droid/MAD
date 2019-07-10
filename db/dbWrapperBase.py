@@ -920,7 +920,7 @@ class DbWrapperBase(ABC):
 
         query = (
             "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
-            "spawndef, last_scanned "
+            "spawndef, last_scanned, first_detection "
             "FROM `trs_spawn`"
         )
 
@@ -948,9 +948,16 @@ class DbWrapperBase(ABC):
         query = query + query_where
         res = self.execute(query)
 
-        for (spawnid, lat, lon, endtime, spawndef, last_scanned) in res:
-            spawn[spawnid] = {'id': spawnid, 'lat': lat, 'lon': lon, 'endtime': endtime, 'spawndef': spawndef,
-                              'lastscan': str(last_scanned)}
+        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection) in res:
+            spawn[spawnid] = {
+                'id': spawnid,
+                'lat': lat,
+                'lon': lon,
+                'endtime': endtime,
+                'spawndef': spawndef,
+                'lastscan': str(last_scanned),
+                'first_detection': str(first_detection)
+            }
 
         return str(json.dumps(spawn))
 
@@ -980,7 +987,7 @@ class DbWrapperBase(ABC):
             minutes = int(endminsec_split[0])
             seconds = int(endminsec_split[1])
             temp_date = current_time_of_day.replace(
-                    minute=minutes, second=seconds)
+                minute=minutes, second=seconds)
 
             spawn_duration_minutes = 60 if spawndef == 15 else 30
 
