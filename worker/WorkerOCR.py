@@ -118,7 +118,7 @@ class WorkerOCR(WorkerBase):
         # curTime = time.time()
         logger.info(
             "main: Checking raidcount and copying raidscreen if raids present")
-        count_of_raids = self._pogoWindowManager.readRaidCircles(self.get_screenshot_path(), self._id,
+        count_of_raids = self._pogoWindowManager.read_amount_raid_circles(self.get_screenshot_path(), self._id,
                                                                  self._communicator)
         if count_of_raids == -1:
             logger.debug("Worker: Count present but no raid shown")
@@ -131,7 +131,7 @@ class WorkerOCR(WorkerBase):
                 logger.debug(
                     "Worker: couldn't take screenshot after opening raidtab, lock released")
                 return
-            count_of_raids = self._pogoWindowManager.readRaidCircles(self.get_screenshot_path(), self._id,
+            count_of_raids = self._pogoWindowManager.read_amount_raid_circles(self.get_screenshot_path(), self._id,
                                                                      self._communicator)
         #    elif countOfRaids == 0:
         #        emptycount += 1
