@@ -74,7 +74,6 @@ class Scanner:
                 logger.info('[Crop: {} ({})] detectRaidTime: found raidtimer {}', str(
                     raidNo), str(self.uniqueHash), raidtimer)
                 hatchTime = self.getHatchTime(raidtimer, raidNo)
-                logger.info('HIER')
 
                 if hatchTime:
                     logger.info('[Crop: {} ({})] ' + 'detectRaidTime: Hatchtime {}',
