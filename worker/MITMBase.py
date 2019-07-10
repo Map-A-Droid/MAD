@@ -1,5 +1,4 @@
 import collections
-import math
 import time
 from abc import abstractmethod
 from datetime import datetime
@@ -43,30 +42,28 @@ class MITMBase(WorkerBase):
                                                  self._mapping_manager.routemanager_get_mode(self._routemanager_name),
                                                  99)
 
-    def _wait_for_data(self, timestamp: float = time.time(), proto_to_wait_for=106, timeout=None):
+    def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None):
+        if timestamp is None:
+            timestamp = time.time()
+
         if timeout is None:
             timeout = self.get_devicesettings_value("mitm_wait_timeout", 45)
 
         # let's fetch the latest data to add the offset to timeout (in case phone and server times are off...)
         latest = self._mitm_mapper.request_latest(self._id)
-        timestamp_last_data = latest.get("timestamp_last_data", None)
-        timestamp_last_received = latest.get("timestamp_receiver", None)
+        timestamp_last_data = latest.get("timestamp_last_data", 0)
+        timestamp_last_received = latest.get("timestamp_receiver", 0)
 
         # we can now construct the rough estimate of the diff of time of mobile vs time of server, subtract our
         # timestamp by the diff
         # TODO: discuss, probably wiser to add to timeout or get the diff of how long it takes for RGC to issue a cmd
         timestamp = timestamp - (timestamp_last_received - timestamp_last_data)
 
-        # if timestamp_last_data is not None and timestamp_last_received is not None:
-        #     # add the difference of the two timestamps to timeout
-        #     timeout += (timestamp_last_received - timestamp_last_data)
-
         logger.info('Waiting for data after {}',
                     datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
-        while (data_requested == LatestReceivedType.UNDEFINED
-                and timestamp + timeout >= math.floor(time.time())):
+        while (data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time())):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
@@ -99,8 +96,8 @@ class MITMBase(WorkerBase):
 
             self._mitm_mapper.collect_location_stats(self._id, self.current_location, 0, self._waittime_without_delays,
                                                      position_type, 0,
-                                                     self._mapping_manager.routemanager_get_mode(
-                                                             self._routemanager_name), self._transporttype)
+                                                     self._mapping_manager.routemanager_get_mode(self._routemanager_name),
+                                                     self._transporttype)
 
             self._restart_count += 1
 
@@ -171,10 +168,10 @@ class MITMBase(WorkerBase):
         logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
         # get confirm box coords
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
-               self._resocalc.get_confirm_delete_quest_coords(self)[1]
+            self._resocalc.get_confirm_delete_quest_coords(self)[1]
 
         for trash in range(len(trashcancheck)):
-            logger.info("Delete old quest {}", int(trash)+1)
+            logger.info("Delete old quest {}", int(trash) + 1)
             self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
             time.sleep(1 + int(delayadd))
             self._communicator.click(int(x), int(y))

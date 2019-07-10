@@ -32,7 +32,7 @@ class MitmMapper(object):
         self.__playerstats_db_update_queue: Queue = Queue()
         self.__playerstats_db_update_mutex: Lock = Lock()
         self.__playerstats_db_update_consumer: Thread = Thread(
-                name="playerstats_update_consumer", target=self.__internal_playerstats_db_update_consumer)
+            name="playerstats_update_consumer", target=self.__internal_playerstats_db_update_consumer)
         if self.__mapping_manager is not None:
             for origin in self.__mapping_manager.get_all_devicemappings().keys():
                 self.__mapping[origin] = {}
@@ -110,8 +110,14 @@ class MitmMapper(object):
         return result
 
     # origin, method, data, timestamp
-    def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = time.time(),
-                      timestamp_received_receiver: float = time.time()):
+    def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = None,
+                      timestamp_received_receiver: float = None):
+        if timestamp_received_raw is None:
+            timestamp_received_raw = time.time()
+
+        if timestamp_received_receiver is None:
+            timestamp_received_receiver = time.time()
+
         updated = False
         logger.debug3("Trying to acquire lock and update proto {} received by {}".format(origin, key))
         with self.__mapping_mutex:
