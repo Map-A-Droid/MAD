@@ -1128,7 +1128,8 @@ new Vue({
          <div class="timestamp"><i class="fa fa-clock"></i> Scanned: ${spawn["lastscan"]}</div>
          <br>
           <div cla ss="spawnContent">
-          <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown"}</strong> spawnpoint</div>
+            <div class="spawnFirstDetection"><i class="fas fa-baby"></i> First seen: ${spawn["first_detection"]}</div>
+            <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown"}</strong> spawnpoint</div>
             <div class="spawnTiming">${spawntiming}</div>
           </div>
         </div>`;
