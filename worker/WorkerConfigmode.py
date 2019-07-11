@@ -9,8 +9,8 @@ from utils.routeutil import check_walker_value_type
 from utils.MappingManager import MappingManager
 from mitm_receiver.MitmMapper import MitmMapper
 from db.dbWrapperBase import DbWrapperBase
-from utils.madGlobals import(WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
-                             InternalStopWorkerException)
+from utils.madGlobals import (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                              InternalStopWorkerException)
 
 
 class WorkerConfigmode(object):
@@ -190,7 +190,7 @@ class WorkerConfigmode(object):
             start_result = self._communicator.reboot()
         except WebsocketWorkerRemovedException:
             logger.error(
-                    "Could not reboot due to client already having disconnected")
+                "Could not reboot due to client already having disconnected")
             start_result = False
         time.sleep(5)
         self._db_wrapper.save_last_reboot(self._id)
@@ -203,10 +203,8 @@ class WorkerConfigmode(object):
         logger.info('Waiting for pogo start: {} seconds', str(pogo_start_delay))
 
         while delay_count <= pogo_start_delay:
-            if not self._mapping_manager.routemanager_present(self._routemanager_name) \
-                    or self._stop_worker_event.is_set():
+            if self._stop_worker_event.is_set():
                 logger.error("Worker {} get killed while waiting for pogo start", str(self._id))
                 raise InternalStopWorkerException
             time.sleep(1)
             delay_count += 1
-
