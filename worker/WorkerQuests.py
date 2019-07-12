@@ -352,6 +352,8 @@ class WorkerQuests(MITMBase):
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()
+        self._check_ggl_login()
+        self._check_windows()
         return start_result
 
     def _cleanup(self):

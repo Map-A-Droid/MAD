@@ -22,6 +22,7 @@ from utils.madGlobals import (
 from utils.resolution import Resocalculator
 from utils.routeutil import check_walker_value_type
 from websocket.communicator import Communicator
+from ocr.screenPath import ScreenType, WordToScreenMatching
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
@@ -79,6 +80,7 @@ class WorkerBase(ABC):
         self.set_devicesettings_value("last_mode", self._mapping_manager.routemanager_get_mode(self._routemanager_name))
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
+        self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
@@ -231,6 +233,7 @@ class WorkerBase(ABC):
         try:
             self._check_ggl_login()
             self._turn_screen_on_and_start_pogo()
+            self._check_windows()
             self._get_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -316,8 +319,6 @@ class WorkerBase(ABC):
             return
 
         while not self._stop_worker_event.isSet():
-            # check for ggl login
-            self._check_ggl_login()
             try:
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 walkercheck = self.check_walker()
@@ -572,6 +573,28 @@ class WorkerBase(ABC):
 
         logger.debug('No GGL Login Window found on {}', str(self._id))
         return False
+
+    def _check_windows(self):
+        returncode: ScreenType = ScreenType.UNDEFINED
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                    delayAfter=2):
+            logger.error("_check_ggl_login: Failed getting screenshot")
+            return False
+
+        while not returncode == ScreenType.POGO:
+            returncode = self._WordToScreenMatching.matchScreen(self.get_screenshot_path())
+
+            if returncode == ScreenType.LOGINSELECT:
+                time.sleep(5)
+                self._check_ggl_login()
+                returncode = ScreenType.POGO
+
+            if returncode != ScreenType.POGO:
+                self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1), delayAfter=2)
+
+        return
+
+
 
     def _stop_pogo(self):
         attempts = 0
