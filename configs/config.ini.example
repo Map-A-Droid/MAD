@@ -72,7 +72,7 @@
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #language:                   # Language for quests (default:en - others: de (more soon))
 #mitm_status_password: SetPls # Header Authorization password for MITM /status/ page
-#custom_google_domain:       # Domain you are using for Google Apps accounts (not GMails) to login in GGL
+#custom_google_domain:       # List of domain (comma separated) you are using for Google Apps accounts (not GMails) to login in GGL
 
 # MADmin statistics
 ######################
