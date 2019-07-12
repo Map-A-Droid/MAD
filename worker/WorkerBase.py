@@ -229,9 +229,9 @@ class WorkerBase(ABC):
 
         self._work_mutex.acquire()
         try:
-            self._get_screen_size()
             self._check_ggl_login()
             self._turn_screen_on_and_start_pogo()
+            self._get_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
             # no cleanup required here? TODO: signal websocket server somehow
@@ -566,7 +566,7 @@ class WorkerBase(ABC):
                 buttoncheck = self._checkPogoButton()
                 buttontimeout += 1
                 if buttontimeout == 5:
-                    logger.info('Timeout while waiting for after-login Button')
+                    logger.info('Timeout while waiting for Button')
 
             return True
 
