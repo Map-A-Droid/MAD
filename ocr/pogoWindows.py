@@ -266,7 +266,7 @@ class PogoWindows:
 
         n_boxes = len(d['level'])
         for i in range(n_boxes):
-            if '@gmail.com' in (d['text'][i]) or (self._args.custom_google_domain and any(elem in (d['text'][i]) for elem in self._args.custom_google_domain.split(","))):
+            if '@gmail.com' in (d['text'][i]) or (self._args.custom_google_domain and any(elem.lower() in (d['text'][i].lower()) for elem in self._args.custom_google_domain.split(","))):
                 (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
                 click_x, click_y = x + w / 2, y + h / 2
                 logger.info('Found GGL Mail - click on it (' + str(click_x) + ', ' + str(click_y) + ')')
