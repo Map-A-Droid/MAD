@@ -13,7 +13,7 @@
 # so MAD will update your new rocketmap schema.                                                        #
 #                                                                                                      #
 # Blank RocketMap schema created via https://github.com/cecpk/OSM-Rocketmap properly working with MAD  #
-#       https://gist.github.com/sn0opy/fb654915180cfbd07d5a30407c286995i                               #
+#       https://gist.github.com/sn0opy/fb654915180cfbd07d5a30407c286995                                #
 #                                                                                                      #
 # If you get an error like:                                                                            #
 #  "ERROR 1364 (HY000) at line 1: Field 'enabled' doesn't have a default value                         #
