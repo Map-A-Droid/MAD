@@ -127,7 +127,6 @@ class MITMBase(WorkerBase):
     def _wait_for_injection(self):
         self._not_injected_count = 0
         while not self._mitm_mapper.get_injection_status(self._id):
-            self._check_ggl_login()
             if self._not_injected_count >= 20:
                 logger.error("Worker {} not get injected in time - reboot", str(self._id))
                 self._reboot(self._mitm_mapper)
