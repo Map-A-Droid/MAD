@@ -239,42 +239,6 @@ class PogoWindows:
             "readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
         return -1
 
-    def look_for_ggl_login(self, filename, communicator):
-        if not os.path.isfile(filename):
-            logger.error("look_for_ggl_login: {} does not exist", str(filename))
-            return False
-
-        return self.__thread_pool.apply_async(self.__internal_look_for_ggl_login,
-                                              (filename, communicator)).get()
-
-    def __internal_look_for_ggl_login(self, filename, communicator):
-        logger.debug("lookForButton: Look for ggl login")
-        try:
-            screenshot_read = cv2.imread(filename)
-        except:
-            logger.error("Screenshot corrupted :(")
-            return False
-
-        if screenshot_read is None:
-            logger.error("Screenshot corrupted :(")
-            return False
-
-        img = cv2.imread(filename)
-
-        d = pytesseract.image_to_data(img, output_type=Output.DICT)
-
-        n_boxes = len(d['level'])
-        for i in range(n_boxes):
-            if '@gmail.com' in (d['text'][i]):
-                (x, y, w, h) = (d['left'][i], d['top'][i], d['width'][i], d['height'][i])
-                click_x, click_y = x + w / 2, y + h / 2
-                logger.info('Found GGL Mail - click on it (' + str(click_x) + ', ' + str(click_y) + ')')
-                communicator.click(click_x, click_y)
-                time.sleep(5)
-                return True
-
-        return False
-
     def look_for_button(self, filename, ratiomin, ratiomax, communicator):
         if not os.path.isfile(filename):
             logger.error("look_for_button: {} does not exist", str(filename))

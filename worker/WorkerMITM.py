@@ -147,7 +147,6 @@ class WorkerMITM(MITMBase):
             reached_raidtab = True
 
         self._wait_pogo_start_delay()
-        self._check_ggl_login()
         self._check_windows()
         return reached_raidtab
 

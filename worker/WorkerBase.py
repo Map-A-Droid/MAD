@@ -231,7 +231,6 @@ class WorkerBase(ABC):
 
         self._work_mutex.acquire()
         try:
-            self._check_ggl_login()
             self._turn_screen_on_and_start_pogo()
             self._check_windows()
             self._get_screen_size()
@@ -542,59 +541,23 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
-    def _check_ggl_login(self):
-        topmostapp = self._communicator.topmostApp()
-        if not topmostapp: return False
-
-        if "AccountPickerActivity" in topmostapp or 'SignInActivity' in topmostapp:
-
-            if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                        delayAfter=10):
-                logger.error("_check_ggl_login: Failed getting screenshot")
-                return False
-
-            logger.info('GGL Login Window found on {} - processing', str(self._id))
-            if not self._pogoWindowManager.look_for_ggl_login(self.get_screenshot_path(), self._communicator):
-                logger.error("_check_ggl_login: Failed reading screenshot")
-                return False
-
-            buttontimeout = 0
-            logger.info('Waiting for News Popup ...')
-
-            buttoncheck = self._checkPogoButton()
-            while not buttoncheck and not self._stop_worker_event.isSet() and buttontimeout < 6:
-                time.sleep(5)
-                buttoncheck = self._checkPogoButton()
-                buttontimeout += 1
-                if buttontimeout == 5:
-                    logger.info('Timeout while waiting for Button')
-
-            return True
-
-        logger.debug('No GGL Login Window found on {}', str(self._id))
-        return False
-
     def _check_windows(self):
         returncode: ScreenType = ScreenType.UNDEFINED
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                     delayAfter=2):
-            logger.error("_check_ggl_login: Failed getting screenshot")
+            logger.error("_check_windows: Failed getting screenshot")
             return False
 
         while not returncode == ScreenType.POGO:
             returncode = self._WordToScreenMatching.matchScreen(self.get_screenshot_path())
 
-            if returncode == ScreenType.LOGINSELECT:
-                time.sleep(5)
-                self._check_ggl_login()
-                returncode = ScreenType.POGO
+            if returncode == ScreenType.GGL: time.sleep(10)
 
             if returncode != ScreenType.POGO:
-                self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1), delayAfter=2)
+                self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                     delayAfter=0.1)
 
         return
-
-
 
     def _stop_pogo(self):
         attempts = 0
