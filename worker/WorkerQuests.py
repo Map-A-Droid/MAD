@@ -73,7 +73,6 @@ class WorkerQuests(MITMBase):
                 self._id), target=self._clear_thread)
         self.clear_thread.daemon = True
         self.clear_thread.start()
-        self._check_ggl_login()
 
         reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
@@ -325,7 +324,6 @@ class WorkerQuests(MITMBase):
         self._work_mutex.release()
 
     def _start_pogo(self):
-        self._check_ggl_login()
         pogo_topmost = self._communicator.isPogoTopmost()
         if pogo_topmost:
             return True
