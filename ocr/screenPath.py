@@ -196,13 +196,12 @@ class WordToScreenMatching(object):
         elif ScreenType(self.returntype) == ScreenType.LOGINSELECT:
             temp_dict: dict = {}
             n_boxes = len(self._globaldict['level'])
-            print(self._globaldict)
             for i in range(n_boxes):
                 if 'Facebook' in (self._globaldict['text'][i]): temp_dict['Facebook'] = self._globaldict['top'][i]
                 if 'TRAINER' in (self._globaldict['text'][i]): temp_dict['TRAINER'] = self._globaldict['top'][i]
                 # french ...
                 if 'DRESSEURS' in (self._globaldict['text'][i]): temp_dict['TRAINER'] = self._globaldict['top'][i]
-                
+
                 if 'Google' in (self._globaldict['text'][i]):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
