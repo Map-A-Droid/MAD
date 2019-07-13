@@ -551,11 +551,11 @@ class WorkerBase(ABC):
         while not returncode == ScreenType.POGO:
             returncode = self._WordToScreenMatching.matchScreen(self.get_screenshot_path())
 
-            if returncode == ScreenType.GGL: time.sleep(15)
-
             if returncode != ScreenType.POGO:
                 self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                      delayAfter=0.1)
+
+            time.sleep(5)
 
         return
 

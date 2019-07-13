@@ -99,6 +99,7 @@ class WordToScreenMatching(object):
     def matchScreen(self, screenpath):
         topmostapp = self._communicator.topmostApp()
         frame = cv2.imread(screenpath)
+        frame_original = frame.copy()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         self.returntype: ScreenType = -1
         self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
@@ -126,28 +127,50 @@ class WordToScreenMatching(object):
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
                     self._communicator.click(click_x, click_y)
-                    time.sleep(5)
+                    time.sleep(25)
 
                     return ScreenType.GGL
 
         elif ScreenType(self.returntype) == ScreenType.PERMISSION:
+            click_x = None
+            click_y = None
+            divisor: int = 1
+            count: int = 0
             click_text = 'ZULASSEN,ALLOW,AUTORISER'
+            self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
             n_boxes = len(self._globaldict['level'])
-            for i in range(n_boxes):
-                if any(elem in (self._globaldict['text'][i]) for elem in click_text.split(",")):
-                    (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                    self._globaldict['width'][i], self._globaldict['height'][i])
-                    click_x, click_y = x + w / 2, y + h / 2
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(2)
+            while click_x is None and count < 2:
+                for i in range(n_boxes):
+                    if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_text.split(",")):
+                        (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
+                                        self._globaldict['width'][i], self._globaldict['height'][i])
+                        if click_x is None:
+                             click_x, click_y = x + w / 2, y + h / 2
+                        else:
+                            temp_click_x, temp_click_y = x + w / 2, y + h / 2
+                            if temp_click_x > click_x: (click_x, click_y) = (temp_click_x, temp_click_y)
 
-            return ScreenType.PERMISSION
+                if click_x is None:
+                    frame = cv2.bitwise_not(frame_original)
+                    frame = cv2.resize(frame, None, fx=2, fy=2)
+                    divisor = 2
+                    self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
+                    n_boxes = len(self._globaldict['level'])
+
+                count += 1
+
+            if click_x is not None:
+                self._communicator.click(click_x/divisor, click_y/divisor)
+                time.sleep(2)
+                return ScreenType.PERMISSION
+
+            return ScreenType.UNDEFINED
 
         elif ScreenType(self.returntype) == ScreenType.MARKETING:
             click_text = 'ERLAUBEN,ALLOW,AUTORISER'
             n_boxes = len(self._globaldict['level'])
             for i in range(n_boxes):
-                if any(elem in (self._globaldict['text'][i]) for elem in click_text.split(",")):
+                if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_text.split(",")):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
@@ -259,4 +282,4 @@ class WordToScreenMatching(object):
 
 if __name__ == '__main__':
     screen = WordToScreenMatching(None, None, "test")
-    screen.matchScreen("screenshot_m7_bith.jpg")
+    screen.matchScreen("screenshot_tv_grant.jpg")
