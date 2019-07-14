@@ -4,6 +4,7 @@ import functools
 import math
 import os
 import time
+import re
 from abc import ABC, abstractmethod
 from threading import Event, Lock, Thread, current_thread
 from typing import Optional
@@ -81,6 +82,10 @@ class WorkerBase(ABC):
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
         self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id)
+
+        startcoords = self.get_devicesettings_value("startcoords_of_walker", '0,0').replace(' ', '').split(',')
+        self._communicator.setLocation(
+            startcoords[0], startcoords[1], 0)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
