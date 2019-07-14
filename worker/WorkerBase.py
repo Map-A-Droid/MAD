@@ -577,37 +577,32 @@ class WorkerBase(ABC):
             if returncode == ScreenType.QUEST:
                 questcounter += 1
                 if firstround:
-                    logger.info('First Round getting research menu')
+                    logger.info('First round getting research menu')
                     x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                            self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(1.5)
                     returncode = ScreenType.POGO
                 elif questcounter == 3:
-                    returncode = ScreenType.POGO
-                else:
+                    logger.info('Getting research menu three times in row')
                     x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                            self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(1.5)
-                    x, y = self._resocalc.get_coords_quest_menu(self)[0], \
-                           self._resocalc.get_coords_quest_menu(self)[1]
-                    self._communicator.click(int(x), int(y))
-                    time.sleep(2)
-                    self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                         delayAfter=0.1)
+                    returncode = ScreenType.POGO
 
-            elif returncode != ScreenType.POGO:
-                x, y = self._resocalc.get_close_main_button_coords(self)[0], \
-                       self._resocalc.get_close_main_button_coords(self)[1]
-                self._communicator.click(int(x), int(y))
-                time.sleep(1.5)
-                x, y = self._resocalc.get_coords_quest_menu(self)[0], \
-                       self._resocalc.get_coords_quest_menu(self)[1]
-                self._communicator.click(int(x), int(y))
-                time.sleep(2)
-                self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                     delayAfter=0.1)
+                if returncode == ScreenType.POGO: return returncode
+
+            x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                   self._resocalc.get_close_main_button_coords(self)[1]
+            self._communicator.click(int(x), int(y))
+            time.sleep(1.5)
+            x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+                   self._resocalc.get_coords_quest_menu(self)[1]
+            self._communicator.click(int(x), int(y))
+            time.sleep(2)
+            self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                 delayAfter=0.1)
 
             firstround = False
 
