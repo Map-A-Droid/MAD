@@ -554,7 +554,6 @@ class WorkerBase(ABC):
             if returncode != ScreenType.POGO:
                 self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                      delayAfter=0.1)
-
         return
 
     def _stop_pogo(self):
