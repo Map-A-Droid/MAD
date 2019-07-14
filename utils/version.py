@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 10
+current_version = 11
 
 
 class MADVersion(object):
@@ -265,6 +265,17 @@ class MADVersion(object):
                 "center_longitude double NOT NULL, "
                 "updated int(11) NOT NULL, "
                 "PRIMARY KEY (id)) "
+            )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+
+        if self._version < 11:
+            query = (
+                "ALTER TABLE trs_stats_detect_raw "
+                "ADD is_shiny TINYINT(1) NOT NULL DEFAULT '0' "
+                "AFTER count"
             )
             try:
                 self.dbwrapper.execute(query, commit=True)

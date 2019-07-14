@@ -675,11 +675,12 @@ class RmWrapper(DbWrapperBase):
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
         encounter_id = wild_pokemon['encounter_id']
+        shiny = wild_pokemon['pokemon_data']['display']['is_shiny']
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
-        mitm_mapper.collect_mon_iv_stats(origin, encounter_id)
+        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, shiny)
 
         if getdetspawntime is None:
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
@@ -1705,3 +1706,18 @@ class RmWrapper(DbWrapperBase):
             })
 
         return mons
+
+    def statistics_get_shiny_stats(self):
+        logger.debug('Fetching shiny pokemon stats from db')
+        query = (
+            "SELECT (select count(encounter_id) from pokemon where pokemon.pokemon_id=a.pokemon_id), "
+            "count(encounter_id), a.pokemon_id FROM pokemon a left join trs_stats_detect_raw "
+            "on a.encounter_id=trs_stats_detect_raw.type_id where a.pokemon_id in (select pokemon.pokemon_id from "
+            "pokemon inner join trs_stats_detect_raw on pokemon.encounter_id=trs_stats_detect_raw.type_id where "
+            "trs_stats_detect_raw.is_shiny=1) and trs_stats_detect_raw.is_shiny=1 group by "
+            "trs_stats_detect_raw.is_shiny, a.pokemon_id order by a.pokemon_id"
+        )
+
+        res = self.execute(query)
+
+        return res

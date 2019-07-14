@@ -172,9 +172,20 @@ class statistics(object):
                                 'name': monName,
                                 'periode': datetime.datetime.fromtimestamp(dat[2]).strftime(self._datetimeformat)})
 
+        shiny_stats = []
+
+        data = self._db.statistics_get_shiny_stats()
+        for dat in data:
+            mon = "%03d" % dat[2]
+            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+            monName_raw = (get_raid_boss_cp(dat[2]))
+            monName = i8ln(monName_raw['name'])
+            ratio = round(dat[1] * 100 / dat[0], 5)
+            shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio })
+
         stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
                  'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
-                 'location_info': location_info}
+                 'location_info': location_info, 'shiny': shiny_stats}
         return jsonify(stats)
 
     def utc2local(self, ts):
