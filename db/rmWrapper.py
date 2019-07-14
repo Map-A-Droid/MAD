@@ -675,12 +675,12 @@ class RmWrapper(DbWrapperBase):
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
         encounter_id = wild_pokemon['encounter_id']
-        shiny = wild_pokemon['pokemon_data']['display']['is_shiny']
+        shiny = wild_pokemon['pokemon_data']['display'].get('is_shiny', 0)
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
-        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, shiny)
+        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if getdetspawntime is None:
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
