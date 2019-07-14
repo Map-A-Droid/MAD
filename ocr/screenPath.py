@@ -22,10 +22,11 @@ class ScreenType(Enum):
     GGL = 10
     PERMISSION = 11
     MARKETING = 12
+    QUEST = 20
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator, pogoWindowManager, id):
+    def __init__(self, communicator, pogoWindowManager, id, resocalc):
         self._ScreenType: dict = {}
         self._id = id
         detect_ReturningScreen: list = ('ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER')
@@ -48,6 +49,7 @@ class WordToScreenMatching(object):
         self._globaldict: dict = []
         self._pogoWindowManager = pogoWindowManager
         self._communicator = communicator
+        self._resocalc = resocalc
         logger.info("Starting Screendetector")
 
     def check_lines(self, lines, height):
@@ -77,7 +79,6 @@ class WordToScreenMatching(object):
     def matchScreen(self, screenpath):
         topmostapp = self._communicator.topmostApp()
         frame = cv2.imread(screenpath)
-        frame_original = frame.copy()
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         self.returntype: ScreenType = -1
         self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
@@ -153,7 +154,7 @@ class WordToScreenMatching(object):
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         self._communicator.touchandhold(click_x, click_y, click_x, click_y - (height/2))
-                        # self._communicator.touchandhold(click_x, click_y, click_x, click_y - (height/2))
+                        self._communicator.touchandhold(click_x, click_y, click_x, click_y - (height/2))
                         time.sleep(1)
                         self._communicator.click(click_x, click_y)
                         time.sleep(1)
@@ -237,10 +238,40 @@ class WordToScreenMatching(object):
         else:
             return ScreenType.POGO
 
+    def checkQuest(self, screenpath):
+        frame = cv2.imread(screenpath)
+        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        self.returntype: ScreenType = -1
+        self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
+        print(self._globaldict)
+        click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
+        n_boxes = len(self._globaldict['level'])
+        for i in range(n_boxes):
+            if any(elem in (self._globaldict['text'][i]) for elem in click_text.split(",")):
+                logger.info('Found research menu')
+                self._communicator.click(100, 100)
+                return ScreenType.QUEST
+
+        logger.info('Listening to Dr. blabla - please wait')
+
+        self._communicator.click(100, 100)
+        time.sleep(1)
+        self._communicator.click(100, 100)
+        time.sleep(1)
+        self._communicator.click(100, 100)
+        time.sleep(1)
+        self._communicator.click(100, 100)
+        time.sleep(1)
+        self._communicator.click(100, 100)
+        time.sleep(1)
+        self._communicator.click(100, 100)
+
+        return ScreenType.UNDEFINED
 
     def parseXML(self, xml):
         click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
-        xmlroot = ET.fromstring(xml)
+        parser = ET.XMLParser(encoding="utf-8")
+        xmlroot = ET.fromstring(xml, parser=parser)
         bounds: str = ""
         for item in xmlroot.iter('node'):
             if str(item.attrib['text']).upper() in click_text:
