@@ -5,7 +5,6 @@ import time
 import re
 
 import xml.etree.ElementTree as ET
-from xml.sax.saxutils import escape, unescape
 from utils.logging import logger
 from pytesseract import Output
 from enum import Enum
@@ -113,7 +112,7 @@ class WordToScreenMatching(object):
                     return ScreenType.GGL
 
         elif ScreenType(self.returntype) == ScreenType.PERMISSION:
-            (click_x, click_y) = self.parseXML(escape(self._communicator.uiautomator()))
+            (click_x, click_y) = self.parseXML(self._communicator.uiautomator())
             self._communicator.click(click_x, click_y)
             time.sleep(2)
             return ScreenType.PERMISSION
@@ -269,7 +268,8 @@ class WordToScreenMatching(object):
 
     def parseXML(self, xml):
         click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
-        xmlroot = ET.fromstring(xml)
+        parser = ET.XMLParser(encoding="utf-8")
+        xmlroot = ET.fromstring(xml, parser=parser)
         bounds: str = ""
         for item in xmlroot.iter('node'):
             if str(item.attrib['text']).upper() in click_text:
