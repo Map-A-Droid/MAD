@@ -268,10 +268,11 @@ class PlayerStats(object):
                     type_count = int(data[106]['mon'][mon_id])
 
                     data_location_raw.append((str(client_id),
-                                             str(type_id),
-                                             'mon',
-                                             str(type_count),
-                                             str(int(period))
+                                              str(type_id),
+                                              'mon',
+                                              str(type_count),
+                                              0,
+                                              str(int(period))
                                               ))
 
             if 'raid' in data[106]:
@@ -280,10 +281,11 @@ class PlayerStats(object):
                     type_count = int(data[106]['raid'][gym_id])
 
                     data_location_raw.append((str(client_id),
-                                             str(type_id),
-                                             'raid',
-                                             str(type_count),
-                                             str(int(period))
+                                              str(type_id),
+                                              'raid',
+                                              str(type_count),
+                                              0,
+                                              str(int(period))
                                               ))
 
             if 'quest' in data[106]:
@@ -292,10 +294,11 @@ class PlayerStats(object):
                     type_count = int(data[106]['quest'][stop_id])
 
                     data_location_raw.append((str(client_id),
-                                             str(type_id),
-                                             'quest',
-                                             str(type_count),
-                                             str(int(period))
+                                              str(type_id),
+                                              'quest',
+                                              str(type_count),
+                                              0,
+                                              str(int(period))
                                               ))
 
         if 102 in data:
