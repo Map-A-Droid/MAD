@@ -3,6 +3,7 @@ import time
 from enum import Enum
 from threading import Event, Thread
 from typing import List
+from datetime import datetime, timedelta
 
 from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper
@@ -277,7 +278,9 @@ class WorkerQuests(MITMBase):
         if delay_used < 0:
             logger.info('No more cooldowntime - start over')
         else:
-            logger.info("Real sleep time: {} seconds!", str(delay_used))
+            delay_used = math.floor(delay_used)
+            logger.info("Real sleep time: {} seconds: next action {}",
+                        str(delay_used), str(datetime.now() + timedelta(seconds=delay_used)))
             cleanupbox = False
             lastcleanupbox = self.get_devicesettings_value('last_cleanup_time', None)
             if lastcleanupbox is not None:
