@@ -80,6 +80,8 @@ class WorkerQuests(MITMBase):
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
 
+        self._check_quest()
+
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 

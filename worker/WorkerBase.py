@@ -80,7 +80,8 @@ class WorkerBase(ABC):
         self.set_devicesettings_value("last_mode", self._mapping_manager.routemanager_get_mode(self._routemanager_name))
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
-        self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id)
+        self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
+                                                          self._resocalc)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
@@ -554,6 +555,62 @@ class WorkerBase(ABC):
             if returncode != ScreenType.POGO:
                 self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                      delayAfter=0.1)
+        return
+
+    def _check_quest(self):
+        logger.info('Precheck Quest Menu')
+        questcounter: int = 0
+        firstround: bool = True
+        x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+               self._resocalc.get_coords_quest_menu(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(2)
+        returncode: ScreenType = ScreenType.UNDEFINED
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                    delayAfter=2):
+            logger.error("_check_windows: Failed getting screenshot")
+            return False
+
+        while not returncode == ScreenType.POGO:
+            returncode = self._WordToScreenMatching.checkQuest(self.get_screenshot_path())
+
+            if returncode == ScreenType.QUEST:
+                questcounter += 1
+                if firstround:
+                    logger.info('First Round getting research menu')
+                    x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                           self._resocalc.get_close_main_button_coords(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(1.5)
+                    returncode = ScreenType.POGO
+                elif questcounter == 3:
+                    returncode = ScreenType.POGO
+                else:
+                    x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                           self._resocalc.get_close_main_button_coords(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(1.5)
+                    x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+                           self._resocalc.get_coords_quest_menu(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(2)
+                    self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                         delayAfter=0.1)
+
+            elif returncode != ScreenType.POGO:
+                x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                       self._resocalc.get_close_main_button_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(1.5)
+                x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+                       self._resocalc.get_coords_quest_menu(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(2)
+                self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                     delayAfter=0.1)
+
+            firstround = False
+
         return
 
     def _stop_pogo(self):
