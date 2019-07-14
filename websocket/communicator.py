@@ -82,6 +82,11 @@ class Communicator:
                                                         self.__command_timeout)
         return response
 
+    def uiautomator(self) -> str:
+        response = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref, "more uiautomator",
+                                                        self.__command_timeout)
+        return response
+
     def get_screenshot(self, path, quality: int = 70, screenshot_type: ScreenshotType = ScreenshotType.JPEG) -> bool:
         if quality < 10 or quality > 100:
             logger.error("Invalid quality value passed for screenshots")

@@ -1,12 +1,14 @@
 import cv2
 import pytesseract
+import math
+import time
+import re
+
+import xml.etree.ElementTree as ET
+from utils.logging import logger
 from pytesseract import Output
 from enum import Enum
 import numpy as np
-import math
-import time
-from utils.logging import logger
-
 
 class ScreenType(Enum):
     UNDEFINED = -1
@@ -20,30 +22,6 @@ class ScreenType(Enum):
     GGL = 10
     PERMISSION = 11
     MARKETING = 12
-
-    def check_lines(self, lines, height):
-        temp_lines = []
-        sort_lines = []
-        old_y1 = 0
-        index = 0
-
-        for line in lines:
-            for x1, y1, x2, y2 in line:
-                temp_lines.append([y1, y2, x1, x2])
-
-        temp_lines = np.array(temp_lines)
-        sort_arr = (temp_lines[temp_lines[:, 0].argsort()])
-
-        button_value = height / 40
-
-        for line in sort_arr:
-            if int(old_y1 + int(button_value)) < int(line[0]):
-                if int(line[0]) == int(line[1]):
-                    sort_lines.append([line[2], line[0], line[3], line[1]])
-                    old_y1 = line[0]
-            index += 1
-
-        return np.asarray(sort_lines, dtype=np.int32)
 
 
 class WordToScreenMatching(object):
@@ -126,45 +104,17 @@ class WordToScreenMatching(object):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(25)
 
                     return ScreenType.GGL
 
         elif ScreenType(self.returntype) == ScreenType.PERMISSION:
-            click_x = None
-            click_y = None
-            divisor: int = 1
-            count: int = 0
-            click_text = 'ZULASSEN,ALLOW,AUTORISER'
-            self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
-            n_boxes = len(self._globaldict['level'])
-            while click_x is None and count < 2:
-                for i in range(n_boxes):
-                    if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_text.split(",")):
-                        (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                        self._globaldict['width'][i], self._globaldict['height'][i])
-                        if click_x is None:
-                             click_x, click_y = x + w / 2, y + h / 2
-                        else:
-                            temp_click_x, temp_click_y = x + w / 2, y + h / 2
-                            if temp_click_x > click_x: (click_x, click_y) = (temp_click_x, temp_click_y)
-
-                if click_x is None:
-                    frame = cv2.bitwise_not(frame_original)
-                    frame = cv2.resize(frame, None, fx=2, fy=2)
-                    divisor = 2
-                    self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
-                    n_boxes = len(self._globaldict['level'])
-
-                count += 1
-
-            if click_x is not None:
-                self._communicator.click(click_x/divisor, click_y/divisor)
-                time.sleep(2)
-                return ScreenType.PERMISSION
-
-            return ScreenType.UNDEFINED
+            (click_x, click_y) = self.parseXML(self._communicator.uiautomator())
+            self._communicator.click(click_x, click_y)
+            time.sleep(2)
+            return ScreenType.PERMISSION
 
         elif ScreenType(self.returntype) == ScreenType.MARKETING:
             click_text = 'ERLAUBEN,ALLOW,AUTORISER'
@@ -174,6 +124,7 @@ class WordToScreenMatching(object):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(2)
 
@@ -199,9 +150,10 @@ class WordToScreenMatching(object):
                     else:
                         click_y = old_y + ((y1 - old_y)/2)
                         click_x = x1 + ((x2 - x1)/2)
+                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         self._communicator.touchandhold(click_x, click_y, click_x, click_y - (height/2))
-                        self._communicator.touchandhold(click_x, click_y, click_x, click_y - (height/2))
+                        # self._communicator.touchandhold(click_x, click_y, click_x, click_y - (height/2))
                         time.sleep(1)
                         self._communicator.click(click_x, click_y)
                         time.sleep(1)
@@ -213,7 +165,7 @@ class WordToScreenMatching(object):
 
         elif ScreenType(self.returntype) == ScreenType.RETURNING:
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
-            time.sleep(1)
+            time.sleep(2)
             return ScreenType.RETURNING
 
         elif ScreenType(self.returntype) == ScreenType.LOGINSELECT:
@@ -229,6 +181,7 @@ class WordToScreenMatching(object):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(1)
                     return ScreenType.LOGINSELECT
@@ -238,8 +191,9 @@ class WordToScreenMatching(object):
                     height, width = frame.shape
                     click_x = width / 2
                     click_y = temp_dict['Facebook'] + ((temp_dict['TRAINER'] - temp_dict['Facebook']) / 2)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
-                    time.sleep(1)
+                    time.sleep(2)
                     return ScreenType.LOGINSELECT
 
                 # alternative select
@@ -247,8 +201,9 @@ class WordToScreenMatching(object):
                     height, width = frame.shape
                     click_x = width / 2
                     click_y = temp_dict['Facebook'] + (height / 10.11)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
-                    time.sleep(1)
+                    time.sleep(2)
                     return ScreenType.LOGINSELECT
 
                 # alternative select
@@ -256,13 +211,14 @@ class WordToScreenMatching(object):
                     height, width = frame.shape
                     click_x = width / 2
                     click_y = temp_dict['TRAINER'] - (height / 10.11)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
-                    time.sleep(1)
+                    time.sleep(2)
                     return ScreenType.LOGINSELECT
 
         elif ScreenType(self.returntype) == ScreenType.FAILURE:
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
-            time.sleep(1)
+            time.sleep(2)
             return ScreenType.FAILURE
 
         elif ScreenType(self.returntype) == ScreenType.RETRY:
@@ -273,11 +229,33 @@ class WordToScreenMatching(object):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
+                    time.sleep(2)
             return ScreenType.RETRY
 
         else:
             return ScreenType.POGO
+
+
+    def parseXML(self, xml):
+        click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
+        xmlroot = ET.fromstring(xml)
+        bounds: str = ""
+        for item in xmlroot.iter('node'):
+            if item.attrib['text'] in click_text:
+                logger.debug("Found text {}", str(item.attrib['text']))
+                bounds = item.attrib['bounds']
+                logger.info("Bounds {}", str(item.attrib['bounds']))
+                continue
+
+        match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+
+        click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1)))/2)
+        click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2)))/2)
+        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+
+        return click_x, click_y
 
 
 if __name__ == '__main__':
