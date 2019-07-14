@@ -243,10 +243,10 @@ class WordToScreenMatching(object):
         xmlroot = ET.fromstring(xml)
         bounds: str = ""
         for item in xmlroot.iter('node'):
-            if item.attrib['text'] in click_text:
+            if str(item.attrib['text']).upper() in click_text:
                 logger.debug("Found text {}", str(item.attrib['text']))
                 bounds = item.attrib['bounds']
-                logger.info("Bounds {}", str(item.attrib['bounds']))
+                logger.debug("Bounds {}", str(item.attrib['bounds']))
                 continue
 
         match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
