@@ -268,9 +268,8 @@ class WordToScreenMatching(object):
         return ScreenType.UNDEFINED
 
     def parseXML(self, xml):
-        print(unescape(xml))
         click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
-        xmlroot = ET.fromstring(unescape(xml))
+        xmlroot = ET.fromstring(xml)
         bounds: str = ""
         for item in xmlroot.iter('node'):
             if str(item.attrib['text']).upper() in click_text:
