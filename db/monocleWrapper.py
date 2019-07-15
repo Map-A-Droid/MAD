@@ -1602,7 +1602,8 @@ class MonocleWrapper(DbWrapperBase):
     def statistics_get_shiny_stats(self):
         logger.debug('Fetching shiny pokemon stats from db')
         query = (
-            "SELECT (select count(encounter_id) from sightings where sightings.pokemon_id=a.pokemon_id), "
+            "SELECT (select count(encounter_id) from sightings inner join trs_stats_detect_raw on "
+            "trs_stats_detect_raw.type_id=sightings.encounter_id where sightings.pokemon_id=a.pokemon_id), "
             "count(encounter_id), a.pokemon_id FROM sightings a left join trs_stats_detect_raw "
             "on a.encounter_id=trs_stats_detect_raw.type_id where a.pokemon_id in (select sightings.pokemon_id from "
             "sightings inner join trs_stats_detect_raw on sightings.encounter_id=trs_stats_detect_raw.type_id where "
