@@ -1601,14 +1601,16 @@ class MonocleWrapper(DbWrapperBase):
 
     def statistics_get_shiny_stats(self):
         logger.debug('Fetching shiny pokemon stats from db')
+
         query = (
             "SELECT (select count(encounter_id) from sightings inner join trs_stats_detect_raw on "
-            "trs_stats_detect_raw.type_id=sightings.encounter_id where sightings.pokemon_id=a.pokemon_id), "
-            "count(encounter_id), a.pokemon_id FROM sightings a left join trs_stats_detect_raw "
-            "on a.encounter_id=trs_stats_detect_raw.type_id where a.pokemon_id in (select sightings.pokemon_id from "
-            "sightings inner join trs_stats_detect_raw on sightings.encounter_id=trs_stats_detect_raw.type_id where "
-            "trs_stats_detect_raw.is_shiny=1) and trs_stats_detect_raw.is_shiny=1 group by "
-            "trs_stats_detect_raw.is_shiny, a.pokemon_id order by a.pokemon_id"
+            "trs_stats_detect_raw.type_id=sightings.encounter_id where sightings.pokemon_id=a.pokemon_id and "
+            "trs_stats_detect_raw.worker=b.worker and sightings.form=a.form), count(DISTINCT encounter_id), a.pokemon_id,"
+            "b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'), a.form "
+            "FROM sightings a left join trs_stats_detect_raw b on a.encounter_id=b.type_id where a.pokemon_id in (select "
+            "sightings.pokemon_id from sightings inner join trs_stats_detect_raw on sightings.encounter_id="
+            "trs_stats_detect_raw.type_id where trs_stats_detect_raw.is_shiny=1) and b.is_shiny=1 group by "
+            "b.is_shiny, a.pokemon_id, a.form, b.worker order by a.pokemon_id"
         )
 
         res = self.execute(query)

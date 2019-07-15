@@ -4,7 +4,7 @@ import time
 from flask import (jsonify, render_template, request)
 from madmin.functions import auth_required
 from utils.language import i8ln
-from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp
+from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp, form_mapper
 from utils.geo import get_distance_of_two_points_in_meters
 
 
@@ -176,12 +176,14 @@ class statistics(object):
 
         data = self._db.statistics_get_shiny_stats()
         for dat in data:
+            form_suffix = "%02d" % form_mapper(dat[2], dat[5])
             mon = "%03d" % dat[2]
-            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
             monName_raw = (get_raid_boss_cp(dat[2]))
             monName = i8ln(monName_raw['name'])
             ratio = round(dat[1] * 100 / dat[0], 5)
-            shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio })
+            shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
+                                'worker': dat[3], 'encounterid': dat[4]})
 
         stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
                  'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
