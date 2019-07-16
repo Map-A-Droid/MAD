@@ -1636,3 +1636,16 @@ class DbWrapperBase(ABC):
             })
 
         return cells
+
+    def statistics_get_shiny_stats_hour(self):
+        logger.debug('Fetching shiny pokemon stats from db')
+        query = (
+            "SELECT hour(FROM_UNIXTIME(timestamp_scan)) as hour, type_id FROM trs_stats_detect_raw where "
+            "is_shiny=1 group by type_id, hour ORDER BY hour ASC"
+        )
+
+        res = self.execute(query)
+
+        return res
+
+

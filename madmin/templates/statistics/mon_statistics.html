@@ -52,12 +52,11 @@
         var options_bars = {
             xaxis: {
                 mode: "time",
-                {% if time == "12" %}
-                timeformat: "%d.%m<br>%I:00:00 %p",
-                {% else %}
-                timeformat: "%d.%m<br>%H:00:00",
-                {% endif %}
-                minTickSize: [3, "hour"],
+            {% if time == "12" %}
+                timeformat: "%I:00 %p",
+            {% else %}
+                timeformat: "%H:00",
+            {% endif %}
                 timezone: "browser"
             },
             series: {
@@ -73,10 +72,6 @@
                 hoverable: true,
                 borderWidth: 2,
                 backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
-            },
-            legend: {
-                container: $("#legendContainer_quest"),
-                noColumns: 0
             }
         };
 
@@ -117,6 +112,7 @@
                 detection = result.detection
                 shiny = result.shiny
                 shiny_worker = result.shiny_worker
+                shiny_hour = result.shiny_hour
 
                 setGrid('#show-data-good-pokemon', good_spawns, [
                     { data: 'id', title: 'Mon-ID' },
@@ -158,10 +154,6 @@
                 }
                 ]);
 
-
-
-
-
                 $.plot($("#flot_spawn"), [
                     {
                         data: spawn.iv,
@@ -177,6 +169,14 @@
                     }
                 ], options_dots);
                 $("#flot_spawn").UseTooltip();
+
+                $.plot($("#flot_shiny_hour"), [
+                    {
+                        data: shiny_hour,
+                        label: "Shiny / Hour"
+                    }
+                ], options_bars);
+                $("#flot_shiny_hour").UseTooltip();
 
 
             },
@@ -334,7 +334,7 @@
         height: 300px;
     }
 
-    #flot_stop {
+    #flot_shiny_hour {
         width: 100%;
         height: 300px;
     }
@@ -374,15 +374,19 @@
     <a href="statistics_mon?minutes_spawn=1440">1440</a>
     <a href="statistics_mon?minutes_spawn=10080">One Week</a>
     </div>
+<br>
 <div id="legendContainer_spawn"></div>
 <div id="flot_spawn"></div>
 <br>
 <h2>Recent Perfect Pokemon</h2>
 <table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
 <br>
-<h2>Shiny Stats</h2>
+<h2>Detected Shiny / Hour (all Worker)</h2>
+<div id="flot_shiny_hour"></div>
+<br>
+<h2>Shiny Stats Type / Worker Detail View</h2>
 <table id="show-data-shiny" class="table" style="width:100%;"></table>
 <br>
-<h2>Shiny Stats / Worker</h2>
+<h2>Shiny Amount / Worker</h2>
 <table id="show-data-shiny-worker" class="table" style="width:100%;"></table>
 {% endblock %}

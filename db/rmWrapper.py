@@ -1723,3 +1723,4 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query)
 
         return res
+

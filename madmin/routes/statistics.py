@@ -170,6 +170,25 @@ class statistics(object):
 
         spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
 
+        #shiny hour
+
+        shiny_hour_temp = {}
+        shiny_hour_calc = {}
+        shiny_hour = []
+        data = self._db.statistics_get_shiny_stats_hour()
+        for dat in data:
+            if dat[1] not in shiny_hour_temp:
+                shiny_hour_temp[dat[1]] = dat[0]
+
+        for dat in shiny_hour_temp:
+            if shiny_hour_temp[dat] not in shiny_hour_calc: shiny_hour_calc[shiny_hour_temp[dat]] = 0
+            shiny_hour_calc[shiny_hour_temp[dat]] += 1
+
+        for dat in sorted(shiny_hour_calc):
+            sht = ([dat * 60 * 60 * 1000, shiny_hour_calc[dat]])
+            shiny_hour.append(sht)
+
+
         # good_spawns avg
         good_spawns = []
         data = self._db.get_best_pokemon_spawns()
@@ -207,7 +226,8 @@ class statistics(object):
         for dat in shiny_worker:
             shiny_stats_worker.append({'sum': shiny_worker[dat], 'worker': dat})
 
-        stats = {'spawn': spawn, 'good_spawns': good_spawns, 'shiny': shiny_stats, 'shiny_worker': shiny_stats_worker}
+        stats = {'spawn': spawn, 'good_spawns': good_spawns, 'shiny': shiny_stats, 'shiny_worker': shiny_stats_worker,
+                 'shiny_hour': shiny_hour}
         return jsonify(stats)
 
     def utc2local(self, ts):
