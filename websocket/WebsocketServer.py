@@ -463,7 +463,7 @@ class WebsocketServer(object):
         response = None
         if isinstance(message, str):
             logger.debug("Receiving message: {}", str(message.strip()))
-            splitup = message.split(";")
+            splitup = message.split(";", 1)
             id = int(splitup[0])
             response = splitup[1]
         else:
