@@ -114,7 +114,7 @@
 #webhook                     # Activate support for webhook
 #webhook_url:                # webhook endpoint (multiple seperated by comma)
                              #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
-                             #  possible types are: pokemon, raid, gym, weather, pokestop
+                             #  possible types are: pokemon, raid, gym, weather, pokestop, quest
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
 #webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
 #weather_webhook             # Activate support for weather webhook (remember to enable weather support in other settings section too!)
