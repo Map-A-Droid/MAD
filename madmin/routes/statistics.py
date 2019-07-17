@@ -185,7 +185,7 @@ class statistics(object):
             shiny_hour_calc[shiny_hour_temp[dat]] += 1
 
         for dat in sorted(shiny_hour_calc):
-            sht = ([dat * 60 * 60 * 1000, shiny_hour_calc[dat]])
+            sht = ([self.utc2local(dat * 60 * 60) * 1000, shiny_hour_calc[dat]])
             shiny_hour.append(sht)
 
 
@@ -204,7 +204,8 @@ class statistics(object):
             good_spawns.append({'id': dat[1], 'iv': round(calculate_iv(dat[3], dat[4], dat[5]), 0),
                                 'lvl': lvl, 'cp': dat[7], 'img': monPic,
                                 'name': monName,
-                                'periode': datetime.datetime.fromtimestamp(dat[2]).strftime(self._datetimeformat)})
+                                'periode': datetime.datetime.fromtimestamp
+                                (self.utc2local(dat[2])).strftime(self._datetimeformat)})
 
         shiny_stats = []
         shiny_worker = {}
