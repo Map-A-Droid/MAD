@@ -683,10 +683,10 @@ class WorkerQuests(MITMBase):
                     "No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp and \
-                not latest[104].get('timestamp', 0) >= timestamp:
+                (104 in latest and not latest[104].get('timestamp', 0)) >= timestamp:
             return LatestReceivedType.GYM
         elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp and \
-                not latest[104].get('timestamp', 0) >= timestamp:
+                (104 in latest and not latest[104].get('timestamp', 0)) >= timestamp:
             return LatestReceivedType.MON
         else:
             # proto has previously been received, let's check the timestamp...
