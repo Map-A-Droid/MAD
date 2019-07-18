@@ -93,6 +93,9 @@ class MITMBase(WorkerBase):
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
             logger.warning("Timeout waiting for data")
+            if self._mapping_manager.routemanager_get_mode(self._routemanager_name) == 'pokestops':
+                # not getting any data ... something seems wrong. We sleep now - taking screen for later debugging
+                self._takeScreenshot(errorscreen=True)
 
             self._mitm_mapper.collect_location_stats(self._id, self.current_location, 0, self._waittime_without_delays,
                                                      position_type, 0,
@@ -127,12 +130,15 @@ class MITMBase(WorkerBase):
     def _wait_for_injection(self):
         self._not_injected_count = 0
         while not self._mitm_mapper.get_injection_status(self._id):
-            self._check_ggl_login()
             if self._not_injected_count >= 20:
                 logger.error("Worker {} not get injected in time - reboot", str(self._id))
                 self._reboot(self._mitm_mapper)
                 return False
             logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            if self._not_injected_count in [5, 10, 15]:
+                logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
+                        str(self._id), str(self._not_injected_count))
+                self._check_windows()
             if self._stop_worker_event.isSet():
                 logger.error("Worker {} get killed while waiting for injection", str(self._id))
                 return False

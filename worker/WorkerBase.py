@@ -22,6 +22,7 @@ from utils.madGlobals import (
 from utils.resolution import Resocalculator
 from utils.routeutil import check_walker_value_type
 from websocket.communicator import Communicator
+from ocr.screenPath import ScreenType, WordToScreenMatching
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
@@ -79,6 +80,8 @@ class WorkerBase(ABC):
         self.set_devicesettings_value("last_mode", self._mapping_manager.routemanager_get_mode(self._routemanager_name))
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
+        self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
+                                                          self._resocalc)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
@@ -99,12 +102,20 @@ class WorkerBase(ABC):
     def get_communicator(self):
         return self._communicator
 
-    def get_screenshot_path(self) -> str:
+    def get_screenshot_path(self, fileaddon: bool = False) -> str:
         screenshot_ending: str = ".jpg"
+        addon: str = ""
         if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
             screenshot_ending = ".png"
 
-        screenshot_filename = "screenshot_{}{}".format(str(self._id), screenshot_ending)
+        if fileaddon:
+            addon: str = "_" + str(time.time())
+
+        screenshot_filename = "screenshot_{}{}{}".format(str(self._id), str(addon), screenshot_ending)
+
+        if fileaddon:
+            logger.info("Creating debugscreen: {}".format(screenshot_filename))
+
         return os.path.join(
                 self._applicationArgs.temp_path, screenshot_filename)
 
@@ -229,8 +240,8 @@ class WorkerBase(ABC):
 
         self._work_mutex.acquire()
         try:
-            self._check_ggl_login()
             self._turn_screen_on_and_start_pogo()
+            self._check_windows()
             self._get_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -316,8 +327,6 @@ class WorkerBase(ABC):
             return
 
         while not self._stop_worker_event.isSet():
-            # check for ggl login
-            self._check_ggl_login()
             try:
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 walkercheck = self.check_walker()
@@ -541,37 +550,73 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
-    def _check_ggl_login(self):
-        topmostapp = self._communicator.topmostApp()
-        if not topmostapp: return False
+    def _check_windows(self):
+        returncode: ScreenType = ScreenType.UNDEFINED
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                    delayAfter=2):
+            logger.error("_check_windows: Failed getting screenshot")
+            return False
 
-        if "AccountPickerActivity" in topmostapp or 'SignInActivity' in topmostapp:
+        while not returncode == ScreenType.POGO:
+            returncode = self._WordToScreenMatching.matchScreen(self.get_screenshot_path())
 
-            if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                        delayAfter=10):
-                logger.error("_check_ggl_login: Failed getting screenshot")
-                return False
+            if returncode != ScreenType.POGO:
+                self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                     delayAfter=0.1)
+        return
 
-            logger.info('GGL Login Window found on {} - processing', str(self._id))
-            if not self._pogoWindowManager.look_for_ggl_login(self.get_screenshot_path(), self._communicator):
-                logger.error("_check_ggl_login: Failed reading screenshot")
-                return False
+    def _check_quest(self):
+        logger.info('Precheck Quest Menu')
+        questcounter: int = 0
+        firstround: bool = True
+        if not self._checkPogoButton():
+            self._checkPogoClose()
+        x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+               self._resocalc.get_coords_quest_menu(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(1)
+        returncode: ScreenType = ScreenType.UNDEFINED
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                    delayAfter=2):
+            logger.error("_check_windows: Failed getting screenshot")
+            return False
 
-            buttontimeout = 0
-            logger.info('Waiting for News Popup ...')
+        while not returncode == ScreenType.POGO:
+            returncode = self._WordToScreenMatching.checkQuest(self.get_screenshot_path())
 
-            buttoncheck = self._checkPogoButton()
-            while not buttoncheck and not self._stop_worker_event.isSet() and buttontimeout < 6:
-                time.sleep(5)
-                buttoncheck = self._checkPogoButton()
-                buttontimeout += 1
-                if buttontimeout == 5:
-                    logger.info('Timeout while waiting for Button')
+            if returncode == ScreenType.QUEST:
+                questcounter += 1
+                if firstround:
+                    logger.info('First round getting research menu')
+                    x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                           self._resocalc.get_close_main_button_coords(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(1.5)
+                    returncode = ScreenType.POGO
+                elif questcounter == 3:
+                    logger.info('Getting research menu three times in row')
+                    x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                           self._resocalc.get_close_main_button_coords(self)[1]
+                    self._communicator.click(int(x), int(y))
+                    time.sleep(1.5)
+                    returncode = ScreenType.POGO
 
-            return True
+                if returncode == ScreenType.POGO: return returncode
 
-        logger.debug('No GGL Login Window found on {}', str(self._id))
-        return False
+            x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                   self._resocalc.get_close_main_button_coords(self)[1]
+            self._communicator.click(int(x), int(y))
+            time.sleep(1.5)
+            x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+                   self._resocalc.get_coords_quest_menu(self)[1]
+            self._communicator.click(int(x), int(y))
+            time.sleep(2)
+            self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                 delayAfter=0.1)
+
+            firstround = False
+
+        return
 
     def _stop_pogo(self):
         attempts = 0
@@ -676,7 +721,7 @@ class WorkerBase(ABC):
 
         return trashes
 
-    def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0):
+    def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0, errorscreen: bool = False):
         logger.debug("Taking screenshot...")
         time.sleep(delayBefore)
         compareToTime = time.time() - self._lastScreenshotTaken
@@ -690,7 +735,7 @@ class WorkerBase(ABC):
 
         screenshot_quality: int = self.get_devicesettings_value("screenshot_quality", 80)
 
-        take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(),
+        take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
                                                             screenshot_quality, screenshot_type)
 
         if self._lastScreenshotTaken and compareToTime < 0.5:

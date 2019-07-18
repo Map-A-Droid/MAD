@@ -114,7 +114,6 @@ class WorkerMITM(MITMBase):
 
     def _pre_work_loop(self):
         logger.info("MITM worker starting")
-        self._check_ggl_login()
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
@@ -147,7 +146,7 @@ class WorkerMITM(MITMBase):
             reached_raidtab = True
 
         self._wait_pogo_start_delay()
-
+        self._check_windows()
         return reached_raidtab
 
     def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
