@@ -102,12 +102,19 @@ class WorkerBase(ABC):
     def get_communicator(self):
         return self._communicator
 
-    def get_screenshot_path(self) -> str:
+    def get_screenshot_path(self, fileaddon: bool = False) -> str:
         screenshot_ending: str = ".jpg"
         if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
             screenshot_ending = ".png"
 
-        screenshot_filename = "screenshot_{}{}".format(str(self._id), screenshot_ending)
+        if fileaddon:
+            addon: str = "_" + str(time.time())
+
+        screenshot_filename = "screenshot_{}{}{}".format(str(self._id), str(addon), screenshot_ending)
+
+        if fileaddon:
+            logger.info("Creating debugscreen: {}".format(screenshot_filename))
+
         return os.path.join(
                 self._applicationArgs.temp_path, screenshot_filename)
 
@@ -561,6 +568,9 @@ class WorkerBase(ABC):
         logger.info('Precheck Quest Menu')
         questcounter: int = 0
         firstround: bool = True
+        time.sleep(2)
+        if not self._checkPogoButton():
+            self._checkPogoClose()
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
@@ -711,7 +721,7 @@ class WorkerBase(ABC):
 
         return trashes
 
-    def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0):
+    def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0, errorscreen: bool = False):
         logger.debug("Taking screenshot...")
         time.sleep(delayBefore)
         compareToTime = time.time() - self._lastScreenshotTaken
@@ -725,7 +735,7 @@ class WorkerBase(ABC):
 
         screenshot_quality: int = self.get_devicesettings_value("screenshot_quality", 80)
 
-        take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(),
+        take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
                                                             screenshot_quality, screenshot_type)
 
         if self._lastScreenshotTaken and compareToTime < 0.5:

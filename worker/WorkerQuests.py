@@ -727,4 +727,6 @@ class WorkerQuests(MITMBase):
                 # TODO: timeoutopen error instead of data_error_counter? Differentiate timeout vs missing data (the
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
+        # not getting any data ... something seems wrong. We sleep now - takine screen for later debugging
+        self._takeScreenshot(errorscreen=True)
         return LatestReceivedType.UNDEFINED
