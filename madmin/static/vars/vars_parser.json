@@ -188,6 +188,23 @@
 						"require": "false",
 						"description": "Quality of screenshot (Default: 80)"
 					}
+				},
+				{
+					"name": "route_calc_algorithm",
+					"settings": {
+						"type": "option",
+						"values": "optimized|quick",
+						"require": "false",
+						"description": "Method of calculation for routes. (Default optimized)"
+					}
+				},
+				{
+					"name": "startcoords_of_walker",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
+					}
 				}
 			]
 		}
@@ -362,6 +379,14 @@
 						"values": "optimized|quick",
 						"require": "false",
 						"description": "Method of calculation for routes. (Default optimized)"
+					}
+				},
+				{
+					"name": "startcoords_of_walker",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
 					}
 				}
 			]

@@ -238,6 +238,13 @@ class WorkerBase(ABC):
     def _internal_pre_work(self):
         current_thread().name = self._id
 
+        if self.get_devicesettings_value("startcoords_of_walker", None) is not None:
+            startcoords = self.get_devicesettings_value("startcoords_of_walker").replace(' ', '')\
+                .replace('_','').split(',')
+            logger.info('Setting startcoords or walker lat {} / lng {}'.format(str(startcoords[0]),
+                                                                               str(startcoords[1])))
+            self._communicator.setLocation(startcoords[0], startcoords[1], 0)
+
         self._work_mutex.acquire()
         try:
             self._turn_screen_on_and_start_pogo()
