@@ -84,9 +84,9 @@ class WorkerBase(ABC):
         self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
                                                           self._resocalc)
 
-        startcoords = self.get_devicesettings_value("startcoords_of_walker", '0,0').replace(' ', '').split(',')
-        self._communicator.setLocation(
-            startcoords[0], startcoords[1], 0)
+        if self.get_devicesettings_value("startcoords_of_walker", None) is not None:
+            startcoords = self.get_devicesettings_value("startcoords_of_walker").replace(' ', '').split(',')
+            self._communicator.setLocation(startcoords[0], startcoords[1], 0)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
