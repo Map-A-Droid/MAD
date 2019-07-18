@@ -239,15 +239,15 @@ class PogoWindows:
             "readCircles: Determined screenshot to not contain raidcircles, but a raidcount!")
         return -1
 
-    def look_for_button(self, filename, ratiomin, ratiomax, communicator):
+    def look_for_button(self, filename, ratiomin, ratiomax, communicator, upper: bool = False):
         if not os.path.isfile(filename):
             logger.error("look_for_button: {} does not exist", str(filename))
             return False
 
         return self.__thread_pool.apply_async(self.__internal_look_for_button,
-                                              (filename, ratiomin, ratiomax, communicator)).get()
+                                              (filename, ratiomin, ratiomax, communicator, upper)).get()
 
-    def __internal_look_for_button(self, filename, ratiomin, ratiomax, communicator):
+    def __internal_look_for_button(self, filename, ratiomin, ratiomax, communicator, upper):
         logger.debug("lookForButton: Reading lines")
         disToMiddleMin = None
         try:
@@ -305,10 +305,26 @@ class PogoWindows:
                         and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
 
                     lineCount += 1
-                    click_y = _last_y + ((y1 - _last_y) / 2)
-                    _last_y = y1
-                    _x1 = x1
-                    _x2 = x2
+                    disToMiddleMin_temp = y1 - (height / 2)
+                    if upper:
+                        if disToMiddleMin is None:
+                            disToMiddleMin = disToMiddleMin_temp
+                            click_y = y1 + 50
+                            _last_y = y1
+                            _x1 = x1
+                            _x2 = x2
+                        else:
+                            if disToMiddleMin_temp < disToMiddleMin:
+                                click_y = _last_y + ((y1 - _last_y) / 2)
+                                _last_y = y1
+                                _x1 = x1
+                                _x2 = x2
+
+                    else:
+                        click_y = _last_y + ((y1 - _last_y) / 2)
+                        _last_y = y1
+                        _x1 = x1
+                        _x2 = x2
 
                     logger.debug("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))

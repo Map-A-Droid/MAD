@@ -93,6 +93,9 @@ class MITMBase(WorkerBase):
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
             logger.warning("Timeout waiting for data")
+            if self._mapping_manager.routemanager_get_mode(self._routemanager_name) == 'pokestops':
+                # not getting any data ... something seems wrong. We sleep now - taking screen for later debugging
+                self._takeScreenshot(errorscreen=True)
 
             self._mitm_mapper.collect_location_stats(self._id, self.current_location, 0, self._waittime_without_delays,
                                                      position_type, 0,

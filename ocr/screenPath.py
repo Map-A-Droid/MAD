@@ -165,7 +165,7 @@ class WordToScreenMatching(object):
                         return ScreenType.BIRTHDATE
 
         elif ScreenType(self.returntype) == ScreenType.RETURNING:
-            self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
+            self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator, upper=True)
             time.sleep(2)
             return ScreenType.RETURNING
 
@@ -243,7 +243,6 @@ class WordToScreenMatching(object):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         self.returntype: ScreenType = -1
         self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
-        print(self._globaldict)
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         n_boxes = len(self._globaldict['level'])
         for i in range(n_boxes):
@@ -254,17 +253,10 @@ class WordToScreenMatching(object):
 
         logger.info('Listening to Dr. blabla - please wait')
 
-        self._communicator.click(100, 100)
+        self._communicator.backButton()
         time.sleep(1)
         self._communicator.click(100, 100)
         time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
 
         return ScreenType.UNDEFINED
 

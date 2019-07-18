@@ -58,11 +58,11 @@ class testimage(object):
             self._image_check = self.get_gym_click_coords(self._image)
 
         if self._mode == "check_button_big":
-            self._image_check = self.look_for_button(self._image, 1.05, 2.20)
+            self._image_check = self.look_for_button(self._image, 1.05, 2.20, upper=True)
                                                      #2.20, 3.01)
 
         if self._mode == "check_button_small":
-            self._image_check = self.look_for_button(self._image, 2.20, 3.01)
+            self._image_check = self.look_for_button(self._image, 2.20, 3.01, upper=False)
 
         if self._mode == "find_pokeball":
             self._image_check = self.find_pokeball(self._image)
@@ -221,7 +221,7 @@ class testimage(object):
             return True
         return False
 
-    def look_for_button(self, filename, ratiomin, ratiomax):
+    def look_for_button(self, filename, ratiomin, ratiomax, upper: bool = False):
         print("lookForButton: Reading lines")
         disToMiddleMin = None
         gray = cv2.cvtColor(filename, cv2.COLOR_BGR2GRAY)
@@ -267,10 +267,26 @@ class testimage(object):
                         y1 > (height / 2) \
                         and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
                     lineCount += 1
-                    click_y = _last_y + ((y1 - _last_y) / 2)
-                    _last_y = y1
-                    _x1 = x1
-                    _x2 = x2
+                    disToMiddleMin_temp = y1 - (height/2)
+                    if upper:
+                        if disToMiddleMin is None:
+                            disToMiddleMin = disToMiddleMin_temp
+                            click_y = y1 + 50
+                            _last_y = y1
+                            _x1 = x1
+                            _x2 = x2
+                        else:
+                            if disToMiddleMin_temp < disToMiddleMin:
+                                click_y = _last_y + ((y1 - _last_y) / 2)
+                                _last_y = y1
+                                _x1 = x1
+                                _x2 = x2
+
+                    else:
+                        click_y = _last_y + ((y1 - _last_y) / 2)
+                        _last_y = y1
+                        _x1 = x1
+                        _x2 = x2
 
                     print("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))

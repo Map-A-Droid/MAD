@@ -104,6 +104,7 @@ class WorkerBase(ABC):
 
     def get_screenshot_path(self, fileaddon: bool = False) -> str:
         screenshot_ending: str = ".jpg"
+        addon: str = ""
         if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
             screenshot_ending = ".png"
 
@@ -568,13 +569,12 @@ class WorkerBase(ABC):
         logger.info('Precheck Quest Menu')
         questcounter: int = 0
         firstround: bool = True
-        time.sleep(2)
         if not self._checkPogoButton():
             self._checkPogoClose()
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(2)
+        time.sleep(1)
         returncode: ScreenType = ScreenType.UNDEFINED
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                     delayAfter=2):
