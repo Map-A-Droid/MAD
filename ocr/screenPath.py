@@ -254,9 +254,7 @@ class WordToScreenMatching(object):
         logger.info('Listening to Dr. blabla - please wait')
 
         self._communicator.backButton()
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
+        time.sleep(3)
 
         return ScreenType.UNDEFINED
 

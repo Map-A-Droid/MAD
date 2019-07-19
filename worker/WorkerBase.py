@@ -558,6 +558,7 @@ class WorkerBase(ABC):
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
     def _check_windows(self):
+        logger.info('Checking pogo screen...')
         returncode: ScreenType = ScreenType.UNDEFINED
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                     delayAfter=2):
@@ -570,6 +571,8 @@ class WorkerBase(ABC):
             if returncode != ScreenType.POGO:
                 self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                      delayAfter=0.1)
+
+        logger.info('Checking pogo screen is finished')
         return
 
     def _check_quest(self):
@@ -577,8 +580,6 @@ class WorkerBase(ABC):
         questcounter: int = 0
         questloop: int = 0
         firstround: bool = True
-        if not self._checkPogoButton():
-            self._checkPogoClose()
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
@@ -600,16 +601,14 @@ class WorkerBase(ABC):
                            self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(1.5)
-                    returncode = ScreenType.POGO
+                    return ScreenType.POGO
                 elif questcounter >= 2:
                     logger.info('Getting research menu two times in row')
                     x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                            self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
                     time.sleep(1.5)
-                    returncode = ScreenType.POGO
-
-                if returncode == ScreenType.POGO: return returncode
+                    return ScreenType.POGO
 
             x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                    self._resocalc.get_close_main_button_coords(self)[1]
