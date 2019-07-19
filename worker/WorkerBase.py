@@ -575,6 +575,7 @@ class WorkerBase(ABC):
     def _check_quest(self):
         logger.info('Precheck Quest Menu')
         questcounter: int = 0
+        questloop: int = 0
         firstround: bool = True
         if not self._checkPogoButton():
             self._checkPogoClose()
@@ -619,11 +620,14 @@ class WorkerBase(ABC):
             self._communicator.click(int(x), int(y))
             time.sleep(2)
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                 delayAfter=0.1)
+                                 delayAfter=2)
 
-            if questcounter > 5:
+            if questloop > 5:
                 logger.warning("Give up - maybe research screen is there...")
+                return ScreenType.POGO
                 break
+
+            questloop += 1
 
             firstround = False
 
