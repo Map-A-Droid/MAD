@@ -46,7 +46,7 @@ class WebhookWorker:
         if size == 0:
             return [payload]
 
-        return [payload[x : x + size] for x in range(0, len(payload), size)]
+        return [payload[x: x + size] for x in range(0, len(payload), size)]
 
     def __is_in_excluded_area(self, coordinate):
         for gfh in self.__geofence_helpers:
@@ -529,6 +529,8 @@ class WebhookWorker:
                 self.__geofence_helpers.append(geofence_helper_of_area)
 
     def __create_payload(self):
+        logger.debug("Fetching data changed since {}", self.__last_check)
+
         # the payload that is about to be sent
         full_payload = []
 
@@ -575,6 +577,8 @@ class WebhookWorker:
                 full_payload += mon
         except Exception:
             logger.exception("Error while creating webhook payload")
+
+        logger.debug2("Done fetching data + building payload")
 
         return full_payload
 
