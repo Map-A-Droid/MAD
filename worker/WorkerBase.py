@@ -600,8 +600,8 @@ class WorkerBase(ABC):
                     self._communicator.click(int(x), int(y))
                     time.sleep(1.5)
                     returncode = ScreenType.POGO
-                elif questcounter == 3:
-                    logger.info('Getting research menu three times in row')
+                elif questcounter >= 2:
+                    logger.info('Getting research menu two times in row')
                     x, y = self._resocalc.get_close_main_button_coords(self)[0], \
                            self._resocalc.get_close_main_button_coords(self)[1]
                     self._communicator.click(int(x), int(y))
@@ -620,6 +620,10 @@ class WorkerBase(ABC):
             time.sleep(2)
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                  delayAfter=0.1)
+
+            if questcounter > 5:
+                logger.warning("Give up - maybe research screen is there...")
+                break
 
             firstround = False
 
