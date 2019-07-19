@@ -113,6 +113,7 @@
                 shiny = result.shiny
                 shiny_worker = result.shiny_worker
                 shiny_hour = result.shiny_hour
+                shiny_stats_avg = result.shiny_stats_avg
 
                 setGrid('#show-data-good-pokemon', good_spawns, [
                     { data: 'id', title: 'Mon-ID' },
@@ -144,6 +145,21 @@
                     { data: null, title: 'Pic' },
                     { data: 'ratio', title: 'Ratio' },
                     { data: 'worker', title: 'Worker' }
+
+                ], [
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " width=100>";
+                    }
+                }
+                ]);
+                setGrid('#show-data-shiny-avg', shiny_stats_avg, [
+                    { data: 'avg', title: 'Worker Encounter AVG' },
+                    { data: 'amount', title: 'Shiny' },
+                    { data: 'name', title: 'Name' },
+                    { data: null, title: 'Pic' },
+                    { data: 'click_for_shiny', title: 'AVG Encouter for one Shiny' }
 
                 ], [
                 {
@@ -386,6 +402,9 @@
 <br>
 <h2>Shiny Stats Type / Worker Detail View</h2>
 <table id="show-data-shiny" class="table" style="width:100%;"></table>
+<br>
+<h2>Shiny Stats AVG</h2>
+<table id="show-data-shiny-avg" class="table" style="width:100%;"></table>
 <br>
 <h2>Shiny Amount / Worker</h2>
 <table id="show-data-shiny-worker" class="table" style="width:100%;"></table>

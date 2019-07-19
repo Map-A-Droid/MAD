@@ -6,7 +6,7 @@ from madmin.functions import auth_required
 from utils.language import i8ln
 from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp, form_mapper
 from utils.geo import get_distance_of_two_points_in_meters
-
+from utils.logging import logger
 
 class statistics(object):
     def __init__(self, db, args, app):
@@ -144,13 +144,14 @@ class statistics(object):
                  'location_info': location_info, 'detection': detection}
         return jsonify(stats)
 
+    @logger.catch
     def game_stats_mon(self):
         minutes_spawn = request.args.get('minutes_spawn', 10)
 
         # Spawn
         iv = []
         noniv = []
-        sum = []
+        sumg = []
         sumup = {}
 
         data = self._db.statistics_get_pokemon_count(minutes_spawn)
@@ -166,9 +167,9 @@ class statistics(object):
                 sumup[(self.utc2local(dat[0]) * 1000)] = dat[1]
 
         for dat in sumup:
-            sum.append([dat, sumup[dat]])
+            sumg.append([dat, sumup[dat]])
 
-        spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
+        spawn = {'iv': iv, 'noniv': noniv, 'sum': sumg}
 
         #shiny hour
 
@@ -209,6 +210,7 @@ class statistics(object):
 
         shiny_stats = []
         shiny_worker = {}
+        shiny_avg = {}
         data = self._db.statistics_get_shiny_stats()
         for dat in data:
             form_suffix = "%02d" % form_mapper(dat[2], dat[5])
@@ -220,15 +222,42 @@ class statistics(object):
             if dat[3] not in shiny_worker: shiny_worker[dat[3]] = 0
             shiny_worker[dat[3]] += dat[1]
 
+            if dat[2] not in shiny_avg: shiny_avg[dat[2]] = {}
+            if dat[5] not in shiny_avg[dat[2]]:
+                shiny_avg[dat[2]][dat[5]] = {}
+                shiny_avg[dat[2]][dat[5]]['total_shiny'] = []
+                shiny_avg[dat[2]][dat[5]]['total_nonshiny'] = []
+
+            shiny_avg[dat[2]][dat[5]]['total_shiny'].append(dat[1])
+            shiny_avg[dat[2]][dat[5]]['total_nonshiny'].append(dat[0])
+
             shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
                                 'worker': dat[3], 'encounterid': dat[4]})
+
+        shiny_stats_avg = []
+        for dat in shiny_avg:
+            for form_dat in shiny_avg[dat]:
+
+                form_suffix = "%02d" % form_mapper(dat, form_dat)
+                mon = "%03d" % dat
+                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+                monName_raw = (get_raid_boss_cp(dat))
+                monName = i8ln(monName_raw['name'])
+
+                shiny_amount = sum(shiny_avg[dat][form_dat]['total_shiny'])
+                shiny_amount_avg = round(sum(shiny_avg[dat][form_dat]['total_nonshiny']) / \
+                                   len(shiny_avg[dat][form_dat]['total_nonshiny']), 0)
+                shiny_avg_click = round(shiny_amount_avg / shiny_amount, 0)
+
+                shiny_stats_avg.append({'name': monName, 'img': monPic, 'amount': shiny_amount,
+                                        'avg': shiny_amount_avg, 'click_for_shiny': shiny_avg_click})
 
         shiny_stats_worker = []
         for dat in shiny_worker:
             shiny_stats_worker.append({'sum': shiny_worker[dat], 'worker': dat})
 
         stats = {'spawn': spawn, 'good_spawns': good_spawns, 'shiny': shiny_stats, 'shiny_worker': shiny_stats_worker,
-                 'shiny_hour': shiny_hour}
+                 'shiny_hour': shiny_hour, 'shiny_stats_avg': shiny_stats_avg}
         return jsonify(stats)
 
     def utc2local(self, ts):
