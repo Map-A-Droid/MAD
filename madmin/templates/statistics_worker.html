@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.pie.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
+
+<script>
+    $(function () {
+
+        var options_dots = {
+            xaxis: {
+                mode: "time",
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:00 %p - ",
+                {% else %}
+                timeformat: "%d.%m<br>%H:00 - ",
+                {% endif %}
+                minTickSize: [1, "hour"],
+                timezone: "browser"
+            },
+            series: {
+                lines: {
+                    show: true,
+                    color: '#ffa500'
+                },
+                points: {
+                    show: true
+                }
+            },
+            grid: {
+                hoverable: true,
+                borderWidth: 1,
+                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            },
+            legend: {
+                container: $("#legendContainer_spawn"),
+                noColumns: 0
+            }
+        };
+
+        var options_bars = {
+            xaxis: {
+                mode: "time",
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:00:00 %p",
+                {% else %}
+                timeformat: "%d.%m<br>%H:00:00",
+                {% endif %}
+                minTickSize: [3, "hour"],
+                timezone: "browser"
+            },
+            series: {
+                bars: {
+                    show: true
+                }
+            },
+            bars: {
+                align: "center",
+                barWidth: 60 * 40 * 1000
+            },
+            grid: {
+                hoverable: true,
+                borderWidth: 2,
+                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            },
+            legend: {
+                container: $("#legendContainer_quest"),
+                noColumns: 0
+            }
+        };
+
+        var options_pie = {
+            series: {
+                pie: {
+                    show: true,
+                    radius: 1,
+                    tilt: 0.5,
+                    label: {
+                        show: true,
+                        radius: 0.8,
+                        threshold: 0.1
+                    }
+                }
+            },
+            legend: {
+                show: true,
+                labelFormatter: function (label, series) {
+                    return '<div id="legendContainer" style="color:black;">' +
+                        label + ' : ' +
+                        (series.data[0][1]) +
+                        '</div>';
+                }
+            }
+        };
+
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+
+        $.ajax({
+            "url": "statistics_detection_worker_data?worker={{ worker }}&minutes={{ minutes }}",
+            "type": "GET",
+            "cache": false,
+            "dataType": "json",
+            success: function (result) {
+                receiving = result.receiving
+                avg = result.avg
+                locations = result.locations
+                location_ratio = result.ratio
+                allspawns = result.allspawns
+                detections_raw = result.detections_raw
+                location_raw = result.location_raw
+
+                $.plot($("#flot_usage"), receiving,
+                    {
+                        grid: {
+                            hoverable: true,
+                            borderWidth: 2,
+                            backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+                        },
+                        xaxis: {
+                            mode: "time",
+                            {% if time == "12" %}
+                            timeformat: "%d.%m<br>%I:%M %p",
+                            {% else %}
+                            timeformat: "%d.%m<br>%H:%M",
+                            {% endif %}
+                            tickSize: [1, "hour"],
+                            timezone: "browser"
+                        },
+                        legend: {
+                            container: $("#legendContainer_usage"),
+                            noColumns: 0
+                        },
+                        series: {
+                             lines: {
+                                 show: true,
+                                 color: '#ffa500'
+                             },
+                             points: {
+                                 show: true
+                             }
+                         }
+                    }
+                );
+                $("#flot_usage").UseTooltipFull();
+                $.plot($("#flot_locations"), locations,
+                    {
+                        grid: {
+                            hoverable: true,
+                            borderWidth: 2,
+                            backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+                        },
+                        xaxis: {
+                            mode: "time",
+                            //{% if time == "12" %}
+                            timeformat: "%d.%m<br>%I:%M %p",
+                            //{% else %}
+                            timeformat: "%d.%m<br>%H:%M",
+                            //{% endif %}
+                            tickSize: [1, "hour"],
+                            timezone: "browser"
+                        },
+                        legend: {
+                            container: $("#legendContainer_locations"),
+                            noColumns: 0
+                        },
+                        series: {
+                             lines: {
+                                 show: true,
+                                 color: '#ffa500'
+                             },
+                             points: {
+                                 show: true
+                             }
+                         }}
+                );
+                $("#flot_locations").UseTooltipFull();
+
+
+                setGrid('#show-data', avg, [
+                    { data: 'dtime', title: 'Time' },
+                    { data: 'transporttype', title: 'Transport Type' },
+                    { data: 'ok_locations', title: 'Locations with Data' },
+                    { data: 'avg_datareceive', title: 'AVG Data Receiving (seconds)' },
+                    { data: 'type', title: 'Type of Worker' }
+                ]);
+                setGrid('#show-data-detection_raw', detections_raw, [
+                    { data: 'type', title: 'Typ' },
+                    { data: 'id', title: 'ID' },
+                    { data: 'count', title: 'Count of scanning' }
+                ]);
+                setGrid('#show-data-complete', allspawns, [
+                    { data: 'type', title: 'Type' },
+                    { data: 'amount', title: 'Count' }
+                ]);
+                setGrid('#show-data-location_raw', location_raw, [
+                    { data: null, title: 'Map' },
+                    { data: null, title: 'Lat / Lng' },
+                    { data: 'distance', title: 'Distance' },
+                    { data: 'type', title: 'Type / Data' },
+                    { data: 'fix_ts', title: 'Geofix- / Datatime' },
+                    { data: 'transporttype', title: 'Transport Type' }
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=map?lat=" + row.lat + "&lng=" + row.lng + " target=_new>[MAP]</a>";
+                    },
+                },
+                {
+                    "targets": [1],
+                    "render": function (data, type, row) {
+                        return row.lat + "<br>" + row.lng;
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        return row.type + "<br>" + row.data;
+                    }
+                },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+                        return row.fix_ts + "<br>" + row.data_ts;
+                    }
+                }
+                ]);
+                $.plot($("#flot_ratio"), location_ratio, options_pie);
+
+
+
+            },
+            complete: function () {
+                setTimeout($.unblockUI, 100);
+            }
+
+        });
+
+
+        function setGrid(tableGridHtmlId, gridData, columns, defs) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "searching": true,
+            "paging": true,
+            "columns": columns,
+            "ordering": false,
+            "columnDefs": defs,
+            "responsive": {{ responsive }}
+        });
+	}
+
+        var previousPoint = null, previousLabel = null;
+
+        $.fn.UseTooltip = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                            item.pageY,
+                            color,
+                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: " + timeConverter(x, 'hour') + "</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+        $.fn.UseTooltipFull = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                            item.pageY,
+                            color,
+                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Time</strong>: " + timeConverter(x, 'full') + "</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+        function timeConverter(timestamp, mode) {
+            var a = new Date(timestamp);
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var year = a.getFullYear();
+            var month = months[a.getMonth()];
+            var date = a.getDate();
+            var hour = a.getHours();
+            var hour_till = a.getHours() + 1;
+            var min = a.getMinutes();
+            min = min < 10 ? '0' + min : min;
+            var sec = a.getSeconds();
+            sec = sec < 10 ? '0' + sec : sec;
+
+            {% if time == "12" %}
+            var ampm = hour >= 12 ? 'pm' : 'am';
+            hour = hour % 12;
+            hour = hour ? hour : 12;
+            hour_till = hour_till % 12;
+            hour_till = hour_till ? hour_till : 12;
+            hour_till + ' ' + ampm;
+            sec = sec + ' ' + ampm;
+            {% endif %}
+
+            if (mode == 'hour') {
+                var time = hour + ' - ' + hour_till
+            } else {
+                var time = hour + ':' + min + ':' + sec
+            }
+            return time;
+        }
+
+        function showTooltip(x, y, color, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css({
+                position: 'absolute',
+                display: 'none',
+                top: y - 40,
+                left: x - 120,
+                border: '2px solid ' + color,
+                padding: '3px',
+                'font-size': '9px',
+                'border-radius': '5px',
+                'background-color': '#fff',
+                'font-family': 'Verdana, Arial, Helvetica, Tahoma, sans-serif',
+                opacity: 0.9
+            }).appendTo("body").fadeIn(200);
+        }
+    });
+
+</script>
+
+<style type="text/css">
+    #flot_usage {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_locations {
+        width: 100%;
+        height: 300px;
+    }
+    #flot_ratio {
+        width: 100%;
+        height: 300px;
+    }
+
+    #legendContainer {
+        background-color: #fff;
+        padding: 2px;
+        margin-bottom: 8px;
+        display: inline-block;
+        margin: 0 auto;
+    }
+
+    #flotcontainer {
+        width: 600px;
+        height: 200px;
+        text-align: left;
+    }
+
+    #selector {
+        font-size: 1.5em;
+        margin: 10px;
+    }
+</style>
+
+
+{% endblock %}
+
+{% block content %}
+<h1>Statistic for Worker {{ worker }}</h1>
+<h6>Back to <a href="statistics">Statistics</a></h6>
+<h2>Complete Worker Detection</h2>
+<table id="show-data-complete" class="table" style="width:100%;"></table>
+<hr>
+<h2>Workerdetails</h2>
+<div id="selector">
+    View {{ minutes }} minutes <br>Set:
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=60">60</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=120">120</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=240">240</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=480">480</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=1440">1440</a>
+    <a href="statistics_detection_worker?worker={{ worker }}&amp;minutes=10080">One Week</a>
+    </div>
+<h2>Worker Detection</h2>
+<div id="legendContainer_usage"></div>
+<div id="flot_usage"></div>
+<br>
+<h2>Location / Data Statistics (Mon_mitm / IV_mitm)</h2>
+<table id="show-data" class="table" style="width:100%;"></table>
+<br>
+<h2>Location / Data Ratio</h2>
+<div id="legendContainer_locations"></div>
+<div id="flot_locations"></div>
+<br>
+<h2>Location / Data / QueueType Ratio</h2>
+<div id="legendContainer_locations"></div>
+<div id="flot_ratio"></div>
+<br>
+<h2>Raw detection data</h2>
+<table id="show-data-detection_raw" class="table" style="width:100%;"></table>
+<br>
+<h2>Raw location data</h2>
+<table id="show-data-location_raw" class="table" style="width:100%;"></table>
+
+{% endblock %}

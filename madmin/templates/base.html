@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8">
+    {% if title %}
+    <title>MADmin - {{ title }}</title>
+    {% else %}
+    <title>MADmin</title>
+    {% endif %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" integrity="sha384-1UXhfqyOyO+W+XsGhiIFwwD3hsaHRz2XDGMle3b8bXPH5+cMsXVShDoHA3AH/y/p" crossorigin="anonymous">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
+    {% block header %}{% endblock %}
+    {% if not pub %}
+    <style>
+        body {
+          padding-top: 56px;
+        }
+        .brandimg {
+            max-height: 20px;
+        }
+    </style>
+    {% endif %}
+</head>
+
+<body>
+    {% if not pub %}
+    <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
+        <div class="container">
+          <a class="navbar-brand" href=".">
+              <img src="{{ url_for('static', filename='mad_banner_trans.png').lstrip('/') }}" class="brandimg">
+          </a>
+          <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+              <span class="navbar-toggler-icon"></span>
+          </button>
+          <div id="navbarNav" class="navbar-collapse collapse">
+              <ul class="navbar-nav mr-auto">
+                  <li class="nav-item">
+                    <a href="map" class="nav-link">Map</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="quests" class="nav-link">Quests</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="showsettings" class="nav-link">Mapping Editor</a>
+                  </li>
+                  <li class="nav-item">
+                    <a href="status" class="nav-link">Status</a>
+                  </li>
+                  <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="statistics" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        Statistics
+                    </a>
+                      <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
+                      <a href="statistics" class="dropdown-item">Global Stats</a>
+                      <a href="statistics_mon" class="dropdown-item">Mon Stats</a>
+                    </div>
+                  </li>
+                  <li class="nav-item">
+                    <a href="phonecontrol" class="nav-link">Phonecontrol</a>
+                  </li>
+
+                  {% if running_ocr %}
+                  <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        OCR Settings
+                    </a>
+                    <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
+                      <a href="raids" class="dropdown-item">Check Raids</a>
+                      <a href="gyms" class="dropdown-item">Check Gyms</a>
+                      <a href="unknown" class="dropdown-item">Unrecognized Gyms</a>
+                      <a href="screens" class="dropdown-item">Processed Screens</a>
+                    </div>
+                  </li>
+                  {% endif %}
+              </ul>
+          </div>
+        </div>
+    </nav>
+    {% endif %}
+    <div class="container" role="main">
+        {% block content %}{% endblock %}
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.3.1/jquery.min.js" integrity="sha384-tsQFqpEReu7ZLhBV2VZlAu7zcOV+rXbYlF2cqB8txI/8aZajjp4Bqd+V6D5IgvKT" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.6/umd/popper.min.js" integrity="sha384-wHAiFfRlMFy6i5SRaxvfOCifBUQy1xHdJ/yoi7FRNXMRBu5WHdZYu1hA6ZOblgut" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/4.2.1/js/bootstrap.min.js" integrity="sha384-B0UglyR+jN6CkvvICOB2joaf5I4l3gm9GU6Hc1og6Ls7i6U/mkkaduKaBhlAXv9k" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js" integrity="sha384-rgWRqC0OFPisxlUvl332tiM/qmaNxnlY46eksSZD84t+s2vZlqGeHrncwIRX7CGp" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js" integrity="sha256-9wRM03dUw6ABCs+AU69WbK33oktrlXamEXMvxUaF+KU=" crossorigin="anonymous"></script>
+    <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js" crossorigin="anonymous""></script>
+    {% block scripts %}{% endblock %}
+</body>
+
+</html>

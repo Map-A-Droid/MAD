@@ -1,0 +1,98 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'name', title: 'Name' },
+                { data: 'filename', title: 'Hashpic' },
+                { data: 'gymimage', title: 'Gympic' },
+                { data: 'type', title: 'Egg/Mon' },
+                { data: 'level', title: 'Level' },
+                { data: 'modify', title: 'Last Modify', type: 'date' },
+                { data: 'creation', title: 'Creation Date', type: 'date' },
+                { data: '', title: 'Actions' }
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return data + "<br />Hashvalue: " + row.hashvalue + "<br />Matchcount: " + row.count;
+                    },
+                },
+                {
+                    "targets": [1, 2],
+                    "render": function (data, type, row) {
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        var monegg = "";
+                        var monName = "";
+                        if (row.type === "egg") {
+                            monegg = "<img class='lazy' data-original='" + row.eggPic + "' width=50>"
+                            monName = ''
+                        } else {
+                            monegg = "<img class='lazy' data-original='" + row.monPic + "' width=100>"
+                            monName = row.monname
+                        }
+                        return monName + "<br />" + monegg;
+                    }
+                },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+                        var lvl = "";
+                        if (row.type === "egg") {
+                            lvl = 'Egg'
+                        } else {
+                            lvl = 'Level: ' + row.level
+                        }
+                        return lvl;
+                    }
+                },
+                {
+                    "targets": [7],
+                    "render": function (data, type, row) {
+                        var modifyRaid = "<a href='modify_raid?hash=" + row.hashvalue + "&lat=" + row.lat + "&lon=" + row.lon + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Gym</a>";
+                        var modifyMon = "<a href='modify_mon?hash=" + row.hashvalue + "&lvl=" + row.level + "&gym=" + row.id + "&mon=" + row.mon + "&lvl=" + row.level + "'>Change Mon</a>";
+                        var deleteHash = "<a href='delete_hash?hash=" + row.hashvalue + "&type=raid&redirect=raids'>Delete</a>";
+                        return modifyRaid + "<br />" + modifyMon + "<br />" + deleteHash;
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "order": [[{{ sort }}, "desc" ]],
+            "responsive": {{ responsive }},
+            "autoWidth": true
+        });
+	}
+	
+    $(document).ready(function () {
+        $("#navraids").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "get_raids",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Check saved Raids</h2>
+<table id="show-data" class="table"></table>
+{% endblock %}
