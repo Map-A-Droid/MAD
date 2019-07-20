@@ -58,7 +58,7 @@ class testimage(object):
             self._image_check = self.get_gym_click_coords(self._image)
 
         if self._mode == "check_button_big":
-            self._image_check = self.look_for_button(self._image, 1.05, 2.20, upper=True)
+            self._image_check = self.look_for_button(self._image, 1.05, 2.20, upper=False)
                                                      #2.20, 3.01)
 
         if self._mode == "check_button_small":

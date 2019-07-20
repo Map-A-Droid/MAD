@@ -81,7 +81,7 @@ class WorkerBase(ABC):
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
         self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
-                                                          self._resocalc)
+                                                          self._resocalc, mapping_manager)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
@@ -248,7 +248,9 @@ class WorkerBase(ABC):
         self._work_mutex.acquire()
         try:
             self._turn_screen_on_and_start_pogo()
-            self._check_windows()
+            if not self._check_windows():
+                logger.error('Kill Worker...')
+                self._stop_worker_event.set()
             self._get_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -559,6 +561,8 @@ class WorkerBase(ABC):
 
     def _check_windows(self):
         logger.info('Checking pogo screen...')
+        restartcounter: bool = False
+        loginerrorcounter: int = 0
         returncode: ScreenType = ScreenType.UNDEFINED
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                     delayAfter=2):
@@ -569,11 +573,34 @@ class WorkerBase(ABC):
             returncode = self._WordToScreenMatching.matchScreen(self.get_screenshot_path())
 
             if returncode != ScreenType.POGO:
-                self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                     delayAfter=0.1)
+
+                if returncode == ScreenType.ERROR:
+                    logger.warning('Something wrong with screendetection')
+                    loginerrorcounter += 1
+
+                if restartcounter:
+                    logger.error('Cannot login again - clear pogo game data and restart phone')
+                    self._stop_pogo()
+                    time.sleep(5)
+                    self._communicator.resetAppdata("com.nianticlabs.pokemongo")
+                    self._reboot()
+                    break
+
+                if loginerrorcounter == 2:
+                    logger.error('Cannot login two times in row - restart pogo')
+                    self._stop_pogo()
+                    time.sleep(5)
+                    self._turn_screen_on_and_start_pogo()
+                    loginerrorcounter = 0
+                    restartcounter = True
+                    break
+
+                if returncode != ScreenType.POGO:
+                    self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+                                         delayAfter=0.1)
 
         logger.info('Checking pogo screen is finished')
-        return
+        return True
 
     def _check_quest(self):
         logger.info('Precheck Quest Menu')

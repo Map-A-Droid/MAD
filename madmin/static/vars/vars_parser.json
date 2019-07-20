@@ -205,6 +205,31 @@
 						"require": "false",
 						"description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
 					}
+				},
+				{
+					"name": "logintype",
+					"settings": {
+						"type": "option",
+						"values": "ptc|google",
+						"require": "false",
+						"description": "Select login typ for automatic login"
+					}
+				},
+				{
+					"name": "ggl_login_mail",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)"
+					}
+				},
+				{
+					"name": "ptc_login",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "PTC User/Password (Format username,password)"
+					}
 				}
 			]
 		}
