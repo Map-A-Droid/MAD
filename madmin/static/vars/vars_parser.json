@@ -210,7 +210,7 @@
 					"name": "logintype",
 					"settings": {
 						"type": "option",
-						"values": "ptc|google",
+						"values": "google|ptc",
 						"require": "false",
 						"description": "Select login typ for automatic login"
 					}
