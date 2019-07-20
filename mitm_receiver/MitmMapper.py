@@ -179,3 +179,4 @@ class MitmMapper(object):
     def generate_player_stats(self, origin: str, inventory_proto: dict):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).gen_player_stats(inventory_proto)
+

@@ -220,7 +220,7 @@
 					"settings": {
 						"type": "text",
 						"require": "false",
-						"description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)"
+						"description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
 					}
 				},
 				{
@@ -228,7 +228,16 @@
 					"settings": {
 						"type": "text",
 						"require": "false",
-						"description": "PTC User/Password (Format username,password)"
+						"description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
+					}
+				},
+				{
+					"name": "account_rotation",
+					"settings": {
+						"type": "option",
+						"values": "false|true",
+						"require": "false",
+						"description": "Rotate accounts (f.e. to prevent long cool downs)"
 					}
 				}
 			]

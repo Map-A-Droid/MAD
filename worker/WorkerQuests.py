@@ -59,13 +59,7 @@ class WorkerQuests(MITMBase):
         self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
         self._clear_quest_counter = 0
-
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
-        if self._level_mode:
-            logger.info("Starting Level Mode")
-        else:
-            # initial cleanup old quests
-            if not self._init: self.clear_thread_task = 2
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -75,13 +69,28 @@ class WorkerQuests(MITMBase):
         self.clear_thread.daemon = True
         self.clear_thread.start()
 
+        if self.get_devicesettings_value('account_rotation', False) and not \
+                self.get_devicesettings_value('account_rotation_started', False):
+            if not self._switch_user():
+                logger.error('Something happened while account rotation')
+                raise InternalStopWorkerException
+            self.set_devicesettings_value('account_rotation_started', True)
+            time.sleep(10)
+
         reached_main_menu = self._check_pogo_main_screen(10, True)
         if not reached_main_menu:
             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                 # TODO: put in loop, count up for a reboot ;)
                 raise InternalStopWorkerException
 
-        self._check_quest()
+        if self._level_mode:
+            logger.info("Starting Level Mode")
+        else:
+            if not self.get_devicesettings_value('account_rotation_started', False):
+                # only check if not checked in the past
+                self._check_quest()
+            # initial cleanup old quests
+            if not self._init: self.clear_thread_task = 2
 
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
@@ -275,6 +284,24 @@ class WorkerQuests(MITMBase):
         else:
             logger.debug("No last action time found - no calculation")
             delay_used = -1
+
+        if self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= 300 and \
+                self.get_devicesettings_value('account_rotation', False):
+            # Waiting time >= 5 min and more then one account - switch!
+
+            logger.info('Could use more then 1 account - switch & no cooldown')
+            if not self._switch_user():
+                logger.error('Something happend while account switching :(')
+                raise InternalStopWorkerException
+            else:
+                time.sleep(10)
+                reached_main_menu = self._check_pogo_main_screen(10, True)
+                if not reached_main_menu:
+                    if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                        # TODO: put in loop, count up for a reboot ;)
+                        raise InternalStopWorkerException
+                self._check_quest()
+                delay_used = -1
 
         if delay_used < 0:
             logger.info('No more cooldowntime - start over')

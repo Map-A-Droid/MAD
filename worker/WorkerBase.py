@@ -602,6 +602,19 @@ class WorkerBase(ABC):
         logger.info('Checking pogo screen is finished')
         return True
 
+    def _switch_user(self):
+        logger.info('Switching User - please wait ...')
+        self._stop_pogo()
+        time.sleep(5)
+        self._communicator.resetAppdata("com.nianticlabs.pokemongo")
+        self._turn_screen_on_and_start_pogo()
+        if not self._check_windows():
+            logger.error('Kill Worker...')
+            self._stop_worker_event.set()
+            return False
+        logger.info('Switching finished ...')
+        return True
+
     def _check_quest(self):
         logger.info('Precheck Quest Menu')
         questcounter: int = 0

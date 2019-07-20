@@ -7,8 +7,9 @@ import re
 import xml.etree.ElementTree as ET
 from utils.logging import logger
 from utils.MappingManager import MappingManager
-from typing import Optional
+from typing import Optional, List
 from pytesseract import Output
+from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
 import numpy as np
 
@@ -27,6 +28,11 @@ class ScreenType(Enum):
     MARKETING = 12
     QUEST = 20
     ERROR = 100
+
+class LoginType(Enum):
+    UNKNOWN = -1
+    google = 1
+    ptc = 2
 
 
 class WordToScreenMatching(object):
@@ -54,10 +60,71 @@ class WordToScreenMatching(object):
         self._ScreenType[12] = detect_Marketing
         self._ScreenType[7] = detect_WrongPassword
         self._globaldict: dict = []
+
+        self._logintype: LoginType = -1
+        self._PTC_accounts: List[Login_PTC] = []
+        self._GGL_accounts: List[Login_GGL] = []
+        self._accountcount: int = 0
+        self._accountindex: int = self.get_devicesettings_value('accountindex', 0)
+
         self._pogoWindowManager = pogoWindowManager
         self._communicator = communicator
         self._resocalc = resocalc
         logger.info("Starting Screendetector")
+        self.get_login_accounts()
+
+    def get_login_accounts(self):
+        self._logintype = LoginType[self.get_devicesettings_value('logintype', 'google')]
+        logger.info("Set logintype: {}".format(self._logintype))
+        if self._logintype == LoginType.ptc:
+            temp_accounts = self.get_devicesettings_value('ptc_login', False)
+            if not temp_accounts:
+                logger.warning('No PTC Accounts are set - hope we are login and never logout!')
+            temp_accounts = temp_accounts.replace(' ', '').split('|')
+
+            for account in temp_accounts:
+                ptc_temp = account.split(',')
+                if 2 < len(ptc_temp) > 2:
+                    logger.warning('Cannot use this account (Wrong format!): {}'.format(str(account)))
+                username = ptc_temp[0]
+                password = ptc_temp[1]
+                self._PTC_accounts.append(Login_PTC(username, password))
+            self._accountcount = len(self._PTC_accounts)
+        else:
+            temp_accounts = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+            if not temp_accounts:
+                logger.warning('No GGL Accounts are set - using first @gmail.com Account')
+            temp_accounts = temp_accounts.replace(' ', '').split('|')
+
+            for account in temp_accounts:
+                self._GGL_accounts.append(Login_GGL(account))
+            self._accountcount = len(self._GGL_accounts)
+
+        logger.info('Added {} account(s) to memory'.format(str(self._accountcount)))
+        return
+
+    def get_next_account(self):
+        if self._accountcount == 0:
+            logger.info('Cannot return new account - no one is set')
+            return None
+        if self._accountindex <= self._accountcount - 1:
+            logger.info('Request next Account - Using Nr. {}'.format(self._accountindex+1))
+            self._accountindex += 1
+        elif self._accountindex > self._accountcount - 1:
+            logger.info('Request next Account - Restarting with Nr. 1')
+            self._accountindex = 0
+
+        self.set_devicesettings_value('accountindex', self._accountindex)
+
+        if self._logintype == LoginType.ptc:
+            logger.info('Using PTC Account: {}'.format(self._PTC_accounts[self._accountindex-1].username))
+            return self._PTC_accounts[self._accountindex-1]
+        else:
+            logger.info('Using GGL Account: {}'.format(self._GGL_accounts[self._accountindex - 1].username))
+            return self._GGL_accounts[self._accountindex-1]
+
+    def return_memory_account_count(self):
+        return self._accountcount
 
     def check_lines(self, lines, height):
         temp_lines = []
@@ -109,9 +176,9 @@ class WordToScreenMatching(object):
 
         if ScreenType(returntype) == ScreenType.GGL:
             n_boxes = len(self._globaldict['level'])
+            ggl_login = self.get_next_account()
             for i in range(n_boxes):
-                ggl_login = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
-                if ggl_login in (self._globaldict['text'][i]):
+                if ggl_login.username in (self._globaldict['text'][i]):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
@@ -249,14 +316,10 @@ class WordToScreenMatching(object):
         elif ScreenType(returntype) == ScreenType.PTC:
             click_user_text = 'username,benutzername,Nom,d’utilisateur'
             click_pass_text = 'password,passwort,Mot,passe'
-            ptc = self.get_devicesettings_value('ptc_login', False)
+            ptc = self.get_next_account()
             if not ptc:
                 logger.error('No PTC Username and Passwort are set')
                 return ScreenType.ERROR
-
-            ptc = ptc.replace(' ', '').split(',')
-            username = ptc[0]
-            password = ptc[1]
 
             for i in range(n_boxes):
                 if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_user_text.split(",")):
@@ -266,7 +329,7 @@ class WordToScreenMatching(object):
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(.5)
-                    self._communicator.sendText(username)
+                    self._communicator.sendText(ptc.username)
                     break
 
             self._communicator.click(100, 100)
@@ -279,7 +342,7 @@ class WordToScreenMatching(object):
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(.5)
-                    self._communicator.sendText(password)
+                    self._communicator.sendText(ptc.password)
                     time.sleep(2)
                     break
 
@@ -287,7 +350,7 @@ class WordToScreenMatching(object):
             time.sleep(2)
 
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
-            time.sleep(2)
+            time.sleep(25)
             return ScreenType.PTC
 
         elif ScreenType(returntype) == ScreenType.FAILURE:
