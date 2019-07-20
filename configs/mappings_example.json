@@ -106,7 +106,10 @@
                 "post_walk_delay": 0,
                 "reboot": false,
                 "restart_pogo": 0,
-                "walk_after_teleport_distance": 1
+                "walk_after_teleport_distance": 1,
+                "account_rotation": true,
+                "logintype": "ptc",
+                "ptc_login": "PTC_1,PTC_PASS_1|PTC_2,PTC_PASS_2|PTC_3,PTC_PASS_3"
             },
             "walker": "test123"
         },
@@ -121,7 +124,10 @@
                 "reboot": true,
                 "reboot_thresh": 10,
                 "restart_pogo": 0,
-                "walk_after_teleport_distance": 1
+                "walk_after_teleport_distance": 1,
+                "account_rotation": false,
+                "logintype": "google",
+                "ptc_login": "GGL1@gmail.com"
             },
             "walker": "iv_total"
         }
