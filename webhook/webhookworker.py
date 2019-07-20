@@ -364,8 +364,6 @@ class WebhookWorker:
 
             if mon["pokemon_id"] in self.__IV_MON and (
                 mon["individual_attack"] is None
-                and mon["individual_defense"] is None
-                and mon["individual_stamina"] is None
             ):
                 # skipping this mon since IV has not been scanned yet
                 continue
@@ -586,13 +584,15 @@ class WebhookWorker:
         logger.info("Starting webhook worker thread")
 
         while not terminate_mad.is_set():
+            preparing_timestamp = int(time.time())
+
             # fetch data and create payload
             full_payload = self.__create_payload()
 
             # send our payload
             self.__send_webhook(full_payload)
 
-            self.__last_check = int(time.time())
+            self.__last_check = preparing_timestamp
             time.sleep(self.__worker_interval_sec)
 
         logger.info("Stopping webhook worker thread")
