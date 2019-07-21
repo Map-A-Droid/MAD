@@ -127,7 +127,7 @@
                 "walk_after_teleport_distance": 1,
                 "account_rotation": false,
                 "logintype": "google",
-                "ptc_login": "GGL1@gmail.com"
+                "ggl_login": "GGL1@gmail.com"
             },
             "walker": "iv_total"
         }
