@@ -749,7 +749,8 @@ class WorkerQuests(MITMBase):
                         return LatestReceivedType.GYM
                     else:
                         return LatestReceivedType.STOP
-                if proto_to_wait_for == 4 and len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
+                if proto_to_wait_for == 4 and 'inventory_delta' in latest_data['payload'] and \
+                        len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return LatestReceivedType.CLEAR
             else:
                 logger.debug("latest timestamp of proto {} ({}) is older than {}", str(
