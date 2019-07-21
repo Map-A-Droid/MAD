@@ -248,9 +248,6 @@ class WorkerBase(ABC):
         self._work_mutex.acquire()
         try:
             self._turn_screen_on_and_start_pogo()
-            if not self._check_windows():
-                logger.error('Kill Worker...')
-                self._stop_worker_event.set()
             self._get_screen_size()
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -623,7 +620,7 @@ class WorkerBase(ABC):
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(1)
+        time.sleep(10)
         returncode: ScreenType = ScreenType.UNDEFINED
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                     delayAfter=2):

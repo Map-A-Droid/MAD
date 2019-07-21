@@ -241,12 +241,20 @@
 					}
 				},
 				{
+					"name": "rotation_waittime",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Rotate accounts if waiting time longer than x seconds after teleport (Default: 300 - need account_rotation: true)"
+					}
+				},
+				{
 					"name": "rotate_on_lvl_30",
 					"settings": {
 						"type": "option",
 						"values": "false|true",
 						"require": "false",
-						"description": "Rotate accounts if player level > 30 (for levelmode)"
+						"description": "Rotate accounts if player level >= 30 (for levelmode)"
 					}
 				}
 			]

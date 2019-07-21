@@ -60,6 +60,7 @@ class WorkerQuests(MITMBase):
         self._stop_process_time = 0
         self._clear_quest_counter = 0
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        self._rotation_waittime = self.get_devicesettings_value('rotation_waittime', 300)
 
     def _pre_work_loop(self):
         if self.clear_thread is not None:
@@ -74,6 +75,14 @@ class WorkerQuests(MITMBase):
             if not self._switch_user():
                 logger.error('Something happened while account rotation')
                 raise InternalStopWorkerException
+            else:
+                reached_main_menu = self._check_pogo_main_screen(10, True)
+                if not reached_main_menu:
+                    if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                        # TODO: put in loop, count up for a reboot ;)
+                        raise InternalStopWorkerException
+                self._check_quest()
+                self.set_devicesettings_value('account_rotation_started', True)
             time.sleep(10)
 
         reached_main_menu = self._check_pogo_main_screen(10, True)
@@ -85,10 +94,6 @@ class WorkerQuests(MITMBase):
         if self._level_mode:
             logger.info("Starting Level Mode")
         else:
-            if not self.get_devicesettings_value('account_rotation_started', False):
-                # only check if not checked in the past
-                self._check_quest()
-                self.set_devicesettings_value('account_rotation_started', True)
             # initial cleanup old quests
             if not self._init: self.clear_thread_task = 2
 
@@ -285,9 +290,9 @@ class WorkerQuests(MITMBase):
             logger.debug("No last action time found - no calculation")
             delay_used = -1
 
-        if self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= 300 and \
-                self.get_devicesettings_value('account_rotation', False):
-            # Waiting time >= 5 min and more then one account - switch!
+        if self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime and \
+                self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
+            # Waiting time to long and more then one account - switch! (not level mode!!)
             logger.info('Could use more then 1 account - switch & no cooldown')
             self.switch_account()
             delay_used = -1
@@ -390,7 +395,6 @@ class WorkerQuests(MITMBase):
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()
-        self._check_windows()
         return start_result
 
     def _cleanup(self):
