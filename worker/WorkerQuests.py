@@ -74,7 +74,6 @@ class WorkerQuests(MITMBase):
             if not self._switch_user():
                 logger.error('Something happened while account rotation')
                 raise InternalStopWorkerException
-            self.set_devicesettings_value('account_rotation_started', True)
             time.sleep(10)
 
         reached_main_menu = self._check_pogo_main_screen(10, True)
@@ -89,6 +88,7 @@ class WorkerQuests(MITMBase):
             if not self.get_devicesettings_value('account_rotation_started', False):
                 # only check if not checked in the past
                 self._check_quest()
+                self.set_devicesettings_value('account_rotation_started', True)
             # initial cleanup old quests
             if not self._init: self.clear_thread_task = 2
 
@@ -288,20 +288,9 @@ class WorkerQuests(MITMBase):
         if self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= 300 and \
                 self.get_devicesettings_value('account_rotation', False):
             # Waiting time >= 5 min and more then one account - switch!
-
             logger.info('Could use more then 1 account - switch & no cooldown')
-            if not self._switch_user():
-                logger.error('Something happend while account switching :(')
-                raise InternalStopWorkerException
-            else:
-                time.sleep(10)
-                reached_main_menu = self._check_pogo_main_screen(10, True)
-                if not reached_main_menu:
-                    if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
-                        # TODO: put in loop, count up for a reboot ;)
-                        raise InternalStopWorkerException
-                self._check_quest()
-                delay_used = -1
+            self.switch_account()
+            delay_used = -1
 
         if delay_used < 0:
             logger.info('No more cooldowntime - start over')
@@ -329,6 +318,19 @@ class WorkerQuests(MITMBase):
         self.last_location = self.current_location
         return cur_time, True
 
+    def switch_account(self):
+        if not self._switch_user():
+            logger.error('Something happend while account switching :(')
+            raise InternalStopWorkerException
+        else:
+            time.sleep(10)
+            reached_main_menu = self._check_pogo_main_screen(10, True)
+            if not reached_main_menu:
+                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                    # TODO: put in loop, count up for a reboot ;)
+                    raise InternalStopWorkerException
+            self._check_quest()
+
     def _post_move_location_routine(self, timestamp: float):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
@@ -336,6 +338,12 @@ class WorkerQuests(MITMBase):
         if position_type is None:
             logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
+
+        if self.get_devicesettings_value('rotate_on_lvl_30', False) and self._mitm_mapper.get_playerlevel() >= 30 \
+                and self._level_mode:
+            #switch if player lvl >= 30
+            self.switch_account()
+
         self._work_mutex.acquire()
         if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
             logger.info("Processing Stop / Quest...")

@@ -239,6 +239,15 @@
 						"require": "false",
 						"description": "Rotate accounts (f.e. to prevent long cool downs)"
 					}
+				},
+				{
+					"name": "rotate_on_lvl_30",
+					"settings": {
+						"type": "option",
+						"values": "false|true",
+						"require": "false",
+						"description": "Rotate accounts if player level > 30 (for levelmode)"
+					}
 				}
 			]
 		}
