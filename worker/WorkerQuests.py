@@ -72,6 +72,7 @@ class WorkerQuests(MITMBase):
 
         if self.get_devicesettings_value('account_rotation', False) and not \
                 self.get_devicesettings_value('account_rotation_started', False):
+            # switch to first account if first started and rotation is activated
             if not self._switch_user():
                 logger.error('Something happened while account rotation')
                 raise InternalStopWorkerException
@@ -84,12 +85,12 @@ class WorkerQuests(MITMBase):
                 self._check_quest()
                 self.set_devicesettings_value('account_rotation_started', True)
             time.sleep(10)
-
-        reached_main_menu = self._check_pogo_main_screen(10, True)
-        if not reached_main_menu:
-            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
-                # TODO: put in loop, count up for a reboot ;)
-                raise InternalStopWorkerException
+        else:
+            reached_main_menu = self._check_pogo_main_screen(10, True)
+            if not reached_main_menu:
+                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                    # TODO: put in loop, count up for a reboot ;)
+                    raise InternalStopWorkerException
 
         if self._level_mode:
             logger.info("Starting Level Mode")
