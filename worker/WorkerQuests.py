@@ -363,9 +363,9 @@ class WorkerQuests(MITMBase):
 
             logger.info('Open Stop')
 
-            data_received = self._open_pokestop(timestamp)
+            data_received = self._open_pokestop(math.floor(time.time()))
             if data_received is not None and data_received == LatestReceivedType.STOP:
-                self._handle_stop(timestamp)
+                self._handle_stop(math.floor(time.time()))
         else:
             logger.debug('Currently in INIT Mode - no Stop processing')
             time.sleep(5)
@@ -651,11 +651,10 @@ class WorkerQuests(MITMBase):
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
                 time.sleep(10)
-                self._checkPogoClose()
-                time.sleep(1)
-                if not self._checkPogoButton():
-                    self._checkPogoClose()
-                time.sleep(1)
+                x, y = self._resocalc.get_close_main_button_coords(
+                    self)[0], self._resocalc.get_close_main_button_coords(self)[1]
+                self._communicator.click(int(x), int(y))
+                time.sleep(3)
                 self._turn_map(self._delay_add)
                 time.sleep(1)
             elif data_received == LatestReceivedType.MON:
@@ -726,16 +725,14 @@ class WorkerQuests(MITMBase):
         if latest is None:
             logger.debug("Nothing received since MAD started")
             time.sleep(0.5)
+        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp:
+            return LatestReceivedType.GYM
+        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
+            return LatestReceivedType.MON
         elif proto_to_wait_for not in latest:
             logger.debug(
                     "No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
-        elif 156 in latest and latest[156].get('timestamp', 0) >= timestamp and \
-                (104 in latest and not latest[104].get('timestamp', 0)) >= timestamp:
-            return LatestReceivedType.GYM
-        elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp and \
-                (104 in latest and not latest[104].get('timestamp', 0)) >= timestamp:
-            return LatestReceivedType.MON
         else:
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?

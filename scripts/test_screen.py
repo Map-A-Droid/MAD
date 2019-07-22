@@ -142,6 +142,7 @@ class testimage(object):
         print('Opening gym')
         x, y = self._resocalc.get_gym_click_coords(
             self)[0], self._resocalc.get_gym_click_coords(self)[1]
+        print (x,y)
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def find_pokeball(self, image):
