@@ -97,8 +97,11 @@
 
 {% block scripts %}
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
 <script>
  $(document).ready(function() {
+
+ $('body').Aplus();
 
 $("a#screenshot").bind("click", function(event) {
        event.preventDefault();
@@ -118,18 +121,22 @@ $("a#screenshot").bind("click", function(event) {
 
 $("a#quit").bind("click", function(event) {
        event.preventDefault();
-       var origin = $(this).attr("origin");
-       var url = $(this).attr("href");
-       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
-       $.ajax({
-       type: "GET",
-       url: url,
-       success: function(data){
-           $('#date' + origin).text(data);
-           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
-           $('div#' + origin).unblock();
-       }
+       var confirm1 = confirm('Do you really want quit pogo?');
+       if (confirm1) {
+            var origin = $(this).attr("origin");
+            var url = $(this).attr("href");
+            $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+            $.ajax({
+            type: "GET",
+            url: url,
+            success: function(data){
+               $('#date' + origin).text(data);
+               $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+               $('div#' + origin).unblock();
+        }
+
      });
+     }
    });
 
 
