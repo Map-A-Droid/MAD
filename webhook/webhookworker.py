@@ -395,6 +395,9 @@ class WebhookWorker:
             if mon["form"] is not None and mon["form"] > 0:
                 mon_payload["form"] = mon["form"]
 
+            if mon["costume"] is not None:
+                mon_payload["costume"] = mon["costume"]
+
             if mon["cp"] is not None:
                 mon_payload["cp"] = mon["cp"]
 
