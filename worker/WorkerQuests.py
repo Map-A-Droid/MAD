@@ -348,8 +348,8 @@ class WorkerQuests(MITMBase):
             logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
 
-        if self.get_devicesettings_value('rotate_on_lvl_30', False) and self._mitm_mapper.get_playerlevel() >= 30 \
-                and self._level_mode:
+        if self.get_devicesettings_value('rotate_on_lvl_30', False) and \
+                self._mitm_mapper.get_playerlevel(self._id) >= 30 and self._level_mode:
             #switch if player lvl >= 30
             self.switch_account()
 
