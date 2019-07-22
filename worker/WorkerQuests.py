@@ -60,6 +60,7 @@ class WorkerQuests(MITMBase):
         self._stop_process_time = 0
         self._clear_quest_counter = 0
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        self._ignore_spinned_stops = self._mapping_manager.routemanager_settings.get("ignore_spinned_stops", True)
         self._rotation_waittime = self.get_devicesettings_value('rotation_waittime', 300)
 
     def _pre_work_loop(self):
@@ -607,7 +608,7 @@ class WorkerQuests(MITMBase):
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
                     return False
-                if self._level_mode:
+                if self._level_mode and self._ignore_spinned_stops:
                     visited: bool = fort.get("visited", False)
                     if visited:
                         logger.info("Levelmode: Stop already visited - skipping it")

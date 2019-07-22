@@ -817,6 +817,16 @@
 						"description": "Max. distance of walking - otherwise teleport to new location",
 						"output": "int"
 					}
+				},
+				{
+					"name": "ignore_spinned_stops",
+					"settings": {
+						"type": "option",
+						"values": "true|false",
+						"require": "true",
+						"description": "Do not spinn stops already made in the past (for levelmode)",
+						"output": "int"
+					}
 				}
 			]
 		},
