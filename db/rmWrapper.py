@@ -1710,7 +1710,7 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_shiny_stats(self):
         logger.debug('Fetching shiny pokemon stats from db')
         query = (
-            "SELECT (select count(encounter_id) from pokemon inner join trs_stats_detect_raw on "
+            "SELECT (select count(DISTINCT encounter_id) from pokemon inner join trs_stats_detect_raw on "
             "trs_stats_detect_raw.type_id=pokemon.encounter_id where pokemon.pokemon_id=a.pokemon_id and "
             "trs_stats_detect_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT encounter_id), a.pokemon_id,"
             "b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'), a.form "
