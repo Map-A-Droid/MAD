@@ -612,7 +612,8 @@ class WorkerQuests(MITMBase):
                     return False
 
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0:
-                    logger.info("Stop {}, {} is rocketized - skip for later check".format(str(latitude), str(longitde)))
+                    logger.info("Stop {}, {} is rocketized - skip for later check"
+                                .format(str(latitude), str(longitude)))
                     return False
 
                 if self._level_mode and self._ignore_spinned_stops:
