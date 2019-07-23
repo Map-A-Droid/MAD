@@ -490,6 +490,12 @@ class WebhookWorker:
             if pokestop["image"]:
                 pokestop_payload["url"] = pokestop["image"]
 
+            if pokestop["incident_start"]:
+                pokestop_payload["incident_start"] = pokestop["incident_start"]
+
+            if pokestop["incident_expiration"]:
+                pokestop_payload["incident_expiration"] = pokestop["incident_expiration"]
+
             entire_payload = {"type": "pokestop", "message": pokestop_payload}
             ret.append(entire_payload)
 

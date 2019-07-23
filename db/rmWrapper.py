@@ -1258,9 +1258,10 @@ class RmWrapper(DbWrapperBase):
     def get_stops_changed_since(self, timestamp):
         query = (
             "SELECT pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier, "
-            "last_modified, last_updated "
+            "last_modified, last_updated, incident_start, incident_expiration "
             "FROM pokestop "
-            "WHERE DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 AND last_updated >= %s"
+            "WHERE last_updated >= %s AND (DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 OR "
+            "incident_start IS NOT NULL)"
         )
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -1268,7 +1269,8 @@ class RmWrapper(DbWrapperBase):
 
         ret = []
         for (pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier,
-                last_modified, last_updated) in res:
+                last_modified, last_updated, incident_start, incident_expiration) in res:
+
             ret.append({
                 'pokestop_id': pokestop_id,
                 'latitude': latitude,
@@ -1278,7 +1280,9 @@ class RmWrapper(DbWrapperBase):
                 'image': image,
                 'active_fort_modifier': active_fort_modifier,
                 "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
-                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp())
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()),
+                "incident_start": int(incident_start.replace(tzinfo=timezone.utc).timestamp()) if incident_start is not None else None,
+                "incident_expiration": int(incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if incident_expiration is not None else None
             })
 
         return ret
