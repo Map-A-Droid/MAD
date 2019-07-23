@@ -2,7 +2,7 @@ import calendar
 import shutil
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import reduce
 from multiprocessing.managers import SyncManager
 from typing import List, Optional
@@ -265,7 +265,7 @@ class MonocleWrapper(DbWrapperBase):
                     "VALUES (%s, %s, %s, %s, %s, %s, %s)"
 
                 )
-                vals = (gym, lvl, int(float(capture_time)), 
+                vals = (gym, lvl, int(float(capture_time)),
                         start, end, pkm)
 
             self.execute(query, vals, commit=True)
@@ -1370,8 +1370,37 @@ class MonocleWrapper(DbWrapperBase):
     def get_stops_changed_since(self, timestamp):
         # no lured support for monocle now!
 
+        query = (
+            "SELECT external_id, lat, lon, name, url, "
+            "updated, expires, incident_start, incident_expiration from pokestops  "
+            "WHERE updated >= %s AND expires > %s OR "
+            "incident_start IS NOT NULL"
+        )
+
+        logger.debug('Pokestop query for webhook {}'.format(query))
+
+        res = self.execute(query, (timestamp, timestamp,))
+
+        logger.debug('Pokestop result for webhook {}'.format(res))
+
         ret = []
-        return ret
+
+        for (external_id, latitude, longitude, name, image,
+                last_updated, lure_expiration, incident_start, incident_expiration) in res:
+
+            ret.append({
+                'pokestop_id': external_id,
+                'latitude': latitude,
+                'longitude': longitude,
+                'lure_expiration': lure_expiration,
+                'name': name,
+                'image': image,
+                "last_updated": last_updated,
+                "incident_start": incident_start if incident_start is not None else None,
+                "incident_expiration": incident_expiration if incident_expiration is not None else None
+            })
+
+            return ret
 
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:

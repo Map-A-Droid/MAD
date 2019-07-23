@@ -482,10 +482,10 @@ class WebhookWorker:
                 "latitude": pokestop["latitude"],
                 "longitude": pokestop["longitude"],
                 "updated": pokestop["last_updated"],
-                "last_modified": pokestop["last_modified"]
+                "last_modified": pokestop["last_modified"] if "llast_modified" in pokestop else None
             }
 
-            if pokestop["active_fort_modifier"]:
+            if 'active_fort_modifier' in pokestop and pokestop["active_fort_modifier"]:
                 pokestop_payload["lure_expiration"] = pokestop["lure_expiration"]
                 pokestop_payload["lure_id"] = pokestop["active_fort_modifier"]
 
@@ -578,6 +578,7 @@ class WebhookWorker:
                 pokestops = self.__prepare_stops_data(
                     self.__db_wrapper.get_stops_changed_since(self.__last_check)
                 )
+                logger.debug('Pokestops webhook payload {}'.format(pokestops))
                 full_payload += pokestops
 
             # mon
@@ -599,6 +600,8 @@ class WebhookWorker:
         while not terminate_mad.is_set():
             # fetch data and create payload
             full_payload = self.__create_payload()
+
+            logger.debug('Full payload for webhook {}'.format(full_payload))
 
             # send our payload
             self.__send_webhook(full_payload)
