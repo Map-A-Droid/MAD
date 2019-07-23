@@ -135,7 +135,7 @@ class MITMBase(WorkerBase):
                 self._reboot(self._mitm_mapper)
                 return False
             logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
-            if self._not_injected_count in [0, 1, 5, 10, 15]:
+            if self._not_injected_count in [5, 10, 15]:
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                         str(self._id), str(self._not_injected_count))
                 self._check_windows()
