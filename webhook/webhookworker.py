@@ -482,7 +482,7 @@ class WebhookWorker:
                 "latitude": pokestop["latitude"],
                 "longitude": pokestop["longitude"],
                 "updated": pokestop["last_updated"],
-                "last_modified": pokestop["last_modified"] if "llast_modified" in pokestop else None
+                "last_modified": pokestop["last_modified"] if "last_modified" in pokestop else None
             }
 
             if 'active_fort_modifier' in pokestop and pokestop["active_fort_modifier"]:
