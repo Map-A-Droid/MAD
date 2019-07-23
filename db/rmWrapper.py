@@ -42,6 +42,16 @@ class RmWrapper(DbWrapperBase):
                 "table": "gym",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_start",
+                "ctype": "datetime NULL"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_expiration",
+                "ctype": "datetime NULL"
             }
         ]
 
@@ -820,11 +830,12 @@ class RmWrapper(DbWrapperBase):
 
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "last_updated, active_fort_modifier) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+            "last_updated, active_fort_modifier, incident_start, incident_expiration) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "active_fort_modifier=VALUES(active_fort_modifier) "
+            "active_fort_modifier=VALUES(active_fort_modifier), incident_start=VALUES(incident_start), "
+            "incident_expiration=VALUES(incident_expiration)"
         )
 
         for cell in cells:
@@ -1087,18 +1098,31 @@ class RmWrapper(DbWrapperBase):
         if stop_data['type'] != 1:
             logger.warning("{} is not a pokestop", str(stop_data))
             return None
+
         now = datetime.utcfromtimestamp(
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
         last_modified = datetime.utcfromtimestamp(
             stop_data['last_modified_timestamp_ms'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
-        # lure isn't present anymore...
         lure = '1970-01-01 00:00:00'
         active_fort_modifier = None
+        incident_start = None
+        incident_expiration = None
+
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
             lure = datetime.utcfromtimestamp(30 * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
 
-        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier
+        if "pokestop_display" in stop_data:
+            start_ms = stop_data["pokestop_display"]["incident_start_ms"]
+            expiration_ms = stop_data["pokestop_display"]["incident_expiration_ms"]
+
+            if start_ms > 0:
+                incident_start = datetime.utcfromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+            if expiration_ms > 0:
+                incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier, incident_start, incident_expiration
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
         now = datetime.utcfromtimestamp(
