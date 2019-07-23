@@ -314,15 +314,15 @@ class WordToScreenMatching(object):
                         return ScreenType.LOGINSELECT
 
         elif ScreenType(returntype) == ScreenType.PTC:
-            click_user_text = 'username,benutzername,Nom,d’utilisateur'
-            click_pass_text = 'password,passwort,Mot,passe'
+            click_user_text = 'Username,Benutzername,Nom,d’utilisateur'
+            click_pass_text = 'Password,Passwort,Mot,passe'
             ptc = self.get_next_account()
             if not ptc:
-                logger.error('No PTC Username and Passwort are set')
+                logger.error('No PTC Username and Password is set')
                 return ScreenType.ERROR
 
             for i in range(n_boxes):
-                if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_user_text.split(",")):
+                if any(elem in (self._globaldict['text'][i]) for elem in click_user_text.split(",")):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
                     click_x, click_y = x + w / 2, y + h / 2
