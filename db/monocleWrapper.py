@@ -61,8 +61,11 @@ class MonocleWrapper(DbWrapperBase):
                 "table": "pokestops",
                 "column": "incident_expiration",
                 "ctype": "int(11) NULL"
+            },            {
+                "table": "pokestops",
+                "column": "last_modified",
+                "ctype": "int(11) NULL"
             },
-
         ]
 
         for field in fields:
@@ -781,11 +784,11 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
         query_pokestops = (
-            "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires, "
+            "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires, last_modified, "
             "incident_start, incident_expiration) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires), "
-            "lat=VALUES(lat), lon=VALUES(lon), incident_start=VALUES(incident_start), "
+            "lat=VALUES(lat), lon=VALUES(lon), last_modified=VALUES(last_modified), incident_start=VALUES(incident_start), "
             "incident_expiration=VALUES(incident_expiration)"
         )
 
@@ -804,7 +807,7 @@ class MonocleWrapper(DbWrapperBase):
                                               list_of_stops_vals[2], list_of_stops_vals[3],
                                               list_of_stops_vals[4], list_of_stops_vals[5],
                                               list_of_stops_vals[6], list_of_stops_vals[7],
-                                              list_of_stops_vals[8]))
+                                              list_of_stops_vals[8], list_of_stops_vals[9]))
 
         self.executemany(query_pokestops, list_of_pokestops, commit=True)
 
@@ -1067,6 +1070,8 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         lure = 0
 
+        last_modified = int(stop_data['last_modified_timestamp_ms']/1000)
+
         if "pokestop_display" in stop_data:
             incident_start = None
             incident_expiration = None
@@ -1082,7 +1087,8 @@ class MonocleWrapper(DbWrapperBase):
 
         return (
             stop_data['id'], stop_data['latitude'], stop_data['longitude'], "unknown",
-            stop_data['image_url'], now, lure, incident_start, incident_expiration
+            stop_data['image_url'], now, lure, last_modified,
+            incident_start, incident_expiration
         )
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
@@ -1351,6 +1357,7 @@ class MonocleWrapper(DbWrapperBase):
 
         for (name, url, external_id, team, guard_pokemon_id, slots_available,
                 lat, lon, is_in_battle, updated, is_ex_raid_eligible) in res:
+            # TODO Check if the update should be last_modified from protos
             ret.append({
                 "gym_id": external_id,
                 "team_id": team,
@@ -1372,7 +1379,7 @@ class MonocleWrapper(DbWrapperBase):
 
         query = (
             "SELECT external_id, lat, lon, name, url, "
-            "updated, expires, incident_start, incident_expiration from pokestops  "
+            "updated, expires, incident_start, incident_expiration, last_modified from pokestops  "
             "WHERE updated >= %s AND expires > %s OR "
             "incident_start IS NOT NULL"
         )
@@ -1386,7 +1393,7 @@ class MonocleWrapper(DbWrapperBase):
         ret = []
 
         for (external_id, latitude, longitude, name, image,
-                last_updated, lure_expiration, incident_start, incident_expiration) in res:
+                last_updated, lure_expiration, incident_start, incident_expiration, last_modified) in res:
 
             ret.append({
                 'pokestop_id': external_id,
@@ -1396,11 +1403,12 @@ class MonocleWrapper(DbWrapperBase):
                 'name': name,
                 'image': image,
                 "last_updated": last_updated,
+                "last_modified": last_modified,
                 "incident_start": incident_start if incident_start is not None else None,
                 "incident_expiration": incident_expiration if incident_expiration is not None else None
             })
 
-            return ret
+        return ret
 
     def __extract_args_single_pokestop_details(self, stop_data):
         if stop_data.get('type', 999) != 1:
