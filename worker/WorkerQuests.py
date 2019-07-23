@@ -610,6 +610,11 @@ class WorkerQuests(MITMBase):
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
                     return False
+
+                if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0:
+                    logger.info("Stop {}, {} is rocketized - skip for later check".format(str(latitude), str(longitde)))
+                    return False
+
                 if self._level_mode and self._ignore_spinned_stops:
                     visited: bool = fort.get("visited", False)
                     if visited:
