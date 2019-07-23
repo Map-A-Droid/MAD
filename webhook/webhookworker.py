@@ -481,11 +481,13 @@ class WebhookWorker:
                 "pokestop_id": pokestop["pokestop_id"],
                 "latitude": pokestop["latitude"],
                 "longitude": pokestop["longitude"],
-                "lure_expiration": pokestop["lure_expiration"],
-                "lure_id": pokestop["active_fort_modifier"],
                 "updated": pokestop["last_updated"],
                 "last_modified": pokestop["last_modified"]
             }
+
+            if pokestop["active_fort_modifier"]:
+                pokestop_payload["lure_expiration"] = pokestop["lure_expiration"]
+                pokestop_payload["lure_id"] = pokestop["active_fort_modifier"]
 
             if pokestop["image"]:
                 pokestop_payload["url"] = pokestop["image"]
