@@ -157,12 +157,13 @@ class WordToScreenMatching(object):
         frame = cv2.imread(screenpath)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         returntype: ScreenType = -1
-        self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
+
         if "AccountPickerActivity" in topmostapp or 'SignInActivity' in topmostapp:
-            returntype= 10
+            returntype = 10
         elif "GrantPermissionsActivity" in topmostapp:
             returntype = 11
         else:
+            self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
             n_boxes = len(self._globaldict['level'])
             for i in range(n_boxes):
                 if returntype != -1: break
@@ -175,24 +176,15 @@ class WordToScreenMatching(object):
             logger.info("Processing Screen: {}", str(ScreenType(returntype)))
 
         if ScreenType(returntype) == ScreenType.GGL:
-            n_boxes = len(self._globaldict['level'])
             ggl_login = self.get_next_account()
-            for i in range(n_boxes):
-                if ggl_login.username in (self._globaldict['text'][i]):
-                    (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                    self._globaldict['width'][i], self._globaldict['height'][i])
-                    click_x, click_y = x + w / 2, y + h / 2
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(25)
-
-                    return ScreenType.GGL
-
-            logger.warning('Dont find saved login mail address')
+            if self.parse_ggl(self._communicator.uiautomator(), ggl_login.username):
+                time.sleep(25)
+                return ScreenType.GGL
+            logger.warning('Dont find any saved ggl address')
             return ScreenType.ERROR
 
         elif ScreenType(returntype) == ScreenType.PERMISSION:
-            (click_x, click_y) = self.parseXML(self._communicator.uiautomator())
+            (click_x, click_y) = self.parse_permission(self._communicator.uiautomator())
             self._communicator.click(click_x, click_y)
             time.sleep(2)
             return ScreenType.PERMISSION
@@ -393,7 +385,7 @@ class WordToScreenMatching(object):
 
         return ScreenType.UNDEFINED
 
-    def parseXML(self, xml):
+    def parse_permission(self, xml):
         click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
         parser = ET.XMLParser(encoding="utf-8")
         xmlroot = ET.fromstring(xml, parser=parser)
@@ -412,6 +404,24 @@ class WordToScreenMatching(object):
         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
 
         return click_x, click_y
+
+    def parse_ggl(self, xml, mail: str):
+        parser = ET.XMLParser(encoding="utf-8")
+        xmlroot = ET.fromstring(xml, parser=parser)
+        for item in xmlroot.iter('node'):
+            if mail in str(item.attrib['text']):
+                logger.debug("Found text {}", str(item.attrib['text']))
+                bounds = item.attrib['bounds']
+                logger.debug("Bounds {}", str(item.attrib['bounds']))
+                match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                self._communicator.click(click_x, click_y)
+                time.sleep(2)
+                return True
+        time.sleep(2)
+        return False
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
