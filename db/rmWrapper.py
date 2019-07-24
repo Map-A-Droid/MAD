@@ -871,7 +871,8 @@ class RmWrapper(DbWrapperBase):
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
             "VALUES (%s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned)"
+            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
+            "url=IF(VALUES(url) IS NOT NULL AND VALUES(url) <> '', VALUES(url), url)"
         )
 
         for cell in cells:
