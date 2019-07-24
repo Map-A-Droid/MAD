@@ -724,7 +724,7 @@ class RmWrapper(DbWrapperBase):
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form)"
+            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id)"
         )
 
         vals = (
