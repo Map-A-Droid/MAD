@@ -148,7 +148,7 @@ class WorkerMITM(MITMBase):
         self._wait_pogo_start_delay()
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
-        
+
         return reached_raidtab
 
     def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
