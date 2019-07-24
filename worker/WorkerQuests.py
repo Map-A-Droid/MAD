@@ -399,6 +399,9 @@ class WorkerQuests(MITMBase):
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
+
         return start_result
 
     def _cleanup(self):
