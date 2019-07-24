@@ -43,7 +43,7 @@ def trash_image_matching(screen_img):
         sc_till = 1
     elif width == 1080:
         sc_from = 0.5
-        sc_till = 0.9
+        sc_till = 1.2
     elif width == 720:
         sc_from = 0.5
         sc_till = 0.7
