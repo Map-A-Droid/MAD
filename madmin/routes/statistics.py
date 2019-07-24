@@ -244,7 +244,8 @@ class statistics(object):
                 monName_raw = (get_raid_boss_cp(dat))
                 monName = i8ln(monName_raw['name'])
 
-                shiny_amount = sum(shiny_avg[dat][form_dat]['total_shiny'])
+                shiny_amount = sum(shiny_avg[dat][form_dat]['total_shiny']) / \
+                                   len(shiny_avg[dat][form_dat]['total_nonshiny'])
                 shiny_amount_avg = round(sum(shiny_avg[dat][form_dat]['total_nonshiny']) / \
                                    len(shiny_avg[dat][form_dat]['total_nonshiny']), 0)
                 shiny_avg_click = round(shiny_amount_avg / shiny_amount, 0)
