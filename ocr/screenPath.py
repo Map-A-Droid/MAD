@@ -306,6 +306,7 @@ class WordToScreenMatching(object):
                         return ScreenType.LOGINSELECT
 
         elif ScreenType(returntype) == ScreenType.PTC:
+            height, width = frame.shape
             click_user_text = 'Username,Benutzername,Nom,d’utilisateur'
             click_pass_text = 'Password,Passwort,Mot,passe'
             ptc = self.get_next_account()
@@ -313,33 +314,20 @@ class WordToScreenMatching(object):
                 logger.error('No PTC Username and Password is set')
                 return ScreenType.ERROR
 
-            for i in range(n_boxes):
-                if any(elem in (self._globaldict['text'][i]) for elem in click_user_text.split(",")):
-                    (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                    self._globaldict['width'][i], self._globaldict['height'][i])
-                    click_x, click_y = x + w / 2, y + h / 2
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(.5)
-                    self._communicator.sendText(ptc.username)
-                    break
+            distance_to_middle = height / 13.71
 
-            self._communicator.click(100, 100)
-
-            for i in range(n_boxes):
-                if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_pass_text.split(",")):
-                    (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                    self._globaldict['width'][i], self._globaldict['height'][i])
-                    click_x, click_y = x + w / 2, y + h / 2
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(.5)
-                    self._communicator.sendText(ptc.password)
-                    time.sleep(2)
-                    break
-
+            # username
+            self._communicator.click(width / 2, (height / 2) - distance_to_middle)
+            time.sleep(.5)
+            self._communicator.sendText(ptc.username)
             self._communicator.click(100, 100)
             time.sleep(2)
+            
+            # password
+            self._communicator.click(width / 2, (height / 2) + distance_to_middle)
+            time.sleep(.5)
+            self._communicator.sendText(ptc.password)
+            self._communicator.click(100, 100)
 
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
             time.sleep(25)
