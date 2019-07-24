@@ -912,6 +912,44 @@ class RmWrapper(DbWrapperBase):
         logger.debug("{}: submit_gyms done", str(origin))
         return True
 
+    def submit_gym_proto(self, origin, map_proto):
+        logger.debug("Updating gym sent by {}", str(origin))
+        if map_proto.get("result", 0) != 1:
+            return False
+        status = map_proto.get("gym_status_and_defenders", None)
+        if status is None:
+            return False
+        fort_proto = status.get("pokemon_fort_proto", None)
+        if fort_proto is None:
+            return False
+        gym_id = fort_proto["id"]
+        name = map_proto["name"]
+        description = map_proto["description"]
+        url = map_proto["url"]
+
+        set_keys = []
+        vals = []
+
+        if name is not None and name != "":
+            set_keys.append("name=%s")
+            vals.append(name)
+        if description is not None and description != "":
+            set_keys.append("description=%s")
+            vals.append(description)
+        if url is not None and url != "":
+            set_keys.append("url=%s")
+            vals.append(url)
+
+        if len(set_keys) == 0:
+            return False
+
+        query = "UPDATE gymdetails SET " + ",".join(set_keys) + " WHERE gym_id = %s"
+        vals.append(gym_id)
+
+        self.execute((query), tuple(vals), commit=True)
+
+        return True
+
     def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
         logger.debug(
             "RmWrapper::submit_raids_map_proto called with data received from {}", str(origin))
