@@ -109,6 +109,7 @@ var init = true;
 var fetchTimeout = null;
 var clickToScanActive = false;
 var cleanupInterval = null;
+const teamNames = ['Uncontested', 'Mystic', 'Valor', 'Instinct']
 
 // object to hold all the markers and elements
 var leaflet_data = {
@@ -1054,14 +1055,14 @@ new Vue({
           </div>`;
       }
 
-
+      var gymName = gym["name"] ? gym["name"] : teamNames[gym["team_id"]] + " Gym"
       var timeformat = "YYYY-MM-DD HH:mm:ss";
       var last_scanned = moment(gym["last_scanned"]*1000);
 
       return `
         <div class="content">
           <div class="image" style="background: url(${gym["img"]}) center center no-repeat;"></div>
-          <div class="name"><strong>${gym["name"]}</strong></div>
+          <div class="name"><strong>${gymName}</strong></div>
           <div class="id"><i class="fa fa-fingerprint"></i> <span>${gym["id"]}</span></div>
           <div class="coords">
             <i class="fa fa-map-pin"></i>
@@ -1464,4 +1465,3 @@ new Vue({
     }
   }
 });
-
