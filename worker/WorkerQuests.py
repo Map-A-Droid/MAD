@@ -73,6 +73,9 @@ class WorkerQuests(MITMBase):
         self.clear_thread.daemon = True
         self.clear_thread.start()
 
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
+
         if self.get_devicesettings_value('account_rotation', False) and not \
                 self.get_devicesettings_value('account_rotation_started', False):
             # switch to first account if first started and rotation is activated
@@ -100,9 +103,6 @@ class WorkerQuests(MITMBase):
         else:
             # initial cleanup old quests
             if not self._init: self.clear_thread_task = 2
-
-        if not self._wait_for_injection() or self._stop_worker_event.is_set():
-            raise InternalStopWorkerException
 
     def _health_check(self):
         """
@@ -399,6 +399,9 @@ class WorkerQuests(MITMBase):
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
+
         return start_result
 
     def _cleanup(self):
@@ -612,7 +615,8 @@ class WorkerQuests(MITMBase):
                     return False
 
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0:
-                    logger.info("Stop {}, {} is rocketized - skip for later check".format(str(latitude), str(longitde)))
+                    logger.info("Stop {}, {} is rocketized - skip for later check"
+                                .format(str(latitude), str(longitude)))
                     return False
 
                 if self._level_mode and self._ignore_spinned_stops:

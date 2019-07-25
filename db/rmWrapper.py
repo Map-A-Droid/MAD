@@ -724,7 +724,7 @@ class RmWrapper(DbWrapperBase):
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form)"
+            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id)"
         )
 
         vals = (
@@ -871,7 +871,8 @@ class RmWrapper(DbWrapperBase):
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
             "VALUES (%s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned)"
+            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
+            "url=IF(VALUES(url) IS NOT NULL AND VALUES(url) <> '', VALUES(url), url)"
         )
 
         for cell in cells:
@@ -1738,11 +1739,11 @@ class RmWrapper(DbWrapperBase):
     def statistics_get_shiny_stats(self):
         logger.debug('Fetching shiny pokemon stats from db')
         query = (
-            "SELECT (select count(encounter_id) from pokemon inner join trs_stats_detect_raw on "
+            "SELECT (select count(DISTINCT encounter_id) from pokemon inner join trs_stats_detect_raw on "
             "trs_stats_detect_raw.type_id=pokemon.encounter_id where pokemon.pokemon_id=a.pokemon_id and "
             "trs_stats_detect_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT encounter_id), a.pokemon_id,"
             "b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'), a.form "
-            "FROM pokemon a left join trs_stats_detect_raw b on a.encounter_id=b.type_id where b.is_shiny=1 group by "
+            "FROM pokemon a left join trs_stats_detect_raw b on a.encounter_id=CAST(b.type_id as unsigned int) where b.is_shiny=1 group by "
             "b.is_shiny, a.pokemon_id, a.form, b.worker order by a.pokemon_id"
         )
 

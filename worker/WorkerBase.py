@@ -81,7 +81,7 @@ class WorkerBase(ABC):
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
         self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
-                                                          self._resocalc, mapping_manager)
+                                                          self._resocalc, mapping_manager, self)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
@@ -561,13 +561,13 @@ class WorkerBase(ABC):
         restartcounter: bool = False
         loginerrorcounter: int = 0
         returncode: ScreenType = ScreenType.UNDEFINED
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                    delayAfter=2):
-            logger.error("_check_windows: Failed getting screenshot")
-            return False
+        #if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+        #                            delayAfter=2):
+        #    logger.error("_check_windows: Failed getting screenshot")
+        #    return False
 
         while not returncode == ScreenType.POGO:
-            returncode = self._WordToScreenMatching.matchScreen(self.get_screenshot_path())
+            returncode = self._WordToScreenMatching.matchScreen()
 
             if returncode != ScreenType.POGO:
 
@@ -864,7 +864,7 @@ class WorkerBase(ABC):
                 return False
 
             # not using continue since we need to get a screen before the next round...
-            found = self._pogoWindowManager.look_for_button(screenshot_path, 2.20, 3.01, self._communicator)
+            found = self._pogoWindowManager.look_for_button(screenshot_path, 2.40, 3.01, self._communicator)
             if found:
                 logger.debug("_check_pogo_main_screen: Found button (small)")
 
@@ -876,6 +876,7 @@ class WorkerBase(ABC):
 
             if not found and self._pogoWindowManager.look_for_button(screenshot_path, 1.05, 2.20, self._communicator):
                 logger.debug("_check_pogo_main_screen: Found button (big)")
+                time.sleep(5)
                 found = True
 
             logger.debug("_check_pogo_main_screen: Previous checks found popups: {}", str(found))

@@ -21,7 +21,7 @@
 		"field": "origin",
 		"description": "Assign devices to walker",
 		"quickview": "walker|pool",
-		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance"
+		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance|logintype|account_rotation"
 	},
 	"auth": {
 		"has_settings": "false",
