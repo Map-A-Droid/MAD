@@ -421,7 +421,7 @@ class WordToScreenMatching(object):
         xmlroot = ET.fromstring(xml, parser=parser)
         for item in xmlroot.iter('node'):
             if mail in str(item.attrib['text']):
-                logger.debug("Found text {}", str(item.attrib['text']))
+                logger.info("Found mail {}", str(item.attrib['text']))
                 bounds = item.attrib['bounds']
                 logger.debug("Bounds {}", str(item.attrib['bounds']))
                 match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
@@ -432,6 +432,7 @@ class WordToScreenMatching(object):
                 time.sleep(2)
                 return True
         time.sleep(2)
+        logger.warning('Dont find any mailaddress...')
         return False
 
     def set_devicesettings_value(self, key: str, value):
