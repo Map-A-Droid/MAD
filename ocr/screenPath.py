@@ -174,7 +174,7 @@ class WordToScreenMatching(object):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
             frame = cv2.imread(screenpath)
-            self._height, self._width = frame.shape
+            self._height, self._width, _ = frame.shape
             self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
             n_boxes = len(self._globaldict['level'])
             for i in range(n_boxes):
@@ -240,7 +240,7 @@ class WordToScreenMatching(object):
                         click_x = x1 + ((x2 - x1)/2)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
-                        self._communicator.touchandhold(click_x, click_y, click_x, click_y - (height/2), 200)
+                        self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height/2), 200)
                         time.sleep(1)
                         self._communicator.click(click_x, click_y)
                         time.sleep(1)
@@ -295,7 +295,6 @@ class WordToScreenMatching(object):
 
                     # alternative select
                     if 'Facebook' in temp_dict and 'TRAINER' in temp_dict:
-                        height, width = frame.shape
                         click_x = width / 2
                         click_y = temp_dict['Facebook'] + ((temp_dict['TRAINER'] - temp_dict['Facebook']) / 2)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
@@ -305,9 +304,8 @@ class WordToScreenMatching(object):
 
                     # alternative select
                     if 'Facebook' in temp_dict:
-                        height, width = frame.shape
                         click_x = width / 2
-                        click_y = temp_dict['Facebook'] + (height / 10.11)
+                        click_y = temp_dict['Facebook'] + (self._height / 10.11)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         time.sleep(2)
@@ -315,9 +313,8 @@ class WordToScreenMatching(object):
 
                     # alternative select
                     if 'CLUB' in temp_dict:
-                        height, width = frame.shape
                         click_x = width / 2
-                        click_y = temp_dict['TRAINER'] - (height / 10.11)
+                        click_y = temp_dict['TRAINER'] - (self._height / 10.11)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         time.sleep(2)
