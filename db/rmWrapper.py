@@ -904,7 +904,7 @@ class RmWrapper(DbWrapperBase):
 
                     gym_details_args.append(
                         (
-                            gym['id'], None, gym['image_url'], now
+                            gym['id'], "unknown", gym['image_url'], now
                         )
                     )
         self.executemany(query_gym, gym_args, commit=True)
