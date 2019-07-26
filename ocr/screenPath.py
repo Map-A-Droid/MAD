@@ -174,7 +174,6 @@ class WordToScreenMatching(object):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
             frame = cv2.imread(screenpath)
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             self._height, self._width = frame.shape
             self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
             n_boxes = len(self._globaldict['level'])
@@ -194,15 +193,15 @@ class WordToScreenMatching(object):
             if self.parse_ggl(self._communicator.uiautomator(), ggl_login.username):
                 time.sleep(25)
                 return ScreenType.GGL
-            logger.warning('Dont find any saved ggl address')
             return ScreenType.ERROR
 
         elif ScreenType(returntype) == ScreenType.PERMISSION:
             self._nextscreen = ScreenType.UNDEFINED
-            (click_x, click_y) = self.parse_permission(self._communicator.uiautomator())
-            self._communicator.click(click_x, click_y)
+            if self.parse_permission(self._communicator.uiautomator()):
+                time.sleep(2)
+                return ScreenType.PERMISSION
             time.sleep(2)
-            return ScreenType.PERMISSION
+            return ScreenType.ERROR
 
         elif ScreenType(returntype) == ScreenType.MARKETING:
             self._nextscreen = ScreenType.POGO
@@ -397,6 +396,9 @@ class WordToScreenMatching(object):
         return ScreenType.UNDEFINED
 
     def parse_permission(self, xml):
+        if xml is None:
+            logger.warning('Something wrong with processing - getting None Type from Websocket...')
+            return False
         click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
         parser = ET.XMLParser(encoding="utf-8")
         xmlroot = ET.fromstring(xml, parser=parser)
@@ -406,17 +408,24 @@ class WordToScreenMatching(object):
                 logger.debug("Found text {}", str(item.attrib['text']))
                 bounds = item.attrib['bounds']
                 logger.debug("Bounds {}", str(item.attrib['bounds']))
-                continue
 
-        match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
-        click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1)))/2)
-        click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2)))/2)
-        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
-        return click_x, click_y
+                click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1)))/2)
+                click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2)))/2)
+                logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                self._communicator.click(click_x, click_y)
+                time.sleep(2)
+                return True
+        time.sleep(2)
+        logger.warning('Dont find any button...')
+        return False
 
     def parse_ggl(self, xml, mail: str):
+        if xml is None:
+            logger.warning('Something wrong with processing - getting None Type from Websocket...')
+            return False
         parser = ET.XMLParser(encoding="utf-8")
         xmlroot = ET.fromstring(xml, parser=parser)
         for item in xmlroot.iter('node'):
