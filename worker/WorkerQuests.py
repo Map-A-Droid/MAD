@@ -694,8 +694,11 @@ class WorkerQuests(MITMBase):
                 self.clear_thread_task = 1
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
-                logger.info('Received new Quest or have previously spun the stop')
-                self._clear_quest_counter += 1
+                if data_received == FortSearchResultTypes.COOLDOWN:
+                    logger.info('NOT received new Quest - previously spun the stop/cooldown')
+                elif data_received == FortSearchResultTypes.QUEST:
+                    logger.info('Received new Quest')
+                    self._clear_quest_counter += 1
                 if self._clear_quest_counter == 3:
                     logger.info('Getting 3 quests - clean them')
                     reached_main_menu = self._check_pogo_main_screen(10, True)
