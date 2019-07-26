@@ -312,6 +312,16 @@ class MADVersion(object):
                 except Exception as e:
                     logger.exception("Unexpected error: {}", e)
 
+                query = (
+                    "UPDATE gymdetails "
+                    "SET name = NULL "
+                    "WHERE name = 'unknown'"
+                )
+                try:
+                    self.dbwrapper.execute(query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
+
         self.set_version(current_version)
 
     def set_version(self, version):
