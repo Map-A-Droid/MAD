@@ -2,7 +2,7 @@ import calendar
 import shutil
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import reduce
 from multiprocessing.managers import SyncManager
 from typing import List, Optional
@@ -61,8 +61,11 @@ class MonocleWrapper(DbWrapperBase):
                 "table": "pokestops",
                 "column": "incident_expiration",
                 "ctype": "int(11) NULL"
+            },            {
+                "table": "pokestops",
+                "column": "last_modified",
+                "ctype": "int(11) NULL"
             },
-
         ]
 
         for field in fields:
@@ -265,7 +268,7 @@ class MonocleWrapper(DbWrapperBase):
                     "VALUES (%s, %s, %s, %s, %s, %s, %s)"
 
                 )
-                vals = (gym, lvl, int(float(capture_time)), 
+                vals = (gym, lvl, int(float(capture_time)),
                         start, end, pkm)
 
             self.execute(query, vals, commit=True)
@@ -783,11 +786,11 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
         query_pokestops = (
-            "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires, "
+            "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires, last_modified, "
             "incident_start, incident_expiration) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires), "
-            "lat=VALUES(lat), lon=VALUES(lon), incident_start=VALUES(incident_start), "
+            "lat=VALUES(lat), lon=VALUES(lon), last_modified=VALUES(last_modified), incident_start=VALUES(incident_start), "
             "incident_expiration=VALUES(incident_expiration)"
         )
 
@@ -806,7 +809,7 @@ class MonocleWrapper(DbWrapperBase):
                                               list_of_stops_vals[2], list_of_stops_vals[3],
                                               list_of_stops_vals[4], list_of_stops_vals[5],
                                               list_of_stops_vals[6], list_of_stops_vals[7],
-                                              list_of_stops_vals[8]))
+                                              list_of_stops_vals[8], list_of_stops_vals[9]))
 
         self.executemany(query_pokestops, list_of_pokestops, commit=True)
 
@@ -1069,6 +1072,8 @@ class MonocleWrapper(DbWrapperBase):
         now = time.time()
         lure = 0
 
+        last_modified = int(stop_data['last_modified_timestamp_ms']/1000)
+
         if "pokestop_display" in stop_data:
             incident_start = None
             incident_expiration = None
@@ -1084,7 +1089,8 @@ class MonocleWrapper(DbWrapperBase):
 
         return (
             stop_data['id'], stop_data['latitude'], stop_data['longitude'], "unknown",
-            stop_data['image_url'], now, lure, incident_start, incident_expiration
+            stop_data['image_url'], now, lure, last_modified,
+            incident_start, incident_expiration
         )
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
@@ -1353,6 +1359,7 @@ class MonocleWrapper(DbWrapperBase):
 
         for (name, url, external_id, team, guard_pokemon_id, slots_available,
                 lat, lon, is_in_battle, updated, is_ex_raid_eligible) in res:
+            # TODO Check if the update should be last_modified from protos
             ret.append({
                 "gym_id": external_id,
                 "team_id": team,
@@ -1372,7 +1379,37 @@ class MonocleWrapper(DbWrapperBase):
     def get_stops_changed_since(self, timestamp):
         # no lured support for monocle now!
 
+        query = (
+            "SELECT external_id, lat, lon, name, url, "
+            "updated, expires, incident_start, incident_expiration, last_modified from pokestops  "
+            "WHERE updated >= %s AND expires > %s OR "
+            "incident_start IS NOT NULL"
+        )
+
+        logger.debug('Pokestop query for webhook {}'.format(query))
+
+        res = self.execute(query, (timestamp, timestamp,))
+
+        logger.debug('Pokestop result for webhook {}'.format(res))
+
         ret = []
+
+        for (external_id, latitude, longitude, name, image,
+                last_updated, lure_expiration, incident_start, incident_expiration, last_modified) in res:
+
+            ret.append({
+                'pokestop_id': external_id,
+                'latitude': latitude,
+                'longitude': longitude,
+                'lure_expiration': lure_expiration,
+                'name': name,
+                'image': image,
+                "last_updated": last_updated,
+                "last_modified": last_modified,
+                "incident_start": incident_start if incident_start is not None else None,
+                "incident_expiration": incident_expiration if incident_expiration is not None else None
+            })
+
         return ret
 
     def __extract_args_single_pokestop_details(self, stop_data):
