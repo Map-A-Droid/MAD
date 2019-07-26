@@ -340,6 +340,13 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def submit_gym_proto(self, origin, map_proto):
+        """
+        Update gyms from a map_proto dict
+        """
+        pass
+
+    @abstractmethod
     def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
         """
         Update/Insert raids from a map_proto dict
