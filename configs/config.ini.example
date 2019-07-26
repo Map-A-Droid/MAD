@@ -119,7 +119,7 @@
 #webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
 #weather_webhook             # Activate support for weather webhook (remember to enable weather support in other settings section too!)
 #pokemon_webhook             # Activate support for pokemon webhook
-#pokestop_webhook            # Activate support for pokestop webhook (lures)
+#pokestop_webhook            # Activate support for pokestop webhook (lures and Team Rocket incidents)
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
 #quest_webhook               # Activate support for quest webhook
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
