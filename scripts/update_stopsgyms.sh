@@ -81,7 +81,7 @@ gymtable=gymdetails
 pstable=pokestop
 psidcol=pokestop_id
 gymidcol=gym_id
-namedefault=unknown
+namedefault=NULL
 psurlcol=image
 updategyminfo
 while read -r eid ;do # delete pokestops that are now gyms

@@ -1055,7 +1055,7 @@ new Vue({
           </div>`;
       }
 
-      var gymName = gym["name"] != "unknown" ? gym["name"] : teamNames[gym["team_id"]] + " Gym"
+      var gymName = gym["name"] ? gym["name"] : teamNames[gym["team_id"]] + " Gym"
       var timeformat = "YYYY-MM-DD HH:mm:ss";
       var last_scanned = moment(gym["last_scanned"]*1000);
 

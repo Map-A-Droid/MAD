@@ -42,7 +42,7 @@ class RmWrapper(DbWrapperBase):
                 "table": "gym",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
-            },
+            },       
             {
                 "table": "pokestop",
                 "column": "incident_start",
@@ -869,7 +869,7 @@ class RmWrapper(DbWrapperBase):
             "is_ex_raid_eligible=VALUES(is_ex_raid_eligible)"
         )
         query_gym_details = (
-            "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
+            "INSERT INTO gymdetails (gym_id, url, last_scanned) "
             "VALUES (%s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
             "url=IF(VALUES(url) IS NOT NULL AND VALUES(url) <> '', VALUES(url), url)"
@@ -904,7 +904,7 @@ class RmWrapper(DbWrapperBase):
 
                     gym_details_args.append(
                         (
-                            gym['id'], "unknown", gym['image_url'], now
+                            gym['id'], gym['image_url'], now
                         )
                     )
         self.executemany(query_gym, gym_args, commit=True)

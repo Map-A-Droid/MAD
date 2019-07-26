@@ -125,8 +125,9 @@ class ocr(object):
             description = ''
 
             if str(gymid) in data:
-                name = data[str(gymid)]["name"].replace(
-                    "\\", r"\\").replace('"', '')
+                if data[str(gymid)]["name"]:
+                    name = data[str(gymid)]["name"].replace(
+                        "\\", r"\\").replace('"', '')
                 lat = data[str(gymid)]["latitude"]
                 lon = data[str(gymid)]["longitude"]
                 if data[str(gymid)]["description"]:
@@ -197,8 +198,9 @@ class ocr(object):
                 gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
                 if str(gymid) in data:
-                    name = data[str(gymid)]["name"].replace(
-                        "\\", r"\\").replace('"', '')
+                    if data[str(gymid)]["description"]:
+                        name = data[str(gymid)]["name"].replace(
+                            "\\", r"\\").replace('"', '')
                     lat = data[str(gymid)]["latitude"]
                     lon = data[str(gymid)]["longitude"]
                     if data[str(gymid)]["description"]:
@@ -276,8 +278,9 @@ class ocr(object):
                 gymImage = 'gym_img/_' + str(gymid) + '_.jpg'
 
                 if str(gymid) in data:
-                    name = data[str(gymid)]["name"].replace(
-                        "\\", r"\\").replace('"', '')
+                    if data[str(gymid)]["name"]:
+                        name = data[str(gymid)]["name"].replace(
+                            "\\", r"\\").replace('"', '')
                     lat = data[str(gymid)]["latitude"]
                     lon = data[str(gymid)]["longitude"]
                     if data[str(gymid)]["description"]:

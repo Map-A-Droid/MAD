@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 12
+current_version = 13
 
 
 class MADVersion(object):
@@ -300,6 +300,17 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+
+        if self._version < 13:
+            if self._application_args.db_method == "rm":
+                query = (
+                    "ALTER TABLE gymdetails "
+                    "MODIFY name varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL"
+                )
+                try:
+                    self.dbwrapper.execute(query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
 
         self.set_version(current_version)
 
