@@ -449,9 +449,11 @@ class WebhookWorker:
                 "latitude": gym["latitude"],
                 "longitude": gym["longitude"],
                 "team_id": gym["team_id"],
-                "name": gym["name"],
                 "slots_available": gym["slots_available"],
             }
+
+            if gym.get("name", None) is not None:
+                gym_payload["name"] = gym.get("name")
 
             if gym.get("description", None) is not None:
                 gym_payload["description"] = gym.get("description")
