@@ -28,6 +28,7 @@ class ScreenType(Enum):
     MARKETING = 12
     QUEST = 20
     ERROR = 100
+    CLOSE = 500
 
 class LoginType(Enum):
     UNKNOWN = -1
@@ -155,6 +156,9 @@ class WordToScreenMatching(object):
         return np.asarray(sort_lines, dtype=np.int32)
 
     def matchScreen(self):
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return ScreenType.CLOSE
         screenpath = self._parent.get_screenshot_path()
         topmostapp = self._communicator.topmostApp()
         if not topmostapp:

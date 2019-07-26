@@ -571,6 +571,11 @@ class WorkerBase(ABC):
 
             if returncode != ScreenType.POGO:
 
+                if returncode == ScreenType.CLOSE:
+                    logger.warning('Pogo not in foreground...')
+                    self._start_pogo()
+                    break
+
                 if returncode == ScreenType.ERROR:
                     logger.warning('Something wrong with screendetection')
                     loginerrorcounter += 1

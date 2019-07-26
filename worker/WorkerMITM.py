@@ -130,8 +130,8 @@ class WorkerMITM(MITMBase):
 
         cur_time = time.time()
         start_result = False
+        self._mitm_mapper.set_injection_status(self._id, False)
         while not pogo_topmost:
-            self._mitm_mapper.set_injection_status(self._id, False)
             start_result = self._communicator.startApp(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
