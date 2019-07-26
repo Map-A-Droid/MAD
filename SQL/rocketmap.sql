@@ -34,7 +34,7 @@ CREATE TABLE `gym` (
 
 CREATE TABLE `gymdetails` (
   `gym_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `name` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
+  `name` varchar(191) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `description` longtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `url` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   `last_scanned` datetime NOT NULL,
