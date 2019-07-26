@@ -221,6 +221,7 @@ class WordToScreenMatching(object):
         elif ScreenType(returntype) == ScreenType.BIRTHDATE:
             self._nextscreen = ScreenType.UNDEFINED
             old_y = None
+            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             frame = cv2.GaussianBlur(frame, (3, 3), 0)
             frame = cv2.Canny(frame, 50, 200, apertureSize=3)
             kernel = np.ones((2, 2), np.uint8)
