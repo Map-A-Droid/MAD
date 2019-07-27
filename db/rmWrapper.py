@@ -1318,8 +1318,8 @@ class RmWrapper(DbWrapperBase):
                 'name': name,
                 'image': image,
                 'active_fort_modifier': active_fort_modifier,
-                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
-                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()),
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()) if last_modified is not None else None,
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()) if last_updated is not None else None,
                 "incident_start": int(incident_start.replace(tzinfo=timezone.utc).timestamp()) if incident_start is not None else None,
                 "incident_expiration": int(incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if incident_expiration is not None else None
             })

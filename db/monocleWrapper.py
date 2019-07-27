@@ -1438,8 +1438,8 @@ class MonocleWrapper(DbWrapperBase):
                 'lure_expiration': lure_expiration,
                 'name': name,
                 'image': image,
-                "last_updated": last_updated,
-                "last_modified": last_modified,
+                "last_updated": last_updated if last_updated is not None else None,
+                "last_modified": last_modified if last_modified is not None else None,
                 "incident_start": incident_start if incident_start is not None else None,
                 "incident_expiration": incident_expiration if incident_expiration is not None else None
             })
