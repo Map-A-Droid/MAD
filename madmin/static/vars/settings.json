@@ -36,5 +36,11 @@
 		"description": "Set Global Device Configurations - Individual parameters can be overridden with device settings",
 		"quickview": "devicepool",
 		"quickview_settings": "post_walk_delay|post_teleport_delay|mitm_wait_timeout|restart_pogo|walk_after_teleport_distance"
+	},
+	"monivlist": {
+		"has_settings": "false",
+		"could_edit": "true",
+		"field": "monlist",
+		"description": "Set Global Mon IV List"
 	}
 }

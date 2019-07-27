@@ -63,6 +63,7 @@ class MappingManager:
         self._areas: Optional[dict] = None
         self._routemanagers: Optional[Dict[str, dict]] = None
         self._auths: Optional[dict] = None
+        self._monlists: Optional[dict] = None
         self.__stop_file_watcher_event: Event = Event()
 
         self.__raw_json: Optional[dict] = None
@@ -129,6 +130,10 @@ class MappingManager:
 
     def get_areas(self) -> Optional[dict]:
         return self._areas
+
+    def get_monlist(self, listname) -> Optional[list]:
+        if listname is not None: return self._monlists[listname]
+        return []
 
     def get_all_routemanager_names(self):
         return self._routemanagers.keys()
@@ -229,6 +234,8 @@ class MappingManager:
                 self.__raw_json['walker'] = []
             if 'devicesettings' not in self.__raw_json:
                 self.__raw_json['devicesettings'] = []
+            if 'monivlist' not in self.__raw_json:
+                self.__raw_json['monivlist'] = []
 
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
@@ -424,7 +431,7 @@ class MappingManager:
         areas_arr = self.__raw_json["areas"]
         for area in areas_arr:
             area_dict = {}
-            area_dict['routecalc'] = area.get('routecalc', None)
+            area_dict['mon_ids_iv'] = area.get('routecalc', None)
             area_dict['mode'] = area['mode']
             area_dict['geofence_included'] = area.get(
                     'geofence_included', None)
@@ -433,6 +440,15 @@ class MappingManager:
             area_dict['init'] = area.get('init', False)
             areas[area['name']] = area_dict
         return areas
+
+    def __get_latest_monlists(self) -> dict:
+        # {'mon_ids_iv': [787, 1], 'monlist': 'test'}
+        monlist = {}
+        monlists_arr = self.__raw_json["monivlist"]
+        for list in monlists_arr:
+            monlist[list['monlist']] = list.get('mon_ids_iv', None)
+        return monlist
+
 
     def update(self, full_lock=False):
         """
@@ -445,6 +461,7 @@ class MappingManager:
             devicemappings_tmp = self.__get_latest_devicemappings()
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
+            monlists_temp = self.__get_latest_monlists()
 
             logger.info("Restoring old devicesettings")
             for dev in self._devicemappings:
@@ -463,18 +480,11 @@ class MappingManager:
 
             logger.info("Acquiring lock to update mappings")
             with self.__mappings_mutex:
-                # stopping routemanager / worker
-                # logger.info('Restarting Worker')
-                # for routemanager in self._routemanagers.keys():
-                #     area: RouteManagerBase = self._routemanagers.get(routemanager, None)
-                #     if area is None:
-                #         continue
-                #     area.stop_routemanager()
-
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp
                 self._routemanagers = routemanagers_tmp
                 self._auths = auths_tmp
+                self._monlists = monlists_temp
 
         else:
             logger.info("Acquiring lock to update mappings,full")
@@ -483,6 +493,7 @@ class MappingManager:
                 self._areas = self.__get_latest_areas()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
+                self._monlists = self.__get_latest_monlists()
 
         logger.info("Mappings have been updated")
 

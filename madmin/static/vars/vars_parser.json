@@ -260,6 +260,33 @@
 			]
 		}
 	],
+	"monivlist": [
+		{
+			"name": "monivlist",
+			"fields": [
+				{
+					"name": "monlist",
+					"settings": {
+						"type": "text",
+						"require": "true",
+						"empty": "null",
+						"description": "Name of global Monlist",
+						"lockonedit": "true"
+					}
+				},
+				{
+					"name": "mon_ids_iv",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
+						"output": "int",
+						"showmonsidpicker": true
+					}
+				}
+			]
+		}
+	],
 	"devicesettings": [
 		{
 			"name": "devicesettings",
@@ -597,9 +624,9 @@
 				{
 					"name": "mon_ids_iv",
 					"settings": {
-						"type": "text",
+						"type": "monlistselect",
 						"require": "false",
-						"description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
+						"description": "Select global mon list",
 						"output": "int",
 						"showmonsidpicker": true
 					}
@@ -714,9 +741,9 @@
 				{
 					"name": "mon_ids_iv",
 					"settings": {
-						"type": "text",
+						"type": "monlistselect",
 						"require": "false",
-						"description": "Encounter this mon ids (Put in brakets [1,2,3] as comma separated list!)",
+						"description": "Select global mon list",
 						"output": "int",
 						"showmonsidpicker": true
 					}
