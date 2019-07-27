@@ -3,7 +3,8 @@ import pytesseract
 import math
 import time
 import re
-
+import sys
+sys.path.append("..")
 import xml.etree.ElementTree as ET
 from utils.logging import logger
 from utils.MappingManager import MappingManager
@@ -22,6 +23,7 @@ class ScreenType(Enum):
     BIRTHDATE = 1
     FAILURE = 5
     RETRY = 6
+    GAMEDATA = 8
     POGO = 99
     GGL = 10
     PERMISSION = 11
@@ -53,15 +55,18 @@ class WordToScreenMatching(object):
         detect_Birthday: list = ('Geburtdatum', 'birth.', 'naissance.', 'date')
         detect_Marketing: list = ('Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
                                   'notifications', 'évenements,', 'evenements,', 'offres')
+        detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'game', 'data')
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
         self._ScreenType[4] = detect_PTC
         self._ScreenType[5] = detect_FailureLoginScreen
         self._ScreenType[6] = detect_FailureRetryScreen
+        self._ScreenType[8] = detect_Gamedata
         self._ScreenType[1] = detect_Birthday
         self._ScreenType[12] = detect_Marketing
         self._ScreenType[7] = detect_WrongPassword
         self._globaldict: dict = []
+        self._ratio: float = 0.0
 
         self._logintype: LoginType = -1
         self._PTC_accounts: List[Login_PTC] = []
@@ -177,8 +182,11 @@ class WordToScreenMatching(object):
                                                 delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
-            frame = cv2.imread(screenpath)
-            self._height, self._width, _ = frame.shape
+            frame_color = cv2.imread(screenpath)
+            self._height, self._width, _ = frame_color.shape
+            frame_color = cv2.resize(frame_color, None, fx=2, fy=2)
+            frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
+            self._ratio = self._height / self._width
             self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
             n_boxes = len(self._globaldict['level'])
             for i in range(n_boxes):
@@ -207,6 +215,10 @@ class WordToScreenMatching(object):
             time.sleep(2)
             return ScreenType.ERROR
 
+        elif ScreenType(returntype) == ScreenType.GAMEDATA:
+            self._nextscreen = ScreenType.UNDEFINED
+            return ScreenType.GAMEDATA
+
         elif ScreenType(returntype) == ScreenType.MARKETING:
             self._nextscreen = ScreenType.POGO
             click_text = 'ERLAUBEN,ALLOW,AUTORISER'
@@ -225,7 +237,6 @@ class WordToScreenMatching(object):
         elif ScreenType(returntype) == ScreenType.BIRTHDATE:
             self._nextscreen = ScreenType.UNDEFINED
             old_y = None
-            frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
             frame = cv2.GaussianBlur(frame, (3, 3), 0)
             frame = cv2.Canny(frame, 50, 200, apertureSize=3)
             kernel = np.ones((2, 2), np.uint8)
@@ -300,7 +311,7 @@ class WordToScreenMatching(object):
 
                     # alternative select
                     if 'Facebook' in temp_dict and 'TRAINER' in temp_dict:
-                        click_x = width / 2
+                        click_x = self._width / 2
                         click_y = temp_dict['Facebook'] + ((temp_dict['TRAINER'] - temp_dict['Facebook']) / 2)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
@@ -309,7 +320,7 @@ class WordToScreenMatching(object):
 
                     # alternative select
                     if 'Facebook' in temp_dict:
-                        click_x = width / 2
+                        click_x = self._width / 2
                         click_y = temp_dict['Facebook'] + (self._height / 10.11)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
@@ -318,7 +329,7 @@ class WordToScreenMatching(object):
 
                     # alternative select
                     if 'CLUB' in temp_dict:
-                        click_x = width / 2
+                        click_x = self._width / 2
                         click_y = temp_dict['TRAINER'] - (self._height / 10.11)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
@@ -411,7 +422,6 @@ class WordToScreenMatching(object):
                 bounds = item.attrib['bounds']
                 logger.debug("Bounds {}", str(item.attrib['bounds']))
 
-
                 match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
                 click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1)))/2)
@@ -465,3 +475,10 @@ class WordToScreenMatching(object):
 if __name__ == '__main__':
     screen = WordToScreenMatching(None, None, "test")
     screen.matchScreen("screenshot_tv_grant.jpg")
+    #frame = cv2.imread('screenshot.jpg')
+    #h, w, _ = frame.shape
+    #frame = cv2.resize(frame, None, fx=2, fy=2)
+    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+    #self._height, self._width, _ = frame.shape
+    #print(pytesseract.image_to_data(frame, output_type=Output.DICT))
+

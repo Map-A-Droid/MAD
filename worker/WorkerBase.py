@@ -561,15 +561,20 @@ class WorkerBase(ABC):
         restartcounter: bool = False
         loginerrorcounter: int = 0
         returncode: ScreenType = ScreenType.UNDEFINED
-        #if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-        #                            delayAfter=2):
-        #    logger.error("_check_windows: Failed getting screenshot")
-        #    return False
 
         while not returncode == ScreenType.POGO:
             returncode = self._WordToScreenMatching.matchScreen()
 
             if returncode != ScreenType.POGO:
+
+                if returncode == ScreenType.GAMEDATA:
+                    logger.warning('Error getting Gamedata...')
+                    self._stop_pogo()
+                    time.sleep(5)
+                    self._turn_screen_on_and_start_pogo()
+                    loginerrorcounter = 0
+                    restartcounter = True
+                    break
 
                 if returncode == ScreenType.CLOSE:
                     logger.warning('Pogo not in foreground...')
@@ -596,10 +601,6 @@ class WorkerBase(ABC):
                     loginerrorcounter = 0
                     restartcounter = True
                     break
-
-                if returncode != ScreenType.POGO:
-                    self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                         delayAfter=0.1)
 
         logger.info('Checking pogo screen is finished')
         return True
