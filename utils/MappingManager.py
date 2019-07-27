@@ -131,7 +131,7 @@ class MappingManager:
     def get_areas(self) -> Optional[dict]:
         return self._areas
 
-    def get_monlist(self, listname) -> Optional[list]:
+    def get_monlist(self, listname):
         if listname is not None: return self._monlists[listname]
         return []
 
