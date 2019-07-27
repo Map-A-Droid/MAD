@@ -128,7 +128,7 @@ class WordToScreenMatching(object):
         self.set_devicesettings_value('accountindex', self._accountindex)
 
         if self._logintype == LoginType.ptc:
-            logger.info('Using PTC Account: {}'.format(self.censor_account(self._PTC_accounts[self._accountindex-1].username)))
+            logger.info('Using PTC Account: {}'.format(self.censor_account(self._PTC_accounts[self._accountindex-1].username, isPTC=True)))
             return self._PTC_accounts[self._accountindex-1]
         else:
             logger.info('Using GGL Account: {}'.format(self.censor_account(self._GGL_accounts[self._accountindex-1].username)))
@@ -480,8 +480,11 @@ class WordToScreenMatching(object):
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
     
-    def censor_account(self, emailaddress):        
-        # make sure we have @ there.
+    def censor_account(self, emailaddress, isPTC=False):
+        # PTC account
+        if isPTC:
+            return (emailaddress[0:2]+"***"+emailaddress[-2:])
+        # GGL - make sure we have @ there.
         # If not it could be wrong match, so returning original
         if '@' in emailaddress:
             d = emailaddress.split("@", 1)
