@@ -128,10 +128,10 @@ class WordToScreenMatching(object):
         self.set_devicesettings_value('accountindex', self._accountindex)
 
         if self._logintype == LoginType.ptc:
-            logger.info('Using PTC Account: {}'.format(self._PTC_accounts[self._accountindex-1].username))
+            logger.info('Using PTC Account: {}'.format(self.censor_account(self._PTC_accounts[self._accountindex-1].username)))
             return self._PTC_accounts[self._accountindex-1]
         else:
-            logger.info('Using GGL Account: {}'.format(self._GGL_accounts[self._accountindex - 1].username))
+            logger.info('Using GGL Account: {}'.format(self.censor_account(self._GGL_accounts[self._accountindex-1].username)))
             return self._GGL_accounts[self._accountindex-1]
 
     def return_memory_account_count(self):
@@ -451,7 +451,7 @@ class WordToScreenMatching(object):
         xmlroot = ET.fromstring(xml, parser=parser)
         for item in xmlroot.iter('node'):
             if mail in str(item.attrib['text']):
-                logger.info("Found mail {}", str(item.attrib['text']))
+                logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
                 bounds = item.attrib['bounds']
                 logger.debug("Bounds {}", str(item.attrib['bounds']))
                 match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
@@ -479,6 +479,22 @@ class WordToScreenMatching(object):
         if devicemappings is None:
             return default_value
         return devicemappings.get("settings", {}).get(key, default_value)
+    
+    def censor_account(self, emailaddress):        
+        # make sure we have @ there.
+        # If not it could be wrong match, so returning original
+        if '@' in emailaddress:
+            d = emailaddress.split("@", 1)
+            # long local-part, censor middle part only
+            if len(d[0]) > 6:
+                return (d[0][0:2]+"***"+d[0][-2:]+"@"+d[1])
+            # domain only, just return
+            elif len(d[0]) == 0:
+                return (emailaddress)
+            # local-part is short, asterix for each char
+            else:
+                return ("*"*len(d[0])+"@"+d[1])
+        return emailaddress
 
 
 if __name__ == '__main__':
