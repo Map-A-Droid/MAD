@@ -59,6 +59,7 @@ class WorkerQuests(MITMBase):
         self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
         self._clear_quest_counter = 0
+        self._rocket: bool = False
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
         self._ignore_spinned_stops = self._mapping_manager.routemanager_get_settings(self._routemanager_name)\
             .get("ignore_spinned_stops", True)
@@ -586,6 +587,7 @@ class WorkerQuests(MITMBase):
         self._mitm_mapper.update_latest(origin=self._id, key="injected_settings", values_dict=injected_settings)
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
+        self._rocket = False
         latest: dict = self._mitm_mapper.request_latest(self._id)
         if latest is None or 106 not in latest.keys():
             return False
@@ -601,6 +603,7 @@ class WorkerQuests(MITMBase):
                 continue
 
             for fort in forts:
+
                 latitude: float = fort.get("latitude", 0.0)
                 longitude: float = fort.get("longitude", 0.0)
                 if latitude == 0.0 or longitude == 0.0:
@@ -615,9 +618,10 @@ class WorkerQuests(MITMBase):
                     return False
 
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0:
-                    logger.info("Stop {}, {} is rocketized - skip for later check"
+                    logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
                                 .format(str(latitude), str(longitude)))
-                    return False
+                    self._rocket = True
+                    return True
 
                 if self._level_mode and self._ignore_spinned_stops:
                     visited: bool = fort.get("visited", False)
@@ -698,6 +702,7 @@ class WorkerQuests(MITMBase):
                     logger.info('NOT received new Quest - previously spun the stop/cooldown')
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
+                    if self._rocket: self.process_rocket()
                     self._clear_quest_counter += 1
                 if self._clear_quest_counter == 3:
                     logger.info('Getting 3 quests - clean them')
@@ -789,3 +794,13 @@ class WorkerQuests(MITMBase):
                 # TODO: latter indicates too high speeds for example
                 time.sleep(0.5)
         return LatestReceivedType.UNDEFINED
+
+    def process_rocket(self):
+        if self._rocket:
+            logger.info('Closing Rocket Dialog')
+            time.sleep(5)
+            self._communicator.click(100, 100)
+            time.sleep(1)
+            self._communicator.click(100, 100)
+            time.sleep(2)
+            self._checkPogoClose()

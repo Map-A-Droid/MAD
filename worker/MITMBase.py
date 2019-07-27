@@ -96,6 +96,7 @@ class MITMBase(WorkerBase):
             if self._mapping_manager.routemanager_get_mode(self._routemanager_name) == 'pokestops':
                 # not getting any data ... something seems wrong. We sleep now - taking screen for later debugging
                 self._takeScreenshot(errorscreen=True)
+                if self._rocket: self.process_rocket()
 
             self._mitm_mapper.collect_location_stats(self._id, self.current_location, 0, self._waittime_without_delays,
                                                      position_type, 0,
