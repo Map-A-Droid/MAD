@@ -567,8 +567,8 @@ class WorkerBase(ABC):
 
             if returncode != ScreenType.POGO:
 
-                if returncode == ScreenType.GAMEDATA:
-                    logger.warning('Error getting Gamedata...')
+                if returncode == ScreenType.GAMEDATA or returncode == ScreenType.CONSENT:
+                    logger.warning('Error getting Gamedata or strange ggl message appears')
                     self._stop_pogo()
                     time.sleep(5)
                     self._turn_screen_on_and_start_pogo()
