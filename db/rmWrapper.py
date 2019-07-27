@@ -1314,7 +1314,7 @@ class RmWrapper(DbWrapperBase):
                 'pokestop_id': pokestop_id,
                 'latitude': latitude,
                 'longitude': longitude,
-                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()),
+                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()) if lure_expiration is not None else None,
                 'name': name,
                 'image': image,
                 'active_fort_modifier': active_fort_modifier,
