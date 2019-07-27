@@ -40,7 +40,7 @@ class statistics(object):
         if not minutes_spawn:
             minutes_spawn = 120
 
-        return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
+        return render_template('statistics.html', title="MAD Statistics", minutes_spawn=minutes_spawn,
                                minutes_usage=minutes_usage, time=self._args.madmin_time, running_ocr=self._args.only_ocr,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
@@ -286,7 +286,7 @@ class statistics(object):
         minutes = request.args.get('minutes', 120)
         worker = request.args.get('worker')
 
-        return render_template('statistics_worker.html', title="MAD Worker Statisics", minutes=minutes,
+        return render_template('statistics_worker.html', title="MAD Worker Statistics", minutes=minutes,
                                time=self._args.madmin_time, worker=worker, running_ocr=self._args.only_ocr,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
