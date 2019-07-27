@@ -294,7 +294,7 @@ class WordToScreenMatching(object):
                 if 'Facebook' in (self._globaldict['text'][i]): temp_dict['Facebook'] = self._globaldict['top'][i] / 2
                 if 'CLUB' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / 2
                 # french ...
-                if 'DRESSEURS' in (self._globaldict['text'][i]): temp_dict['TRAINER'] = self._globaldict['top'][i] / 2
+                if 'DRESSEURS' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / 2
 
                 if self.get_devicesettings_value('logintype', 'google') == 'ptc':
                     self._nextscreen = ScreenType.PTC
@@ -339,7 +339,7 @@ class WordToScreenMatching(object):
                     # alternative select
                     if 'CLUB' in temp_dict:
                         click_x = self._width / 2
-                        click_y = (temp_dict['TRAINER'] - self._height / 10.11)
+                        click_y = (temp_dict['CLUB'] - self._height / 10.11)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         time.sleep(3)
