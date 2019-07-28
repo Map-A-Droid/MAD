@@ -92,7 +92,7 @@ class RouteManagerBase(ABC):
 
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
-            return self.settings.get("mon_ids_iv", [])
+            return self.settings.get("mon_ids_iv_raw", [])
         else:
             return None
 

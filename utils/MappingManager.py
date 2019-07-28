@@ -296,6 +296,13 @@ class MappingManager:
                     area["geofence_included"], area.get("geofence_excluded", None))
             mode = area["mode"]
             # build routemanagers
+
+            #map iv list to ids
+            if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
+                # replace list name
+                area['settings']['mon_ids_iv_raw'] = \
+                    self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
+
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
                                                                  mode_mapping.get(mode, {}).get("max_count", 99999999),
@@ -460,11 +467,12 @@ class MappingManager:
         """
         self.__read_mappings_file()
         if not full_lock:
+            self._monlists = self.__get_latest_monlists()
             areas_tmp = self.__get_latest_areas()
             devicemappings_tmp = self.__get_latest_devicemappings()
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
-            monlists_temp = self.__get_latest_monlists()
+
 
             logger.info("Restoring old devicesettings")
             for dev in self._devicemappings:
@@ -487,16 +495,17 @@ class MappingManager:
                 self._devicemappings = devicemappings_tmp
                 self._routemanagers = routemanagers_tmp
                 self._auths = auths_tmp
-                self._monlists = monlists_temp
+
 
         else:
             logger.info("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
+                self._monlists = self.__get_latest_monlists()
                 self._routemanagers = self.__get_latest_routemanagers()
                 self._areas = self.__get_latest_areas()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
-                self._monlists = self.__get_latest_monlists()
+
 
         logger.info("Mappings have been updated")
 
