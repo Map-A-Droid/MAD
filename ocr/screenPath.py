@@ -304,7 +304,7 @@ class WordToScreenMatching(object):
                         click_x, click_y = (x + w / 2) / 2, (y + h / 2) / 2
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
-                        time.sleep(1)
+                        time.sleep(5)
                         return ScreenType.LOGINSELECT
 
                 else:
@@ -315,7 +315,7 @@ class WordToScreenMatching(object):
                         click_x, click_y = (x + w / 2) / 2, (y + h / 2) / 2
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
-                        time.sleep(3)
+                        time.sleep(5)
                         return ScreenType.LOGINSELECT
 
                     # alternative select
@@ -324,7 +324,7 @@ class WordToScreenMatching(object):
                         click_y = (temp_dict['Facebook'] + ((temp_dict['TRAINER'] - temp_dict['Facebook']) / 2))
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
-                        time.sleep(3)
+                        time.sleep(5)
                         return ScreenType.LOGINSELECT
 
                     # alternative select
@@ -333,7 +333,7 @@ class WordToScreenMatching(object):
                         click_y = (temp_dict['Facebook'] + self._height / 10.11)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
-                        time.sleep(3)
+                        time.sleep(5)
                         return ScreenType.LOGINSELECT
 
                     # alternative select
@@ -342,7 +342,7 @@ class WordToScreenMatching(object):
                         click_y = (temp_dict['CLUB'] - self._height / 10.11)
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
-                        time.sleep(3)
+                        time.sleep(5)
                         return ScreenType.LOGINSELECT
 
         elif ScreenType(returntype) == ScreenType.PTC:

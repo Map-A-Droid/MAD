@@ -558,11 +558,10 @@ class WorkerBase(ABC):
 
     def _check_windows(self):
         logger.info('Checking pogo screen...')
-        restartcounter: bool = False
         loginerrorcounter: int = 0
         returncode: ScreenType = ScreenType.UNDEFINED
 
-        while not returncode == ScreenType.POGO:
+        while not returncode == ScreenType.POGO or not self._stop_worker_event.is_set():
             returncode = self._WordToScreenMatching.matchScreen()
 
             if returncode != ScreenType.POGO:
@@ -572,37 +571,30 @@ class WorkerBase(ABC):
                     self._stop_pogo()
                     time.sleep(5)
                     self._turn_screen_on_and_start_pogo()
-                    loginerrorcounter = 0
-                    restartcounter = True
-                    break
 
-                if returncode == ScreenType.CLOSE:
+                elif returncode == ScreenType.CLOSE:
                     logger.warning('Pogo not in foreground...')
                     self._start_pogo()
-                    break
 
-                if returncode == ScreenType.ERROR:
+                elif returncode == ScreenType.ERROR:
                     logger.warning('Something wrong with screendetection')
                     loginerrorcounter += 1
 
-                if restartcounter:
-                    logger.error('Cannot login again - clear pogo game data and restart phone')
+                if loginerrorcounter == 4:
+                    logger.error('Cannot login again - (clear pogo game data and) restart phone')
+                    self._stop_worker_event.set()
                     self._stop_pogo()
                     time.sleep(5)
                     if not self.get_devicesettings_value('dont_clear_gamedata', False):
                         logger.info('Clearing gamedata')
                         self._communicator.resetAppdata("com.nianticlabs.pokemongo")
                     self._reboot()
-                    break
 
                 if loginerrorcounter == 2:
                     logger.error('Cannot login two times in row - restart pogo')
                     self._stop_pogo()
                     time.sleep(5)
                     self._turn_screen_on_and_start_pogo()
-                    loginerrorcounter = 0
-                    restartcounter = True
-                    break
 
         logger.info('Checking pogo screen is finished')
         return True
