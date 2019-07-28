@@ -543,6 +543,7 @@ class config(object):
                     mapping = json.load(f)
                     if 'monivlist' not in mapping:
                         mapping['monivlist'] = []
+                mapping['monivlist'].append({'monlist': None})
                 for option in mapping['monivlist']:
                     if edit:
                         if field['name'] in oldvalues:

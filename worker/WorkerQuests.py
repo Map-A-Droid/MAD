@@ -552,7 +552,8 @@ class WorkerQuests(MITMBase):
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
         ids_iv: List[int] = []
         if routemanager_settings is not None:
-            ids_iv = self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None))
+            ids_iv = self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None),
+                                                       self._routemanager_name)
         # if iv ids are specified we will sync the workers encountered ids to newest time.
         if ids_iv is not None:
             (self._latest_encounter_update, encounter_ids) = self._db_wrapper.update_encounters_from_db(

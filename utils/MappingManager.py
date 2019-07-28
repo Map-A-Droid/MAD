@@ -131,7 +131,11 @@ class MappingManager:
     def get_areas(self) -> Optional[dict]:
         return self._areas
 
-    def get_monlist(self, listname):
+    def get_monlist(self, listname, areaname):
+        if type(listname) is list:
+            logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json'
+                         ' - Using a empty list now!!'.format(str(areaname)))
+            return []
         if listname is not None: return self._monlists[listname]
         return []
 
