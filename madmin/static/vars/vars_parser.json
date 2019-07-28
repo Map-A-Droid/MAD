@@ -232,6 +232,15 @@
 					}
 				},
 				{
+					"name": "dont_clear_gamedata",
+					"settings": {
+						"type": "option",
+						"values": "false|true",
+						"require": "false",
+						"description": "Dont clear gamedata if login not working multiple times"
+					}
+				},
+				{
 					"name": "account_rotation",
 					"settings": {
 						"type": "option",
