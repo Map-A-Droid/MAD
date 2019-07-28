@@ -47,7 +47,7 @@ class WordToScreenMatching(object):
         self._mapping_manager = mapping_mananger
         detect_ReturningScreen: list = ('ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER')
         detect_LoginScreen: list = ('KIDS', 'Google', 'Facebook')
-        detect_PTC: list = ('Benutzername', 'Passwort', 'Username', 'Password','DRESSEURS')
+        detect_PTC: list = ('Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS')
         detect_FailureRetryScreen: list = ('TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
                                            'connexion.', 'connexion')
         detect_FailureLoginScreen: list = ('Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
@@ -56,7 +56,7 @@ class WordToScreenMatching(object):
         detect_Birthday: list = ('Geburtdatum', 'birth.', 'naissance.', 'date')
         detect_Marketing: list = ('Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
                                   'notifications', 'évenements,', 'evenements,', 'offres')
-        detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'game', 'data')
+        detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data')
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
         self._ScreenType[4] = detect_PTC
