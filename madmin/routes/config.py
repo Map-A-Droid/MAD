@@ -255,6 +255,7 @@ class config(object):
         return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(walker),
                         code=302)
 
+    @logger.catch()
     @auth_required
     def config(self):
         fieldwebsite = []
@@ -539,12 +540,16 @@ class config(object):
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
                     field['settings']['description']) + '</small><select class="form-control" name="' + str(
                     field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                temp_mapping = {}
+                temp_mapping['monivlist'] = []
                 with open(self._args.mappings) as f:
                     mapping = json.load(f)
                     if 'monivlist' not in mapping:
                         mapping['monivlist'] = []
-                mapping['monivlist'].append({'monlist': None})
-                for option in mapping['monivlist']:
+                temp_mapping['monivlist'].append({'monlist': None})
+                for monlist_temp in mapping['monivlist']:
+                    temp_mapping['monivlist'].append({'monlist': monlist_temp['monlist']})
+                for option in temp_mapping['monivlist']:
                     if edit:
                         if field['name'] in oldvalues['settings']:
                             if str(oldvalues['settings'][field['name']]).lower() == str(option['monlist']).lower():
