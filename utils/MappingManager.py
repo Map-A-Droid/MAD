@@ -435,7 +435,7 @@ class MappingManager:
         areas_arr = self.__raw_json["areas"]
         for area in areas_arr:
             area_dict = {}
-            area_dict['mon_ids_iv'] = area.get('routecalc', None)
+            area_dict['routecalc'] = area.get('routecalc', None)
             area_dict['mode'] = area['mode']
             area_dict['geofence_included'] = area.get(
                     'geofence_included', None)
@@ -452,7 +452,6 @@ class MappingManager:
         for list in monlists_arr:
             monlist[list['monlist']] = list.get('mon_ids_iv', None)
         return monlist
-
 
     def update(self, full_lock=False):
         """

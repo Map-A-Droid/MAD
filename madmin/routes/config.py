@@ -546,8 +546,8 @@ class config(object):
                 mapping['monivlist'].append({'monlist': None})
                 for option in mapping['monivlist']:
                     if edit:
-                        if field['name'] in oldvalues:
-                            if str(oldvalues[field['name']]).lower() == str(option['monlist']).lower():
+                        if field['name'] in oldvalues['settings']:
+                            if str(oldvalues['settings'][field['name']]).lower() == str(option['monlist']).lower():
                                 sel = 'selected'
                         else:
                             if not option['monlist']:
