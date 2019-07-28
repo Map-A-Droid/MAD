@@ -295,10 +295,10 @@ class WebsocketServer(object):
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', 0)
 
                 # set global mon_iv
-                routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
+                routemanager_settings = self.__mapping_manager.routemanager_get_settings(walker_area_name)
                 if routemanager_settings is not None:
                     client_mapping['mon_ids_iv'] =\
-                        self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None))
+                        self.__mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None))
 
 
             else:
