@@ -203,7 +203,9 @@ class WordToScreenMatching(object):
             frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
             self._ratio = self._height / self._width
             self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
-                #pytesseract.image_to_data(frame, output_type=Output.DICT)
+            if 'text' not in self._globaldict:
+                logger.error('Error while text detection')
+                return ScreenType.ERROR
             n_boxes = len(self._globaldict['level'])
             for i in range(n_boxes):
                 if returntype != -1: break

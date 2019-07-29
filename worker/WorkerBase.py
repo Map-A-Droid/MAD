@@ -851,10 +851,6 @@ class WorkerBase(ABC):
             return False
 
         logger.debug("_check_pogo_main_screen: checking mainscreen")
-        buttoncheck = self._pogoWindowManager.look_for_button(screenshot_path, 2.20, 3.01, self._communicator)
-        if buttoncheck:
-            logger.debug('Found button on screen')
-            self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1))
         while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id):
             logger.error("_check_pogo_main_screen: not on Mainscreen...")
             if attempts == maxAttempts:
@@ -864,7 +860,7 @@ class WorkerBase(ABC):
                 return False
 
             # not using continue since we need to get a screen before the next round...
-            found = self._pogoWindowManager.look_for_button(screenshot_path, 2.40, 3.01, self._communicator)
+            found = self._pogoWindowManager.look_for_button(screenshot_path, 2.20, 3.01, self._communicator)
             if found:
                 logger.debug("_check_pogo_main_screen: Found button (small)")
 
@@ -912,10 +908,14 @@ class WorkerBase(ABC):
         if found:
             time.sleep(1)
             logger.debug("checkPogoButton: Found button (small)")
-            logger.debug("checkPogoButton: done")
-            return True
+
+        if not found and self._pogoWindowManager.look_for_button(self.get_screenshot_path(), 1.05, 2.20,
+                                                                 self._communicator):
+            logger.debug("checkPogoButton: Found button (big)")
+            found = True
+
         logger.debug("checkPogoButton: done")
-        return False
+        return found
 
     def _wait_pogo_start_delay(self):
         delay_count: int = 0
@@ -930,21 +930,16 @@ class WorkerBase(ABC):
             time.sleep(1)
             delay_count += 1
 
-    def _checkPogoClose(self):
+    def _checkPogoClose(self, takescreen = True):
         logger.debug("checkPogoClose: Trying to find closeX")
         pogoTopmost = self._communicator.isPogoTopmost()
         if not pogoTopmost:
             return False
 
-        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
-            # TODO: go again?
-            # if again:
-            #     logger.error("checkPogoClose: failed getting a screenshot again")
-            #     return False
-            # TODO: consider throwing?
-            logger.debug("checkPogoClose: Could not get screenshot")
-            return False
-        attempts = 0
+        if takescreen:
+            if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+                logger.debug("checkPogoClose: Could not get screenshot")
+                return False
 
         if os.path.isdir(self.get_screenshot_path()):
             logger.error("checkPogoClose: screenshot.png is not a file/corrupted")

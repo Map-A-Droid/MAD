@@ -679,7 +679,7 @@ class WorkerQuests(MITMBase):
             elif data_received == LatestReceivedType.UNDEFINED:
                 logger.info('Getting timeout - or other unknown error. Try again')
                 if not self._checkPogoButton():
-                    self._checkPogoClose()
+                    self._checkPogoClose(takescreen=False)
 
             to += 1
         return data_received
