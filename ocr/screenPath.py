@@ -10,6 +10,7 @@ from utils.logging import logger
 from utils.MappingManager import MappingManager
 from typing import Optional, List
 from pytesseract import Output
+from multiprocessing.pool import ThreadPool
 from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
 import numpy as np
@@ -82,6 +83,7 @@ class WordToScreenMatching(object):
         logger.info("Starting Screendetector")
         self._width: int = 0
         self._height: int = 0
+        self.__thread_pool = ThreadPool(processes=2)
         self.get_login_accounts()
 
     def get_login_accounts(self):
@@ -162,6 +164,9 @@ class WordToScreenMatching(object):
         return np.asarray(sort_lines, dtype=np.int32)
 
     def matchScreen(self):
+        return self.__thread_pool.apply_async(self.__internal_matchScreen, ()).get()
+
+    def __internal_matchScreen(self):
         pogoTopmost = self._communicator.isPogoTopmost()
         screenpath = self._parent.get_screenshot_path()
         topmostapp = self._communicator.topmostApp()
