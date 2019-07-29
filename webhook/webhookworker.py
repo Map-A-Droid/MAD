@@ -606,8 +606,6 @@ class WebhookWorker:
             # fetch data and create payload
             full_payload = self.__create_payload()
 
-            logger.debug('Full payload for webhook {}'.format(full_payload))
-
             # send our payload
             self.__send_webhook(full_payload)
 
