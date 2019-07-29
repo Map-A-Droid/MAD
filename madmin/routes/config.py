@@ -2,6 +2,7 @@ import ast
 import os
 import json
 from flask import (render_template, request, redirect)
+from functools import cmp_to_key
 from madmin.functions import auth_required, getBasePath
 from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
@@ -836,7 +837,7 @@ class config(object):
             _quick = settings[var].get('quickview', False)
             _quicksett = settings[var].get('quickview_settings', False)
 
-            for output in mapping[var]:
+            for output in sorted(mapping[var], key=cmp_to_key(self.sort_by_name_if_exists)):
                 quickadd, quickline = '', ''
                 mode = output.get('mode', _typearea)
                 if settings[var]['could_edit']:
@@ -1016,8 +1017,27 @@ class config(object):
         if not self._args.auto_reload_config:
             self._mapping_mananger.update()
         return redirect(getBasePath(request) + "/showsettings", code=302)
+    
+    def cmp_by_key(self, a, b, key):
+           # RIP python2 cmp()
+           return (a[key] > b[key]) - (a[key] < b[key])
 
-
-
-
-
+    def sort_by_name_if_exists(self, a, b):
+        # Sort areas by "name"
+        if "name" in a and "name" in b:
+            return self.cmp_by_key(a, b, "name")
+        # Devices by origin
+        elif "origin" in a and "origin" in b:
+            return self.cmp_by_key(a, b, "origin")
+        # Walkers by walkername
+        elif "walkername" in a and "walkername" in b:
+            return self.cmp_by_key(a, b, "walkername")
+        # Global mon list by monlist
+        elif "monlist" in a and "monlist" in b:
+            return self.cmp_by_key(a, b, "monlist")
+        # auth list by username
+        elif "username" in a and "username" in b:
+            return self.cmp_by_key(a, b, "username")
+        # Leave rest unsorted
+        else:
+            return 0
