@@ -10,7 +10,7 @@ CREATE TABLE `gomap` (
 
 CREATE TABLE `gym` (
   `gym_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `team_id` smallint(6) NOT NULL,
+  `team_id` smallint(6) NOT NULL DEFAULT 0,
   `guard_pokemon_id` smallint(6) NOT NULL,
   `slots_available` smallint(6) NOT NULL,
   `enabled` tinyint(1) NOT NULL,
