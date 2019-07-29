@@ -814,7 +814,8 @@ class MonocleWrapper(DbWrapperBase):
                                               list_of_stops_vals[2], list_of_stops_vals[3],
                                               list_of_stops_vals[4], list_of_stops_vals[5],
                                               list_of_stops_vals[6], list_of_stops_vals[7],
-                                              list_of_stops_vals[8], list_of_stops_vals[9]))
+                                              list_of_stops_vals[8], list_of_stops_vals[9],
+                                              list_of_stops_vals[10]))
 
         self.executemany(query_pokestops, list_of_pokestops, commit=True)
 
