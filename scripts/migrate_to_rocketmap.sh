@@ -34,7 +34,13 @@ read olddbname
 echo -n "Name for you new Database ?         "
 read newdbname
 
-DB_CHECK=$(MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "SHOW DATABASES;" | grep $newdbname)
+# Create Query function
+
+query(){
+MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "$1"
+}
+
+DB_CHECK=$(query "SHOW DATABASES;" | grep $newdbname)
 if [ ! -z "${DB_CHECK}" ]; then
        echo -e "\033[31m"
        echo "Database Already Exist. Cannot Proceed"
@@ -60,35 +66,35 @@ MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname < ../SQL/rocketmap.sql
 for table in trs_quest trs_spawn trs_spawnsightings trs_status trshash
 do
    echo "Importing $table..."
-   MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO $table SELECT * FROM $olddbname.$table;"
+   query "INSERT INTO $table SELECT * FROM $olddbname.$table;"
 done
 
 for table in trs_s2cells trs_stats_detect trs_stats_detect_raw trs_stats_location trs_stats_location_raw trs_usage
 do
    echo "Creating and Importing $table..."
-   MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "CREATE TABLE $table LIKE $olddbname.$table;"
-   MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO $table SELECT * FROM $olddbname.$table;"
+   query "CREATE TABLE $table LIKE $olddbname.$table;"
+   query "INSERT INTO $table SELECT * FROM $olddbname.$table;"
 done
 
 if [ $dbtype == 'monocle' ]
 then
 
       echo "Importing Gyms from forts..."
-      MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO gym (gym_id, latitude, longitude) SELECT external_id, lat, lon from $olddbname.forts;"
+      query "INSERT INTO gym (gym_id, latitude, longitude) SELECT external_id, lat, lon from $olddbname.forts;"
       echo "Importing Gymdetails from forts..."
-      MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO gymdetails (gym_id, name, url) SELECT external_id, IFNULL(name,''), IFNULL(url,'') from $olddbname.forts;"
+      query "INSERT INTO gymdetails (gym_id, name, url) SELECT external_id, IFNULL(name,''), IFNULL(url,'') from $olddbname.forts;"
       echo "Importing Pokestops..."
-      MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO pokestop (pokestop_id, latitude, longitude, name, image) SELECT external_id, lat, lon, name, url from $olddbname.pokestops;"
+      query "INSERT INTO pokestop (pokestop_id, latitude, longitude, name, image) SELECT external_id, lat, lon, name, url from $olddbname.pokestops;"
 
 elif [ $dbtype == 'rdm' ]
 then
 
       echo "Importing Gyms from Gym..."
-      MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO gym (gym_id, latitude, longitude) SELECT id, lat, lon from $olddbname.gym;"
+      query "INSERT INTO gym (gym_id, latitude, longitude) SELECT id, lat, lon from $olddbname.gym;"
       echo "Importing Gymdetails from Gym..."
-      MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO gymdetails (gym_id, name, url) SELECT id, IFNULL(name,''), IFNULL(url,'') from $olddbname.gym;"
+      query "INSERT INTO gymdetails (gym_id, name, url) SELECT id, IFNULL(name,''), IFNULL(url,'') from $olddbname.gym;"
       echo "Importing Pokestops..."
-      MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "INSERT INTO pokestop (pokestop_id, latitude, longitude, name, image) SELECT id, lat, lon, name, url from $olddbname.pokestop;"
+      query "INSERT INTO pokestop (pokestop_id, latitude, longitude, name, image) SELECT id, lat, lon, name, url from $olddbname.pokestop;"
 
 fi
 
