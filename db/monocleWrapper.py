@@ -67,7 +67,7 @@ class MonocleWrapper(DbWrapperBase):
                 "ctype": "int(11) NULL"
             },
             {
-                "table": "pokestop",
+                "table": "pokestops",
                 "column": "incident_grunt_type",
                 "ctype": "smallint(1) NULL"
             }
