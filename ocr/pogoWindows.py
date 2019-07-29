@@ -729,3 +729,20 @@ class PogoWindows:
         else:
             logger.debug("Could not find close button (X).")
             return False
+
+    def get_screen_text(self, screenshot, identifier):
+        if screenshot is None:
+            logger.error("get_screen_text: image does not exist")
+            return False
+
+        return self.__thread_pool.apply_async(self.__internal_get_screen_text,
+                                              (screenshot, identifier)).get()
+
+    def __internal_get_screen_text(self, screenshot, identifier):
+        # TODO: unused method, maybe remove it?
+        logger.debug(
+            "get_screen_text: Reading screen text - identifier {}", identifier)
+
+        return pytesseract.image_to_data(screenshot, output_type=Output.DICT)
+
+

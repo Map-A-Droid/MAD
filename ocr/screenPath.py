@@ -1,5 +1,4 @@
 import cv2
-import pytesseract
 import math
 import time
 import re
@@ -9,7 +8,6 @@ import xml.etree.ElementTree as ET
 from utils.logging import logger
 from utils.MappingManager import MappingManager
 from typing import Optional, List
-from pytesseract import Output
 from multiprocessing.pool import ThreadPool
 from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
@@ -195,7 +193,8 @@ class WordToScreenMatching(object):
             frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
             frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
             self._ratio = self._height / self._width
-            self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
+            self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
+                #pytesseract.image_to_data(frame, output_type=Output.DICT)
             n_boxes = len(self._globaldict['level'])
             for i in range(n_boxes):
                 if returntype != -1: break
@@ -406,7 +405,8 @@ class WordToScreenMatching(object):
     def checkQuest(self, screenpath):
         frame = cv2.imread(screenpath)
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-        self._globaldict = pytesseract.image_to_data(frame, output_type=Output.DICT)
+        self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
+            #pytesseract.image_to_data(frame, output_type=Output.DICT)
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         n_boxes = len(self._globaldict['level'])
         for i in range(n_boxes):

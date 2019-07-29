@@ -238,8 +238,9 @@ if __name__ == "__main__":
             ocr_enabled = False
 
             if not args.no_ocr:
-                from ocr.pogoWindows import PogoWindows
-                pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
+                logger.error('The argument no_ocr will be eliminated soon - we need ocr (no more option now!)')
+            from ocr.pogoWindows import PogoWindows
+            pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
 
             if ocr_enabled:
                 from ocr.copyMons import MonRaidImages
