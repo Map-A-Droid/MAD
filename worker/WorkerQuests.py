@@ -622,7 +622,6 @@ class WorkerQuests(MITMBase):
                     logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
                                 .format(str(latitude), str(longitude)))
                     self._rocket = True
-                    return True
 
                 if self._level_mode and self._ignore_spinned_stops:
                     visited: bool = fort.get("visited", False)
@@ -694,6 +693,8 @@ class WorkerQuests(MITMBase):
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
+            if self._rocket:
+                self.process_rocket()
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.error('Box is full ... Next round!')
                 self.clear_thread_task = 1
@@ -703,7 +704,6 @@ class WorkerQuests(MITMBase):
                     logger.info('NOT received new Quest - previously spun the stop/cooldown')
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
-                    if self._rocket: self.process_rocket()
                     self._clear_quest_counter += 1
                 if self._clear_quest_counter == 3:
                     logger.info('Getting 3 quests - clean them')
@@ -728,6 +728,7 @@ class WorkerQuests(MITMBase):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
                     self.clear_thread_task = 2
                     break
+
                 # self._close_gym(self._delay_add)
 
                 self._turn_map(self._delay_add)
@@ -797,15 +798,11 @@ class WorkerQuests(MITMBase):
         return LatestReceivedType.UNDEFINED
 
     def process_rocket(self):
-        if self._rocket:
-            self._work_mutex.acquire()
-            try:
-                logger.info('Closing Rocket Dialog')
-                time.sleep(5)
-                self._communicator.click(100, 100)
-                time.sleep(4)
-                self._communicator.click(100, 100)
-                time.sleep(4)
-                self._checkPogoClose()
-            finally:
-                self._work_mutex.release()
+        logger.info('Closing Rocket Dialog')
+        time.sleep(5)
+        self._communicator.click(100, 100)
+        time.sleep(4)
+        self._communicator.click(100, 100)
+        time.sleep(4)
+        self._checkPogoClose()
+

@@ -739,10 +739,15 @@ class PogoWindows:
                                               (screenshot, identifier)).get()
 
     def __internal_get_screen_text(self, screenshot, identifier):
-        # TODO: unused method, maybe remove it?
+        returning_dict : dict = []
         logger.debug(
             "get_screen_text: Reading screen text - identifier {}", identifier)
 
-        return pytesseract.image_to_data(screenshot, output_type=Output.DICT)
+        try:
+            returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT)
+        except Exception as e:
+            logger.error("get_screen_text: {}", e)
+
+        return returning_dict
 
 
