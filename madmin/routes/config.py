@@ -1020,7 +1020,7 @@ class config(object):
     
     def cmp_by_key(self, a, b, key):
            # RIP python2 cmp()
-           return (a[key] > b[key]) - (a[key] < b[key])
+           return (a[key].lower() > b[key].lower()) - (a[key].lower() < b[key].lower())
 
     def sort_by_name_if_exists(self, a, b):
         # Sort areas by "name"
