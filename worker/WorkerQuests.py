@@ -798,10 +798,14 @@ class WorkerQuests(MITMBase):
 
     def process_rocket(self):
         if self._rocket:
-            logger.info('Closing Rocket Dialog')
-            time.sleep(5)
-            self._communicator.click(100, 100)
-            time.sleep(4)
-            self._communicator.click(100, 100)
-            time.sleep(4)
-            self._checkPogoClose()
+            self._work_mutex.acquire()
+            try:
+                logger.info('Closing Rocket Dialog')
+                time.sleep(5)
+                self._communicator.click(100, 100)
+                time.sleep(4)
+                self._communicator.click(100, 100)
+                time.sleep(4)
+                self._checkPogoClose()
+            finally:
+                self._work_mutex.release()
