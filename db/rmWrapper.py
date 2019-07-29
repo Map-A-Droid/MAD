@@ -55,7 +55,7 @@ class RmWrapper(DbWrapperBase):
             },
             {
                 "table": "pokestop",
-                "column": "grunt_type",
+                "column": "incident_grunt_type",
                 "ctype": "tinyint(1) NULL"
             }
         ]
@@ -835,12 +835,12 @@ class RmWrapper(DbWrapperBase):
 
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "last_updated, active_fort_modifier, incident_start, incident_expiration, grunt_type) "
+            "last_updated, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
             "active_fort_modifier=VALUES(active_fort_modifier), incident_start=VALUES(incident_start), "
-            "incident_expiration=VALUES(incident_expiration), grunt_type=VALUES(grunt_type)"
+            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type)"
         )
 
         for cell in cells:
@@ -1151,7 +1151,7 @@ class RmWrapper(DbWrapperBase):
         active_fort_modifier = None
         incident_start = None
         incident_expiration = None
-        grunt_type = None
+        incident_grunt_type = None
 
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
@@ -1160,7 +1160,7 @@ class RmWrapper(DbWrapperBase):
         if "pokestop_display" in stop_data:
             start_ms = stop_data["pokestop_display"]["incident_start_ms"]
             expiration_ms = stop_data["pokestop_display"]["incident_expiration_ms"]
-            grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
+            incident_grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
 
             if start_ms > 0:
                 incident_start = datetime.utcfromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
@@ -1168,7 +1168,7 @@ class RmWrapper(DbWrapperBase):
             if expiration_ms > 0:
                 incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
 
-        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier, incident_start, incident_expiration, grunt_type
+        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
         now = datetime.utcfromtimestamp(
@@ -1304,7 +1304,7 @@ class RmWrapper(DbWrapperBase):
     def get_stops_changed_since(self, timestamp):
         query = (
             "SELECT pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier, "
-            "last_modified, last_updated, incident_start, incident_expiration, grunt_type "
+            "last_modified, last_updated, incident_start, incident_expiration, incident_grunt_type "
             "FROM pokestop "
             "WHERE last_updated >= %s AND (DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 OR "
             "incident_start IS NOT NULL)"
@@ -1315,7 +1315,7 @@ class RmWrapper(DbWrapperBase):
 
         ret = []
         for (pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier,
-                last_modified, last_updated, incident_start, incident_expiration, grunt_type) in res:
+                last_modified, last_updated, incident_start, incident_expiration, incident_grunt_type) in res:
 
             ret.append({
                 'pokestop_id': pokestop_id,
@@ -1329,7 +1329,7 @@ class RmWrapper(DbWrapperBase):
                 "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()) if last_updated is not None else None,
                 "incident_start": int(incident_start.replace(tzinfo=timezone.utc).timestamp()) if incident_start is not None else None,
                 "incident_expiration": int(incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if incident_expiration is not None else None,
-                "grunt_type": grunt_type
+                "incident_grunt_type": incident_grunt_type
             })
 
         return ret

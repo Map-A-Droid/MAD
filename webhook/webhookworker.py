@@ -496,8 +496,8 @@ class WebhookWorker:
             if pokestop["incident_expiration"]:
                 pokestop_payload["incident_expiration"] = pokestop["incident_expiration"]
 
-            if pokestop["grunt_type"]:
-                pokestop_payload["grunt_type"] = pokestop["grunt_type"]
+            if pokestop["incident_grunt_type"]:
+                pokestop_payload["incident_grunt_type"] = pokestop["incident_grunt_type"]
 
             entire_payload = {"type": "pokestop", "message": pokestop_payload}
             ret.append(entire_payload)
