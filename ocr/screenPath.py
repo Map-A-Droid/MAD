@@ -188,7 +188,16 @@ class WordToScreenMatching(object):
                                                 delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
-            frame_org = cv2.imread(screenpath)
+            try:
+                frame_org = cv2.imread(screenpath)
+            except Exception:
+                logger.error("Screenshot corrupted :(")
+                return ScreenType.ERROR
+
+            if frame_org is None:
+                logger.error("Screenshot corrupted :(")
+                return ScreenType.ERROR
+
             self._height, self._width, _ = frame_org.shape
             frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
             frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
@@ -403,7 +412,15 @@ class WordToScreenMatching(object):
             return ScreenType.POGO
 
     def checkQuest(self, screenpath):
-        frame = cv2.imread(screenpath)
+        try:
+            frame = cv2.imread(screenpath)
+        except Exception:
+            logger.error("Screenshot corrupted :(")
+            return ScreenType.UNDEFINED
+
+        if frame is None:
+            logger.error("Screenshot corrupted :(")
+            return ScreenType.ERROR
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
             #pytesseract.image_to_data(frame, output_type=Output.DICT)
