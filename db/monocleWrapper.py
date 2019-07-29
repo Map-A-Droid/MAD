@@ -1429,8 +1429,6 @@ class MonocleWrapper(DbWrapperBase):
 
         res = self.execute(query, (timestamp, timestamp,))
 
-        logger.debug('Pokestop result for webhook {}'.format(res))
-
         ret = []
 
         for (external_id, latitude, longitude, name, image,
