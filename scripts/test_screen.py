@@ -194,8 +194,8 @@ class testimage(object):
         mainscreen = 0
 
         height, width, _ = image.shape
-        gray = image[int(height) - int(round(height / 5)):int(height),
-                     0: int(int(width) / 4)]
+        gray = image[int(height) - int(round(height / 6)):int(height),
+                     0: int(int(width) / 3)]
         original = gray
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
