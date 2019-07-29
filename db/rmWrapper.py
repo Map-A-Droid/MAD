@@ -56,7 +56,7 @@ class RmWrapper(DbWrapperBase):
             {
                 "table": "pokestop",
                 "column": "incident_grunt_type",
-                "ctype": "tinyint(1) NULL"
+                "ctype": "smallint(1) NULL"
             }
         ]
 
