@@ -308,6 +308,7 @@ CREATE TABLE `trs_quest` (
   `quest_target` tinyint(3) NOT NULL,
   `quest_condition` varchar(500) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `quest_reward` varchar(1000) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+  `quest_template` varchar(100) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `quest_task` varchar(150) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   PRIMARY KEY (`GUID`),
   KEY `quest_type` (`quest_type`)
