@@ -56,7 +56,7 @@ msgstr "Fange {0} {poke}"
 msgid "Spin {0} Pokestops or Gyms."
 msgstr "Drehe {0} Pokestops oder Arenen."
 
-msgid "Spin {0} never visited Pokestops or Gyms."
+msgid "Spin {0} Pokestops you haven't visited before."
 msgstr "Drehe {0} Pokestops die Du noch nicht besucht hast."
 
 msgid "Hatch {0} Eggs."

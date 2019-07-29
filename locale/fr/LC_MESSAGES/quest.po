@@ -56,7 +56,7 @@ msgstr "Attrape {0} {poke}."
 msgid "Spin {0} Pokestops or Gyms."
 msgstr "Fais tourner {0} PokéStops ou Arènes."
 
-msgid "Spin {0} never visited Pokestops or Gyms."
+msgid "Spin {0} Pokestops you haven't visited before."
 msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes. "
 
 msgid "Hatch {0} Eggs."
