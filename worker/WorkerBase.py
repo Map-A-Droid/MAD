@@ -561,7 +561,7 @@ class WorkerBase(ABC):
         loginerrorcounter: int = 0
         returncode: ScreenType = ScreenType.UNDEFINED
 
-        while not returncode == ScreenType.POGO or not self._stop_worker_event.is_set():
+        while not returncode == ScreenType.POGO and not self._stop_worker_event.is_set():
             returncode = self._WordToScreenMatching.matchScreen()
 
             if returncode != ScreenType.POGO:
