@@ -89,7 +89,7 @@ class WorkerQuests(MITMBase):
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
-                self._check_quest()
+                if self.get_devicesettings_value('screendetection', False): self._check_quest()
                 self.set_devicesettings_value('account_rotation_started', True)
             time.sleep(10)
         else:

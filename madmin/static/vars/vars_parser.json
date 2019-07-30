@@ -207,6 +207,15 @@
 					}
 				},
 				{
+					"name": "screendetection",
+					"settings": {
+						"type": "option",
+						"values": "false|true",
+						"require": "false",
+						"description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts"
+					}
+				},
+				{
 					"name": "logintype",
 					"settings": {
 						"type": "option",
