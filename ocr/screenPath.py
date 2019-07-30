@@ -8,7 +8,6 @@ import xml.etree.ElementTree as ET
 from utils.logging import logger
 from utils.MappingManager import MappingManager
 from typing import Optional, List
-from multiprocessing.pool import ThreadPool
 from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
 import numpy as np
@@ -28,6 +27,7 @@ class ScreenType(Enum):
     PERMISSION = 11
     MARKETING = 12
     CONSENT = 13
+    SN = 14
     QUEST = 20
     ERROR = 100
     CLOSE = 500
@@ -56,6 +56,8 @@ class WordToScreenMatching(object):
         detect_Marketing: list = ('Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
                                   'notifications', 'évenements,', 'evenements,', 'offres')
         detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data')
+        detect_SN: list = ('kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
+                           'logiciel')
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
         self._ScreenType[4] = detect_PTC
@@ -64,7 +66,8 @@ class WordToScreenMatching(object):
         self._ScreenType[8] = detect_Gamedata
         self._ScreenType[1] = detect_Birthday
         self._ScreenType[12] = detect_Marketing
-        self._ScreenType[7] = detect_WrongPassword
+        self._ScreenType[14] = detect_Marketing
+        self._ScreenType[7] = detect_SN
         self._globaldict: dict = []
         self._ratio: float = 0.0
 
@@ -81,7 +84,6 @@ class WordToScreenMatching(object):
         logger.info("Starting Screendetector")
         self._width: int = 0
         self._height: int = 0
-        self.__thread_pool = ThreadPool(processes=2)
         self.get_login_accounts()
 
     def get_login_accounts(self):
@@ -162,9 +164,6 @@ class WordToScreenMatching(object):
         return np.asarray(sort_lines, dtype=np.int32)
 
     def matchScreen(self):
-        return self.__thread_pool.apply_async(self.__internal_matchScreen, ()).get()
-
-    def __internal_matchScreen(self):
         pogoTopmost = self._communicator.isPogoTopmost()
         screenpath = self._parent.get_screenshot_path()
         topmostapp = self._communicator.topmostApp()
@@ -235,8 +234,11 @@ class WordToScreenMatching(object):
 
         elif ScreenType(returntype) == ScreenType.CONSENT:
             self._nextscreen = ScreenType.UNDEFINED
-            time.sleep(2)
             return ScreenType.CONSENT
+
+        elif ScreenType(returntype) == ScreenType.SN:
+            self._nextscreen = ScreenType.UNDEFINED
+            return ScreenType.SN
 
         elif ScreenType(returntype) == ScreenType.GAMEDATA:
             self._nextscreen = ScreenType.UNDEFINED
@@ -446,23 +448,28 @@ class WordToScreenMatching(object):
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
         click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
-        parser = ET.XMLParser(encoding="utf-8")
-        xmlroot = ET.fromstring(xml, parser=parser)
-        bounds: str = ""
-        for item in xmlroot.iter('node'):
-            if str(item.attrib['text']).upper() in click_text:
-                logger.debug("Found text {}", str(item.attrib['text']))
-                bounds = item.attrib['bounds']
-                logger.debug("Bounds {}", str(item.attrib['bounds']))
+        try:
+            parser = ET.XMLParser(encoding="utf-8")
+            xmlroot = ET.fromstring(xml, parser=parser)
+            bounds: str = ""
+            for item in xmlroot.iter('node'):
+                if str(item.attrib['text']).upper() in click_text:
+                    logger.debug("Found text {}", str(item.attrib['text']))
+                    bounds = item.attrib['bounds']
+                    logger.debug("Bounds {}", str(item.attrib['bounds']))
 
-                match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
-                click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1)))/2)
-                click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2)))/2)
-                logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                self._communicator.click(click_x, click_y)
-                time.sleep(2)
-                return True
+                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1)))/2)
+                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2)))/2)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                    self._communicator.click(click_x, click_y)
+                    time.sleep(2)
+                    return True
+        except Exception as e:
+            logger.error('Something wrong while parsing xml: {}'.format(str(e)))
+            return False
+
         time.sleep(2)
         logger.warning('Dont find any button...')
         return False
@@ -471,20 +478,25 @@ class WordToScreenMatching(object):
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
-        parser = ET.XMLParser(encoding="utf-8")
-        xmlroot = ET.fromstring(xml, parser=parser)
-        for item in xmlroot.iter('node'):
-            if mail in str(item.attrib['text']):
-                logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
-                bounds = item.attrib['bounds']
-                logger.debug("Bounds {}", str(item.attrib['bounds']))
-                match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
-                click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
-                click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                self._communicator.click(click_x, click_y)
-                time.sleep(2)
-                return True
+        try:
+            parser = ET.XMLParser(encoding="utf-8")
+            xmlroot = ET.fromstring(xml, parser=parser)
+            for item in xmlroot.iter('node'):
+                if mail in str(item.attrib['text']):
+                    logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
+                    bounds = item.attrib['bounds']
+                    logger.debug("Bounds {}", str(item.attrib['bounds']))
+                    match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
+                    click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
+                    click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                    self._communicator.click(click_x, click_y)
+                    time.sleep(2)
+                    return True
+        except Exception as e:
+            logger.error('Something wrong while parsing xml: {}'.format(str(e)))
+            return False
+
         time.sleep(2)
         logger.warning('Dont find any mailaddress...')
         return False
