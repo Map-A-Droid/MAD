@@ -41,7 +41,7 @@ MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "$1"
 }
 
 DB_CHECK=$(query "SHOW DATABASES;" | grep $newdbname)
-if [ ! -z "${DB_CHECK}" ]; then
+if [[ ! -z "${DB_CHECK}" ]]; then
        echo -e "\033[31m"
        echo "Database Already Exist. Cannot Proceed"
        echo ""
@@ -76,7 +76,7 @@ do
    query "INSERT INTO $table SELECT * FROM $olddbname.$table;"
 done
 
-if [ $dbtype == 'monocle' ]
+if [[ $dbtype == 'monocle' ]]
 then
 
       echo "Importing Gyms from forts..."
@@ -86,7 +86,7 @@ then
       echo "Importing Pokestops..."
       query "INSERT INTO pokestop (pokestop_id, latitude, longitude, name, image) SELECT external_id, lat, lon, name, url from $olddbname.pokestops;"
 
-elif [ $dbtype == 'rdm' ]
+elif [[ $dbtype == 'rdm' ]]
 then
 
       echo "Importing Gyms from Gym..."
