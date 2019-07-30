@@ -295,8 +295,9 @@ class WorkerQuests(MITMBase):
             logger.debug("No last action time found - no calculation")
             delay_used = -1
 
-        if self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime and \
-                self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
+        if  self.get_devicesettings_value('screendetection', False) and \
+                self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
+                and self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
             # Waiting time to long and more then one account - switch! (not level mode!!)
             logger.info('Could use more then 1 account - switch & no cooldown')
             self.switch_account()
