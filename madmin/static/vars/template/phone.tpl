@@ -11,7 +11,7 @@
 
 <div class=phonename id=date<<phonename>>><<creationdate>></div>
 <div id=button><a id=screenshot origin=<<phonename>> href='take_screenshot?origin=<<phonename>>&adb=<<adb_option>>'>Take Screenshot</a></div>
-<div id=button><a href='clear_game_data?origin=<<phonename>>&adb=<<adb_option>>' id='resetgamedata' origin=<<phonename>>>Reset Game Data</a></div>
+<div id=button><a href='clear_game_data?origin=<<phonename>>&adb=<<adb_option>>' id='resetgamedata' origin=<<phonename>> class='confirm' title='Do you really want to clear data for pogo, this will result in the need to re-login?'>Reset Game Data</a></div>
 <div id=button><a href='quit_pogo?origin=<<phonename>>&adb=<<adb_option>>' id='quit' origin=<<phonename>>>Quit Pogo</a></div>
 <div id=button><a href='restart_phone?origin=<<phonename>>&adb=<<adb_option>>' class='confirm' title='Do you really want to restart phone?'>Reboot Phone</a></div>
 </div>
