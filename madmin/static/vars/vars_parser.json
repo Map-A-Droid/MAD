@@ -872,6 +872,16 @@
 						"description": "Do not spinn stops already made in the past (for levelmode)",
 						"output": "int"
 					}
+				},
+				{
+					"name": "cleanup_every_spin",
+					"settings": {
+						"type": "option",
+						"values": "false|true",
+						"require": "true",
+						"description": "Cleanup quest inventory every spinned stop",
+						"output": "int"
+					}
 				}
 			]
 		},
@@ -984,6 +994,16 @@
 						"type": "text",
 						"require": "false",
 						"description": "Rounds in Init Mode. (Default: 1)"
+					}
+				},
+				{
+					"name": "mon_ids_iv",
+					"settings": {
+						"type": "monlistselect",
+						"require": "false",
+						"description": "Select global mon list",
+						"output": "int",
+						"showmonsidpicker": true
 					}
 				}
 			]

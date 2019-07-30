@@ -705,16 +705,25 @@ class WorkerQuests(MITMBase):
                     logger.info('NOT received new Quest - previously spun the stop/cooldown')
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
+                if not self.get_devicesettings_value('cleanup_every_spin', False):
                     self._clear_quest_counter += 1
-                if self._clear_quest_counter == 3:
-                    logger.info('Getting 3 quests - clean them')
+                    if self._clear_quest_counter == 3:
+                        logger.info('Getting 3 quests - clean them')
+                        reached_main_menu = self._check_pogo_main_screen(10, True)
+                        if not reached_main_menu:
+                            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                                # TODO: put in loop, count up for a reboot ;)
+                                raise InternalStopWorkerException
+                        self.clear_thread_task = 2
+                        self._clear_quest_counter = 0
+                else:
+                    logger.info('Getting new quest - clean it')
                     reached_main_menu = self._check_pogo_main_screen(10, True)
                     if not reached_main_menu:
                         if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                             # TODO: put in loop, count up for a reboot ;)
                             raise InternalStopWorkerException
                     self.clear_thread_task = 2
-                    self._clear_quest_counter = 0
                 break
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
                   FortSearchResultTypes.OUT_OF_RANGE):
