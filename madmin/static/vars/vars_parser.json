@@ -1,1169 +1,1169 @@
 {
-	"devices": [
-		{
-			"name": "devices",
-			"fields": [
-				{
-					"name": "origin",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Name of device (from RGC settings)",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "walker",
-					"settings": {
-						"type": "walkerselect",
-						"require": "true",
-						"empty": null,
-						"description": "Walker of this area"
-					}
-				},
-				{
-					"name": "pool",
-					"settings": {
-						"type": "poolselect",
-						"require": "true",
-						"empty": null,
-						"description": "Configpool for this area"
-					}
-				},
-				{
-					"name": "adbname",
-					"settings": {
-						"type": "adbselect",
-						"require": "true",
-						"empty": null,
-						"description": "ADB devicename"
-					}
-				}
-			],
-			"settings": [
-				{
-					"name": "post_walk_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
-					}
-				},
-				{
-					"name": "post_teleport_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds after a teleport. (Default: 4.0)"
-					}
-				},
-				{
-					"name": "walk_after_teleport_distance",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Walk n metres in both directions after teleport for getting data"
-					}
-				},
-				{
-					"name": "cool_down_sleep",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "None|false|true",
-						"description": "More cooldown after teleport"
-					}
-				},
-				{
-					"name": "post_turn_screen_on_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
-					}
-				},
-				{
-					"name": "post_pogo_start_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
-					}
-				},
-				{
-					"name": "restart_pogo",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
-					}
-				},
-				{
-					"name": "delay_after_hatch",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
-					}
-				},
-				{
-					"name": "mitm_wait_timeout",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
-					}
-				},
-				{
-					"name": "vps_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
-					}
-				},
-				{
-					"name": "reboot",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "None|false|true",
-						"description": "Reboot device if reboot_thresh is reached (Default: false)"
-					}
-				},
-				{
-					"name": "reboot_thresh",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Restart Phone after restart Pogo N times. (Default: 3)"
-					}
-				},
-				{
-					"name": "restart_thresh",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
-					}
-				},
-				{
-					"name": "post_screenshot_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
-					}
-				},
-				{
-					"name": "screenshot_x_offset",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
-					}
-				},
-				{
-					"name": "screenshot_y_offset",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
-					}
-				},
-				{
-					"name": "screenshot_type",
-					"settings": {
-						"type": "option",
-						"require": "true",
-						"values": "jpeg|png",
-						"description": "Type of screenshot (Default: jpeg)"
-					}
-				},
-				{
-					"name": "screenshot_quality",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Quality of screenshot (Default: 80)"
-					}
-				},
-				{
-					"name": "route_calc_algorithm",
-					"settings": {
-						"type": "option",
-						"values": "optimized|quick",
-						"require": "false",
-						"description": "Method of calculation for routes. (Default optimized)"
-					}
-				},
-				{
-					"name": "startcoords_of_walker",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
-					}
-				},
-				{
-					"name": "screendetection",
-					"settings": {
-						"type": "option",
-						"values": "false|true",
-						"require": "false",
-						"description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts"
-					}
-				},
-				{
-					"name": "logintype",
-					"settings": {
-						"type": "option",
-						"values": "google|ptc",
-						"require": "false",
-						"description": "Select login type for automatic login. If using Google make sure that account already exists on device."
-					}
-				},
-				{
-					"name": "ggl_login_mail",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
-					}
-				},
-				{
-					"name": "ptc_login",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
-					}
-				},
-				{
-					"name": "dont_clear_gamedata",
-					"settings": {
-						"type": "option",
-						"values": "false|true",
-						"require": "false",
-						"description": "Dont clear gamedata if login not working multiple times"
-					}
-				},
-				{
-					"name": "account_rotation",
-					"settings": {
-						"type": "option",
-						"values": "false|true",
-						"require": "false",
-						"description": "Rotate accounts (f.e. to prevent long cool downs)"
-					}
-				},
-				{
-					"name": "rotation_waittime",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Rotate accounts if waiting time longer than x seconds after teleport (Default: 300 - need account_rotation: true)"
-					}
-				},
-				{
-					"name": "rotate_on_lvl_30",
-					"settings": {
-						"type": "option",
-						"values": "false|true",
-						"require": "false",
-						"description": "Rotate accounts if player level >= 30 (for levelmode)"
-					}
-				}
-			]
-		}
-	],
-	"monivlist": [
-		{
-			"name": "monivlist",
-			"fields": [
-				{
-					"name": "monlist",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Name of global Monlist",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "mon_ids_iv",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
-						"output": "int",
-						"showmonsidpicker": true
-					}
-				}
-			]
-		}
-	],
-	"devicesettings": [
-		{
-			"name": "devicesettings",
-			"fields": [
-				{
-					"name": "devicepool",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Name for the global device settings",
-						"lockonedit": "true"
-					}
-				}
-			],
-			"settings": [
-				{
-					"name": "post_walk_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
-					}
-				},
-				{
-					"name": "post_teleport_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds after a teleport. (Default: 4.0)"
-					}
-				},
-				{
-					"name": "walk_after_teleport_distance",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Walk n seconds after teleport for getting data"
-					}
-				},
-				{
-					"name": "cool_down_sleep",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "false|true",
-						"description": "More cooldown after teleport"
-					}
-				},
-				{
-					"name": "post_turn_screen_on_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
-					}
-				},
-				{
-					"name": "post_pogo_start_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
-					}
-				},
-				{
-					"name": "restart_pogo",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
-					}
-				},
-				{
-					"name": "delay_after_hatch",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
-					}
-				},
-				{
-					"name": "mitm_wait_timeout",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
-					}
-				},
-				{
-					"name": "vps_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
-					}
-				},
-				{
-					"name": "reboot",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "false|true",
-						"description": "Reboot device if reboot_thresh is reached (Default: false)"
-					}
-				},
-				{
-					"name": "reboot_thresh",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Restart Phone after restart Pogo N times. (Default: 3)"
-					}
-				},
-				{
-					"name": "restart_thresh",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
-					}
-				},
-				{
-					"name": "post_screenshot_delay",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
-					}
-				},
-				{
-					"name": "screenshot_x_offset",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
-					}
-				},
-				{
-					"name": "screenshot_y_offset",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
-					}
-				},
-				{
-					"name": "screenshot_type",
-					"settings": {
-						"type": "option",
-						"require": "true",
-						"values": "jpeg|png",
-						"description": "Type of screenshot (Default: jpeg)"
-					}
-				},
-				{
-					"name": "screenshot_quality",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Quality of screenshot (Default: 80)"
-					}
-				},
-				{
-					"name": "route_calc_algorithm",
-					"settings": {
-						"type": "option",
-						"values": "optimized|quick",
-						"require": "false",
-						"description": "Method of calculation for routes. (Default optimized)"
-					}
-				},
-				{
-					"name": "startcoords_of_walker",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
-					}
-				}
-			]
-		}
-	],
-	"walker": [
-		{
-			"name": "walker",
-			"fields": [
-				{
-					"name": "walkername",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Name of walker",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "setup",
-					"settings": {
-						"type": "list",
-						"require": "false",
-						"empty": "null",
-						"description": "Order of areas",
-						"lockonedit": "false"
-					}
-				}
-			],
-			"settings": []
-		}
-	],
-	"areas": [
-		{
-			"name": "mon_mitm",
-			"description": "Overlay scanner (MITM) for detecting spawnpoints. Raids will also get detected",
-			"fields": [
-				{
-					"name": "name",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of area",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "init",
-					"settings": {
-						"type": "option",
-						"require": "true",
-						"values": "false|true",
-						"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
-					}
-				},
-				{
-					"name": "geofence_included",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Including geofence for scanarea"
-					}
-				},
-				{
-					"name": "geofence_excluded",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"empty": "null",
-						"description": "Excluding geofence for scanarea"
-					}
-				},
-				{
-					"name": "routecalc",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of routefile"
-					}
-				},
-				{
-					"name": "coords_spawns_known",
-					"settings": {
-						"type": "option",
-						"require": "true",
-						"values": "true|false",
-						"description": "Scan all spawnpoints or just ones with unknown endtimes"
-					}
-				}
-			],
-			"settings": [
-				{
-					"name": "speed",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Speed of player in kmh",
-						"output": "int"
-					}
-				},
-				{
-					"name": "max_distance",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Max. distance of walking - otherwise teleport to new location",
-						"output": "int"
-					}
-				},
-				{
-					"name": "delay_after_prio_event",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
-						"output": "int"
-					}
-				},
-				{
-					"name": "priority_queue_clustering_timedelta",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "remove_from_queue_backlog",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "starve_route",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "false|true",
-						"description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-						"output": "int"
-					}
-				},
-				{
-					"name": "init_mode_rounds",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Rounds in Init Mode. (Default: 1)"
-					}
-				},
-				{
-					"name": "mon_ids_iv",
-					"settings": {
-						"type": "monlistselect",
-						"require": "false",
-						"description": "Select global mon list",
-						"output": "int",
-						"showmonsidpicker": true
-					}
-				},
-				{
-					"name": "min_time_left_seconds",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Ignore mons with less spawntime in seconds",
-						"output": "int"
-					}
-				}
-			]
-		},
-		{
-			"name": "iv_mitm",
-			"description": "IV worker for getting mon values",
-			"fields": [
-				{
-					"name": "name",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of area",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "geofence_included",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Including geofence for scanarea"
-					}
-				},
-				{
-					"name": "geofence_excluded",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"empty": "null",
-						"description": "Excluding geofence for scanarea"
-					}
-				},
-				{
-					"name": "routecalc",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of routefile"
-					}
-				}
-			],
-			"settings": [
-				{
-					"name": "speed",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Speed of player in kmh",
-						"output": "int"
-					}
-				},
-				{
-					"name": "max_distance",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Max. distance of walking - otherwise teleport to new location",
-						"output": "int"
-					}
-				},
-				{
-					"name": "delay_after_prio_event",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
-						"output": "int"
-					}
-				},
-				{
-					"name": "priority_queue_clustering_timedelta",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 300)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "remove_from_queue_backlog",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Remove any events from priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "starve_route",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "false|true",
-						"description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-						"output": "int"
-					}
-				},
-				{
-					"name": "mon_ids_iv",
-					"settings": {
-						"type": "monlistselect",
-						"require": "false",
-						"description": "Select global mon list",
-						"output": "int",
-						"showmonsidpicker": true
-					}
-				},
-				{
-					"name": "min_time_left_seconds",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Ignore mons with less spawntime in seconds",
-						"output": "int"
-					}
-				}
-			]
-		},
-		{
-			"name": "pokestops",
-			"description": "Discover all quests from Pokestops",
-			"fields": [
-				{
-					"name": "name",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of area",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "geofence_included",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Including geofence for scanarea"
-					}
-				},
-				{
-					"name": "geofence_excluded",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"empty": "null",
-						"description": "Excluding geofence for scanarea"
-					}
-				},
-				{
-					"name": "routecalc",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of routefile"
-					}
-				},
-				{
-					"name": "init",
-					"settings": {
-						"type": "option",
-						"require": "true",
-						"values": "false|true",
-						"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
-					}
-				},
-				{
-					"name": "level",
-					"settings": {
-						"type": "option",
-						"require": "true",
-						"values": "false|true",
-						"description": "Level up an account mode"
-					}
-				},
-				{
-					"name": "route_calc_algorithm",
-					"settings": {
-						"type": "option",
-						"values": "optimized|quick",
-						"require": "false",
-						"description": "Method of calculation for routes. (Default optimized)"
-					}
-				}
-			],
-			"settings": [
-				{
-					"name": "speed",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Speed of player in kmh",
-						"output": "int"
-					}
-				},
-				{
-					"name": "max_distance",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Max. distance of walking - otherwise teleport to new location",
-						"output": "int"
-					}
-				},
-				{
-					"name": "ignore_spinned_stops",
-					"settings": {
-						"type": "option",
-						"values": "true|false",
-						"require": "true",
-						"description": "Do not spinn stops already made in the past (for levelmode)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "cleanup_every_spin",
-					"settings": {
-						"type": "option",
-						"values": "false|true",
-						"require": "true",
-						"description": "Cleanup quest inventory every spinned stop",
-						"output": "int"
-					}
-				}
-			]
-		},
-		{
-			"name": "raids_mitm",
-			"description": "Overlay scanner (MITM) for detecting raids",
-			"fields": [
-				{
-					"name": "name",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of area",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "init",
-					"settings": {
-						"type": "option",
-						"require": "true",
-						"values": "false|true",
-						"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
-					}
-				},
-				{
-					"name": "geofence_included",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Including geofence for scanarea"
-					}
-				},
-				{
-					"name": "geofence_excluded",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"empty": "null",
-						"description": "Excluding geofence for scanarea"
-					}
-				},
-				{
-					"name": "routecalc",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of routefile"
-					}
-				}
-			],
-			"settings": [
-				{
-					"name": "speed",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Speed of player in kmh"
-					}
-				},
-				{
-					"name": "max_distance",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Max. distance of walking - otherwise teleport to new location"
-					}
-				},
-				{
-					"name": "delay_after_prio_event",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
-						"output": "int"
-					}
-				},
-				{
-					"name": "priority_queue_clustering_timedelta",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "remove_from_queue_backlog",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "starve_route",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "false|true",
-						"description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-						"output": "int"
-					}
-				},
-				{
-					"name": "init_mode_rounds",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Rounds in Init Mode. (Default: 1)"
-					}
-				},
-				{
-					"name": "mon_ids_iv",
-					"settings": {
-						"type": "monlistselect",
-						"require": "false",
-						"description": "Select global mon list",
-						"output": "int",
-						"showmonsidpicker": true
-					}
-				}
-			]
-		},
-		{
-			"name": "idle",
-			"description": "Idle Mode - worker do nothing.",
-			"fields": [
-				{
-					"name": "name",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of area",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "geofence_included",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Including geofence for scanarea"
-					}
-				},
-				{
-					"name": "routecalc",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of routefile"
-					}
-				}
-			],
-			"settings": [
-			]
-		},
-		{
-			"name": "raids_ocr",
-			"description": "OCR scanner for detecting raids.",
-			"fields": [
-				{
-					"name": "name",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of area",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "geofence_included",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Including geofence for scanarea"
-					}
-				},
-				{
-					"name": "geofence_excluded",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"empty": "null",
-						"description": "Excluding geofence for scanarea"
-					}
-				},
-				{
-					"name": "routecalc",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Name of routefile"
-					}
-				}
-			],
-			"settings": [
-				{
-					"name": "speed",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Speed of player in kmh"
-					}
-				},
-				{
-					"name": "max_distance",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"description": "Max. distance of walking - otherwise teleport to new location"
-					}
-				},
-				{
-					"name": "delay_after_prio_event",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
-						"output": "int"
-					}
-				},
-				{
-					"name": "priority_queue_clustering_timedelta",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "remove_from_queue_backlog",
-					"settings": {
-						"type": "text",
-						"require": "false",
-						"description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-						"output": "int"
-					}
-				},
-				{
-					"name": "starve_route",
-					"settings": {
-						"type": "option",
-						"require": "false",
-						"values": "false|true",
-						"description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-						"output": "int"
-					}
-				}
-			]
-		}
-	],
-	"auth": [
-		{
-			"name": "auth",
-			"fields": [
-				{
-					"name": "username",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Username of device",
-						"lockonedit": "true"
-					}
-				},
-				{
-					"name": "password",
-					"settings": {
-						"type": "text",
-						"require": "true",
-						"empty": "null",
-						"description": "Password of device"
-					}
-				}
-			],
-			"settings": []
-		}
-	]
+  "devices": [
+    {
+      "name": "devices",
+      "fields": [
+        {
+          "name": "origin",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Name of device (from RGC settings)",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "walker",
+          "settings": {
+            "type": "walkerselect",
+            "require": "true",
+            "empty": null,
+            "description": "Walker of this area"
+          }
+        },
+        {
+          "name": "pool",
+          "settings": {
+            "type": "poolselect",
+            "require": "true",
+            "empty": null,
+            "description": "Configpool for this area"
+          }
+        },
+        {
+          "name": "adbname",
+          "settings": {
+            "type": "adbselect",
+            "require": "true",
+            "empty": null,
+            "description": "ADB devicename"
+          }
+        }
+      ],
+      "settings": [
+        {
+          "name": "post_walk_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
+          }
+        },
+        {
+          "name": "post_teleport_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds after a teleport. (Default: 4.0)"
+          }
+        },
+        {
+          "name": "walk_after_teleport_distance",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Walk n metres in both directions after teleport for getting data"
+          }
+        },
+        {
+          "name": "cool_down_sleep",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "None|false|true",
+            "description": "More cooldown after teleport"
+          }
+        },
+        {
+          "name": "post_turn_screen_on_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
+          }
+        },
+        {
+          "name": "post_pogo_start_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
+          }
+        },
+        {
+          "name": "restart_pogo",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+          }
+        },
+        {
+          "name": "delay_after_hatch",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
+          }
+        },
+        {
+          "name": "mitm_wait_timeout",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
+          }
+        },
+        {
+          "name": "vps_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
+          }
+        },
+        {
+          "name": "reboot",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "None|false|true",
+            "description": "Reboot device if reboot_thresh is reached (Default: false)"
+          }
+        },
+        {
+          "name": "reboot_thresh",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Restart Phone after restart Pogo N times. (Default: 3)"
+          }
+        },
+        {
+          "name": "restart_thresh",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
+          }
+        },
+        {
+          "name": "post_screenshot_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
+          }
+        },
+        {
+          "name": "screenshot_x_offset",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
+          }
+        },
+        {
+          "name": "screenshot_y_offset",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
+          }
+        },
+        {
+          "name": "screenshot_type",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "jpeg|png",
+            "description": "Type of screenshot (Default: jpeg)"
+          }
+        },
+        {
+          "name": "screenshot_quality",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Quality of screenshot (Default: 80)"
+          }
+        },
+        {
+          "name": "route_calc_algorithm",
+          "settings": {
+            "type": "option",
+            "values": "optimized|quick",
+            "require": "false",
+            "description": "Method of calculation for routes. (Default optimized)"
+          }
+        },
+        {
+          "name": "startcoords_of_walker",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
+          }
+        },
+        {
+          "name": "screendetection",
+          "settings": {
+            "type": "option",
+            "values": "false|true",
+            "require": "false",
+            "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts"
+          }
+        },
+        {
+          "name": "logintype",
+          "settings": {
+            "type": "option",
+            "values": "google|ptc",
+            "require": "false",
+            "description": "Select login type for automatic login. If using Google make sure that account already exists on device."
+          }
+        },
+        {
+          "name": "ggl_login_mail",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
+          }
+        },
+        {
+          "name": "ptc_login",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
+          }
+        },
+        {
+          "name": "clear_game_data",
+          "settings": {
+            "type": "option",
+            "values": "false|true",
+            "require": "false",
+            "description": "Clear gamedata if logins fail multiple times"
+          }
+        },
+        {
+          "name": "account_rotation",
+          "settings": {
+            "type": "option",
+            "values": "false|true",
+            "require": "false",
+            "description": "Rotate accounts (f.e. to prevent long cool downs)"
+          }
+        },
+        {
+          "name": "rotation_waittime",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Rotate accounts if waiting time longer than x seconds after teleport (Default: 300 - need account_rotation: true)"
+          }
+        },
+        {
+          "name": "rotate_on_lvl_30",
+          "settings": {
+            "type": "option",
+            "values": "false|true",
+            "require": "false",
+            "description": "Rotate accounts if player level >= 30 (for levelmode)"
+          }
+        }
+      ]
+    }
+  ],
+  "monivlist": [
+    {
+      "name": "monivlist",
+      "fields": [
+        {
+          "name": "monlist",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Name of global Monlist",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "mon_ids_iv",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
+            "output": "int",
+            "showmonsidpicker": true
+          }
+        }
+      ]
+    }
+  ],
+  "devicesettings": [
+    {
+      "name": "devicesettings",
+      "fields": [
+        {
+          "name": "devicepool",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Name for the global device settings",
+            "lockonedit": "true"
+          }
+        }
+      ],
+      "settings": [
+        {
+          "name": "post_walk_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
+          }
+        },
+        {
+          "name": "post_teleport_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds after a teleport. (Default: 4.0)"
+          }
+        },
+        {
+          "name": "walk_after_teleport_distance",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Walk n seconds after teleport for getting data"
+          }
+        },
+        {
+          "name": "cool_down_sleep",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "false|true",
+            "description": "More cooldown after teleport"
+          }
+        },
+        {
+          "name": "post_turn_screen_on_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
+          }
+        },
+        {
+          "name": "post_pogo_start_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
+          }
+        },
+        {
+          "name": "restart_pogo",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+          }
+        },
+        {
+          "name": "delay_after_hatch",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
+          }
+        },
+        {
+          "name": "mitm_wait_timeout",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
+          }
+        },
+        {
+          "name": "vps_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
+          }
+        },
+        {
+          "name": "reboot",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "false|true",
+            "description": "Reboot device if reboot_thresh is reached (Default: false)"
+          }
+        },
+        {
+          "name": "reboot_thresh",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Restart Phone after restart Pogo N times. (Default: 3)"
+          }
+        },
+        {
+          "name": "restart_thresh",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
+          }
+        },
+        {
+          "name": "post_screenshot_delay",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
+          }
+        },
+        {
+          "name": "screenshot_x_offset",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
+          }
+        },
+        {
+          "name": "screenshot_y_offset",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
+          }
+        },
+        {
+          "name": "screenshot_type",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "jpeg|png",
+            "description": "Type of screenshot (Default: jpeg)"
+          }
+        },
+        {
+          "name": "screenshot_quality",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Quality of screenshot (Default: 80)"
+          }
+        },
+        {
+          "name": "route_calc_algorithm",
+          "settings": {
+            "type": "option",
+            "values": "optimized|quick",
+            "require": "false",
+            "description": "Method of calculation for routes. (Default optimized)"
+          }
+        },
+        {
+          "name": "startcoords_of_walker",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
+          }
+        }
+      ]
+    }
+  ],
+  "walker": [
+    {
+      "name": "walker",
+      "fields": [
+        {
+          "name": "walkername",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Name of walker",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "setup",
+          "settings": {
+            "type": "list",
+            "require": "false",
+            "empty": "null",
+            "description": "Order of areas",
+            "lockonedit": "false"
+          }
+        }
+      ],
+      "settings": []
+    }
+  ],
+  "areas": [
+    {
+      "name": "mon_mitm",
+      "description": "Overlay scanner (MITM) for detecting spawnpoints. Raids will also get detected",
+      "fields": [
+        {
+          "name": "name",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of area",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "init",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "false|true",
+            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+          }
+        },
+        {
+          "name": "geofence_included",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Including geofence for scanarea"
+          }
+        },
+        {
+          "name": "geofence_excluded",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "empty": "null",
+            "description": "Excluding geofence for scanarea"
+          }
+        },
+        {
+          "name": "routecalc",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of routefile"
+          }
+        },
+        {
+          "name": "coords_spawns_known",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "true|false",
+            "description": "Scan all spawnpoints or just ones with unknown endtimes"
+          }
+        }
+      ],
+      "settings": [
+        {
+          "name": "speed",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Speed of player in kmh",
+            "output": "int"
+          }
+        },
+        {
+          "name": "max_distance",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Max. distance of walking - otherwise teleport to new location",
+            "output": "int"
+          }
+        },
+        {
+          "name": "delay_after_prio_event",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
+            "output": "int"
+          }
+        },
+        {
+          "name": "priority_queue_clustering_timedelta",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "remove_from_queue_backlog",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "starve_route",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "false|true",
+            "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+            "output": "int"
+          }
+        },
+        {
+          "name": "init_mode_rounds",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Rounds in Init Mode. (Default: 1)"
+          }
+        },
+        {
+          "name": "mon_ids_iv",
+          "settings": {
+            "type": "monlistselect",
+            "require": "false",
+            "description": "Select global mon list",
+            "output": "int",
+            "showmonsidpicker": true
+          }
+        },
+        {
+          "name": "min_time_left_seconds",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Ignore mons with less spawntime in seconds",
+            "output": "int"
+          }
+        }
+      ]
+    },
+    {
+      "name": "iv_mitm",
+      "description": "IV worker for getting mon values",
+      "fields": [
+        {
+          "name": "name",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of area",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "geofence_included",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Including geofence for scanarea"
+          }
+        },
+        {
+          "name": "geofence_excluded",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "empty": "null",
+            "description": "Excluding geofence for scanarea"
+          }
+        },
+        {
+          "name": "routecalc",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of routefile"
+          }
+        }
+      ],
+      "settings": [
+        {
+          "name": "speed",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Speed of player in kmh",
+            "output": "int"
+          }
+        },
+        {
+          "name": "max_distance",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Max. distance of walking - otherwise teleport to new location",
+            "output": "int"
+          }
+        },
+        {
+          "name": "delay_after_prio_event",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
+            "output": "int"
+          }
+        },
+        {
+          "name": "priority_queue_clustering_timedelta",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 300)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "remove_from_queue_backlog",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Remove any events from priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "starve_route",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "false|true",
+            "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+            "output": "int"
+          }
+        },
+        {
+          "name": "mon_ids_iv",
+          "settings": {
+            "type": "monlistselect",
+            "require": "false",
+            "description": "Select global mon list",
+            "output": "int",
+            "showmonsidpicker": true
+          }
+        },
+        {
+          "name": "min_time_left_seconds",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Ignore mons with less spawntime in seconds",
+            "output": "int"
+          }
+        }
+      ]
+    },
+    {
+      "name": "pokestops",
+      "description": "Discover all quests from Pokestops",
+      "fields": [
+        {
+          "name": "name",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of area",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "geofence_included",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Including geofence for scanarea"
+          }
+        },
+        {
+          "name": "geofence_excluded",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "empty": "null",
+            "description": "Excluding geofence for scanarea"
+          }
+        },
+        {
+          "name": "routecalc",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of routefile"
+          }
+        },
+        {
+          "name": "init",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "false|true",
+            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+          }
+        },
+        {
+          "name": "level",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "false|true",
+            "description": "Level up an account mode"
+          }
+        },
+        {
+          "name": "route_calc_algorithm",
+          "settings": {
+            "type": "option",
+            "values": "optimized|quick",
+            "require": "false",
+            "description": "Method of calculation for routes. (Default optimized)"
+          }
+        }
+      ],
+      "settings": [
+        {
+          "name": "speed",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Speed of player in kmh",
+            "output": "int"
+          }
+        },
+        {
+          "name": "max_distance",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Max. distance of walking - otherwise teleport to new location",
+            "output": "int"
+          }
+        },
+        {
+          "name": "ignore_spinned_stops",
+          "settings": {
+            "type": "option",
+            "values": "true|false",
+            "require": "true",
+            "description": "Do not spinn stops already made in the past (for levelmode)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "cleanup_every_spin",
+          "settings": {
+            "type": "option",
+            "values": "false|true",
+            "require": "true",
+            "description": "Cleanup quest inventory every spinned stop",
+            "output": "int"
+          }
+        }
+      ]
+    },
+    {
+      "name": "raids_mitm",
+      "description": "Overlay scanner (MITM) for detecting raids",
+      "fields": [
+        {
+          "name": "name",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of area",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "init",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "false|true",
+            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+          }
+        },
+        {
+          "name": "geofence_included",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Including geofence for scanarea"
+          }
+        },
+        {
+          "name": "geofence_excluded",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "empty": "null",
+            "description": "Excluding geofence for scanarea"
+          }
+        },
+        {
+          "name": "routecalc",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of routefile"
+          }
+        }
+      ],
+      "settings": [
+        {
+          "name": "speed",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Speed of player in kmh"
+          }
+        },
+        {
+          "name": "max_distance",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Max. distance of walking - otherwise teleport to new location"
+          }
+        },
+        {
+          "name": "delay_after_prio_event",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
+            "output": "int"
+          }
+        },
+        {
+          "name": "priority_queue_clustering_timedelta",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "remove_from_queue_backlog",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "starve_route",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "false|true",
+            "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+            "output": "int"
+          }
+        },
+        {
+          "name": "init_mode_rounds",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Rounds in Init Mode. (Default: 1)"
+          }
+        },
+        {
+          "name": "mon_ids_iv",
+          "settings": {
+            "type": "monlistselect",
+            "require": "false",
+            "description": "Select global mon list",
+            "output": "int",
+            "showmonsidpicker": true
+          }
+        }
+      ]
+    },
+    {
+      "name": "idle",
+      "description": "Idle Mode - worker do nothing.",
+      "fields": [
+        {
+          "name": "name",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of area",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "geofence_included",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Including geofence for scanarea"
+          }
+        },
+        {
+          "name": "routecalc",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of routefile"
+          }
+        }
+      ],
+      "settings": [
+      ]
+    },
+    {
+      "name": "raids_ocr",
+      "description": "OCR scanner for detecting raids.",
+      "fields": [
+        {
+          "name": "name",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of area",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "geofence_included",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Including geofence for scanarea"
+          }
+        },
+        {
+          "name": "geofence_excluded",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "empty": "null",
+            "description": "Excluding geofence for scanarea"
+          }
+        },
+        {
+          "name": "routecalc",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Name of routefile"
+          }
+        }
+      ],
+      "settings": [
+        {
+          "name": "speed",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Speed of player in kmh"
+          }
+        },
+        {
+          "name": "max_distance",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "description": "Max. distance of walking - otherwise teleport to new location"
+          }
+        },
+        {
+          "name": "delay_after_prio_event",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
+            "output": "int"
+          }
+        },
+        {
+          "name": "priority_queue_clustering_timedelta",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "remove_from_queue_backlog",
+          "settings": {
+            "type": "text",
+            "require": "false",
+            "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+            "output": "int"
+          }
+        },
+        {
+          "name": "starve_route",
+          "settings": {
+            "type": "option",
+            "require": "false",
+            "values": "false|true",
+            "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
+            "output": "int"
+          }
+        }
+      ]
+    }
+  ],
+  "auth": [
+    {
+      "name": "auth",
+      "fields": [
+        {
+          "name": "username",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Username of device",
+            "lockonedit": "true"
+          }
+        },
+        {
+          "name": "password",
+          "settings": {
+            "type": "text",
+            "require": "true",
+            "empty": "null",
+            "description": "Password of device"
+          }
+        }
+      ],
+      "settings": []
+    }
+  ]
 }

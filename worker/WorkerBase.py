@@ -587,8 +587,8 @@ class WorkerBase(ABC):
                     self._stop_worker_event.set()
                     self._stop_pogo()
                     time.sleep(5)
-                    if not self.get_devicesettings_value('dont_clear_gamedata', False):
-                        logger.info('Clearing gamedata')
+                    if self.get_devicesettings_value('clear_game_data', True):
+                        logger.info('Clearing game data')
                         self._communicator.resetAppdata("com.nianticlabs.pokemongo")
                     self._reboot()
 
