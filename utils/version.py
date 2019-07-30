@@ -2,10 +2,10 @@ import json
 import sys
 
 from utils.logging import logger
-
+import shutil
 from .convert_mapping import convert_mappings
 
-current_version = 13
+current_version = 14
 
 
 class MADVersion(object):
@@ -233,6 +233,103 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+        if self._version < 13:
+            update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walker', 'devices']
+            old_data = {}
+            new_data = {}
+            cache = {}
+            target = '%s.bk' % (self._application_args.mappings,)
+            try:
+                shutil.copy(self._application_args.mappings, target)
+            except IOError as e:
+                print('Unable to clone configuration.  Exiting')
+                sys.exit(1)
+            with open(self._application_args.mappings, 'rb') as fh:
+                old_data = json.load(fh)
+            walkerarea = 'walkerarea'
+            walkerarea_ind = 0
+            for key in update_order:
+                try:
+                    entries = old_data[key]
+                except:
+                    entries = []
+                cache[key] = {}
+                if type(entries) is dict:
+                    continue
+                index = 0
+                new_data[key] = {
+                    'index': index,
+                    'entries': {}
+                }
+                if key == 'walker':
+                    new_data[walkerarea] = {
+                        'index': index,
+                        'entries': {}
+                    }
+                for entry in entries:
+                    if key == 'monivlist':
+                        cache[key][entry['monlist']] = index
+                    if key == 'devicesettings':
+                        cache[key][entry['devicepool']] = index
+                    elif key == 'areas':
+                        cache[key][entry['name']] = index
+                        try:
+                            mon_list = entry['settings']['mon_ids_iv']
+                            if type(mon_list) is list:
+                                monlist_ind = new_data['monivlist']['index']
+                                new_data['monivlist']['entries'][index] = {
+                                    'monlist': 'Update List',
+                                    'mon_ids_iv': mon_list
+                                }
+                                entry['settings']['mon_ids_iv'] = '/api/monlist/%s' % (monlist_ind)
+                                new_data['monivlist']['index'] += 1
+                            else:
+                                try:
+                                    name = mon_list
+                                    uri = '/api/monlist/%s' % (cache['monivlist'][name])
+                                    entry['settings']['mon_ids_iv'] = uri
+                                except:
+                                    # No name match.  Maybe an old record so lets toss it
+                                    del entry['settings']['mon_ids_iv']
+                        except KeyError:
+                            pass
+                        except:
+                            # No monlist specified
+                            pass
+                    elif key == 'walker':
+                        cache[key][entry['walkername']] = index
+                        valid_areas = []
+                        if 'setup' in entry:
+                            for ind, area in enumerate(entry['setup']):
+                                try:
+                                    area['walkerarea'] = '/api/area/%s' % (cache['areas'][area['walkerarea']],)
+                                except KeyError:
+                                    # The area no longer exists.  Remove from the path
+                                    pass
+                                else:
+                                    new_data[walkerarea]['entries'][walkerarea_ind] = area
+                                    valid_areas.append('/api/walkerarea/%s' % walkerarea_ind)
+                                    walkerarea_ind += 1
+                            entry['setup'] = valid_areas
+                            new_data[walkerarea]['index'] = walkerarea_ind
+                        else:
+                            entry['setup'] = []
+                    elif key == 'devices':
+                        try:
+                            entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
+                        except:
+                            # The pool no longer exists.  Skip the device
+                            continue
+                        try:
+                            entry['walker'] = '/api/walker/%s' % (cache['walker'][entry['walker']],)
+                        except:
+                            # The walker no longer exists.  Skip the device
+                            continue
+                    new_data[key]['entries'][index] = entry
+                    index += 1
+                new_data[key]['index'] = index
+            with open(self._application_args.mappings, 'w') as outfile:
+                json.dump(new_data, outfile, indent=4, sort_keys=True)
 
         if self._version < 13:
             # Adding current_sleep for worker status
@@ -246,9 +343,108 @@ class MADVersion(object):
                 except Exception as e:
                     logger.exception("Unexpected error: {}", e)
 
+        if self._version < 14:
+            update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walker', 'devices']
+            old_data = {}
+            new_data = {}
+            cache = {}
+            target = '%s.bk' % (self._application_args.mappings,)
+            try:
+                shutil.copy(self._application_args.mappings, target)
+            except IOError as e:
+                print('Unable to clone configuration.  Exiting')
+                sys.exit(1)
+            with open(self._application_args.mappings, 'rb') as fh:
+                old_data = json.load(fh)
+            walkerarea = 'walkerarea'
+            walkerarea_ind = 0
+            for key in update_order:
+                try:
+                    entries = old_data[key]
+                except:
+                    entries = []
+                cache[key] = {}
+                if type(entries) is dict:
+                    continue
+                index = 0
+                new_data[key] = {
+                    'index': index,
+                    'entries': {}
+                }
+                if key == 'walker':
+                    new_data[walkerarea] = {
+                        'index': index,
+                        'entries': {}
+                    }
+                for entry in entries:
+                    if key == 'monivlist':
+                        cache[key][entry['monlist']] = index
+                    if key == 'devicesettings':
+                        cache[key][entry['devicepool']] = index
+                    elif key == 'areas':
+                        cache[key][entry['name']] = index
+                        try:
+                            mon_list = entry['settings']['mon_ids_iv']
+                            if type(mon_list) is list:
+                                monlist_ind = new_data['monivlist']['index']
+                                new_data['monivlist']['entries'][index] = {
+                                    'monlist': 'Update List',
+                                    'mon_ids_iv': mon_list
+                                }
+                                entry['settings']['mon_ids_iv'] = '/api/monlist/%s' % (monlist_ind)
+                                new_data['monivlist']['index'] += 1
+                            else:
+                                try:
+                                    name = mon_list
+                                    uri = '/api/monlist/%s' % (cache['monivlist'][name])
+                                    entry['settings']['mon_ids_iv'] = uri
+                                except:
+                                    # No name match.  Maybe an old record so lets toss it
+                                    del entry['settings']['mon_ids_iv']
+                        except KeyError:
+                            pass
+                        except:
+                            # No monlist specified
+                            pass
+                    elif key == 'walker':
+                        cache[key][entry['walkername']] = index
+                        valid_areas = []
+                        if 'setup' in entry:
+                            for ind, area in enumerate(entry['setup']):
+                                try:
+                                    area['walkerarea'] = '/api/area/%s' % (cache['areas'][area['walkerarea']],)
+                                except KeyError:
+                                    # The area no longer exists.  Remove from the path
+                                    pass
+                                else:
+                                    new_data[walkerarea]['entries'][walkerarea_ind] = area
+                                    valid_areas.append('/api/walkerarea/%s' % walkerarea_ind)
+                                    walkerarea_ind += 1
+                            entry['setup'] = valid_areas
+                            new_data[walkerarea]['index'] = walkerarea_ind
+                        else:
+                            entry['setup'] = []
+                    elif key == 'devices':
+                        try:
+                            entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
+                        except:
+                            # The pool no longer exists.  Skip the device
+                            continue
+                        try:
+                            entry['walker'] = '/api/walker/%s' % (cache['walker'][entry['walker']],)
+                        except:
+                            # The walker no longer exists.  Skip the device
+                            continue
+                    new_data[key]['entries'][index] = entry
+                    index += 1
+                new_data[key]['index'] = index
+            with open(self._application_args.mappings, 'w') as outfile:
+                json.dump(new_data, outfile, indent=4, sort_keys=True)
+
         self.set_version(current_version)
 
     def set_version(self, version):
         output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)
+
