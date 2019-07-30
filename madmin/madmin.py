@@ -23,6 +23,11 @@ log = logger
 
 
 def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager):
+    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
+    app.config["basePath"] = args.madmin_base_path
+    app.logger.removeHandler(default_handler)
+    logging.basicConfig(handlers=[InterceptHandler()], level=0)
+
     # load routes
     statistics(db_wrapper, args, app)
     control(db_wrapper, args, mapping_manager, ws_server, logger, app)
@@ -31,9 +36,6 @@ def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
     ocr(db_wrapper, args, logger, app)
     path(db_wrapper, args, app)
 
-    app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
-    app.logger.removeHandler(default_handler)
-    logging.basicConfig(handlers=[InterceptHandler()], level=0)
     app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
 
 

@@ -223,6 +223,9 @@ def parseArgs():
     parser.add_argument('-mmpassword', '--madmin_password', default='',
                         help='Password for MADmin Frontend.')
 
+    parser.add_argument('-mmbp', '--madmin_base_path', default='/',
+                        help='Base path for madmin')
+
     parser.add_argument('-pfile', '--position_file', default='current',
                         help='Filename for bot\'s current position (Default: current)')
 

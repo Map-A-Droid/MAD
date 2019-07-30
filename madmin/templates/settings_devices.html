@@ -1,0 +1,64 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script defer src="https://use.fontawesome.com/releases/v5.8.2/js/all.js" integrity="sha384-DJ25uNYET2XCl5ZF++U8eNxPWqcKohUUBUpKGlNLMchM7q4Wjg2CUpjHLaL8yYPH" crossorigin="anonymous"></script>
+<script>
+  $(document).ready(function () {
+    $("select").change(function() {
+      var origin = $(this).data("origin");
+      var val = $(this).children("option:selected").val();
+      $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+      $.post("settings/set_device_walker", {"origin": origin, "walker": val}).always(function() {
+        $.unblockUI();
+      });
+    });
+  });
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<table class="table table-striped table-hover">
+  <thead class="thead-dark">
+    <tr>
+      <th style="width: 50%" colspan="2">Origin</th>
+      <th style="width: 30%">Walker</th>
+      <th style="width: 20%"></th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for device in mappings.devices|sort(attribute="origin") %}
+    <tr>
+      <td class="align-middle">
+        <a href="#">{{device.origin}}</a>
+      </td>
+      <td class="align-middle">
+        <p style="font-size: 65%; min-height: 50px; display: inline-box">
+        {% for key in device.settings|sort %}
+        {% if key in ["post_walk_delay", "post_teleport_delay", "walk_after_teleport_distance", "mitm_wait_timeout", "restart_thresh"] %}
+        {{key}}: {{device.settings[key]}}<br>
+        {% endif %}
+        {% endfor %}
+        </p>
+      </td>
+      <td class="align-middle">
+        <select class="form-control form-control-sm" data-origin="{{device.origin}}">
+        {% for w in mappings.walker %}
+         <option name="{{w.walkername}}" {{ 'selected="selected"' if w.walkername == device.walker else "" }}>{{w.walkername}}</option>
+        {% endfor %}
+        </select>
+      </td>
+      <td class="text-right align-middle">
+        <button type="button" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+      </td>
+    </tr>
+  {% endfor %}
+  </tbody
+</table>
+{% endblock %}

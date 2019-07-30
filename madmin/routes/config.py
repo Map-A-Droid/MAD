@@ -2,12 +2,16 @@ import ast
 import os
 import json
 from flask import (render_template, request, redirect)
+from flask_caching import Cache
 from functools import cmp_to_key
 from madmin.functions import auth_required, getBasePath
 from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
 from utils.MappingManager import MappingManager
-from utils.logging import InterceptHandler, logger
+from utils.logging import logger
+
+cache = Cache(config={'CACHE_TYPE': 'simple'})
+
 
 class config(object):
     def __init__(self, db, args, logger, app, mapping_manager: MappingManager):
@@ -22,6 +26,8 @@ class config(object):
         self._logger = logger
 
         self._app = app
+        self._app.config["TEMPLATES_AUTO_RELOAD"] = True
+        cache.init_app(self._app)
         self._mapping_mananger = mapping_manager
         self.add_route()
 
@@ -36,6 +42,8 @@ class config(object):
             ("/showmonsidpicker", self.showmonsidpicker),
             ("/addedit", self.addedit),
             ("/showsettings", self.showsettings),
+            ("/settings/devices", self.settings_devices),
+            ("/settings/set_device_walker", self.set_device_walker),
             ("/reload", self.reload)
         ]
         for route, view_func in routes:
@@ -773,7 +781,6 @@ class config(object):
         with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
-
         return redirect(getBasePath(request) + "/showsettings?area=" + str(area), code=302)
 
     def match_type(self, value):
@@ -801,6 +808,36 @@ class config(object):
         else:
             value = value.replace(' ', '_')
         return value
+
+    @logger.catch
+    @auth_required
+    def set_device_walker(self):
+        origin = request.form.get('origin')
+        walker = request.form.get('walker')
+
+        with open(self._args.mappings) as f:
+            mapping = json.load(f)
+
+        for key, val in enumerate(mapping["devices"]):
+            device = mapping["devices"][key]
+
+            if device["origin"] == origin:
+                mapping["devices"][key]["walker"] = walker
+
+        with open(self._args.mappings, 'w') as outfile:
+            json.dump(mapping, outfile, indent=4, sort_keys=True)
+
+        return "ok"
+
+    @logger.catch
+    @auth_required
+    def settings_devices(self):
+        with open(self._args.mappings) as f:
+            mappings = json.load(f)
+
+        return render_template('settings_devices.html',
+                               mappings=mappings,
+                               responsive=str(self._args.madmin_noresponsive).lower())
 
     @logger.catch
     @auth_required
@@ -1017,7 +1054,7 @@ class config(object):
         if not self._args.auto_reload_config:
             self._mapping_mananger.update()
         return redirect(getBasePath(request) + "/showsettings", code=302)
-    
+
     def cmp_by_key(self, a, b, key):
            # RIP python2 cmp()
            return (a[key].lower() > b[key].lower()) - (a[key].lower() < b[key].lower())

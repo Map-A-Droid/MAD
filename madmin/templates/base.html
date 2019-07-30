@@ -8,6 +8,7 @@
     {% else %}
     <title>MADmin</title>
     {% endif %}
+    <base href="{{config.basePath}}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
@@ -78,6 +79,7 @@
                   </li>
                   {% endif %}
               </ul>
+              <button type="button" class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold">Reload mappings</a>
           </div>
         </div>
     </nav>
