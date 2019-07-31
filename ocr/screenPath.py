@@ -31,6 +31,7 @@ class ScreenType(Enum):
     QUEST = 20
     ERROR = 100
     CLOSE = 500
+    DISABLED = 999
 
 class LoginType(Enum):
     UNKNOWN = -1
@@ -182,6 +183,8 @@ class WordToScreenMatching(object):
             return ScreenType.CLOSE
         elif self._nextscreen != ScreenType.UNDEFINED:
             returntype = ScreenType(self._nextscreen)
+        elif not self.get_devicesettings_value('screendetection', False):
+            return ScreenType.DISABLED
         else:
             if not self._parent._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                                 delayAfter=2):
