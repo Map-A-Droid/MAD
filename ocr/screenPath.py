@@ -94,8 +94,10 @@ class WordToScreenMatching(object):
             temp_accounts = self.get_devicesettings_value('ptc_login', False)
             if not temp_accounts:
                 logger.warning('No PTC Accounts are set - hope we are login and never logout!')
-            temp_accounts = temp_accounts.replace(' ', '').split('|')
+                self._accountcount = 0
+                return
 
+            temp_accounts = temp_accounts.replace(' ', '').split('|')
             for account in temp_accounts:
                 ptc_temp = account.split(',')
                 if 2 < len(ptc_temp) > 2:
@@ -221,8 +223,15 @@ class WordToScreenMatching(object):
 
         if ScreenType(returntype) == ScreenType.GGL:
             self._nextscreen = ScreenType.UNDEFINED
-            ggl_login = self.get_next_account()
-            if self.parse_ggl(self._communicator.uiautomator(), ggl_login.username):
+
+            if self._logintype == LoginType.ptc:
+                logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
+                username = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+            else:
+                ggl_login = self.get_next_account()
+                username = ggl_login.usernam
+
+            if self.parse_ggl(self._communicator.uiautomator(), username):
                 time.sleep(25)
                 return ScreenType.GGL
             return ScreenType.ERROR
