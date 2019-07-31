@@ -21,6 +21,14 @@ var locInjectBtn = L.easyButton({
   }]
 });
 
+function loopCoords(coordarray) {
+    var returning = "";
+    coordarray[0].forEach((element, index, array) => {
+        returning += (element.lat + ',' + element.lng + '|');
+    });
+    return returning;
+};
+
 function copyClipboard(text) {
     navigator.clipboard.writeText(text.replace("|", ",")).then(function() {
         alert('Copying to clipboard was successful!');
@@ -109,6 +117,7 @@ var init = true;
 var fetchTimeout = null;
 var clickToScanActive = false;
 var cleanupInterval = null;
+var newfences = {};
 const teamNames = ['Uncontested', 'Mystic', 'Valor', 'Instinct']
 
 // object to hold all the markers and elements
@@ -1453,6 +1462,70 @@ new Vue({
       map.on('mousedown', function() {
         sidebar.close();
       });
+
+
+
+
+      var editableLayers = new L.FeatureGroup();
+    map.addLayer(editableLayers);
+
+    var MyCustomMarker = L.Icon.extend({
+  options: {
+    shadowUrl: null,
+    iconAnchor: new L.Point(12, 12),
+    iconSize: new L.Point(24, 24),
+    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Information_icon4_orange.svg'
+  }
+});
+
+    var options = {
+        position: 'topright',
+        draw: {
+            polyline: false,
+            polygon: {
+                allowIntersection: false, // Restricts shapes to simple polygons
+                drawError: {
+                    color: '#e1e100', // Color the shape will turn when intersects
+                    message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                },
+                shapeOptions: {
+                    color: '#bada55'
+                }
+            },
+            circle: false, // Turns off this drawing tool
+            rectangle: false,
+            line: false,
+            marker: {
+                icon: new MyCustomMarker()
+            }
+        },
+        edit: {
+            featureGroup: editableLayers, //REQUIRED!!
+            remove: false
+        }
+    };
+
+    var drawControl = new L.Control.Draw(options);
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, function (e) {
+        var type = e.layerType,
+            layer = e.layer;
+
+
+        var fencename = prompt("Please enter name of fence", "");
+
+        coords = loopCoords(layer.getLatLngs())
+
+        newfences[fencename] = coords
+
+        if (type === 'polygon') {
+            layer.bindPopup('<b>' + fencename + '</b><br><a href=savefence?name=' + fencename + '&coords=' + coords + '>Save to MAD</a>');
+        }
+
+        editableLayers.addLayer(layer);
+    });
+
 
       // initial load
       this.map_fetch_everything();
