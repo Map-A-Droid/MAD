@@ -21,6 +21,14 @@ var locInjectBtn = L.easyButton({
   }]
 });
 
+function loopCoords(coordarray) {
+    var returning = "";
+    coordarray[0].forEach((element, index, array) => {
+        returning += (element.lat + ',' + element.lng + '|');
+    });
+    return returning;
+};
+
 function copyClipboard(text) {
     navigator.clipboard.writeText(text.replace("|", ",")).then(function() {
         alert('Copying to clipboard was successful!');
@@ -109,6 +117,7 @@ var init = true;
 var fetchTimeout = null;
 var clickToScanActive = false;
 var cleanupInterval = null;
+var newfences = {};
 const teamNames = ['Uncontested', 'Mystic', 'Valor', 'Instinct']
 
 // object to hold all the markers and elements
@@ -1453,6 +1462,60 @@ new Vue({
       map.on('mousedown', function() {
         sidebar.close();
       });
+
+    var editableLayers = new L.FeatureGroup();
+    map.addLayer(editableLayers);
+
+
+    var options = {
+        position: 'topright',
+        draw: {
+            polyline: false,
+            polygon: {
+                allowIntersection: false,
+                drawError: {
+                    color: '#e1e100',
+                    message: '<strong>Oh snap!<strong> you can\'t draw that!'
+                },
+                shapeOptions: {
+                    color: '#ac00e6'
+                }
+            },
+            circle: false,
+            circlemarker: false,
+            rectangle: false,
+            line: false,
+            marker: false,
+        },
+        edit: {
+            featureGroup: editableLayers,
+            remove: false
+        }
+    };
+
+    var drawControl = new L.Control.Draw(options);
+    map.addControl(drawControl);
+
+    map.on(L.Draw.Event.CREATED, function (e) {
+        var type = e.layerType,
+            layer = e.layer;
+
+        var fencename = prompt("Please enter name of fence", "");
+        coords = loopCoords(layer.getLatLngs())
+        newfences[layer] = fencename
+        layer.bindPopup('<b>' + fencename + '</b><br><a href=savefence?name=' + fencename + '&coords=' + coords + '>Save to MAD</a>');
+        editableLayers.addLayer(layer);
+        layer.openPopup();
+    });
+
+    map.on('draw:edited', function (e) {
+        var layers = e.layers;
+        layers.eachLayer(function (layer) {
+            coords = loopCoords(layer.getLatLngs())
+            layer._popup.setContent('<b>' + newfences[layer] + '</b><br><a href=savefence?name=' + newfences[layer] + '&coords=' + coords + '>Save to MAD</a>')
+            layer.openPopup();
+        });
+    });
 
       // initial load
       this.map_fetch_everything();
