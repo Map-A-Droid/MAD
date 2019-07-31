@@ -229,7 +229,7 @@ class WordToScreenMatching(object):
                 username = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
             else:
                 ggl_login = self.get_next_account()
-                username = ggl_login.usernam
+                username = ggl_login.username
 
             if self.parse_ggl(self._communicator.uiautomator(), username):
                 time.sleep(25)
