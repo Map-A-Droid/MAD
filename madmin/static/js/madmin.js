@@ -1463,44 +1463,32 @@ new Vue({
         sidebar.close();
       });
 
-
-
-
-      var editableLayers = new L.FeatureGroup();
+    var editableLayers = new L.FeatureGroup();
     map.addLayer(editableLayers);
 
-    var MyCustomMarker = L.Icon.extend({
-  options: {
-    shadowUrl: null,
-    iconAnchor: new L.Point(12, 12),
-    iconSize: new L.Point(24, 24),
-    iconUrl: 'https://upload.wikimedia.org/wikipedia/commons/6/6b/Information_icon4_orange.svg'
-  }
-});
 
     var options = {
         position: 'topright',
         draw: {
             polyline: false,
             polygon: {
-                allowIntersection: false, // Restricts shapes to simple polygons
+                allowIntersection: false,
                 drawError: {
-                    color: '#e1e100', // Color the shape will turn when intersects
-                    message: '<strong>Oh snap!<strong> you can\'t draw that!' // Message that will show when intersect
+                    color: '#e1e100',
+                    message: '<strong>Oh snap!<strong> you can\'t draw that!'
                 },
                 shapeOptions: {
-                    color: '#bada55'
+                    color: '#ac00e6'
                 }
             },
-            circle: false, // Turns off this drawing tool
+            circle: false,
+            circlemarker: false,
             rectangle: false,
             line: false,
-            marker: {
-                icon: new MyCustomMarker()
-            }
+            marker: false,
         },
         edit: {
-            featureGroup: editableLayers, //REQUIRED!!
+            featureGroup: editableLayers,
             remove: false
         }
     };
@@ -1512,20 +1500,22 @@ new Vue({
         var type = e.layerType,
             layer = e.layer;
 
-
         var fencename = prompt("Please enter name of fence", "");
-
         coords = loopCoords(layer.getLatLngs())
-
-        newfences[fencename] = coords
-
-        if (type === 'polygon') {
-            layer.bindPopup('<b>' + fencename + '</b><br><a href=savefence?name=' + fencename + '&coords=' + coords + '>Save to MAD</a>');
-        }
-
+        newfences[layer] = fencename
+        layer.bindPopup('<b>' + fencename + '</b><br><a href=savefence?name=' + fencename + '&coords=' + coords + '>Save to MAD</a>');
         editableLayers.addLayer(layer);
+        layer.openPopup();
     });
 
+    map.on('draw:edited', function (e) {
+        var layers = e.layers;
+        layers.eachLayer(function (layer) {
+            coords = loopCoords(layer.getLatLngs())
+            layer._popup.setContent('<b>' + newfences[layer] + '</b><br><a href=savefence?name=' + newfences[layer] + '&coords=' + coords + '>Save to MAD</a>')
+            layer.openPopup();
+        });
+    });
 
       // initial load
       this.map_fetch_everything();
