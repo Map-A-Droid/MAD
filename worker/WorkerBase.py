@@ -80,10 +80,8 @@ class WorkerBase(ABC):
         self.set_devicesettings_value("last_mode", self._mapping_manager.routemanager_get_mode(self._routemanager_name))
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
-        self._WordToScreenMatching = None
-        if self.get_devicesettings_value('screendetection', False):
-            self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
-                                                              self._resocalc, mapping_manager, self)
+        self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
+                                                          self._resocalc, mapping_manager, self)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
@@ -577,6 +575,11 @@ class WorkerBase(ABC):
                 elif returncode == ScreenType.CLOSE:
                     logger.warning('Pogo not in foreground...')
                     self._start_pogo()
+
+                elif returncode == ScreenType.DISABLED:
+                    # Screendetection is disabled
+                    returncode == ScreenType.POGO
+                    break
 
                 elif returncode == ScreenType.ERROR:
                     logger.warning('Something wrong with screendetection')
