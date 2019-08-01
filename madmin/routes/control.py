@@ -34,7 +34,7 @@ class control(object):
 
     def add_route(self):
         routes = [
-            ("/phonecontrol", self.get_phonescreens),
+            ("/devicecontrol", self.get_phonescreens),
             ("/take_screenshot", self.take_screenshot),
             ("/click_screenshot", self.click_screenshot),
             ("/swipe_screenshot", self.swipe_screenshot),
@@ -113,7 +113,7 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol",
+        return render_template('phonescreens.html', editform=screens_phone, header="Devicecontrol", title="Devicecontrol",
                                running_ocr=(self._args.only_ocr))
 
     @auth_required
@@ -233,7 +233,7 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        self._logger.info('MADmin: Restart Phone ({})', str(origin))
+        self._logger.info('MADmin: Restart Device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                         adb, origin,"am broadcast -a android.intent.action.BOOT_COMPLETED")):
@@ -241,7 +241,7 @@ class control(object):
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reboot()
-        return redirect(getBasePath(request) + '/phonecontrol')
+        return redirect(getBasePath(request) + '/devicecontrol')
 
     @auth_required
     def clear_game_data(self):
@@ -258,7 +258,7 @@ class control(object):
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.resetAppdata("com.nianticlabs.pokemongo")
-        return redirect(getBasePath(request) + '/phonecontrol')
+        return redirect(getBasePath(request) + '/devicecontrol')
 
 
     @auth_required
