@@ -1,4 +1,5 @@
 import json
+import os
 from typing import List, Optional
 
 from flask import (jsonify, render_template, request, redirect)
@@ -355,11 +356,12 @@ class map(object):
             return redirect(getBasePath(request) + "/map", code=302)
 
         coords_split = coords.split("|")
+        geofence_file_path = self._args.geofence_file_path
 
-        file = open("configs/geofences/" + str(name) + ".txt", "a")
+        file = open(os.path.join(geofence_file_path, (str(name) + ".txt")), "a")
         file.write("[" + str(name) + "]\n")
         for i in range(len(coords_split)):
-            file.write(str(coords_split[i])+"\n")
+            file.write(str(coords_split[i]) + "\n")
 
         file.close()
 

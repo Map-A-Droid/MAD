@@ -232,6 +232,10 @@ def parseArgs():
     parser.add_argument('-qpub', '--quests_public', action='store_true', default=False,
                         help='Enables MADmin /quests_pub endpoint for public quests overview')
 
+    parser.add_argument('--geofence_file_path',
+                        help='Defines directory to save created madmin map geofence files',
+                        default='configs/geofences')
+
     # etc
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
