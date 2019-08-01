@@ -9,22 +9,22 @@
 {% block content %}
 <ul class="nav nav-pills nav-fill" style="margin: 20px 0px 40px;">
   <li class="nav-item">
-    <a class="nav-link" href="settings/devices">Devices</a>
+    <a class="nav-link {{ "active" if subtab == "devices"}}" href="settings/devices">Devices</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="settings/shared">Shared settings</a>
+    <a class="nav-link {{ "active" if subtab == "sharedsettings" }}" href="settings/shared">Shared settings</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="settings/walker">Walker</a>
+    <a class="nav-link {{ "active" if subtab == "walker" }}" href="settings/walker">Walker</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="settings/areas">Areas</a>
+    <a class="nav-link {{ "active" if subtab == "areas" }}" href="settings/areas">Areas</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="settings/auth">Auth</a>
+    <a class="nav-link {{ "active" if subtab == "auth" }}" href="settings/auth">Auth</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link" href="settings/ivlists">IV Lists</a>
+    <a class="nav-link {{ "active" if subtab == "ivlists" }}" href="settings/ivlists">IV Lists</a>
   </li>
 </ul>
 {% endblock %}

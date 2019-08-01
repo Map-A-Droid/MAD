@@ -1,0 +1,65 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script defer src="https://use.fontawesome.com/releases/v5.8.2/js/all.js" integrity="sha384-DJ25uNYET2XCl5ZF++U8eNxPWqcKohUUBUpKGlNLMchM7q4Wjg2CUpjHLaL8yYPH" crossorigin="anonymous"></script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<h1 class="display-4">{{deviceconfig.origin}}</h1>
+
+<form action="settings/devices?device={{deviceconfig.origin}}" method="post">
+<div class="row">
+  <div class="col-sm">
+    {% for field in settings_vars.settings|sort(attribute="name") %}
+    <div class="form-group">
+      <label for="{{field.name}}">{{field.name}}</label>
+      {% if field.settings.type == "option" %}
+      <select class="form-control" name="{{field.name}}">
+        {% for option in field.settings["values"].split("|") %}
+        <option value="{{option}}" {{'selected="selected"' if option == deviceconfig.settings[field.name]}}>{{option}}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <input type="{{field.settings.type}}" name="{{field.name}}" class="form-control" id="{{field.name}}" value="{{deviceconfig.settings[field.name]}}">
+      {% endif %}
+      <small class="form-text text-muted">{{field.settings.description}}</small>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="col-sm">
+    <div class="form-group">
+      <label for="walker">walker</label>
+      <select class="form-control" name="field.walker">
+        {% for w in walker %}
+        <option value="{{w.walkername}}" {{'selected="selected"' if w.walkername == deviceconfig.walker}}>{{w.walkername}}</option>
+        {% endfor %}
+      </select>
+      <small class="form-text text-muted">Walker for this device</small>
+    </div>
+    <div class="form-group">
+      <label for="pool">pool</label>
+      <select class="form-control" name="field.pool">
+        <option>None</option>
+        {% for p in pools %}
+        <option value="{{p.name}}" {{'selected="selected"' if p.name == deviceconfig.pool}}>{{p.name}}</option>
+        {% endfor %}
+      </select>
+      <small class="form-text text-muted">Configuration pool used by this device</small>
+    </div>
+    <div class="form-group">
+      <label for="adbname">adbname</label>
+      <input type="input" class="form-control" id="adbname" name="field.adbname" value="{{deviceconfig.adbname}}">
+      <small class="form-text text-muted">ADB device name</small>
+    </div>
+    <button type="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+</div>
+</form>
+{% endblock %}

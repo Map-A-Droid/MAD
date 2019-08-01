@@ -1,283 +1,280 @@
 {
-  "devices": [
-    {
-      "name": "devices",
-      "fields": [
-        {
-          "name": "origin",
-          "settings": {
-            "type": "text",
-            "require": "true",
-            "empty": "null",
-            "description": "Name of device (from RGC settings)",
-            "lockonedit": "true"
-          }
-        },
-        {
-          "name": "walker",
-          "settings": {
-            "type": "walkerselect",
-            "require": "true",
-            "empty": null,
-            "description": "Walker of this area"
-          }
-        },
-        {
-          "name": "pool",
-          "settings": {
-            "type": "poolselect",
-            "require": "true",
-            "empty": null,
-            "description": "Configpool for this area"
-          }
-        },
-        {
-          "name": "adbname",
-          "settings": {
-            "type": "adbselect",
-            "require": "true",
-            "empty": null,
-            "description": "ADB devicename"
-          }
+  "devices": {
+    "fields": [
+      {
+        "name": "origin",
+        "settings": {
+          "type": "text",
+          "require": "true",
+          "empty": "null",
+          "description": "Name of device (from RGC settings)",
+          "lockonedit": "true"
         }
-      ],
-      "settings": [
-        {
-          "name": "post_walk_delay",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
-          }
-        },
-        {
-          "name": "post_teleport_delay",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Delay in seconds after a teleport. (Default: 4.0)"
-          }
-        },
-        {
-          "name": "walk_after_teleport_distance",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Walk n metres in both directions after teleport for getting data"
-          }
-        },
-        {
-          "name": "cool_down_sleep",
-          "settings": {
-            "type": "option",
-            "require": "false",
-            "values": "None|false|true",
-            "description": "More cooldown after teleport"
-          }
-        },
-        {
-          "name": "post_turn_screen_on_delay",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
-          }
-        },
-        {
-          "name": "post_pogo_start_delay",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
-          }
-        },
-        {
-          "name": "restart_pogo",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
-          }
-        },
-        {
-          "name": "delay_after_hatch",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
-          }
-        },
-        {
-          "name": "mitm_wait_timeout",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
-          }
-        },
-        {
-          "name": "vps_delay",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
-          }
-        },
-        {
-          "name": "reboot",
-          "settings": {
-            "type": "option",
-            "require": "false",
-            "values": "None|false|true",
-            "description": "Reboot device if reboot_thresh is reached (Default: false)"
-          }
-        },
-        {
-          "name": "reboot_thresh",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Restart Phone after restart Pogo N times. (Default: 3)"
-          }
-        },
-        {
-          "name": "restart_thresh",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
-          }
-        },
-        {
-          "name": "post_screenshot_delay",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
-          }
-        },
-        {
-          "name": "screenshot_x_offset",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
-          }
-        },
-        {
-          "name": "screenshot_y_offset",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
-          }
-        },
-        {
-          "name": "screenshot_type",
-          "settings": {
-            "type": "option",
-            "require": "true",
-            "values": "jpeg|png",
-            "description": "Type of screenshot (Default: jpeg)"
-          }
-        },
-        {
-          "name": "screenshot_quality",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Quality of screenshot (Default: 80)"
-          }
-        },
-        {
-          "name": "route_calc_algorithm",
-          "settings": {
-            "type": "option",
-            "values": "optimized|quick",
-            "require": "false",
-            "description": "Method of calculation for routes. (Default optimized)"
-          }
-        },
-        {
-          "name": "startcoords_of_walker",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
-          }
-        },
-        {
-          "name": "screendetection",
-          "settings": {
-            "type": "option",
-            "values": "false|true",
-            "require": "false",
-            "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts"
-          }
-        },
-        {
-          "name": "logintype",
-          "settings": {
-            "type": "option",
-            "values": "google|ptc",
-            "require": "false",
-            "description": "Select login type for automatic login. If using Google make sure that account already exists on device."
-          }
-        },
-        {
-          "name": "ggl_login_mail",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
-          }
-        },
-        {
-          "name": "ptc_login",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
-          }
-        },
-        {
-          "name": "clear_game_data",
-          "settings": {
-            "type": "option",
-            "values": "false|true",
-            "require": "false",
-            "description": "Clear gamedata if logins fail multiple times"
-          }
-        },
-        {
-          "name": "account_rotation",
-          "settings": {
-            "type": "option",
-            "values": "false|true",
-            "require": "false",
-            "description": "Rotate accounts (f.e. to prevent long cool downs)"
-          }
-        },
-        {
-          "name": "rotation_waittime",
-          "settings": {
-            "type": "text",
-            "require": "false",
-            "description": "Rotate accounts if waiting time longer than x seconds after teleport (Default: 300 - need account_rotation: true)"
-          }
-        },
-        {
-          "name": "rotate_on_lvl_30",
-          "settings": {
-            "type": "option",
-            "values": "false|true",
-            "require": "false",
-            "description": "Rotate accounts if player level >= 30 (for levelmode)"
-          }
+      },
+      {
+        "name": "walker",
+        "settings": {
+          "type": "walkerselect",
+          "require": "true",
+          "empty": null,
+          "description": "Walker of this area"
         }
-      ]
-    }
-  ],
+      },
+      {
+        "name": "pool",
+        "settings": {
+          "type": "poolselect",
+          "require": "true",
+          "empty": null,
+          "description": "Configpool for this area"
+        }
+      },
+      {
+        "name": "adbname",
+        "settings": {
+          "type": "adbselect",
+          "require": "true",
+          "empty": null,
+          "description": "ADB devicename"
+        }
+      }
+    ],
+    "settings": [
+      {
+        "name": "post_walk_delay",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Delay in seconds after reaching destination. (Default: 2.0)"
+        }
+      },
+      {
+        "name": "post_teleport_delay",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Delay in seconds after teleport. (Default: 4.0)"
+        }
+      },
+      {
+        "name": "walk_after_teleport_distance",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Walk in meters to walk after teleport. Might help loading data (Default: None)"
+        }
+      },
+      {
+        "name": "cool_down_sleep",
+        "settings": {
+          "type": "option",
+          "require": "false",
+          "values": "false|true",
+          "description": "Add extra cooldown after teleport"
+        }
+      },
+      {
+        "name": "post_turn_screen_on_delay",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
+        }
+      },
+      {
+        "name": "post_pogo_start_delay",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
+        }
+      },
+      {
+        "name": "restart_pogo",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+        }
+      },
+      {
+        "name": "delay_after_hatch",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
+        }
+      },
+      {
+        "name": "mitm_wait_timeout",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Timeout in seconds while waiting for data after setting/reaching a location. (Default: 45)"
+        }
+      },
+      {
+        "name": "vps_delay",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
+        }
+      },
+      {
+        "name": "reboot",
+        "settings": {
+          "type": "option",
+          "require": "false",
+          "values": "false|true",
+          "description": "Reboot device if reboot_thresh is reached (Default: false)"
+        }
+      },
+      {
+        "name": "reboot_thresh",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Restart Phone after restart Pogo N times. (Default: 3)"
+        }
+      },
+      {
+        "name": "restart_thresh",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
+        }
+      },
+      {
+        "name": "post_screenshot_delay",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
+        }
+      },
+      {
+        "name": "screenshot_x_offset",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
+        }
+      },
+      {
+        "name": "screenshot_y_offset",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
+        }
+      },
+      {
+        "name": "screenshot_type",
+        "settings": {
+          "type": "option",
+          "require": "true",
+          "values": "jpeg|png",
+          "description": "Type of screenshot (Default: jpeg)"
+        }
+      },
+      {
+        "name": "screenshot_quality",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Quality of screenshot (Default: 80)"
+        }
+      },
+      {
+        "name": "route_calc_algorithm",
+        "settings": {
+          "type": "option",
+          "values": "optimized|quick",
+          "require": "false",
+          "description": "Method of calculation for routes. (Default: optimized)"
+        }
+      },
+      {
+        "name": "startcoords_of_walker",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
+        }
+      },
+      {
+        "name": "screendetection",
+        "settings": {
+          "type": "option",
+          "values": "false|true",
+          "require": "false",
+          "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts"
+        }
+      },
+      {
+        "name": "logintype",
+        "settings": {
+          "type": "option",
+          "values": "google|ptc",
+          "require": "false",
+          "description": "Select login type for automatic login. If using Google make sure that account already exists on device."
+        }
+      },
+      {
+        "name": "ggl_login_mail",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
+        }
+      },
+      {
+        "name": "ptc_login",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
+        }
+      },
+      {
+        "name": "clear_game_data",
+        "settings": {
+          "type": "option",
+          "values": "false|true",
+          "require": "false",
+          "description": "Clear game data if logins fail multiple times"
+        }
+      },
+      {
+        "name": "account_rotation",
+        "settings": {
+          "type": "option",
+          "values": "false|true",
+          "require": "false",
+          "description": "Rotate accounts (f.e. to prevent long cool downs) - Only for PTC"
+        }
+      },
+      {
+        "name": "rotation_waittime",
+        "settings": {
+          "type": "text",
+          "require": "false",
+          "description": "Rotate accounts if wait time is longer than x seconds after teleport (Default: 300 - requires account_rotation to be enabled)"
+        }
+      },
+      {
+        "name": "rotate_on_lvl_30",
+        "settings": {
+          "type": "option",
+          "values": "false|true",
+          "require": "false",
+          "description": "Rotate accounts if player level >= 30 (for leveling mode)"
+        }
+      }
+    ]
+  },
   "monivlist": [
     {
       "name": "monivlist",
@@ -297,7 +294,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
+            "description": "Encounter these mon ids while walking (Put in brackets [1,2,3] as comma separated list!)",
             "output": "int",
             "showmonsidpicker": true
           }

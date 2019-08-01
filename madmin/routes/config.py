@@ -1,7 +1,7 @@
 import ast
 import os
 import json
-from flask import (render_template, request, redirect)
+from flask import (render_template, request, redirect, url_for)
 from flask_caching import Cache
 from functools import cmp_to_key
 from madmin.functions import auth_required, getBasePath
@@ -41,7 +41,7 @@ class config(object):
             ("/addnew", self.addnew),
             ("/showmonsidpicker", self.showmonsidpicker),
             ("/addedit", self.addedit),
-            ("/showsettings", self.showsettings),
+            ("/settings", self.settings),
             ("/settings/devices", self.settings_devices),
             ("/settings/set_device_walker", self.set_device_walker),
             ("/reload", self.reload)
@@ -835,119 +835,60 @@ class config(object):
         with open(self._args.mappings) as f:
             mappings = json.load(f)
 
+        devicename = request.args.get("device", None)
+
+        if request.method == 'POST':
+            for key, val in enumerate(mappings["devices"]):
+                device = mappings["devices"][key]
+
+                if device["origin"] != devicename:
+                    continue
+
+                for entry in request.form:
+                    value = request.form[entry]
+
+                    if value == "None":
+                        value = None
+
+                    if entry.startswith("field."):
+                        name = entry.split("field.", 1)[1]
+                        mappings["devices"][key][name] = value
+                    else:
+                        mappings["devices"][key]["settings"][entry] = value
+
+            with open(self._args.mappings, 'w') as outfile:
+                json.dump(mappings, outfile, indent=4, sort_keys=True)
+
+            return redirect("/{}/settings/devices?device={}".format(self._args.madmin_base_path, devicename), code=302)
+
+        if devicename is not None:
+            deviceconfig = None
+            for key, val in enumerate(mappings["devices"]):
+                tmpdevice = mappings["devices"][key]
+
+                if tmpdevice["origin"] == devicename:
+                    deviceconfig = tmpdevice
+
+            with open('madmin/static/vars/vars_parser.json') as f:
+                settings_vars = json.load(f)
+
+            return render_template('settings_singledevice.html',
+                                   deviceconfig=deviceconfig,
+                                   subtab="devices",
+                                   walker=mappings["walker"],
+                                   pools=mappings["devicesettings"],
+                                   settings_vars=settings_vars["devices"],
+                                   responsive=str(self._args.madmin_noresponsive).lower())
+
         return render_template('settings_devices.html',
                                mappings=mappings,
+                               subtab="devices",
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @logger.catch
     @auth_required
-    def showsettings(self):
-        tab_content = ''
-        tabarea = request.args.get("area", 'devices')
-        with open(self._args.mappings) as f:
-            mapping = json.load(f)
-            if 'walker' not in mapping:
-                mapping['walker'] = []
-            if 'devicesettings' not in mapping:
-                mapping['devicesettings'] = []
-            if 'monivlist' not in mapping:
-                mapping['monivlist'] = []
-
-        with open('madmin/static/vars/settings.json') as f:
-            settings = json.load(f)
-        with open('madmin/static/vars/vars_parser.json') as f:
-            vars = json.load(f)
-
-        globalheader = '<thead><tr><th><b>Type</b></th><th>Basedata</th><th>Settings</th><th>Delete</th></tr></thead>'
-
-        for var in vars:
-            line, quickadd, quickline = '', '', ''
-            header = '<tr><td colspan="4" class="header"><b>' + (var.upper()) + '</b> <a href="addnew?area=' + var + \
-                     '">[Add new]</a></td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
-            subheader = '<tr><td colspan="4">' + \
-                        settings[var]['description'] + \
-                        '</td><td style="display: none;"></td><td style="display: none;"></td><td style="display: none;"></td></tr>'
-            edit = '<td></td>'
-            editsettings = '<td></td>'
-            _typearea = var
-            _field = settings[var]['field']
-            _quick = settings[var].get('quickview', False)
-            _quicksett = settings[var].get('quickview_settings', False)
-
-            for output in sorted(mapping[var], key=cmp_to_key(self.sort_by_name_if_exists)):
-                quickadd, quickline = '', ''
-                mode = output.get('mode', _typearea)
-                if settings[var]['could_edit']:
-                    edit = '<td><a href="config?type=' + str(mode) + '&area=' + str(
-                        _typearea) + '&block=fields&edit=' + str(output[_field]) + '">[Edit]</a></td>'
-                else:
-                    edit = '<td></td>'
-                if settings[var]['has_settings'] in ('true'):
-                    editsettings = '<td><a href="config?type=' + str(mode) + '&area=' + str(
-                        _typearea) + '&block=settings&edit=' + str(output[_field]) + '">[Edit Settings]</a></td>'
-                else:
-                    editsettings = '<td></td>'
-                delete = '<td><a href="delsetting?type=' + str(mode) + '&area=' + str(
-                    _typearea) + '&block=settings&edit=' + str(output[_field]) + '&del=true" class="confirm" ' \
-                                                                                 'title="Do you really want to delete this?">' \
-                                                                                 '[Delete]</a></td>'
-
-                line = line + '<tr><td><b>' + \
-                       str(output[_field]) + '</b></td>' + str(edit) + \
-                       str(editsettings) + str(delete) + '</tr>'
-
-                if _quick == 'setup':
-                    quickadd = 'Assigned areas: ' + \
-                               str(len(output.get('setup', []))) + '<br />Areas: '
-                    for area in output.get('setup', []):
-                        quickadd = quickadd + area.get('walkerarea') + ' | '
-
-                    quickline = quickline + '<tr><td></td><td colspan="3" class="quick">' + \
-                                str(
-                                    quickadd) + ' </td><td style="display: none;"></td><td style="display: none;">' \
-                                                '</td><td style="display: none;"></td>'
-
-                elif _quick:
-                    for quickfield in _quick.split('|'):
-                        if output.get(quickfield, False):
-                            quickadd = quickadd + \
-                                       str(quickfield) + ': ' + \
-                                       str(output.get(quickfield, '')).split(
-                                           '\n')[0] + '<br>'
-                    quickline = quickline + '<tr><td></td><td class="quick">' + \
-                                str(quickadd) + '</td>'
-
-                quickadd = ''
-                if _quicksett:
-                    for quickfield in _quicksett.split('|'):
-                        if output['settings'].get(quickfield, False):
-                            quickadd = quickadd + \
-                                       str(quickfield) + ': ' + \
-                                       str(output['settings'].get(
-                                           quickfield, '')) + '<br>'
-                    quickline = quickline + '<td colspan="2" class="quick">' + \
-                                str(quickadd) + '</td><td style="display: none;"></td></tr>'
-
-                line = line + quickline
-
-            if str(tabarea) == str(var):
-                _active = 'show active'
-            else:
-                _active = ""
-
-            _tab_starter = '<div class="tab-pane fade ' + str(_active) + '"  id="nav-' + str(var) \
-                           + '" role="tabpanel" aria-labelledby="nav-' + str(var) + '-tab">'
-
-            table = str(_tab_starter) + '<table>' + str(globalheader) + '<tbody>' + str(header) + str(subheader) + str(line) \
-                     + '</tbody></table></div>'
-
-            tab_content = tab_content + table
-
-        return render_template('settings.html',
-                               settings=tab_content,
-                               tabarea=tabarea,
-                               title="Mapping Editor", responsive=str(self._args.madmin_noresponsive).lower(),
-                               running_ocr=self._args.only_ocr, autoreloadconfig=self._args.auto_reload_config)
+    def settings(self):
+        return redirect("/{}/settings/devices".format(self._args.madmin_base_path), code=302)
 
     @auth_required
     def addnew(self):

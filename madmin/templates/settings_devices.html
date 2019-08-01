@@ -36,7 +36,7 @@
   {% for device in mappings.devices|sort(attribute="origin") %}
     <tr>
       <td class="align-middle">
-        <a href="#">{{device.origin}}</a>
+        <a href="settings/devices?device={{device.origin}}">{{device.origin}}</a>
       </td>
       <td class="align-middle">
         <p style="font-size: 65%; min-height: 50px; display: inline-box">
