@@ -381,9 +381,9 @@ class WordToScreenMatching(object):
                 logger.error('No PTC Username and Password is set')
                 return ScreenType.ERROR
 
-            username_y = self._height / 2.224797219003476
-            password_y = self._height / 1.875
-            button_y = self._height / 1.58285243198681
+            username_y = self._height / 2.5
+            password_y = self._height / 2.105
+            button_y = self._height / 1.7777
 
             # username
             self._communicator.click(self._width / 2, username_y)
