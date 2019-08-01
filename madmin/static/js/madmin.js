@@ -119,6 +119,7 @@ var clickToScanActive = false;
 var cleanupInterval = null;
 var newfences = {};
 const teamNames = ['Uncontested', 'Mystic', 'Valor', 'Instinct']
+const iconBasePath = "https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large";
 
 // object to hold all the markers and elements
 var leaflet_data = {
@@ -483,6 +484,8 @@ new Vue({
           } else if (route.mode == "raids_mitm" || route.mode == "raids_ocr") {
             mode = "raids";
             cradius = $this.settings.routes.coordinateRadius.raids;
+          } else {
+            mode = route.mode;
           }
 
           route.coordinates.forEach(function (coord) {
@@ -785,7 +788,7 @@ new Vue({
               var icon = leaflet_data["monicons"][mon["mon_id"]];
             } else {
               var form = mon["form"] == 0 ? "00" : mon["form"];
-              var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+              var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
               var icon = L.icon({
                 iconUrl: image,
                 iconSize: [40, 40],
@@ -927,23 +930,23 @@ new Vue({
     build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
       switch (quest_reward_type_raw) {
         case 2:
-          var image = 'static/quest/reward_' + quest_item_id + '_1.png';
+          var image = `${iconBasePath}/rewards/reward_${quest_item_id}_1.png`;
           var size = [30, 30]
-          var anchor = [30, 20]
+          var anchor = [30, 30]
           break;
         case 3:
-          var image = 'static/quest/reward_stardust.png';
+          var image = `${iconBasePath}/rewards/reward_stardust.png`;
           var size = [30, 30]
-          var anchor = [30, 20]
+          var anchor = [30, 30]
           break;
         case 7:
           var form = '00';
           if (quest_pokemon_id === 327) {
             form = '11';
           }
-          var image = 'asset/pokemon_icons/pokemon_icon_' + String.prototype.padStart.call(quest_pokemon_id, 3, 0) + '_' + form + '.png';
-          var size = [50, 50]
-          var anchor = [40, 30]
+          var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${form}.png`;
+          var size = [30, 30]
+          var anchor = [30, 30]
           break;
       }
 
@@ -951,6 +954,7 @@ new Vue({
         iconUrl: 'static/Pstop-quest.png',
         shadowUrl: image,
         iconSize: [30, 30],
+        iconAnchor: [15, 30],
         shadowSize: size,
         shadowAnchor: anchor
       })
@@ -962,11 +966,11 @@ new Vue({
 
       switch (quest_reward_type_raw) {
         case 2:
-          var image = `static/quest/reward_${quest_item_id}_1.png`;
+          var image = `${iconBasePath}/rewards/reward_${quest_item_id}_1.png`;
           var rewardtext = `${quest_item_amount}x ${quest_item_type}`;
           break;
         case 3:
-          var image = "static/quest/reward_stardust.png";
+          var image = `${iconBasePath}/rewards/reward_stardust.png`;
           var rewardtext = `${quest_item_amount} ${quest_item_type}`;
           break;
         case 7:
@@ -974,7 +978,7 @@ new Vue({
           if (quest_pokemon_id === 327) {
             form = '11';
           }
-          var image = `asset/pokemon_icons/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${form}.png`;
+          var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${form}.png`;
           var rewardtext = quest_pokemon_name;
           var size = "150%";
           break;
@@ -1015,22 +1019,10 @@ new Vue({
         if (raid["mon"]) {
           var mon = String.prototype.padStart.call(raid["mon"], 3, 0);
           var form = String.prototype.padStart.call(raid["form"], 2, 0);
-          var image = `asset/pokemon_icons/pokemon_icon_${mon}_${form}.png`;
+          var image = `${iconBasePath}/pokemon_icon_${mon}_${form}.png`;
           var monText = `<div class="monId"><i class="fas fa-ghost"></i> Mon: <strong>#${raid["mon"]}</strong></div>`
         } else {
-          switch (raid["level"]) {
-            case 1:
-            case 2:
-              var image = "asset/static_assets/png/ic_raid_egg_normal.png";
-              break;
-            case 3:
-            case 4:
-              var image = "asset/static_assets/png/ic_raid_egg_rare.png";
-              break;
-            case 5:
-              var image = "asset/static_assets/png/ic_raid_egg_legendary.png";
-              break;
-          }
+          var image = `${iconBasePath}/egg${raid["level"]}.png`;
         }
 
         var levelStars = `<i class="fas fa-star"></i>`.repeat(raid["level"]);
@@ -1148,7 +1140,7 @@ new Vue({
       mon = this.mons[marker.options.id];
 
       var form = mon["form"] == 0 ? "00" : mon["form"];
-      var image = `https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
+      var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(mon["mon_id"], 3, 0)}_${form}.png`;
 
       var iv = (mon["individual_attack"] + mon["individual_defense"] + mon["individual_stamina"])*100/45;
       var end = moment(mon["disappear_time"]*1000);
