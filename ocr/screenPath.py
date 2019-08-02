@@ -67,8 +67,8 @@ class WordToScreenMatching(object):
         self._ScreenType[8] = detect_Gamedata
         self._ScreenType[1] = detect_Birthday
         self._ScreenType[12] = detect_Marketing
-        self._ScreenType[14] = detect_Marketing
-        self._ScreenType[7] = detect_SN
+        self._ScreenType[14] = detect_SN
+        self._ScreenType[7] = detect_WrongPassword
         self._globaldict: dict = []
         self._ratio: float = 0.0
 
