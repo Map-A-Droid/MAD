@@ -1259,10 +1259,14 @@ class RmWrapper(DbWrapperBase):
             "trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
             "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template "
             "FROM pokestop INNER JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
-            "WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
         )
 
         query_where = ""
+        
+        if timestamp is not None:
+            query_where = " WHERE trs_quest.quest_timestamp >= {} ".format(timestamp)
+        else:
+            query_where = " WHERE DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) = CURDATE() "
 
         if neLat is not None and neLon is not None and swLat is not None and swLon is not None:
             oquery_where = (
@@ -1279,10 +1283,7 @@ class RmWrapper(DbWrapperBase):
             ).format(oSwLat, oSwLon, oNeLat, oNeLon)
 
             query_where = query_where + oquery_where
-        elif timestamp is not None:
-            oquery_where = " AND trs_quest.quest_timestamp >= {}".format(timestamp)
-            query_where = query_where + oquery_where
-
+        
         res = self.execute(query + query_where)
 
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
