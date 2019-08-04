@@ -970,8 +970,8 @@ class config(object):
             new_mons_list = request.form.get('current_mons_list')
             if not new_mons_list:
                 return redirect("/showsettings", code=302)
-
-            mapping["monivlist"][this_area_index]["mon_ids_iv"] = ast.literal_eval(new_mons_list)
+            # force single 'string' value to tuple. Not pretty, but it works.
+            mapping["monivlist"][this_area_index]["mon_ids_iv"] = ast.literal_eval(new_mons_list+",")
 
             with open(self._args.mappings, 'w') as outfile:
                 json.dump(mapping, outfile, indent=4, sort_keys=True)
