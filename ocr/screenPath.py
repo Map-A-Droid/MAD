@@ -276,38 +276,6 @@ class WordToScreenMatching(object):
 
         elif ScreenType(returntype) == ScreenType.BIRTHDATE:
             self._nextscreen = ScreenType.UNDEFINED
-            old_y = None
-            frame = cv2.cvtColor(frame_org, cv2.COLOR_BGR2GRAY)
-            frame = cv2.GaussianBlur(frame, (3, 3), 0)
-            frame = cv2.Canny(frame, 50, 200, apertureSize=3)
-            kernel = np.ones((2, 2), np.uint8)
-            edges = cv2.morphologyEx(frame, cv2.MORPH_GRADIENT, kernel)
-            minLineLength = (self._width / 3.927272727272727) - (self._width * 0.02)
-            lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
-                                    maxLineGap=2)
-
-            lines = self.check_lines(lines, self._height)
-            for line in lines:
-                line = [line]
-                for x1, y1, x2, y2 in line:
-                    if old_y is None:
-                        old_y = y1
-                    else:
-                        click_y = old_y + ((y1 - old_y)/2)
-                        click_x = x1 + ((x2 - x1)/2)
-                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                        self._communicator.click(click_x, click_y)
-                        self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height/2), 200)
-                        time.sleep(1)
-                        self._communicator.click(click_x, click_y)
-                        time.sleep(1)
-                        click_x = self._width / 2
-                        click_y = click_y + (self._height / 8.53)
-                        self._communicator.click(click_x, click_y)
-                        time.sleep(1)
-                        return ScreenType.BIRTHDATE
-
-            # alternative method
             click_x = (self._width / 2) + (self._width / 3)
             click_y = (self._height / 1.69) + self._screenshot_y_offset
             logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
