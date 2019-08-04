@@ -59,6 +59,7 @@ class WordToScreenMatching(object):
         detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data')
         detect_SN: list = ('kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
                            'logiciel')
+
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
         self._ScreenType[4] = detect_PTC
@@ -77,6 +78,7 @@ class WordToScreenMatching(object):
         self._GGL_accounts: List[Login_GGL] = []
         self._accountcount: int = 0
         self._accountindex: int = self.get_devicesettings_value('accountindex', 0)
+        self._screenshot_y_offset: int = self.get_devicesettings_value('screenshot_y_offset', 0)
         self._nextscreen: ScreenType = ScreenType.UNDEFINED
 
         self._pogoWindowManager = pogoWindowManager
@@ -186,6 +188,7 @@ class WordToScreenMatching(object):
         elif self._nextscreen != ScreenType.UNDEFINED:
             returntype = ScreenType(self._nextscreen)
         elif not self.get_devicesettings_value('screendetection', False):
+            logger.info('No more screen detection - disabled...')
             return ScreenType.DISABLED
         else:
             if not self._parent._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
@@ -304,6 +307,21 @@ class WordToScreenMatching(object):
                         time.sleep(1)
                         return ScreenType.BIRTHDATE
 
+            # alternative method
+            click_x = (self._width / 2) + (self._width / 3)
+            click_y = (self._height / 1.69) + self._screenshot_y_offset
+            logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+            self._communicator.click(click_x, click_y)
+            self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
+            time.sleep(1)
+            self._communicator.click(click_x, click_y)
+            time.sleep(1)
+            click_x = self._width / 2
+            click_y = click_y + (self._height / 8.53)
+            self._communicator.click(click_x, click_y)
+            time.sleep(1)
+            return ScreenType.BIRTHDATE
+
         elif ScreenType(returntype) == ScreenType.RETURNING:
             self._nextscreen = ScreenType.UNDEFINED
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator, upper=True)
@@ -381,9 +399,9 @@ class WordToScreenMatching(object):
                 logger.error('No PTC Username and Password is set')
                 return ScreenType.ERROR
 
-            username_y = self._height / 2.224797219003476
-            password_y = self._height / 1.875
-            button_y = self._height / 1.58285243198681
+            username_y = self._height / 2.224797219003476 + self._screenshot_y_offset
+            password_y = self._height / 1.875 + self._screenshot_y_offset
+            button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
 
             # username
             self._communicator.click(self._width / 2, username_y)
