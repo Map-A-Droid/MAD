@@ -1259,7 +1259,8 @@ new Vue({
     },
     l_event_click(e) {
       if(clickToScanActive) {
-        $('#injectionModal').data('coords', e.latlng.lat + ',' + e.latlng.lng).modal();
+        $("#injectLocation").val(`${e.latlng.lat.toFixed(6)},${e.latlng.lng.toFixed(6)}`);
+        $("#injectionModal").modal();
       }
     },
     addMouseEventPopup(marker) {
@@ -1310,7 +1311,7 @@ new Vue({
       $.ajax({
         type: "GET",
         url: 'send_gps?origin=' + $('#injectionWorker').val() +
-          '&coords=' + $('#injectionModal').data('coords') +
+          '&coords=' + $('#injectLocation').val() +
           '&sleeptime=' + $('#injectionSleep').val()
       });
     },
