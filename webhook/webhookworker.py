@@ -430,7 +430,10 @@ class WebhookWorker:
                 mon["weather_boosted_condition"] is not None
                 and mon["weather_boosted_condition"] > 0
             ):
-                mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
+                if self.__args.quest_webhook_flavor == "default":
+                    mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
+                if self.__args.quest_webhook_flavor == "poracle":
+                    mon_payload["weather"] = mon["weather_boosted_condition"]
 
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)
