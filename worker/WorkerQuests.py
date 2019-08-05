@@ -589,7 +589,6 @@ class WorkerQuests(MITMBase):
         self._mitm_mapper.update_latest(origin=self._id, key="injected_settings", values_dict=injected_settings)
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
-        self._rocket = False
         latest: dict = self._mitm_mapper.request_latest(self._id)
         if latest is None or 106 not in latest.keys():
             return False
@@ -623,6 +622,8 @@ class WorkerQuests(MITMBase):
                     logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
                                 .format(str(latitude), str(longitude)))
                     self._rocket = True
+                else:
+                    self._rocket = False
 
                 if self._level_mode and self._ignore_spinned_stops:
                     visited: bool = fort.get("visited", False)
