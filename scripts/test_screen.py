@@ -264,9 +264,8 @@ class testimage(object):
         for line in lines:
             line = [line]
             for x1, y1, x2, y2 in line:
-                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and \
-                        y1 > (height / 2) \
-                        and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
+                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength \
+                        and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
                     lineCount += 1
                     disToMiddleMin_temp = y1 - (height/2)
                     if upper:
