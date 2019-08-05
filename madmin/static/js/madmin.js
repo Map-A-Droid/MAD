@@ -1459,7 +1459,6 @@ new Vue({
     var editableLayers = new L.FeatureGroup();
     map.addLayer(editableLayers);
 
-
     var options = {
         position: 'topright',
         draw: {
@@ -1474,7 +1473,7 @@ new Vue({
                     color: '#ac00e6'
                 }
             },
-            circle: false,
+            circle: true,
             circlemarker: false,
             rectangle: false,
             line: false,
@@ -1492,6 +1491,10 @@ new Vue({
     map.on(L.Draw.Event.CREATED, function (e) {
         var type = e.layerType,
             layer = e.layer;
+
+        if (type != "polygon") {
+          return;
+        }
 
         var fencename = prompt("Please enter name of fence", "");
         coords = loopCoords(layer.getLatLngs())
