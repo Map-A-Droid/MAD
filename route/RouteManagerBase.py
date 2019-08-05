@@ -30,10 +30,12 @@ class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "optimized"):
+                 level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15):
         self.db_wrapper: DbWrapperBase = db_wrapper
         self.init: bool = init
         self.name: str = name
+        self.useS2: bool = useS2
+        self.S2level: int = S2level
         self._coords_unstructured: List[Location] = coords
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
             path_to_include_geofence, path_to_exclude_geofence)
@@ -218,7 +220,7 @@ class RouteManagerBase(ABC):
             logger.debug("Deleting routefile...")
             os.remove(str(routefile) + ".calc")
         new_route = getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
-                                 routefile=routefile, algorithm=calctype)
+                                 routefile=routefile, algorithm=calctype, useS2=self.useS2, S2level=self.S2level)
         if self._overwrite_calculation: self._overwrite_calculation = False
         return new_route
 

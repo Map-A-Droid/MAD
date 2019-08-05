@@ -19,8 +19,8 @@ from utils.s2Helper import S2Helper
 
 mode_mapping = {
     "raids_mitm": {
-        "s2_cell_level": 13,
-        "range": 490,
+        "s2_cell_level": 15,
+        "range": 520,
         "range_init": 490,
         "max_count": 100000
     },
@@ -315,7 +315,8 @@ class MappingManager:
                                                                  coords_spawns_known=area.get(
                                                                          "coords_spawns_known", False),
                                                                  routefile=area["routecalc"],
-                                                                 calctype=area.get("route_calc_algorithm", "optimized")
+                                                                 calctype=area.get("route_calc_algorithm", "optimized"),
+                                                                 S2level=mode_mapping.get(mode, {}).get("s2_cell_level", 30)
                                                                  )
 
             if mode not in ("iv_mitm", "idle"):

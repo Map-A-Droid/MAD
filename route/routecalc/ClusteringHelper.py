@@ -1,13 +1,17 @@
 from utils.collections import Relation
 from utils.geo import (get_distance_of_two_points_in_meters,
                        get_middle_of_coord_list)
+import s2sphere
+from utils.s2Helper import S2Helper
 
 
 class ClusteringHelper:
-    def __init__(self, max_radius, max_count_per_circle, max_timedelta_seconds):
+    def __init__(self, max_radius, max_count_per_circle, max_timedelta_seconds, useS2: bool=False, S2level: int = 30):
         self.max_radius = max_radius
         self.max_count_per_circle = max_count_per_circle
         self.max_timedelta_seconds = max_timedelta_seconds
+        self.useS2 = useS2
+        self.S2level = S2level
 
     def _get_relations_in_range_within_time(self, queue, max_radius):
         relations = {}
@@ -60,6 +64,9 @@ class ClusteringHelper:
                                                          latest_timestamp, max_radius):
         inside_circle = []
         highest_timedelta = 0
+        if self.useS2: 
+            region = s2sphere.CellUnion(S2Helper.get_S2cells_from_circle(middle.lat, middle.lng, self.max_radius, self.S2level))
+
         for event_relations in relations:
             # exclude previously clustered events...
             if len(event_relations) == 4 and event_relations[3]:
@@ -68,17 +75,19 @@ class ClusteringHelper:
             distance = get_distance_of_two_points_in_meters(middle.lat, middle.lng,
                                                             event_relations[1].lat,
                                                             event_relations[1].lng)
+            event_in_range = 0 <= distance <= max_radius
+            if self.useS2: event_in_range = region.contains(s2sphere.LatLng.from_degrees(event_relations[1].lat, event_relations[1].lng).to_point())
             # timedelta of event being inspected to the earliest timestamp
             timedelta_end = latest_timestamp - event_relations[0]
             timedelta_start = event_relations[0] - earliest_timestamp
-            if timedelta_end < 0 and 0 <= distance <= max_radius:
+            if timedelta_end < 0 and event_in_range:
                 # we found an event starting past the current latest timestamp, let's update the latest_timestamp
                 latest_timestamp_temp = latest_timestamp + abs(timedelta_end)
                 if latest_timestamp_temp - earliest_timestamp <= self.max_timedelta_seconds:
                     latest_timestamp = latest_timestamp_temp
                     highest_timedelta = highest_timedelta + abs(timedelta_end)
                     inside_circle.append(event_relations)
-            elif timedelta_start < 0 and 0 <= distance <= max_radius:
+            elif timedelta_start < 0 and event_in_range:
                 # we found an event starting before earliest_timestamp, let's check that...
                 earliest_timestamp_temp = earliest_timestamp - \
                     abs(timedelta_start)
@@ -87,7 +96,7 @@ class ClusteringHelper:
                     highest_timedelta = highest_timedelta + \
                         abs(timedelta_start)
                     inside_circle.append(event_relations)
-            elif timedelta_end >= 0 and timedelta_start >= 0 and 0 <= distance <= max_radius:
+            elif timedelta_end >= 0 and timedelta_start >= 0 and event_in_range:
                 # we found an event within our current timedelta and proximity, just append it to the list
                 inside_circle.append(event_relations)
 

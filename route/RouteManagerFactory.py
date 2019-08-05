@@ -5,17 +5,17 @@ from route.RouteManagerMon import RouteManagerMon
 from route.RouteManagerQuests import RouteManagerQuests
 from route.RouteManagerRaids import RouteManagerRaids
 
-
 class RouteManagerFactory:
     @staticmethod
     def get_routemanager(db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                          path_to_exclude_geofence: Optional[str], routefile: str, mode: Optional[str] = None,
                          init: bool = False, name: str="unknown", settings=None, coords_spawns_known: bool = False,
-                         level: bool = False, calctype: str = "optimized"):
+                         level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15 ):
         if mode == "raids_ocr" or mode == "raids_mitm":
             route_manager = RouteManagerRaids(db_wrapper, coords, max_radius, max_coords_within_radius,
                                               path_to_include_geofence, path_to_exclude_geofence, routefile,
-                                              mode=mode, settings=settings, init=init, name=name
+                                              mode=mode, settings=settings, init=init, name=name,
+                                              useS2=useS2, S2level=S2level
                                               )
         elif mode == "mon_mitm":
             route_manager = RouteManagerMon(db_wrapper, coords, max_radius, max_coords_within_radius,
