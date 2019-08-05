@@ -282,3 +282,16 @@ class S2Helper:
         #     origin, bearing)
         # return Location(destination.latitude, destination.longitude)
         return Location(destination.lat, destination.lon)
+
+    @staticmethod
+    # Returns a set of S2 cells within circle around position
+    def get_S2cells_from_circle(lat, lng, radius, level=15):
+        EARTH = 6371000
+        region = s2sphere.Cap.from_axis_angle(\
+            s2sphere.LatLng.from_degrees(lat, lng).to_point(), \
+            s2sphere.Angle.from_degrees(360*radius/(2*math.pi*EARTH)))
+        coverer = s2sphere.RegionCoverer()
+        coverer.min_level = level
+        coverer.max_level = level
+        cells = coverer.get_covering(region)
+        return cells 

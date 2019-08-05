@@ -11,7 +11,7 @@ from utils.logging import logger
 from .util import *
 
 
-def getLessCoords(npCoordinates, maxRadius, maxCountPerCircle):
+def getLessCoords(npCoordinates, maxRadius, maxCountPerCircle, useS2: bool=False, S2level: int=15):
     coordinates = []
     for coord in npCoordinates:
         coordinates.append(
@@ -19,7 +19,7 @@ def getLessCoords(npCoordinates, maxRadius, maxCountPerCircle):
         )
 
     clustering_helper = ClusteringHelper(max_radius=maxRadius, max_count_per_circle=maxCountPerCircle,
-                                         max_timedelta_seconds=0)
+                                         max_timedelta_seconds=0, useS2=useS2, S2level=S2level)
     clustered_events = clustering_helper.get_clustered(coordinates)
     # relations = __getRelationsInRange(coordinates, maxRadius)
     # summedUp = __sumUpRelations(relations, maxCountPerCircle, maxRadius)
@@ -33,8 +33,9 @@ def getLessCoords(npCoordinates, maxRadius, maxCountPerCircle):
     return coords_cleaned_up
 
 
-def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=1, algorithm='optimized'):
+def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=1, algorithm='optimized', useS2: bool = False, S2level: int=15):
     export_data = []
+    if useS2: logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
     if routefile is not None and os.path.isfile(routefile + '.calc'):
         logger.debug('Found existing routefile {}', routefile)
         with open(routefile + '.calc', 'r') as route:
@@ -52,7 +53,7 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
     if len(coords) > 1 and maxRadius and maxCoordsInRadius:
         logger.info("Calculating...")
 
-        newCoords = getLessCoords(coords, maxRadius, maxCoordsInRadius)
+        newCoords = getLessCoords(coords, maxRadius, maxCoordsInRadius, useS2, S2level)
         lessCoordinates = np.zeros(shape=(len(newCoords), 2))
         for i in range(len(lessCoordinates)):
             lessCoordinates[i][0] = newCoords[i][0]
