@@ -375,6 +375,10 @@ class WordToScreenMatching(object):
                 username_y = self._height / 2.224797219003476 + self._screenshot_y_offset
                 password_y = self._height / 1.875 + self._screenshot_y_offset
                 button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
+            elif float(self._ratio) < 1.7:
+                username_y = self._height / 2.224797219003476 + self._screenshot_y_offset
+                password_y = self._height / 1.875 + self._screenshot_y_offset
+                button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
 
             # username
             self._communicator.click(self._width / 2, username_y)
