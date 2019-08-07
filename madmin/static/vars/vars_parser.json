@@ -542,7 +542,7 @@
         {
           "name": "geofence_included",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "true",
             "empty": "null",
             "description": "Including geofence for scanarea"
@@ -551,7 +551,7 @@
         {
           "name": "geofence_excluded",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "false",
             "empty": "null",
             "description": "Excluding geofence for scanarea"
@@ -676,7 +676,7 @@
         {
           "name": "geofence_included",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "true",
             "empty": "null",
             "description": "Including geofence for scanarea"
@@ -685,7 +685,7 @@
         {
           "name": "geofence_excluded",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "false",
             "empty": "null",
             "description": "Excluding geofence for scanarea"
@@ -793,7 +793,7 @@
         {
           "name": "geofence_included",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "true",
             "empty": "null",
             "description": "Including geofence for scanarea"
@@ -802,7 +802,7 @@
         {
           "name": "geofence_excluded",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "false",
             "empty": "null",
             "description": "Excluding geofence for scanarea"
@@ -910,7 +910,7 @@
         {
           "name": "geofence_included",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "true",
             "empty": "null",
             "description": "Including geofence for scanarea"
@@ -919,7 +919,7 @@
         {
           "name": "geofence_excluded",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "false",
             "empty": "null",
             "description": "Excluding geofence for scanarea"
@@ -1024,7 +1024,7 @@
         {
           "name": "geofence_included",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "true",
             "empty": "null",
             "description": "Including geofence for scanarea"
@@ -1058,7 +1058,7 @@
         {
           "name": "geofence_included",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "true",
             "empty": "null",
             "description": "Including geofence for scanarea"
@@ -1067,7 +1067,7 @@
         {
           "name": "geofence_excluded",
           "settings": {
-            "type": "text",
+            "type": "fenceselect",
             "require": "false",
             "empty": "null",
             "description": "Excluding geofence for scanarea"
