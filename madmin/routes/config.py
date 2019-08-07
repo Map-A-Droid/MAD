@@ -43,6 +43,7 @@ class config(object):
             ("/addedit", self.addedit),
             ("/settings", self.settings),
             ("/settings/devices", self.settings_devices),
+            ("/settings/shared", self.settings_shared),
             ("/settings/set_device_walker", self.set_device_walker),
             ("/reload", self.reload)
         ]
@@ -877,13 +878,62 @@ class config(object):
                                    subtab="devices",
                                    walker=mappings["walker"],
                                    pools=mappings["devicesettings"],
-                                   settings_vars=settings_vars["devices"],
-                                   responsive=str(self._args.madmin_noresponsive).lower())
+                                   settings_vars=settings_vars["devices"])
 
         return render_template('settings_devices.html',
                                mappings=mappings,
-                               subtab="devices",
-                               responsive=str(self._args.madmin_noresponsive).lower())
+                               subtab="devices")
+
+    @logger.catch
+    @auth_required
+    def settings_shared(self):
+        with open(self._args.mappings) as f:
+            mappings = json.load(f)
+
+        sharedsettingname = request.args.get("setting", None)
+        if request.method == 'POST':
+            for key, val in enumerate(mappings["devicesettings"]):
+                device = mappings["devicesettings"][key]
+
+                if device["devicepool"] != sharedsettingname:
+                    continue
+
+                for entry in request.form:
+                    value = request.form[entry]
+
+                    if value == "None":
+                        value = None
+
+                    if entry.startswith("field."):
+                        name = entry.split("field.", 1)[1]
+                        mappings["devicesettings"][key][name] = value
+                    else:
+                        mappings["devicesettings"][key]["settings"][entry] = value
+
+            with open(self._args.mappings, 'w') as outfile:
+                json.dump(mappings, outfile, indent=4, sort_keys=True)
+
+            return redirect("/{}/settings/shared?setting={}".format(self._args.madmin_base_path, sharedsettingname), code=302)
+
+        if sharedsettingname is not None:
+            sharedsetting = None
+            for key, val in enumerate(mappings["devicesettings"]):
+                tmpsetting = mappings["devicesettings"][key]
+
+                if tmpsetting["devicepool"] == sharedsettingname:
+                    sharedsetting = tmpsetting
+
+            with open('madmin/static/vars/vars_parser.json') as f:
+                settings_vars = json.load(f)
+
+            return render_template("settings_singlesharedsetting.html",
+                                   subtab="sharedsettings",
+                                   settings_vars=settings_vars["devices"],
+                                   sharedsetting=sharedsetting)
+
+        return render_template("settings_sharedsettings.html",
+                               subtab="sharedsettings",
+                               mappings=mappings)
 
     @logger.catch
     @auth_required
