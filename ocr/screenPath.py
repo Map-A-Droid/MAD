@@ -235,7 +235,7 @@ class WordToScreenMatching(object):
                 username = ggl_login.username
 
             if self.parse_ggl(self._communicator.uiautomator(), username):
-                time.sleep(25)
+                time.sleep(40)
                 return ScreenType.GGL
             return ScreenType.ERROR
 
@@ -396,7 +396,7 @@ class WordToScreenMatching(object):
 
             # button
             self._communicator.click(self._width / 2, button_y)
-            time.sleep(25)
+            time.sleep(40)
             return ScreenType.PTC
 
         elif ScreenType(returntype) == ScreenType.FAILURE:
