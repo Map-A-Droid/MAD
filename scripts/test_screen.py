@@ -62,7 +62,7 @@ class testimage(object):
                                                      #2.20, 3.01)
 
         if self._mode == "check_button_small":
-            self._image_check = self.look_for_button(self._image, 2.20, 3.01, upper=False)
+            self._image_check = self.look_for_button(self._image, 2.20, 3.01, upper=True)
 
         if self._mode == "find_pokeball":
             self._image_check = self.find_pokeball(self._image)
@@ -265,6 +265,7 @@ class testimage(object):
             line = [line]
             for x1, y1, x2, y2 in line:
                 if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength \
+                    and y1 > height / 3 \
                         and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
                     lineCount += 1
                     disToMiddleMin_temp = y1 - (height/2)
