@@ -131,7 +131,7 @@ class MITMBase(WorkerBase):
                 logger.error("Worker {} not get injected in time - reboot", str(self._id))
                 self._reboot(self._mitm_mapper)
                 return False
-            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {})", str(self._id), str(self._not_injected_count))
             if self._not_injected_count in [3, 6, 9, 15]:
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                         str(self._id), str(self._not_injected_count))
