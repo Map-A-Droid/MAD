@@ -322,7 +322,8 @@ class MappingManager:
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),
                                              init=area.get("init", False),
-                                             range_init=mode_mapping.get(area["mode"], {}).get("range_init", 630))
+                                             range_init=mode_mapping.get(area["mode"], {}).get("range_init", 630),
+                                             including_stops=area.get("including_stops", False))
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area["mode"]]["range"]
                 max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
@@ -399,13 +400,15 @@ class MappingManager:
         return devices
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
-                       init: bool = False, range_init: int = 630) -> List[Location]:
+                       init: bool = False, range_init: int = 630, including_stops: bool = False) -> List[Location]:
         coords: List[Location] = []
         if mode == "raids_ocr" or not init:
             # grab data from DB depending on mode
             # TODO: move routemanagers to factory
             if mode == "raids_ocr" or mode == "raids_mitm":
                 coords = self.__db_wrapper.gyms_from_db(geofence_helper)
+                if including_stops:
+                    coords.extend(self.__db_wrapper.stops_from_db(geofence_helper))
             elif mode == "mon_mitm":
                 if coords_spawns_known:
                     logger.debug("Reading known Spawnpoints from DB")

@@ -932,6 +932,15 @@
             "require": "true",
             "description": "Name of routefile"
           }
+        },
+        {
+          "name": "including_stops",
+          "settings": {
+            "type": "option",
+            "require": "true",
+            "values": "false|true",
+            "description": "Calculate route including stops to catch invasions."
+          }
         }
       ],
       "settings": [
