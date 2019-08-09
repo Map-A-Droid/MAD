@@ -695,8 +695,7 @@ class WorkerQuests(MITMBase):
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
-            if self._rocket:
-                self.process_rocket()
+            self.process_rocket()
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.error('Box is full ... Next round!')
                 self.clear_thread_task = 1
@@ -809,17 +808,14 @@ class WorkerQuests(MITMBase):
         return LatestReceivedType.UNDEFINED
 
     def process_rocket(self):
-        logger.info('Closing Rocket Dialog')
-        time.sleep(2)
-        self._checkPogoClose()
-        time.sleep(4)
-        self._communicator.click(300, 300)
-        time.sleep(4)
-        self._communicator.click(300, 300)
-        time.sleep(4)
-        self._communicator.click(300, 300)
-        time.sleep(4)
-        self._communicator.click(300, 300)
-        time.sleep(4)
+        logger.debug('Closing Rocket Dialog')
+        self._communicator.click(100, 100)
+        time.sleep(.5)
+        self._communicator.click(100, 100)
+        time.sleep(.5)
+        self._communicator.click(100, 100)
+        time.sleep(.5)
+        self._communicator.click(100, 100)
+        time.sleep(.5)
         self._checkPogoClose()
 
