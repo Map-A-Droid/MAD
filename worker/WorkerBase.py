@@ -266,7 +266,7 @@ class WorkerBase(ABC):
             # logger.debug("main: Current time - lastPogoRestart: {}", str(curTime - lastPogoRestart))
             # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
             if self._location_count > restart_pogo_setting:
-                logger.error(
+                logger.info(
                         "scanned " + str(restart_pogo_setting) + " locations, restarting pogo")
                 pogo_started = self._restart_pogo()
                 self._location_count = 0
