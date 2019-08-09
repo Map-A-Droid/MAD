@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2019-06-07 21:26+0200\n"
+"POT-Creation-Date: 2019-07-29 20:56+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -54,7 +54,7 @@ msgstr ""
 msgid "Spin {0} Pokestops or Gyms."
 msgstr ""
 
-msgid "Spin {0} never visited Pokestops or Gyms."
+msgid "Spin {0} Pokestops you haven't visited before"
 msgstr ""
 
 msgid "Hatch {0} Eggs."

@@ -1,17 +1,18 @@
 import json
+import os
 from typing import List, Optional
 
-from flask import (jsonify, render_template, request)
+from flask import (jsonify, render_template, request, redirect)
 from flask_caching import Cache
 
 from db.dbWrapperBase import DbWrapperBase
-from madmin.functions import auth_required, getCoordFloat, getBoundParameter
+from madmin.functions import auth_required, getCoordFloat, getBoundParameter, getBasePath
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.gamemechanicutil import get_raid_boss_cp
-from utils.language import i8ln
 from utils.questGen import generate_quest
 from utils.s2Helper import S2Helper
+from utils.logging import logger
 from pathlib import Path
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
@@ -43,7 +44,8 @@ class map(object):
             ("/get_gymcoords", self.get_gymcoords),
             ("/get_quests", self.get_quests),
             ("/get_map_mons", self.get_map_mons),
-            ("/get_cells", self.get_cells)
+            ("/get_cells", self.get_cells),
+            ("/savefence", self.savefence),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -343,3 +345,27 @@ class map(object):
             })
 
         return jsonify(ret)
+
+    @logger.catch()
+    @auth_required
+    def savefence(self):
+        name = request.args.get('name', False)
+        coords = request.args.get('coords', False)
+
+        if not name and not coords:
+            return redirect(getBasePath(request) + "/map", code=302)
+
+        coords_split = coords.split("|")
+        geofence_file_path = self._args.geofence_file_path
+
+        file = open(os.path.join(geofence_file_path, (str(name) + ".txt")), "a")
+        file.write("[" + str(name) + "]\n")
+        for i in range(len(coords_split)):
+            file.write(str(coords_split[i]) + "\n")
+
+        file.close()
+
+        return redirect(getBasePath(request) + "/map", code=302)
+
+
+

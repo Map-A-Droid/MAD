@@ -112,13 +112,13 @@ class MITMBase(WorkerBase):
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
                         and self.get_devicesettings_value("reboot", False):
-                    logger.error("Rebooting {}", str(self._id))
+                    logger.error("To much timeouts - Rebooting {}", str(self._id))
                     self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
 
                 # self._mitm_mapper.
                 self._restart_count = 0
-                logger.error("Restarting Pogo {}", str(self._id))
+                logger.error("To much timeouts - Restarting Pogo  {}", str(self._id))
                 self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()
@@ -127,12 +127,15 @@ class MITMBase(WorkerBase):
     def _wait_for_injection(self):
         self._not_injected_count = 0
         while not self._mitm_mapper.get_injection_status(self._id):
-            self._check_ggl_login()
             if self._not_injected_count >= 20:
                 logger.error("Worker {} not get injected in time - reboot", str(self._id))
                 self._reboot(self._mitm_mapper)
                 return False
-            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {})", str(self._id), str(self._not_injected_count))
+            if self._not_injected_count in [3, 6, 9, 15]:
+                logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
+                        str(self._id), str(self._not_injected_count))
+                self._check_windows()
             if self._stop_worker_event.isSet():
                 logger.error("Worker {} get killed while waiting for injection", str(self._id))
                 return False

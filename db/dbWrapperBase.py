@@ -340,6 +340,13 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
+    def submit_gym_proto(self, origin, map_proto):
+        """
+        Update gyms from a map_proto dict
+        """
+        pass
+
+    @abstractmethod
     def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
         """
         Update/Insert raids from a map_proto dict
@@ -428,6 +435,10 @@ class DbWrapperBase(ABC):
 
     @abstractmethod
     def get_best_pokemon_spawns(self):
+        pass
+
+    @abstractmethod
+    def statistics_get_shiny_stats(self):
         pass
 
     @abstractmethod
@@ -1361,8 +1372,8 @@ class DbWrapperBase(ABC):
 
     def submit_stats_detections_raw(self, data):
         query_status = (
-            "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, timestamp_scan) "
-            "VALUES (%s, %s, %s, %s, %s) "
+            "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
         )
         self.executemany(query_status, data, commit=True)
         return True
@@ -1632,3 +1643,16 @@ class DbWrapperBase(ABC):
             })
 
         return cells
+
+    def statistics_get_shiny_stats_hour(self):
+        logger.debug('Fetching shiny pokemon stats from db')
+        query = (
+            "SELECT hour(FROM_UNIXTIME(timestamp_scan)) as hour, type_id FROM trs_stats_detect_raw where "
+            "is_shiny=1 group by type_id, hour ORDER BY hour ASC"
+        )
+
+        res = self.execute(query)
+
+        return res
+
+

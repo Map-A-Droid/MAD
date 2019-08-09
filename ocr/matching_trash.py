@@ -43,10 +43,10 @@ def trash_image_matching(screen_img):
         sc_till = 1
     elif width == 1080:
         sc_from = 0.5
-        sc_till = 0.9
+        sc_till = 1.2
     elif width == 720:
-        sc_from = 0.5
-        sc_till = 0.7
+        sc_from = 0.3
+        sc_till = 0.9
     elif width == 1440:
         sc_from = 0.5
         sc_till = 1.5
@@ -66,7 +66,7 @@ def trash_image_matching(screen_img):
         loc = np.where(res >= threshold)
         boxcount = 0
         for pt in zip(*loc[::-1]):
-            if pt[0] > width/4*3 and pt[1] < height/5*4:
+            if pt[0] > width/4*3 and pt[1] < height/6*5:
                 x_coord = int(pt[0] + tW / 2)
                 y_coord = int(pt[1] + tH / 2)
 

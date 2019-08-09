@@ -10,21 +10,21 @@ CREATE TABLE `gomap` (
 
 CREATE TABLE `gym` (
   `gym_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `team_id` smallint(6) NOT NULL,
-  `guard_pokemon_id` smallint(6) NOT NULL,
-  `slots_available` smallint(6) NOT NULL,
-  `enabled` tinyint(1) NOT NULL,
+  `team_id` smallint(6) NOT NULL DEFAULT 0,
+  `guard_pokemon_id` smallint(6) NOT NULL DEFAULT 0,
+  `slots_available` smallint(6) NOT NULL DEFAULT 6,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
   `latitude` double NOT NULL,
   `longitude` double NOT NULL,
-  `total_cp` smallint(6) NOT NULL,
-  `is_in_battle` tinyint(1) NOT NULL,
+  `total_cp` smallint(6) NOT NULL DEFAULT 0,
+  `is_in_battle` tinyint(1) NOT NULL DEFAULT 0,
   `gender` smallint(6) DEFAULT NULL,
   `form` smallint(6) DEFAULT NULL,
   `costume` smallint(6) DEFAULT NULL,
   `weather_boosted_condition` smallint(6) DEFAULT NULL,
   `shiny` tinyint(1) DEFAULT NULL,
-  `last_modified` datetime NOT NULL,
-  `last_scanned` datetime NOT NULL,
+  `last_modified` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `last_scanned` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`gym_id`),
   KEY `gym_last_modified` (`last_modified`),
   KEY `gym_last_scanned` (`last_scanned`),
@@ -37,7 +37,7 @@ CREATE TABLE `gymdetails` (
   `name` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
   `description` longtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
   `url` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_scanned` datetime NOT NULL,
+  `last_scanned` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`gym_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
@@ -171,10 +171,10 @@ CREATE TABLE `pokemon` (
 
 CREATE TABLE `pokestop` (
   `pokestop_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `enabled` tinyint(1) NOT NULL,
+  `enabled` tinyint(1) NOT NULL DEFAULT 1,
   `latitude` double NOT NULL,
   `longitude` double NOT NULL,
-  `last_modified` datetime NOT NULL,
+  `last_modified` datetime DEFAULT CURRENT_TIMESTAMP,
   `lure_expiration` datetime DEFAULT NULL,
   `active_fort_modifier` smallint(6) DEFAULT NULL,
   `last_updated` datetime DEFAULT NULL,

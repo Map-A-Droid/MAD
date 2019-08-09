@@ -42,6 +42,21 @@ class RmWrapper(DbWrapperBase):
                 "table": "gym",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_start",
+                "ctype": "datetime NULL"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_expiration",
+                "ctype": "datetime NULL"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_grunt_type",
+                "ctype": "smallint(1) NULL"
             }
         ]
 
@@ -675,11 +690,12 @@ class RmWrapper(DbWrapperBase):
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
         encounter_id = wild_pokemon['encounter_id']
+        shiny = wild_pokemon['pokemon_data']['display'].get('is_shiny', 0)
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
-        mitm_mapper.collect_mon_iv_stats(origin, encounter_id)
+        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if getdetspawntime is None:
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
@@ -713,7 +729,7 @@ class RmWrapper(DbWrapperBase):
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form)"
+            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id)"
         )
 
         vals = (
@@ -819,11 +835,12 @@ class RmWrapper(DbWrapperBase):
 
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "last_updated, active_fort_modifier) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+            "last_updated, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "active_fort_modifier=VALUES(active_fort_modifier) "
+            "active_fort_modifier=VALUES(active_fort_modifier), incident_start=VALUES(incident_start), "
+            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type)"
         )
 
         for cell in cells:
@@ -859,7 +876,8 @@ class RmWrapper(DbWrapperBase):
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
             "VALUES (%s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned)"
+            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
+            "url=IF(VALUES(url) IS NOT NULL AND VALUES(url) <> '', VALUES(url), url)"
         )
 
         for cell in cells:
@@ -897,6 +915,44 @@ class RmWrapper(DbWrapperBase):
         self.executemany(query_gym, gym_args, commit=True)
         self.executemany(query_gym_details, gym_details_args, commit=True)
         logger.debug("{}: submit_gyms done", str(origin))
+        return True
+
+    def submit_gym_proto(self, origin, map_proto):
+        logger.debug("Updating gym sent by {}", str(origin))
+        if map_proto.get("result", 0) != 1:
+            return False
+        status = map_proto.get("gym_status_and_defenders", None)
+        if status is None:
+            return False
+        fort_proto = status.get("pokemon_fort_proto", None)
+        if fort_proto is None:
+            return False
+        gym_id = fort_proto["id"]
+        name = map_proto["name"]
+        description = map_proto["description"]
+        url = map_proto["url"]
+
+        set_keys = []
+        vals = []
+
+        if name is not None and name != "":
+            set_keys.append("name=%s")
+            vals.append(name)
+        if description is not None and description != "":
+            set_keys.append("description=%s")
+            vals.append(description)
+        if url is not None and url != "":
+            set_keys.append("url=%s")
+            vals.append(url)
+
+        if len(set_keys) == 0:
+            return False
+
+        query = "UPDATE gymdetails SET " + ",".join(set_keys) + " WHERE gym_id = %s"
+        vals.append(gym_id)
+
+        self.execute((query), tuple(vals), commit=True)
+
         return True
 
     def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
@@ -1086,18 +1142,33 @@ class RmWrapper(DbWrapperBase):
         if stop_data['type'] != 1:
             logger.warning("{} is not a pokestop", str(stop_data))
             return None
+
         now = datetime.utcfromtimestamp(
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
         last_modified = datetime.utcfromtimestamp(
             stop_data['last_modified_timestamp_ms'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
-        # lure isn't present anymore...
         lure = '1970-01-01 00:00:00'
         active_fort_modifier = None
+        incident_start = None
+        incident_expiration = None
+        incident_grunt_type = None
+
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
             lure = datetime.utcfromtimestamp(30 * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
 
-        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier
+        if "pokestop_display" in stop_data:
+            start_ms = stop_data["pokestop_display"]["incident_start_ms"]
+            expiration_ms = stop_data["pokestop_display"]["incident_expiration_ms"]
+            incident_grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
+
+            if start_ms > 0:
+                incident_start = datetime.utcfromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+            if expiration_ms > 0:
+                incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
         now = datetime.utcfromtimestamp(
@@ -1233,9 +1304,10 @@ class RmWrapper(DbWrapperBase):
     def get_stops_changed_since(self, timestamp):
         query = (
             "SELECT pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier, "
-            "last_modified, last_updated "
+            "last_modified, last_updated, incident_start, incident_expiration, incident_grunt_type "
             "FROM pokestop "
-            "WHERE DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 AND last_updated >= %s"
+            "WHERE last_updated >= %s AND (DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 OR "
+            "incident_start IS NOT NULL)"
         )
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -1243,17 +1315,21 @@ class RmWrapper(DbWrapperBase):
 
         ret = []
         for (pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier,
-                last_modified, last_updated) in res:
+                last_modified, last_updated, incident_start, incident_expiration, incident_grunt_type) in res:
+
             ret.append({
                 'pokestop_id': pokestop_id,
                 'latitude': latitude,
                 'longitude': longitude,
-                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()),
+                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()) if lure_expiration is not None else None,
                 'name': name,
                 'image': image,
                 'active_fort_modifier': active_fort_modifier,
-                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
-                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp())
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()) if last_modified is not None else None,
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()) if last_updated is not None else None,
+                "incident_start": int(incident_start.replace(tzinfo=timezone.utc).timestamp()) if incident_start is not None else None,
+                "incident_expiration": int(incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if incident_expiration is not None else None,
+                "incident_grunt_type": incident_grunt_type
             })
 
         return ret
@@ -1705,3 +1781,18 @@ class RmWrapper(DbWrapperBase):
             })
 
         return mons
+
+    def statistics_get_shiny_stats(self):
+        logger.debug('Fetching shiny pokemon stats from db')
+        query = (
+            "SELECT (select count(DISTINCT encounter_id) from pokemon inner join trs_stats_detect_raw on "
+            "trs_stats_detect_raw.type_id=pokemon.encounter_id where pokemon.pokemon_id=a.pokemon_id and "
+            "trs_stats_detect_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT encounter_id), a.pokemon_id,"
+            "b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'), a.form "
+            "FROM pokemon a left join trs_stats_detect_raw b on a.encounter_id=CAST(b.type_id as unsigned int) where b.is_shiny=1 group by "
+            "b.is_shiny, a.pokemon_id, a.form, b.worker order by a.pokemon_id"
+        )
+
+        res = self.execute(query)
+
+        return res

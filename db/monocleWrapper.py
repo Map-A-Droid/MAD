@@ -2,7 +2,7 @@ import calendar
 import shutil
 import sys
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from functools import reduce
 from multiprocessing.managers import SyncManager
 from typing import List, Optional
@@ -51,6 +51,25 @@ class MonocleWrapper(DbWrapperBase):
                 "table": "sightings",
                 "column": "height",
                 "ctype": "float NULL"
+            },
+            {
+                "table": "pokestops",
+                "column": "incident_start",
+                "ctype": "int(11) NULL"
+            },
+            {
+                "table": "pokestops",
+                "column": "incident_expiration",
+                "ctype": "int(11) NULL"
+            },            {
+                "table": "pokestops",
+                "column": "last_modified",
+                "ctype": "int(11) NULL"
+            },
+            {
+                "table": "pokestops",
+                "column": "incident_grunt_type",
+                "ctype": "smallint(1) NULL"
             }
         ]
 
@@ -254,7 +273,7 @@ class MonocleWrapper(DbWrapperBase):
                     "VALUES (%s, %s, %s, %s, %s, %s, %s)"
 
                 )
-                vals = (gym, lvl, int(float(capture_time)), 
+                vals = (gym, lvl, int(float(capture_time)),
                         start, end, pkm)
 
             self.execute(query, vals, commit=True)
@@ -620,18 +639,22 @@ class MonocleWrapper(DbWrapperBase):
             "VALUES(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), atk_iv=VALUES(atk_iv), def_iv=VALUES(def_iv), "
             "sta_iv=VALUES(sta_iv), move_1=VALUES(move_1), move_2=VALUES(move_2), cp=VALUES(cp), "
-            "level=VALUES(level), weight=VALUES(weight), costume=VALUES(costume), height=VALUES(height)"
+            "level=VALUES(level), weight=VALUES(weight), costume=VALUES(costume), height=VALUES(height), "
+            "weather_boosted_condition=VALUES(weather_boosted_condition), form=VALUES(form), "
+            "gender=VALUES(gender), pokemon_id=VALUES(pokemon_id)"
         )
 
         encounter_id = wild_pokemon['encounter_id']
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
-        mitm_mapper.collect_mon_iv_stats(origin, str(encounter_id))
 
         latitude = wild_pokemon.get("latitude")
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
+        shiny = wild_pokemon['pokemon_data']['display']['is_shiny']
+
+        mitm_mapper.collect_mon_iv_stats(origin, str(encounter_id), shiny)
 
         if pokemon_data.get("cp_multiplier") < 0.734:
             pokemon_level = (58.35178527 * pokemon_data.get("cp_multiplier") * pokemon_data.get("cp_multiplier") -
@@ -768,10 +791,12 @@ class MonocleWrapper(DbWrapperBase):
             return False
 
         query_pokestops = (
-            "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s)"
+            "INSERT INTO pokestops (external_id, lat, lon, name, url, updated, expires, last_modified, "
+            "incident_start, incident_expiration, incident_grunt_type) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE updated=VALUES(updated), expires=VALUES(expires), "
-            "lat=VALUES(lat), lon=VALUES(lon)"
+            "lat=VALUES(lat), lon=VALUES(lon), last_modified=VALUES(last_modified), incident_start=VALUES(incident_start), "
+            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type)"
         )
 
         list_of_pokestops = []
@@ -788,7 +813,9 @@ class MonocleWrapper(DbWrapperBase):
                     list_of_pokestops.append((external_id, list_of_stops_vals[1],
                                               list_of_stops_vals[2], list_of_stops_vals[3],
                                               list_of_stops_vals[4], list_of_stops_vals[5],
-                                              list_of_stops_vals[6]))
+                                              list_of_stops_vals[6], list_of_stops_vals[7],
+                                              list_of_stops_vals[8], list_of_stops_vals[9],
+                                              list_of_stops_vals[10]))
 
         self.executemany(query_pokestops, list_of_pokestops, commit=True)
 
@@ -857,6 +884,40 @@ class MonocleWrapper(DbWrapperBase):
         self.executemany(query_forts, vals_forts, commit=True)
         self.executemany(query_fort_sightings,
                          vals_fort_sightings, commit=True)
+        return True
+
+    def submit_gym_proto(self, origin, map_proto):
+        logger.debug("Updating gym sent by {}", str(origin))
+        if map_proto.get("result", 0) != 1:
+            return False
+        status = map_proto.get("gym_status_and_defenders", None)
+        if status is None:
+            return False
+        fort_proto = status.get("pokemon_fort_proto", None)
+        if fort_proto is None:
+            return False
+        gym_id = fort_proto["id"]
+        name = map_proto["name"]
+        url = map_proto["url"]
+
+        set_keys = []
+        vals = []
+
+        if name is not None and name != "":
+            set_keys.append("name=%s")
+            vals.append(name)
+        if url is not None and url != "":
+            set_keys.append("url=%s")
+            vals.append(url)
+
+        if len(set_keys) == 0:
+            return False
+
+        query = "UPDATE forts SET " + ",".join(set_keys) + " WHERE external_id = %s"
+        vals.append(gym_id)
+
+        self.execute((query), tuple(vals), commit=True)
+
         return True
 
     def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
@@ -1048,14 +1109,28 @@ class MonocleWrapper(DbWrapperBase):
             logger.warning("{} is not a pokestop", str(stop_data))
             return None
 
-        now = int(time.time())
-        # lure = int(float(stop_data['lure_expires']))
+        now = time.time()
         lure = 0
-        if lure > 0:
-            lure = lure / 1000
+
+        last_modified = int(stop_data['last_modified_timestamp_ms']/1000)
+        incident_start = None
+        incident_expiration = None
+        incident_grunt_type = None
+
+        if "pokestop_display" in stop_data:
+            start_ms = stop_data["pokestop_display"]["incident_start_ms"]
+            expiration_ms = stop_data["pokestop_display"]["incident_expiration_ms"]
+            incident_grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
+            if start_ms > 0:
+                incident_start = start_ms / 1000
+
+            if expiration_ms > 0:
+                incident_expiration = expiration_ms / 1000
+
         return (
             stop_data['id'], stop_data['latitude'], stop_data['longitude'], "unknown",
-            stop_data['image_url'], now, lure
+            stop_data['image_url'], now, lure, last_modified,
+            incident_start, incident_expiration, incident_grunt_type
         )
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
@@ -1324,6 +1399,7 @@ class MonocleWrapper(DbWrapperBase):
 
         for (name, url, external_id, team, guard_pokemon_id, slots_available,
                 lat, lon, is_in_battle, updated, is_ex_raid_eligible) in res:
+            # TODO Check if the update should be last_modified from protos
             ret.append({
                 "gym_id": external_id,
                 "team_id": team,
@@ -1343,7 +1419,36 @@ class MonocleWrapper(DbWrapperBase):
     def get_stops_changed_since(self, timestamp):
         # no lured support for monocle now!
 
+        query = (
+            "SELECT external_id, lat, lon, name, url, "
+            "updated, expires, incident_start, incident_expiration, last_modified, incident_grunt_type from pokestops  "
+            "WHERE updated >= %s AND expires > %s OR "
+            "incident_start IS NOT NULL"
+        )
+
+        logger.debug('Pokestop query for webhook {}'.format(query))
+
+        res = self.execute(query, (timestamp, timestamp,))
+
         ret = []
+
+        for (external_id, latitude, longitude, name, image,
+                last_updated, lure_expiration, incident_start, incident_expiration, last_modified, incident_grunt_type) in res:
+
+            ret.append({
+                'pokestop_id': external_id,
+                'latitude': latitude,
+                'longitude': longitude,
+                'lure_expiration': lure_expiration,
+                'name': name,
+                'image': image,
+                "last_updated": last_updated if last_updated is not None else None,
+                "last_modified": last_modified if last_modified is not None else None,
+                "incident_start": incident_start if incident_start is not None else None,
+                "incident_expiration": incident_expiration if incident_expiration is not None else None,
+                "incident_grunt_type": incident_grunt_type
+            })
+
         return ret
 
     def __extract_args_single_pokestop_details(self, stop_data):
@@ -1596,4 +1701,22 @@ class MonocleWrapper(DbWrapperBase):
             })
 
         return mons
+
+    def statistics_get_shiny_stats(self):
+        logger.debug('Fetching shiny pokemon stats from db')
+
+        query = (
+            "SELECT (select count(encounter_id) from sightings inner join trs_stats_detect_raw on "
+            "trs_stats_detect_raw.type_id=sightings.encounter_id where sightings.pokemon_id=a.pokemon_id and "
+            "trs_stats_detect_raw.worker=b.worker and sightings.form=a.form), count(DISTINCT encounter_id), "
+            "a.pokemon_id, b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'),"
+            " a.form "
+            "FROM sightings a left join trs_stats_detect_raw b on a.encounter_id=b.type_id where b.is_shiny=1 group by "
+            "b.is_shiny, a.pokemon_id, a.form, b.worker order by a.pokemon_id"
+        )
+
+        res = self.execute(query)
+
+        return res
+
 

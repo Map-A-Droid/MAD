@@ -58,11 +58,11 @@ class testimage(object):
             self._image_check = self.get_gym_click_coords(self._image)
 
         if self._mode == "check_button_big":
-            self._image_check = self.look_for_button(self._image, 1.05, 2.20)
+            self._image_check = self.look_for_button(self._image, 1.05, 2.20, upper=False)
                                                      #2.20, 3.01)
 
         if self._mode == "check_button_small":
-            self._image_check = self.look_for_button(self._image, 2.20, 3.01)
+            self._image_check = self.look_for_button(self._image, 2.20, 3.01, upper=True)
 
         if self._mode == "find_pokeball":
             self._image_check = self.find_pokeball(self._image)
@@ -142,6 +142,7 @@ class testimage(object):
         print('Opening gym')
         x, y = self._resocalc.get_gym_click_coords(
             self)[0], self._resocalc.get_gym_click_coords(self)[1]
+        print (x,y)
         return cv2.circle(image, (int(x), int(y)), 20, (0, 0, 255), -1)
 
     def find_pokeball(self, image):
@@ -193,8 +194,8 @@ class testimage(object):
         mainscreen = 0
 
         height, width, _ = image.shape
-        gray = image[int(height) - int(round(height / 5)):int(height),
-                     0: int(int(width) / 4)]
+        gray = image[int(height) - int(round(height / 6)):int(height),
+                     0: int(int(width) / 3)]
         original = gray
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
@@ -221,7 +222,7 @@ class testimage(object):
             return True
         return False
 
-    def look_for_button(self, filename, ratiomin, ratiomax):
+    def look_for_button(self, filename, ratiomin, ratiomax, upper: bool = False):
         print("lookForButton: Reading lines")
         disToMiddleMin = None
         gray = cv2.cvtColor(filename, cv2.COLOR_BGR2GRAY)
@@ -253,7 +254,7 @@ class testimage(object):
         _x = 0
         _y = height
         lines = cv2.HoughLinesP(edges, rho=1, theta=math.pi / 180, threshold=70, minLineLength=minLineLength,
-                                maxLineGap=2)
+                                maxLineGap=5)
         if lines is None:
             return False
 
@@ -263,14 +264,30 @@ class testimage(object):
         for line in lines:
             line = [line]
             for x1, y1, x2, y2 in line:
-                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength and \
-                        y1 > (height / 2) \
-                        and (x2-x1)/2 + x1 < width/2+50 and (x2 - x1)/2+x1 > width/2-50:
+                if y1 == y2 and x2 - x1 <= maxLineLength and x2 - x1 >= minLineLength \
+                    and y1 > height / 3 \
+                        and (x2 - x1) / 2 + x1 < width / 2 + 50 and (x2 - x1) / 2 + x1 > width / 2 - 50:
                     lineCount += 1
-                    click_y = _last_y + ((y1 - _last_y) / 2)
-                    _last_y = y1
-                    _x1 = x1
-                    _x2 = x2
+                    disToMiddleMin_temp = y1 - (height/2)
+                    if upper:
+                        if disToMiddleMin is None:
+                            disToMiddleMin = disToMiddleMin_temp
+                            click_y = y1 + 50
+                            _last_y = y1
+                            _x1 = x1
+                            _x2 = x2
+                        else:
+                            if disToMiddleMin_temp < disToMiddleMin:
+                                click_y = _last_y + ((y1 - _last_y) / 2)
+                                _last_y = y1
+                                _x1 = x1
+                                _x2 = x2
+
+                    else:
+                        click_y = _last_y + ((y1 - _last_y) / 2)
+                        _last_y = y1
+                        _x1 = x1
+                        _x2 = x2
 
                     print("lookForButton: Found Buttonline Nr. " + str(lineCount) + " - Line lenght: " + str(
                         x2 - x1) + "px Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2))

@@ -40,6 +40,7 @@ class control(object):
             ("/swipe_screenshot", self.swipe_screenshot),
             ("/quit_pogo", self.quit_pogo),
             ("/restart_phone", self.restart_phone),
+            ("/clear_game_data", self.clear_game_data),
             ("/send_gps", self.send_gps),
             ("/send_text", self.send_text),
             ("/send_command", self.send_command)
@@ -241,6 +242,24 @@ class control(object):
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reboot()
         return redirect(getBasePath(request) + '/phonecontrol')
+
+    @auth_required
+    def clear_game_data(self):
+        origin = request.args.get('origin')
+        useadb = request.args.get('adb')
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+
+        adb = devicemappings.get(origin, {}).get('adb', False)
+        self._logger.info('MADmin: Clear game data for phone ({})', str(origin))
+        if (useadb == 'True' and
+                self._adb_connect.send_shell_command(
+                        adb, origin, "pm clear com.nianticlabs.pokemongo")):
+            self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+        else:
+            temp_comm = self._ws_server.get_origin_communicator(origin)
+            temp_comm.resetAppdata("com.nianticlabs.pokemongo")
+        return redirect(getBasePath(request) + '/phonecontrol')
+
 
     @auth_required
     def send_gps(self):

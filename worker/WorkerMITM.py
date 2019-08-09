@@ -114,7 +114,6 @@ class WorkerMITM(MITMBase):
 
     def _pre_work_loop(self):
         logger.info("MITM worker starting")
-        self._check_ggl_login()
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
@@ -131,8 +130,8 @@ class WorkerMITM(MITMBase):
 
         cur_time = time.time()
         start_result = False
+        self._mitm_mapper.set_injection_status(self._id, False)
         while not pogo_topmost:
-            self._mitm_mapper.set_injection_status(self._id, False)
             start_result = self._communicator.startApp(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
@@ -147,6 +146,8 @@ class WorkerMITM(MITMBase):
             reached_raidtab = True
 
         self._wait_pogo_start_delay()
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
 
         return reached_raidtab
 
@@ -177,12 +178,14 @@ class WorkerMITM(MITMBase):
             scanmode = "mons"
             routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
-                ids_iv = routemanager_settings.get("mon_ids_iv", None)
+                ids_iv = self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None),
+                                                           self._routemanager_name)
         elif routemanager_mode == "raids_mitm":
             scanmode = "raids"
             routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
-                ids_iv = routemanager_settings.get("mon_ids_iv", None)
+                ids_iv = self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None),
+                                                           self._routemanager_name)
         elif routemanager_mode == "iv_mitm":
             scanmode = "ivs"
             ids_iv = self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_name)

@@ -63,6 +63,7 @@ class MappingManager:
         self._areas: Optional[dict] = None
         self._routemanagers: Optional[Dict[str, dict]] = None
         self._auths: Optional[dict] = None
+        self._monlists: Optional[dict] = None
         self.__stop_file_watcher_event: Event = Event()
 
         self.__raw_json: Optional[dict] = None
@@ -129,6 +130,14 @@ class MappingManager:
 
     def get_areas(self) -> Optional[dict]:
         return self._areas
+
+    def get_monlist(self, listname, areaname):
+        if type(listname) is list:
+            logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json'
+                         ' - Using a empty list now!!'.format(str(areaname)))
+            return []
+        if listname is not None: return self._monlists[listname]
+        return []
 
     def get_all_routemanager_names(self):
         return self._routemanagers.keys()
@@ -229,6 +238,8 @@ class MappingManager:
                 self.__raw_json['walker'] = []
             if 'devicesettings' not in self.__raw_json:
                 self.__raw_json['devicesettings'] = []
+            if 'monivlist' not in self.__raw_json:
+                self.__raw_json['monivlist'] = []
 
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
@@ -285,6 +296,13 @@ class MappingManager:
                     area["geofence_included"], area.get("geofence_excluded", None))
             mode = area["mode"]
             # build routemanagers
+
+            #map iv list to ids
+            if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
+                # replace list name
+                area['settings']['mon_ids_iv_raw'] = \
+                    self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
+
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
                                                                  mode_mapping.get(mode, {}).get("max_count", 99999999),
@@ -304,7 +322,8 @@ class MappingManager:
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),
                                              init=area.get("init", False),
-                                             range_init=mode_mapping.get(area["mode"], {}).get("range_init", 630))
+                                             range_init=mode_mapping.get(area["mode"], {}).get("range_init", 630),
+                                             including_stops=area.get("including_stops", False))
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area["mode"]]["range"]
                 max_count_in_radius = mode_mapping[area["mode"]]["max_count"]
@@ -381,13 +400,15 @@ class MappingManager:
         return devices
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
-                       init: bool = False, range_init: int = 630) -> List[Location]:
+                       init: bool = False, range_init: int = 630, including_stops: bool = False) -> List[Location]:
         coords: List[Location] = []
         if mode == "raids_ocr" or not init:
             # grab data from DB depending on mode
             # TODO: move routemanagers to factory
             if mode == "raids_ocr" or mode == "raids_mitm":
                 coords = self.__db_wrapper.gyms_from_db(geofence_helper)
+                if including_stops:
+                    coords.extend(self.__db_wrapper.stops_from_db(geofence_helper))
             elif mode == "mon_mitm":
                 if coords_spawns_known:
                     logger.debug("Reading known Spawnpoints from DB")
@@ -434,6 +455,14 @@ class MappingManager:
             areas[area['name']] = area_dict
         return areas
 
+    def __get_latest_monlists(self) -> dict:
+        # {'mon_ids_iv': [787, 1], 'monlist': 'test'}
+        monlist = {}
+        monlists_arr = self.__raw_json["monivlist"]
+        for list in monlists_arr:
+            monlist[list['monlist']] = list.get('mon_ids_iv', None)
+        return monlist
+
     def update(self, full_lock=False):
         """
         Updates the internal mappings and routemanagers
@@ -441,10 +470,12 @@ class MappingManager:
         """
         self.__read_mappings_file()
         if not full_lock:
+            self._monlists = self.__get_latest_monlists()
             areas_tmp = self.__get_latest_areas()
             devicemappings_tmp = self.__get_latest_devicemappings()
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
+
 
             logger.info("Restoring old devicesettings")
             for dev in self._devicemappings:
@@ -454,28 +485,30 @@ class MappingManager:
                 if "last_mode" in self._devicemappings[dev]['settings']:
                     devicemappings_tmp[dev]['settings']["last_mode"] = \
                         self._devicemappings[dev]['settings']["last_mode"]
+                if "accountindex" in self._devicemappings[dev]['settings']:
+                    devicemappings_tmp[dev]['settings']["accountindex"] = \
+                        self._devicemappings[dev]['settings']["accountindex"]
+                if "account_rotation_started" in self._devicemappings[dev]['settings']:
+                    devicemappings_tmp[dev]['settings']["account_rotation_started"] = \
+                        self._devicemappings[dev]['settings']["account_rotation_started"]
+
             logger.info("Acquiring lock to update mappings")
             with self.__mappings_mutex:
-                # stopping routemanager / worker
-                # logger.info('Restarting Worker')
-                # for routemanager in self._routemanagers.keys():
-                #     area: RouteManagerBase = self._routemanagers.get(routemanager, None)
-                #     if area is None:
-                #         continue
-                #     area.stop_routemanager()
-
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp
                 self._routemanagers = routemanagers_tmp
                 self._auths = auths_tmp
 
+
         else:
             logger.info("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
+                self._monlists = self.__get_latest_monlists()
                 self._routemanagers = self.__get_latest_routemanagers()
                 self._areas = self.__get_latest_areas()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
+
 
         logger.info("Mappings have been updated")
 

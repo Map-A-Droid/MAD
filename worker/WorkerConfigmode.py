@@ -168,7 +168,7 @@ class WorkerConfigmode(object):
                 logger.error("Worker {} not get injected in time - reboot", str(self._id))
                 self._reboot()
                 return False
-            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {})", str(self._id), str(self._not_injected_count))
             if self._stop_worker_event.isSet():
                 logger.error("Worker {} get killed while waiting for injection", str(self._id))
                 return False

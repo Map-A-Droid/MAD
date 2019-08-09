@@ -73,12 +73,18 @@ class Communicator:
                     str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))),
                 self.__command_timeout)
 
-    def touchandhold(self, x1, y1, x2, y2) -> bool:
-        return self.__runAndOk("touch swipe {} {} {} {} 3000".format(
-            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__command_timeout)
+    def touchandhold(self, x1, y1, x2, y2, time:int = 3000) -> bool:
+        return self.__runAndOk("touch swipe {} {} {} {} {}".format(
+            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2))), str(int(time)))
+            , self.__command_timeout)
 
     def getscreensize(self) -> str:
         response = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref, "screen size",
+                                                        self.__command_timeout)
+        return response
+
+    def uiautomator(self) -> str:
+        response = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref, "more uiautomator",
                                                         self.__command_timeout)
         return response
 
@@ -126,6 +132,9 @@ class Communicator:
 
     def homeButton(self) -> bool:
         return self.__runAndOk("touch keyevent 3", self.__command_timeout)
+
+    def enterButton(self) -> bool:
+        return self.__runAndOk("touch keyevent 61", self.__command_timeout)
 
     def sendText(self, text):
         return self.__runAndOk("touch text " + str(text), self.__command_timeout)

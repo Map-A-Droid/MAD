@@ -108,3 +108,7 @@ class MitmDataProcessor(Process):
                 logger.debug2("Processing proto 4 of {}".format(origin))
                 self.__mitm_mapper.generate_player_stats(origin, data["payload"])
                 logger.debug2("Done processing proto 4 of {}".format(origin))
+            elif type == 156:
+                logger.debug2("Processing proto 156 of {}".format(origin))
+                self.__db_wrapper.submit_gym_proto(origin, data["payload"])
+                logger.debug2("Done processing proto 156 of {}".format(origin))
