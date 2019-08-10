@@ -563,9 +563,6 @@ class WordToScreenMatching(object):
     def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0, errorscreen: bool = False):
         logger.debug("Taking screenshot...")
         time.sleep(delayBefore)
-        compareToTime = time.time() - self._lastScreenshotTaken
-        logger.debug("Last screenshot taken: {}",
-                     str(self._lastScreenshotTaken))
 
         # TODO: area settings for jpg/png and quality?
         screenshot_type: ScreenshotType = ScreenshotType.JPEG
@@ -577,13 +574,7 @@ class WordToScreenMatching(object):
         take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
                                                             screenshot_quality, screenshot_type)
 
-        if self._lastScreenshotTaken and compareToTime < 0.5:
-            logger.debug(
-                    "takeScreenshot: screenshot taken recently, returning immediately")
-            logger.debug("Screenshot taken recently, skipping")
-            return True
-
-        elif not take_screenshot:
+        if not take_screenshot:
             logger.error("takeScreenshot: Failed retrieving screenshot")
             logger.debug("Failed retrieving screenshot")
             return False
