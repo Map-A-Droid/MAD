@@ -1,5 +1,5 @@
 import cv2
-import math
+import os
 import time
 import re
 import sys
@@ -11,6 +11,7 @@ from typing import Optional, List
 from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
 import numpy as np
+from utils.madGlobals import ScreenshotType
 
 class ScreenType(Enum):
     UNDEFINED = -1
@@ -40,10 +41,10 @@ class LoginType(Enum):
 
 
 class WordToScreenMatching(object):
-    def __init__(self, communicator, pogoWindowManager, id, resocalc, mapping_mananger: MappingManager, worker):
+    def __init__(self, communicator, pogoWindowManager, id, resocalc, mapping_mananger: MappingManager, args):
         self._ScreenType: dict = {}
         self._id = id
-        self._parent = worker
+        self._applicationArgs = args
         self._mapping_manager = mapping_mananger
         detect_ReturningScreen: list = ('ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER')
         detect_LoginScreen: list = ('KIDS', 'Google', 'Facebook')
@@ -170,7 +171,7 @@ class WordToScreenMatching(object):
 
     def matchScreen(self):
         pogoTopmost = self._communicator.isPogoTopmost()
-        screenpath = self._parent.get_screenshot_path()
+        screenpath = self.get_screenshot_path()
         topmostapp = self._communicator.topmostApp()
         if not topmostapp:
             return ScreenType.ERROR
@@ -191,7 +192,7 @@ class WordToScreenMatching(object):
             logger.info('No more screen detection - disabled...')
             return ScreenType.DISABLED
         else:
-            if not self._parent._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
+            if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                                 delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
@@ -541,6 +542,56 @@ class WordToScreenMatching(object):
             else:
                 return ("*"*len(d[0])+"@"+d[1])
         return emailaddress
+
+    def get_screenshot_path(self, fileaddon: bool = False) -> str:
+        screenshot_ending: str = ".jpg"
+        addon: str = ""
+        if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
+            screenshot_ending = ".png"
+
+        if fileaddon:
+            addon: str = "_" + str(time.time())
+
+        screenshot_filename = "screenshot_{}{}{}".format(str(self._id), str(addon), screenshot_ending)
+
+        if fileaddon:
+            logger.info("Creating debugscreen: {}".format(screenshot_filename))
+
+        return os.path.join(
+                self._applicationArgs.temp_path, screenshot_filename)
+
+    def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0, errorscreen: bool = False):
+        logger.debug("Taking screenshot...")
+        time.sleep(delayBefore)
+        compareToTime = time.time() - self._lastScreenshotTaken
+        logger.debug("Last screenshot taken: {}",
+                     str(self._lastScreenshotTaken))
+
+        # TODO: area settings for jpg/png and quality?
+        screenshot_type: ScreenshotType = ScreenshotType.JPEG
+        if self.get_devicesettings_value("screenshot_type", "jpeg") == "png":
+            screenshot_type = ScreenshotType.PNG
+
+        screenshot_quality: int = 80
+
+        take_screenshot = self._communicator.get_screenshot(self.get_screenshot_path(fileaddon=errorscreen),
+                                                            screenshot_quality, screenshot_type)
+
+        if self._lastScreenshotTaken and compareToTime < 0.5:
+            logger.debug(
+                    "takeScreenshot: screenshot taken recently, returning immediately")
+            logger.debug("Screenshot taken recently, skipping")
+            return True
+
+        elif not take_screenshot:
+            logger.error("takeScreenshot: Failed retrieving screenshot")
+            logger.debug("Failed retrieving screenshot")
+            return False
+        else:
+            logger.debug("Success retrieving screenshot")
+            self._lastScreenshotTaken = time.time()
+            time.sleep(delayAfter)
+            return True
 
 
 if __name__ == '__main__':

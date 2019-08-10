@@ -291,6 +291,9 @@ class WorkerQuests(MITMBase):
             logger.info(
                     "Timediff between now and last action time: {}", str(float(timediff)))
             delay_used = delay_used - timediff
+        elif self.get_devicesettings_value('last_action_time', None) is None:
+            logger.info('Starting first time - we wait because of some default pogo delays ...')
+            delay_used = 20
         else:
             logger.debug("No last action time found - no calculation")
             delay_used = -1
@@ -368,6 +371,8 @@ class WorkerQuests(MITMBase):
             data_received = self._open_pokestop(math.floor(time.time()))
             if data_received is not None and data_received == LatestReceivedType.STOP:
                 self._handle_stop(math.floor(time.time()))
+
+
         else:
             logger.debug('Currently in INIT Mode - no Stop processing')
             time.sleep(5)
@@ -695,7 +700,10 @@ class WorkerQuests(MITMBase):
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
-            self.process_rocket()
+            time.sleep(1)
+            if self._rocket or not self._check_pogo_main_screen_tr():
+                logger.info('Check for Team Rocket Dialog or other open window')
+                self.process_rocket()
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.error('Box is full ... Next round!')
                 self.clear_thread_task = 1
@@ -810,12 +818,12 @@ class WorkerQuests(MITMBase):
     def process_rocket(self):
         logger.debug('Closing Rocket Dialog')
         self._communicator.click(100, 100)
-        time.sleep(.5)
+        time.sleep(1)
         self._communicator.click(100, 100)
-        time.sleep(.5)
+        time.sleep(1)
         self._communicator.click(100, 100)
-        time.sleep(.5)
+        time.sleep(1)
         self._communicator.click(100, 100)
-        time.sleep(.5)
+        time.sleep(1)
         self._checkPogoClose()
 

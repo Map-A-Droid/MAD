@@ -81,7 +81,7 @@ class WorkerBase(ABC):
         self.last_processed_location = Location(0.0, 0.0)
         self.workerstart = None
         self._WordToScreenMatching = WordToScreenMatching(self._communicator, self._pogoWindowManager, self._id,
-                                                          self._resocalc, mapping_manager, self)
+                                                          self._resocalc, mapping_manager, self._applicationArgs)
 
     def set_devicesettings_value(self, key: str, value):
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
@@ -864,15 +864,13 @@ class WorkerBase(ABC):
                         "_check_pogo_main_screen: Could not get to Mainscreen within {} attempts", str(maxAttempts))
                 return False
 
-            # not using continue since we need to get a screen before the next round...
-            found = self._pogoWindowManager.look_for_button(screenshot_path, 2.20, 3.01, self._communicator)
+            found = self._pogoWindowManager.check_close_except_nearby_button(self.get_screenshot_path(), self._id,
+                                                                             self._communicator, close_raid=True)
             if found:
-                logger.debug("_check_pogo_main_screen: Found button (small)")
-
-            if not found and self._pogoWindowManager.check_close_except_nearby_button(
-                    self.get_screenshot_path(), self._id,
-                    self._communicator, close_raid=True):
                 logger.debug("_check_pogo_main_screen: Found (X) button (except nearby)")
+
+            if not found and self._pogoWindowManager.look_for_button(screenshot_path, 2.20, 3.01, self._communicator):
+                logger.debug("_check_pogo_main_screen: Found button (small)")
                 found = True
 
             if not found and self._pogoWindowManager.look_for_button(screenshot_path, 1.05, 2.20, self._communicator):
@@ -886,6 +884,29 @@ class WorkerBase(ABC):
 
             attempts += 1
         logger.debug("_check_pogo_main_screen: done")
+        return True
+
+    def _check_pogo_main_screen_tr(self):
+        logger.debug(
+                "_check_pogo_main_screen_tr: Trying to get to the Mainscreen ")
+        pogoTopmost = self._communicator.isPogoTopmost()
+        if not pogoTopmost:
+            return False
+
+        if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
+                return False
+
+        screenshot_path = self.get_screenshot_path()
+        if os.path.isdir(screenshot_path):
+            logger.error(
+                    "_check_pogo_main_screen_tr: screenshot.png/.jpg is not a file/corrupted")
+            return False
+
+        logger.debug("_check_pogo_main_screen_tr: checking mainscreen")
+        if not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id):
+            return False
+
+        logger.debug("_check_pogo_main_screen_tr: done")
         return True
 
     def _checkPogoButton(self):
