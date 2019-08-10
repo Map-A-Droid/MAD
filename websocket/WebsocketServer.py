@@ -216,7 +216,7 @@ class WebsocketServer(object):
             if self._configmode:
                 worker = WorkerConfigmode(self.args, origin, self, walker = None,
                                           mapping_manager = self.__mapping_manager, mitm_mapper = self.__mitm_mapper,
-                                          db_wrapper = self.__db_wrapper)
+                                          db_wrapper = self.__db_wrapper, routemanager_name=None)
                 logger.debug("Starting worker for {}", str(origin))
                 new_worker_thread = Thread(
                     name='worker_%s' % origin, target=worker.start_worker)
@@ -328,7 +328,7 @@ class WebsocketServer(object):
             elif walker_routemanager_mode in ["idle"]:
                 worker = WorkerConfigmode(self.args, origin, self, walker=walker_settings,
                                           mapping_manager=self.__mapping_manager, mitm_mapper=self.__mitm_mapper,
-                                          db_wrapper=self.__db_wrapper)
+                                          db_wrapper=self.__db_wrapper, routemanager_name=walker_area_name)
             else:
                 logger.error("Mode not implemented")
                 sys.exit(1)

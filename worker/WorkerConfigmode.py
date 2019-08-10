@@ -15,11 +15,12 @@ from utils.madGlobals import (WebsocketWorkerRemovedException, WebsocketWorkerTi
 
 class WorkerConfigmode(object):
     def __init__(self, args, id, websocket_handler, walker, mapping_manager,
-                 mitm_mapper: MitmMapper, db_wrapper: DbWrapperBase):
+                 mitm_mapper: MitmMapper, db_wrapper: DbWrapperBase, routemanager_name: str):
         self._communicator = Communicator(
             websocket_handler, id, self, args.websocket_command_timeout)
         self._stop_worker_event = Event()
         self._id = id
+        self._routemanager_name = routemanager_name
         self._walker = walker
         self.workerstart = None
         self._mapping_manager: MappingManager = mapping_manager
@@ -40,9 +41,17 @@ class WorkerConfigmode(object):
 
     def start_worker(self):
         logger.info("Worker {} started in configmode", str(self._id))
+        self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
         while self.check_walker() and not self._stop_worker_event.is_set():
-            time.sleep(10)
+            position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
+            if position_type is None:
+                logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
+                self._stop_worker_event.set()
+                time.sleep(1)
+            else:
+                time.sleep(10)
         self.set_devicesettings_value('finished', True)
+        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
         try:
             self._communicator.cleanup_websocket()
         finally:
