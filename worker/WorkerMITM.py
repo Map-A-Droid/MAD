@@ -26,7 +26,11 @@ class WorkerMITM(MITMBase):
 
     def _post_move_location_routine(self, timestamp):
         # TODO: pass the appropiate proto number if IV?
-        self._wait_for_data(timestamp)
+        if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
+            self._wait_for_data(timestamp)
+        else:
+            logger.info('Currently in INIT Mode - process next coord')
+            self.worker_stats()
 
     def _move_to_location(self):
         if not self._mapping_manager.routemanager_present(self._routemanager_name) \
@@ -41,8 +45,13 @@ class WorkerMITM(MITMBase):
                                                             self.current_location.lat),
                                                         float(self.current_location.lng))
         logger.debug('Moving {} meters to the next position', round(distance, 2))
-        speed = routemanager_settings.get("speed", 0)
-        max_distance = routemanager_settings.get("max_distance", None)
+        if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
+            speed = routemanager_settings.get("speed", 0)
+            max_distance = routemanager_settings.get("max_distance", None)
+        else:
+            speed = int(25)
+            max_distance = int(200)
+
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):

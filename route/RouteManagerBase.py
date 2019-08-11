@@ -53,10 +53,14 @@ class RouteManagerBase(ABC):
         self._calctype = calctype
         self._overwrite_calculation: bool = False
         self._stops_not_processed: Dict[Location, int] = {}
+        self._routepool: Dict = {}
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
         self._workers_registered_mutex = Lock()
+
+        # waiting till routepool is filled up
+        self._workers_fillup_mutex = Lock()
 
         self._last_round_prio = {}
         self._manager_mutex = RLock()
@@ -144,6 +148,10 @@ class RouteManagerBase(ABC):
                 logger.info("Worker {} unregistering from routemanager {}", str(
                     worker_name), str(self.name))
                 self._workers_registered.remove(worker_name)
+                if worker_name in self._routepool:
+                    logger.info('Cleanup routepool for origin {}', str(worker_name))
+                    self._routepool[worker_name].clear()
+                    del self._routepool[worker_name]
                 del self._rounds[worker_name]
             else:
                 # TODO: handle differently?
@@ -390,6 +398,7 @@ class RouteManagerBase(ABC):
         return merged
 
     def get_next_location(self, origin: str) -> Optional[Location]:
+        if origin not in self._routepool: self._routepool[origin] = Queue()
         logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
             logger.info(
@@ -459,7 +468,8 @@ class RouteManagerBase(ABC):
             if self.init and (self._route_queue.empty()):
                 self._init_mode_rounds += 1
             if self.init and (self._route_queue.empty()) and \
-                    self._init_mode_rounds >= int(self.settings.get("init_mode_rounds", 1)):
+                    self._init_mode_rounds >= int(self.settings.get("init_mode_rounds", 1)) and \
+                    self._routepool[origin].empty():
                 # we are done with init, let's calculate a new route
                 logger.warning("Init of {} done, it took {}, calculating new route...", str(
                     self.name), self._get_round_finished_string())
@@ -483,9 +493,9 @@ class RouteManagerBase(ABC):
                 logger.debug(
                     "Initroute of {} is finished - restart worker", str(self.name))
                 return None
-            elif (self._route_queue.qsize()) == 1:
+            elif (self._route_queue.qsize()) == 1 and self._routepool[origin].empty():
                 logger.info('Reaching last coord of route')
-            elif self._route_queue.empty():
+            elif self._route_queue.empty() and self._routepool[origin].empty():
                 # normal queue is empty - prioQ is filled. Try to generate a new Q
                 logger.info("Normal routequeue is empty - try to fill up")
                 if self._get_coords_after_finish_route():
@@ -499,12 +509,16 @@ class RouteManagerBase(ABC):
                 self._manager_mutex.release()
 
             # getting new coord
-            next_coord = self._route_queue.get()
+            if self._routepool[origin].empty():
+                logger.warning('Routepool of origin {} is empty - try to fill up'.format(str(origin)))
+                self._fill_up_routepool(origin)
+            next_coord = self._routepool[origin].get()
             next_lat = next_coord[0]
             next_lng = next_coord[1]
             self._route_queue.task_done()
-            logger.info("{}: Moving on with location {} [{} coords left]", str(
-                self.name), str(next_coord), str(self._route_queue.qsize()))
+            logger.info("{}: Moving on with location {} [{} coords left (Workerpool) - {} coords left (Route)]",
+                        str(self.name), str(next_coord), str(self._routepool[origin].qsize())
+                        , str(self._route_queue.qsize()))
 
             self._last_round_prio[origin] = False
         logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}, {}", str(
@@ -514,6 +528,29 @@ class RouteManagerBase(ABC):
             return Location(next_lat, next_lng)
         else:
             return self.get_next_location(origin)
+
+    def _fill_up_routepool(self, origin: str):
+        # calculate poolsize
+        poolsize = int(len(self._route) / 10)
+        self._workers_fillup_mutex.acquire()
+        try:
+            if self._route_queue.qsize() < poolsize:
+                logger.warning('Routepool is not enough - take the rest')
+                pollsize = len(self._route_queue)
+            i = 0
+            while i < poolsize:
+                next_coord = self._route_queue.get()
+                next_lat = next_coord[0]
+                next_lng = next_coord[1]
+                self._routepool[origin].put((next_lat, next_lng))
+                i += 1
+        except Exception as e:
+            logger.error('Error till fill up routepool:'.format(e))
+        finally:
+            self._workers_fillup_mutex.release()
+
+        logger.success('Filled up Routepool for origin {} with {} coords'.format(str(origin),
+                                                                              self._routepool[origin].qsize()))
 
     def del_from_route(self):
         logger.debug(
