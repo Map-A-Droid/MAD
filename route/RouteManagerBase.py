@@ -537,7 +537,7 @@ class RouteManagerBase(ABC):
         try:
             if self._route_queue.qsize() < poolsize:
                 logger.warning('Routepool is not enough - take the rest')
-                pollsize = len(self._route_queue)
+                pollsize = self._route_queue.qsize()
             i = 0
             while i < poolsize:
                 next_coord = self._route_queue.get()
@@ -546,7 +546,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].put((next_lat, next_lng))
                 i += 1
         except Exception as e:
-            logger.error('Error till fill up routepool:'.format(e))
+            logger.error('Error while fill up routepool: {}'.format(e))
         finally:
             self._workers_fillup_mutex.release()
 
