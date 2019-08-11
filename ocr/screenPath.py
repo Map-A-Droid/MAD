@@ -280,7 +280,7 @@ class WordToScreenMatching(object):
 
         elif ScreenType(returntype) == ScreenType.BIRTHDATE:
             self._nextscreen = ScreenType.UNDEFINED
-            click_x = (self._width / 2) + (self._width / 3)
+            click_x = (self._width / 2) + (self._width / 4)
             click_y = (self._height / 1.69) + self._screenshot_y_offset
             logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
             self._communicator.click(click_x, click_y)
@@ -493,7 +493,7 @@ class WordToScreenMatching(object):
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)
             for item in xmlroot.iter('node'):
-                if mail in str(item.attrib['text']):
+                if mail.lower() in str(item.attrib['text']).lower():
                     logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
                     bounds = item.attrib['bounds']
                     logger.debug("Bounds {}", str(item.attrib['bounds']))
