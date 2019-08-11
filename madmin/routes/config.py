@@ -575,9 +575,10 @@ class config(object):
                 temp_mapping['fence'] = []
                 geofence_file_path = self._args.geofence_file_path
                 existing_fences = glob.glob(os.path.join(geofence_file_path, '*.txt'))
-                temp_mapping['fence'].append({'fence': None})
+                temp_mapping['fence'].append({'fence': None, 'realpath': None})
                 for geofence_temp in existing_fences:
-                    temp_mapping['fence'].append({'fence': os.path.basename(geofence_temp)})
+                    temp_mapping['fence'].append({'fence': os.path.basename(geofence_temp),
+                                                  'realpath': geofence_temp})
 
                 for option in temp_mapping['fence']:
                     if edit:
@@ -589,7 +590,7 @@ class config(object):
                             if not option['fence']:
                                 sel = 'selected'
                     _temp = _temp + '<option value="' + \
-                            str(option['fence']) + '" ' + sel + '>' + \
+                            str(option['realpath']) + '" ' + sel + '>' + \
                             os.path.splitext(str(option['fence']))[0] + '</option>'
                     sel = ''
                 _temp = _temp + '</select></div>'
