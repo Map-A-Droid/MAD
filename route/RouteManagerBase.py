@@ -66,7 +66,6 @@ class RouteManagerBase(ABC):
         self._manager_mutex = RLock()
         self._round_started_time = None
         self._route: List[Location] = []
-        self._poolsize: None
 
         if coords is not None:
             if init:
@@ -534,9 +533,7 @@ class RouteManagerBase(ABC):
     def _fill_up_routepool(self, origin: str):
         # calculate poolsize
         self._workers_fillup_mutex.acquire()
-        if self._poolsize is None:
-            self._poolsize = int(len(self._route) / 5)
-        poolsize = self._poolsize
+        poolsize = int(len(self._route) / 5)
         try:
             if self._route_queue.qsize() < poolsize:
                 logger.warning('Routepool is not enough - take the rest')
