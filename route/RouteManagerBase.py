@@ -66,6 +66,7 @@ class RouteManagerBase(ABC):
         self._manager_mutex = RLock()
         self._round_started_time = None
         self._route: List[Location] = []
+        self._poolsize: None
 
         if coords is not None:
             if init:
@@ -150,7 +151,6 @@ class RouteManagerBase(ABC):
                 self._workers_registered.remove(worker_name)
                 if worker_name in self._routepool:
                     logger.info('Cleanup routepool for origin {}', str(worker_name))
-                    self._routepool[worker_name].clear()
                     del self._routepool[worker_name]
                 del self._rounds[worker_name]
             else:
@@ -172,6 +172,9 @@ class RouteManagerBase(ABC):
                     worker), str(self.name))
                 worker.stop_worker()
                 self._workers_registered.remove(worker)
+                if worker in self._routepool:
+                    logger.info('Cleanup routepool for origin {}', str(worker))
+                    del self._routepool[worker]
                 del self._rounds[worker]
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
@@ -510,7 +513,6 @@ class RouteManagerBase(ABC):
 
             # getting new coord
             if self._routepool[origin].empty():
-                logger.warning('Routepool of origin {} is empty - try to fill up'.format(str(origin)))
                 self._fill_up_routepool(origin)
             next_coord = self._routepool[origin].get()
             next_lat = next_coord[0]
@@ -531,8 +533,10 @@ class RouteManagerBase(ABC):
 
     def _fill_up_routepool(self, origin: str):
         # calculate poolsize
-        poolsize = int(len(self._route) / 10)
         self._workers_fillup_mutex.acquire()
+        if self._poolsize is None:
+            self._poolsize = int(len(self._route) / 5)
+        poolsize = self._poolsize
         try:
             if self._route_queue.qsize() < poolsize:
                 logger.warning('Routepool is not enough - take the rest')
