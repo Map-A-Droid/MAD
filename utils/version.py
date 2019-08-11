@@ -287,7 +287,7 @@ class MADVersion(object):
                     "ALTER TABLE trs_stats_detect_raw "
                     "ADD INDEX typeworker (worker, type_id)"
                 )
-            index_exist = self.dbwrapper.check_column_exists(
+            index_exist = self.dbwrapper.check_index_exists(
                     'trs_stats_detect_raw', 'typeworker')
             
             if index_exist == 1:
@@ -298,14 +298,14 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
-                               
+
             query = (
                 "ALTER TABLE trs_stats_detect_raw "
                 "ADD INDEX shiny (is_shiny)"
             )
-            index_exist = self.dbwrapper.check_column_exists(
+            index_exist = self.dbwrapper.check_index_exists(
                     'trs_stats_detect_raw', 'shiny')
-            
+
             if index_exist == 1:
                 query = (
                     "ALTER TABLE trs_stats_detect_raw DROP INDEX shiny; "
