@@ -577,19 +577,20 @@ class config(object):
                 existing_fences = glob.glob(os.path.join(geofence_file_path, '*.txt'))
                 temp_mapping['fence'].append({'fence': None})
                 for geofence_temp in existing_fences:
-                    temp_mapping['fence'].append({'fence': geofence_temp})
+                    temp_mapping['fence'].append({'fence': os.path.basename(geofence_temp)})
 
                 for option in temp_mapping['fence']:
                     if edit:
                         if field['name'] in oldvalues:
-                            if str(oldvalues[field['name']]).lower() == str(option['fence']).lower():
+                            if os.path.basename(str(oldvalues[field['name']])).lower() == \
+                                    os.path.basename(str(option['fence'])).lower():
                                 sel = 'selected'
                         else:
                             if not option['fence']:
                                 sel = 'selected'
                     _temp = _temp + '<option value="' + \
                             str(option['fence']) + '" ' + sel + '>' + \
-                            str(option['fence']) + '</option>'
+                            os.path.splitext(str(option['fence']))[0] + '</option>'
                     sel = ''
                 _temp = _temp + '</select></div>'
                 fieldwebsite.append(str(_temp))
