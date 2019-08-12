@@ -485,7 +485,7 @@
       ]
     }
   ],
-  "walker": [
+  "walker":
     {
       "name": "walker",
       "fields": [
@@ -511,8 +511,7 @@
         }
       ],
       "settings": []
-    }
-  ],
+    },
   "areas": [
     {
       "name": "mon_mitm",
@@ -1135,8 +1134,8 @@
         }
       ]
     }
-  ],
-  "auth": [
+   ],
+    "auth": [
     {
       "name": "auth",
       "fields": [

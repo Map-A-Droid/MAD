@@ -36,7 +36,6 @@ class config(object):
             ("/addwalker", self.addwalker),
             ("/savesortwalker", self.savesortwalker),
             ("/delwalker", self.delwalker),
-            ("/config", self.config),
             ("/delsetting", self.delsetting),
             ("/addnew", self.addnew),
             ("/showmonsidpicker", self.showmonsidpicker),
@@ -44,6 +43,7 @@ class config(object):
             ("/settings", self.settings),
             ("/settings/devices", self.settings_devices),
             ("/settings/shared", self.settings_shared),
+            ("/settings/areas", self.settings_areas),
             ("/settings/set_device_walker", self.set_device_walker),
             ("/reload", self.reload)
         ]
@@ -265,398 +265,6 @@ class config(object):
         return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(walker),
                         code=302)
 
-    @logger.catch()
-    @auth_required
-    def config(self):
-        fieldwebsite = []
-        oldvalues = []
-        sel = ''
-        _walkernr = 0
-
-        edit = False
-        edit = request.args.get('edit')
-        type = request.args.get('type')
-        block = request.args.get('block')
-        area = request.args.get('area')
-        tabarea=area
-        fieldwebsite.append('<form action="addedit" id="settings" method="post">')
-        fieldwebsite.append(
-            '<input type="hidden" name="block" value="' + block + '" />')
-        fieldwebsite.append(
-            '<input type="hidden" name="mode" value="' + type + '" />')
-        fieldwebsite.append(
-            '<input type="hidden" name="area" value="' + area + '" />')
-        if edit:
-            fieldwebsite.append(
-                '<input type="hidden" name="edit" value="' + edit + '" />')
-            with open(self._args.mappings) as f:
-                mapping = json.load(f)
-                if 'walker' not in mapping:
-                    mapping['walker'] = []
-                if 'devicesettings' not in mapping:
-                    mapping['devicesettings'] = []
-                nr = 0
-                for oldfields in mapping[area]:
-                    if 'name' in oldfields:
-                        if oldfields['name'] == edit:
-                            oldvalues = oldfields
-                            _checkfield = 'name'
-                    if 'origin' in oldfields:
-                        if oldfields['origin'] == edit:
-                            oldvalues = oldfields
-                            _checkfield = 'origin'
-                    if 'username' in oldfields:
-                        if oldfields['username'] == edit:
-                            oldvalues = oldfields
-                            _checkfield = 'username'
-                    if 'devicepool' in oldfields:
-                        if oldfields['devicepool'] == edit:
-                            oldvalues = oldfields
-                            _checkfield = 'devicepool'
-                    if 'monlist' in oldfields:
-                        if oldfields['monlist'] == edit:
-                            oldvalues = oldfields
-                            _checkfield = 'monlist'
-                    if 'walkername' in oldfields:
-                        if oldfields['walkername'] == edit:
-                            oldvalues = oldfields
-                            _checkfield = 'walker'
-                            _walkernr = nr
-                        nr += 1
-
-        with open('madmin/static/vars/vars_parser.json') as f:
-            vars = json.load(f)
-
-        for area in vars[area]:
-            if 'name' in area:
-                if area['name'] == type:
-                    _name = area['name']
-                    compfields = area
-            if 'origin' in area:
-                if area['origin'] == type:
-                    _name = area['origin']
-                    compfields = area
-            if 'username' in area:
-                if area['username'] == type:
-                    _name = area['username']
-                    compfields = area
-            if 'walker' in area:
-                if area['walker'] == type:
-                    _name = area['walker']
-                    compfields = area
-            if 'devicesettings' in area:
-                if area['devicesettings'] == type:
-                    _name = area['devicesettings']
-                    compfields = area
-            if 'monivlist' in area:
-                if area['monivlist'] == type:
-                    _name = area['monivlist']
-                    compfields = area
-
-        for field in compfields[block]:
-            lock = field['settings'].get("lockonedit", False)
-            showmonsidpicker = field['settings'].get("showmonsidpicker", False)
-            lockvalue = 'readonly' if lock and edit else ''
-            req = 'required' if field['settings'].get(
-                'require', 'false') == 'true' else ''
-            if field['settings']['type'] == 'text' or field['settings']['type'] == 'textarea':
-                val = ''
-                if edit:
-                    if block == 'settings':
-                        if field['name'] in oldvalues['settings'] and str(oldvalues['settings'][field['name']]) != str(
-                                'None'):
-                            val = str(oldvalues['settings'][field['name']])
-                    else:
-                        if field['name'] in oldvalues and str(oldvalues[field['name']]) != str('None'):
-                            val = str(oldvalues[field['name']])
-
-                formStr = '<div class="form-group">'
-                formStr += '<label>' + str(field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small>'
-
-                # No idea how/where to put that link, ended with this one
-                if showmonsidpicker:
-                    monsidpicker_link = '<a href=showmonsidpicker?edit=' + str(edit) + '&type=' + str(
-                        type) + '>[BETA ID Picker]</a>'
-                    formStr += monsidpicker_link
-                if field['settings']['type'] == 'text':
-                    formStr += '<input type="text" name="' + \
-                               str(field['name']) + '" value="' + val + \
-                               '" ' + lockvalue + ' ' + req + '>'
-                if field['settings']['type'] == 'textarea':
-                    formStr += '<textarea rows="10" name="' + \
-                               str(field['name']) + '" ' + lockvalue + \
-                               ' ' + req + '>' + val + '</textarea>'
-                formStr += '</div>'
-                fieldwebsite.append(formStr)
-
-            if field['settings']['type'] == 'list':
-                if edit:
-                    val = ''
-                    fieldwebsite.append('<div class="form-group"><label>' + str(
-                        field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                        field['settings']['description']) + '</small></div>')
-
-                    fieldwebsite.append('<table class="table">')
-                    fieldwebsite.append(
-                        '<tr><th></th><th>Nr.</th><th>Area<br>Description</th><th>Walkermode</th><th>Setting</th>'
-                        '<th>Max. Devices</th><th></th></tr><tbody class="row_position">')
-                    if block != 'settings':
-                        if field['name'] in oldvalues and str(oldvalues[field['name']]) != str('None'):
-                            val = list(oldvalues[field['name']])
-                            i = 0
-                            while i < len(val):
-                                fieldwebsite.append('<tr id=' + str(val[i]['walkerarea']) + '|' + str(
-                                    val[i]['walkertype']) + '|' + str(val[i]['walkervalue']) + '|' + str(
-                                    val[i].get('walkermax', '')) + '|' + str(val[i].get('walkertext', '')).replace(' ',
-                                                                                                                   '_') + '>'
-                                                                                                                          '<td ><img src="static/sort.png" class="handle"></td><td>' + str(
-                                    i) + '</td><td><b>' + str(val[i]['walkerarea']) + '</b><br>' + str(
-                                    val[i].get('walkertext', '')).replace('_', ' ') + '</td><td>' + str(
-                                    val[i]['walkertype']) + '</td><td>' + str(
-                                    val[i]['walkervalue']) + '</td><td>' + str(
-                                    val[i].get('walkermax', '')) + '</td><td>'
-                                                                   '<a href="delwalker?walker=' + str(
-                                    edit) + '&walkernr=' + str(
-                                    _walkernr) + '&walkerposition=' + str(i) + '" class="confirm" '\
-                                                                               'title="Do you really want to delete '
-                                                                               'this?">'\
-                                                                               'Delete</a><br>'
-                                                                               '<a href="addwalker?walker=' + str(
-                                    edit) + '&walkernr=' + str(_walkernr) + '&walkerposition=' + str(
-                                    i) + '&edit=True">Edit</a></form></td></tr>')
-                                i += 1
-
-                        fieldwebsite.append('</tbody></table>')
-                        fieldwebsite.append(
-                            '<div class="form-group"><a href="addwalker?walker=' + str(edit) + '&walkernr=' + str(
-                                _walkernr) + '">Add Area</a></div>')
-
-            if field['settings']['type'] == 'option':
-                _temp = '<div class="form-group"><label>' + str(
-                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
-                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                _options = field['settings']['values'].split('|')
-                for option in _options:
-                    if edit:
-                        if block == 'settings':
-                            if field['name'] in oldvalues['settings']:
-                                if str(oldvalues['settings'][field['name']]).lower() in str(option).lower():
-                                    sel = 'selected'
-                        else:
-                            if field['name'] in oldvalues:
-                                if str(oldvalues[field['name']]).lower() in str(option).lower():
-                                    sel = 'selected'
-                    _temp = _temp + '<option value="' + \
-                            str(option) + '" ' + sel + '>' + str(option) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-
-            if field['settings']['type'] == 'areaselect':
-                _temp = '<div class="form-group"><label>' + str(
-                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
-                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open(self._args.mappings) as f:
-                    mapping = json.load(f)
-                    if 'walker' not in mapping:
-                        mapping['walker'] = []
-                mapping['areas'].append({'name': None})
-
-                for option in mapping['areas']:
-                    if edit:
-                        if block == "settings":
-                            if str(oldvalues[field['settings']['name']]).lower() == str(option['name']).lower():
-                                sel = 'selected'
-                            else:
-                                if oldvalues[field['settings']['name']] == '':
-                                    sel = 'selected'
-                        else:
-                            if field['name'] in oldvalues:
-                                if str(oldvalues[field['name']]).lower() == str(option['name']).lower():
-                                    sel = 'selected'
-                            else:
-                                if not option['name']:
-                                    sel = 'selected'
-                    _temp = _temp + '<option value="' + \
-                            str(option['name']) + '" ' + sel + '>' + \
-                            str(option['name']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-
-            if field['settings']['type'] == 'adbselect':
-                devices = self._adb_connect.return_adb_devices()
-                _temp = '<div class="form-group"><label>' + str(
-                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
-                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                adb = {}
-                adb['serial'] = []
-                adb['serial'].append({'name': None})
-                for device in devices:
-                    adb['serial'].append({'name': device.serial})
-
-                for option in adb['serial']:
-                    if edit:
-                        if block == "settings":
-                            if str(oldvalues[field['settings']['name']]).lower() == str(option['name']).lower():
-                                sel = 'selected'
-                            else:
-                                if oldvalues[field['settings']['name']] == '':
-                                    sel = 'selected'
-                        else:
-                            if field['name'] in oldvalues:
-                                if str(oldvalues[field['name']]).lower() == str(option['name']).lower():
-                                    sel = 'selected'
-                            else:
-                                if not option['name']:
-                                    sel = 'selected'
-                    _temp = _temp + '<option value="' + \
-                            str(option['name']) + '" ' + sel + '>' + \
-                            str(option['name']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-
-            if field['settings']['type'] == 'walkerselect':
-                _temp = '<div class="form-group"><label>' + str(
-                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
-                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open(self._args.mappings) as f:
-                    mapping = json.load(f)
-                    if 'walker' not in mapping:
-                        mapping['walker'] = []
-                for option in mapping['walker']:
-                    if edit:
-                        if field['name'] in oldvalues:
-                            if str(oldvalues[field['name']]).lower() == str(option['walkername']).lower():
-                                sel = 'selected'
-                        else:
-                            if not option['walkername']:
-                                sel = 'selected'
-                    _temp = _temp + '<option value="' + \
-                            str(option['walkername']) + '" ' + sel + '>' + \
-                            str(option['walkername']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-
-            if field['settings']['type'] == 'monlistselect':
-                _temp = '<div class="form-group"><label>' + str(
-                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
-                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                temp_mapping = {}
-                temp_mapping['monivlist'] = []
-                with open(self._args.mappings) as f:
-                    mapping = json.load(f)
-                    if 'monivlist' not in mapping:
-                        mapping['monivlist'] = []
-                temp_mapping['monivlist'].append({'monlist': None})
-                for monlist_temp in mapping['monivlist']:
-                    temp_mapping['monivlist'].append({'monlist': monlist_temp['monlist']})
-                for option in temp_mapping['monivlist']:
-                    if edit:
-                        if field['name'] in oldvalues['settings']:
-                            if str(oldvalues['settings'][field['name']]).lower() == str(option['monlist']).lower():
-                                sel = 'selected'
-                        else:
-                            if not option['monlist']:
-                                sel = 'selected'
-                    _temp = _temp + '<option value="' + \
-                            str(option['monlist']) + '" ' + sel + '>' + \
-                            str(option['monlist']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-
-            if field['settings']['type'] == 'poolselect':
-                _temp = '<div class="form-group"><label>' + str(
-                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
-                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
-                with open(self._args.mappings) as f:
-                    mapping = json.load(f)
-                    if 'devicesettings' not in mapping:
-                        mapping['devicesettings'] = []
-                mapping['devicesettings'].append({'devicepool': None})
-                for option in mapping['devicesettings']:
-                    if edit:
-                        if field['name'] in oldvalues:
-                            if str(oldvalues[field['name']]).lower() == str(option['devicepool']).lower():
-                                sel = 'selected'
-                        else:
-                            if not option['devicepool']:
-                                sel = 'selected'
-                    _temp = _temp + '<option value="' + \
-                            str(option['devicepool']) + '" ' + sel + '>' + \
-                            str(option['devicepool']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-
-            if field['settings']['type'] == 'areaoption':
-                _temp = '<div class="form-group"><label>' + str(
-                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
-                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
-                    field['name']) + '" ' + lockvalue + ' ' + req + ' size=10 multiple=multiple>'
-                with open(self._args.mappings) as f:
-                    mapping = json.load(f)
-                    if 'walker' not in mapping:
-                        mapping['walker'] = []
-                mapping['areas'].append({'name': None})
-                oldvalues_split = []
-
-                if edit:
-                    if block == "settings":
-                        if oldvalues[field['settings']['name']] is not None:
-                            oldvalues_split = oldvalues[field['settings']['name']].replace(
-                                " ", "").split(",")
-                    else:
-                        if oldvalues[field['name']] is not None:
-                            oldvalues_split = oldvalues[field['name']].replace(
-                                " ", "").split(",")
-
-                for option in mapping['areas']:
-                    if edit:
-                        for old_value in oldvalues_split:
-                            if block == "settings":
-                                if str(old_value).lower() == str(option['name']).lower():
-                                    sel = 'selected'
-                                else:
-                                    if old_value == '':
-                                        sel = 'selected'
-                            else:
-                                if field['name'] in oldvalues:
-                                    if str(old_value).lower() == str(option['name']).lower():
-                                        sel = 'selected'
-                                else:
-                                    if not option['name']:
-                                        sel = 'selected'
-                    _temp = _temp + '<option value="' + \
-                            str(option['name']) + '" ' + sel + '>' + \
-                            str(option['name']) + '</option>'
-                    sel = ''
-                _temp = _temp + '</select></div>'
-                fieldwebsite.append(str(_temp))
-
-        if edit:
-            header = "Edit " + edit + " (" + type + ")"
-        else:
-            header = "Add new " + type
-
-        if (type == 'walker' and edit is None) or (type != 'walker' and edit is not None) \
-                or (type != 'walker' and edit is None):
-            fieldwebsite.append(
-                '<button type="submit" class="btn btn-primary">Save</button></form>')
-
-        return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings",
-                               walkernr=_walkernr, edit=edit, tabarea=tabarea, running_ocr=(self._args.only_ocr))
-
     @auth_required
     def delsetting(self):
         global device_mappings, areas
@@ -829,6 +437,65 @@ class config(object):
             json.dump(mapping, outfile, indent=4, sort_keys=True)
 
         return "ok"
+
+    @logger.catch
+    @auth_required
+    def settings_areas(self):
+        with open(self._args.mappings) as f:
+            mappings = json.load(f)
+
+        areaname = request.args.get("name", None)
+
+        if request.method == 'POST':
+            for key, val in enumerate(mappings["areas"]):
+                area = mappings["areas"][key]
+
+                if area["name"] != areaname:
+                    continue
+
+                for entry in request.form:
+                    value = request.form[entry]
+
+                    if value == "None" or value == "":
+                        value = None
+
+                    if entry.startswith("field."):
+                        name = entry.split("field.", 1)[1]
+                        mappings["areas"][key][name] = value
+                    else:
+                        mappings["areas"][key]["settings"][entry] = value
+
+            with open(self._args.mappings, 'w') as outfile:
+                json.dump(mappings, outfile, indent=4, sort_keys=True)
+
+            return redirect("/{}/settings/areas?name={}".format(self._args.madmin_base_path, areaname), code=302)
+
+        if areaname is not None:
+            areaconfig = None
+            for key, val in enumerate(mappings["areas"]):
+                tmparea = mappings["areas"][key]
+
+                if tmparea["name"] == areaname:
+                    areaconfig = tmparea
+
+            with open('madmin/static/vars/vars_parser.json') as f:
+                all_settings_vars = json.load(f)
+
+            settings_vars = []
+            for key, val in enumerate(all_settings_vars["areas"]):
+                tmpsv = all_settings_vars["areas"][key]
+
+                if tmpsv["name"] == areaconfig["mode"]:
+                    settings_vars = tmpsv
+
+            return render_template('settings_singlearea.html',
+                                   area=areaconfig,
+                                   subtab="areas",
+                                   settings_vars=settings_vars)
+
+        return render_template('settings_areas.html',
+                               mappings=mappings,
+                               subtab="areas")
 
     @logger.catch
     @auth_required

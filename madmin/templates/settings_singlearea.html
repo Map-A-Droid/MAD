@@ -1,0 +1,56 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<h1 class="display-4">{{area.name}} <small class="text-muted lead">{{area.mode}}</small></h1>
+
+<form action="settings/areas?name={{area.name}}" method="post">
+<div class="row">
+  <div class="col-sm">
+    {% for field in settings_vars.settings|sort(attribute="name") %}
+    <div class="form-group">
+      <label for="{{field.name}}">{{field.name}}</label>
+      {% if field.settings.type == "option" %}
+      <select class="form-control" name="{{field.name}}">
+        {% for option in field.settings["values"].split("|") %}
+        <option value="{{option}}" {{'selected="selected"' if option == area.settings[field.name]}}>{{option}}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <input type="{{field.settings.type}}" name="{{field.name}}" class="form-control" id="{{field.name}}" value="{% if area.settings[field.name] != 'None' and area.settings[field.name] is not none %}{{area.settings[field.name]}}{% endif %}">
+      {% endif %}
+      <small class="form-text text-muted">{{field.settings.description}}</small>
+    </div>
+    {% endfor %}
+  </div>
+  <div class="col-sm">
+    {% for field in settings_vars.fields|sort(attribute="name") %}
+    {% if field.name != "name" %}
+    <div class="form-group">
+      <label for="{{field.name}}">{{field.name}}</label>
+      {% if field.settings.type == "option" %}
+      <select class="form-control" name="field.{{field.name}}">
+        {% for option in field.settings["values"].split("|") %}
+        <option value="{{option}}" {{'selected="selected"' if option == area[field.name]}}>{{option}}</option>
+        {% endfor %}
+      </select>
+      {% else %}
+      <input type="{{field.settings.type}}" name="field.{{field.name}}" class="form-control" id="{{field.name}}" value="{% if area[field.name] != 'None' and area[field.name] is not none %}{{area[field.name]}}{% endif %}">
+      {% endif %}
+      <small class="form-text text-muted">{{field.settings.description}}</small>
+    </div>
+    {% endif %}
+    {% endfor %}
+    <button type="submit" class="btn btn-success btn-lg btn-block">Save</button>
+</div>
+</form>
+{% endblock %}

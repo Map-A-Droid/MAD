@@ -1,0 +1,47 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+{% if mappings.areas|length > 0 %}
+<table class="table table-striped table-hover">
+  <thead class="thead-dark">
+    <tr>
+      <th style="width: 50%">Name</th>
+      <th style="width: 30%">Settings</th>
+      <th style="width: 20%"></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for area in mappings.areas %}
+    <tr>
+      <td class="align-middle">
+        <a href="settings/areas?name={{area.name}}">{{area.name}}</a>
+      </td>
+      <td>
+        <p style="font-size: 65%; min-height: 40px; display: inline-box">
+        {% for key in area.settings|sort %}
+        {%if area.settings[key] != "" %}
+        {{key}}: {{area.settings[key]}}<br>
+        {% endif %}
+        {% endfor %}
+        </p>
+      </td>
+      <td class="text-right align-middle">
+        <button type="button" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody
+</table>
+{% else %}
+<div class="alert alert-info">No areas configured yet</div
+{% endif %}
+{% endblock %}
