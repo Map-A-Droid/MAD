@@ -538,9 +538,9 @@ class RouteManagerBase(ABC):
         try:
             if self._route_queue.qsize() < poolsize:
                 logger.warning('Routepool is not enough - take the rest')
-                pollsize = self._route_queue.qsize()
+                poolsize = self._route_queue.qsize()
             i = 0
-            while i < poolsize:
+            while i <= poolsize:
                 next_coord = self._route_queue.get()
                 next_lat = next_coord[0]
                 next_lng = next_coord[1]
