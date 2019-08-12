@@ -1473,7 +1473,7 @@ new Vue({
                     color: '#ac00e6'
                 }
             },
-            circle: true,
+            circle: false,
             circlemarker: false,
             rectangle: false,
             line: false,
