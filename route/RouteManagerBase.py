@@ -3,6 +3,7 @@ import heapq
 import json
 import os
 import time
+import math
 from abc import ABC, abstractmethod
 from datetime import datetime
 from queue import Queue
@@ -533,7 +534,7 @@ class RouteManagerBase(ABC):
     def _fill_up_routepool(self, origin: str):
         # calculate poolsize
         self._workers_fillup_mutex.acquire()
-        poolsize = int(len(self._route) / 5)
+        poolsize = math.ceil(len(self._route) / 5)
         try:
             if self._route_queue.qsize() < poolsize:
                 logger.warning('Routepool is not enough - take the rest')
