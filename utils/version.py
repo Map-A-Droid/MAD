@@ -240,10 +240,13 @@ class MADVersion(object):
                 "ADD quest_template VARCHAR(100) NULL DEFAULT NULL "
                 "AFTER quest_reward"
             )
-            try:
-                self.dbwrapper.execute(alter_query, commit=True)
-            except Exception as e:
-                logger.exception("Unexpected error: {}", e)
+            column_exist = self.dbwrapper.check_column_exists(
+                    'trs_quest', 'quest_template')
+            if column_exist == 0:
+                try:
+                    self.dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
 
         if self._version < 9:
             alter_query = (
@@ -277,10 +280,13 @@ class MADVersion(object):
                 "ADD is_shiny TINYINT(1) NOT NULL DEFAULT '0' "
                 "AFTER count"
             )
-            try:
-                self.dbwrapper.execute(query, commit=True)
-            except Exception as e:
-                logger.exception("Unexpected error: {}", e)
+            column_exist = self.dbwrapper.check_column_exists(
+                    'trs_stats_detect_raw', 'is_shiny')
+            if column_exist == 0:
+                try:
+                    self.dbwrapper.execute(query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
 
         if self._version < 12:
             query = (
@@ -290,7 +296,7 @@ class MADVersion(object):
             index_exist = self.dbwrapper.check_index_exists(
                     'trs_stats_detect_raw', 'typeworker')
             
-            if index_exist == 1:
+            if index_exist >= 1:
                 query = (
                     "ALTER TABLE trs_stats_detect_raw DROP INDEX typeworker, ADD INDEX typeworker (worker, type_id)"
                 )     
@@ -306,7 +312,7 @@ class MADVersion(object):
             index_exist = self.dbwrapper.check_index_exists(
                     'trs_stats_detect_raw', 'shiny')
 
-            if index_exist == 1:
+            if index_exist >= 1:
                 query = (
                     "ALTER TABLE trs_stats_detect_raw DROP INDEX shiny, ADD INDEX shiny (is_shiny)"
                 )      
