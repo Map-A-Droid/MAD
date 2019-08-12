@@ -237,7 +237,7 @@ class MITMBase(WorkerBase):
             self.current_location.lat), str(self.current_location.lng))
         logger.debug('Last Pos: {} {}', str(
             self.last_location.lat), str(self.last_location.lng))
-        routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name)
+        routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name, self._id)
         if routemanager_status is None:
             logger.warning("Routemanager not available")
             routemanager_status = [None, None]

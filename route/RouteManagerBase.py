@@ -577,9 +577,9 @@ class RouteManagerBase(ABC):
         with open(args.mappings, 'w') as outfile:
             json.dump(vars, outfile, indent=4, sort_keys=True)
 
-    def get_route_status(self) -> Tuple[int, int]:
+    def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route:
-            return (len(self._route) - self._route_queue.qsize()), len(self._route)
+            return (len(self._route) - (self._route_queue.qsize() + self._routepool[origin])), len(self._route)
         return 1, 1
 
     def get_rounds(self, origin: str) -> int:

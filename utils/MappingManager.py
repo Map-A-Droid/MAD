@@ -176,9 +176,9 @@ class MappingManager:
         if routemanager is not None:
             routemanager.add_coord_to_be_removed(lat, lon)
 
-    def routemanager_get_route_stats(self, routemanager_name: str) -> Optional[Tuple[int, int]]:
+    def routemanager_get_route_stats(self, routemanager_name: str, origin: str) -> Optional[Tuple[int, int]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
-        return routemanager.get_route_status() if routemanager is not None else None
+        return routemanager.get_route_status(origin) if routemanager is not None else None
 
     def routemanager_get_rounds(self, routemanager_name: str, worker_name: str) -> Optional[int]:
         routemanager = self.__fetch_routemanager(routemanager_name)
