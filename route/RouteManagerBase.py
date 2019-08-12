@@ -579,7 +579,7 @@ class RouteManagerBase(ABC):
 
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route:
-            return (len(self._route) - (self._route_queue.qsize() + self._routepool[origin])), len(self._route)
+            return (len(self._route) - (self._route_queue.qsize() + self._routepool[origin].qsize())), len(self._route)
         return 1, 1
 
     def get_rounds(self, origin: str) -> int:

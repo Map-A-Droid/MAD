@@ -162,7 +162,7 @@ class MITMBase(WorkerBase):
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
             self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(4 + int(delayadd))
+        time.sleep(6 + int(delayadd))
 
         trashcancheck = self._get_trash_positions()
         if trashcancheck is None:
