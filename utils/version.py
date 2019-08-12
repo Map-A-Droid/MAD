@@ -292,8 +292,8 @@ class MADVersion(object):
             
             if index_exist == 1:
                 query = (
-                    "ALTER TABLE trs_stats_detect_raw DROP INDEX typeworker; "
-                ) + query       
+                    "ALTER TABLE trs_stats_detect_raw DROP INDEX typeworker, ADD INDEX typeworker (worker, type_id)"
+                )     
             try:
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
@@ -308,8 +308,8 @@ class MADVersion(object):
 
             if index_exist == 1:
                 query = (
-                    "ALTER TABLE trs_stats_detect_raw DROP INDEX shiny; "
-                ) + query       
+                    "ALTER TABLE trs_stats_detect_raw DROP INDEX shiny, ADD INDEX shiny (is_shiny)"
+                )      
             try:
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
