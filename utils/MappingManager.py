@@ -334,7 +334,7 @@ class MappingManager:
                     areas_procs[area["name"]] = proc
                 else:
                     logger.info(
-                            "Init mode enabled and more than 400 coords in init. Going row-based for {}", str(area.get("name", "unknown")))
+                            "Init mode enabled. Going row-based for {}", str(area.get("name", "unknown")))
                     # we are in init, let's write the init route to file to make it visible in madmin
                     if area["routecalc"] is not None:
                         routefile = os.path.join(
