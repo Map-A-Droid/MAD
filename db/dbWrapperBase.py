@@ -46,7 +46,7 @@ class DbWrapperBase(ABC):
     def check_index_exists(self, table, index):
         query = (
             "SELECT count(*) "
-            "FROM information_schema.columns "
+            "FROM information_schema.statistics "
             "WHERE table_name = %s "
             "AND index_name = %s "
             "AND table_schema = %s"
