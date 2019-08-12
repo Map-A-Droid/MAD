@@ -139,7 +139,7 @@ class DbWrapperBase(ABC):
                 res = cursor.fetchall()
                 return res
         except mysql.connector.Error as err:
-            logger.error("Failed executing query: {}", str(err))
+            logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
             return None
         except Exception as e:
             logger.error("Unspecified exception in dbWrapper: {}", str(e))
