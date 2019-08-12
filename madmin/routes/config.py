@@ -711,7 +711,7 @@ class config(object):
     def reload(self):
         if not self._args.auto_reload_config:
             self._mapping_mananger.update()
-        return redirect(getBasePath(request) + "/showsettings", code=302)
+        return redirect("/{}/settings".format(self._args.madmin_base_path), code=302)
 
     def cmp_by_key(self, a, b, key):
            # RIP python2 cmp()
