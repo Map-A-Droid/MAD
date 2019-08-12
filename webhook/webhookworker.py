@@ -343,6 +343,9 @@ class WebhookWorker:
 
             if raid["is_ex_raid_eligible"] is not None:
                 raid_payload["is_ex_raid_eligible"] = raid["is_ex_raid_eligible"]
+                
+            if raid["is_exclusive"] is not None:
+                raid_payload["is_exclusive"] = raid["is_exclusive"]
 
             if raid["gender"] is not None:
                 raid_payload["gender"] = raid["gender"]
