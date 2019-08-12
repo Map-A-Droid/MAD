@@ -13,7 +13,7 @@
 
 <h1 class="display-4">{{area.name}} <small class="text-muted lead">{{area.mode}}</small></h1>
 
-<form action="settings/areas?name={{area.name}}" method="post">
+<form action="settings/areas?area={{area.name}}" method="post">
 <div class="row">
   <div class="col-sm">
     {% for field in settings_vars.settings|sort(attribute="name") %}

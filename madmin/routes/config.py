@@ -444,7 +444,7 @@ class config(object):
         with open(self._args.mappings) as f:
             mappings = json.load(f)
 
-        areaname = request.args.get("name", None)
+        areaname = request.args.get("area", None)
 
         if request.method == 'POST':
             for key, val in enumerate(mappings["areas"]):
@@ -468,7 +468,7 @@ class config(object):
             with open(self._args.mappings, 'w') as outfile:
                 json.dump(mappings, outfile, indent=4, sort_keys=True)
 
-            return redirect("/{}/settings/areas?name={}".format(self._args.madmin_base_path, areaname), code=302)
+            return redirect("/{}/settings/areas?area={}".format(self._args.madmin_base_path, areaname), code=302)
 
         if areaname is not None:
             areaconfig = None

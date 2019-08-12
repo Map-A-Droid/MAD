@@ -26,7 +26,7 @@
         {% endfor %}
       </select>
       {% else %}
-      <input type="{{field.settings.type}}" name="{{field.name}}" class="form-control" id="{{field.name}}" value="{{deviceconfig.settings[field.name] if not 'None' else ''}}">
+      <input type="{{field.settings.type}}" name="{{field.name}}" class="form-control" id="{{field.name}}" value="{% if deviceconfig.settings[field.name] is not none and deviceconfig.settings[field.name] != none %}{{deviceconfig.settings[field.name]}}{% endif %}">
       {% endif %}
       <small class="form-text text-muted">{{field.settings.description}}</small>
     </div>

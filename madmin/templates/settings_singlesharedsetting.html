@@ -26,7 +26,7 @@
         {% endfor %}
       </select>
       {% else %}
-      <input type="{{field.settings.type}}" name="{{field.name}}" class="form-control" id="{{field.name}}" value="{{sharedsetting.settings[field.name] if not 'None' else ''}}">
+      <input type="{{field.settings.type}}" name="{{field.name}}" class="form-control" id="{{field.name}}" value="{% if sharedsetting.settings[field.name] is not none and sharedsetting.settings[field.name] != 'None' %}{{sharedsetting.settings[field.name]}}{% endif %}">
       {% endif %}
       <small class="form-text text-muted">{{field.settings.description}}</small>
     </div>
