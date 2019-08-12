@@ -420,7 +420,8 @@ class RouteManagerBase(ABC):
                 "{}: Checking if a location is available...", str(self.name))
             self._manager_mutex.acquire()
             got_location = not self._route_queue.empty() or (
-                self._prio_queue is not None and len(self._prio_queue) > 0)
+                self._prio_queue is not None and len(self._prio_queue) > 0) or \
+                not self._routepool[origin].empty()
             self._manager_mutex.release()
             if not got_location:
                 logger.debug("{}: No location available yet", str(self.name))
