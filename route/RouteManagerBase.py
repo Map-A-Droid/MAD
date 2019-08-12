@@ -55,6 +55,7 @@ class RouteManagerBase(ABC):
         self._overwrite_calculation: bool = False
         self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict = {}
+        self._routepoolpositionmax: Dict = {}
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
@@ -401,7 +402,9 @@ class RouteManagerBase(ABC):
         return merged
 
     def get_next_location(self, origin: str) -> Optional[Location]:
-        if origin not in self._routepool: self._routepool[origin] = Queue()
+        if origin not in self._routepool:
+            self._routepool[origin] = Queue()
+            self._routepoolpositionmax[origin] = 0
         logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
             logger.info(
@@ -514,7 +517,9 @@ class RouteManagerBase(ABC):
 
             # getting new coord
             if self._routepool[origin].empty():
-                self._fill_up_routepool(origin)
+                if not self._fill_up_routepool(origin):
+                    return None
+
             next_coord = self._routepool[origin].get()
             next_lat = next_coord[0]
             next_lng = next_coord[1]
@@ -536,24 +541,42 @@ class RouteManagerBase(ABC):
         # calculate poolsize
         self._workers_fillup_mutex.acquire()
         poolsize = math.ceil(len(self._route) / 5)
+        if self._route_queue.empty():
+            logger.warning('Routepool for {} is empty now - worker {} get no coords - leaving'.format(str(self.name),
+                                                                                                      str(origin)))
+            return False
         try:
             if self._route_queue.qsize() < poolsize:
-                logger.warning('Routepool is not enough - take the rest')
+                logger.warning('Routepool for {} contains not enough coords - {} take the rest'.format(str(self.name),
+                                                                                                       str(origin)))
                 poolsize = self._route_queue.qsize()
             i = 0
+
             while i < poolsize:
                 next_coord = self._route_queue.get()
                 next_lat = next_coord[0]
                 next_lng = next_coord[1]
                 self._routepool[origin].put((next_lat, next_lng))
                 i += 1
+            self._routepoolpositionmax[origin] = len(self._route) - self._route_queue.qsize()
+
         except Exception as e:
-            logger.error('Error while fill up routepool: {}'.format(e))
+            logger.error('Error while filling up Workerpool for {} (Route: {}): {}'.format(str(origin),
+                                                                                           str(self.name),
+                                                                                           format(e)))
+            return False
         finally:
             self._workers_fillup_mutex.release()
 
         logger.success('Filled up Routepool for origin {} with {} coords'.format(str(origin),
                                                                               self._routepool[origin].qsize()))
+        return True
+
+    def get_worker_workerpool(self):
+        for origin in self._routepool:
+            logger.info('Worker {}: {} open positions (Route: {})'.format(str(origin),
+                                                                          str(self._routepool[origin].qsize()),
+                                                                          str(self.name)))
 
     def del_from_route(self):
         logger.debug(
@@ -579,7 +602,7 @@ class RouteManagerBase(ABC):
 
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route:
-            return (len(self._route) - (self._route_queue.qsize() + self._routepool[origin].qsize())), len(self._route)
+            return (self._routepoolpositionmax[origin] - self._routepool[origin].qsize()), len(self._route)
         return 1, 1
 
     def get_rounds(self, origin: str) -> int:

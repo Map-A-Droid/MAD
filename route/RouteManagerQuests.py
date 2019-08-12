@@ -90,6 +90,7 @@ class RouteManagerQuests(RouteManagerBase):
                 return False
             return True
         finally:
+            self.get_worker_workerpool()
             self._manager_mutex.release()
 
     def _restore_original_route(self):

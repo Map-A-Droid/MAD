@@ -8,6 +8,7 @@ class RouteManagerRaids(RouteManagerBase):
 
     def _get_coords_after_finish_route(self):
         self._init_route_queue()
+        self.get_worker_workerpool()
         return True
 
     def _recalc_route_workertype(self):
