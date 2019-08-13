@@ -224,7 +224,7 @@ class statistics(object):
                                '(check config.ini // game_stats_raw)')
                 diff = 1
 
-            ratio = round(dat[1] * 100 / diff, 5)
+            ratio = round(dat[1] * 100 / diff, 2)
             if dat[3] not in shiny_worker: shiny_worker[dat[3]] = 0
             shiny_worker[dat[3]] += dat[1]
 
@@ -238,7 +238,9 @@ class statistics(object):
             shiny_avg[dat[2]][dat[5]]['total_nonshiny'].append(diff)
 
             shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
-                                'worker': dat[3], 'encounterid': dat[4]})
+                                'worker': dat[3], 'encounterid': dat[4],
+                               'periode': datetime.datetime.fromtimestamp
+                                (self.utc2local(dat[6])).strftime(self._datetimeformat})
 
         shiny_stats_avg = []
         for dat in shiny_avg:
@@ -250,14 +252,12 @@ class statistics(object):
                 monName_raw = (get_raid_boss_cp(dat))
                 monName = i8ln(monName_raw['name'])
 
-                shiny_amount = sum(shiny_avg[dat][form_dat]['total_shiny']) / \
-                                   len(shiny_avg[dat][form_dat]['total_nonshiny'])
-                shiny_amount_avg = round(sum(shiny_avg[dat][form_dat]['total_nonshiny']) / \
-                                   len(shiny_avg[dat][form_dat]['total_nonshiny']), 0)
-                shiny_avg_click = round(shiny_amount_avg / shiny_amount, 0)
+                total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
+                total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
+                shiny_avg_click = round(total_shiny_encounters / total_nonshiny_encounters, 0)
 
-                shiny_stats_avg.append({'name': monName, 'img': monPic, 'amount': shiny_amount,
-                                        'avg': shiny_amount_avg, 'click_for_shiny': shiny_avg_click})
+                shiny_stats_avg.append({'name': monName, 'img': monPic, 'total_shiny_encounters': total_shiny_encounters,
+                                        'total_nonshiny_encounters': total_nonshiny_encounters, 'click_for_shiny': shiny_avg_click})
 
         shiny_stats_worker = []
         for dat in shiny_worker:
