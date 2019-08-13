@@ -1790,7 +1790,7 @@ class RmWrapper(DbWrapperBase):
             "trs_stats_detect_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT encounter_id), a.pokemon_id,"
             "b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'), a.form, b.timestamp_scan "
             "FROM pokemon a left join trs_stats_detect_raw b on a.encounter_id=CAST(b.type_id as unsigned int) where b.is_shiny=1 group by "
-            "b.is_shiny, a.pokemon_id, a.form, b.worker order by b.timestamp_scan"
+            "b.is_shiny, a.pokemon_id, a.form, b.worker order by b.timestamp_scan DESC "
         )
 
         res = self.execute(query)
