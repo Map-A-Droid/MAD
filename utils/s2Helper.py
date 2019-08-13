@@ -304,9 +304,8 @@ class S2Helper:
             CellId.to_point(), \
             s2sphere.Angle.from_degrees(360*radius/(2*math.pi*EARTH)))
         coverer = s2sphere.RegionCoverer()
-        coverer.min_level = 10
+        coverer.min_level = level
         coverer.max_level = level
-        coverer.max_cells = 20
         cells = coverer.get_covering(region)
         return cells 
 
