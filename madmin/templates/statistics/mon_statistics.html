@@ -134,18 +134,18 @@
 
                 setGrid('#show-data-shiny-worker', shiny_worker, [
                     { data: 'worker', title: 'Worker' },
-                    { data: 'sum', title: 'Sum of all' }
+                    { data: 'sum', title: 'Total Shiny Encounters' }
 
                 ]);
 
                 setGrid('#show-data-shiny', shiny, [
-                    { data: 'sum', title: 'Sum of all' },
+                    { data: 'sum', title: 'Encounters' },
                     { data: 'shiny', title: 'Shiny' },
                     { data: 'name', title: 'Name' },
                     { data: null, title: 'Pic' },
-                    { data: 'ratio', title: 'Ratio' },
-                    { data: 'worker', title: 'Worker' }
-
+                    { data: 'ratio', title: 'Ratio (%)' },
+                    { data: 'worker', title: 'Worker' },
+		    { data: 'periode', title: 'Last seen' }
                 ], [
                 {
                     "targets": [3],
@@ -155,11 +155,11 @@
                 }
                 ]);
                 setGrid('#show-data-shiny-avg', shiny_stats_avg, [
-                    { data: 'avg', title: 'Worker Encounter AVG' },
-                    { data: 'amount', title: 'Shiny' },
+                    { data: 'total_nonshiny_encounters', title: 'Encounters' },
+                    { data: 'total_shiny_encounters', title: 'Shiny' },
                     { data: 'name', title: 'Name' },
                     { data: null, title: 'Pic' },
-                    { data: 'click_for_shiny', title: 'AVG Encouter for one Shiny' }
+                    { data: 'click_for_shiny', title: 'Odds (1 in X Encounters)' }
 
                 ], [
                 {
@@ -394,18 +394,18 @@
 <div id="legendContainer_spawn"></div>
 <div id="flot_spawn"></div>
 <br>
-<h2>Recent Perfect Pokemon</h2>
+<h2>Last 300 Perfect Pokemon</h2>
 <table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
 <br>
-<h2>Detected Shiny / Hour (all Worker)</h2>
+<h2>Detected Shiny / Hour (all Workers)</h2>
 <div id="flot_shiny_hour"></div>
 <br>
-<h2>Shiny Stats Type / Worker Detail View</h2>
+<h2>Shiny Stats per Workers</h2>
 <table id="show-data-shiny" class="table" style="width:100%;"></table>
 <br>
-<h2>Shiny Stats AVG</h2>
+<h2>Global Shiny Stats</h2>
 <table id="show-data-shiny-avg" class="table" style="width:100%;"></table>
 <br>
-<h2>Shiny Amount / Worker</h2>
+<h2>Shiny Amount per Worker</h2>
 <table id="show-data-shiny-worker" class="table" style="width:100%;"></table>
 {% endblock %}
