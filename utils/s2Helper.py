@@ -306,6 +306,7 @@ class S2Helper:
         coverer = s2sphere.RegionCoverer()
         coverer.min_level = 10
         coverer.max_level = level
+        coverer.max_cells = 20
         cells = coverer.get_covering(region)
         return cells 
 
