@@ -857,7 +857,7 @@ class WorkerBase(ABC):
 
         logger.debug("_check_pogo_main_screen: checking mainscreen")
         while not self._pogoWindowManager.check_pogo_mainscreen(screenshot_path, self._id):
-            logger.error("_check_pogo_main_screen: not on Mainscreen...")
+            logger.warning("_check_pogo_main_screen: not on Mainscreen...")
             if attempts == maxAttempts:
                 # could not reach raidtab in given maxAttempts
                 logger.error(
