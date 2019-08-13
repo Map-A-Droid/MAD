@@ -254,7 +254,7 @@ class statistics(object):
 
                 total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
                 total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
-                shiny_avg_click = round(total_shiny_encounters / total_nonshiny_encounters, 0)
+                shiny_avg_click = round(total_nonshiny_encounters / total_shiny_encounters, 0)
 
                 shiny_stats_avg.append({'name': monName, 'img': monPic, 'total_shiny_encounters': total_shiny_encounters,
                                         'total_nonshiny_encounters': total_nonshiny_encounters, 'click_for_shiny': shiny_avg_click})
