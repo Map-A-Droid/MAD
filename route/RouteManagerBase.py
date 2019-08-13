@@ -601,7 +601,7 @@ class RouteManagerBase(ABC):
             json.dump(vars, outfile, indent=4, sort_keys=True)
 
     def get_route_status(self, origin) -> Tuple[int, int]:
-        if self._route:
+        if self._route and origin in self._routepool:
             return (self._routepoolpositionmax[origin] - self._routepool[origin].qsize()), len(self._route)
         return 1, 1
 

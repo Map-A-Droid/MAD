@@ -291,7 +291,7 @@ class WorkerQuests(MITMBase):
             logger.info(
                     "Timediff between now and last action time: {}", str(float(timediff)))
             delay_used = delay_used - timediff
-        elif self.get_devicesettings_value('last_action_time', None) is None:
+        elif self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
             logger.info('Starting first time - we wait because of some default pogo delays ...')
             delay_used = 20
         else:
