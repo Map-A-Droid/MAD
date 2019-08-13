@@ -240,7 +240,7 @@ class statistics(object):
             shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
                                 'worker': dat[3], 'encounterid': dat[4],
                                 'periode': datetime.datetime.fromtimestamp
-                                (self.utc2local(dat[6])).strftime(self._datetimeformat})
+                                (self.utc2local(dat[6])).strftime(self._datetimeformat)})
 
         shiny_stats_avg = []
         for dat in shiny_avg:
