@@ -611,7 +611,7 @@ class RouteManagerBase(ABC):
                     #   2) append the coords missing (check end of old routelength, add/remove from there on compared
                     #      to new)
                     old_queue: collections.deque = collections.deque(entry.queue)
-                    while len(old_queue) > 0 or old_queue.popleft() != new_subroute[0]:
+                    while len(old_queue) > 0 and old_queue.popleft() != new_subroute[0]:
                         pass
 
                     if len(old_queue) == 0:
