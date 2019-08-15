@@ -611,14 +611,14 @@ class RouteManagerBase(ABC):
                     #   2) append the coords missing (check end of old routelength, add/remove from there on compared
                     #      to new)
                     old_queue: collections.deque = collections.deque(entry.queue)
-                    while len(old_queue) > 0 or old_queue.index(0) != new_subroute[0]:
-                        old_queue.pop(0)
+                    while len(old_queue) > 0 or old_queue.popleft() != new_subroute[0]:
+                        pass
 
                     if len(old_queue) == 0:
                         # just set new route...
-                        entry.queue: Queue = Queue()
+                        entry.queue: collections.deque = collections.deque()
                         for location in new_subroute:
-                            entry.queue.put(location)
+                            entry.queue.append(location)
                         continue
 
                     # TODO: what if old_queue is beyond new?
@@ -633,7 +633,7 @@ class RouteManagerBase(ABC):
                             pass
                         logger.info("Length of subroute to be extended by {}".format(str(len(new_subroute_copy))))
                         while len(new_subroute_copy) > 0:
-                            entry.queue.put(new_subroute_copy.popleft())
+                            entry.queue.append(new_subroute_copy.popleft())
 
                 elif len(new_subroute) > len(entry.subroute) > 0:
                     #   old routelength < new len(route)/n:
@@ -662,7 +662,7 @@ class RouteManagerBase(ABC):
                     [entry.queue.append(i) for i in old_queue_list]
 
                 if len(entry.queue) == 0:
-                    [entry.queue.put(i) for i in new_subroute]
+                    [entry.queue.append(i) for i in new_subroute]
                 # don't forget to update the subroute ;)
                 entry.subroute = new_subroute
 
