@@ -60,6 +60,9 @@ class RouteManagerMon(RouteManagerBase):
         finally:
             self._manager_mutex.release()
 
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
+
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
         if self._update_prio_queue_thread is not None:

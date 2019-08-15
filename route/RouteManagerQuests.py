@@ -186,6 +186,9 @@ class RouteManagerQuests(RouteManagerBase):
         finally:
             self._manager_mutex.release()
 
+    def _delete_coord_after_fetch(self) -> bool:
+        return True
+
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
         self._is_started = False

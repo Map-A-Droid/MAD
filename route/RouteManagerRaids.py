@@ -33,6 +33,9 @@ class RouteManagerRaids(RouteManagerBase):
         return self.db_wrapper.get_next_raid_hatches(self.delay_after_timestamp_prio,
                                                      self.geofence_helper)
 
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
+
     def _get_coords_post_init(self):
         return self.db_wrapper.gyms_from_db(self.geofence_helper)
 

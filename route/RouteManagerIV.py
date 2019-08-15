@@ -63,6 +63,9 @@ class RouteManagerIV(RouteManagerBase):
             # just set a value to enable the queue
             self.delay_after_timestamp_prio = 5
 
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
+
     def _start_routemanager(self):
         self._manager_mutex.acquire()
         try:
