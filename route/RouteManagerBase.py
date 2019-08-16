@@ -593,7 +593,9 @@ class RouteManagerBase(ABC):
             self._recalc_route_workertype()
         with self._manager_mutex:
             logger.info("Updating all routepools because of removal/addition")
-
+            if len(self._workers_registered) == 0:
+                logger.info("No registered workers, aborting __worker_changed_update_routepools...")
+                return
             new_subroute_length = math.ceil(len(self._current_route_round_coords) / len(self._workers_registered))
             i: int = 0
             for origin in self._routepool.keys():
