@@ -31,6 +31,7 @@ class RoutePoolEntry:
     last_access: float
     queue: collections.deque
     subroute: List[Location]
+    rounds: int = 0
 
 
 class RouteManagerBase(ABC):
@@ -62,6 +63,7 @@ class RouteManagerBase(ABC):
         self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict[str, RoutePoolEntry] = {}
         # self._routepoolpositionmax: Dict = {}
+        self._roundcount: int = 0
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
@@ -482,9 +484,10 @@ class RouteManagerBase(ABC):
             logger.debug("{}: Moving on with route", str(self.name))
             self._positiontyp[origin] = 0
             # TODO: this check is likely always true now.............
-            if len(self._route) == len(self._current_route_round_coords):
+            if self.check_worker_rounds() > self._roundcount:
+                self._roundcount = self.check_worker_rounds()
                 if self._round_started_time is not None:
-                    logger.info("Round of route {} reached the first spot again. It took {}", str(
+                    logger.info("All subroutes of {} reached the first spot again. It took {}", str(
                             self.name), str(self._get_round_finished_string()))
                     self.add_route_to_origin()
                 self._round_started_time = datetime.now()
@@ -531,6 +534,7 @@ class RouteManagerBase(ABC):
             elif len(self._current_route_round_coords) == 0 and len(self._routepool[origin].queue) == 0:
                 # normal queue is empty - prioQ is filled. Try to generate a new Q
                 logger.info("Normal routequeue is empty - try to fill up")
+                self._routepool[origin].rounds += 1
                 if self._get_coords_after_finish_route():
                     # getting new coords or IV worker
                     self._manager_mutex.release()
@@ -571,6 +575,14 @@ class RouteManagerBase(ABC):
             return False
         self.__worker_changed_update_routepools()
         return True
+
+    def check_worker_rounds(self):
+        temp_worker_round_list: list = []
+        for origin in self._routepool.keys():
+            entry: RoutePoolEntry = self._routepool[origin]
+            temp_worker_round_list.append(entry.rounds)
+
+        return min(temp_worker_round_list)
 
     # to be called regularly to remove inactive workers that used to be registered
     def _check_routepools(self, timeout: int = 300):
