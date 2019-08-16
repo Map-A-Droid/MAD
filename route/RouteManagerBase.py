@@ -54,7 +54,6 @@ class RouteManagerBase(ABC):
         self._first_started = False
         self._current_route_round_coords: List[Location] = []
         self._start_calc: bool = False
-        self._rounds = {}
         self._positiontyp = {}
         self._coords_to_be_ignored = set()
         self._level = level
@@ -62,7 +61,6 @@ class RouteManagerBase(ABC):
         self._overwrite_calculation: bool = False
         self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict[str, RoutePoolEntry] = {}
-        # self._routepoolpositionmax: Dict = {}
         self._roundcount: int = 0
 
         # we want to store the workers using the routemanager
@@ -152,9 +150,7 @@ class RouteManagerBase(ABC):
                 logger.info("Worker {} registering to routemanager {}",
                             str(worker_name), str(self.name))
                 self._workers_registered.append(worker_name)
-                self._rounds[worker_name] = 0
                 self._positiontyp[worker_name] = 0
-
                 return True
 
         finally:
@@ -170,7 +166,6 @@ class RouteManagerBase(ABC):
                 if worker_name in self._routepool:
                     logger.info('Cleanup routepool for origin {}', str(worker_name))
                     del self._routepool[worker_name]
-                del self._rounds[worker_name]
             else:
                 # TODO: handle differently?
                 logger.info(
@@ -195,7 +190,6 @@ class RouteManagerBase(ABC):
                 if worker in self._routepool:
                     logger.info('Cleanup routepool for origin {}', str(worker))
                     del self._routepool[worker]
-                del self._rounds[worker]
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                         "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
@@ -494,7 +488,6 @@ class RouteManagerBase(ABC):
                 if self._round_started_time is not None:
                     logger.info("All subroutes of {} reached the first spot again. It took {}", str(
                             self.name), str(self._get_round_finished_string()))
-                    self.add_route_to_origin()
                 self._round_started_time = datetime.now()
                 if len(self._route) == 0:
                     return None
@@ -738,12 +731,6 @@ class RouteManagerBase(ABC):
             #   the new route, remove the old rest of it (or just fetch the first coord of the next subroute and
             #   remove the coords of that coord onward)
 
-    def get_worker_workerpool(self):
-        for origin in self._routepool:
-            logger.info('Worker {}: {} open positions (Route: {})'.format(str(origin),
-                                                                          str(len(self._routepool[origin].queue)),
-                                                                          str(self.name)))
-
     def change_init_mapping(self, name_area: str):
         with open(args.mappings) as f:
             vars = json.load(f)
@@ -763,11 +750,7 @@ class RouteManagerBase(ABC):
         return 1, 1
 
     def get_rounds(self, origin: str) -> int:
-        return self._rounds.get(origin, 999)
-
-    def add_route_to_origin(self):
-        for origin in self._rounds:
-            self._rounds[origin] += 1
+        return self.check_worker_rounds()
 
     def get_registered_workers(self) -> int:
         return len(self._workers_registered)
