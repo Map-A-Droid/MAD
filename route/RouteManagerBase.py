@@ -278,9 +278,6 @@ class RouteManagerBase(ABC):
             self._merge_priority_queue(new_queue)
             time.sleep(self._priority_queue_update_interval())
 
-            # for now, let's call the regular checkup on routepools here...
-            self._check_routepools()
-
     def _merge_priority_queue(self, new_queue):
         if new_queue is not None:
             self._manager_mutex.acquire()
@@ -497,10 +494,8 @@ class RouteManagerBase(ABC):
                 self._round_started_time = datetime.now()
 
             # continue as usual
-            if self.init and len(self._current_route_round_coords) == 0:
-                self._init_mode_rounds += 1
             if self.init and len(self._current_route_round_coords) == 0 and \
-                    self._init_mode_rounds >= int(self.settings.get("init_mode_rounds", 1)) and \
+                    self.check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
                     len(self._routepool[origin].queue) == 0:
                 # we are done with init, let's calculate a new route
                 logger.warning("Init of {} done, it took {}, calculating new route...", str(
@@ -586,8 +581,8 @@ class RouteManagerBase(ABC):
 
     # to be called regularly to remove inactive workers that used to be registered
     def _check_routepools(self, timeout: int = 300):
-        routepool_changed: bool = False
         while not self._stop_update_thread.is_set():
+            routepool_changed: bool = False
             with self._workers_registered_mutex:
                 for origin in list(self._routepool):
                     entry: RoutePoolEntry = self._routepool[origin]
@@ -688,6 +683,7 @@ class RouteManagerBase(ABC):
                     #   remove the coords of that coord onward)
                     last_el_old_route: Location = entry.subroute[len(entry.subroute) - 1]
                     old_queue_list: List[Location] = list(entry.queue)
+                    old_queue: collections.deque = collections.deque(entry.queue)
 
                     last_el_new_route: Location = new_subroute[len(new_subroute) - 1]
                     # check last element of new subroute:
