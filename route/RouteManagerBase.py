@@ -105,6 +105,13 @@ class RouteManagerBase(ABC):
         self._stop_update_thread = Event()
         self._init_route_queue()
 
+        self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
+                                               target=self._check_routepools)
+        self._check_routepools_thread.daemon = False
+        self._check_routepools_thread.start()
+
+
+
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
             return self.settings.get("mon_ids_iv_raw", [])
@@ -115,6 +122,7 @@ class RouteManagerBase(ABC):
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
             self._update_prio_queue_thread.join()
+        self._check_routepools_thread.join()
 
     def _init_route_queue(self):
         self._manager_mutex.acquire()
@@ -147,9 +155,6 @@ class RouteManagerBase(ABC):
                 self._rounds[worker_name] = 0
                 self._positiontyp[worker_name] = 0
 
-                # if worker_name not in self._routepool:
-                #     self._routepool[worker_name] = RoutePoolEntry(time.time(), collections.deque(), [])
-                # self.__worker_changed_update_routepools()
                 return True
 
         finally:
@@ -587,17 +592,21 @@ class RouteManagerBase(ABC):
     # to be called regularly to remove inactive workers that used to be registered
     def _check_routepools(self, timeout: int = 300):
         routepool_changed: bool = False
-        with self._workers_registered_mutex:
-            for origin in list(self._routepool):
-                entry: RoutePoolEntry = self._routepool[origin]
-                if time.time() - entry.last_access > timeout:
-                    logger.warning(
+        while not self._stop_update_thread.is_set():
+            with self._workers_registered_mutex:
+                for origin in list(self._routepool):
+                    entry: RoutePoolEntry = self._routepool[origin]
+                    if time.time() - entry.last_access > timeout:
+                        logger.warning(
                             "Worker {} has not accessed a location in {} seconds, removing from routemanager".format(
-                                    origin, timeout))
-                    del self._routepool[origin]
-                    routepool_changed = True
-        if routepool_changed:
-            self.__worker_changed_update_routepools()
+                                origin, timeout))
+                        del self._routepool[origin]
+                        routepool_changed = True
+            if routepool_changed:
+                self.__worker_changed_update_routepools()
+
+            time.sleep(60)
+
 
     def __worker_changed_update_routepools(self):
         if len(self._route) == 0:
