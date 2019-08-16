@@ -18,3 +18,4 @@ loguru
 gevent
 opencv-python
 pytesseract
+dataclasses
