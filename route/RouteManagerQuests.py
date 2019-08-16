@@ -64,7 +64,7 @@ class RouteManagerQuests(RouteManagerBase):
                 logger.info("Another process already calculate the new route")
                 return True
             self._start_calc = True
-            if not self._route_queue.empty():
+            if len(self._current_route_round_coords) > 0:
                 self._start_calc = False
                 return True
             self.generate_stop_list()

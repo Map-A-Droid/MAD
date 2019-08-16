@@ -7,7 +7,6 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from queue import Queue
 from threading import Event, Lock, RLock, Thread
 from typing import Dict, List, Optional, Tuple
 
@@ -102,6 +101,7 @@ class RouteManagerBase(ABC):
         self._prio_queue = None
         self._update_prio_queue_thread = None
         self._stop_update_thread = Event()
+        self._init_route_queue()
 
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
@@ -145,9 +145,9 @@ class RouteManagerBase(ABC):
                 self._rounds[worker_name] = 0
                 self._positiontyp[worker_name] = 0
 
-                if worker_name not in self._routepool:
-                    self._routepool[worker_name] = RoutePoolEntry(0, collections.deque(), [])
-                self.__worker_changed_update_routepools()
+                # if worker_name not in self._routepool:
+                #     self._routepool[worker_name] = RoutePoolEntry(time.time(), collections.deque(), [])
+                # self.__worker_changed_update_routepools()
                 return True
 
         finally:
@@ -167,8 +167,9 @@ class RouteManagerBase(ABC):
             else:
                 # TODO: handle differently?
                 logger.info(
-                    "Worker {} failed unregistering from routemanager {} since subscription was previously lifted", str(
-                            worker_name), str(self.name))
+                        "Worker {} failed unregistering from routemanager {} since subscription was previously lifted",
+                        str(
+                                worker_name), str(self.name))
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                         "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
@@ -262,6 +263,7 @@ class RouteManagerBase(ABC):
         self._route.clear()
         for coord in new_route:
             self._route.append(Location(coord["lat"], coord["lng"]))
+        self._current_route_round_coords = self._route.copy()
         self._current_index_of_route = 0
         self._manager_mutex.release()
 
@@ -424,9 +426,12 @@ class RouteManagerBase(ABC):
         return merged
 
     def get_next_location(self, origin: str) -> Optional[Location]:
-        # if origin not in self._routepool:
-        #     self._routepool[origin] = RoutePoolEntry(0, collections.deque(), [])
-        #     # self._routepoolpositionmax[origin] = 0
+        if len(self._route) == 0:
+            self._recalc_route_workertype()
+        if origin not in self._routepool:
+            self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [])
+            self.__worker_changed_update_routepools()
+            # self._routepoolpositionmax[origin] = 0
         logger.debug("get_next_location of {} called", str(self.name))
         if not self._is_started:
             logger.info(
@@ -444,9 +449,8 @@ class RouteManagerBase(ABC):
             logger.debug(
                     "{}: Checking if a location is available...", str(self.name))
             self._manager_mutex.acquire()
-            got_location = not len(self._current_route_round_coords) == 0 or (
-                    self._prio_queue is not None and len(self._prio_queue) > 0) or \
-                           not len(self._routepool[origin].queue) == 0
+            got_location = len(self._current_route_round_coords) > 0 or len(self._routepool[origin].queue) > 0 or (
+                    self._prio_queue is not None and len(self._prio_queue) > 0)
             self._manager_mutex.release()
             if not got_location:
                 logger.debug("{}: No location available yet", str(self.name))
@@ -477,6 +481,7 @@ class RouteManagerBase(ABC):
         else:
             logger.debug("{}: Moving on with route", str(self.name))
             self._positiontyp[origin] = 0
+            # TODO: this check is likely always true now.............
             if len(self._route) == len(self._current_route_round_coords):
                 if self._round_started_time is not None:
                     logger.info("Round of route {} reached the first spot again. It took {}", str(
@@ -491,7 +496,6 @@ class RouteManagerBase(ABC):
                 self._round_started_time = datetime.now()
 
             # continue as usual
-
             if self.init and len(self._current_route_round_coords) == 0:
                 self._init_mode_rounds += 1
             if self.init and len(self._current_route_round_coords) == 0 and \
@@ -520,6 +524,8 @@ class RouteManagerBase(ABC):
                 logger.debug(
                         "Initroute of {} is finished - restart worker", str(self.name))
                 return None
+            elif len(self._current_route_round_coords) > 1 and len(self._routepool[origin].queue) == 0:
+                self.__worker_changed_update_routepools()
             elif len(self._current_route_round_coords) == 1 and len(self._routepool[origin].queue) == 0:
                 logger.info('Reaching last coord of route')
             elif len(self._current_route_round_coords) == 0 and len(self._routepool[origin].queue) == 0:
@@ -571,7 +577,7 @@ class RouteManagerBase(ABC):
     def _check_routepools(self, timeout: int = 300):
         routepool_changed: bool = False
         with self._manager_mutex:
-            for origin in self._routepool.keys():
+            for origin in list(self._routepool):
                 entry: RoutePoolEntry = self._routepool[origin]
                 if time.time() - entry.last_access > timeout:
                     logger.warning(
@@ -583,19 +589,27 @@ class RouteManagerBase(ABC):
             self.__worker_changed_update_routepools()
 
     def __worker_changed_update_routepools(self):
+        if len(self._route) == 0:
+            self._recalc_route_workertype()
         with self._manager_mutex:
             logger.info("Updating all routepools because of removal/addition")
 
-            new_subroute_length = math.ceil(len(self._route) / len(self._workers_registered))
+            new_subroute_length = math.ceil(len(self._current_route_round_coords) / len(self._workers_registered))
             i: int = 0
             for origin in self._routepool.keys():
                 # let's assume a worker has already been removed or added to the dict (keys)...
                 entry: RoutePoolEntry = self._routepool[origin]
 
-                new_subroute: List[Location] = [self._route[index] for index in range(i * new_subroute_length,
-                                                                                      (i + 1) *
-                                                                                      new_subroute_length - 1)]
-
+                if len(self._current_route_round_coords) % 2 == 0:
+                    new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
+                                                    range(i * new_subroute_length,
+                                                          ((i + 1) * new_subroute_length))]
+                else:
+                    new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
+                                                    range(i * new_subroute_length,
+                                                          ((i + 1) *
+                                                           new_subroute_length) -1)]
+                i += 1
                 if len(entry.subroute) == 0:
                     # worker is freshly registering, pass him his fair share
                     entry.subroute = new_subroute
@@ -665,7 +679,6 @@ class RouteManagerBase(ABC):
                     [entry.queue.append(i) for i in new_subroute]
                 # don't forget to update the subroute ;)
                 entry.subroute = new_subroute
-
             # TODO: A worker has been removed or added, we need to update the individual workerpools/queues
             #
             # First: Split the original route by the remaining workers => we have a list of new subroutes of
