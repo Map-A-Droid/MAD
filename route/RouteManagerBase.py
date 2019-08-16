@@ -65,10 +65,10 @@ class RouteManagerBase(ABC):
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
-        self._workers_registered_mutex = Lock()
+        self._workers_registered_mutex = RLock()
 
         # waiting till routepool is filled up
-        self._workers_fillup_mutex = Lock()
+        self._workers_fillup_mutex = RLock()
 
         self._last_round_prio = {}
         self._manager_mutex = RLock()
@@ -550,9 +550,8 @@ class RouteManagerBase(ABC):
             self._routepool[origin].last_access = time.time()
             if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                 self._current_route_round_coords.remove(next_coord)
-            logger.info("{}: Moving on with location {} [{} coords left (Workerpool) - {} coords left (Route)]",
-                        str(self.name), str(next_coord), str(len(self._routepool[origin].queue))
-                        , str(len(self._current_route_round_coords)))
+            logger.info("{}: Moving on with location {} [{} coords left (Workerpool)]",
+                        str(self.name), str(next_coord), str(len(self._routepool[origin].queue)))
 
             self._last_round_prio[origin] = False
         logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
@@ -576,7 +575,7 @@ class RouteManagerBase(ABC):
     # to be called regularly to remove inactive workers that used to be registered
     def _check_routepools(self, timeout: int = 300):
         routepool_changed: bool = False
-        with self._manager_mutex:
+        with self._workers_registered_mutex:
             for origin in list(self._routepool):
                 entry: RoutePoolEntry = self._routepool[origin]
                 if time.time() - entry.last_access > timeout:
@@ -591,26 +590,38 @@ class RouteManagerBase(ABC):
     def __worker_changed_update_routepools(self):
         if len(self._route) == 0:
             self._recalc_route_workertype()
-        with self._manager_mutex:
+        with self._workers_registered_mutex and self._manager_mutex:
             logger.info("Updating all routepools because of removal/addition")
             if len(self._workers_registered) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return
-            new_subroute_length = math.ceil(len(self._current_route_round_coords) / len(self._workers_registered))
+
+            new_subroute_length = math.floor(len(self._current_route_round_coords) / len(self._workers_registered))
+
             i: int = 0
+            temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
             for origin in self._routepool.keys():
                 # let's assume a worker has already been removed or added to the dict (keys)...
                 entry: RoutePoolEntry = self._routepool[origin]
 
-                if len(self._current_route_round_coords) % 2 == 0:
-                    new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
-                                                    range(i * new_subroute_length,
-                                                          ((i + 1) * new_subroute_length))]
-                else:
-                    new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
-                                                    range(i * new_subroute_length,
-                                                          ((i + 1) *
-                                                           new_subroute_length) -1)]
+                new_subroute: List[Location] = []
+                j: int = 0
+                while len(temp_total_round) > 0 and (j <= new_subroute_length or i == len(self._routepool)):
+                    j += 1
+                    new_subroute.append(temp_total_round.popleft())
+                #
+                # if (i == len(self._routepool)
+                #         and len(self._current_route_round_coords) % len(self._workers_registered) > 0):
+                #     new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
+                #                                     range(i * new_subroute_length,
+                #                                           ((i + 1) * new_subroute_length + len(
+                #                                                   self._current_route_round_coords) % len(
+                #                                               self._workers_registered)))]
+                # else:
+                #     new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
+                #                                     range(i * new_subroute_length,
+                #                                           ((i + 1) *
+                #                                            new_subroute_length))]
                 i += 1
                 if len(entry.subroute) == 0:
                     # worker is freshly registering, pass him his fair share
@@ -725,7 +736,8 @@ class RouteManagerBase(ABC):
 
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route:
-            return len(self._route) - len(self._current_route_round_coords), len(self._route)
+            entry: RoutePoolEntry = self._routepool[origin]
+            return len(entry.subroute) - len(entry.queue), len(entry.subroute)
             # return (self._routepoolpositionmax[origin] - self._routepool[origin].qsize()), len(self._route)
         return 1, 1
 
