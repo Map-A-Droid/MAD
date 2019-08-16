@@ -62,7 +62,7 @@ def getJsonRoute(coords, maxRadius, maxCoordsInRadius, routefile, num_processes=
                      str(lessCoordinates), str(len(lessCoordinates)))
 
     logger.debug("Got {} coordinates", len(lessCoordinates))
-    if not len(lessCoordinates) > 2:
+    if len(lessCoordinates) < 3:
         logger.debug(
             "less than 3 coordinates... not gonna take a shortest route on that")
         export_data = []
