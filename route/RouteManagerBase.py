@@ -574,11 +574,13 @@ class RouteManagerBase(ABC):
         self.__worker_changed_update_routepools()
         return True
 
-    def check_worker_rounds(self):
+    def check_worker_rounds(self) -> int:
         temp_worker_round_list: list = []
         for origin in self._routepool.keys():
             entry: RoutePoolEntry = self._routepool[origin]
             temp_worker_round_list.append(entry.rounds)
+
+        if len(temp_worker_round_list) == 0: return 0
 
         return min(temp_worker_round_list)
 
@@ -599,7 +601,6 @@ class RouteManagerBase(ABC):
                 self.__worker_changed_update_routepools()
 
             time.sleep(60)
-
 
     def __worker_changed_update_routepools(self):
         if len(self._route) == 0:
