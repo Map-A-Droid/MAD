@@ -19,6 +19,7 @@ from route.routecalc.calculate_route import getJsonRoute
 from utils.collections import Location
 from utils.logging import logger
 from utils.walkerArgs import parseArgs
+from utils.geo import get_distance_of_two_points_in_meters
 
 args = parseArgs()
 
@@ -32,6 +33,9 @@ class RoutePoolEntry:
     queue: collections.deque
     subroute: List[Location]
     rounds: int = 0
+    current_pos: Location = Location(0.0, 0.0)
+    has_prio_event: bool = False
+    prio_coords: Location = Location(0.0, 0.0)
 
 
 class RouteManagerBase(ABC):
@@ -433,6 +437,12 @@ class RouteManagerBase(ABC):
             logger.info("Another process already calculate the new route")
             return None
 
+        if self._routepool[origin].has_prio_event:
+            prioevent = self._routepool[origin].prio_coords
+            logger.info('Worker {} getting a nearby prio event {}'.format(str(origin), str(prioevent)))
+            self._routepool[origin].has_prio_event = False
+            return prioevent
+
         # first check if a location is available, if not, block until we have one...
         got_location = False
         while not got_location and self._is_started and not self.init:
@@ -464,6 +474,8 @@ class RouteManagerBase(ABC):
                                                                  and self._prio_queue[0][0] < time.time())):
                 logger.debug("{}: Priority event", str(self.name))
                 next_coord = heapq.heappop(self._prio_queue)[1]
+                if self._other_worker_closer_to_prioq(next_coord, origin):
+                    return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
                 logger.info("Round of route {} is moving to {}, {} for a priority event", str(
@@ -546,6 +558,7 @@ class RouteManagerBase(ABC):
             if self._check_coords_before_returning(next_coord.lat, next_coord.lng):
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                     self._current_route_round_coords.remove(next_coord)
+                self._routepool[origin].current_pos = next_coord
                 return next_coord
             else:
                 return self.get_next_location(origin)
@@ -557,6 +570,48 @@ class RouteManagerBase(ABC):
                 temp_worker_round_list.append(entry.rounds)
 
         return 0 if len(temp_worker_round_list) == 0 else min(temp_worker_round_list)
+
+    def _other_worker_closer_to_prioq(self, prioqcoord, origin):
+        logger.debug('Check distances from worker to prioQ coord')
+        temp_distance: float = 0.0
+        closer_worker = None
+        if len(self._workers_registered) == 1:
+            logger.debug('Route has only one worker - no distance check')
+            return False
+
+        current_worker_pos = self._routepool[origin].current_pos
+        distance_worker = get_distance_of_two_points_in_meters(current_worker_pos.lat, current_worker_pos.lng,
+                                                               prioqcoord.lat, prioqcoord.lng)
+
+        logger.debug("Worker {} distance to PrioQ {}: {}".format(str(origin), str(prioqcoord), str(distance_worker)))
+
+        temp_distance = distance_worker
+
+        for worker in self._routepool.keys():
+            if worker == origin or self._routepool[worker].has_prio_event:
+                continue
+            worker_pos = self._routepool[worker].current_pos
+            prio_distance = get_distance_of_two_points_in_meters(worker_pos.lat, worker_pos.lng,
+                                                                 prioqcoord.lat, prioqcoord.lng)
+            logger.debug("Worker {} distance to PrioQ {}: {}".format(str(worker), str(prioqcoord), str(prio_distance)))
+            if prio_distance < temp_distance:
+                logger.debug("Worker {} closer then {} by {} meters".format(str(worker), str(origin),
+                                                                            str(int(distance_worker) -
+                                                                                int(prio_distance))))
+                temp_distance = prio_distance
+                closer_worker = worker
+
+        if closer_worker is not None:
+            self._routepool[closer_worker].has_prio_event = True
+            self._routepool[closer_worker].prio_coords = prioqcoord
+            logger.debug(
+                "Worker {} is closer to PrioQ event {}".format(str(closer_worker), str(prioqcoord)))
+            return True
+
+        logger.debug(
+            "No Worker is closer to PrioQ event {} than {}".format(str(prioqcoord), str(origin)))
+
+        return False
 
     # to be called regularly to remove inactive workers that used to be registered
     def _check_routepools(self, timeout: int = 300):
