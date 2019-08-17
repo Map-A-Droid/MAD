@@ -105,10 +105,8 @@ class RouteManagerBase(ABC):
 
         self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
                                                target=self._check_routepools)
-        self._check_routepools_thread.daemon = False
+        self._check_routepools_thread.daemon = True
         self._check_routepools_thread.start()
-
-
 
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
@@ -575,9 +573,7 @@ class RouteManagerBase(ABC):
             entry: RoutePoolEntry = self._routepool[origin]
             temp_worker_round_list.append(entry.rounds)
 
-        if len(temp_worker_round_list) == 0: return 0
-
-        return min(temp_worker_round_list)
+        return 0 if len(temp_worker_round_list) == 0 else min(temp_worker_round_list)
 
     # to be called regularly to remove inactive workers that used to be registered
     def _check_routepools(self, timeout: int = 300):
@@ -601,11 +597,14 @@ class RouteManagerBase(ABC):
         if len(self._route) == 0:
             self._recalc_route_workertype()
         with self._workers_registered_mutex and self._manager_mutex:
-            logger.info("Updating all routepools because of removal/addition")
+            logger.debug("Updating all routepools")
             if len(self._workers_registered) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return
-
+            elif len(self._current_route_round_coords) == 0:
+                logger.error("No coords for current route could be found, unable to distribute workers on an empty "
+                             "route")
+                return
             new_subroute_length = math.floor(len(self._current_route_round_coords) / len(self._workers_registered))
 
             i: int = 0
@@ -619,29 +618,22 @@ class RouteManagerBase(ABC):
                 while len(temp_total_round) > 0 and (j <= new_subroute_length or i == len(self._routepool)):
                     j += 1
                     new_subroute.append(temp_total_round.popleft())
-                #
-                # if (i == len(self._routepool)
-                #         and len(self._current_route_round_coords) % len(self._workers_registered) > 0):
-                #     new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
-                #                                     range(i * new_subroute_length,
-                #                                           ((i + 1) * new_subroute_length + len(
-                #                                                   self._current_route_round_coords) % len(
-                #                                               self._workers_registered)))]
-                # else:
-                #     new_subroute: List[Location] = [self._current_route_round_coords[index] for index in
-                #                                     range(i * new_subroute_length,
-                #                                           ((i + 1) *
-                #                                            new_subroute_length))]
+
                 i += 1
                 if len(entry.subroute) == 0:
                     # worker is freshly registering, pass him his fair share
                     entry.subroute = new_subroute
-                    for loc in new_subroute:
-                        entry.queue.append(loc)
-                if len(new_subroute) == len(entry.subroute):
+                    # let's clean the queue just to make sure
+                    entry.queue.clear()
+                elif len(new_subroute) == len(entry.subroute):
                     # apparently nothing changed
-                    # TODO: check for equivalance and if queues are filled...
-                    logger.info("Apparently no changes in subroutes...")
+                    compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
+
+                    if compare(new_subroute, entry.subroute):
+                        logger.info("Apparently no changes in subroutes...")
+                    else:
+                        logger.fatal("Subroute of {} has changed. To be implemented...".format(origin))
+                        # TODO: what now?
                 elif len(new_subroute) < len(entry.subroute):
                     # we apparently have added at least a worker...
                     #   1) reduce the start of the current queue to start of new route
@@ -658,7 +650,6 @@ class RouteManagerBase(ABC):
                             entry.queue.append(location)
                         continue
 
-                    # TODO: what if old_queue is beyond new?
                     # we now are at a point where we need to also check the end of the old queue and
                     # append possibly missing coords to it
                     last_el_old_q: Location = old_queue[len(old_queue) - 1]
@@ -668,7 +659,7 @@ class RouteManagerBase(ABC):
                         new_subroute_copy = collections.deque(new_subroute)
                         while len(new_subroute_copy) > 0 and new_subroute_copy.popleft() != last_el_old_q:
                             pass
-                        logger.info("Length of subroute to be extended by {}".format(str(len(new_subroute_copy))))
+                        logger.debug("Length of subroute to be extended by {}".format(str(len(new_subroute_copy))))
                         while len(new_subroute_copy) > 0:
                             entry.queue.append(new_subroute_copy.popleft())
 
@@ -681,6 +672,7 @@ class RouteManagerBase(ABC):
                     #   still in
                     #   the new route, remove the old rest of it (or just fetch the first coord of the next subroute and
                     #   remove the coords of that coord onward)
+                    logger.debug("A worker has apparently been removed from the routepool")
                     last_el_old_route: Location = entry.subroute[len(entry.subroute) - 1]
                     old_queue_list: List[Location] = list(entry.queue)
                     old_queue: collections.deque = collections.deque(entry.queue)
