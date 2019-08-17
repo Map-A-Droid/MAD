@@ -20,6 +20,7 @@ from utils.collections import Location
 from utils.logging import logger
 from utils.walkerArgs import parseArgs
 from utils.geo import get_distance_of_two_points_in_meters
+from operator import itemgetter
 
 args = parseArgs()
 
@@ -32,6 +33,7 @@ class RoutePoolEntry:
     last_access: float
     queue: collections.deque
     subroute: List[Location]
+    time_added: float
     rounds: int = 0
     current_pos: Location = Location(0.0, 0.0)
     has_prio_event: bool = False
@@ -425,9 +427,8 @@ class RouteManagerBase(ABC):
             self._recalc_route_workertype()
         if origin not in self._routepool:
             logger.debug("No subroute/routepool entry of {} present, creating it".format(origin))
-            self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [])
+            self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [], time_added=time.time())
             self.__worker_changed_update_routepools()
-            # self._routepoolpositionmax[origin] = 0
         if not self._is_started:
             logger.info(
                     "Starting routemanager {} in get_next_location", str(self.name))
@@ -651,7 +652,14 @@ class RouteManagerBase(ABC):
 
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
-            for origin, entry in self._routepool.items():
+
+            # we want to order the dict by the time's we added the workers to the areas
+            # we first need to build a list of tuples with only origin, time_added
+            reduced_routepools = [(origin, self._routepool[origin].time_added) for origin in self._routepool]
+            sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
+            
+            for origin, time_added in sorted_routepools:
+                entry: RoutePoolEntry = self._routepool[origin]
                 logger.debug("Checking subroute of {}".format(origin))
                 # let's assume a worker has already been removed or added to the dict (keys)...
 
