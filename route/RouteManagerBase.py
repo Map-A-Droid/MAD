@@ -670,14 +670,15 @@ class RouteManagerBase(ABC):
                     # let's clean the queue just to make sure
                     entry.queue.clear()
                 elif len(new_subroute) == len(entry.subroute):
-                    logger.debug("{}'s subroute is as long as the old one, we will assume it hasn't changed (for now)")
+                    logger.debug("{}'s subroute is as long as the old one, we will assume it hasn't changed (for now)"
+                                 .format(str(origin)))
                     # apparently nothing changed
                     compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
 
                     if compare(new_subroute, entry.subroute):
                         logger.info("Apparently no changes in subroutes...")
                     else:
-                        logger.fatal("Subroute of {} has changed. To be implemented...".format(origin))
+                        logger.critical("Subroute of {} has changed. To be implemented...".format(origin))
                         # TODO: what now?
                 elif len(new_subroute) < len(entry.subroute):
                     logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
