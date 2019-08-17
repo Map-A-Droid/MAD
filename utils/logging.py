@@ -6,8 +6,8 @@ from loguru import logger
 
 
 def initLogging(args):
-    log_level = logLevel(args.log_level, args.verbose)
-    log_file_level = logLevel(args.log_file_level, args.verbose)
+    log_level_label, log_level = logLevel(args.log_level, args.verbose)
+    _, log_file_level = logLevel(args.log_file_level, args.verbose)
     log_trace = log_level <= 10
     log_file_trace = log_file_level <= 10
 
@@ -64,7 +64,7 @@ def initLogging(args):
         logger.error("Logging parameters/configuration is invalid.")
         sys.exit(1)
 
-    logger.info("Setting log level to {}", str(log_level))
+    logger.info("Setting log level to {} ({}).", str(log_level), log_level_label)
 
 
 def logLevel(arg_log_level, arg_debug_level):
@@ -83,9 +83,8 @@ def logLevel(arg_log_level, arg_debug_level):
         ("ERROR", 40),
         ("CRITICAL", 50)
     ]
-
     # Case insensitive.
-    arg_log_level = arg_log_level.upper()
+    arg_log_level = arg_log_level.upper() if arg_log_level else None
     # Easy label->level lookup.
     verbosity_map = { k.upper(): v for k,v in verbosity_levels }
 
@@ -117,9 +116,9 @@ def logLevel(arg_log_level, arg_debug_level):
     # List goes from TRACE to DEBUG, -v=1=DEBUG is last index.
     # Note: List length is 1-based and so is count(-v).
     debug_level_idx = debug_levels_length - arg_debug_level
-    _, debug_level = debug_levels[debug_level_idx]
+    debug_label, debug_level = debug_levels[debug_level_idx]
 
-    return debug_level
+    return (debug_label, debug_level)
 
 
 def errorFilter(record):
