@@ -115,8 +115,9 @@ class RouteManagerBase(ABC):
             return None
 
     def stop_routemanager(self):
+        self._stop_update_thread.set()
+
         if self._update_prio_queue_thread is not None:
-            self._stop_update_thread.set()
             self._update_prio_queue_thread.join()
         self._check_routepools_thread.join()
 
