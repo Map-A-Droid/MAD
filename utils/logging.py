@@ -68,31 +68,58 @@ def initLogging(args):
 
 
 def logLevel(arg_log_level, arg_debug_level):
-    levelswitch = {
-        "TRACE": 5,
-        "DEBUG5": 6,
-        "DEBUG4": 7,
-        "DEBUG3": 8,
-        "DEBUG2": 9,
-        "DEBUG": 10,
-        "INFO": 20,
-        "SUCCESS": 25,
-        "WARNING": 30,
-        "ERROR": 40,
-        "CRITICAL": 50
-    }
+    # List has an order, dict doesn't. We need the guaranteed order to
+    # determine debug level based on arg_debug_level.
+    verbosity_levels = [
+        ("TRACE", 5),
+        ("DEBUG5", 6),
+        ("DEBUG4", 7),
+        ("DEBUG3", 8),
+        ("DEBUG2", 9),
+        ("DEBUG", 10),
+        ("INFO", 20),
+        ("SUCCESS", 25),
+        ("WARNING", 30),
+        ("ERROR", 40),
+        ("CRITICAL", 50)
+    ]
 
-    forced_log_level = levelswitch.get(arg_log_level, None)
+    # Case insensitive.
+    arg_log_level = arg_log_level.upper()
+    # Easy label->level lookup.
+    verbosity_map = { k.upper(): v for k,v in verbosity_levels }
+
+    # Log level by label.
+    forced_log_level = verbosity_map.get(arg_log_level, None)
     if forced_log_level:
         return forced_log_level
 
+    # Default log level.
     if arg_debug_level == 0:
-        return 20
+        return verbosity_map.get('INFO')
 
-    # DEBUG=10; starting with -v equals to args.verbose==1
-    # starting with -vv equals to args.verbose==2 etc.
-    loglevel = 11 - arg_debug_level
-    return loglevel
+    # Log level based on count(-v) verbosity arguments.
+    # Limit it to allowed grades, starting at DEBUG.
+    debug_log_level_idx = next(key for key,(label, level) in enumerate(verbosity_levels) if label == 'DEBUG')
+
+    # Limit custom verbosity to existing grades.
+    debug_levels = verbosity_levels[:debug_log_level_idx + 1]
+    debug_levels_length = len(debug_levels)
+
+    if arg_debug_level < 0 or arg_debug_level > debug_levels_length:
+        logger.debug("Verbosity -v={} is outside of the bounds [0, {}]. Changed to nearest limit.",
+                     str(arg_debug_level),
+                     str(debug_levels_length))
+
+        arg_debug_level = min(arg_debug_level, debug_levels_length)
+        arg_debug_level = max(arg_debug_level, 0)
+
+    # List goes from TRACE to DEBUG, -v=1=DEBUG is last index.
+    # Note: List length is 1-based and so is count(-v).
+    debug_level_idx = debug_levels_length - arg_debug_level
+    _, debug_level = debug_levels[debug_level_idx]
+
+    return debug_level
 
 
 def errorFilter(record):
