@@ -441,6 +441,7 @@ class RouteManagerBase(ABC):
             prioevent = self._routepool[origin].prio_coords
             logger.info('Worker {} getting a nearby prio event {}'.format(str(origin), str(prioevent)))
             self._routepool[origin].has_prio_event = False
+            self._routepool[origin].current_pos = prioevent
             return prioevent
 
         # first check if a location is available, if not, block until we have one...
@@ -475,6 +476,8 @@ class RouteManagerBase(ABC):
                 logger.debug("{}: Priority event", str(self.name))
                 next_coord = heapq.heappop(self._prio_queue)[1]
                 if self._other_worker_closer_to_prioq(next_coord, origin):
+                    self._last_round_prio[origin] = True
+                    self._positiontyp[origin] = 1
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
