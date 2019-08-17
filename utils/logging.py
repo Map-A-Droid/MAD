@@ -106,9 +106,13 @@ def logLevel(arg_log_level, arg_debug_level):
     debug_levels_length = len(debug_levels)
 
     if arg_debug_level < 0 or arg_debug_level > debug_levels_length:
-        logger.debug("Verbosity -v={} is outside of the bounds [0, {}]. Changed to nearest limit.",
-                     str(arg_debug_level),
-                     str(debug_levels_length))
+        # Only show the message once per startup. This method is currently called once
+        # for console logging, once for file logging.
+        if not hasattr(logLevel, 'bounds_exceeded'):
+            logger.debug("Verbosity -v={} is outside of the bounds [0, {}]. Changed to nearest limit.",
+                        str(arg_debug_level),
+                        str(debug_levels_length))
+            logLevel.bounds_exceeded = True
 
         arg_debug_level = min(arg_debug_level, debug_levels_length)
         arg_debug_level = max(arg_debug_level, 0)
