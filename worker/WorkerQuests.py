@@ -307,7 +307,7 @@ class WorkerQuests(MITMBase):
             delay_used = -1
 
         if delay_used < 0:
-            logger.info('No more cooldowntime - start over')
+            logger.info('No need to wait before spinning, continuing...')
         else:
             delay_used = math.floor(delay_used)
             logger.info("Real sleep time: {} seconds: next action {}",
