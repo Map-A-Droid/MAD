@@ -1127,11 +1127,12 @@ new Vue({
             <i class ="fa fa-map-pin"></i>
             <a href="https://maps.google.com/?q=${spawn["lat"]},${spawn["lon"]}">${spawn["lat"].toFixed(6)}, ${spawn["lon"].toFixed(6)}</a>
          </div>
-         <div class="timestamp"><i class="fa fa-clock"></i> Scanned: ${spawn["lastscan"]}</div>
          <br>
           <div cla ss="spawnContent">
-            <div class="spawnFirstDetection"><i class="fas fa-baby"></i> First seen: ${spawn["first_detection"]}</div>
-            <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown"}</strong> spawnpoint</div>
+            <div class="spawnFirstDetection"><i class="fas fa-baby"></i> First seen: <strong>${spawn["first_detection"]}</strong></div>
+            <div class="timestamp"><i class="fas fa-eye"></i> Last seen: <strong>${spawn["lastnonscan"]}</strong></div>
+            <div class="timestamp"><i class="fa fa-clock"></i> Last confirmation: <strong>${spawn["lastscan"]}</strong></div>
+            <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown despawn time"}</strong></div>
             <div class="spawnTiming">${spawntiming}</div>
           </div>
         </div>`;
