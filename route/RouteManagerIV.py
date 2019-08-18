@@ -9,7 +9,7 @@ class RouteManagerIV(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 60
 
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         return True
 
     def _recalc_route_workertype(self):

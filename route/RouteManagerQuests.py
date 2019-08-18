@@ -54,7 +54,7 @@ class RouteManagerQuests(RouteManagerBase):
         self.starve_route = False
         self._stoplist: List[Location] = []
 
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         if self._level:
             logger.info("Level Mode - switch to next area")
             return False
@@ -90,7 +90,6 @@ class RouteManagerQuests(RouteManagerBase):
                 return False
             return True
         finally:
-            self.get_worker_workerpool()
             self._manager_mutex.release()
 
     def _restore_original_route(self):

@@ -6,9 +6,8 @@ class RouteManagerMon(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 180
 
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         self._init_route_queue()
-        self.get_worker_workerpool()
         return True
 
     def _recalc_route_workertype(self):

@@ -365,7 +365,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         """
         Return list of coords to be fetched after finish a route
         :return:
@@ -422,13 +422,7 @@ class RouteManagerBase(ABC):
 
     def get_next_location(self, origin: str) -> Optional[Location]:
         logger.debug("get_next_location of {} called", str(self.name))
-        if len(self._route) == 0:
-            logger.info("Route is empty, calculating route")
-            self._recalc_route_workertype()
-        if origin not in self._routepool:
-            logger.debug("No subroute/routepool entry of {} present, creating it".format(origin))
-            self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [], time_added=time.time())
-            self.__worker_changed_update_routepools()
+
         if not self._is_started:
             logger.info(
                     "Starting routemanager {} in get_next_location", str(self.name))
@@ -438,12 +432,19 @@ class RouteManagerBase(ABC):
             logger.info("Another process already calculate the new route")
             return None
 
-        if self._routepool[origin].has_prio_event:
-            prioevent = self._routepool[origin].prio_coords
-            logger.info('Worker {} getting a nearby prio event {}'.format(str(origin), str(prioevent)))
-            self._routepool[origin].has_prio_event = False
-            self._routepool[origin].current_pos = prioevent
-            return prioevent
+        with self._manager_mutex:
+            if origin not in self._routepool:
+                logger.debug("No subroute/routepool entry of {} present, creating it".format(origin))
+                self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [],
+                                                         time_added=time.time())
+                self.__worker_changed_update_routepools()
+
+            elif self._routepool[origin].has_prio_event:
+                prioevent = self._routepool[origin].prio_coords
+                logger.info('Worker {} getting a nearby prio event {}'.format(str(origin), str(prioevent)))
+                self._routepool[origin].has_prio_event = False
+                self._routepool[origin].current_pos = prioevent
+                return prioevent
 
         # first check if a location is available, if not, block until we have one...
         got_location = False
@@ -451,8 +452,11 @@ class RouteManagerBase(ABC):
             logger.debug(
                     "{}: Checking if a location is available...", str(self.name))
             with self._manager_mutex:
-                got_location = len(self._current_route_round_coords) > 0 or len(self._routepool[origin].queue) > 0 or (
-                        self._prio_queue is not None and len(self._prio_queue) > 0)
+                got_location = (len(self._current_route_round_coords) > 0 or (self._routepool.get(origin,
+                                                                                                  None) is not None
+                                                                             and len(self._routepool[origin].queue))
+                                                                             > 0 or (
+                        self._prio_queue is not None and len(self._prio_queue) > 0))
             logger.debug2("Got location {}".format(str(got_location)))
             if not got_location:
                 logger.debug("{}: No location available yet", str(self.name))
@@ -638,6 +642,7 @@ class RouteManagerBase(ABC):
 
     def __worker_changed_update_routepools(self):
         if len(self._route) == 0:
+            logger.debug("Route is empty, recalcing")
             self._recalc_route_workertype()
         with self._manager_mutex:
             logger.debug("Updating all routepools")
