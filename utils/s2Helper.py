@@ -5,7 +5,6 @@ from typing import List
 
 import gpxdata
 import s2sphere
-import inspect
 from geopy import Point, distance
 # from utils.collections import Location
 # from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
@@ -292,46 +291,7 @@ class S2Helper:
             s2sphere.LatLng.from_degrees(lat, lng).to_point(), \
             s2sphere.Angle.from_degrees(360*radius/(2*math.pi*EARTH)))
         coverer = s2sphere.RegionCoverer()
-        coverer.min_level = 10
-        coverer.max_level = level
-        cells = coverer.get_covering(region)
-        return cells 
-
-    @staticmethod
-    def get_S2cells_from_circle_and_CellId(CellId, radius, level=15):
-        EARTH = 6371000
-        region = s2sphere.Cap.from_axis_angle(\
-            CellId.to_point(), \
-            s2sphere.Angle.from_degrees(360*radius/(2*math.pi*EARTH)))
-        coverer = s2sphere.RegionCoverer()
         coverer.min_level = level
         coverer.max_level = level
         cells = coverer.get_covering(region)
         return cells 
-
-    def get_middle_of_coord_listS2(list_of_cells):
-        if len(list_of_cells) == 1:
-            return Location(list_of_cells[0].to_lat_lng().lat().degrees, list_of_cells[0].to_lat_lng().lng().degrees)
-
-        x = 0
-        y = 0
-        z = 0
-
-        for cell in list_of_cells:
-            # transform to radians...
-            lat_rad = cell.to_lat_lng().lat().radians
-            lng_rad = cell.to_lat_lng().lng().radians
-
-            x += math.cos(lat_rad) * math.cos(lng_rad)
-            y += math.cos(lat_rad) * math.sin(lng_rad)
-            z += math.sin(lat_rad)
-
-        amount_of_coords = len(list_of_cells)
-        x = x / amount_of_coords
-        y = y / amount_of_coords
-        z = z / amount_of_coords
-        central_lng = math.atan2(y, x)
-        central_square_root = math.sqrt(x * x + y * y)
-        central_lat = math.atan2(z, central_square_root)
-
-        return Location(math.degrees(central_lat), math.degrees(central_lng))
