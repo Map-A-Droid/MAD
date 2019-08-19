@@ -91,7 +91,7 @@ def logLevel(arg_log_level, arg_debug_level):
     # Log level by label.
     forced_log_level = verbosity_map.get(arg_log_level, None)
     if forced_log_level:
-        return forced_log_level
+        return (arg_log_level, forced_log_level)
 
     # Default log level.
     if arg_debug_level == 0:
