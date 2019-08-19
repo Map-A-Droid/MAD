@@ -124,6 +124,8 @@
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
 #quest_webhook               # Activate support for quest webhook
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
+#pokemon_webhook_nonivs      # By default MAD will not send mons without IV checked if they are on ANY Global Mon List. Enable this to have them (sometimes) send twice
+                             # once without IV, once with IV. Make sure your webhook reciever can work with the same encounter send twice [e.g. PokeAlarm needs dev branch] 
 
 # Dynamic Rarity
 ######################
