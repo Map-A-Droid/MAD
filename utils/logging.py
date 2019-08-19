@@ -95,7 +95,7 @@ def logLevel(arg_log_level, arg_debug_level):
 
     # Default log level.
     if arg_debug_level == 0:
-        return verbosity_map.get('INFO')
+        return ('INFO', verbosity_map.get('INFO'))
 
     # Log level based on count(-v) verbosity arguments.
     # Limit it to allowed grades, starting at DEBUG.
