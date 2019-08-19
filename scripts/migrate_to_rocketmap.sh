@@ -37,7 +37,7 @@ read newdbname
 # Create Query function
 
 query(){
-MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname -e "$1"
+MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport -u root $newdbname -e "$1"
 }
 
 DB_CHECK=$(query "SHOW DATABASES;" | grep $newdbname)
@@ -57,9 +57,9 @@ echo -ne "\e[0m"
 # Creating DB and Schema
 
 echo "Creating New DATABASE..."
-MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport -e "CREATE DATABASE $newdbname;"
+MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport -u root -e "CREATE DATABASE $newdbname;"
 echo "Creating RM DB Schema..."
-MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport $newdbname < ../SQL/rocketmap.sql
+MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport -u root $newdbname < ../SQL/rocketmap.sql
 
 # Start Importing Data
 
