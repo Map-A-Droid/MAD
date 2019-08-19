@@ -112,13 +112,13 @@ class MITMBase(WorkerBase):
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
                         and self.get_devicesettings_value("reboot", False):
-                    logger.error("To much timeouts - Rebooting {}", str(self._id))
+                    logger.error("Too many timeouts - Rebooting device {}", str(self._id))
                     self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
 
                 # self._mitm_mapper.
                 self._restart_count = 0
-                logger.error("To much timeouts - Restarting Pogo  {}", str(self._id))
+                logger.error("Too many timeouts - Restarting game on {}", str(self._id))
                 self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()

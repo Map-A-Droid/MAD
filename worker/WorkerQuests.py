@@ -705,7 +705,7 @@ class WorkerQuests(MITMBase):
                 logger.info('Check for Team Rocket Dialog or other open window')
                 self.process_rocket()
             if data_received == FortSearchResultTypes.INVENTORY:
-                logger.error('Box is full ... Next round!')
+                logger.info('Box is full... Next round!')
                 self.clear_thread_task = 1
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
