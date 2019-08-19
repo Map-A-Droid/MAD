@@ -250,7 +250,7 @@ if __name__ == "__main__":
                                                  mitm_mapper, args, mapping_manager, db_wrapper)
             mitm_receiver_process.start()
 
-            logger.info('Starting scanner')
+            logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager)
             t_ws = Thread(name='scanner', target=ws_server.start_server)
             t_ws.daemon = False
@@ -291,7 +291,7 @@ if __name__ == "__main__":
 
     if args.with_madmin:
         from madmin.madmin import madmin_start
-        logger.info("Starting Madmin on Port: {}", str(args.madmin_port))
+        logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
                           args=(args, db_wrapper, ws_server, mapping_manager))
         t_madmin.daemon = True

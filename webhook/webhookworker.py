@@ -268,7 +268,6 @@ class WebhookWorker:
                 "time_changed": weather["last_updated"],
             }
 
-            # required by PA but not provided by Monocle
             if weather.get("latitude", None) is None:
                 weather_payload["latitude"] = S2Helper.middle_of_cell(
                     weather["s2_cell_id"]
@@ -343,7 +342,7 @@ class WebhookWorker:
 
             if raid["is_ex_raid_eligible"] is not None:
                 raid_payload["is_ex_raid_eligible"] = raid["is_ex_raid_eligible"]
-                
+
             if raid["is_exclusive"] is not None:
                 raid_payload["is_exclusive"] = raid["is_exclusive"]
 
@@ -366,8 +365,8 @@ class WebhookWorker:
                 continue
 
             if (
-                not self.__args.pokemon_webhook_nonivs 
-                and mon["pokemon_id"] in self.__IV_MON 
+                not self.__args.pokemon_webhook_nonivs
+                and mon["pokemon_id"] in self.__IV_MON
                 and (mon["individual_attack"] is None)
             ):
                 # skipping this mon since IV has not been scanned yet
@@ -386,14 +385,9 @@ class WebhookWorker:
             # get rarity
             pokemon_rarity = self.__rarity.rarity_by_id(pokemonid=mon["pokemon_id"])
 
-            # used by RM
             if mon.get("cp_multiplier", None) is not None:
                 mon_payload["cp_multiplier"] = mon["cp_multiplier"]
                 mon_payload["pokemon_level"] = calculate_mon_level(mon["cp_multiplier"])
-
-            # used by Monocle
-            if mon.get("level", None) is not None:
-                mon_payload["pokemon_level"] = mon["level"]
 
             if mon["form"] is not None and mon["form"] > 0:
                 mon_payload["form"] = mon["form"]

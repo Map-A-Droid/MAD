@@ -12,7 +12,6 @@
 # You need to have MySQL Database and User/Grants already created!
 # If you just need clean schema you can install it via scripts/databasesetup.py
 
-#db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
 #dbip:                       # IP adress or hostname of the mysql server
 #dbusername:                 # USERname for database
 #dbpassword:                 # Password for that username

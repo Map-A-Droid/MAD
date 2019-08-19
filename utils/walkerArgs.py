@@ -31,13 +31,13 @@ def parseArgs():
     parser.add_argument('-cf', '--config',
                         is_config_file=True, help='Set configuration file')
     parser.add_argument('-mf', '--mappings', default=os.getenv('MAD_CONFIG',
-                            os.path.join(os.path.dirname(__file__),
-                            '../configs/mappings.json')),
+                        os.path.join(os.path.dirname(__file__),
+                                     '../configs/mappings.json')),
                         help='Set mappings file')
 
     # MySQL
-    parser.add_argument('-dbm', '--db_method', required=False,
-                        help='DB scheme to be used. Either "monocle" or "rm".')
+    parser.add_argument('-dbm', '--db_method', required=True, default="rm",
+                        help='LEGACY: DB scheme to be used')
     parser.add_argument('-dbip', '--dbip', required=False,
                         help='IP of MySql Server.')
     parser.add_argument('-dbuser', '--dbusername', required=False,

@@ -7,7 +7,6 @@ from multiprocessing import Lock, Semaphore
 from typing import List, Optional
 
 import mysql
-from utils.s2Helper import S2Helper
 from bitstring import BitArray
 from mysql.connector.pooling import MySQLConnectionPool
 
@@ -42,7 +41,7 @@ class DbWrapperBase(ABC):
                                         pool_size=self.application_args.db_poolsize,
                                         **self.dbconfig)
         self.pool_mutex.release()
-        
+
     def check_index_exists(self, table, index):
         query = (
             "SELECT count(*) "

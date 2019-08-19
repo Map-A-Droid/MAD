@@ -14,14 +14,6 @@ port=$(awk -F: '/^dbport/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's
 [[ "$port" == "" ]] && port=3306
 
 case "$dbtype" in
- monocle)
-	gyms="forts"
-	gymID="external_id"
-	details="forts"
-	pokestopDB="pokestops"
-	pokestopID="external_id"
-        imgurl="url"
-	;;
  rm)
 	gyms="gym"
 	gymID="gym_id"
