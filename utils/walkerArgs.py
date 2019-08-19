@@ -243,6 +243,9 @@ def parseArgs():
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
 
+    parser.add_argument('-ld', '--lure_duration', default='30', type=int,
+                        help='Lure duration in minutes. (Default: 30)')
+
     # mappings.json auto reloader
 
     parser.add_argument('-arc', '--auto_reload_config', action='store_true', default=False,
@@ -289,7 +292,7 @@ def parseArgs():
     parser.add_argument("--log_file_retention", default="10",
                         help=("Amount of days to keep file logs. Set to 0 to"
                               " keep them forever (Default: 10)"))
-    parser.add_argument('--log_filename', default='%Y%m%d_%H%M_<SN>.log', 
+    parser.add_argument('--log_filename', default='%Y%m%d_%H%M_<SN>.log',
                         help=("Defines the log filename to be saved."
                               " Allows date formatting, and replaces <SN>"
                               " with the instance's status name. Read the"

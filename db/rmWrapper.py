@@ -1155,7 +1155,7 @@ class RmWrapper(DbWrapperBase):
 
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
-            lure = datetime.utcfromtimestamp(30 * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
+            lure = datetime.utcfromtimestamp(self.application_args.lure_duration * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
 
         if "pokestop_display" in stop_data:
             start_ms = stop_data["pokestop_display"]["incident_start_ms"]
