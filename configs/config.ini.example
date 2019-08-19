@@ -40,22 +40,12 @@
 #initial_restart:            # Initial Pogo restart when scanner starts. (Default: true)
 #delay_after_hatch:          # Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)
 
-# Runtype settings
-######################
-
-#only_scan                   # running this instance in scanning mode without OCR tracing
-#only_ocr                    # running this instance in ocr mode without Scanning
-#ocr_multitask               # running OCR as multiprocessing task
-#ocr_thread_count:           # amount of processes/threads to run analysis with
-#no_ocr                      # activate this if you dont want to use mode ocr_raid or questscanner
-
 # path settings
 ######################
 
 #pogoasset:                  # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
-#unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
 #file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
 #mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
 

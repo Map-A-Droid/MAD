@@ -315,11 +315,6 @@ class WebsocketServer(object):
                                     mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
                                     db_wrapper=self.__db_wrapper,
                                     pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
-            elif walker_routemanager_mode in ["raids_ocr"]:
-                from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
-                                   mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
-                                   pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
             elif walker_routemanager_mode in ["pokestops"]:
                 worker = WorkerQuests(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
                                       mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,

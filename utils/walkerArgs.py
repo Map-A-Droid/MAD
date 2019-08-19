@@ -81,10 +81,10 @@ def parseArgs():
                             'gym. Default: 3.5'))
 
     # Runtypes
-    parser.add_argument('-os', '--only_scan', action='store_true', default=False,
+    parser.add_argument('-os', '--only_scan', action='store_true', default=True,
                         help='Use this instance only for scanning.')
     parser.add_argument('-oo', '--only_ocr', action='store_true', default=False,
-                        help='Use this instance only for OCR.')
+                        help='LEGACY: Use this instance only for OCR.')
     parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
                         help='Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.')
     parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
@@ -93,8 +93,6 @@ def parseArgs():
                         help='Start madmin as instance.')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
-    parser.add_argument('-nocr', '--no_ocr', action='store_true', default=False,
-                        help='Activate if you not using OCR for Quest or Raidscanning.')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
@@ -106,9 +104,6 @@ def parseArgs():
 
     parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots',  # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
-
-    parser.add_argument('-unkpath', '--unknown_path', default='ocr/unknown',
-                        help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
 
