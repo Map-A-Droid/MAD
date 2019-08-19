@@ -1,32 +1,50 @@
-# Basic docker image 
-# Usage:
-#   docker build -t pogomad .             # Build the docker Image
-#   docker run -d pogomad start.py        # Launch Server
-
-FROM python:3.7.1-slim
-
-# Default ports for PogoDroid, RGC and MAdmin
-EXPOSE 8080 8000 5000
-
+############################
+# MAD
+############################
+FROM python:3.7-slim
 # Working directory for the application
 WORKDIR /usr/src/app
 
-# Set Entrypoint with hard-coded options
-ENTRYPOINT ["python"]
-CMD ["./start.py"] 
-
-# Install required system packages
-RUN apt-get update && apt-get install -y --no-install-recommends libgeos-dev build-essential
-RUN apt-get update && apt-get -y install libglib2.0-0 default-libmysqlclient-dev
-RUN apt-get update && apt-get -y install tesseract-ocr libtesseract-dev
-RUN apt-get -y install tk
-RUN apt-get update
-
+# copy requirements only, to reduce image size and improve cache usage
 COPY requirements.txt /usr/src/app/
-COPY requirements_ocr.txt /usr/src/app/
 
-RUN apt-get update && apt-get install -y git && pip install -r requirements.txt
-RUN apt-get update && apt-get install -y git && pip install -r requirements_ocr.txt
+# Install required system packages + python requirements + cleanup in one layer (yields smaller docker image). 
+# If you try to debug the build you should split into single RUN commands ;)
+RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
+&& apt-get install -y --no-install-recommends \
+build-essential \
+libglib2.0-0 \
+default-libmysqlclient-dev \
+python-opencv \
+libsm6 \
+libxext6 \
+libxrender-dev \
+tk \
+wget \
+&& wget https://github.com/tesseract-ocr/tessdata/raw/master/eng.traineddata \
+&& mkdir /usr/local/share/tessdata/ \
+&& mv -v eng.traineddata /usr/local/share/tessdata/ \
+# python reqs
+&& python3 -m pip install --no-cache-dir -r requirements.txt \
+# cleanup
+&& apt-get remove -y wget \
+&& apt-get remove -y build-essential \
+&& apt-get remove -y python2.7 && rm -rf /usr/lib/python2.7 \
+&& apt-get purge -y --auto-remove -o APT::AutoRemove::RecommendsImportant=false \
+&& rm -rf /var/lib/apt/lists/*
+
+RUN printf "deb http://ftp.de.debian.org/debian stretch main" >> /etc/apt/sources.list \
+&& apt-get update && apt-get install libicu57
+
+# tesseract from stretch-backport
+RUN printf "deb http://httpredir.debian.org/debian stretch-backports main non-free\ndeb-src http://httpredir.debian.org/debian stretch-backports main non-free" >> /etc/apt/sources.list.d/backports.list \
+&& apt-get update && apt-get -y --allow-unauthenticated -t stretch-backports install tesseract-ocr libtesseract-dev
 
 # Copy everything to the working directory (Python files, templates, config) in one go.
 COPY . /usr/src/app/
+
+# Set Entrypoint with hard-coded options
+ENTRYPOINT ["python3","start.py", "-wm", "-os"]
+
+# Default ports for PogoDroid, RGC and MAdmin
+EXPOSE 8080 8000 5000
