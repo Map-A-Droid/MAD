@@ -36,7 +36,7 @@ def parseArgs():
                         help='Set mappings file')
 
     # MySQL
-    parser.add_argument('-dbm', '--db_method', required=True, default="rm",
+    parser.add_argument('-dbm', '--db_method', required=False, default="rm",
                         help='LEGACY: DB scheme to be used')
     parser.add_argument('-dbip', '--dbip', required=False,
                         help='IP of MySql Server.')
