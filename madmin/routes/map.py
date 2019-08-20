@@ -362,7 +362,8 @@ class map(object):
         file = open(os.path.join(geofence_file_path, (str(name) + ".txt")), "a")
         file.write("[" + str(name) + "]\n")
         for i in range(len(coords_split)):
-            file.write(str(coords_split[i]) + "\n")
+            latlon_split = coords_split[i].split(",")
+            file.write("{0},{1}\n".format(str(float(latlon_split[0]) % 90), str(float(latlon_split[0]) % 360)))
 
         file.close()
 
