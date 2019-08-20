@@ -481,7 +481,7 @@ new Vue({
           } else if (route.mode == "pokestops") {
             mode = "quests";
             cradius = $this.settings.routes.coordinateRadius.quests;
-          } else if (route.mode == "raids_mitm" {
+          } else if (route.mode == "raids_mitm") {
             mode = "raids";
             cradius = $this.settings.routes.coordinateRadius.raids;
           } else {
@@ -551,7 +551,7 @@ new Vue({
           } else if (route.mode == "pokestops") {
             mode = "quests";
             cradius = $this.settings.routes.coordinateRadius.quests;
-          } else if (route.mode == "raids_mitm" {
+          } else if (route.mode == "raids_mitm") {
             mode = "raids";
             cradius = $this.settings.routes.coordinateRadius.raids;
           }
