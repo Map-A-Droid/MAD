@@ -190,14 +190,6 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def get_raid_endtime(self, gym, raid_no, unique_hash="123"):
-        """
-        Retrieves the time the requested raid ends - if present
-        :return: returns (Boolean, Value) with Value being the time or None, Boolean being True/False appropriately
-        """
-        pass
-
-    @abstractmethod
     def set_scanned_location(self, lat, lng, capture_time):
         """
         Update scannedlocation (in RM) of a given lat/lng
