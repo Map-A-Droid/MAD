@@ -5,7 +5,7 @@ import mysql.connector
 import requests
 import re
 
-rm_sql = open('../SQL/rocketmap.sql')
+rm_sql = open('SQL/rocketmap.sql')
 configfile = open("../configs/config.ini", "r")
 config = configfile.read()
 

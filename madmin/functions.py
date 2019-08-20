@@ -81,15 +81,6 @@ def encodeHashJson(gym, lvl, mon):
     return hashJson
 
 
-def getAllHash(type, db):
-    rv = db.get_all_hash(type)
-    hashRes = {}
-    for result in rv:
-        hashRes[result[1]] = ({'id': str(
-            result[0]), 'type': result[2], 'count': result[3], 'modify': str(result[4])})
-    return json.dumps(hashRes, indent=4, sort_keys=True)
-
-
 def getCoordFloat(coordinate):
     return floor(float(coordinate) * (10 ** 5)) / float(10 ** 5)
 
@@ -100,4 +91,3 @@ def generate_device_screenshot_path(phone_name: str, device_mappings: dict, args
         screenshot_ending = ".png"
     screenshot_filename = "screenshot_{}{}".format(phone_name, screenshot_ending)
     return os.path.join(args.temp_path, screenshot_filename)
-

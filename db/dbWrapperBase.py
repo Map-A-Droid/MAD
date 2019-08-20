@@ -181,21 +181,6 @@ class DbWrapperBase(ABC):
             self.connection_semaphore.release()
 
     @abstractmethod
-    def auto_hatch_eggs(self):
-        """
-        Check the entire DB for unhatched level 5 eggs and updates the mon ID if there is only one
-        possible raidmon
-        """
-        pass
-
-    @abstractmethod
-    def db_timestring_to_unix_timestamp(self, timestring):
-        """
-        Converts a DB timestring to a unix timestamp (seconds since epoch)
-        """
-        pass
-
-    @abstractmethod
     def get_next_raid_hatches(self, delay_after_hatch, geofence_helper=None):
         """
         In order to build a priority queue, we need to be able to check for the next hatches of raid eggs
@@ -205,50 +190,10 @@ class DbWrapperBase(ABC):
         pass
 
     @abstractmethod
-    def submit_raid(self, gym, pkm, lvl, start, end, type, raid_no, capture_time,
-                    unique_hash="123", MonWithNoEgg=False):
-        """
-        Insert or update raid in DB and send webhook
-        :return: if raid has all the required values = True, else False
-        """
-        pass
-
-    @abstractmethod
-    def read_raid_endtime(self, gym, raid_no, unique_hash="123"):
-        """
-        Check if a raid already has an endtime and return True/False appropriately
-        :return: if raid has endtime = True, else False
-        """
-        pass
-
-    @abstractmethod
     def get_raid_endtime(self, gym, raid_no, unique_hash="123"):
         """
         Retrieves the time the requested raid ends - if present
         :return: returns (Boolean, Value) with Value being the time or None, Boolean being True/False appropriately
-        """
-        pass
-
-    @abstractmethod
-    def raid_exist(self, gym, type, raid_no, unique_hash="123", mon=0):
-        """
-        Checks if a raid is already present in the DB
-        :return: returns True/False indicating if a raid is already present in the database
-        """
-        pass
-
-    @abstractmethod
-    def refresh_times(self, gym, raid_no, capture_time, unique_hash="123"):
-        """
-        Update last_modified/last_scanned/updated of a gym
-        """
-        pass
-
-    @abstractmethod
-    def get_near_gyms(self, lat, lng, hash, raid_no, dist, unique_hash="123"):
-        """
-        Retrieve gyms around a given lat, lng within the given dist
-        :return: returns list of gyms within dist sorted by distance
         """
         pass
 
@@ -263,14 +208,6 @@ class DbWrapperBase(ABC):
     def check_stop_quest(self, lat, lng):
         """
         Update scannedlocation (in RM) of a given lat/lng
-        """
-        pass
-
-    @abstractmethod
-    def get_gym_infos(self, id=False):
-        """
-        Retrieve all the gyminfos from DB
-        :return: returns dict containing all the gyminfos contained in the DB
         """
         pass
 
@@ -303,16 +240,6 @@ class DbWrapperBase(ABC):
         """
         Retrieve all the pokestops valid within the area set by geofence_helper
         :return: numpy array with coords
-        """
-        pass
-
-    @abstractmethod
-    def update_insert_weather(self, cell_id, gameplay_weather, capture_time,
-                              cloud_level=0, rain_level=0, wind_level=0,
-                              snow_level=0, fog_level=0, wind_direction=0,
-                              weather_daytime=0):
-        """
-        Updates the weather in a given cell_id
         """
         pass
 
@@ -380,10 +307,6 @@ class DbWrapperBase(ABC):
         """
         Update/Insert weather from a map_proto dict
         """
-        pass
-
-    @abstractmethod
-    def download_gym_images(self):
         pass
 
     @abstractmethod
@@ -460,26 +383,6 @@ class DbWrapperBase(ABC):
     def delete_stop(self, lat: float, lng: float):
         pass
 
-    def create_hash_database_if_not_exists(self):
-        """
-        In order to store 'hashes' of crops/images, we require a table to store those hashes
-        """
-        logger.debug(
-            "DbWrapperBase::create_hash_database_if_not_exists called")
-        logger.debug('Creating hash db in database')
-
-        query = (' Create table if not exists trshash ( ' +
-                 ' hashid MEDIUMINT NOT NULL AUTO_INCREMENT, ' +
-                 ' hash VARCHAR(255) NOT NULL, ' +
-                 ' type VARCHAR(10) NOT NULL, ' +
-                 ' id VARCHAR(255) NOT NULL, ' +
-                 ' count INT(10) NOT NULL DEFAULT 1, ' +
-                 ' modify DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, ' +
-                 ' PRIMARY KEY (hashid))')
-        self.execute(query, commit=True)
-
-        return True
-
     def create_quest_database_if_not_exists(self):
         """
         In order to store 'hashes' of crops/images, we require a table to store those hashes
@@ -504,131 +407,6 @@ class DbWrapperBase(ABC):
         self.execute(query, commit=True)
 
         return True
-
-    def check_for_hash(self, imghash, type, raid_no, distance, unique_hash="123"):
-        logger.debug("DbWrapperBase::check_for_hash called")
-        logger.debug("[Crop: {} ({})] check_for_hash: Checking for hash in db", str(
-            raid_no), str(unique_hash))
-
-        query = (
-            "SELECT id, hash, "
-            "BIT_COUNT( "
-            "CONVERT((CONV(hash, 16, 10)), UNSIGNED) "
-            "^ "
-            "CONVERT((CONV(%s, 16, 10)), UNSIGNED)) as hamming_distance, type, count, modify "
-            "FROM trshash "
-            "HAVING hamming_distance < %s AND type = %s "
-            "ORDER BY hamming_distance ASC"
-        )
-        vals = (str(imghash), distance, str(type))
-
-        res = self.execute(query, vals)
-        number_of_rows = len(res)
-
-        logger.debug("[Crop: {} ({})] check_for_hash: Found hashes in database: {}", str(
-            raid_no), str(unique_hash), str(number_of_rows))
-
-        if number_of_rows > 0:
-            logger.debug("[Crop: {} ({})] check_for_hash: returning found ID", str(
-                raid_no), str(unique_hash))
-            for row in res:
-                logger.debug("[Crop: {} ({})] check_for_hash: ID = {}", str(
-                    raid_no), str(unique_hash), str(row[0]))
-                logger.debug("DbWrapperBase::check_for_hash done")
-                return True, row[0], row[1], row[4], row[5]
-        else:
-            logger.debug("[Crop: {} ({})] check_for_hash: No matching hash found", str(
-                raid_no), str(unique_hash))
-            logger.debug("DbWrapperBase::check_for_hash done")
-            return False, None, None, None, None
-
-    def get_all_hash(self, type):
-        logger.debug("DbWrapperBase::get_all_hash called")
-        query = (
-            "SELECT id, hash, type, count, modify "
-            "FROM trshash "
-            "HAVING type = %s"
-        )
-        vals = (str(type),)
-        logger.debug(query)
-
-        res = self.execute(query, vals)
-
-        return res
-
-    def insert_hash(self, imghash, type, id, raid_no, unique_hash="123"):
-        logger.debug("DbWrapperBase::insert_hash called")
-        if type == 'raid':
-            distance = 4
-        else:
-            distance = 4
-
-        double_check = self.check_for_hash(imghash, type, raid_no, distance)
-
-        if double_check[0]:
-            logger.debug("[Crop: {} ({})] insert_hash: Already in DB, updating counter", str(
-                raid_no), str(unique_hash))
-
-        # TODO: consider INSERT... ON DUPLICATE KEY UPDATE ??
-
-        if not double_check[0]:
-            query = (
-                "INSERT INTO trshash (hash, type, id) "
-                "VALUES (%s, %s, %s)"
-            )
-            vals = (str(imghash), str(type), id)
-        else:
-            query = (
-                "UPDATE trshash "
-                "SET count=count+1, modify=NOW() "
-                "WHERE hash=%s"
-            )
-            vals = (str(imghash),)
-
-        self.execute(query, vals, commit=True)
-        logger.debug("DbWrapperBase::insert_hash done")
-        return True
-
-    def delete_hash_table(self, ids, type, mode=' not in ', field=' id '):
-        logger.debug("DbWrapperBase::delete_hash_table called")
-        logger.debug('Deleting old Hashes of type {}', type)
-        logger.debug('Valid ids: {}', ids)
-
-        query = (
-            "DELETE FROM trshash "
-            "WHERE " + field + " " + mode + " (%s) "
-            "AND type like %s"
-        )
-        vals = (str(ids), str(type))
-        logger.debug(query)
-
-        self.execute(query, vals, commit=True)
-        return True
-
-    def clear_hash_gyms(self, mons):
-        logger.debug("DbWrapperBase::clear_hash_gyms called")
-        data = []
-        query = (
-            "SELECT hashid "
-            "FROM trshash "
-            "WHERE id LIKE '%\"mon\":\"%s\"%' AND type='raid'"
-        )
-
-        mon_split = mons.split('|')
-        for mon in mon_split:
-            args = (int(mon),)
-            res = self.execute(query, args)
-            for dbid in res:
-                data.append(int(dbid[0]))
-
-        _mon_list = ','.join(map(str, data))
-        logger.debug('clearHashGyms: Read Raid Hashes with known Mons')
-        if len(data) > 0:
-            query = ('DELETE FROM trshash ' +
-                     ' WHERE hashid NOT IN (' + _mon_list + ')' +
-                     ' AND type=\'raid\'')
-            self.execute(query, commit=True)
-        logger.info('clearHashGyms: Deleted Raidhashes with unknown mons')
 
     def getspawndef(self, spawn_id):
         if not spawn_id:
@@ -732,42 +510,6 @@ class DbWrapperBase(ABC):
         self.executemany(query_spawnpoints_unseen,
                          spawnpoint_args_unseen, commit=True)
 
-    def submitspsightings(self, spid, encid, secs):
-        logger.debug("DbWrapperBase::submitspsightings called")
-        if 0 <= int(secs) <= 90000:
-            query = (
-                "INSERT INTO trs_spawnsightings (encounter_id, spawnpoint_id, tth_secs) "
-                "VALUES (%s, %s, %s)"
-            )
-            vals = (
-                encid, spid, secs
-            )
-        else:
-            query = (
-                "INSERT INTO trs_spawnsightings (encounter_id, spawnpoint_id) "
-                "VALUES (%s, %s)"
-            )
-            vals = (
-                encid, spid
-            )
-
-        self.execute(query, vals, commit=True)
-
-    def get_spawn_infos(self):
-        logger.debug("DbWrapperBase::get_spawn_infos called")
-        query = (
-            "SELECT count(spawnpoint), "
-            "ROUND ( "
-            "(COUNT(calc_endminsec) + 1) / (COUNT(*) + 1) * 100, 2) AS percent "
-            "FROM trs_spawn"
-        )
-
-        found = self.execute(query)
-        logger.info("Spawnpoint statistics: {}, Spawnpoints with detected endtime: {}", str(
-            found[0][0]), str(found[0][1]))
-
-        return float(found[0][1])
-
     def get_detected_spawns(self, geofence_helper) -> List[Location]:
         logger.debug("DbWrapperBase::get_detected_spawns called")
 
@@ -856,21 +598,6 @@ class DbWrapperBase(ABC):
             return str(found[0][0])
         else:
             return False
-
-    def _gen_endtime(self, known_despawn):
-        hrmi = known_despawn.split(':')
-        known_despawn = datetime.now().replace(
-            hour=0, minute=int(hrmi[0]), second=int(hrmi[1]), microsecond=0)
-        now = datetime.now()
-        if now.minute <= known_despawn.minute:
-            despawn = now + timedelta(minutes=known_despawn.minute - now.minute,
-                                      seconds=known_despawn.second - now.second)
-        elif now.minute > known_despawn.minute:
-            despawn = now + timedelta(hours=1) - timedelta(
-                minutes=(now.minute - known_despawn.minute), seconds=now.second - known_despawn.second)
-        else:
-            return None
-        return time.mktime(despawn.timetuple())
 
     def _get_min_pos_in_array(self):
         min = datetime.now().strftime("%M")
@@ -1273,7 +1000,7 @@ class DbWrapperBase(ABC):
         )
 
         vals = (
-            origin,  now, 1
+            origin, now, 1
         )
 
         self.execute(query, vals, commit=True)

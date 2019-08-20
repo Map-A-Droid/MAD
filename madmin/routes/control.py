@@ -113,8 +113,7 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol",
-                               running_ocr=(self._args.only_ocr))
+        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):

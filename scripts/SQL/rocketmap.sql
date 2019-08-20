@@ -285,17 +285,6 @@ CREATE TABLE `trainer` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
-CREATE TABLE `trshash` (
-  `hashid` mediumint(9) NOT NULL AUTO_INCREMENT,
-  `hash` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `type` varchar(10) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `id` varchar(255) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `count` int(10) NOT NULL DEFAULT 1,
-  `modify` datetime NOT NULL DEFAULT current_timestamp(),
-  PRIMARY KEY (`hashid`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
 CREATE TABLE `trs_quest` (
   `GUID` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `quest_type` tinyint(3) NOT NULL,

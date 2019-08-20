@@ -55,7 +55,7 @@ class map(object):
         setlat = request.args.get('lat', 0)
         setlng = request.args.get('lng', 0)
         return render_template('map.html', lat=self._args.home_lat, lng=self._args.home_lng,
-                               running_ocr=self._args.only_ocr, setlat=setlat, setlng=setlng)
+                               setlat=setlat, setlng=setlng)
 
     @auth_required
     def get_position(self):

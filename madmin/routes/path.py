@@ -19,7 +19,6 @@ class path(object):
             ("/screenshot/<path:path>", self.pushscreens),
             ("/static/<path:path>", self.pushstatic),
             ("/gym_img/<path:path>", self.pushGyms),
-            ("/www_hash/<path:path>", self.pushHashes),
             ("/screenshots/<path:path>", self.pushScreens),
             ("/asset/<path:path>", self.pushAssets),
             ("/screens", self.screens),
@@ -47,10 +46,6 @@ class path(object):
         return send_from_directory('../ocr/gym_img', path)
 
     @auth_required
-    def pushHashes(self, path):
-        return send_from_directory('../ocr/www_hash', path)
-
-    @auth_required
     def pushScreens(self, path):
         return send_from_directory('../' + self._args.raidscreen_path, path)
 
@@ -61,38 +56,38 @@ class path(object):
     @auth_required
     def screens(self):
         return render_template('screens.html', responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show success Screens", running_ocr=(self._args.only_ocr))
+                               title="show success Screens")
 
     @auth_required
     def root(self):
-        return render_template('index.html', running_ocr=(self._args.only_ocr))
+        return render_template('index.html')
 
     @auth_required
     def raids(self):
         return render_template('raids.html', sort=str(self._args.madmin_sort),
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show Raid Matching", running_ocr=(self._args.only_ocr))
+                               title="show Raid Matching")
 
     @auth_required
     def gyms(self):
         return render_template('gyms.html', sort=self._args.madmin_sort,
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show Gym Matching", running_ocr=(self._args.only_ocr))
+                               title="show Gym Matching")
 
     @auth_required
     def unknown(self):
         return render_template('unknown.html', responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show unkown Gym", running_ocr=(self._args.only_ocr))
+                               title="show unkown Gym")
 
     @auth_required
     def quest(self):
         return render_template('quests.html', pub=False,
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show daily Quests", running_ocr=(self._args.only_ocr))
+                               title="show daily Quests")
 
     @auth_required
     def quest_pub(self):
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show daily Quests", running_ocr=(self._args.only_ocr))
+                               title="show daily Quests")
 

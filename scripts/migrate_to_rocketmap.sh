@@ -59,11 +59,11 @@ echo -ne "\e[0m"
 echo "Creating New DATABASE..."
 MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport -u root -e "CREATE DATABASE $newdbname;"
 echo "Creating RM DB Schema..."
-MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport -u root $newdbname < ../SQL/rocketmap.sql
+MYSQL_PWD=$dbpass mysql -h $dbip -P $dbport -u root $newdbname < SQL/rocketmap.sql
 
 # Start Importing Data
 
-for table in trs_quest trs_spawn trs_spawnsightings trs_status trshash
+for table in trs_quest trs_spawn trs_spawnsightings trs_status
 do
    echo "Importing $table..."
    query "INSERT INTO $table SELECT * FROM $olddbname.$table;"

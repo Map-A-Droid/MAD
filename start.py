@@ -162,7 +162,6 @@ if __name__ == "__main__":
     install_thread_excepthook()
 
     db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
-    db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()

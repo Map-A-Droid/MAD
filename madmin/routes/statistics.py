@@ -8,6 +8,7 @@ from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_b
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.logging import logger
 
+
 class statistics(object):
     def __init__(self, db, args, app):
         self._db = db
@@ -40,7 +41,7 @@ class statistics(object):
             minutes_usage = 120
 
         return render_template('statistics/statistics.html', title="MAD Statisics", minutes_usage=minutes_usage,
-                               time=self._args.madmin_time, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
@@ -50,7 +51,7 @@ class statistics(object):
             minutes_spawn = 120
 
         return render_template('statistics/mon_statistics.html', title="MAD Mon Statisics", minutes_spawn=minutes_spawn,
-                               time=self._args.madmin_time, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
@@ -377,14 +378,13 @@ class statistics(object):
         worker = request.args.get('worker')
 
         return render_template('statistics_worker.html', title="MAD Worker Statisics", minutes=minutes,
-                               time=self._args.madmin_time, worker=worker, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time, worker=worker,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
     def status(self):
         return render_template('status.html', responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Worker status",
-                               running_ocr=(self._args.only_ocr))
+                               title="Worker status")
 
     @auth_required
     def get_status(self):
