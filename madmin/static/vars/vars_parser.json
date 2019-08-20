@@ -96,7 +96,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)"
           }
         },
         {
@@ -375,7 +375,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)"
           }
         },
         {

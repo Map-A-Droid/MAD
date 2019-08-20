@@ -257,7 +257,7 @@ class WorkerBase(ABC):
 
         # register worker  in routemanager
         logger.info("Try to register {} in Routemanager {}", str(
-                self._id), str(self._routemanager_name))
+            self._id), str(self._routemanager_name))
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
 
         self._work_mutex.release()
@@ -273,12 +273,12 @@ class WorkerBase(ABC):
     def _internal_health_check(self):
         # check if pogo is topmost and start if necessary
         logger.debug(
-                "_internal_health_check: Calling _start_pogo routine to check if pogo is topmost")
+            "_internal_health_check: Calling _start_pogo routine to check if pogo is topmost")
         self._work_mutex.acquire()
         logger.debug("_internal_health_check: worker lock acquired")
         logger.debug("Checking if we need to restart pogo")
         # Restart pogo every now and then...
-        restart_pogo_setting = self.get_devicesettings_value("restart_pogo", 80)
+        restart_pogo_setting = self.get_devicesettings_value("restart_pogo", 0)
         if restart_pogo_setting > 0:
             # logger.debug("main: Current time - lastPogoRestart: {}", str(curTime - lastPogoRestart))
             # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
@@ -302,7 +302,7 @@ class WorkerBase(ABC):
         logger.info("Internal cleanup of {} started", str(self._id))
         self._cleanup()
         logger.info(
-                "Internal cleanup of {} signalling end to websocketserver", str(self._id))
+            "Internal cleanup of {} signalling end to websocketserver", str(self._id))
         self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
         self._communicator.cleanup_websocket()
 
