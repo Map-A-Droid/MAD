@@ -955,6 +955,7 @@ class config(object):
             line = line + '<h3><a href="config?type=' + str(output['name']) + '&area=' + str(
                 area) + '&block=fields">' + str(output['name']) + '</a></h3><h5>' + str(
                 output['description']) + '</h5><hr>'
+        return render_template('sel_type.html', line=line, title="Type selector")
 
     @auth_required
     @logger.catch
