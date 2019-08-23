@@ -449,7 +449,7 @@
 					"settings": {
 						"type": "option",
 						"require": "true",
-						"values": "true|false",
+						"values": "All|Unknown Only",
 						"description": "Scan all spawnpoints or just ones with unknown endtimes"
 					}
 				}
@@ -523,7 +523,7 @@
 					"settings": {
 						"type": "text",
 						"require": "false",
-						"description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
+						"description": "Encounter this mon ids while walking (Put in brackets [1,2,3] as comma separated list!)",
 						"output": "int",
 						"showmonsidpicker": true
 					}
@@ -640,7 +640,7 @@
 					"settings": {
 						"type": "text",
 						"require": "false",
-						"description": "Encounter this mon ids (Put in brakets [1,2,3] as comma separated list!)",
+						"description": "Encounter this mon ids (Put in brackets [1,2,3] as comma separated list!)",
 						"output": "int",
 						"showmonsidpicker": true
 					}
@@ -701,7 +701,7 @@
 						"type": "option",
 						"require": "true",
 						"values": "false|true",
-						"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+						"description": "Set this to true, if you scan the area for gyms / spawnpoints the first time"
 					}
 				},
 				{
@@ -763,7 +763,7 @@
 						"type": "option",
 						"require": "true",
 						"values": "false|true",
-						"description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+						"description": "Set this to true, if you scan the area for gyms / spawnpoints the first time"
 					}
 				},
 				{
