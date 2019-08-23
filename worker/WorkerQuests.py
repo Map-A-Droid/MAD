@@ -590,7 +590,7 @@ class WorkerQuests(MITMBase):
             # wait for GMO in case we moved too far away
             data_received = self._wait_for_data(
                     timestamp=timestamp, proto_to_wait_for=106, timeout=35)
-            if data_received == LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
+            if data_received != LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
                 logger.info("Stop {}, {} considered to be ignored in the next round due to failed spinnable check",
                             str(self.current_location.lat), str(self.current_location.lng))
                 self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
