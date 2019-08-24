@@ -438,6 +438,7 @@ class RouteManagerBase(ABC):
                 logger.info('Worker {} getting a nearby prio event {}', origin, prioevent)
                 self._routepool[origin].has_prio_event = False
                 self._routepool[origin].current_pos = prioevent
+                self._routepool[origin].last_access = time.time()
                 return prioevent
 
         # first check if a location is available, if not, block until we have one...
@@ -547,7 +548,6 @@ class RouteManagerBase(ABC):
                         return None
 
                 next_coord = self._routepool[origin].queue.popleft()
-                self._routepool[origin].last_access = time.time()
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                     self._current_route_round_coords.remove(next_coord)
                 logger.info("{}: Moving on with location {} [{} coords left (Workerpool)]",
@@ -560,6 +560,7 @@ class RouteManagerBase(ABC):
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                     self._current_route_round_coords.remove(next_coord)
                 self._routepool[origin].current_pos = next_coord
+                self._routepool[origin].last_access = time.time()
                 return next_coord
             else:
                 return self.get_next_location(origin)
