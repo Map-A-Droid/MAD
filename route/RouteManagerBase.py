@@ -427,6 +427,10 @@ class RouteManagerBase(ABC):
             return None
 
         with self._manager_mutex:
+            with self._workers_registered_mutex:
+                if origin not in self._workers_registered:
+                    self.register_worker(origin)
+
             if origin not in self._routepool:
                 logger.debug("No subroute/routepool entry of {} present, creating it", origin)
                 self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [],
@@ -440,10 +444,6 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].current_pos = prioevent
                 self._routepool[origin].last_access = time.time()
                 return prioevent
-
-            with self._workers_registered_mutex:
-                if origin not in self._workers_registered:
-                    self.register_worker(origin)
 
         # first check if a location is available, if not, block until we have one...
         got_location = False
