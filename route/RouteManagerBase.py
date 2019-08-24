@@ -654,7 +654,7 @@ class RouteManagerBase(ABC):
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
-            logger.debug("Checking routepool: ", str(self._routepool))
+            logger.debug("Checking routepool: {}", self._routepool)
             reduced_routepools = [(origin, self._routepool[origin].time_added) for origin in self._routepool]
             sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
 
