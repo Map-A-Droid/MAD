@@ -654,7 +654,7 @@ class RouteManagerBase(ABC):
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
-            logger.debug("Checking routepool: ", self._routepool)
+            logger.debug("Checking routepool: ", str(self._routepool))
             reduced_routepools = [(origin, self._routepool[origin].time_added) for origin in self._routepool]
             sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
 
@@ -687,11 +687,12 @@ class RouteManagerBase(ABC):
                     if compare(new_subroute, entry.subroute):
                         logger.info("Apparently no changes in subroutes...")
                     else:
-                        logger.critical("Subroute of {} has changed. To be implemented...", origin)
+                        logger.critical("Subroute of {} has changed. Replacing entirely", origin)
                         # TODO: what now?
                         logger.debug('new_subroute: {}', new_subroute)
                         logger.debug('entry.subroute: {}', entry.subroute)
                         logger.debug('new_subroute == entry.subroute: {}', new_subroute == entry.subroute)
+                        entry.subroute = new_subroute
                 elif len(new_subroute) < len(entry.subroute):
                     logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
                                  "added)", origin)
