@@ -244,6 +244,26 @@ def questtask(typeid, condition, target):
         text = _('Trade {0} Pokemon.')
     elif typeid == 24:
         text = _('Send {0} gifts to friends.')
+    elif typeid == 28:
+        # Take snapshots quest
+        if re.search(r'"type": 1', condition) is not None:
+            text = _("Take {0} snapshots of {type} Pokemon")
+            arr['wb'] = ""
+            arr['type'] = ""
+            arr['poke'] = ""
+            match_object = re.search(
+                r'"pokemon_type": \[([0-9, ]+)\]', condition)
+            if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['type'] = pokemonTypes[pt[0]].title() + _('-type ')
+                else:
+                    for ty in pt:
+                        arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
+                            _('-type ') if last == cur else '-, ')
+                        cur += 1
 
     if int(target) == int(1):
         text = text.replace(_(' Eggs'), _('n Egg'))
