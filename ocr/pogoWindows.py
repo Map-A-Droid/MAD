@@ -30,9 +30,9 @@ class PogoWindows:
         self.__thread_pool_tesseract = ThreadPool(processes=1)
 
     def __most_present_colour(self, filename, max_colours):
-        img = Image.open(filename)
-        # put a higher value if there are many colors in your image
-        colors = img.getcolors(max_colours)
+        with Image.open(filename) as img:
+            # put a higher value if there are many colors in your image
+            colors = img.getcolors(max_colours)
         max_occurrence, most_present = 0, 0
         try:
             for c in colors:
@@ -73,8 +73,8 @@ class PogoWindows:
         tempPathColoured = self.temp_dir_path + "/" + str(identifier) + "_gpsError.png"
         cv2.imwrite(tempPathColoured, gpsError)
 
-        col = Image.open(tempPathColoured)
-        width, height = col.size
+        with Image.open(tempPathColoured) as col:
+            width, height = col.size
 
         # check for the colour of the GPS error
         if self.__most_present_colour(tempPathColoured, width * height) == (240, 75, 95):
@@ -640,7 +640,8 @@ class PogoWindows:
         # resize image
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
         cv2.imwrite(temp_path_item, gray)
-        text = pytesseract.image_to_string(Image.open(temp_path_item))
+        with Image.open(temp_path_item) as im:
+            text = pytesseract.image_to_string(im)
         return text
 
     def check_pogo_mainscreen(self, filename, identifier):

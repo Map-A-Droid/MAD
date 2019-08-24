@@ -65,13 +65,13 @@ class MonRaidImages(object):
 
                     copyfile(monFileAsset, monFile)
 
-                    image = Image.open(monFile)
-                    image.convert("RGBA")
-                    # Empty canvas colour (r,g,b,a)
-                    canvas = Image.new('RGBA', image.size,
-                                       (255, 255, 255, 255))
-                    # Paste the image onto the canvas, using it's alpha channel as mask
-                    canvas.paste(image, mask=image)
+                    with Image.open(monFile) as image:
+                        image.convert("RGBA")
+                        # Empty canvas colour (r,g,b,a)
+                        canvas = Image.new('RGBA', image.size,
+                                           (255, 255, 255, 255))
+                        # Paste the image onto the canvas, using it's alpha channel as mask
+                        canvas.paste(image, mask=image)
                     canvas.save(monFile, format="PNG")
 
                     monAsset = cv2.imread(monFile, 3)

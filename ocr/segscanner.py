@@ -58,8 +58,8 @@ class Scanner:
         emptyRaidTempPath = os.path.join(
             self.tempPath, str(raidNo) + str(hash) + '_emptyraid.png')
         cv2.imwrite(emptyRaidTempPath, raidtimer)
-        rt = Image.open(emptyRaidTempPath)
-        gray = rt.convert('L')
+        with Image.open(emptyRaidTempPath) as rt:
+            gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x < 200 else 255, '1')
         raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~', '')\
             .replace('o', '0').replace('O', '0').replace('"', '').replace('-', '').replace('.', ':')\
@@ -114,8 +114,8 @@ class Scanner:
         emptyRaidTempPath = os.path.join(
             self.tempPath, str(raidNo) + str(hash) + '_endraid.png')
         cv2.imwrite(emptyRaidTempPath, raidtimer)
-        rt = Image.open(emptyRaidTempPath)
-        gray = rt.convert('L')
+        with Image.open(emptyRaidTempPath) as rt:
+            gray = rt.convert('L')
         bw = gray.point(lambda x: 0 if x < 200 else 255, '1')
 
         raidtimer = pytesseract.image_to_string(bw, config='--psm 6 --oem 3').replace(' ', '').replace('~', '').replace('o', '0').replace('O', '0').replace('"', '').replace(
@@ -378,18 +378,18 @@ class Scanner:
 
     def addTextToCrop(self, picture, text, grayscale=False):
         from PIL import Image, ImageFont, ImageDraw
-        img = Image.open(picture)
-        draw = ImageDraw.Draw(img)
-        font = ImageFont.truetype('font/arial.ttf', 10)
-        x, y = 0, 0
+        with Image.open(picture) as img:
+            draw = ImageDraw.Draw(img)
+            font = ImageFont.truetype('font/arial.ttf', 10)
+            x, y = 0, 0
 
-        w, h = font.getsize(text)
-        draw.rectangle((x, y, x + img.size[0], y + h + 1), fill='black')
-        if grayscale:
-            draw.text((x, y), text, (255), font=font)
-        else:
-            draw.text((x, y), text, (255, 255, 255), font=font)
-        img.save(picture)
+            w, h = font.getsize(text)
+            draw.rectangle((x, y, x + img.size[0], y + h + 1), fill='black')
+            if grayscale:
+                draw.text((x, y), text, (255), font=font)
+            else:
+                draw.text((x, y), text, (255, 255, 255), font=font)
+            img.save(picture)
 
     def decodeHashJson(self, hashJson, raidNo):
         data = json.loads(hashJson)
@@ -714,8 +714,8 @@ class Scanner:
         tempHash = os.path.join(self.tempPath, str(
             time.time()) + "_" + str(raidNo) + "temphash_check.jpg")
         cv2.imwrite(tempHash, crop)
-        hashPic = Image.open(tempHash)
-        imageHash = self.dhash(hashPic, raidNo)
+        with Image.open(tempHash) as hashPic:
+            imageHash = self.dhash(hashPic, raidNo)
 
         os.remove(tempHash)
 
@@ -746,8 +746,8 @@ class Scanner:
         tempHash = os.path.join(self.tempPath, str(
             time.time()) + "_" + str(raidNo) + "temphash_new.jpg")
         cv2.imwrite(tempHash, crop)
-        hashPic = Image.open(tempHash)
-        imageHash = self.dhash(hashPic, raidNo)
+        with Image.open(tempHash) as hashPic:
+            imageHash = self.dhash(hashPic, raidNo)
 
         logger.debug('[Crop: ' + str(raidNo) + ' (' +
                      str(self.uniqueHash) + ') ] ' + 'imageHash: ' + str(imageHash))
@@ -789,8 +789,8 @@ class Scanner:
         tempHash = os.path.join(self.tempPath, str(
             time.time()) + "_" + str(raidNo) + "temphash_new.jpg")
         cv2.imwrite(tempHash, crop)
-        hashPic = Image.open(tempHash)
-        imageHash = self.dhash(hashPic, raidNo)
+        with Image.open(tempHash) as hashPic:
+            imageHash = self.dhash(hashPic, raidNo)
 
         logger.debug('[Crop: ' + str(raidNo) + ' (' + str(self.uniqueHash) +
                      ') ] ' + 'getImageHash: ' + str(imageHash))

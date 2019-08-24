@@ -358,12 +358,10 @@ class map(object):
         coords_split = coords.split("|")
         geofence_file_path = self._args.geofence_file_path
 
-        file = open(os.path.join(geofence_file_path, (str(name) + ".txt")), "a")
-        file.write("[" + str(name) + "]\n")
-        for i in range(len(coords_split)):
-            file.write(str(coords_split[i]) + "\n")
-
-        file.close()
+        with open(os.path.join(geofence_file_path, (str(name) + ".txt")), "a") as file:
+            file.write("[" + str(name) + "]\n")
+            for i in range(len(coords_split)):
+                file.write(str(coords_split[i]) + "\n")
 
         return redirect(getBasePath(request) + "/map", code=302)
 

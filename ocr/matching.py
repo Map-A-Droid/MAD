@@ -25,11 +25,11 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
     if zoom is True:
         if width_f < 180:
             tempFile = str(hash) + "_resize_" + str(raidNo) + ".jpg"
-            img_temp = Image.open(fort_img_name)
-            wsize = int((float(img_temp.size[0]))*2)
-            hsize = int((float(img_temp.size[1]))*2)
-            img_temp = img_temp.resize((wsize, hsize), Image.ANTIALIAS)
-            img_temp.save(tempFile)
+            with Image.open(fort_img_name) as img_temp:
+                wsize = int((float(img_temp.size[0]))*2)
+                hsize = int((float(img_temp.size[1]))*2)
+                img_temp = img_temp.resize((wsize, hsize), Image.ANTIALIAS)
+                img_temp.save(tempFile)
             fort_img = cv2.imread(tempFile, 3)
             os.remove(tempFile)
         # else:
@@ -53,11 +53,11 @@ def fort_image_matching(url_img_name, fort_img_name, zoom, value, raidNo, hash, 
 
     else:
         tempFile = str(hash) + "_resize_" + str(raidNo) + ".jpg"
-        img_temp = Image.open(fort_img_name)
-        wsize = int((float(img_temp.size[0]))*2)
-        hsize = int((float(img_temp.size[1]))*2)
-        img_temp = img_temp.resize((wsize, hsize), Image.ANTIALIAS)
-        img_temp.save(tempFile)
+        with Image.open(fort_img_name) as img_temp:
+            wsize = int((float(img_temp.size[0]))*2)
+            hsize = int((float(img_temp.size[1]))*2)
+            img_temp = img_temp.resize((wsize, hsize), Image.ANTIALIAS)
+            img_temp.save(tempFile)
         fort_img = cv2.imread(tempFile, 3)
         crop = url_img
         os.remove(tempFile)
