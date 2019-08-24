@@ -708,7 +708,7 @@ class RouteManagerBase(ABC):
                     if len(old_queue) == 0:
                         logger.debug("{}'s queue is empty, we can just pass him the new subroute", origin)
                         # just set new route...
-                        entry.queue: collections.deque = collections.deque()
+                        entry.queue = collections.deque()
                         for location in new_subroute:
                             entry.queue.append(location)
                         continue
