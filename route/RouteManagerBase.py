@@ -164,9 +164,6 @@ class RouteManagerBase(ABC):
                 logger.info("Worker {} unregistering from routemanager {}", str(
                         worker_name), str(self.name))
                 self._workers_registered.remove(worker_name)
-                if worker_name in self._routepool:
-                    logger.info('Cleanup routepool for origin {}', str(worker_name))
-                    del self._routepool[worker_name]
             else:
                 # TODO: handle differently?
                 logger.info(
@@ -188,9 +185,6 @@ class RouteManagerBase(ABC):
                         worker), str(self.name))
                 worker.stop_worker()
                 self._workers_registered.remove(worker)
-                if worker in self._routepool:
-                    logger.info('Cleanup routepool for origin {}', str(worker))
-                    del self._routepool[worker]
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                         "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
@@ -610,8 +604,9 @@ class RouteManagerBase(ABC):
                 closer_worker = worker
 
         if closer_worker is not None:
-            self._routepool[closer_worker].has_prio_event = True
-            self._routepool[closer_worker].prio_coords = prioqcoord
+            with self._manager_mutex:
+                self._routepool[closer_worker].has_prio_event = True
+                self._routepool[closer_worker].prio_coords = prioqcoord
             logger.debug("Worker {} is closer to PrioQ event {}", closer_worker, prioqcoord)
             return True
 
@@ -661,6 +656,7 @@ class RouteManagerBase(ABC):
             reduced_routepools = [(origin, self._routepool[origin].time_added) for origin in self._routepool]
             sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
 
+            logger.debug("Checking routepools in the following order: {}", sorted_routepools)
             for origin, time_added in sorted_routepools:
                 entry: RoutePoolEntry = self._routepool[origin]
                 logger.debug("Checking subroute of {}", origin)
