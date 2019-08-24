@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2019-07-29 20:56+0200\n"
-"PO-Revision-Date: 2019-07-29 20:57+0200\n"
+"PO-Revision-Date: 2019-08-24 17:31+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Item"
@@ -56,10 +56,8 @@ msgstr "Attrape {0} {poke}."
 msgid "Spin {0} Pokestops or Gyms."
 msgstr "Fais tourner {0} PokéStops ou Arènes."
 
-#, fuzzy
-#| msgid "Spin {0} Pokestops you haven't visited before."
 msgid "Spin {0} Pokestops you haven't visited before"
-msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes. "
+msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes."
 
 msgid "Hatch {0} Eggs."
 msgstr "Fais éclore {0} Œufs."
@@ -106,7 +104,10 @@ msgstr "Fais évoluer {0} Pokémon."
 msgid "Use an item to evolve a Pokemon."
 msgstr "Utilise un objet pour faire évoluer un Pokémon."
 
-msgid "Evolve {0} {type}Pokemon"
+msgid "Take {0} snapshots of {type} Pokemon"
+msgstr "Prends {0} photos de Pokémon de type {type}."
+
+msgid "Evolve {0} {type} Pokemon"
 msgstr "Fais évoluer {0} {type}Pokémon."
 
 #, fuzzy
