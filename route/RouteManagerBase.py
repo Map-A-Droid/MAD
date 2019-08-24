@@ -441,6 +441,10 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].last_access = time.time()
                 return prioevent
 
+            with self._workers_registered_mutex:
+                if origin not in self._workers_registered:
+                    self.register_worker(origin)
+
         # first check if a location is available, if not, block until we have one...
         got_location = False
         while not got_location and self._is_started and not self.init:
@@ -540,7 +544,7 @@ class RouteManagerBase(ABC):
                         return None
 
                 # getting new coord
-                elif len(self._routepool[origin].queue) == 0:
+                if len(self._routepool[origin].queue) == 0:
                     logger.debug("Worker finished his subroute, updating all subroutes if necessary")
                     if not self.__worker_changed_update_routepools():
                         logger.debug("Failed updating subroute, returning None => Signalling worker to reconnect. We "
