@@ -142,6 +142,9 @@ def parseArgs():
 
     parser.add_argument('-mspass', '--mitm_status_password', default='',
                         help='Header Authorization password for MITM /status/ page')
+                        
+    parser.add_argument('-mic', '--max_injection_count', type=int, default=20,
+                        help='reboot device if inject tries fails this value. (default 20)')                        
 
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,

@@ -41,6 +41,8 @@ class MITMBase(WorkerBase):
         self._mitm_mapper.collect_location_stats(self._id, self.current_location, 1, time.time(), 2, 0,
                                                  self._mapping_manager.routemanager_get_mode(self._routemanager_name),
                                                  99)
+        self._max_injection_count = args.max_injection_count
+                                          
 
     def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None):
         if timestamp is None:
@@ -127,7 +129,7 @@ class MITMBase(WorkerBase):
     def _wait_for_injection(self):
         self._not_injected_count = 0
         while not self._mitm_mapper.get_injection_status(self._id):
-            if self._not_injected_count >= 20:
+            if self._not_injected_count >= self._max_injection_count:
                 logger.error("Worker {} not get injected in time - reboot", str(self._id))
                 self._reboot(self._mitm_mapper)
                 return False

@@ -62,6 +62,8 @@
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #language:                   # Language for quests (default:en - others: de (more soon))
 #mitm_status_password: SetPls # Header Authorization password for MITM /status/ page
+#max_injection_count:        # Maxium number of injections to try before rebooting the device (default 20).
+
 
 # MADmin statistics
 ######################
