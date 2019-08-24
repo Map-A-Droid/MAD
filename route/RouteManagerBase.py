@@ -531,6 +531,7 @@ class RouteManagerBase(ABC):
                             "Initroute of {} is finished - restart worker", str(self.name))
                     return None
                 elif len(self._current_route_round_coords) > 1 and len(self._routepool[origin].queue) == 0:
+                    logger.debug("{} finished his subroute, recalculating since more than one coord left of total route")
                     self.__worker_changed_update_routepools()
                 elif len(self._current_route_round_coords) == 1 and len(self._routepool[origin].queue) == 0:
                     logger.info('Reaching last coord of route')
@@ -546,7 +547,7 @@ class RouteManagerBase(ABC):
                         return None
 
                 # getting new coord
-                if len(self._routepool[origin].queue) == 0:
+                elif len(self._routepool[origin].queue) == 0:
                     logger.debug("Worker finished his subroute, updating all subroutes if necessary")
                     if not self.__worker_changed_update_routepools():
                         logger.debug("Failed updating subroute, returning None => Signalling worker to reconnect. We "
@@ -693,6 +694,7 @@ class RouteManagerBase(ABC):
                     else:
                         logger.critical("Subroute of {} has changed. To be implemented...".format(origin))
                         # TODO: what now?
+                        logger.debug(new_subroute, entry.subroute, new_subroute == entry.subroute)
                 elif len(new_subroute) < len(entry.subroute):
                     logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
                                  "added)".format(origin))
