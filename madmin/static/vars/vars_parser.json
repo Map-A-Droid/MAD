@@ -148,6 +148,14 @@
             "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
           }
         },
+      	{
+					"name": "injection_thresh_reboot",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Reboot (if enable) device after not injecting for X times (Default: 20)."
+					}
+				},
         {
           "name": "post_screenshot_delay",
           "settings": {
