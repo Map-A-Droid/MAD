@@ -1390,4 +1390,9 @@ class DbWrapperBase(ABC):
 
         return res
 
+    def update_trs_status_to_idle(self, origin):
+        query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
+        logger.debug(query)
+        self.execute(query, commit=True)
+
 
