@@ -217,7 +217,14 @@ class control(object):
         adb = devicemappings.get(origin, {}).get('adb', False)
         self._logger.info('MADmin: Restart Pogo ({})', str(origin))
         if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
-            self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+            self._logger.info('MADMin: ADB shell force-stop game command successfully ({})', str(origin))
+            if restart:
+                time.sleep(1)
+                started = self._adb_connect.send_shell_command(adb, origin, "am start com.nianticlabs.pokemongo")
+                if started:
+                    self._logger.info('MADMin: ADB shell start game command successfully ({})', str(origin))
+                else:
+                    self._logger.error('MADMin: ADB shell start game command failed ({})', str(origin))
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             if restart:
