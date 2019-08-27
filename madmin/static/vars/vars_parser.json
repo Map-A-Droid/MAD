@@ -571,7 +571,7 @@
             "type": "option",
             "require": "true",
             "values": "true|false",
-            "description": "Scan all spawnpoints or just ones with unknown endtimes"
+            "description": "True = scan all spawnpoints, false = scan spawnpoints with unknown endtimes"
           }
         }
       ],
