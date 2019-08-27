@@ -550,12 +550,22 @@ class RouteManagerBase(ABC):
                 # getting new coord
                 if len(self._routepool[origin].queue) == 0:
                     logger.info("Worker finished his subroute, updating all subroutes if necessary")
-                    if (not self.__worker_changed_update_routepools() and len(self._routepool[origin].queue) == 0
+                    if not self.__worker_changed_update_routepools() or (len(self._routepool[origin].queue) == 0
                             and len(self._routepool[origin].subroute) == 0):
-                        logger.debug("Failed updating subroute, returning None => Signalling worker to reconnect. We "
-                                     "may be finished with this area")
+                        logger.info("Subroute-update won't help or queue and subroute are empty, "
+                                    "signalling worker to reconnect")
                         return None
+                    elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
+                        [self._routepool[origin].queue.append(i) for i in self._routepool[origin].subroute]
 
+                # not entirely sure how this can be the case considering __worker_changed_update_routepools should
+                # handle the queue length and is checked before, but whatever...
+                # let's double check the queue length here and if it's empty, we need to handle it either with the
+                # worker's subroute or return None to kill the worker
+                if len(self._routepool[origin].queue) == 0:
+                    logger.warning("Having updated routepools and checked lengths of queue and subroute, "
+                                   "{}'s queue is still empty, signalling worker to stop whatever he is doing")
+                    return None
                 next_coord = self._routepool[origin].queue.popleft()
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                     self._current_route_round_coords.remove(next_coord)
