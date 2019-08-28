@@ -38,6 +38,7 @@ class RoutePoolEntry:
     current_pos: Location = Location(0.0, 0.0)
     has_prio_event: bool = False
     prio_coords: Location = Location(0.0, 0.0)
+    worker_sleeping: float = 0
 
 
 class RouteManagerBase(ABC):
@@ -414,6 +415,13 @@ class RouteManagerBase(ABC):
         merged = self.clustering_helper.get_clustered(latest)
         return merged
 
+    def __set_routepool_entry_location(self, origin: str, pos: Location):
+        with self._manager_mutex:
+            if self._routepool.get(origin, None) is not None:
+                self._routepool[origin].current_pos = pos
+                self._routepool[origin].last_access = time.time()
+                self._routepool[origin].worker_sleeping = 0
+
     def get_next_location(self, origin: str) -> Optional[Location]:
         logger.debug("get_next_location of {} called", str(self.name))
 
@@ -443,8 +451,7 @@ class RouteManagerBase(ABC):
                 prioevent = self._routepool[origin].prio_coords
                 logger.info('Worker {} getting a nearby prio event {}', origin, prioevent)
                 self._routepool[origin].has_prio_event = False
-                self._routepool[origin].current_pos = prioevent
-                self._routepool[origin].last_access = time.time()
+                self.__set_routepool_entry_location(origin, prioevent)
                 return prioevent
 
         # first check if a location is available, if not, block until we have one...
@@ -578,8 +585,7 @@ class RouteManagerBase(ABC):
             if self._check_coords_before_returning(next_coord.lat, next_coord.lng):
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                     self._current_route_round_coords.remove(next_coord)
-                self._routepool[origin].current_pos = next_coord
-                self._routepool[origin].last_access = time.time()
+                self.__set_routepool_entry_location(origin, next_coord)
                 return next_coord
             else:
                 return self.get_next_location(origin)
@@ -642,7 +648,7 @@ class RouteManagerBase(ABC):
             with self._manager_mutex:
                 for origin in list(self._routepool):
                     entry: RoutePoolEntry = self._routepool[origin]
-                    if time.time() - entry.last_access > timeout:
+                    if time.time() - entry.last_access > timeout + entry.worker_sleeping:
                         logger.warning(
                             "Worker {} has not accessed a location in {} seconds, removing from routemanager",
                             origin, timeout)
@@ -652,6 +658,12 @@ class RouteManagerBase(ABC):
                 self.__worker_changed_update_routepools()
 
             time.sleep(60)
+
+    def set_worker_sleeping(self, origin: str, sleep_duration: float):
+        if sleep_duration > 0:
+            with self._manager_mutex:
+                if origin in self._routepool:
+                    self._routepool[origin].worker_sleeping = sleep_duration
 
     def __worker_changed_update_routepools(self):
         if len(self._route) == 0:
@@ -679,6 +691,7 @@ class RouteManagerBase(ABC):
             sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
 
             logger.debug("Checking routepools in the following order: {}", sorted_routepools)
+            compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
             for origin, time_added in sorted_routepools:
                 entry: RoutePoolEntry = self._routepool[origin]
                 logger.debug("Checking subroute of {}", origin)
@@ -702,8 +715,6 @@ class RouteManagerBase(ABC):
                     logger.debug("{}'s subroute is as long as the old one, we will assume it hasn't changed (for now)",
                                  origin)
                     # apparently nothing changed
-                    compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
-
                     if compare(new_subroute, entry.subroute):
                         logger.info("Apparently no changes in subroutes...")
                     else:
