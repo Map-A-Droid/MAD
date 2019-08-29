@@ -63,6 +63,8 @@ class WorkerQuests(MITMBase):
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
         self._ignore_spinned_stops = self._mapping_manager.routemanager_get_settings(self._routemanager_name)\
             .get("ignore_spinned_stops", True)
+        self._always_cleanup = self._mapping_manager.routemanager_get_settings(self._routemanager_name)\
+            .get("cleanup_every_spin", False)
 
         self._rotation_waittime = self.get_devicesettings_value('rotation_waittime', 300)
 
@@ -713,7 +715,7 @@ class WorkerQuests(MITMBase):
                     logger.info('NOT received new Quest - previously spun the stop/cooldown')
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
-                if not self.get_devicesettings_value('cleanup_every_spin', False):
+                if not self._always_cleanup:
                     self._clear_quest_counter += 1
                     if self._clear_quest_counter == 3:
                         logger.info('Getting 3 quests - clean them')
