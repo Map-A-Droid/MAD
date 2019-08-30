@@ -10,7 +10,8 @@
             "require": "true",
             "empty": "null",
             "description": "Name of device (from RGC settings)",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -19,7 +20,8 @@
             "type": "walkerselect",
             "require": "true",
             "empty": null,
-            "description": "Walker of this area"
+            "description": "Walker of this area",
+            "expected": "str"
           }
         },
         {
@@ -28,7 +30,8 @@
             "type": "poolselect",
             "require": "true",
             "empty": null,
-            "description": "Configpool for this area"
+            "description": "Configpool for this area",
+            "expected": "str"
           }
         },
         {
@@ -37,7 +40,8 @@
             "type": "adbselect",
             "require": "true",
             "empty": null,
-            "description": "ADB devicename"
+            "description": "ADB devicename",
+            "expected": "str"
           }
         }
       ],
@@ -47,7 +51,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
+            "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)",
+            "expected": "float"
           }
         },
         {
@@ -55,7 +60,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds after a teleport. (Default: 4.0)"
+            "description": "Delay in seconds after a teleport. (Default: 4.0)",
+            "expected": "float"
           }
         },
         {
@@ -63,7 +69,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Walk n metres in both directions after teleport for getting data"
+            "description": "Walk n metres in both directions after teleport for getting data",
+            "expected": "float"
           }
         },
         {
@@ -72,7 +79,8 @@
             "type": "option",
             "require": "false",
             "values": "None|false|true",
-            "description": "More cooldown after teleport"
+            "description": "More cooldown after teleport",
+            "expected": "bool"
           }
         },
         {
@@ -80,7 +88,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
+            "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)",
+            "expected": "float"
           }
         },
         {
@@ -88,7 +97,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
+            "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)",
+            "expected": "float"
           }
         },
         {
@@ -96,7 +106,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)"
+            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)",
+            "expected": "float"
           }
         },
         {
@@ -104,7 +115,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
+            "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)",
+            "expected": "float"
           }
         },
         {
@@ -112,7 +124,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
+            "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)",
+            "expected": "float"
           }
         },
         {
@@ -120,7 +133,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
+            "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)",
+            "expected": "float"
           }
         },
         {
@@ -129,7 +143,8 @@
             "type": "option",
             "require": "false",
             "values": "None|false|true",
-            "description": "Reboot device if reboot_thresh is reached (Default: false)"
+            "description": "Reboot device if reboot_thresh is reached (Default: false)",
+            "expected": "bool"
           }
         },
         {
@@ -137,7 +152,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Phone after restart Pogo N times. (Default: 3)"
+            "description": "Restart Phone after restart Pogo N times. (Default: 3)",
+            "expected": "int"
           }
         },
         {
@@ -146,6 +162,8 @@
             "type": "text",
             "require": "false",
             "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
+            ,
+            "expected": "int"
           }
         },
         {
@@ -153,7 +171,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
+            "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)",
+            "expected": "float"
           }
         },
         {
@@ -161,7 +180,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
+            "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)",
+            "expected": "int"
           }
         },
         {
@@ -169,7 +189,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
+            "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)",
+            "expected": "int"
           }
         },
         {
@@ -178,7 +199,8 @@
             "type": "option",
             "require": "true",
             "values": "jpeg|png",
-            "description": "Type of screenshot (Default: jpeg)"
+            "description": "Type of screenshot (Default: jpeg)",
+            "expected": "str"
           }
         },
         {
@@ -186,7 +208,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Quality of screenshot (Default: 80)"
+            "description": "Quality of screenshot (Default: 80)",
+            "expected": "int"
           }
         },
         {
@@ -195,7 +218,8 @@
             "type": "option",
             "values": "optimized|quick",
             "require": "false",
-            "description": "Method of calculation for routes. (Default optimized)"
+            "description": "Method of calculation for routes. (Default optimized)",
+            "expected": "str"
           }
         },
         {
@@ -203,7 +227,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
+            "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)",
+            "expected": "str"
           }
         },
         {
@@ -212,7 +237,8 @@
             "type": "option",
             "values": "false|true",
             "require": "false",
-            "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts"
+            "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts",
+            "expected": "bool"
           }
         },
         {
@@ -221,7 +247,8 @@
             "type": "option",
             "values": "google|ptc",
             "require": "false",
-            "description": "Select login type for automatic login. If using Google make sure that account already exists on device."
+            "description": "Select login type for automatic login. If using Google make sure that account already exists on device.",
+            "expected": "str"
           }
         },
         {
@@ -229,7 +256,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
+            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)",
+            "expected": "str"
           }
         },
         {
@@ -237,7 +265,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
+            "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)",
+            "expected": "str"
           }
         },
         {
@@ -246,7 +275,8 @@
             "type": "option",
             "values": "false|true",
             "require": "false",
-            "description": "Clear gamedata if logins fail multiple times"
+            "description": "Clear gamedata if logins fail multiple times",
+            "expected": "bool"
           }
         },
         {
@@ -255,7 +285,8 @@
             "type": "option",
             "values": "false|true",
             "require": "false",
-            "description": "Rotate accounts (f.e. to prevent long cool downs)"
+            "description": "Rotate accounts (f.e. to prevent long cool downs)",
+            "expected": "bool"
           }
         },
         {
@@ -263,7 +294,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Rotate accounts if waiting time longer than x seconds after teleport (Default: 300 - need account_rotation: true)"
+            "description": "Rotate accounts if waiting time longer than x seconds after teleport (Default: 300 - need account_rotation: true)",
+            "expected": "float"
           }
         },
         {
@@ -272,7 +304,8 @@
             "type": "option",
             "values": "false|true",
             "require": "false",
-            "description": "Rotate accounts if player level >= 30 (for levelmode)"
+            "description": "Rotate accounts if player level >= 30 (for levelmode)",
+            "expected": "bool"
           }
         }
       ]
@@ -289,7 +322,8 @@
             "require": "true",
             "empty": "null",
             "description": "Name of global Monlist",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -297,9 +331,10 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Encounter this mon ids while walking (Put in brakets [1,2,3] as comma separated list!)",
+            "description": "Encounter this mon ids while walking (Put in brackets [1,2,3] as comma separated list!)",
             "output": "int",
-            "showmonsidpicker": true
+            "showmonsidpicker": true,
+            "expected": "list"
           }
         }
       ]
@@ -316,7 +351,8 @@
             "require": "true",
             "empty": "null",
             "description": "Name for the global device settings",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         }
       ],
@@ -326,7 +362,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)"
+            "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)",
+            "expected": "float"
           }
         },
         {
@@ -334,7 +371,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds after a teleport. (Default: 4.0)"
+            "description": "Delay in seconds after a teleport. (Default: 4.0)",
+            "expected": "float"
           }
         },
         {
@@ -342,7 +380,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Walk n seconds after teleport for getting data"
+            "description": "Walk n seconds after teleport for getting data",
+            "expected": "float"
           }
         },
         {
@@ -351,7 +390,8 @@
             "type": "option",
             "require": "false",
             "values": "false|true",
-            "description": "More cooldown after teleport"
+            "description": "More cooldown after teleport",
+            "expected": "bool"
           }
         },
         {
@@ -359,7 +399,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)"
+            "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)",
+            "expected": "float"
           }
         },
         {
@@ -367,7 +408,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)"
+            "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)",
+            "expected": "float"
           }
         },
         {
@@ -375,7 +417,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)"
+            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)",
+            "expected": "int"
           }
         },
         {
@@ -383,7 +426,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)"
+            "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)",
+            "expected": "float"
           }
         },
         {
@@ -391,7 +435,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)"
+            "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)",
+            "expected": "float"
           }
         },
         {
@@ -399,7 +444,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)"
+            "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)",
+            "expected": "float"
           }
         },
         {
@@ -408,7 +454,8 @@
             "type": "option",
             "require": "false",
             "values": "false|true",
-            "description": "Reboot device if reboot_thresh is reached (Default: false)"
+            "description": "Reboot device if reboot_thresh is reached (Default: false)",
+            "expected": "bool"
           }
         },
         {
@@ -416,7 +463,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Phone after restart Pogo N times. (Default: 3)"
+            "description": "Restart Phone after restart Pogo N times. (Default: 3)",
+            "expected": "int"
           }
         },
         {
@@ -424,7 +472,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
+            "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)",
+            "expected": "int"
           }
         },
         {
@@ -432,7 +481,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)"
+            "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)",
+            "expected": "float"
           }
         },
         {
@@ -440,7 +490,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)"
+            "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)",
+            "expected": "int"
           }
         },
         {
@@ -448,7 +499,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)"
+            "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)",
+            "expected": "int"
           }
         },
         {
@@ -457,7 +509,8 @@
             "type": "option",
             "require": "true",
             "values": "jpeg|png",
-            "description": "Type of screenshot (Default: jpeg)"
+            "description": "Type of screenshot (Default: jpeg)",
+            "expected": "str"
           }
         },
         {
@@ -465,7 +518,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Quality of screenshot (Default: 80)"
+            "description": "Quality of screenshot (Default: 80)",
+            "expected": "int"
           }
         },
         {
@@ -474,7 +528,8 @@
             "type": "option",
             "values": "optimized|quick",
             "require": "false",
-            "description": "Method of calculation for routes. (Default optimized)"
+            "description": "Method of calculation for routes. (Default optimized)",
+            "expected": "str"
           }
         },
         {
@@ -482,7 +537,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)"
+            "description": "Start Coords of Walker (Default: None) (Format: 123.45,67.89)",
+            "expected": "str"
           }
         }
       ]
@@ -499,7 +555,8 @@
             "require": "true",
             "empty": "null",
             "description": "Name of walker",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -509,7 +566,8 @@
             "require": "false",
             "empty": "null",
             "description": "Order of areas",
-            "lockonedit": "false"
+            "lockonedit": "false",
+            "expected": "list"
           }
         }
       ],
@@ -527,7 +585,8 @@
             "type": "text",
             "require": "true",
             "description": "Name of area",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -536,7 +595,8 @@
             "type": "option",
             "require": "true",
             "values": "false|true",
-            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time",
+            "expected": "bool"
           }
         },
         {
@@ -545,7 +605,8 @@
             "type": "fenceselect",
             "require": "true",
             "empty": "null",
-            "description": "Including geofence for scanarea"
+            "description": "Including geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -554,7 +615,8 @@
             "type": "fenceselect",
             "require": "false",
             "empty": "null",
-            "description": "Excluding geofence for scanarea"
+            "description": "Excluding geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -562,7 +624,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Name of routefile"
+            "description": "Name of routefile",
+            "expected": "str"
           }
         },
         {
@@ -571,7 +634,8 @@
             "type": "option",
             "require": "true",
             "values": "true|false",
-            "description": "Scan all spawnpoints or just ones with unknown endtimes"
+            "description": "Scan all spawnpoints or just ones with unknown endtimes",
+            "expected": "bool"
           }
         }
       ],
@@ -582,7 +646,8 @@
             "type": "text",
             "require": "true",
             "description": "Speed of player in kmh",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -591,7 +656,8 @@
             "type": "text",
             "require": "true",
             "description": "Max. distance of walking - otherwise teleport to new location",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -600,7 +666,8 @@
             "type": "text",
             "require": "false",
             "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -609,7 +676,8 @@
             "type": "text",
             "require": "false",
             "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -618,7 +686,8 @@
             "type": "text",
             "require": "false",
             "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -628,7 +697,8 @@
             "require": "false",
             "values": "false|true",
             "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-            "output": "int"
+            "output": "int",
+            "expected": "bool"
           }
         },
         {
@@ -636,7 +706,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Rounds in Init Mode. (Default: 1)"
+            "description": "Rounds in Init Mode. (Default: 1)",
+            "expected": "int"
           }
         },
         {
@@ -646,7 +717,8 @@
             "require": "false",
             "description": "Select global mon list",
             "output": "int",
-            "showmonsidpicker": true
+            "showmonsidpicker": true,
+            "expected": "list"
           }
         },
         {
@@ -655,7 +727,8 @@
             "type": "text",
             "require": "false",
             "description": "Ignore mons with less spawntime in seconds",
-            "output": "int"
+            "output": "int",
+            "expected": "int"
           }
         }
       ]
@@ -670,7 +743,8 @@
             "type": "text",
             "require": "true",
             "description": "Name of area",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -679,7 +753,8 @@
             "type": "fenceselect",
             "require": "true",
             "empty": "null",
-            "description": "Including geofence for scanarea"
+            "description": "Including geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -688,7 +763,8 @@
             "type": "fenceselect",
             "require": "false",
             "empty": "null",
-            "description": "Excluding geofence for scanarea"
+            "description": "Excluding geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -696,7 +772,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Name of routefile"
+            "description": "Name of routefile",
+            "expected": "str"
           }
         }
       ],
@@ -707,7 +784,8 @@
             "type": "text",
             "require": "true",
             "description": "Speed of player in kmh",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -716,7 +794,8 @@
             "type": "text",
             "require": "true",
             "description": "Max. distance of walking - otherwise teleport to new location",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -725,7 +804,8 @@
             "type": "text",
             "require": "false",
             "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -734,7 +814,8 @@
             "type": "text",
             "require": "false",
             "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 300)",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -743,7 +824,8 @@
             "type": "text",
             "require": "false",
             "description": "Remove any events from priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-            "output": "int"
+            "output": "int",
+            "expected": "int"
           }
         },
         {
@@ -753,7 +835,8 @@
             "require": "false",
             "values": "false|true",
             "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-            "output": "int"
+            "output": "int",
+            "expected": "bool"
           }
         },
         {
@@ -763,7 +846,8 @@
             "require": "false",
             "description": "Select global mon list",
             "output": "int",
-            "showmonsidpicker": true
+            "showmonsidpicker": true,
+            "expected": "list"
           }
         },
         {
@@ -772,7 +856,8 @@
             "type": "text",
             "require": "false",
             "description": "Ignore mons with less spawntime in seconds",
-            "output": "int"
+            "output": "int",
+            "expected": "int"
           }
         }
       ]
@@ -787,7 +872,8 @@
             "type": "text",
             "require": "true",
             "description": "Name of area",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -796,7 +882,8 @@
             "type": "fenceselect",
             "require": "true",
             "empty": "null",
-            "description": "Including geofence for scanarea"
+            "description": "Including geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -805,7 +892,8 @@
             "type": "fenceselect",
             "require": "false",
             "empty": "null",
-            "description": "Excluding geofence for scanarea"
+            "description": "Excluding geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -813,7 +901,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Name of routefile"
+            "description": "Name of routefile",
+            "expected": "str"
           }
         },
         {
@@ -822,7 +911,8 @@
             "type": "option",
             "require": "true",
             "values": "false|true",
-            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time",
+            "expected": "bool"
           }
         },
         {
@@ -831,7 +921,8 @@
             "type": "option",
             "require": "true",
             "values": "false|true",
-            "description": "Level up an account mode"
+            "description": "Level up an account mode",
+            "expected": "bool"
           }
         },
         {
@@ -840,7 +931,8 @@
             "type": "option",
             "values": "optimized|quick",
             "require": "false",
-            "description": "Method of calculation for routes. (Default optimized)"
+            "description": "Method of calculation for routes. (Default optimized)",
+            "expected": "str"
           }
         }
       ],
@@ -851,7 +943,8 @@
             "type": "text",
             "require": "true",
             "description": "Speed of player in kmh",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -860,7 +953,8 @@
             "type": "text",
             "require": "true",
             "description": "Max. distance of walking - otherwise teleport to new location",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -870,7 +964,8 @@
             "values": "true|false",
             "require": "true",
             "description": "Do not spinn stops already made in the past (for levelmode)",
-            "output": "int"
+            "output": "int",
+            "expected": "bool"
           }
         },
         {
@@ -880,7 +975,8 @@
             "values": "false|true",
             "require": "true",
             "description": "Cleanup quest inventory every spinned stop",
-            "output": "int"
+            "output": "int",
+            "expected": "bool"
           }
         }
       ]
@@ -895,7 +991,8 @@
             "type": "text",
             "require": "true",
             "description": "Name of area",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -904,7 +1001,8 @@
             "type": "option",
             "require": "true",
             "values": "false|true",
-            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time"
+            "description": "Set this open true, if you scan the area for gyms / spawnpoints the first time",
+            "expected": "bool"
           }
         },
         {
@@ -913,7 +1011,8 @@
             "type": "fenceselect",
             "require": "true",
             "empty": "null",
-            "description": "Including geofence for scanarea"
+            "description": "Including geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -922,7 +1021,8 @@
             "type": "fenceselect",
             "require": "false",
             "empty": "null",
-            "description": "Excluding geofence for scanarea"
+            "description": "Excluding geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -930,7 +1030,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Name of routefile"
+            "description": "Name of routefile",
+            "expected": "str"
           }
         },
         {
@@ -939,7 +1040,8 @@
             "type": "option",
             "require": "true",
             "values": "false|true",
-            "description": "Calculate route including stops to catch invasions."
+            "description": "Calculate route including stops to catch invasions.",
+            "expected": "bool"
           }
         }
       ],
@@ -949,7 +1051,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Speed of player in kmh"
+            "description": "Speed of player in kmh",
+            "expected": "float"
           }
         },
         {
@@ -957,7 +1060,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Max. distance of walking - otherwise teleport to new location"
+            "description": "Max. distance of walking - otherwise teleport to new location",
+            "expected": "float"
           }
         },
         {
@@ -966,7 +1070,8 @@
             "type": "text",
             "require": "false",
             "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -975,7 +1080,8 @@
             "type": "text",
             "require": "false",
             "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -984,7 +1090,8 @@
             "type": "text",
             "require": "false",
             "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -994,7 +1101,8 @@
             "require": "false",
             "values": "false|true",
             "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-            "output": "int"
+            "output": "int",
+            "expected": "bool"
           }
         },
         {
@@ -1002,7 +1110,8 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Rounds in Init Mode. (Default: 1)"
+            "description": "Rounds in Init Mode. (Default: 1)",
+            "expected": "int"
           }
         },
         {
@@ -1012,7 +1121,8 @@
             "require": "false",
             "description": "Select global mon list",
             "output": "int",
-            "showmonsidpicker": true
+            "showmonsidpicker": true,
+            "expected": "list"
           }
         }
       ]
@@ -1027,7 +1137,8 @@
             "type": "text",
             "require": "true",
             "description": "Name of area",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -1036,7 +1147,8 @@
             "type": "fenceselect",
             "require": "true",
             "empty": "null",
-            "description": "Including geofence for scanarea"
+            "description": "Including geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -1044,7 +1156,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Name of routefile"
+            "description": "Name of routefile",
+            "expected": "str"
           }
         }
       ],
@@ -1061,7 +1174,8 @@
             "type": "text",
             "require": "true",
             "description": "Name of area",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -1070,7 +1184,8 @@
             "type": "fenceselect",
             "require": "true",
             "empty": "null",
-            "description": "Including geofence for scanarea"
+            "description": "Including geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -1079,7 +1194,8 @@
             "type": "fenceselect",
             "require": "false",
             "empty": "null",
-            "description": "Excluding geofence for scanarea"
+            "description": "Excluding geofence for scanarea",
+            "expected": "str"
           }
         },
         {
@@ -1087,7 +1203,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Name of routefile"
+            "description": "Name of routefile",
+            "expected": "str"
           }
         }
       ],
@@ -1097,7 +1214,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Speed of player in kmh"
+            "description": "Speed of player in kmh",
+            "expected": "float"
           }
         },
         {
@@ -1105,7 +1223,8 @@
           "settings": {
             "type": "text",
             "require": "true",
-            "description": "Max. distance of walking - otherwise teleport to new location"
+            "description": "Max. distance of walking - otherwise teleport to new location",
+            "expected": "float"
           }
         },
         {
@@ -1123,7 +1242,8 @@
             "type": "text",
             "require": "false",
             "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -1132,7 +1252,8 @@
             "type": "text",
             "require": "false",
             "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
-            "output": "int"
+            "output": "int",
+            "expected": "float"
           }
         },
         {
@@ -1142,7 +1263,8 @@
             "require": "false",
             "values": "false|true",
             "description": "Disable round-robin of route vs. priority queue events. If true,  your route may not be completed in time and e.g. only spawns will be scanned",
-            "output": "int"
+            "output": "int",
+            "expected": "bool"
           }
         }
       ]
@@ -1159,7 +1281,8 @@
             "require": "true",
             "empty": "null",
             "description": "Username of device",
-            "lockonedit": "true"
+            "lockonedit": "true",
+            "expected": "str"
           }
         },
         {
@@ -1168,7 +1291,8 @@
             "type": "text",
             "require": "true",
             "empty": "null",
-            "description": "Password of device"
+            "description": "Password of device",
+            "expected": "str"
           }
         }
       ],

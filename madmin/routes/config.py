@@ -21,7 +21,6 @@ class config(object):
         self._adb_connect = ADBConnect(self._args)
         self._ws_connected_phones: list = []
         self._logger = logger
-
         self._app = app
         self._mapping_mananger = mapping_manager
         self.add_route()
@@ -726,12 +725,18 @@ class config(object):
         for ase in data:
             key = ','.join(data[ase])
             datavalue[ase] = key
-
-        edit = datavalue.get("edit", False)
-        block = datavalue.get("block", False)
-        area = datavalue.get("area", False)
-        mode = datavalue.get("mode", False)
-
+        headers = ['edit', 'block', 'area', 'mode']
+        recieved_data = {
+            'user_data': {}
+        }
+        for (key, val) in datavalue.items():
+            if key in headers:
+                recieved_data[key] = datavalue.get(key, False)
+            else:
+                recieved_data['user_data'][key] = val
+        area = recieved_data['area']
+        mode = recieved_data['mode']
+        block = recieved_data['block']
         with open(self._args.mappings) as f:
             mapping = json.load(f)
             if 'walker' not in mapping:
@@ -743,9 +748,12 @@ class config(object):
 
         with open('madmin/static/vars/settings.json') as f:
             settings = json.load(f)
-
-        if edit:
-            for entry in mapping[area]:
+        # Determine if we should create a new entry or update an existing
+        selected_entry = {}
+        selected_ind = None
+        try:
+            edit = recieved_data['edit']
+            for ind, entry in enumerate(mapping[area]):
                 if 'name' in entry:
                     _checkfield = 'name'
                 if 'origin' in entry:
@@ -758,78 +766,75 @@ class config(object):
                     _checkfield = 'devicepool'
                 if 'monlist' in entry:
                     _checkfield = 'monlist'
-
-                if str(edit) == str(entry[_checkfield]):
-                    if str(block) == str("settings"):
-                        for key, value in datavalue.items():
-                            if value == '' or value == 'None':
-                                if key in entry['settings']:
-                                    del entry['settings'][key]
-                            elif value in area:
-                                continue
-                            else:
-                                if str(key) not in ('block', 'area', 'type', 'edit', 'mode'):
-                                    entry['settings'][key] = self.match_type(value)
-
-                    else:
-                        for key, value in datavalue.items():
-                            if value == '':
-                                if key in entry:
-                                    del entry[key]
-                            elif value in area:
-                                continue
-                            else:
-                                if str(key) in ('geofence'):
-                                    entry[key] = value
-                                elif str(key) not in ('block', 'area', 'type', 'edit'):
-                                    entry[key] = self.match_type(value)
-
-        else:
-            new = {}
-            for key, value in datavalue.items():
-                if value != '' and value not in area:
-                    if str(key) in ('geofence'):
-                        new[key] = value
-                    elif str(key) not in ('block', 'area', 'type', 'edit'):
-                        new[key] = self.match_type(value)
-
+                if str(edit) != str(entry[_checkfield]):
+                    continue
+                selected_entry = entry
+                selected_ind = ind
+                break
+        except KeyError:
+            selected_ind = None
+            selected_entry = {}
+            if settings[area]['has_settings'] == 'true':
+                selected_entry['settings'] = {}
+        if area == 'areas':
+            selected_entry['mode'] = recieved_data['mode']
+        for key,val in recieved_data['user_data'].items():
+            config_def = self.get_def(area, mode, key)
             if str(block) == str("settings"):
-                mapping[area]['settings'].append(new)
+                if val == '' or val == 'None':
+                    if key in selected_entry['settings']:
+                        del selected_entry['settings'][key]
+                else:
+                    selected_entry['settings'][key] = self.match_type(val, config_def['settings'].get('expected', 'str'))
             else:
-                if settings[area]['has_settings'] == 'true':
-                    new['settings'] = {}
-                mapping[area].append(new)
-
+                selected_entry[key] = self.match_type(val, config_def['settings'].get('expected', 'str'))
+        if selected_ind is not None:
+            mapping[area][ind] = selected_entry
+        else:
+            mapping[area].append(selected_entry)
         with open(self._args.mappings, 'w') as outfile:
             json.dump(mapping, outfile, indent=4, sort_keys=True)
+        return redirect(getBasePath(request) + "/showsettings?area=" + str(recieved_data['area']), code=302)
 
+    def get_def(self, area, mode, key):
+        # I doubt this file will ever be edited while MAD is running.  open each time for sanity-sake
+        with open('madmin/static/vars/vars_parser.json', 'rb') as f:
+            var_def = json.load(f)
+            for mode_sect in var_def[area]:
+                if mode_sect['name'] != mode:
+                    continue
+                for entry in mode_sect['fields']:
+                    if str(entry['name']) == str(key):
+                        return entry
+                if 'settings' in mode_sect:
+                    for entry in mode_sect['settings']:
+                        if str(entry['name']) == str(key):
+                            return entry
+        return {'settings':{}}
 
-        return redirect(getBasePath(request) + "/showsettings?area=" + str(area), code=302)
-
-    def match_type(self, value):
-        if '[' in value and ']' in value:
-            if ':' in value:
-                tempvalue = []
-                valuearray = value.replace('[', '').replace(']', '').replace(
-                    ' ', '').replace("'", '').split(',')
-                for k in valuearray:
-                    tempvalue.append(str(k))
-                value = tempvalue
-            else:
-                value = list(value.replace('[', '').replace(']', '').split(','))
-                value = [int(i) for i in value]
-        elif value in 'true':
-            value = bool(True)
-        elif value in 'false':
-            value = bool(False)
-        elif value.isdigit():
-            value = int(value)
-        elif self.check_float(value):
-            value = float(value)
-        elif value == "None":
+    def match_type(self, value, expected):
+        if value == "None":
             value = None
-        else:
-            value = value.replace(' ', '_')
+        elif expected == 'list':
+            if '[' in value and ']' in value:
+                if ':' in value:
+                    tempvalue = []
+                    valuearray = value.replace('[', '').replace(']', '').replace(
+                        ' ', '').replace("'", '').split(',')
+                    for k in valuearray:
+                        tempvalue.append(str(k))
+                    value = tempvalue
+                else:
+                    value = list(value.replace('[', '').replace(']', '').split(','))
+                    value = [int(i) for i in value]
+        elif expected == 'bool':
+            value = True if value.lower() == "true" else False
+        elif expected == 'float':
+            value = float(value)
+        elif expected == 'int':
+            value = int(value)
+        elif expected == 'str':
+            value = str(value).replace(' ', '_')
         return value
 
     @logger.catch
