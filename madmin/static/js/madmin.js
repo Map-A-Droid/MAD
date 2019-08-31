@@ -1406,14 +1406,25 @@ new Vue({
       // get stored center and zoom level if they exists
       const storedZoom = this.getStoredSetting('zoomlevel', 3);
       const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
-      leaflet_data.tileLayer = L.tileLayer(this.maptiles[this.settings.maptiles].url);
+      leaflet_data.tileLayer = L.tileLayer(this.maptiles[this.settings.maptiles].url, {
+        noWrap: true,
+        bounds: [
+          [-90, -180],
+          [90, 180]
+        ]
+      });
 
       map = L.map('map', {
         layers: [leaflet_data.tileLayer],
         zoomControl: false,
         updateWhenZooming: false,
         updateWhenIdle: true,
-        preferCanvas: true
+        preferCanvas: true,
+        worldCopyJump: true,
+        maxBounds: [
+          [-90, -180],
+          [90, 180]
+        ]
       }).setView(storedCenter.split(','), storedZoom);
 
       // add custom button
