@@ -1,6 +1,7 @@
 {% extends "base.html" %}
 
 {% block header %}
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" crossorigin="anonymous">
 <style>
   input[type=text],
   select,
@@ -102,6 +103,7 @@
  $(document).ready(function() {
 
  $('body').Aplus();
+ $('dialog-confirm').dialog();
 
 $("a#screenshot").bind("click", function(event) {
        event.preventDefault();
@@ -120,24 +122,62 @@ $("a#screenshot").bind("click", function(event) {
    });
 
 $("a#quit").bind("click", function(event) {
-       event.preventDefault();
-       var confirm1 = confirm('Do you really want quit pogo?');
-       if (confirm1) {
-            var origin = $(this).attr("origin");
-            var url = $(this).attr("href");
-            $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
-            $.ajax({
-            type: "GET",
-            url: url,
-            success: function(data){
-               $('#date' + origin).text(data);
-               $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
-               $('div#' + origin).unblock();
-        }
+    event.preventDefault();
+    var origin = $(this).attr("origin");
+    var url = $(this).attr("href");
 
-     });
-     }
-   });
+    $("#dialog-confirm").dialog({
+        draggable: false,
+        resizable: false,
+        height: "auto",
+        title: origin,
+        width: "auto",
+        modal: true,
+        buttons: [
+            {
+                text: "Quit",
+                icon: "ui-icon-power",
+                click: function() {
+                     $(this).dialog("close");
+                     $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+                     $.ajax({
+                         type: "GET",
+                         url: url,
+                         success: function(data){
+                             $('#date' + origin).text(data);
+                             $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                             $('div#' + origin).unblock();
+                         }
+                     });
+                }
+            },
+            {
+                text: "Restart",
+                icon: "ui-icon-refresh",
+                click: function() {
+                    $(this).dialog("close");
+                    url = url + "&restart=1"
+                    $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+                    $.ajax({
+                        type: "GET",
+                        url: url,
+                        success: function(data){
+                            $('#date' + origin).text(data);
+                            $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                            $('div#' + origin).unblock();
+                        }
+                    });
+                }
+            },
+            {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        ]
+    });
+});
 
 
 $(".backbutton").bind("click", function(event) {
@@ -284,6 +324,9 @@ e.preventDefault();
   {% for item in editform %}
   {{item | safe }}
   {% endfor %}
+</div>
+<div id="dialog-confirm" style="display:none;">
+  <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>Quit or Restart game?</p>
 </div>
 
 {% endblock %}
