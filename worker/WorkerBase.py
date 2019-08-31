@@ -63,7 +63,9 @@ class WorkerBase(ABC):
         self._pogoWindowManager = pogoWindowManager
         self._waittime_without_delays = 0
         self._transporttype = 0
-        self._not_injected_count = 0
+        self._not_injected_count:int = 0
+        self._same_screen_count: int = 0
+        self._last_screen_type: ScreenType = ScreenType.UNDEFINED
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self.get_devicesettings_value("last_location", None)
@@ -566,6 +568,19 @@ class WorkerBase(ABC):
 
             if returncode != ScreenType.POGO:
 
+                if self._last_screen_type != ScreenType.UNDEFINED and self._last_screen_type == returncode \
+                        and self._same_screen_count == 3:
+                    logger.warning('Pogo freeze - restart Phone')
+                    self._stop_worker_event.set()
+                    self._stop_pogo()
+                    time.sleep(5)
+                    self._reboot()
+
+                if self._last_screen_type != ScreenType.UNDEFINED and self._last_screen_type == returncode \
+                        and self._same_screen_count < 3:
+                    self._same_screen_count += 1
+                    logger.warning('Getting same screen again - maybe Pogo freeze?')
+
                 if returncode == ScreenType.GAMEDATA or returncode == ScreenType.CONSENT:
                     logger.warning('Error getting Gamedata or strange ggl message appears')
                     self._stop_pogo()
@@ -600,6 +615,8 @@ class WorkerBase(ABC):
                     self._stop_pogo()
                     time.sleep(5)
                     self._turn_screen_on_and_start_pogo()
+
+                self._last_screen_type = returncode
 
         logger.info('Checking pogo screen is finished')
         return True
