@@ -363,7 +363,7 @@ class map(object):
         file.write("[" + str(name) + "]\n")
         for i in range(len(coords_split)):
             latlon_split = coords_split[i].split(",")
-            file.write("{0},{1}\n".format(str(float(latlon_split[0]) % 90), str(float(latlon_split[0]) % 360)))
+            file.write("{0},{1}\n".format(str(float(latlon_split[0]) % 90), str(float(latlon_split[1]) % 360)))
 
         file.close()
 
