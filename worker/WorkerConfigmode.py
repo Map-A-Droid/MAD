@@ -119,6 +119,9 @@ class WorkerConfigmode(object):
             if check_walker_value_type(sleeptime):
                 self._stop_pogo()
                 killpogo = True
+                logger.debug("Setting device to idle for routemanager")
+                self._db_wrapper.update_trs_status_to_idle(self._id)
+                logger.debug("Device set to idle for routemanager {}", str(self._id))
             while check_walker_value_type(sleeptime) and not self._stop_worker_event.isSet():
                 time.sleep(1)
             logger.info('{} just woke up', str(self._id))

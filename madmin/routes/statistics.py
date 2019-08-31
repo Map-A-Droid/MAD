@@ -8,6 +8,7 @@ from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_b
 from utils.geo import get_distance_of_two_points_in_meters
 from utils.logging import logger
 
+
 class statistics(object):
     def __init__(self, db, args, app):
         self._db = db
@@ -40,7 +41,7 @@ class statistics(object):
             minutes_usage = 120
 
         return render_template('statistics/statistics.html', title="MAD Statisics", minutes_usage=minutes_usage,
-                               time=self._args.madmin_time, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
@@ -50,7 +51,7 @@ class statistics(object):
             minutes_spawn = 120
 
         return render_template('statistics/mon_statistics.html', title="MAD Mon Statisics", minutes_spawn=minutes_spawn,
-                               time=self._args.madmin_time, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
@@ -224,7 +225,7 @@ class statistics(object):
                                '(check config.ini // game_stats_raw)')
                 diff = 1
 
-            ratio = round(dat[1] * 100 / diff, 5)
+            ratio = round(dat[1] * 100 / diff, 2)
             if dat[3] not in shiny_worker: shiny_worker[dat[3]] = 0
             shiny_worker[dat[3]] += dat[1]
 
@@ -238,7 +239,9 @@ class statistics(object):
             shiny_avg[dat[2]][dat[5]]['total_nonshiny'].append(diff)
 
             shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
-                                'worker': dat[3], 'encounterid': dat[4]})
+                                'worker': dat[3], 'encounterid': dat[4],
+                                'periode': datetime.datetime.fromtimestamp
+                                (self.utc2local(dat[6])).strftime(self._datetimeformat)})
 
         shiny_stats_avg = []
         for dat in shiny_avg:
@@ -250,14 +253,12 @@ class statistics(object):
                 monName_raw = (get_raid_boss_cp(dat))
                 monName = i8ln(monName_raw['name'])
 
-                shiny_amount = sum(shiny_avg[dat][form_dat]['total_shiny']) / \
-                                   len(shiny_avg[dat][form_dat]['total_nonshiny'])
-                shiny_amount_avg = round(sum(shiny_avg[dat][form_dat]['total_nonshiny']) / \
-                                   len(shiny_avg[dat][form_dat]['total_nonshiny']), 0)
-                shiny_avg_click = round(shiny_amount_avg / shiny_amount, 0)
+                total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
+                total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
+                shiny_avg_click = round(total_nonshiny_encounters / total_shiny_encounters, 0)
 
-                shiny_stats_avg.append({'name': monName, 'img': monPic, 'amount': shiny_amount,
-                                        'avg': shiny_amount_avg, 'click_for_shiny': shiny_avg_click})
+                shiny_stats_avg.append({'name': monName, 'img': monPic, 'total_shiny_encounters': total_shiny_encounters,
+                                        'total_nonshiny_encounters': total_nonshiny_encounters, 'click_for_shiny': shiny_avg_click})
 
         shiny_stats_worker = []
         for dat in shiny_worker:
@@ -377,14 +378,13 @@ class statistics(object):
         worker = request.args.get('worker')
 
         return render_template('statistics_worker.html', title="MAD Worker Statisics", minutes=minutes,
-                               time=self._args.madmin_time, worker=worker, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time, worker=worker,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
     def status(self):
         return render_template('status.html', responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Worker status",
-                               running_ocr=(self._args.only_ocr))
+                               title="Worker status")
 
     @auth_required
     def get_status(self):

@@ -112,13 +112,13 @@ class MITMBase(WorkerBase):
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
                         and self.get_devicesettings_value("reboot", False):
-                    logger.error("To much timeouts - Rebooting {}", str(self._id))
+                    logger.error("Too many timeouts - Rebooting device {}", str(self._id))
                     self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
 
                 # self._mitm_mapper.
                 self._restart_count = 0
-                logger.error("To much timeouts - Restarting Pogo  {}", str(self._id))
+                logger.error("Too many timeouts - Restarting game on {}", str(self._id))
                 self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()
@@ -126,25 +126,27 @@ class MITMBase(WorkerBase):
 
     def _wait_for_injection(self):
         self._not_injected_count = 0
+        injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
         while not self._mitm_mapper.get_injection_status(self._id):
-            if self._not_injected_count >= 20:
-                logger.error("Worker {} not get injected in time - reboot", str(self._id))
+            if self._not_injected_count >= injection_thresh_reboot:
+                logger.error("Worker {} not injected in time - reboot", str(self._id))
                 self._reboot(self._mitm_mapper)
                 return False
-            logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {})", str(self._id), str(self._not_injected_count))
+            logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {}/{})",
+                        str(self._id), str(self._not_injected_count), str(injection_thresh_reboot))
             if self._not_injected_count in [3, 6, 9, 15]:
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                         str(self._id), str(self._not_injected_count))
                 self._check_windows()
             if self._stop_worker_event.isSet():
-                logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                logger.error("Worker {} killed while waiting for injection", str(self._id))
                 return False
             self._not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
                 wait_time += 1
                 if self._stop_worker_event.isSet():
-                    logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                    logger.error("Worker {} killed while waiting for injection", str(self._id))
                     return False
                 time.sleep(1)
         return True

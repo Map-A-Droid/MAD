@@ -30,11 +30,6 @@ mode_mapping = {
         "range_init": 145,
         "max_count": 100000
     },
-    "raids_ocr": {
-        "range": 490,
-        "range_init": 490,
-        "max_count": 7
-    },
     "pokestops": {
         "s2_cell_level": 13,
         "range": 0.001,
@@ -294,7 +289,7 @@ class MappingManager:
             # also build a routemanager for each area...
 
             # grab coords
-            # first check if init is false or raids_ocr is set as mode, if so, grab the coords from DB
+            # first check if init is false, if so, grab the coords from DB
             # coords = np.loadtxt(area["coords"], delimiter=',')
             geofence_helper = GeofenceHelper(
                     area["geofence_included"], area.get("geofence_excluded", None))
@@ -397,7 +392,7 @@ class MappingManager:
                 while walker_settings < len(walker_arr):
                     if walker_arr[walker_settings]['walkername'] == walker:
                         device_dict["walker"] = walker_arr[walker_settings].get(
-                                'setup', [])
+                            'setup', [])
                         break
                     walker_settings += 1
             devices[device["origin"]] = device_dict
@@ -406,10 +401,10 @@ class MappingManager:
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
                        init: bool = False, range_init: int = 630, including_stops: bool = False) -> List[Location]:
         coords: List[Location] = []
-        if mode == "raids_ocr" or not init:
+        if not init:
             # grab data from DB depending on mode
             # TODO: move routemanagers to factory
-            if mode == "raids_ocr" or mode == "raids_mitm":
+            if mode == "raids_mitm":
                 coords = self.__db_wrapper.gyms_from_db(geofence_helper)
                 if including_stops:
                     coords.extend(self.__db_wrapper.stops_from_db(geofence_helper))

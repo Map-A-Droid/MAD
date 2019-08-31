@@ -87,14 +87,6 @@ def install_thread_excepthook():
     Process.run = run_process
 
 
-def start_ocr_observer(args, db_helper):
-    from ocr.fileObserver import checkScreenshot
-    observer = Observer()
-    observer.schedule(checkScreenshot(args, db_helper),
-                      path=args.raidscreen_path)
-    observer.start()
-
-
 def generate_mappingjson():
     import json
     newfile = {}
@@ -170,7 +162,6 @@ if __name__ == "__main__":
     install_thread_excepthook()
 
     db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
-    db_wrapper.create_hash_database_if_not_exists()
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()
@@ -179,21 +170,20 @@ if __name__ == "__main__":
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
-    if args.clean_hash_database:
-        logger.info('Cleanup Hash Database and www_hash folder')
-        db_wrapper.delete_hash_table('999', '')
-        for file in glob.glob("ocr/www_hash/*.jpg"):
-            os.remove(file)
-        sys.exit(0)
-
     # create folders
     create_folder(args.raidscreen_path)
     create_folder(args.file_path)
 
-    if not args.only_scan and not args.only_ocr and not args.only_routes:
+    if args.only_ocr:
+        logger.error(
+            "OCR scanning support has been dropped. Please get PogoDroid "
+            "and scan using MITM methods."
+        )
+        sys.exit(1)
+
+    if not args.only_scan and not args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"
                      " -os    ---- start scanner/devicecontroller\n"
-                     " -oo    ---- start OCR analysis of screenshots\n"
                      " -or    ---- only calculate routes")
         sys.exit(1)
 
@@ -235,22 +225,15 @@ if __name__ == "__main__":
             mitm_mapper_manager = MitmMapperManager()
             mitm_mapper_manager.start()
             mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
-            ocr_enabled = False
 
-            if not args.no_ocr:
-                logger.error('The argument no_ocr will be eliminated soon - we need ocr (no more option now!)')
             from ocr.pogoWindows import PogoWindows
             pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
-
-            if ocr_enabled:
-                from ocr.copyMons import MonRaidImages
-                MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
 
             mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                                  mitm_mapper, args, mapping_manager, db_wrapper)
             mitm_receiver_process.start()
 
-            logger.info('Starting scanner')
+            logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
             ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager)
             t_ws = Thread(name='scanner', target=ws_server.start_server)
             t_ws.daemon = False
@@ -270,19 +253,8 @@ if __name__ == "__main__":
                 t_whw.daemon = True
                 t_whw.start()
 
-    if args.only_ocr:
-        from ocr.copyMons import MonRaidImages
-
-        MonRaidImages.runAll(args.pogoasset, db_wrapper=db_wrapper)
-
-        logger.info('Starting OCR worker')
-        t_observ = Thread(
-            name='observer', target=start_ocr_observer, args=(args, db_wrapper,))
-        t_observ.daemon = True
-        t_observ.start()
-
     if args.statistic:
-        if args.only_ocr or args.only_scan:
+        if args.only_scan:
             logger.info("Starting statistics collector")
             t_usage = Thread(name='system',
                              target=get_system_infos, args=(db_wrapper,))
@@ -291,7 +263,7 @@ if __name__ == "__main__":
 
     if args.with_madmin:
         from madmin.madmin import madmin_start
-        logger.info("Starting Madmin on Port: {}", str(args.madmin_port))
+        logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
                           args=(args, db_wrapper, ws_server, mapping_manager))
         t_madmin.daemon = True
