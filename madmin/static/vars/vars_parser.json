@@ -229,7 +229,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
+            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (Example: address|address)"
           }
         },
         {
@@ -237,7 +237,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
+            "description": "PTC User/Password (Format: username,password)<br>Use | to set more the one account (Example: username1,password1|username2,password2)"
           }
         },
         {
