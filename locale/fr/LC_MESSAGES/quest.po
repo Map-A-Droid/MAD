@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2019-07-29 20:56+0200\n"
-"PO-Revision-Date: 2019-07-29 20:57+0200\n"
+"POT-Creation-Date: 2019-08-31 21:52+0200\n"
+"PO-Revision-Date: 2019-08-31 21:58+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -56,10 +56,8 @@ msgstr "Attrape {0} {poke}."
 msgid "Spin {0} Pokestops or Gyms."
 msgstr "Fais tourner {0} PokéStops ou Arènes."
 
-#, fuzzy
-#| msgid "Spin {0} Pokestops you haven't visited before."
 msgid "Spin {0} Pokestops you haven't visited before"
-msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes. "
+msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes."
 
 msgid "Hatch {0} Eggs."
 msgstr "Fais éclore {0} Œufs."
@@ -109,10 +107,8 @@ msgstr "Utilise un objet pour faire évoluer un Pokémon."
 msgid "Evolve {0} {type}Pokemon"
 msgstr "Fais évoluer {0} {type}Pokémon."
 
-#, fuzzy
-#| msgid "Evolve {0} Pokemon."
 msgid "Evolve {0} {poke}."
-msgstr "Fais évoluer {0} Pokémon."
+msgstr "Fais évoluer {0} {poke}."
 
 msgid " in a row"
 msgstr " à la suite"
@@ -131,6 +127,9 @@ msgstr "Échange {0} fois des Pokémon."
 
 msgid "Send {0} gifts to friends."
 msgstr "Envoie {0} Cadeaux à des amis."
+
+msgid "Take {0} snapshots of {type} Pokemon"
+msgstr "Prends {0} photos de Pokémon de type {type}."
 
 msgid " Eggs"
 msgstr " Œufs"

@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2019-07-29 20:56+0200\n"
+"POT-Creation-Date: 2019-08-31 21:52+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -102,10 +102,7 @@ msgstr ""
 msgid "Use an item to evolve a Pokemon."
 msgstr ""
 
-msgid "Take {0} snapshots of {type} Pokemon"
-msgstr ""
-
-msgid "Evolve {0} {type} Pokemon"
+msgid "Evolve {0} {type}Pokemon"
 msgstr ""
 
 msgid "Evolve {0} {poke}."
@@ -127,6 +124,9 @@ msgid "Trade {0} Pokemon."
 msgstr ""
 
 msgid "Send {0} gifts to friends."
+msgstr ""
+
+msgid "Take {0} snapshots of {type} Pokemon"
 msgstr ""
 
 msgid " Eggs"

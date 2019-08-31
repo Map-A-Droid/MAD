@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2019-06-07 21:26+0200\n"
-"PO-Revision-Date: 2019-06-08 10:12+0200\n"
+"POT-Creation-Date: 2019-08-31 21:52+0200\n"
+"PO-Revision-Date: 2019-08-31 21:55+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de_DE\n"
@@ -56,7 +56,9 @@ msgstr "Fange {0} {poke}"
 msgid "Spin {0} Pokestops or Gyms."
 msgstr "Drehe {0} Pokestops oder Arenen."
 
-msgid "Spin {0} Pokestops you haven't visited before."
+#, fuzzy
+#| msgid "Spin {0} Pokestops you haven't visited before."
+msgid "Spin {0} Pokestops you haven't visited before"
 msgstr "Drehe {0} Pokestops die Du noch nicht besucht hast."
 
 msgid "Hatch {0} Eggs."
@@ -127,6 +129,9 @@ msgstr "Tausche {0} Pokemon."
 
 msgid "Send {0} gifts to friends."
 msgstr "Sende {0} Geschenke an Freunde."
+
+msgid "Take {0} snapshots of {type} Pokemon"
+msgstr "Schieße {0} Fotos von {type}Pokemon."
 
 msgid " Eggs"
 msgstr " Eier"
