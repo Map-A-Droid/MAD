@@ -436,6 +436,10 @@ class RouteManagerBase(ABC):
 
         with self._manager_mutex:
             with self._workers_registered_mutex:
+                if self.mode not in ["iv_mitm"] and len(self._workers_registered) > len(
+                        self._current_route_round_coords):
+                    logger.warning("More Workers registered than coords are available - quit worker")
+                    return None
                 if origin not in self._workers_registered:
                     self.register_worker(origin)
 
