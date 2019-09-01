@@ -1,5 +1,6 @@
 import collections
 import time
+import math
 from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -33,6 +34,7 @@ class MITMBase(WorkerBase):
 
         self._reboot_count = 0
         self._restart_count = 0
+        self._screendetection_count = 0
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
         self._latest_encounter_update = 0
@@ -100,6 +102,7 @@ class MITMBase(WorkerBase):
                                                      self._transporttype)
 
             self._restart_count += 1
+            self._screendetection_count += 1
 
             restart_thresh = self.get_devicesettings_value("restart_thresh", 5)
             reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3)
@@ -107,6 +110,12 @@ class MITMBase(WorkerBase):
                 if self._init:
                     restart_thresh = self.get_devicesettings_value("restart_thresh", 5) * 2
                     reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3) * 2
+
+            if self._screendetection_count >= math.floor(restart_thresh / 2):
+                self._screendetection_count = 0
+                if not self._check_windows():
+                    logger.error('Something wrong with that worker - kill it....')
+                    self._stop_worker_event.set()
 
             if self._restart_count > restart_thresh:
                 self._reboot_count += 1
