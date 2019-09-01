@@ -29,6 +29,7 @@ class ScreenType(Enum):
     MARKETING = 12
     CONSENT = 13
     SN = 14
+    UPDATE = 15
     QUEST = 20
     ERROR = 100
     CLOSE = 500
@@ -60,6 +61,8 @@ class WordToScreenMatching(object):
         detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data')
         detect_SN: list = ('kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
                            'logiciel')
+        detect_Forceupdate: list = ('continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
+                                    'aktualisieren', 'update', 'Veux-tu', 'Fais', 'continuer')
 
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
@@ -71,6 +74,7 @@ class WordToScreenMatching(object):
         self._ScreenType[12] = detect_Marketing
         self._ScreenType[14] = detect_SN
         self._ScreenType[7] = detect_WrongPassword
+        self._ScreenType[15] = detect_Forceupdate
         self._globaldict: dict = []
         self._ratio: float = 0.0
 
@@ -254,6 +258,10 @@ class WordToScreenMatching(object):
         elif ScreenType(returntype) == ScreenType.CONSENT:
             self._nextscreen = ScreenType.UNDEFINED
             return ScreenType.CONSENT
+
+        elif ScreenType(returntype) == ScreenType.UPDATE:
+            self._nextscreen = ScreenType.UNDEFINED
+            return ScreenType.UPDATE
 
         elif ScreenType(returntype) == ScreenType.SN:
             self._nextscreen = ScreenType.UNDEFINED

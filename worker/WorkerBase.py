@@ -581,6 +581,12 @@ class WorkerBase(ABC):
                     returncode == ScreenType.POGO
                     break
 
+                elif returncode == ScreenType.UPDATE:
+                    logger.error('Found update pogo screen - wait for update action')
+                    # update pogo - later with new rgc version
+                    while not self._stop_worker_event.is_set():
+                        time.sleep(10)
+
                 elif returncode == ScreenType.ERROR:
                     logger.warning('Something wrong with screendetection')
                     loginerrorcounter += 1
