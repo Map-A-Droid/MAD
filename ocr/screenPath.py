@@ -62,7 +62,7 @@ class WordToScreenMatching(object):
         detect_SN: list = ('kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
                            'logiciel')
         detect_Forceupdate: list = ('continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
-                                    'aktualisieren', 'update', 'Veux-tu', 'Fais', 'continuer')
+                                    'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer')
 
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
