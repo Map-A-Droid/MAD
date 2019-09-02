@@ -768,7 +768,18 @@ class RouteManagerBase(ABC):
                             while len(new_subroute_copy) > 0 and new_subroute_copy.popleft() != last_el_old_q:
                                 pass
                             logger.debug("Length of subroute to be extended by {}", len(new_subroute_copy))
+                            # replace queue with old_queue
+                            entry.queue.clear()
+                            for location in old_queue:
+                                entry.queue.append(location)
                             while len(new_subroute_copy) > 0:
+                                entry.queue.append(new_subroute_copy.popleft())
+                        else:
+                            # clear old route and replace with new_subroute
+                            # maybe the worker jumps a wider distance
+                            entry.queue.clear()
+                            new_subroute_copy = collections.deque(new_subroute)
+                            while len(new_subroute) > 0:
                                 entry.queue.append(new_subroute_copy.popleft())
 
                 elif len(new_subroute) > len(entry.subroute) > 0:
