@@ -778,7 +778,7 @@ class RouteManagerBase(ABC):
                             # maybe the worker jumps a wider distance
                             entry.queue.clear()
                             new_subroute_copy = collections.deque(new_subroute)
-                            while len(new_subroute) > 0:
+                            while len(new_subroute_copy) > 0:
                                 entry.queue.append(new_subroute_copy.popleft())
 
                 elif len(new_subroute) > len(entry.subroute) > 0:
