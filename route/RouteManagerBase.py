@@ -753,7 +753,6 @@ class RouteManagerBase(ABC):
                         entry.queue = collections.deque()
                         for location in new_subroute:
                             entry.queue.append(location)
-                        continue
                     else:
                         # we now are at a point where we need to also check the end of the old queue and
                         # append possibly missing coords to it
