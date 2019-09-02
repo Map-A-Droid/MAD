@@ -770,8 +770,7 @@ class RouteManagerBase(ABC):
                             logger.debug("Length of subroute to be extended by {}", len(new_subroute_copy))
                             # replace queue with old_queue
                             entry.queue.clear()
-                            for location in old_queue:
-                                entry.queue.append(location)
+                            entry.queue = old_queue
                             while len(new_subroute_copy) > 0:
                                 entry.queue.append(new_subroute_copy.popleft())
                         else:
