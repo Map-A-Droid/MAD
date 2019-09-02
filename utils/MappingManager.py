@@ -222,6 +222,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_settings() if routemanager is not None else None
 
+    def routemanager_set_worker_sleeping(self, routemanager_name: str, worker_name: str, sleep_duration: float):
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        routemanager.set_worker_sleeping(worker_name, sleep_duration)
+
     def routemanager_get_position_type(self, routemanager_name: str, worker_name: str) -> Optional[str]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_position_type(worker_name) if routemanager is not None else None

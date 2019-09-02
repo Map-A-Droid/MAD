@@ -9,7 +9,7 @@ class RouteManagerIV(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 60
 
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         return True
 
     def _recalc_route_workertype(self):
@@ -62,6 +62,9 @@ class RouteManagerIV(RouteManagerBase):
         if self.delay_after_timestamp_prio is None:
             # just set a value to enable the queue
             self.delay_after_timestamp_prio = 5
+
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
 
     def _start_routemanager(self):
         self._manager_mutex.acquire()

@@ -54,7 +54,7 @@ class RouteManagerQuests(RouteManagerBase):
         self.starve_route = False
         self._stoplist: List[Location] = []
 
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         if self._level:
             logger.info("Level Mode - switch to next area")
             return False
@@ -64,7 +64,7 @@ class RouteManagerQuests(RouteManagerBase):
                 logger.info("Another process already calculate the new route")
                 return True
             self._start_calc = True
-            if not self._route_queue.empty():
+            if len(self._current_route_round_coords) > 0:
                 self._start_calc = False
                 return True
             self.generate_stop_list()
@@ -90,7 +90,6 @@ class RouteManagerQuests(RouteManagerBase):
                 return False
             return True
         finally:
-            self.get_worker_workerpool()
             self._manager_mutex.release()
 
     def _restore_original_route(self):
@@ -185,6 +184,9 @@ class RouteManagerQuests(RouteManagerBase):
 
         finally:
             self._manager_mutex.release()
+
+    def _delete_coord_after_fetch(self) -> bool:
+        return True
 
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))

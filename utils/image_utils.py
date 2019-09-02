@@ -15,6 +15,6 @@ def getImageHash(image, hashSize=8):
         logger.error("Screenshot corrupted :(")
         return '0'
 
-    hashPic = Image.open(image)
-    imageHash = dhash(hashPic, hashSize)
-    return imageHash
+    with Image.open(image) as hashPic:
+        imageHash = dhash(hashPic, hashSize)
+        return imageHash

@@ -320,6 +320,7 @@ class WorkerQuests(MITMBase):
                 if time.time() - lastcleanupbox > 900:
                     # just cleanup if last cleanup time > 15 minutes ago
                     cleanupbox = True
+            self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._id, delay_used)
             while time.time() <= int(cur_time) + int(delay_used):
                 if delay_used > 200 and cleanupbox:
                     self.clear_thread_task = 1

@@ -184,7 +184,8 @@ class testimage(object):
         cv2.waitKey(0)
         filename = "{}.png".format(os.getpid())
         cv2.imwrite(filename, gray)
-        text = pytesseract.image_to_string(Image.open(filename))
+        with Image.open(filename) as im:
+            text = pytesseract.image_to_string(im)
         os.remove(filename)
         print(text)
         return cv2.rectangle(image, (int(x1), int(y1)), (int(x2), int(y2)), (255, 0, 0), 2)

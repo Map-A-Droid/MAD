@@ -121,9 +121,8 @@ class Communicator:
         else:
             logger.debug("Storing screenshot...")
 
-            fh = open(path, "wb")
-            fh.write(encoded)
-            fh.close()
+            with open(path, "wb") as fh:
+                fh.write(encoded)
             logger.debug("Done storing, returning")
             return True
 
