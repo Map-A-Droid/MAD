@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2019-08-31 21:52+0200\n"
+"POT-Creation-Date: 2019-09-03 12:32+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -15,153 +15,237 @@ msgstr ""
 "Generated-By: pygettext.py 1.5\n"
 
 
+#: utils/questGen.py:28 utils/questGen.py:84
 msgid "Item"
 msgstr ""
 
+#: utils/questGen.py:32 utils/questGen.py:34 utils/questGen.py:85
 msgid "Stardust"
 msgstr ""
 
+#: utils/questGen.py:35 utils/questGen.py:86
 msgid "Pokemon"
 msgstr ""
 
+#: utils/questGen.py:113
 msgid "Great"
 msgstr ""
 
+#: utils/questGen.py:113
 msgid "Nice"
 msgstr ""
 
+#: utils/questGen.py:114
 msgid "Curveball"
 msgstr ""
 
+#: utils/questGen.py:114
 msgid "Excellent"
 msgstr ""
 
-msgid "Catch {0} {type}Pokemon{wb}."
+#: utils/questGen.py:125
+msgid "Catch {0}{different} {type}Pokemon{wb}."
 msgstr ""
 
+#: utils/questGen.py:132 utils/questGen.py:136 utils/questGen.py:208
+#: utils/questGen.py:212 utils/questGen.py:288 utils/questGen.py:292
 msgid "-type "
 msgstr ""
 
+#: utils/questGen.py:135 utils/questGen.py:152 utils/questGen.py:211
+#: utils/questGen.py:229 utils/questGen.py:272 utils/questGen.py:291
 msgid "or "
 msgstr ""
 
+#: utils/questGen.py:140
 msgid " with weather boost"
 msgstr ""
 
+#: utils/questGen.py:142
+msgid " different species of"
+msgstr ""
+
+#: utils/questGen.py:155
 msgid "Catch {0} {poke}."
 msgstr ""
 
+#: utils/questGen.py:157
 msgid "Spin {0} Pokestops or Gyms."
 msgstr ""
 
+#: utils/questGen.py:159
 msgid "Spin {0} Pokestops you haven't visited before"
 msgstr ""
 
+#: utils/questGen.py:161
 msgid "Hatch {0} Eggs."
 msgstr ""
 
+#: utils/questGen.py:164
 msgid "Win {0} Gym Battles."
 msgstr ""
 
+#: utils/questGen.py:166
 msgid "Use a supereffective Charged Attack in {0} Gym battles."
 msgstr ""
 
+#: utils/questGen.py:168
 msgid "Battle in a Gym {0} times."
 msgstr ""
 
+#: utils/questGen.py:171
 msgid "Win {0} Raids."
 msgstr ""
 
+#: utils/questGen.py:173
 msgid "Win a level 3 or higher raid."
 msgstr ""
 
+#: utils/questGen.py:175
 msgid "Win a level 2 or higher raid."
 msgstr ""
 
+#: utils/questGen.py:177
 msgid "Battle in {0} Raids."
 msgstr ""
 
+#: utils/questGen.py:179
 msgid "Transfer {0} Pokemon."
 msgstr ""
 
+#: utils/questGen.py:181
 msgid "Favourite {0} Pokemon."
 msgstr ""
 
+#: utils/questGen.py:183
 msgid "Use {0} {type}Berries to help catch Pokemon."
 msgstr ""
 
+#: utils/questGen.py:188
 msgid " Berry"
 msgstr ""
 
+#: utils/questGen.py:190
 msgid "Power up Pokemon {0} times."
 msgstr ""
 
+#: utils/questGen.py:192
 msgid "Evolve {0} Pokemon."
 msgstr ""
 
+#: utils/questGen.py:195
 msgid "Use an item to evolve a Pokemon."
 msgstr ""
 
+#: utils/questGen.py:197
 msgid "Evolve {0} {type}Pokemon"
 msgstr ""
 
+#: utils/questGen.py:232
 msgid "Evolve {0} {poke}."
 msgstr ""
 
+#: utils/questGen.py:238
 msgid " in a row"
 msgstr ""
 
+#: utils/questGen.py:240
 msgid "Curveball "
 msgstr ""
 
+#: utils/questGen.py:244
 msgid "Make {0} {type}{curve}Throws{inrow}."
 msgstr ""
 
+#: utils/questGen.py:246
 msgid "Earn {0} Candies walking with your buddy."
 msgstr ""
 
+#: utils/questGen.py:248
 msgid "Trade {0} Pokemon."
 msgstr ""
 
+#: utils/questGen.py:250
 msgid "Send {0} gifts to friends."
 msgstr ""
 
+#: utils/questGen.py:254
+msgid "Battle a Team Leader {0} times"
+msgstr ""
+
+#: utils/questGen.py:256
+msgid "Battle another Player {0} times"
+msgstr ""
+
+#: utils/questGen.py:275
+msgid "Take {0} snapshots of {poke}"
+msgstr ""
+
+#: utils/questGen.py:277
 msgid "Take {0} snapshots of {type} Pokemon"
 msgstr ""
 
+#: utils/questGen.py:296
 msgid " Eggs"
 msgstr ""
 
+#: utils/questGen.py:296
 msgid "n Egg"
 msgstr ""
 
+#: utils/questGen.py:297
 msgid " Raid"
 msgstr ""
 
+#: utils/questGen.py:297
 msgid " Raids"
 msgstr ""
 
+#: utils/questGen.py:298
 msgid " Battle"
 msgstr ""
 
+#: utils/questGen.py:298
 msgid " Battles"
 msgstr ""
 
+#: utils/questGen.py:299
 msgid " candies"
 msgstr ""
 
+#: utils/questGen.py:299
 msgid " candy"
 msgstr ""
 
+#: utils/questGen.py:300
 msgid " gift"
 msgstr ""
 
+#: utils/questGen.py:300
 msgid " gifts"
 msgstr ""
 
+#: utils/questGen.py:301
+msgid " a snapshot"
+msgstr ""
+
+#: utils/questGen.py:301
+msgid " {0} snapshots"
+msgstr ""
+
+#: utils/questGen.py:302
+msgid "Make a {type}{curve}Throw"
+msgstr ""
+
+#: utils/questGen.py:302
+msgid "Make {0} {type}{curve}Throws"
+msgstr ""
+
+#: utils/questGen.py:303
 msgid " {0} times"
 msgstr ""
 
+#: utils/questGen.py:304
 msgid "a"
 msgstr ""
 
