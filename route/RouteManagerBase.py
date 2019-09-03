@@ -539,21 +539,22 @@ class RouteManagerBase(ABC):
                     logger.debug("Initroute of {} is finished - restart worker", self.name)
                     return None
 
-                if len(self._current_route_round_coords) > 1 and len(self._routepool[origin].queue) == 0:
+                if len(self._current_route_round_coords) > 0 and len(self._routepool[origin].queue) == 0:
+                    self._routepool[origin].rounds += 1
                     logger.debug(
-                        "{} finished his subroute, recalculating since more than one coord left of total route")
+                        "{} finished his subroute, recalculating since more than one coord left of total route",
+                        self.name)
                     if not self.__worker_changed_update_routepools():
                         return None
-                    return self.get_next_location(origin)
 
                 elif len(self._current_route_round_coords) == 0 and len(self._routepool[origin].queue) == 0:
                     # normal queue is empty - prioQ is filled. Try to generate a new Q
+                    # only quest and iv could hit this else!
                     logger.info("Normal routequeue is empty - try to fill up")
-                    self._routepool[origin].rounds += 1
                     if self._get_coords_after_finish_route():
                         # getting new coords or IV worker
-                        if not self.__worker_changed_update_routepools():
-                            return None
+                        self.__worker_changed_update_routepools()
+                        return self.get_next_location(origin)
                     else:
                         logger.info("Not getting new coords - leaving worker")
                         return None
