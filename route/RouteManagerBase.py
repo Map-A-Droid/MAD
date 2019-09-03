@@ -517,8 +517,7 @@ class RouteManagerBase(ABC):
                     self._round_started_time = datetime.now()
 
                 # continue as usual
-                if self.init and len(self._current_route_round_coords) == 0 and \
-                        self.check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
+                if self.init and self.check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
                         len(self._routepool[origin].queue) == 0:
                     # we are done with init, let's calculate a new route
                     logger.warning("Init of {} done, it took {}, calculating new route...",
@@ -539,39 +538,28 @@ class RouteManagerBase(ABC):
                     self._start_calc = False
                     logger.debug("Initroute of {} is finished - restart worker", self.name)
                     return None
-                elif len(self._current_route_round_coords) > 1 and len(self._routepool[origin].queue) == 0:
+
+                if len(self._current_route_round_coords) > 1 and len(self._routepool[origin].queue) == 0:
                     logger.debug(
                         "{} finished his subroute, recalculating since more than one coord left of total route")
                     if not self.__worker_changed_update_routepools():
                         return None
-                elif len(self._current_route_round_coords) == 1 and len(self._routepool[origin].queue) == 0:
-                    logger.info('Reaching last coord of route')
+                    return self.get_next_location(origin)
+
                 elif len(self._current_route_round_coords) == 0 and len(self._routepool[origin].queue) == 0:
                     # normal queue is empty - prioQ is filled. Try to generate a new Q
                     logger.info("Normal routequeue is empty - try to fill up")
                     self._routepool[origin].rounds += 1
                     if self._get_coords_after_finish_route():
                         # getting new coords or IV worker
+                        if not self.__worker_changed_update_routepools():
+                            return None
                         return self.get_next_location(origin)
-                    elif not self._get_coords_after_finish_route():
+                    else:
                         logger.info("Not getting new coords - leaving worker")
                         return None
 
                 # getting new coord
-                if len(self._routepool[origin].queue) == 0:
-                    logger.info("Worker finished his subroute, updating all subroutes if necessary")
-                    if not self.__worker_changed_update_routepools() or (len(self._routepool[origin].queue) == 0
-                            and len(self._routepool[origin].subroute) == 0):
-                        logger.info("Subroute-update won't help or queue and subroute are empty, "
-                                    "signalling worker to reconnect")
-                        return None
-                    elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
-                        [self._routepool[origin].queue.append(i) for i in self._routepool[origin].subroute]
-
-                # not entirely sure how this can be the case considering __worker_changed_update_routepools should
-                # handle the queue length and is checked before, but whatever...
-                # let's double check the queue length here and if it's empty, we need to handle it either with the
-                # worker's subroute or return None to kill the worker
                 if len(self._routepool[origin].queue) == 0:
                     logger.warning("Having updated routepools and checked lengths of queue and subroute, "
                                    "{}'s queue is still empty, signalling worker to stop whatever he is doing")
