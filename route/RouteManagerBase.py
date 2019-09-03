@@ -439,10 +439,6 @@ class RouteManagerBase(ABC):
                 if origin not in self._workers_registered:
                     self.register_worker(origin)
 
-            if self.mode not in ["iv_mitm"] and len(self._workers_registered) > len(self._current_route_round_coords):
-                logger.warning("More Workers registered than coords are available - quit worker")
-                return None
-
             if origin not in self._routepool:
                 logger.debug("No subroute/routepool entry of {} present, creating it", origin)
                 self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [],
@@ -474,6 +470,9 @@ class RouteManagerBase(ABC):
                 logger.debug("{}: No location available yet", str(self.name))
                 if self._get_coords_after_finish_route() and not self.init:
                     # getting new coords or IV worker
+                    if not self.__worker_changed_update_routepools():
+                        logger.info("Failed updating routepools after finish route")
+                        return None
                     time.sleep(1)
                 else:
                     logger.info("Not getting new coords - leaving worker")
@@ -671,9 +670,12 @@ class RouteManagerBase(ABC):
 
     def __worker_changed_update_routepools(self):
         less_coords: bool = False
-        if len(self._route) == 0:
+        if len(self._route) == 0 and self.mode not in ["iv_mitm", "pokestops"]:
             logger.debug("Route is empty, recalcing")
             self._recalc_route_workertype()
+        else:
+            logger.info("No more coords available - dont update routepool")
+            return True
         with self._manager_mutex:
             logger.debug("Updating all routepools")
             if len(self._workers_registered) == 0:
