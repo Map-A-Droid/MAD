@@ -303,6 +303,14 @@ CREATE TABLE `trs_quest` (
   KEY `quest_type` (`quest_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `trs_s2cells` (
+  `id` bigint(20) unsigned NOT NULL,
+  `level` int(11) NOT NULL,
+  `center_latitude` double NOT NULL,
+  `center_longitude` double NOT NULL,
+  `updated` int(11) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_spawn` (
   `spawnpoint` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
