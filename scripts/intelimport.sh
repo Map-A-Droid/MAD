@@ -22,7 +22,7 @@ do
         if [ $(mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "SELECT count(*) from gym where gym_id=\"$portalGuid\";") -eq 1 ]; then
                 echo "Thats a gym, updating row..."
         ((gymCount ++))
-                mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "UPDATE gymdetails SET name=\"$name\", url=\"$url\" WHERE $gymID=\"$portalGuid\";"
+                mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "UPDATE gymdetails SET name=\"$name\", url=\"$url\" WHERE gym_id=\"$portalGuid\";"
         else
                 echo "Thats NOT a gym, skipping..."
         fi
@@ -30,7 +30,7 @@ do
         if [ $(mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "SELECT count(*) from pokestop where pokestop_id=\"$portalGuid\";") -eq 1 ]; then
                 echo "Thats a pokestop, updating row..."
         ((stopCount ++))
-                mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "UPDATE pokestop SET name=\"$name\", imgage=\"$url\" WHERE $pokestopID=\"$portalGuid\";"
+                mysql -N -s -h "$dbip" -P "$port" -u "$user" -p"${pass}" -D "$dbname" -e "UPDATE pokestop SET name=\"$name\", image=\"$url\" WHERE pokestop_id=\"$portalGuid\";"
         else
                 echo "Thats NOT a pokestop, skipping..."
         fi
