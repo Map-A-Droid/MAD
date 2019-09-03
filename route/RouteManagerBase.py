@@ -670,12 +670,14 @@ class RouteManagerBase(ABC):
 
     def __worker_changed_update_routepools(self):
         less_coords: bool = False
-        if len(self._route) == 0 and self.mode not in ["iv_mitm", "pokestops"]:
-            logger.debug("Route is empty, recalcing")
-            self._recalc_route_workertype()
-        else:
-            logger.info("No more coords available - dont update routepool")
-            return True
+        if len(self._route) == 0:
+            if self.mode not in ["iv_mitm", "pokestops"]:
+                logger.debug("Route is empty, recalcing")
+                self._recalc_route_workertype()
+            else:
+                logger.info("No more coords available - dont update routepool")
+                return True
+
         with self._manager_mutex:
             logger.debug("Updating all routepools")
             if len(self._workers_registered) == 0:
