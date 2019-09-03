@@ -835,4 +835,6 @@ class WorkerQuests(MITMBase):
         self._communicator.click(100, 100)
         time.sleep(4)
         self._checkPogoClose()
+        time.sleep(2)
+        self._checkPogoClose()
 

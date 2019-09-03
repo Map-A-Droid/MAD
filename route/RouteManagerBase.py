@@ -683,9 +683,9 @@ class RouteManagerBase(ABC):
                 logger.error("No coords for current route could be found, unable to distribute workers on an empty "
                              "route")
                 return False
-            if self._workers_registered > self._current_route_round_coords:
+            if len(self._workers_registered) > len(self._current_route_round_coords):
                 less_coords = True
-                new_subroute_length = self._current_route_round_coords
+                new_subroute_length = len(self._current_route_round_coords)
             else:
                 new_subroute_length = math.floor(len(self._current_route_round_coords) / len(self._workers_registered))
                 if new_subroute_length == 0:
