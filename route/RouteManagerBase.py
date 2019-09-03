@@ -436,10 +436,6 @@ class RouteManagerBase(ABC):
 
         with self._manager_mutex:
             with self._workers_registered_mutex:
-                if self.mode not in ["iv_mitm"] and len(self._workers_registered) > len(
-                        self._current_route_round_coords):
-                    logger.warning("More Workers registered than coords are available - quit worker")
-                    return None
                 if origin not in self._workers_registered:
                     self.register_worker(origin)
 
@@ -674,6 +670,7 @@ class RouteManagerBase(ABC):
                     self._routepool[origin].worker_sleeping = sleep_duration
 
     def __worker_changed_update_routepools(self):
+        less_coords: bool = False
         if len(self._route) == 0:
             logger.debug("Route is empty, recalcing")
             self._recalc_route_workertype()
@@ -686,9 +683,13 @@ class RouteManagerBase(ABC):
                 logger.error("No coords for current route could be found, unable to distribute workers on an empty "
                              "route")
                 return False
-            new_subroute_length = math.floor(len(self._current_route_round_coords) / len(self._workers_registered))
-            if new_subroute_length == 0:
-                return False
+            if self._workers_registered > self._current_route_round_coords:
+                less_coords = True
+                new_subroute_length = self._current_route_round_coords
+            else:
+                new_subroute_length = math.floor(len(self._current_route_round_coords) / len(self._workers_registered))
+                if new_subroute_length == 0:
+                    return False
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
 
@@ -815,6 +816,10 @@ class RouteManagerBase(ABC):
                     [entry.queue.append(i) for i in new_subroute]
                 # don't forget to update the subroute ;)
                 entry.subroute = new_subroute
+
+                if less_coords:
+                    new_subroute_length = 0
+
             logger.debug("Done updating subroutes")
             return True
             # TODO: A worker has been removed or added, we need to update the individual workerpools/queues
@@ -857,7 +862,6 @@ class RouteManagerBase(ABC):
         if self._route and origin in self._routepool:
             entry: RoutePoolEntry = self._routepool[origin]
             return len(entry.subroute) - len(entry.queue), len(entry.subroute)
-            # return (self._routepoolpositionmax[origin] - self._routepool[origin].qsize()), len(self._route)
         return 1, 1
 
     def get_rounds(self, origin: str) -> int:
