@@ -692,6 +692,9 @@ class WorkerQuests(MITMBase):
                     self._checkPogoClose(takescreen=False)
 
             to += 1
+        if data_received == LatestReceivedType.STOP and (self._rocket or not self._check_pogo_main_screen_tr()):
+            logger.info('Check for Team Rocket Dialog or other open window')
+            self.process_rocket()
         return data_received
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
@@ -704,9 +707,6 @@ class WorkerQuests(MITMBase):
             data_received = self._wait_for_data(
                 timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
             time.sleep(1)
-            if self._rocket or not self._check_pogo_main_screen_tr():
-                logger.info('Check for Team Rocket Dialog or other open window')
-                self.process_rocket()
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.info('Box is full... Next round!')
                 if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._id,
