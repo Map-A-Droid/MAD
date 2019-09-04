@@ -692,10 +692,10 @@ class WorkerQuests(MITMBase):
                     self._checkPogoClose(takescreen=False)
 
             to += 1
-        if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED]\
-                and (self._rocket or not self._check_pogo_main_screen_tr()):
+        if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED] and self._rocket:
             logger.info('Check for Team Rocket Dialog or other open window')
             self.process_rocket()
+            self._stop_process_time = math.floor(time.time())
         return data_received
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
@@ -760,7 +760,7 @@ class WorkerQuests(MITMBase):
                 self._turn_map(self._delay_add)
                 time.sleep(1)
                 self._stop_process_time = math.floor(time.time())
-                if self._open_pokestop(timestamp) is None:
+                if self._open_pokestop(self._stop_process_time) is None:
                     return
                 to += 1
 
@@ -834,12 +834,6 @@ class WorkerQuests(MITMBase):
         self._communicator.click(100, 100)
         time.sleep(1)
         self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
-        time.sleep(1)
-        self._communicator.click(100, 100)
         time.sleep(4)
-        self._checkPogoClose()
-        time.sleep(2)
         self._checkPogoClose()
 
