@@ -179,6 +179,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_rounds(worker_name) if routemanager is not None else None
 
+    def routemanager_redo_stop(self, routemanager_name: str, worker_name: str, lat: float, lon: float) -> bool:
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
+
     def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[int]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_registered_workers() if routemanager is not None else None

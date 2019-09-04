@@ -709,6 +709,10 @@ class WorkerQuests(MITMBase):
                 self.process_rocket()
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.info('Box is full... Next round!')
+                if not self._mapping_manager._routemanager_redo_stop(self._routemanager_name, self._id,
+                                                                     self.current_location.lat,
+                                                                     self.current_location.lng):
+                    logger.warning('Cannot process this stop again')
                 self.clear_thread_task = 1
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:

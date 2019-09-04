@@ -899,3 +899,12 @@ class RouteManagerBase(ABC):
 
     def get_level_mode(self):
         return self._level
+
+    def redo_stop(self, worker, lat, lon):
+        logger.info('Worker {} redo a unprocessed Stop ({}, {})'.format(str(worker), str(lat), str(lon)))
+        if worker in self._routepool:
+            self._routepool[worker].has_prio_event = True
+            self._routepool[worker].prio_coords = Location(lat, lon)
+            return True
+        return False
+
