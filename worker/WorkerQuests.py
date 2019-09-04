@@ -692,7 +692,8 @@ class WorkerQuests(MITMBase):
                     self._checkPogoClose(takescreen=False)
 
             to += 1
-        if data_received == LatestReceivedType.STOP and (self._rocket or not self._check_pogo_main_screen_tr()):
+        if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED]\
+                and (self._rocket or not self._check_pogo_main_screen_tr()):
             logger.info('Check for Team Rocket Dialog or other open window')
             self.process_rocket()
         return data_received
