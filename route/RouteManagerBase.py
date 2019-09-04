@@ -912,7 +912,7 @@ class RouteManagerBase(ABC):
         coordlist: List[Location] = []
         logger.info('Getting all coords from workers')
         for origin in self._routepool:
-            [coordlist.append(i) for i in origin.route]
+            [coordlist.append(i) for i in self._routepool[origin].route]
 
         logger.debug('Open Coords from workers: {}'.format(str(coordlist)))
         return coordlist
