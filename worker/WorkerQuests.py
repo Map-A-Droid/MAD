@@ -695,18 +695,21 @@ class WorkerQuests(MITMBase):
         if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED] and self._rocket:
             logger.info('Check for Team Rocket Dialog or other open window')
             self.process_rocket()
-            self._stop_process_time = math.floor(time.time())
         return data_received
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
     #  /FortSearchResponse.proto#L12
     def _handle_stop(self, timestamp: float):
         to = 0
+        timeout = 35
+        if self._rocket:
+            timeout = 90
         data_received = FortSearchResultTypes.UNDEFINED
+
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
-                timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
+                timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=timeout)
             time.sleep(1)
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.info('Box is full... Next round!')
