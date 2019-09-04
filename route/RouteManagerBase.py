@@ -909,7 +909,7 @@ class RouteManagerBase(ABC):
         return False
 
     def get_coords_from_workers(self):
-        coordlist = List[Location]
+        coordlist: List[Location] = []
         logger.info('Getting all coords from workers')
         for origin in self._routepool:
             [coordlist.append(i) for i in origin.route]
