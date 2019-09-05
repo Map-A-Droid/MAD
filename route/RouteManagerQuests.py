@@ -55,7 +55,6 @@ class RouteManagerQuests(RouteManagerBase):
         self._stoplist: List[Location] = []
 
     def _get_coords_after_finish_route(self) -> bool:
-        coords_in_worker: List[Location] = self.get_coords_from_workers()
         if self._level:
             logger.info("Level Mode - switch to next area")
             return False
@@ -169,6 +168,7 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.info('No unprocessed  Stops detected - quit worker')
                     self._restore_original_route()
                     self._route: List[Location] = []
+                    return
 
                 if 0 < len(stops) < len(self._route) \
                         and len(stops)/len(self._route) <= 0.3:

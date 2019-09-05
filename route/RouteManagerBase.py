@@ -536,13 +536,17 @@ class RouteManagerBase(ABC):
                         "{} finished his subroute, recalculating since more than one coord left of total route",
                         self.name)
                     if not self.__worker_changed_update_routepools():
+                        logger.info("Failed updating routepools ...")
                         return None
 
                 elif len(self._current_route_round_coords) == 0 and len(self._routepool[origin].queue) == 0:
                     # only quest could hit this else!
                     logger.info("Worker finished his subroute, updating all subroutes if necessary")
-                    if not self.__worker_changed_update_routepools() or (len(self._routepool[origin].queue) == 0
-                            and len(self._routepool[origin].subroute) == 0):
+                    if not self.__worker_changed_update_routepools():
+                        logger.info("Failed updating routepools ...")
+                        return None
+
+                    if len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) == 0:
                         logger.info("Subroute-update won't help or queue and subroute are empty, "
                                     "signalling worker to reconnect")
                         self._routepool[origin].last_access = time.time()
