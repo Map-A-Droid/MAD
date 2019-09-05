@@ -1,5 +1,6 @@
 import math
 import time
+from datetime import datetime
 
 from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper
@@ -30,6 +31,7 @@ class WorkerMITM(MITMBase):
             self._wait_for_data(timestamp)
         else:
             logger.info('Currently in INIT Mode - process next coord')
+            self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
             self.worker_stats()
 
     def _move_to_location(self):
@@ -39,10 +41,8 @@ class WorkerMITM(MITMBase):
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
         # get the distance from our current position (last) to the next gym (cur)
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(
-                                                            self.last_location.lng),
-                                                        float(
-                                                            self.current_location.lat),
+                                                        float(self.last_location.lng),
+                                                        float(self.current_location.lat),
                                                         float(self.current_location.lng))
         logger.debug('Moving {} meters to the next position', round(distance, 2))
         if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
