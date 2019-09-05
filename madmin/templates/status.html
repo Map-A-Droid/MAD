@@ -28,6 +28,7 @@
                 { data: 'routeMax', title: 'Route Length' },
                 { data: 'init', title: 'Init Mode' },
                 { data: 'lastProtoDateTime', title: 'Last Date/Time of Data' },
+                { data: 'currentSleepTime', title: 'Next Action' },
                 { data: 'restartCounter', title: 'Restart Counter' },
                 { data: 'rebootingOption', title: 'Reboot Device' },
                 { data: 'rebootCounter', title: 'Reboot Counter' },
@@ -59,9 +60,20 @@
 
                         return "None";
                     }
+                },
+                {
+                    "targets": [6],
+                    "render": function (data, type, row) {
+                        if(data == '0' || data == 0) {
+                            return 'Now'
+                        }
+                        var dateToShow = new moment().add(parseInt(data),"seconds")
+
+                        return dateToShow.fromNow(true);
+                    }
                 }
             ],
-            "order": [[5, "asc"]],
+            "order": [[0, "asc"]],
             "responsive": {{ responsive }},
             "autoWidth": false,
             "stateSave": true

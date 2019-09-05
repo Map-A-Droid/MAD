@@ -39,6 +39,7 @@ class MITMBase(WorkerBase):
         self._mitm_mapper = mitm_mapper
         self._latest_encounter_update = 0
         self._encounter_ids = {}
+        self._current_sleep_time = 0
 
         self._mitm_mapper.collect_location_stats(self._id, self.current_location, 1, time.time(), 2, 0,
                                                  self._mapping_manager.routemanager_get_mode(self._routemanager_name),
@@ -270,7 +271,8 @@ class MITMBase(WorkerBase):
             'RoutePos':          str(routemanager_status[0]),
             'RouteMax':          str(routemanager_status[1]),
             'Init':              str(routemanager_init),
-            'LastProtoDateTime': str(self._rec_data_time)
+            'LastProtoDateTime': str(self._rec_data_time),
+            'CurrentSleepTime': str(self._current_sleep_time)
         }
 
         self._db_wrapper.save_status(dataToSave)
