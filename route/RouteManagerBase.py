@@ -461,10 +461,7 @@ class RouteManagerBase(ABC):
                 "{}: Checking if a location is available...", str(self.name))
             with self._manager_mutex:
                 got_location = self._prio_queue is not None and len(self._prio_queue) > 0 or self.mode != 'iv_mitm'
-
-            if not got_location:
-                logger.info("Not getting new coords - leaving worker")
-                return None
+                if not got_location: time.sleep(1)
 
         logger.debug(
             "{}: Location available, acquiring lock and trying to return location", self.name)
