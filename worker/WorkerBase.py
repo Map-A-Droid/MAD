@@ -568,7 +568,8 @@ class WorkerBase(ABC):
 
             if returncode != ScreenType.POGO:
 
-                if self._last_screen_type != ScreenType.UNDEFINED and self._last_screen_type == returncode \
+                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR)) \
+                        and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
                     logger.warning('Pogo freeze - restart Phone')
                     self._stop_worker_event.set()
@@ -576,7 +577,8 @@ class WorkerBase(ABC):
                     time.sleep(5)
                     self._reboot()
 
-                if self._last_screen_type != ScreenType.UNDEFINED and self._last_screen_type == returncode \
+                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR)) \
+                        and self._last_screen_type == returncode \
                         and self._same_screen_count < 3:
                     self._same_screen_count += 1
                     logger.warning('Getting same screen again - maybe Pogo freeze?')
