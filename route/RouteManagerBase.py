@@ -557,6 +557,12 @@ class RouteManagerBase(ABC):
                         logger.info("Not getting new coords - leaving worker")
                         return None
 
+                if len(self._routepool[origin].queue) == 0:
+                    logger.warning("Having updated routepools and checked lengths of queue and subroute, "
+                                   "{}'s queue is still empty, signalling worker to stop whatever he is doing")
+                    self._routepool[origin].last_access = time.time()
+                    return None
+
                 next_coord = self._routepool[origin].queue.popleft()
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                     self._current_route_round_coords.remove(next_coord)
