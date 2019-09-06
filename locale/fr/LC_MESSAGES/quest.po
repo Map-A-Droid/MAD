@@ -39,7 +39,7 @@ msgid "Excellent"
 msgstr "Excellent"
 
 msgid "Catch {0} {type}Pokemon{wb}."
-msgstr "Attrape {0} Pokémon {type}{wb}."
+msgstr "Attrape {0}{different} Pokémon {type}{wb}."
 
 msgid "-type "
 msgstr " "
@@ -49,6 +49,10 @@ msgstr "ou "
 
 msgid " with weather boost"
 msgstr " boostés par la météo"
+
+msgid " different species of"
+msgstr " différentes espèces de"
+
 
 msgid "Catch {0} {poke}."
 msgstr "Attrape {0} {poke}."
@@ -127,6 +131,18 @@ msgstr "Échange {0} fois des Pokémon."
 
 msgid "Send {0} gifts to friends."
 msgstr "Envoie {0} Cadeaux à des amis."
+
+#: utils/questGen.py:254
+msgid "Battle a Team Leader {0} times"
+msgstr "Combattre un chef {0} fois"
+
+#: utils/questGen.py:256
+msgid "Battle another Trainer {0} times"
+msgstr "Combattez un autre joueur {0} mal"
+
+#: utils/questGen.py:275
+msgid "Take {0} snapshots of {poke}"
+msgstr "Prendre {0} instantanés de {poke}"
 
 msgid "Take {0} snapshots of {type} Pokemon"
 msgstr "Prends {0} photos de Pokémon de type {type}."
