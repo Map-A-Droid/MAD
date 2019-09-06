@@ -839,7 +839,7 @@ class DbWrapperBase(ABC):
                  ' globalrestartcount INT(11) NULL DEFAULT 0, '
                  ' lastPogoReboot VARCHAR(50) NULL DEFAULT NULL , '
                  ' globalrebootcount INT(11) NULL DEFAULT 0, '
-                 ' currentSleepTime INT(11) NOT NULL DEFAULT 0'
+                 ' currentSleepTime INT(11) NOT NULL DEFAULT 0, '
                  ' PRIMARY KEY (origin))')
 
         self.execute(query, commit=True)
