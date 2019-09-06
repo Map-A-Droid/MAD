@@ -18,7 +18,7 @@ def get_value_for(regex_string, force_exit=True):
                 sys.exit("Check your config.ini for %s - this field is required!" % re.search('\\\s\+(.*):', regex_string).group(1))
             else:
                 sys.exit("Found more than one value for %s in config.ini, fix that." % re.search('\\\s\+(.*):', regex_string).group(1))
-         return None
+        return None
     else:
          return res[0]
 
@@ -26,7 +26,6 @@ def get_value_for(regex_string, force_exit=True):
 def main():
     print("Welcome! This script will import the right database schema for you.")
 
-    db_method = get_value_for(r'\s+db_method:\s+([^.\s]*)')
     dbip = get_value_for(r'\s+dbip:\s+([^\s]+)')
     dbport = get_value_for(r'\s+dbport:\s+([^.\s]*)', False)
     if dbport is None:  # if dbport is not set, use default
@@ -36,16 +35,12 @@ def main():
     dbname = get_value_for(r'\s+dbname:\s+([^.\s]*)')
 
     print("Successfully parsed config.ini, using values:")
-    print("db_method: %s" % db_method)
     print("dbport: %s" % dbport)
     print("dbusername: %s" % dbusername)
     print("dbname: %s" % dbname)
     print("dbip: %s" % dbip)
 
-    if db_method != "rm":
-        sys.exit("Wrong db_method in config.ini, please set your db_method to 'rm'")
-    else:
-        sql_file = rm_sql.read()
+    sql_file = rm_sql.read()
 
     schema = sql_file.splitlines()
     #schema = response.text.readlines()
