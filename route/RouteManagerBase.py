@@ -186,6 +186,9 @@ class RouteManagerBase(ABC):
                     worker), str(self.name))
                 worker.stop_worker()
                 self._workers_registered.remove(worker)
+                if worker in self._routepool:
+                    logger.info("Deleting old routepool form {]", str(worker))
+                    del self._routepool[worker]
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
@@ -556,7 +559,8 @@ class RouteManagerBase(ABC):
 
                 if len(self._routepool[origin].queue) == 0:
                     logger.warning("Having updated routepools and checked lengths of queue and subroute, "
-                                   "{}'s queue is still empty, signalling worker to stop whatever he is doing")
+                                   "{}'s queue is still empty, signalling worker to stop whatever he is doing",
+                                   self.name)
                     self._routepool[origin].last_access = time.time()
                     return None
 
