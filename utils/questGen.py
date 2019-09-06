@@ -253,7 +253,7 @@ def questtask(typeid, condition, target):
         if re.search(r'"type": 22', condition) is not None:
             text = _('Battle a Team Leader {0} times')
         elif re.search(r'"type": 23', condition) is not None:
-            text = _('Battle another Player {0} times')
+            text = _('Battle another Trainer {0} times')
     elif typeid == 28:
         # Take snapshots quest
         if re.search(r'"type": 2', condition) is not None:

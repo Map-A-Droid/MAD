@@ -138,7 +138,7 @@ msgid "Battle a Team Leader {0} times"
 msgstr "Bekämpfe einen Teamleiter {0} mal"
 
 #: utils/questGen.py:256
-msgid "Battle another Player {0} times"
+msgid "Battle another Trainer {0} times"
 msgstr "Bekämpfe einen anderen Spieler {0} mal"
 
 #: utils/questGen.py:275

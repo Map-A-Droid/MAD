@@ -174,7 +174,7 @@ msgid "Battle a Team Leader {0} times"
 msgstr ""
 
 #: utils/questGen.py:256
-msgid "Battle another Player {0} times"
+msgid "Battle another Trainer {0} times"
 msgstr ""
 
 #: utils/questGen.py:275
