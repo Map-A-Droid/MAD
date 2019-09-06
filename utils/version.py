@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 12
+current_version = 13
 
 
 class MADVersion(object):
@@ -233,6 +233,18 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+
+        if self._version < 13:
+            # Adding current_sleep for worker status
+            if self.dbwrapper.check_column_exists('trs_status', 'currentSleepTime') == 0:
+                query = (
+                    "ALTER TABLE trs_status "
+                    "ADD currentSleepTime INT(11) NOT NULL DEFAULT 0"
+                )
+                try:
+                    self.dbwrapper.execute(query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
 
         self.set_version(current_version)
 

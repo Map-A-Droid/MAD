@@ -836,6 +836,10 @@ class DbWrapperBase(ABC):
                  ' init TEXT NOT NULL, '
                  ' rebootingOption TEXT NOT NULL, '
                  ' restartCounter TEXT NOT NULL, '
+                 ' globalrestartcount INT(11) NULL DEFAULT 0, '
+                 ' lastPogoReboot VARCHAR(50) NULL DEFAULT NULL , '
+                 ' globalrebootcount INT(11) NULL DEFAULT 0, '
+                 ' currentSleepTime INT(11) NOT NULL DEFAULT 0, '
                  ' PRIMARY KEY (origin))')
 
         self.execute(query, commit=True)
@@ -946,19 +950,20 @@ class DbWrapperBase(ABC):
         query = (
             "INSERT into trs_status (origin, currentPos, lastPos, routePos, routeMax, "
             "routemanager, rebootCounter, lastProtoDateTime, "
-            "init, rebootingOption, restartCounter) values "
-            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "init, rebootingOption, restartCounter, currentSleepTime) values "
+            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE currentPos=VALUES(currentPos), "
             "lastPos=VALUES(lastPos), routePos=VALUES(routePos), "
             "routeMax=VALUES(routeMax), routemanager=VALUES(routemanager), "
             "rebootCounter=VALUES(rebootCounter), lastProtoDateTime=VALUES(lastProtoDateTime), "
-            "init=VALUES(init), rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter)"
+            "init=VALUES(init), rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter), "
+            "currentSleepTime=VALUES(currentSleepTime)"
         )
         vals = (
             data["Origin"], str(data["CurrentPos"]), str(
                 data["LastPos"]), data["RoutePos"], data["RouteMax"],
             data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"],
-            data["Init"], data["RebootingOption"], data["RestartCounter"]
+            data["Init"], data["RebootingOption"], data["RestartCounter"], data["CurrentSleepTime"]
         )
         self.execute(query, vals, commit=True)
         return
@@ -1005,14 +1010,15 @@ class DbWrapperBase(ABC):
         query = (
             "SELECT origin, currentPos, lastPos, routePos, routeMax, "
             "routemanager, rebootCounter, lastProtoDateTime, lastPogoRestart, "
-            "init, rebootingOption, restartCounter, globalrebootcount, globalrestartcount, lastPogoReboot "
+            "init, rebootingOption, restartCounter, globalrebootcount, globalrestartcount, lastPogoReboot, "
+            "currentSleepTime "
             "FROM trs_status"
         )
 
         result = self.execute(query)
         for (origin, currentPos, lastPos, routePos, routeMax, routemanager,
                 rebootCounter, lastProtoDateTime, lastPogoRestart, init, rebootingOption, restartCounter,
-                globalrebootcount, globalrestartcount, lastPogoReboot) in result:
+                globalrebootcount, globalrestartcount, lastPogoReboot, currentSleepTime) in result:
             status = {
                 "origin": origin,
                 "currentPos": currentPos,
@@ -1028,7 +1034,8 @@ class DbWrapperBase(ABC):
                 "restartCounter": restartCounter,
                 "lastPogoReboot": lastPogoReboot,
                 "globalrebootcount": globalrebootcount,
-                "globalrestartcount": globalrestartcount
+                "globalrestartcount": globalrestartcount,
+                "currentSleepTime": currentSleepTime
 
             }
 

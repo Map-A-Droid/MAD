@@ -242,7 +242,7 @@ class WorkerQuests(MITMBase):
                 if delay_used > 7200:  # There's a maximum of 2 hours wait time
                     delay_used = 7200
             logger.debug(
-                    "Need more sleep after Teleport: {} seconds!", str(delay_used))
+                    "Need more sleep after Teleport: {} seconds!", str(int(delay_used)))
         else:
             logger.info("main: Walking...")
             self._transporttype = 1
@@ -291,7 +291,7 @@ class WorkerQuests(MITMBase):
         if self.get_devicesettings_value('last_action_time', None) is not None:
             timediff = time.time() - self.get_devicesettings_value('last_action_time', 0)
             logger.info(
-                    "Timediff between now and last action time: {}", str(float(timediff)))
+                    "Timediff between now and last action time: {}", str(int(timediff)))
             delay_used = delay_used - timediff
         elif self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
             logger.info('Starting first time - we wait because of some default pogo delays ...')
@@ -309,6 +309,7 @@ class WorkerQuests(MITMBase):
             delay_used = -1
 
         if delay_used < 0:
+            self._current_sleep_time = 0
             logger.info('No need to wait before spinning, continuing...')
         else:
             delay_used = math.floor(delay_used)
@@ -316,6 +317,10 @@ class WorkerQuests(MITMBase):
                         str(delay_used), str(datetime.now() + timedelta(seconds=delay_used)))
             cleanupbox = False
             lastcleanupbox = self.get_devicesettings_value('last_cleanup_time', None)
+
+            self._current_sleep_time = delay_used
+            self.worker_stats()
+
             if lastcleanupbox is not None:
                 if time.time() - lastcleanupbox > 900:
                     # just cleanup if last cleanup time > 15 minutes ago
@@ -328,9 +333,11 @@ class WorkerQuests(MITMBase):
                 if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                         or self._stop_worker_event.is_set():
                     logger.error("Worker {} get killed while sleeping", str(self._id))
+                    self._current_sleep_time = 0
                     raise InternalStopWorkerException
                 time.sleep(1)
 
+        self._current_sleep_time = 0
         self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
         return cur_time, True
