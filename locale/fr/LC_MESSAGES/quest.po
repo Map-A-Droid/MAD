@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2019-08-31 21:52+0200\n"
-"PO-Revision-Date: 2019-08-31 21:58+0200\n"
+"POT-Creation-Date: 2019-09-06 20:18+0200\n"
+"PO-Revision-Date: 2019-09-06 20:27+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -38,7 +38,9 @@ msgstr "à effet"
 msgid "Excellent"
 msgstr "Excellent"
 
-msgid "Catch {0} {type}Pokemon{wb}."
+#, fuzzy
+#| msgid "Catch {0} {type}Pokemon{wb}."
+msgid "Catch {0}{different} {type}Pokemon{wb}."
 msgstr "Attrape {0}{different} Pokémon {type}{wb}."
 
 msgid "-type "
@@ -52,7 +54,6 @@ msgstr " boostés par la météo"
 
 msgid " different species of"
 msgstr " différentes espèces de"
-
 
 msgid "Catch {0} {poke}."
 msgstr "Attrape {0} {poke}."
@@ -132,15 +133,12 @@ msgstr "Échange {0} fois des Pokémon."
 msgid "Send {0} gifts to friends."
 msgstr "Envoie {0} Cadeaux à des amis."
 
-#: utils/questGen.py:254
 msgid "Battle a Team Leader {0} times"
 msgstr "Combattre un chef {0} fois"
 
-#: utils/questGen.py:256
 msgid "Battle another Trainer {0} times"
 msgstr "Combattez un autre joueur {0} mal"
 
-#: utils/questGen.py:275
 msgid "Take {0} snapshots of {poke}"
 msgstr "Prendre {0} instantanés de {poke}"
 
@@ -176,6 +174,22 @@ msgstr " cadeau"
 
 msgid " gifts"
 msgstr " cadeaux"
+
+msgid " a snapshot"
+msgstr " un instantané"
+
+#, fuzzy
+#| msgid "Take {0} snapshots of {poke}"
+msgid " {0} snapshots"
+msgstr "Prendre {0} instantanés de {poke}"
+
+msgid "Make a {type}{curve}Throw"
+msgstr "Fais {type} lancers {curve}{inrow}."
+
+#, fuzzy
+#| msgid "Make {0} {type}{curve}Throws{inrow}."
+msgid "Make {0} {type}{curve}Throws"
+msgstr "Fais {0} {type} lancers {curve}{inrow}."
 
 msgid " {0} times"
 msgstr " {0} fois"

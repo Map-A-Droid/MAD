@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2019-08-31 21:52+0200\n"
-"PO-Revision-Date: 2019-09-03 14:44+0200\n"
+"POT-Creation-Date: 2019-09-06 20:18+0200\n"
+"PO-Revision-Date: 2019-09-06 20:27+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de_DE\n"
@@ -14,7 +14,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.2.1\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 msgid "Item"
@@ -133,15 +133,12 @@ msgstr "Tausche {0} Pokemon."
 msgid "Send {0} gifts to friends."
 msgstr "Sende {0} Geschenke an Freunde."
 
-#: utils/questGen.py:254
 msgid "Battle a Team Leader {0} times"
 msgstr "Bekämpfe einen Teamleiter {0} mal"
 
-#: utils/questGen.py:256
 msgid "Battle another Trainer {0} times"
 msgstr "Bekämpfe einen anderen Spieler {0} mal"
 
-#: utils/questGen.py:275
 msgid "Take {0} snapshots of {poke}"
 msgstr "Schieße {0} Fotos von {poke}"
 
@@ -177,6 +174,21 @@ msgstr " Geschenk"
 
 msgid " gifts"
 msgstr " Geschenke"
+
+msgid " a snapshot"
+msgstr " Foto"
+
+#, fuzzy
+#| msgid "Take {0} snapshots of {poke}"
+msgid " {0} snapshots"
+msgstr "Schieße {0} Fotos von {poke}"
+
+msgid "Make a {type}{curve}Throw"
+msgstr "Lande einen {type}{curve} Würfe {inrow}."
+
+#, fuzzy
+msgid "Make {0} {type}{curve}Throws"
+msgstr "Lande {0} {type}{curve} Würfe {inrow}."
 
 msgid " {0} times"
 msgstr " {0} mal"
