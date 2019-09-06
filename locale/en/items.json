@@ -173,11 +173,11 @@
   },
   "1401": {
     "protoname": "ITEM_FREE_RAID_TICKET",
-    "name": "Free Raid Pass"
+    "name": "Raid Pass"
   },
   "1402": {
     "protoname": "ITEM_PAID_RAID_TICKET",
-    "name": "Paid Raid Pass"
+    "name": "Premium Raid Pass"
   },
   "1403": {
     "protoname": "ITEM_LEGENDARY_RAID_TICKET",
