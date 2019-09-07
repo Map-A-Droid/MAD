@@ -165,6 +165,9 @@ class RouteManagerBase(ABC):
                 logger.info("Worker {} unregistering from routemanager {}", str(
                     worker_name), str(self.name))
                 self._workers_registered.remove(worker_name)
+                if worker_name in self._routepool:
+                    logger.info("Deleting old routepool form {]", str(worker_name))
+                    del self._routepool[worker_name]
             else:
                 # TODO: handle differently?
                 logger.info(
@@ -175,6 +178,10 @@ class RouteManagerBase(ABC):
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self._quit_route()
+            else:
+                # cleanup routepools
+                logger.info('Worker leaving route now - recalc the routepool for the other ones..', str(self.name))
+                self.__worker_changed_update_routepools()
         finally:
             self._workers_registered_mutex.release()
 
