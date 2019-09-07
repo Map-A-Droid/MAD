@@ -180,7 +180,7 @@ class RouteManagerBase(ABC):
                 self._quit_route()
             else:
                 # cleanup routepools
-                logger.info('Worker leaving route now - recalc the routepool for the other ones..', str(self.name))
+                logger.info('Worker {} leaving route now - recalc the routepool for the other ones..', str(self.name))
                 self.__worker_changed_update_routepools()
         finally:
             self._workers_registered_mutex.release()
@@ -202,7 +202,7 @@ class RouteManagerBase(ABC):
                 self._quit_route()
             else:
                 # cleanup routepools
-                logger.info('Worker leaving route now - recalc the routepool for the other ones..', str(self.name))
+                logger.info('Worker {} leaving route now - recalc the routepool for the other ones..', str(self.name))
                 self.__worker_changed_update_routepools()
         finally:
             self._workers_registered_mutex.release()
