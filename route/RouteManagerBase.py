@@ -107,13 +107,15 @@ class RouteManagerBase(ABC):
         # initialize priority queue variables
         self._prio_queue = None
         self._update_prio_queue_thread = None
+        self._check_routepools_thread = None
         self._stop_update_thread = Event()
         self._init_route_queue()
 
-        self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
-                                               target=self._check_routepools)
-        self._check_routepools_thread.daemon = True
-        self._check_routepools_thread.start()
+        if self.mode != "iv_mitm":
+            self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
+                                                   target=self._check_routepools)
+            self._check_routepools_thread.daemon = True
+            self._check_routepools_thread.start()
 
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
@@ -126,7 +128,8 @@ class RouteManagerBase(ABC):
 
         if self._update_prio_queue_thread is not None:
             self._update_prio_queue_thread.join()
-        self._check_routepools_thread.join()
+        if self._check_routepools_thread is not None:
+            self._check_routepools_thread.join()
 
     def _init_route_queue(self):
         with self._manager_mutex:
@@ -457,7 +460,7 @@ class RouteManagerBase(ABC):
                     logger.info("Failed updating routepools after adding a worker to it")
                     return None
 
-            elif self._routepool[origin].has_prio_event:
+            elif self._routepool[origin].has_prio_event and self.mode != 'iv_mitm':
                 prioevent = self._routepool[origin].prio_coords
                 logger.info('Worker {} getting a nearby prio event {}', origin, prioevent)
                 self._routepool[origin].has_prio_event = False
@@ -665,6 +668,9 @@ class RouteManagerBase(ABC):
 
     def __worker_changed_update_routepools(self):
         less_coords: bool = False
+        if self.mode == "iv_mitm":
+            logger.info('Not updating routepools in iv_mitm mode')
+            return True
         with self._manager_mutex:
             if len(self._current_route_round_coords) == 0:
                 if not self._get_coords_after_finish_route():
