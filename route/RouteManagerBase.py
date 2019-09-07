@@ -668,10 +668,7 @@ class RouteManagerBase(ABC):
             if len(self._workers_registered) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
-            elif len(self._current_route_round_coords) == 0:
-                logger.error("No coords for current route could be found, unable to distribute workers on an empty "
-                             "route")
-                return False
+
             if len(self._workers_registered) > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
@@ -725,7 +722,6 @@ class RouteManagerBase(ABC):
                 elif len(new_subroute) == 0:
                     logger.info("New subroute of {} is empty...", origin)
                     entry.subroute = new_subroute
-                    continue
                 elif len(entry.subroute) > len(new_subroute) > 0:
                     logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
                                  "added)", origin)
