@@ -166,7 +166,7 @@ class RouteManagerBase(ABC):
                     worker_name), str(self.name))
                 self._workers_registered.remove(worker_name)
                 if worker_name in self._routepool:
-                    logger.info("Deleting old routepool form {]", str(worker_name))
+                    logger.info("Deleting old routepool form {}", str(worker_name))
                     del self._routepool[worker_name]
             else:
                 # TODO: handle differently?
