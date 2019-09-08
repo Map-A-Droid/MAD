@@ -176,10 +176,12 @@ class RouteManagerQuests(RouteManagerBase):
                         and len(stops)/len(self._route) <= 0.3:
                     # Calculating new route because 70 percent of stops are processed
                     logger.info('There are less stops without quest than routepositions - recalc')
-                    self._clear_coords()
-                    self.add_coords_list(stops)
-                    self._overwrite_calculation = True
-                    self._recalc_route_workertype()
+                    self._recalc_stop_route()
+                elif len(self._route) == 0 and len(stops) > 0:
+                    logger.warning("Something wrong with area {}: it have many new stops - better delete routefile!",
+                                   str(self.name))
+                    logger.info("Recalc new route for area {}", str(self.name))
+                    self._recalc_stop_route()
                 else:
                     self._init_route_queue()
 
@@ -187,6 +189,12 @@ class RouteManagerQuests(RouteManagerBase):
 
         finally:
             self._manager_mutex.release()
+
+    def _recalc_stop_route(self):
+        self._clear_coords()
+        self.add_coords_list(stops)
+        self._overwrite_calculation = True
+        self._recalc_route_workertype()
 
     def _delete_coord_after_fetch(self) -> bool:
         return True
