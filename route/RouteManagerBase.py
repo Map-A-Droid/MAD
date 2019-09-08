@@ -120,7 +120,7 @@ class RouteManagerBase(ABC):
     def _start_check_routepools(self):
         self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
                                                target=self._check_routepools)
-        self._check_routepools_thread.daemon = True
+        self._check_routepools_thread.daemon = False
         self._check_routepools_thread.start()
 
     def stop_routemanager(self):
@@ -657,7 +657,12 @@ class RouteManagerBase(ABC):
                             origin, timeout)
                         self.unregister_worker(origin)
 
-            time.sleep(60)
+            i = 0
+            while i < 60 and not self._stop_update_thread.is_set():
+                if self._stop_update_thread.is_set():
+                    logger.info("Stop checking routepools")
+                i += 1
+                time.sleep(1)
 
     def set_worker_sleeping(self, origin: str, sleep_duration: float):
         if sleep_duration > 0:
@@ -680,7 +685,8 @@ class RouteManagerBase(ABC):
                 coords_in_worker: List[Location] = self.get_coords_from_workers()
                 temp_coordplist = [coord for coord in self._current_route_round_coords if coord not in coords_in_worker]
 
-                if len(self._route) > 0 and len(temp_coordplist) == 0 and not (len(coords_in_worker) / len(self._route) <= 0.5):
+                if len(self._route) > 0 and len(temp_coordplist) == 0 and \
+                        not (len(coords_in_worker) / len(self._route) <= 0.5):
                     # half of coords are in the worker - recalc routepools
                     logger.info('To much coords in the pools - going to update all routepools')
                 else:
