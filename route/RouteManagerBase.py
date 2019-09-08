@@ -665,11 +665,18 @@ class RouteManagerBase(ABC):
 
     def __worker_changed_update_routepools(self):
         less_coords: bool = False
+        temp_coordplist: List[Location] = []
         if self.mode == "iv_mitm":
             logger.info('Not updating routepools in iv_mitm mode')
             return True
         with self._manager_mutex:
-            if len(self._current_route_round_coords) == 0:
+            temp_coordplist = self._current_route_round_coords
+            if self.mode == 'pokestop':
+                # check for coords not in other workers to get a real open coord list
+                coords_in_worker: List[Location] = self.get_coords_from_workers()
+                temp_coordplist = [coord for coord in self._current_route_round_coords if coord not in coords_in_worker]
+
+            if len(temp_coordplist) == 0:
                 if not self._get_coords_after_finish_route():
                     logger.info("No more coords available - dont update routepool")
                     return False
