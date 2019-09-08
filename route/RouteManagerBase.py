@@ -671,7 +671,7 @@ class RouteManagerBase(ABC):
             return True
         with self._manager_mutex:
             temp_coordplist = self._current_route_round_coords
-            if self.mode == 'pokestop':
+            if self.mode == 'pokestops':
                 # check for coords not in other workers to get a real open coord list
                 coords_in_worker: List[Location] = self.get_coords_from_workers()
                 temp_coordplist = [coord for coord in self._current_route_round_coords if coord not in coords_in_worker]
@@ -683,6 +683,9 @@ class RouteManagerBase(ABC):
                     if not self._get_coords_after_finish_route():
                         logger.info("No more coords available - dont update routepool")
                         return False
+                    else:
+                        logger.info("Getting new coords for questroute")
+                        logger.debug("Coords {}", str(self._current_route_round_coords))
 
             logger.debug("Updating all routepools")
             if len(self._workers_registered) == 0:
