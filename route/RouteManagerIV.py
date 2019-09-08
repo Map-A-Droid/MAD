@@ -75,6 +75,7 @@ class RouteManagerIV(RouteManagerBase):
                 self._is_started = True
         finally:
             self._manager_mutex.release()
+        return True
 
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))

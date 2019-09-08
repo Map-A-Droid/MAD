@@ -151,7 +151,7 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.info('Starting init mode')
                     self._init_route_queue()
                     self._tempinit = True
-                    return
+                    return True
 
                 if not self._first_started:
                     logger.info(
@@ -171,6 +171,7 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.info('No unprocessed  Stops detected - quit worker')
                     self._restore_original_route()
                     self._route: List[Location] = []
+                    return False
 
                 if 0 < len(stops) < len(self._route) \
                         and len(stops)/len(self._route) <= 0.3:
@@ -184,6 +185,7 @@ class RouteManagerQuests(RouteManagerBase):
                     self._recalc_stop_route(stops)
 
                 logger.info('Getting {} positions in route', len(self._route))
+                return True
 
         finally:
             self._manager_mutex.release()

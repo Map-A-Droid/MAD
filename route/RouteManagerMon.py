@@ -59,6 +59,7 @@ class RouteManagerMon(RouteManagerBase):
                 self._first_round_finished = False
         finally:
             self._manager_mutex.release()
+        return True
 
     def _delete_coord_after_fetch(self) -> bool:
         return False

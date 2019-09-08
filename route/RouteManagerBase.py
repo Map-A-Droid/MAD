@@ -441,7 +441,9 @@ class RouteManagerBase(ABC):
         if not self._is_started:
             logger.info(
                 "Starting routemanager {} in get_next_location", str(self.name))
-            self._start_routemanager()
+            if not self._start_routemanager():
+                logger.info('No coords available - quit worker')
+                return None
 
         if self._start_calc:
             logger.info("Another process already calculate the new route")

@@ -58,6 +58,8 @@ class RouteManagerRaids(RouteManagerBase):
         finally:
             self._manager_mutex.release()
 
+        return True
+
     def _quit_route(self):
         logger.info("Shutdown Route {}", str(self.name))
         if self._update_prio_queue_thread is not None:
