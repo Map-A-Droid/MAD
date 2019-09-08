@@ -55,6 +55,7 @@ class RouteManagerQuests(RouteManagerBase):
         self._stoplist: List[Location] = []
 
     def _get_coords_after_finish_route(self) -> bool:
+        coords_in_worker: List[Location] = self.get_coords_from_workers()
         if self._level:
             logger.info("Level Mode - switch to next area")
             return False
@@ -74,7 +75,8 @@ class RouteManagerQuests(RouteManagerBase):
                 return False
             coords: List[Location] = self._check_unprocessed_stops()
             # remove coords to be ignored from coords
-            coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
+            coords = [coord for coord in coords if coord not in self._coords_to_be_ignored
+                      and coord not in coords_in_worker]
             if len(coords) > 0:
                 self._clear_coords()
                 self.add_coords_list(coords)
@@ -121,7 +123,8 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.warning("Found stop not processed yet: {}".format(str(stop)))
                     list_of_stops_to_return.append(stop)
                 else:
-                    logger.error("Stop {} has not been processed thrice in a row, please check your DB".format(str(stop)))
+                    logger.error("Stop {} has not been processed thrice in a row, "
+                                 "please check your DB".format(str(stop)))
                     self._coords_to_be_ignored.add(stop)
 
             if len(list_of_stops_to_return) > 0:
