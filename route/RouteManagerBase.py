@@ -111,17 +111,17 @@ class RouteManagerBase(ABC):
         self._stop_update_thread = Event()
         self._init_route_queue()
 
-        if self.mode != "iv_mitm":
-            self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
-                                                   target=self._check_routepools)
-            self._check_routepools_thread.daemon = True
-            self._check_routepools_thread.start()
-
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
             return self.settings.get("mon_ids_iv_raw", [])
         else:
             return None
+
+    def _start_check_routepools(self):
+        self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
+                                               target=self._check_routepools)
+        self._check_routepools_thread.daemon = True
+        self._check_routepools_thread.start()
 
     def stop_routemanager(self):
         self._stop_update_thread.set()

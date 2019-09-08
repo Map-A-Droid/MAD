@@ -143,6 +143,7 @@ class RouteManagerQuests(RouteManagerBase):
                 self._is_started = True
                 self._first_round_finished = False
                 self._tempinit: bool = False
+                self._start_check_routepools()
 
                 if self.init:
                     logger.info('Starting init mode')
@@ -194,6 +195,11 @@ class RouteManagerQuests(RouteManagerBase):
         self._round_started_time = None
         if self.init: self._first_started = False
         self._restore_original_route()
+        if self._check_routepools_thread is not None:
+            self._stop_update_thread.set()
+            self._check_routepools_thread.join()
+            self._check_routepools_thread = None
+            self._stop_update_thread.clear()
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:

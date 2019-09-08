@@ -51,6 +51,7 @@ class RouteManagerRaids(RouteManagerBase):
             if not self._is_started:
                 logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
+                self._start_check_routepools()
                 self._is_started = True
                 self._init_route_queue()
                 self._first_round_finished = False
@@ -64,6 +65,9 @@ class RouteManagerRaids(RouteManagerBase):
             self._update_prio_queue_thread.join()
             self._update_prio_queue_thread = None
             self._stop_update_thread.clear()
+        if self._check_routepools_thread is not None:
+            self._check_routepools_thread.join()
+            self._check_routepools_thread = None
         self._is_started = False
         self._round_started_time = None
 
