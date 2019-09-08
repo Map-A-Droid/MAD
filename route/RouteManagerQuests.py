@@ -182,8 +182,6 @@ class RouteManagerQuests(RouteManagerBase):
                                    str(self.name))
                     logger.info("Recalc new route for area {}", str(self.name))
                     self._recalc_stop_route(stops)
-                else:
-                    self._init_route_queue()
 
                 logger.info('Getting {} positions in route', len(self._route))
 
@@ -195,6 +193,7 @@ class RouteManagerQuests(RouteManagerBase):
         self.add_coords_list(stops)
         self._overwrite_calculation = True
         self._recalc_route_workertype()
+        self._init_route_queue()
 
     def _delete_coord_after_fetch(self) -> bool:
         return True
