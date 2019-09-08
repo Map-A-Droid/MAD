@@ -205,10 +205,8 @@ class RouteManagerQuests(RouteManagerBase):
         if self.init: self._first_started = False
         self._restore_original_route()
         if self._check_routepools_thread is not None:
-            self._stop_update_thread.set()
             self._check_routepools_thread.join()
             self._check_routepools_thread = None
-            self._stop_update_thread.clear()
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:
