@@ -698,8 +698,13 @@ class RouteManagerBase(ABC):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
             else:
-                new_subroute_length = math.floor(len(self._current_route_round_coords) / len(self._workers_registered))
-                if new_subroute_length == 0:
+                try:
+                    new_subroute_length = math.floor(len(self._current_route_round_coords) /
+                                                     len(self._workers_registered))
+                    if new_subroute_length == 0:
+                        return False
+                except Exception as e:
+                    logger.info('Something happens with the worker - breakup')
                     return False
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
