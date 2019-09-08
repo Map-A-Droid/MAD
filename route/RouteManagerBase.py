@@ -665,6 +665,8 @@ class RouteManagerBase(ABC):
 
     def __worker_changed_update_routepools(self):
         less_coords: bool = False
+        if not self._is_started:
+            return True
         temp_coordplist: List[Location] = []
         if self.mode == "iv_mitm":
             logger.info('Not updating routepools in iv_mitm mode')
