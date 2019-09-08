@@ -676,10 +676,13 @@ class RouteManagerBase(ABC):
                 coords_in_worker: List[Location] = self.get_coords_from_workers()
                 temp_coordplist = [coord for coord in self._current_route_round_coords if coord not in coords_in_worker]
 
-            if len(temp_coordplist) == 0:
-                if not self._get_coords_after_finish_route():
-                    logger.info("No more coords available - dont update routepool")
-                    return False
+                if len(temp_coordplist) == 0 and not (len(coords_in_worker) / len(self._route) <= 0.5):
+                    # half of coords are in the worker - recalc routepools
+                    logger.info('To much coords in the pools - going to update all routepools')
+                else:
+                    if not self._get_coords_after_finish_route():
+                        logger.info("No more coords available - dont update routepool")
+                        return False
 
             logger.debug("Updating all routepools")
             if len(self._workers_registered) == 0:
