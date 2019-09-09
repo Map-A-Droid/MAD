@@ -685,7 +685,10 @@ class RouteManagerBase(ABC):
                 coords_in_worker: List[Location] = self.get_coords_from_workers()
                 temp_coordplist = [coord for coord in self._current_route_round_coords if coord not in coords_in_worker]
 
-                if len(self._route) > 0 and len(temp_coordplist) == 0 and \
+                if self._level and len(self._current_route_round_coords) > 0:
+                    logger.info("Worker in level mode - getting all coords")
+                    ## todo: init the route
+                elif len(self._route) > 0 and len(temp_coordplist) == 0 and \
                         not (len(coords_in_worker) / len(self._route) >= 0.5):
                     # half of coords are in the worker - recalc routepools
                     logger.info('To much coords in the pools - going to update all routepools')
