@@ -686,7 +686,7 @@ class RouteManagerBase(ABC):
                 temp_coordplist = [coord for coord in self._current_route_round_coords if coord not in coords_in_worker]
 
                 if len(self._route) > 0 and len(temp_coordplist) == 0 and \
-                        not (len(coords_in_worker) / len(self._route) <= 0.5):
+                        not (len(coords_in_worker) / len(self._route) >= 0.5):
                     # half of coords are in the worker - recalc routepools
                     logger.info('To much coords in the pools - going to update all routepools')
                 else:
