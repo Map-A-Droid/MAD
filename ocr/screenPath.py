@@ -213,7 +213,9 @@ class WordToScreenMatching(object):
                 return ScreenType.ERROR
 
             self._height, self._width, _ = frame_org.shape
-            frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
+            frame_color = frame_org
+            if self._width < 1080:
+                frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
             frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
             self._ratio = self._height / self._width
             self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
