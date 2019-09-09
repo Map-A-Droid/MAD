@@ -17,5 +17,5 @@ watchdog
 loguru
 gevent
 opencv-python
-pytesseract
+pytesseract>=0.3.0
 dataclasses
