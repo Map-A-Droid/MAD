@@ -64,12 +64,12 @@ class RouteManagerRaids(RouteManagerBase):
         logger.info("Shutdown Route {}", str(self.name))
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
-            self._update_prio_queue_thread.join()
             self._update_prio_queue_thread = None
             self._stop_update_thread.clear()
         if self._check_routepools_thread is not None:
-            self._check_routepools_thread.join()
+            self._stop_update_thread.set()
             self._check_routepools_thread = None
+            self._stop_update_thread.clear()
         self._is_started = False
         self._round_started_time = None
 
