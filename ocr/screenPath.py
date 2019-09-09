@@ -216,6 +216,7 @@ class WordToScreenMatching(object):
             frame_color = frame_org
             diff: int = 1
             if self._width < 1080:
+                logger.info('Resize screen ...')
                 frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
                 diff = 2
             frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
@@ -283,6 +284,7 @@ class WordToScreenMatching(object):
                 if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_text.split(",")):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
+                    click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(2)

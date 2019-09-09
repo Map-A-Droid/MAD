@@ -745,11 +745,8 @@ class PogoWindows:
         logger.debug(
             "get_screen_text: Reading screen text - identifier {}", identifier)
 
-        try:
-            returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=20,
-                                                       config='--dpi 70 quiet')
-        except Exception as e:
-            logger.error("get_screen_text: {}", e)
+        returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=20,
+                                                       config='--dpi 70')
 
         return returning_dict
 
