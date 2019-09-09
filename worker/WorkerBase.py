@@ -568,7 +568,8 @@ class WorkerBase(ABC):
 
             if returncode != ScreenType.POGO:
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR)) \
+                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                                                   ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
                     logger.warning('Pogo freeze - restart Phone')
@@ -577,7 +578,8 @@ class WorkerBase(ABC):
                     time.sleep(5)
                     self._reboot()
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR)) \
+                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                                                   ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count < 3:
                     self._same_screen_count += 1
@@ -608,7 +610,7 @@ class WorkerBase(ABC):
                     logger.warning('Something wrong with screendetection')
                     loginerrorcounter += 1
 
-                if loginerrorcounter == 4 or returncode in (ScreenType.SN, ScreenType.RETRY):
+                if loginerrorcounter == 4 or returncode in (ScreenType.SN):
                     logger.error('Cannot login again - (clear pogo game data and) restart phone / SN Error')
                     self._stop_worker_event.set()
                     self._stop_pogo()
