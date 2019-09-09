@@ -610,7 +610,7 @@ class WorkerBase(ABC):
                     logger.warning('Something wrong with screendetection')
                     loginerrorcounter += 1
 
-                if loginerrorcounter == 4 or returncode in (ScreenType.SN):
+                if loginerrorcounter == 4 or returncode == ScreenType.SN:
                     logger.error('Cannot login again - (clear pogo game data and) restart phone / SN Error')
                     self._stop_worker_event.set()
                     self._stop_pogo()
