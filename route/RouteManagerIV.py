@@ -85,6 +85,7 @@ class RouteManagerIV(RouteManagerBase):
             self._stop_update_thread.clear()
         self._is_started = False
         self._round_started_time = None
+        self._init_route_queue()
 
     def _check_coords_before_returning(self, lat, lng):
         return True

@@ -109,7 +109,6 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
         self._stop_update_thread = Event()
-        self._init_route_queue()
 
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
@@ -690,7 +689,7 @@ class RouteManagerBase(ABC):
                     logger.info("Worker in level mode - getting all coords")
                     ## todo: init the route
                 elif len(self._route) > 0 and len(temp_coordplist) == 0 and \
-                        not (len(coords_in_worker) / len(self._route) >= 0.5):
+                        not (len(coords_in_worker) / len(self._route) >= 0.5) and len(self._workers_registered)>1:
                     # half of coords are in the worker - recalc routepools
                     logger.info('To much coords in the pools - going to update all routepools')
                 else:
