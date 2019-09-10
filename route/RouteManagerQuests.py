@@ -57,7 +57,6 @@ class RouteManagerQuests(RouteManagerBase):
         self._shutdown_route: bool = False
 
     def _get_coords_after_finish_route(self) -> bool:
-        coords_in_worker: List[Location] = self.get_coords_from_workers()
         if self._level:
             logger.info("Level Mode - switch to next area")
             return False
@@ -65,7 +64,7 @@ class RouteManagerQuests(RouteManagerBase):
         try:
 
             if self._shutdown_route:
-                logger.info('Other worker shutdown this route - leaving it')
+                logger.info('Other worker shutdown route {} - leaving it', str(self.name))
                 return False
 
             if self._start_calc:
@@ -147,7 +146,7 @@ class RouteManagerQuests(RouteManagerBase):
                 logger.info("Starting routemanager {}", str(self.name))
 
                 if self._shutdown_route:
-                    logger.info('Other worker shutdown this route - leaving it')
+                    logger.info('Other worker shutdown route {} - leaving it', str(self.name))
                     return False
 
                 self.generate_stop_list()
