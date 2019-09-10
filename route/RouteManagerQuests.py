@@ -71,10 +71,6 @@ class RouteManagerQuests(RouteManagerBase):
                 logger.info("Another process already calculate the new route")
                 return True
             self._start_calc = True
-            if len(self._current_route_round_coords) > 0:
-                logger.info("There are coords in the Pool - use this!")
-                self._start_calc = False
-                return True
             self.generate_stop_list()
             if len(self._stoplist) == 0:
                 logger.info("Dont getting new stops - leaving now.")
