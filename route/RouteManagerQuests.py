@@ -166,20 +166,20 @@ class RouteManagerQuests(RouteManagerBase):
 
                 if not self._first_started:
                     logger.info(
-                        "First starting quest route - copying original route for later use")
+                        "First starting quest route - copying original route {} for later use", str(self.name))
                     self._routecopy = self._route.copy()
                     self._first_started = True
                 else:
-                    logger.info("Restoring original route")
+                    logger.info("Restoring original route {} ", str(self.name))
                     self._route = self._routecopy.copy()
 
                 new_stops = list(set(stops) - set(self._route))
                 if len(new_stops) > 0:
                     for stop in new_stops:
-                        logger.warning("Stop with coords {} seems new and not in route.", str(stop))
+                        logger.warning("Stop with coords {} seems new and not in route.", str(self.name))
 
                 if len(stops) == 0:
-                    logger.info('No unprocessed  Stops detected - quit worker')
+                    logger.info('No unprocessed Stops detected in route {} - quit worker', str(self.name))
                     self._shutdown_route = True
                     self._restore_original_route()
                     self._route: List[Location] = []
@@ -198,7 +198,7 @@ class RouteManagerQuests(RouteManagerBase):
                 else:
                     self._init_route_queue()
 
-                logger.info('Getting {} positions in route', len(self._route))
+                logger.info('Getting {} positions in route {}', (len(self._route), str(self.name)))
                 return True
 
         finally:
