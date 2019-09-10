@@ -50,10 +50,11 @@ class RouteManagerRaids(RouteManagerBase):
         try:
             if not self._is_started:
                 logger.info("Starting routemanager {}", str(self.name))
-                self._start_priority_queue()
-                self._start_check_routepools()
+                if self.mode != "idle":
+                    self._start_priority_queue()
+                    self._start_check_routepools()
+                    self._init_route_queue()
                 self._is_started = True
-                self._init_route_queue()
                 self._first_round_finished = False
         finally:
             self._manager_mutex.release()

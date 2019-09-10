@@ -675,7 +675,7 @@ class RouteManagerBase(ABC):
         if not self._is_started:
             return True
         temp_coordplist: List[Location] = []
-        if self.mode == "iv_mitm":
+        if self.mode in ("iv_mitm", "idle"):
             logger.info('Not updating routepools in iv_mitm mode')
             return True
         with self._manager_mutex:
