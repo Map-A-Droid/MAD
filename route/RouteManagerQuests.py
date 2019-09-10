@@ -176,7 +176,7 @@ class RouteManagerQuests(RouteManagerBase):
                 new_stops = list(set(stops) - set(self._route))
                 if len(new_stops) > 0:
                     for stop in new_stops:
-                        logger.warning("Stop with coords {} seems new and not in route.", str(self.name))
+                        logger.warning("Stop with coords {} seems new and not in route.", str(stop))
 
                 if len(stops) == 0:
                     logger.info('No unprocessed Stops detected in route {} - quit worker', str(self.name))
@@ -198,7 +198,7 @@ class RouteManagerQuests(RouteManagerBase):
                 else:
                     self._init_route_queue()
 
-                logger.info('Getting {} positions in route {}', (len(self._route), str(self.name)))
+                logger.info('Getting {} positions in route {}'.format(len(self._route), str(self.name)))
                 return True
 
         finally:
