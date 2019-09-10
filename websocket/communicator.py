@@ -29,13 +29,23 @@ class Communicator:
             self.__sendMutex.release()
 
     def __runAndOk(self, command, timeout) -> bool:
+        return self.__run_and_ok_bytes(0, command, timeout)
+
+    def __run_and_ok_bytes(self, byte_command: int, message, timeout: float) -> bool:
         self.__sendMutex.acquire()
         try:
             result = self.websocket_handler.send_and_wait(
-                    self.worker_id, self.worker_instance_ref, command, timeout)
+                    self.worker_id, self.worker_instance_ref, message, timeout, byte_command=byte_command)
             return result is not None and "OK" in result
         finally:
             self.__sendMutex.release()
+
+    def install_apk(self, filepath: str, timeout: float) -> bool:
+        # TODO: check if file exists...
+        with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
+            data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
+        with self.__sendMutex:
+            return self.__run_and_ok_bytes(1, data, timeout)
 
     def startApp(self, package_name):
         return self.__runAndOk("more start {}\r\n".format(package_name), self.__command_timeout)

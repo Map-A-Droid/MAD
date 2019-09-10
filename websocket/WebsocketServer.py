@@ -505,7 +505,7 @@ class WebsocketServer(object):
         next_message = OutgoingMessage(id, to_be_sent)
         await self.__send_queue.put(next_message)
 
-    async def __send_and_wait_internal(self, id, worker_instance, message, timeout):
+    async def __send_and_wait_internal(self, id, worker_instance, message, timeout, byte_command: int = None):
         async with self.__users_mutex:
             user_entry = self.__current_users.get(id, None)
 
@@ -518,8 +518,16 @@ class WebsocketServer(object):
 
         await self.__set_request(message_id, message_event)
 
-        to_be_sent = u"%s;%s" % (str(message_id), message)
-        logger.debug("To be sent: {}", to_be_sent.strip())
+        if isinstance(message, str):
+            to_be_sent: str = u"%s;%s" % (str(message_id), message)
+            logger.debug("To be sent: {}", to_be_sent.strip())
+        elif byte_command is not None:
+            to_be_sent: bytes = (1).to_bytes(4, byteorder='big')
+            to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
+            to_be_sent += message
+        else:
+            logger.fatal("Tried to send invalid message (bytes without byte command or no byte/str passed)")
+            return None
         await self.__send(id, to_be_sent)
 
         # now wait for the response!
