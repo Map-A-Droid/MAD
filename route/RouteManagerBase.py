@@ -180,10 +180,6 @@ class RouteManagerBase(ABC):
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self._quit_route()
-            else:
-                # cleanup routepools
-                logger.info("Worker {} leaving route now - recalc the routepool for the other ones..", str(worker_name))
-                self.__worker_changed_update_routepools()
         finally:
             self._workers_registered_mutex.release()
 
@@ -586,9 +582,12 @@ class RouteManagerBase(ABC):
             logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
                 self.name), str(next_coord))
             if self._check_coords_before_returning(next_coord.lat, next_coord.lng):
+
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
                     self._current_route_round_coords.remove(next_coord)
+
                 self.__set_routepool_entry_location(origin, next_coord)
+
                 return next_coord
             else:
                 return self.get_next_location(origin)
@@ -689,7 +688,7 @@ class RouteManagerBase(ABC):
                     logger.info("Worker in level mode - getting all coords")
                     ## todo: init the route
                 elif len(self._route) > 0 and len(temp_coordplist) == 0 and \
-                        not (len(coords_in_worker) / len(self._route) >= 0.5) and len(self._workers_registered)>1:
+                        not (len(coords_in_worker) / len(self._route) >= 0.5) and len(self._workers_registered) > 1:
                     # half of coords are in the worker - recalc routepools
                     logger.info('To much coords in the pools - going to update all routepools')
                 else:
