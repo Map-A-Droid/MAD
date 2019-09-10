@@ -516,6 +516,10 @@ class RouteManagerBase(ABC):
                 elif self._round_started_time is None:
                     self._round_started_time = datetime.now()
 
+                if len(self._routepool[origin].queue) == 0:
+                    # worker do the part of route
+                    self._routepool[origin].rounds += 1
+
                 # continue as usual
                 if self.init and self.check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
                         len(self._routepool[origin].queue) == 0:
@@ -538,10 +542,6 @@ class RouteManagerBase(ABC):
                     self._start_calc = False
                     logger.debug("Initroute of {} is finished - restart worker", self.name)
                     return None
-
-                if len(self._routepool[origin].queue) == 0:
-                    # worker do the part of route
-                    self._routepool[origin].rounds += 1
 
                 if len(self._current_route_round_coords) > 0 and len(self._routepool[origin].queue) == 0:
                     logger.debug(
@@ -577,7 +577,8 @@ class RouteManagerBase(ABC):
                     return None
 
                 next_coord = self._routepool[origin].queue.popleft()
-                if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
+                if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
+                        and not self.init:
                     self._current_route_round_coords.remove(next_coord)
                 logger.info("{}: Moving on with location {} [{} coords left (Workerpool)]",
                             str(self.name), str(next_coord), str(len(self._routepool[origin].queue)))
