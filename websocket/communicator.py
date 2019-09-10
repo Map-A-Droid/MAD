@@ -29,9 +29,9 @@ class Communicator:
             self.__sendMutex.release()
 
     def __runAndOk(self, command, timeout) -> bool:
-        return self.__run_and_ok_bytes(0, command, timeout)
+        return self.__run_and_ok_bytes(command, timeout)
 
-    def __run_and_ok_bytes(self, byte_command: int, message, timeout: float) -> bool:
+    def __run_and_ok_bytes(self, message, timeout: float, byte_command: int = None) -> bool:
         self.__sendMutex.acquire()
         try:
             result = self.websocket_handler.send_and_wait(

@@ -559,7 +559,7 @@ class WebsocketServer(object):
                         id), str(result[:10]))
         return result
 
-    def send_and_wait(self, id, worker_instance, message, timeout):
+    def send_and_wait(self, id, worker_instance, message, timeout, byte_command: int = None):
         logger.debug("{} sending command: {}", str(id), message.strip())
         try:
             # future: Handle = self._add_task_to_loop(self.__send_and_wait_internal(id, worker_instance, message,
@@ -567,7 +567,7 @@ class WebsocketServer(object):
             logger.debug("Appending send_and_wait to {}".format(str(self.__loop)))
             with self.__loop_mutex:
                 future = asyncio.run_coroutine_threadsafe(
-                        self.__send_and_wait_internal(id, worker_instance, message, timeout), self.__loop)
+                        self.__send_and_wait_internal(id, worker_instance, message, timeout, byte_command=byte_command), self.__loop)
             result = future.result()
         except WebsocketWorkerRemovedException:
             logger.error("Worker {} was removed, propagating exception".format(id))
