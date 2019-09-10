@@ -143,6 +143,7 @@ class RouteManagerQuests(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
+                self._is_started = True
                 logger.info("Starting routemanager {}", str(self.name))
 
                 if self._shutdown_route:
@@ -154,7 +155,6 @@ class RouteManagerQuests(RouteManagerBase):
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
                 self.starve_route = False
-                self._is_started = True
                 self._first_round_finished = False
                 self._tempinit: bool = False
                 self._start_check_routepools()

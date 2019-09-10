@@ -70,9 +70,9 @@ class RouteManagerIV(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
+                self._is_started = True
                 logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
-                self._is_started = True
         finally:
             self._manager_mutex.release()
         return True
