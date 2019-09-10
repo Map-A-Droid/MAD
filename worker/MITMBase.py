@@ -112,9 +112,9 @@ class MITMBase(WorkerBase):
                     restart_thresh = self.get_devicesettings_value("restart_thresh", 5) * 2
                     reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3) * 2
 
-            if self._screendetection_count >= math.floor(restart_thresh / 2):
+            if self._screendetection_count >= math.ceil(restart_thresh / 2):
                 self._screendetection_count = 0
-                if not self._check_windows():
+                if not self._check_windows(quickcheck=True):
                     logger.error('Something wrong with that worker - kill it....')
                     self._stop_worker_event.set()
 

@@ -558,13 +558,13 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
-    def _check_windows(self):
+    def _check_windows(self, quickcheck = False):
         logger.info('Checking pogo screen...')
         loginerrorcounter: int = 0
         returncode: ScreenType = ScreenType.UNDEFINED
 
         while not returncode == ScreenType.POGO and not self._stop_worker_event.is_set():
-            returncode = self._WordToScreenMatching.matchScreen()
+            returncode = self._WordToScreenMatching.matchScreen(quickcheck)
 
             if returncode != ScreenType.POGO:
 
