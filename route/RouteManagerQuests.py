@@ -71,10 +71,6 @@ class RouteManagerQuests(RouteManagerBase):
                 logger.info("Another process already calculate the new route")
                 return True
             self._start_calc = True
-            if len(self._current_route_round_coords) > 0:
-                logger.info("There are coords in the Pool - use this!")
-                self._start_calc = False
-                return True
             self.generate_stop_list()
             if len(self._stoplist) == 0:
                 logger.info("Dont getting new stops - leaving now.")
@@ -87,7 +83,7 @@ class RouteManagerQuests(RouteManagerBase):
             coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
             if len(coords) > 0:
                 logger.info("Getting new coords - recalc quick route")
-                self._recalc_stop_route(coords)
+                self._recalc_stop_route(self._stoplist)
                 self._start_calc = False
             else:
                 logger.info("Dont getting new stops - leaving now.")
@@ -166,11 +162,11 @@ class RouteManagerQuests(RouteManagerBase):
 
                 if not self._first_started:
                     logger.info(
-                        "First starting quest route - copying original route for later use")
+                        "First starting quest route - copying original route {} for later use", str(self.name))
                     self._routecopy = self._route.copy()
                     self._first_started = True
                 else:
-                    logger.info("Restoring original route")
+                    logger.info("Restoring original route {} ", str(self.name))
                     self._route = self._routecopy.copy()
 
                 new_stops = list(set(stops) - set(self._route))
@@ -179,7 +175,7 @@ class RouteManagerQuests(RouteManagerBase):
                         logger.warning("Stop with coords {} seems new and not in route.", str(stop))
 
                 if len(stops) == 0:
-                    logger.info('No unprocessed  Stops detected - quit worker')
+                    logger.info('No unprocessed Stops detected in route {} - quit worker', str(self.name))
                     self._shutdown_route = True
                     self._restore_original_route()
                     self._route: List[Location] = []
@@ -198,7 +194,7 @@ class RouteManagerQuests(RouteManagerBase):
                 else:
                     self._init_route_queue()
 
-                logger.info('Getting {} positions in route', len(self._route))
+                logger.info('Getting {} positions in route {}'.format(len(self._route), str(self.name)))
                 return True
 
         finally:

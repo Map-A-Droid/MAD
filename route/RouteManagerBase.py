@@ -538,17 +538,16 @@ class RouteManagerBase(ABC):
                     logger.debug("Initroute of {} is finished - restart worker", self.name)
                     return None
 
-                if len(self._current_route_round_coords) > 0 and len(self._routepool[origin].queue) == 0:
-                    logger.debug(
-                        "{} finished his subroute, recalculating since more than one coord left of total route",
-                        self.name)
-                    if not self.__worker_changed_update_routepools():
-                        logger.info("Failed updating routepools ...")
-                        return None
-
-                elif len(self._current_route_round_coords) == 0 and len(self._routepool[origin].queue) == 0:
+                elif len(self._current_route_round_coords) >= 0 and len(self._routepool[origin].queue) == 0:
                     # only quest could hit this else!
                     logger.info("Worker finished his subroute, updating all subroutes if necessary")
+
+                    if self.mode == 'pokestops' and not self.init:
+                        # check for coords not in other workers to get a real open coord list
+                        if not self._get_coords_after_finish_route():
+                            logger.info("No more coords available - dont update routepool")
+                            return None
+
                     if not self.__worker_changed_update_routepools():
                         logger.info("Failed updating routepools ...")
                         return None
@@ -560,6 +559,8 @@ class RouteManagerBase(ABC):
                         return None
                     elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
                         [self._routepool[origin].queue.append(i) for i in self._routepool[origin].subroute]
+                    elif len(self._routepool[origin].queue) > 0 and len(self._routepool[origin].subroute) > 0:
+                        logger.info("Getting new coords for route {}", str(self.name))
                     else:
                         logger.info("Not getting new coords - leaving worker")
                         return None
@@ -583,7 +584,8 @@ class RouteManagerBase(ABC):
                 self.name), str(next_coord))
             if self._check_coords_before_returning(next_coord.lat, next_coord.lng):
 
-                if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords:
+                if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
+                        and not self.init:
                     self._current_route_round_coords.remove(next_coord)
 
                 self.__set_routepool_entry_location(origin, next_coord)
@@ -678,27 +680,6 @@ class RouteManagerBase(ABC):
             logger.info('Not updating routepools in iv_mitm mode')
             return True
         with self._manager_mutex:
-            temp_coordplist = self._current_route_round_coords
-            if self.mode == 'pokestops':
-                # check for coords not in other workers to get a real open coord list
-                coords_in_worker: List[Location] = self.get_coords_from_workers()
-                temp_coordplist = [coord for coord in self._current_route_round_coords if coord not in coords_in_worker]
-
-                if self._level and len(self._current_route_round_coords) > 0:
-                    logger.info("Worker in level mode - getting all coords")
-                    ## todo: init the route
-                elif len(self._route) > 0 and len(temp_coordplist) == 0 and \
-                        not (len(coords_in_worker) / len(self._route) >= 0.5) and len(self._workers_registered) > 1:
-                    # half of coords are in the worker - recalc routepools
-                    logger.info('To much coords in the pools - going to update all routepools')
-                else:
-                    if not self._get_coords_after_finish_route():
-                        logger.info("No more coords available - dont update routepool")
-                        return False
-                    else:
-                        logger.info("Getting new coords for questroute")
-                        logger.debug("Coords {}", str(self._current_route_round_coords))
-
             logger.debug("Updating all routepools")
             if len(self._workers_registered) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
@@ -893,7 +874,12 @@ class RouteManagerBase(ABC):
         return self.check_worker_rounds()
 
     def get_registered_workers(self) -> int:
-        return len(self._workers_registered)
+        self._workers_registered_mutex.acquire()
+        try:
+            return len(self._workers_registered)
+        finally:
+            self._workers_registered_mutex.release()
+        
 
     def get_position_type(self, origin: str) -> Optional[str]:
         return self._positiontyp.get(origin, None)
