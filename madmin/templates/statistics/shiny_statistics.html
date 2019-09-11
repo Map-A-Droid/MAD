@@ -248,8 +248,8 @@
                     { data: 'name', title: 'Name' },
                     { data: 'worker', title: 'Worker' },
                     { data: 'timestamp', title: 'Found' },
-                    { data: null, title: 'Where' }
-
+                    { data: null, title: 'Where' },
+                    { data: 'encounter_id', title: 'Encounter_ID /d/' }
                 ], [
                 {
                     "targets": [0],
@@ -269,7 +269,7 @@
                 setGridAndDestroyIfNeeded('#show-data-shiny-stats-per-mon-and-form', global_shiny_statistics, [
                     { data: null, title: 'Pic' },
                     { data: 'name', title: 'Name' },
-                    { data: 'form', title: 'Form' },
+                    { data: 'form', title: 'Form /d/' },
                     { data: 'shiny', title: 'Nº Shiny' },
                     { data: 'count', title: 'Nº Encounters' },
                     { data: 'odds', title: 'Odds (1 in X)' }
@@ -426,5 +426,6 @@
 <h2>Heatmap of Shiny Encounters</h2>
 <div id="heatmap" style="width:100%; height:600px;"></div>
 <br />
-<h3>Totally in Beta, complain in #mad-dev-branch and tag JabLuszko</h3>
+<h4>Totally in Beta, complain in #mad-dev-branch and tag JabLuszko. Those columns marked with /d/ are for debug purpose atm, strange data found in my db!</h4>
+
 {% endblock %}

@@ -298,7 +298,7 @@ class statistics(object):
 
         tmp_perworker_v2 = {}
         data = self._db.statistics_get_shiny_stats_v2(timestamp_from, timestamp_to)
-        # SELECT pokemon.pokemon_id, pokemon.form, pokemon.latitude, pokemon.longitude, pokemon.gender, pokemon.costume, tr.count, tr.timestamp_scan, tr.worker
+        # SELECT pokemon.pokemon_id, pokemon.form, pokemon.latitude, pokemon.longitude, pokemon.gender, pokemon.costume, tr.count, tr.timestamp_scan, tr.worker, pokemon.encounter_id
         found_shiny_mon_id = []
         shiny_count = {}
         mon_names = {}
@@ -334,7 +334,7 @@ class statistics(object):
             else:
                 tmp_perhour_v2[timestamp.hour] = 1
 
-            shiny_stats_v2.append({'img': monPic, 'name': monName, 'worker': dat[8], 'lat': dat[2], 'lat_5': "{:.5f}".format(dat[2]), 'lng_5': "{:.5f}".format(dat[3]), 'lng': dat[3], 'timestamp': timestamp.strftime(self._datetimeformat), 'form': dat[1], 'mon_id': dat[0]})
+            shiny_stats_v2.append({'img': monPic, 'name': monName, 'worker': dat[8], 'lat': dat[2], 'lat_5': "{:.5f}".format(dat[2]), 'lng_5': "{:.5f}".format(dat[3]), 'lng': dat[3], 'timestamp': timestamp.strftime(self._datetimeformat), 'form': dat[1], 'mon_id': dat[0], 'encounter_id':dat[9]})
 
         #print(shiny_count)
         global_shiny_stats_v2 = []
