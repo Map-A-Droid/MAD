@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 12
+current_version = 13
 
 
 class MADVersion(object):
@@ -300,6 +300,69 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+        if self._version < 13:
+            update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walker', 'devices']
+            old_data = {}
+            new_data = {}
+            cache = {}
+            with open('configs/mappings.json', 'rb') as fh:
+                old_data = json.load(fh)
+            for key in update_order:
+                entries = old_data[key]
+                cache[key] = {}
+                walkerarea = 'walkerarea'
+                walkerarea_ind = 0
+                if type(entries) is dict:
+                    continue
+                index = 0
+                new_data[key] = {
+                    'index': index,
+                    'entries': {}
+                }
+                if key == 'walker':
+                    new_data[walkerarea] = {
+                        'index': index,
+                        'entries': {}
+                    }
+                for entry in entries:
+                    if key == 'devicesettings':
+                        cache[key][entry['devicepool']] = index
+                    elif key == 'areas':
+                        cache[key][entry['name']] = index
+                    elif key == 'walker':
+                        cache[key][entry['walkername']] = index
+                        valid_areas = []
+                        if 'setup' in entry:
+                            for ind, area in enumerate(entry['setup']):
+                                try:
+                                    area['walkerarea'] = '/api/area/%s' % (cache['areas'][area['walkerarea']],)
+                                except KeyError:
+                                    # The area no longer exists.  Remove from the path
+                                    pass
+                                else:
+                                    new_data[walkerarea]['entries'][walkerarea_ind] = area
+                                    valid_areas.append('/api/walkerarea/%s' % walkerarea_ind)
+                                    walkerarea_ind += 1
+                            entry['setup'] = valid_areas
+                            new_data[walkerarea]['index'] = walkerarea_ind
+                        else:
+                            entry['setup'] = []
+                    elif key == 'devices':
+                        try:
+                            entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
+                        except:
+                            # The pool no longer exists.  Skip the device
+                            continue
+                        try:
+                            entry['walker'] = '/api/walker/%s' % (cache['walker'][entry['walker']],)
+                        except:
+                            # The walker no longer exists.  Skip the device
+                            continue
+                    new_data[key]['entries'][index] = entry
+                    index += 1
+                new_data[key]['index'] = index
+            with open(self._application_args.mappings, 'w') as outfile:
+                json.dump(new_data, outfile, indent=4, sort_keys=True)
 
         self.set_version(current_version)
 
@@ -307,3 +370,4 @@ class MADVersion(object):
         output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)
+
