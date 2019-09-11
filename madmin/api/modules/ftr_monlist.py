@@ -11,19 +11,21 @@ class APIMonList(apiHandler.ResourceHandler):
                 "monlist": {
                     "settings": {
                         "type": "text",
-                        "require": "true",
-                        "empty": "null",
+                        "require": True,
+                        "empty": None,
                         "description": "Name of global Monlist",
-                        "lockonedit": "true"
+                        "lockonedit": True,
+                        'expected': str
                     }
                 },
                 "mon_ids_iv": {
                     "settings": {
                         "type": "text",
-                        "require": "false",
+                        "require": False,
                         "description": "Encounter these mon ids while walking (Put in brackets [1,2,3] as comma separated list!)",
                         "output": "int",
-                        "showmonsidpicker": true
+                        "showmonsidpicker": True,
+                        "expected": list
                     }
                 }
             }
