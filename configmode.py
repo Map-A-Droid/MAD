@@ -27,6 +27,12 @@ def generate_mappingjson():
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 
+def create_folder(folder):
+    if not os.path.exists(folder):
+        logger.info(str(folder) + ' created')
+        os.makedirs(folder)
+
+
 def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager):
     from madmin.madmin import madmin_start
     madmin_start(args, db_wrapper, ws_server, mapping_manager)
@@ -43,6 +49,9 @@ if __name__ == "__main__":
     filename = args.mappings
     if not os.path.exists(filename):
         generate_mappingjson()
+
+    create_folder(args.file_path)
+    create_folder(args.upload_path)
 
     db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
 

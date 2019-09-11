@@ -11,6 +11,7 @@ version.json
 configs/config.ini
 *.calc
 configs/geofences/*
+upload/*
 files/*
 configs/mappings.json
 configs/mappings_org.json

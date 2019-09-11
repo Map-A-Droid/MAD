@@ -1,10 +1,12 @@
 import json
 import datetime
 import os
+import glob
 from flask import (make_response, request)
 from functools import update_wrapper, wraps
 from math import floor
 from utils.walkerArgs import parseArgs
+from utils.functions import (creation_date)
 
 mapping_args = parseArgs()
 
@@ -31,6 +33,16 @@ def auth_required(func):
 def allowed_file(filename):
     ALLOWED_EXTENSIONS = set(['apk', 'txt'])
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def uploaded_files(datetimeformat):
+    files = []
+    for file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
+        creationdate = datetime.datetime.fromtimestamp(
+            creation_date(file)).strftime(datetimeformat)
+        screenJson = ({'filename': os.path.basename(file), 'creation': creationdate})
+        files.append(screenJson)
+    return files
 
 
 def nocache(view):

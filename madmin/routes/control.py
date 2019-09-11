@@ -2,11 +2,13 @@ import datetime
 import time
 import os
 import cv2
-from flask import (render_template, request, redirect, flash)
+import glob
+from flask import (render_template, request, redirect, flash, jsonify)
 from werkzeug.utils import secure_filename
 
 from db.dbWrapperBase import DbWrapperBase
-from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache, allowed_file)
+from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache, allowed_file,
+                              uploaded_files)
 from utils.MappingManager import MappingManager
 from utils.functions import (creation_date, generate_phones, image_resize)
 from utils.logging import logger
@@ -44,7 +46,11 @@ class control(object):
             ("/send_gps", self.send_gps),
             ("/send_text", self.send_text),
             ("/upload", self.upload),
-            ("/send_command", self.send_command)
+            ("/send_command", self.send_command),
+            ("/get_uploaded_files", self.get_uploaded_files),
+            ("/uploaded_files", self.uploaded_files),
+            ("/delete_file", self.delete_file),
+            ("/install_file", self.install_file)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -114,7 +120,8 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
+        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol",
+                               files=uploaded_files(self._datetimeformat))
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):
@@ -363,11 +370,60 @@ class control(object):
                 return redirect(request.url)
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                file.save(os.path.join('temp', filename))
+                file.save(os.path.join(self._args.upload_path, filename))
                 flash('File successfully uploaded')
-                return redirect('/upload')
+                return redirect('/uploaded_files')
             else:
                 flash('Allowed file type is apk')
-                return redirect(request.url)
+                return redirect(getBasePath(request) + request.url)
 
-        return render_template('upload.html',header="Phonecontrol", title="Phonecontrol")
+        return render_template('upload.html', header="File Upload", title="File Upload")
+
+    @auth_required
+    def get_uploaded_files(self):
+        return jsonify(uploaded_files(self._datetimeformat))
+
+    @auth_required
+    def uploaded_files(self):
+        origin = request.args.get('origin', False)
+        useadb = request.args.get('adb', False)
+        return render_template('uploaded_files.html',
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Uploaded Files", origin=origin, adb=useadb)
+
+    @auth_required
+    def delete_file(self):
+        filename = request.args.get('filename')
+        if os.path.exists(os.path.join(self._args.upload_path, filename)):
+            os.remove(os.path.join(self._args.upload_path, filename))
+        return self.uploaded_files()
+
+    @auth_required
+    @logger.catch
+    def install_file(self):
+
+        filename = request.args.get('filename')
+        origin = request.args.get('origin')
+        useadb = request.args.get('adb', False)
+
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+        adb = devicemappings.get(origin, {}).get('adb', False)
+
+        if os.path.exists(os.path.join(self._args.upload_path, filename)):
+            if useadb:
+                if self._adb_connect.push_file(adb, origin, os.path.join(self._args.upload_path, filename)) and  \
+                    self._adb_connect.send_shell_command(
+                        adb, origin, "pm install -r /sdcard/Download/" + str(filename)):
+                    flash('File successfully installed')
+                else:
+                    flash('File not successfully uploaded :(')
+            else:
+                temp_comm = self._ws_server.get_origin_communicator(origin)
+                temp_comm.install_apk(os.path.join(self._args.upload_path, filename), 120)
+                flash('File successfully installed')
+
+        return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
+
+
+
+

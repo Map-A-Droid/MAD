@@ -184,6 +184,7 @@ if __name__ == "__main__":
     # create folders
     create_folder(args.raidscreen_path)
     create_folder(args.file_path)
+    create_folder(args.upload_path)
 
     if args.only_ocr:
         logger.error(

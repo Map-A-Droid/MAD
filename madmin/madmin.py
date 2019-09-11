@@ -19,8 +19,8 @@ sys.path.append("..")  # Adds higher directory to python modules path.
 
 app = Flask(__name__)
 app.config['UPLOAD_FOLDER'] = 'temp'
-app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
-app.secret_key = "secret key"
+app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
+app.secret_key = "8bc96865945be733f3973ba21d3c5949"
 log = logger
 
 
