@@ -874,7 +874,12 @@ class RouteManagerBase(ABC):
         return self.check_worker_rounds()
 
     def get_registered_workers(self) -> int:
-        return len(self._workers_registered)
+        self._workers_registered_mutex.acquire()
+        try:
+            return len(self._workers_registered)
+        finally:
+            self._workers_registered_mutex.release()
+        
 
     def get_position_type(self, origin: str) -> Optional[str]:
         return self._positiontyp.get(origin, None)
