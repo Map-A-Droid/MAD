@@ -2,17 +2,17 @@ import datetime
 import time
 import os
 import cv2
-from flask import (render_template, request, redirect)
+from flask import (render_template, request, redirect, flash)
+from werkzeug.utils import secure_filename
 
 from db.dbWrapperBase import DbWrapperBase
-from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache)
+from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache, allowed_file)
 from utils.MappingManager import MappingManager
-from utils.functions import (creation_date, generate_phones,
-                             image_resize)
+from utils.functions import (creation_date, generate_phones, image_resize)
+from utils.logging import logger
 
 from utils.adb import ADBConnect
 from utils.madGlobals import ScreenshotType
-
 
 class control(object):
     def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app):
@@ -43,10 +43,11 @@ class control(object):
             ("/clear_game_data", self.clear_game_data),
             ("/send_gps", self.send_gps),
             ("/send_text", self.send_text),
+            ("/upload", self.upload),
             ("/send_command", self.send_command)
         ]
         for route, view_func in routes:
-            self._app.route(route)(view_func)
+            self._app.route(route, methods=['GET', 'POST'])(view_func)
 
     @auth_required
     @nocache
@@ -347,3 +348,26 @@ class control(object):
 
         time.sleep(2)
         return self.take_screenshot(origin, useadb)
+
+    @auth_required
+    @logger.catch
+    def upload(self):
+        if request.method == 'POST':
+            # check if the post request has the file part
+            if 'file' not in request.files:
+                flash('No file part')
+                return redirect(request.url)
+            file = request.files['file']
+            if file.filename == '':
+                flash('No file selected for uploading')
+                return redirect(request.url)
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join('temp', filename))
+                flash('File successfully uploaded')
+                return redirect('/upload')
+            else:
+                flash('Allowed file type is apk')
+                return redirect(request.url)
+
+        return render_template('upload.html',header="Phonecontrol", title="Phonecontrol")

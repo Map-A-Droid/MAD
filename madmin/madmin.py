@@ -3,11 +3,11 @@ import sys
 import logging
 from flask import Flask
 from flask.logging import default_handler
+from werkzeug.utils import secure_filename
 
 from db.dbWrapperBase import DbWrapperBase
 from utils.MappingManager import MappingManager
 from utils.logging import InterceptHandler, logger
-
 # routes
 from madmin.routes.statistics import statistics
 from madmin.routes.control import control
@@ -18,6 +18,9 @@ from madmin.routes.path import path
 sys.path.append("..")  # Adds higher directory to python modules path.
 
 app = Flask(__name__)
+app.config['UPLOAD_FOLDER'] = 'temp'
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024
+app.secret_key = "secret key"
 log = logger
 
 

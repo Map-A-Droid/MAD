@@ -8,7 +8,6 @@ from utils.walkerArgs import parseArgs
 
 mapping_args = parseArgs()
 
-
 def auth_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
@@ -27,6 +26,11 @@ def auth_required(func):
         return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
     return decorated
+
+
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = set(['apk', 'txt'])
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
 def nocache(view):
