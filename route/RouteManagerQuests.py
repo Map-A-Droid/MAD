@@ -83,7 +83,7 @@ class RouteManagerQuests(RouteManagerBase):
             coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
             if len(coords) > 0:
                 logger.info("Getting new coords - recalc quick route")
-                self._recalc_stop_route(self._stoplist)
+                self._recalc_stop_route(coords)
                 self._start_calc = False
             else:
                 logger.info("Dont getting new stops - leaving now.")
