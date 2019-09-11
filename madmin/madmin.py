@@ -36,7 +36,7 @@ def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
     control(db_wrapper, args, mapping_manager, ws_server, logger, app)
     map(db_wrapper, args, mapping_manager, app)
     api = APIHandler(logger, args, app)
-    config(db_wrapper, args, logger, app, mapping_manager)
+    config(db_wrapper, args, logger, app, mapping_manager, api)
     ocr(db_wrapper, args, logger, app)
     path(db_wrapper, args, app)
 

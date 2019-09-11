@@ -9,12 +9,13 @@ from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
 from utils.MappingManager import MappingManager
 from utils.logging import logger
+from utils.local_api import LocalAPI
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class config(object):
-    def __init__(self, db, args, logger, app, mapping_manager: MappingManager):
+    def __init__(self, db, args, logger, app, mapping_manager: MappingManager, api):
         self._db = db
         self._args = args
         if self._args.madmin_time == "12":
@@ -24,12 +25,14 @@ class config(object):
         self._adb_connect = ADBConnect(self._args)
         self._ws_connected_phones: list = []
         self._logger = logger
-
+        self._api = api
         self._app = app
         self._app.config["TEMPLATES_AUTO_RELOAD"] = True
         cache.init_app(self._app)
         self._mapping_mananger = mapping_manager
+
         self.add_route()
+        self.api = LocalAPI(logger, args)
 
     def add_route(self):
         routes = [
@@ -41,9 +44,12 @@ class config(object):
             ("/showmonsidpicker", self.showmonsidpicker),
             ("/addedit", self.addedit),
             ("/settings", self.settings),
+            ("/settings/auth", self.settings_auth),
             ("/settings/devices", self.settings_devices),
             ("/settings/shared", self.settings_shared),
             ("/settings/areas", self.settings_areas),
+            ("/settings/walker", self.settings_walkers),
+            ("/settings/walker/areaeditor", self.setting_walkers_area),
             ("/settings/set_device_walker", self.set_device_walker),
             ("/reload", self.reload)
         ]
@@ -438,169 +444,180 @@ class config(object):
 
         return "ok"
 
+    def process_element(self, **kwargs):
+        key = kwargs.get('identifier')
+        base_uri = kwargs.get('base_uri')
+        redirect = kwargs.get('redirect')
+        html_single = kwargs.get('html_single')
+        html_all = kwargs.get('html_all')
+        subtab = kwargs.get('subtab')
+        var_parser_section = kwargs.get('var_parser_section', subtab)
+        required_uris = kwargs.get('required_uris')
+        mode_required = kwargs.get('mode_required', False)
+        identifier = request.args.get(key)
+        uri = identifier
+        if uri:
+            if base_uri not in uri:
+                uri = '%s/%s' % (base_uri, identifier)
+        else:
+            uri = base_uri
+        mode = request.args.get("mode", None)
+        settings_vars = self.process_settings_vars(self._api[subtab].configuration, mode=mode)
+        if request.method == 'GET':
+            included_data = {}
+            if required_uris:
+                for key, tmp_uri in required_uris.items():
+                    included_data[key] = self.api.get(tmp_uri).json()
+            # Mode was required for this operation but was not present.  Return the base element
+            if mode_required and mode is None:
+                req = self.api.get(base_uri)
+                element = req.json()
+                included_data[subtab] = element
+                return render_template(html_all,
+                                       subtab=subtab,
+                                       **included_data
+                                       )
+            if identifier and identifier == 'new':
+                return render_template(html_single,
+                                       uri=base_uri,
+                                       redirect=redirect,
+                                       element={'settings':{}},
+                                       subtab=subtab,
+                                       method='POST',
+                                       settings_vars=settings_vars,
+                                       **included_data)
+            req = self.api.get(uri)
+            element = req.json()
+            included_data[subtab] = element
+            if identifier:
+                return render_template(html_single,
+                                       uri=uri,
+                                       redirect=redirect,
+                                       element=element,
+                                       subtab=subtab,
+                                       method='PATCH',
+                                       settings_vars=settings_vars,
+                                       **included_data)
+            else:
+                return render_template(html_all,
+                                       subtab=subtab,
+                                       **included_data
+                                       )
+
+    def process_settings_vars(self, config, mode=None):
+        try:
+            return config[mode]
+        except KeyError:
+            return config
+
     @logger.catch
     @auth_required
     def settings_areas(self):
-        with open(self._args.mappings) as f:
-            mappings = json.load(f)
+        required_data = {
+            'identifier': 'id',
+            'base_uri': '/api/area',
+            'redirect': '/settings/areas',
+            'html_single': 'settings_singlearea.html',
+            'html_all': 'settings_areas.html',
+            'subtab': 'areas',
+            'mode_required': True
+        }
+        return self.process_element(**required_data)
 
-        areaname = request.args.get("area", None)
-
-        if request.method == 'POST':
-            for key, val in enumerate(mappings["areas"]):
-                area = mappings["areas"][key]
-
-                if area["name"] != areaname:
-                    continue
-
-                for entry in request.form:
-                    value = request.form[entry]
-
-                    if value == "None" or value == "":
-                        value = None
-
-                    if entry.startswith("field."):
-                        name = entry.split("field.", 1)[1]
-                        mappings["areas"][key][name] = value
-                    else:
-                        mappings["areas"][key]["settings"][entry] = value
-
-            with open(self._args.mappings, 'w') as outfile:
-                json.dump(mappings, outfile, indent=4, sort_keys=True)
-
-            return redirect("/{}/settings/areas?area={}".format(self._args.madmin_base_path, areaname), code=302)
-
-        if areaname is not None:
-            areaconfig = None
-            for key, val in enumerate(mappings["areas"]):
-                tmparea = mappings["areas"][key]
-
-                if tmparea["name"] == areaname:
-                    areaconfig = tmparea
-
-            with open('madmin/static/vars/vars_parser.json') as f:
-                all_settings_vars = json.load(f)
-
-            settings_vars = []
-            for key, val in enumerate(all_settings_vars["areas"]):
-                tmpsv = all_settings_vars["areas"][key]
-
-                if tmpsv["name"] == areaconfig["mode"]:
-                    settings_vars = tmpsv
-
-            return render_template('settings_singlearea.html',
-                                   area=areaconfig,
-                                   subtab="areas",
-                                   settings_vars=settings_vars)
-
-        return render_template('settings_areas.html',
-                               mappings=mappings,
-                               subtab="areas")
+    @logger.catch
+    @auth_required
+    def settings_auth(self):
+        required_data = {
+            'identifier': 'id',
+            'base_uri': '/api/auth',
+            'redirect': '/settings/auth',
+            'html_single': 'settings_singleauth.html',
+            'html_all': 'settings_auth.html',
+            'subtab': 'auth',
+        }
+        return self.process_element(**required_data)
 
     @logger.catch
     @auth_required
     def settings_devices(self):
-        with open(self._args.mappings) as f:
-            mappings = json.load(f)
-
-        devicename = request.args.get("device", None)
-
-        if request.method == 'POST':
-            for key, val in enumerate(mappings["devices"]):
-                device = mappings["devices"][key]
-
-                if device["origin"] != devicename:
-                    continue
-
-                for entry in request.form:
-                    value = request.form[entry]
-
-                    if value == "None":
-                        value = None
-
-                    if entry.startswith("field."):
-                        name = entry.split("field.", 1)[1]
-                        mappings["devices"][key][name] = value
-                    else:
-                        mappings["devices"][key]["settings"][entry] = value
-
-            with open(self._args.mappings, 'w') as outfile:
-                json.dump(mappings, outfile, indent=4, sort_keys=True)
-
-            return redirect("/{}/settings/devices?device={}".format(self._args.madmin_base_path, devicename), code=302)
-
-        if devicename is not None:
-            deviceconfig = None
-            for key, val in enumerate(mappings["devices"]):
-                tmpdevice = mappings["devices"][key]
-
-                if tmpdevice["origin"] == devicename:
-                    deviceconfig = tmpdevice
-
-            with open('madmin/static/vars/vars_parser.json') as f:
-                settings_vars = json.load(f)
-
-            return render_template('settings_singledevice.html',
-                                   deviceconfig=deviceconfig,
-                                   subtab="devices",
-                                   walker=mappings["walker"],
-                                   pools=mappings["devicesettings"],
-                                   settings_vars=settings_vars["devices"])
-
-        return render_template('settings_devices.html',
-                               mappings=mappings,
-                               subtab="devices")
+        required_data = {
+            'identifier': 'id',
+            'base_uri': '/api/device',
+            'redirect': '/settings/devices',
+            'html_single': 'settings_singledevice.html',
+            'html_all': 'settings_devices.html',
+            'subtab': 'devices',
+            'required_uris': {
+                'walkers': '/api/walker',
+                'pools': '/api/devicesetting'
+            },
+        }
+        return self.process_element(**required_data)
 
     @logger.catch
     @auth_required
     def settings_shared(self):
-        with open(self._args.mappings) as f:
-            mappings = json.load(f)
+        required_data = {
+            'identifier': 'id',
+            'base_uri': '/api/devicesetting',
+            'redirect': '/settings/shared',
+            'html_single': 'settings_singlesharedsetting.html',
+            'html_all': 'settings_sharedsettings.html',
+            'subtab': 'devicesettings',
+            'var_parser_section': 'devices',
+            'required_uris': {},
+        }
+        return self.process_element(**required_data)
 
-        sharedsettingname = request.args.get("setting", None)
-        if request.method == 'POST':
-            for key, val in enumerate(mappings["devicesettings"]):
-                device = mappings["devicesettings"][key]
+    @logger.catch
+    @auth_required
+    def settings_walkers(self):
+        required_data = {
+            'identifier': 'id',
+            'base_uri': '/api/walker',
+            'redirect': '/settings/walker',
+            'html_single': 'settings_singlewalker.html',
+            'html_all': 'settings_walkers.html',
+            'subtab': 'walker',
+            'required_uris': {
+                'areas': '/api/area',
+                'walkerareaconfig': '/api/walkerarea'
+            },
+        }
+        return self.process_element(**required_data)
 
-                if device["devicepool"] != sharedsettingname:
-                    continue
-
-                for entry in request.form:
-                    value = request.form[entry]
-
-                    if value == "None":
-                        value = None
-
-                    if entry.startswith("field."):
-                        name = entry.split("field.", 1)[1]
-                        mappings["devicesettings"][key][name] = value
-                    else:
-                        mappings["devicesettings"][key]["settings"][entry] = value
-
-            with open(self._args.mappings, 'w') as outfile:
-                json.dump(mappings, outfile, indent=4, sort_keys=True)
-
-            return redirect("/{}/settings/shared?setting={}".format(self._args.madmin_base_path, sharedsettingname), code=302)
-
-        if sharedsettingname is not None:
-            sharedsetting = None
-            for key, val in enumerate(mappings["devicesettings"]):
-                tmpsetting = mappings["devicesettings"][key]
-
-                if tmpsetting["devicepool"] == sharedsettingname:
-                    sharedsetting = tmpsetting
-
-            with open('madmin/static/vars/vars_parser.json') as f:
-                settings_vars = json.load(f)
-
-            return render_template("settings_singlesharedsetting.html",
-                                   subtab="sharedsettings",
-                                   settings_vars=settings_vars["devices"],
-                                   sharedsetting=sharedsetting)
-
-        return render_template("settings_sharedsettings.html",
-                               subtab="sharedsettings",
-                               mappings=mappings)
+    @logger.catch
+    @auth_required
+    def setting_walkers_area(self):
+        walkerarea_uri = request.args.get("walkerarea", None)
+        walkeruri = request.args.get("id", None)
+        if walkeruri is None:
+            return self.settings_walkers()
+        # Only pull this if its set.  When creating a new walkerarea it will be empty
+        if walkerarea_uri is not None:
+            if '/api/walkerarea/' not in walkerarea_uri:
+                walkerarea_uri = '/api/walkerarea/%s' % (walkerarea_uri,)
+            walkerareaconfig = self.api.get(walkerarea_uri).json()
+        else:
+            walkerarea_uri = '/api/walkerarea'
+            walkerareaconfig = {}
+        if '/api/walker/' not in walkeruri:
+            walkeruri = '/api/walker/%s' % (walkeruri,)
+        walkerconfig = self.api.get(walkeruri).json()
+        areaconfig = self.api.get('/api/area').json()
+        walkertypes = ['coords','countdown', 'idle', 'period', 'round', 'timer']
+        mappings = {
+            'uri': walkerarea_uri,
+            'element': walkerareaconfig,
+            'walker': walkerconfig,
+            'walkeruri': walkeruri,
+            'areas': areaconfig,
+            'walkertypes': walkertypes
+        }
+        return render_template('settings_walkerarea.html',
+                               subtab="walker",
+                               **mappings
+                               )
 
     @logger.catch
     @auth_required

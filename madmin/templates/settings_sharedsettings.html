@@ -6,42 +6,63 @@
 
 {% block scripts %}
 {{ super() }}
+<script>
+$(document).ready(function () {
+    $(".delete").click(function() {
+        if(confirm('Are you sure you want to delete this resource?')) {
+            $.ajax({
+                url : $(this).data('identifier'),
+                type : 'DELETE'
+            });
+            $(this).parent().parent().remove();
+            toggleConfiguredElement();
+        }
+    });
+    // Toggle on boot
+    toggleConfiguredElement();
+  });
+
+  function toggleConfiguredElement() {
+    if($(".delete").length == 0) {
+        $('#no-configured-elements').show();
+    } else {
+        $('#no-configured-elements').hide();
+    }
+}
+</script>
 {% endblock %}
 
 {% block content %}
 {{ super() }}
-{% if mappings.devicesettings|length > 0 %}
 <table class="table table-striped table-hover">
   <thead class="thead-dark">
     <tr>
       <th style="width: 50%">Name</th>
       <th style="width: 30%">Settings</th>
-      <th style="width: 20%"></th>
+      <th style="width: 20%" class= "text-right align-middle"><a href='settings/shared?id=new'><button type="button" class="btn btn-success"><i class="fas fa-plus"></i></button></a></th>
     </tr>
   </thead>
   <tbody>
-    {% for devicesetting in mappings.devicesettings %}
+    {% for pool_id, devicesetting in devicesettings.items() %}
     <tr>
       <td class="align-middle">
-        <a href="settings/shared?setting={{devicesetting.devicepool}}">{{devicesetting.devicepool}}</a>
+        <a href="settings/shared?id={{ pool_id }}">{{ devicesetting.devicepool }}</a>
       </td>
       <td>
         <p style="font-size: 65%; min-height: 40px; display: inline-box">
         {% for key in devicesetting.settings|sort %}
         {%if devicesetting.settings[key] != "" %}
-        {{key}}: {{devicesetting.settings[key]}}<br>
+        {{ key }}: {{ devicesetting.settings[key] }}<br>
         {% endif %}
         {% endfor %}
         </p>
       </td>
       <td class="text-right align-middle">
-        <button type="button" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+        <button data-identifier='{{ pool_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
       </td>
     </tr>
     {% endfor %}
-  </tbody
+  </tbody>
 </table>
-{% else %}
-<div class="alert alert-info">No shared settings configured yet</div
-{% endif %}
+<div id='no-configured-elements' class="alert alert-info">No shared settings configured</div>
 {% endblock %}

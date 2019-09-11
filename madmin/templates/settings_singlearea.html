@@ -6,51 +6,117 @@
 
 {% block scripts %}
 {{ super() }}
+<script>
+$.urlParam = function(name){
+    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+    return results[1] || 0;
+}
+$(document).ready(function () {
+    $("#submit").click(function() {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        save_data = {};
+        if($(".form-control[setting]").length > 0) {
+            save_data['settings'] = {};
+        }
+        $(".form-control").each(function() {
+            var obj = $(this);
+            var name = obj.attr('name');
+            value = null;
+            if(obj.is('select')) {
+                value = obj.children("option:selected").val();
+            } else if(obj.is('input')) {
+                value = obj.val();
+            }
+            if(value.length == 0)
+                value = null;
+            if(obj.attr('setting') == 'true') {
+                save_data['settings'][name] = value;
+            } else {
+                save_data[name] = value;
+            }
+            if(save_data['pool'] == 'None') {
+                save_data['pool'] = null;
+            }
+        });
+        $.ajax({
+            beforeSend: function(xhr) {
+                xhr.setRequestHeader('x-mode', $.urlParam('mode'));
+            },
+            url : "{{ uri }}",
+            data : JSON.stringify(save_data),
+            type : '{{ method }}',
+            contentType : 'application/json',
+            success: function(data, status, xhr) {
+              if(xhr.status < 400)
+                window.location.replace('{{ redirect }}');
+            },
+            error: function(data, status, xhr) {
+                $("label[for]").removeClass('btn-danger');
+                if(data['responseJSON'] != undefined) {
+                    $.each(data['responseJSON']['missing'], function() {
+                        var elem = $("label[for="+ this +"]");
+                        elem[0].innerHTML = elem.attr('for') +' - Required Field';
+                        elem.addClass('btn-danger');
+                    });
+                    $.each(data['responseJSON']['invalid'], function() {
+                        var field = this.split(/:(.+)/)[0];
+                        var expected = this.split(/:(.+)/)[1];
+                        var elem = $("label[for="+ field +"]");
+                        elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
+                        elem.addClass('btn-danger');
+                    });
+                    $.unblockUI();
+                    alert('One or more fields failed validation');
+                } else {
+                    $.unblockUI();
+                    alert('Unable to save the {{ subtab }}.  An unknown error occurred');    
+                }
+            }
+        });
+    });
+});
+</script>
 {% endblock %}
 
 {% block content %}
 {{ super() }}
 
-<h1 class="display-4">{{area.name}} <small class="text-muted lead">{{area.mode}}</small></h1>
+<h1 class="display-4">{{ element.name }} <small class="text-muted lead">{{ element.mode }}</small></h1>
 
-<form action="settings/areas?area={{area.name}}" method="post">
 <div class="row">
   <div class="col-sm">
-    {% for field in settings_vars.settings|sort(attribute="name") %}
+    {% for key, field in settings_vars.settings|dictsort %}
     <div class="form-group">
-      <label for="{{field.name}}">{{field.name}}</label>
+      <label for="{{ key }}">{{ key }}</label>
       {% if field.settings.type == "option" %}
-      <select class="form-control" name="{{field.name}}">
-        {% for option in field.settings["values"].split("|") %}
-        <option value="{{option}}" {{'selected="selected"' if option == area.settings[field.name]}}>{{option}}</option>
+      <select class="form-control" name="{{ key }}" setting='true'>
+        {% for option in field.settings["values"] %}
+        <option value="{{ option }}" {% if key in element.settings %}{{ 'selected="selected"' if option|tojson == element.settings[key]|tojson }}{% endif %}>{{ option|lower }}</option>
         {% endfor %}
       </select>
       {% else %}
-      <input type="{{field.settings.type}}" name="{{field.name}}" class="form-control" id="{{field.name}}" value="{% if area.settings[field.name] != 'None' and area.settings[field.name] is not none %}{{area.settings[field.name]}}{% endif %}">
+      <input type="{{ field.settings.type }}" name="{{ key }}" setting='true' class="form-control" id="{{ key }}" value="{% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}">
       {% endif %}
-      <small class="form-text text-muted">{{field.settings.description}}</small>
+      <small class="form-text text-muted">{{ field.settings.description }}</small>
     </div>
-    {% endfor %}
+    {% endfor %}  
   </div>
   <div class="col-sm">
-    {% for field in settings_vars.fields|sort(attribute="name") %}
-    {% if field.name != "name" %}
+    {% for key, field in settings_vars.fields|dictsort %}
     <div class="form-group">
-      <label for="{{field.name}}">{{field.name}}</label>
+      <label for="{{ key }}">{{ key }}</label>
       {% if field.settings.type == "option" %}
-      <select class="form-control" name="field.{{field.name}}">
-        {% for option in field.settings["values"].split("|") %}
-        <option value="{{option}}" {{'selected="selected"' if option == area[field.name]}}>{{option}}</option>
+      <select class="form-control" name="{{ key }}">
+        {% for option in field.settings["values"] %}
+        <option value="{{ option }}" {% if key in element %}{{ 'selected="selected"' if option|tojson == element[key]|tojson }}{% endif %}>{{ option|lower }}</option>
         {% endfor %}
       </select>
       {% else %}
-      <input type="{{field.settings.type}}" name="field.{{field.name}}" class="form-control" id="{{field.name}}" value="{% if area[field.name] != 'None' and area[field.name] is not none %}{{area[field.name]}}{% endif %}">
+      <input type="{{ field.type }}" name="{{ key }}" class="form-control" id="{{ key }}" value="{% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
       {% endif %}
-      <small class="form-text text-muted">{{field.settings.description}}</small>
+      <small class="form-text text-muted">{{ field.settings.description }}</small>
     </div>
-    {% endif %}
     {% endfor %}
-    <button type="submit" class="btn btn-success btn-lg btn-block">Save</button>
+    <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
 </div>
-</form>
 {% endblock %}
