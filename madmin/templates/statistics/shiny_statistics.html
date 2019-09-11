@@ -213,8 +213,6 @@
 
      function drawHeatMap(points) {
          heat.setLatLngs(points);
-	 console.log("Drawing heatmap for ");
-         console.log(points);
          //heat.redraw();
      }
 
@@ -229,7 +227,7 @@
             success: function (result) {
                 empty = result.empty
                 if (empty) {
-                  alert("No shiny found in this time frame. Change your params.");
+                  alert("No shiny found for this time frame. Please change your params (or make sure you have game_stats_raw enabled in config.ini)");
                   return;
                 }
                 shiny_statistics = result.shiny_statistics
