@@ -179,8 +179,9 @@ class MitmMapper(object):
     def generate_player_stats(self, origin: str, inventory_proto: dict):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).gen_player_stats(inventory_proto)
+
      def submit_gmo_for_location(self, origin, payload):
-         logger.debug4("submit_gmo of {}", origin)
+         logger.debug4("submit_gmo_for_location of {}", origin)
          cells = payload.get("cells", None)
          # can this even happen?
          if cells is None:
@@ -200,7 +201,7 @@ class MitmMapper(object):
              # just started, nothing to do here
              self.__last_cellsid[origin] = current_cells_id
              self.__last_possibly_moved[origin] = time.time()
-         logger.debug4("Done submit_gmo of {} with {}", origin, current_cells_id)
+         logger.debug4("Done submit_gmo_for_location of {} with {}", origin, current_cells_id)
  
      def get_last_timestamp_possible_moved(self, origin):
          return self.__last_possibly_moved.get(origin, None)
