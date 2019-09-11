@@ -26,6 +26,8 @@ class MitmMapper(object):
         self.__mapping_mutex = Lock()
         self.__mapping_manager: MappingManager = mapping_manager
         self.__injected = {}
+        self.__last_cellsid = {}
+        self.__last_possibly_moved = {}
         self.__application_args = args
         self.__db_wrapper: DbWrapperBase = db_wrapper
         self.__playerstats_db_update_stop: Event = Event()
