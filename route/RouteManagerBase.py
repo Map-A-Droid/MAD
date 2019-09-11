@@ -559,6 +559,8 @@ class RouteManagerBase(ABC):
                         return None
                     elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
                         [self._routepool[origin].queue.append(i) for i in self._routepool[origin].subroute]
+                    elif len(self._routepool[origin].queue) > 0 and len(self._routepool[origin].subroute) > 0:
+                        logger.info("Getting new coords for route {}", str(self.name))
                     else:
                         logger.info("Not getting new coords - leaving worker")
                         return None
