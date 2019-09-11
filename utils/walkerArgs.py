@@ -1,5 +1,6 @@
 import os
 import sys
+from distutils.util import strtobool
 from time import strftime
 
 import configargparse
@@ -303,7 +304,7 @@ def parseArgs():
 
     parser.add_argument('-ahn', '--auto_hatch_number', type=int, default=0,
                         help='Auto hatch of level 5 Pokemon ID')
-    parser.add_argument('--log_colors', default=True,
+    parser.add_argument('--log_colors', default=True, type=lambda x:bool(strtobool(x)),
                         help=("Option to enable/disable colored logs."))
 
     verbose = parser.add_mutually_exclusive_group()
