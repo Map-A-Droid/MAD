@@ -6,11 +6,12 @@ from threading import  RLock, Thread
 from utils.logging import logger
 
 class deviceUpdater(object):
-    def __init__(self, websocket):
+    def __init__(self, websocket, args):
         self._websocket = websocket
         self._update_queue = Queue()
         self._update_mutex = RLock()
         self._log = {}
+        self._args = args
         if os.path.exists('update_log.json'):
             with open('update_log.json') as logfile:
                 self._log = json.load(logfile)

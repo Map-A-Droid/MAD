@@ -277,7 +277,7 @@ if __name__ == "__main__":
     if args.with_madmin:
         from madmin.madmin import madmin_start
 
-        device_Updater = deviceUpdater(ws_server)
+        device_Updater = deviceUpdater(ws_server, args)
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
                           args=(args, db_wrapper, ws_server, mapping_manager, device_Updater))

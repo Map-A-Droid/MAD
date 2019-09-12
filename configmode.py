@@ -75,7 +75,7 @@ if __name__ == "__main__":
     t_ws.daemon = False
     t_ws.start()
 
-    device_Updater = deviceUpdater(ws_server)
+    device_Updater = deviceUpdater(ws_server, args)
 
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
