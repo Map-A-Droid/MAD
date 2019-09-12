@@ -28,6 +28,7 @@ from utils.rarity import Rarity
 from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
 from websocket.WebsocketServer import WebsocketServer
+from utils.updater import deviceUpdater
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -275,9 +276,11 @@ if __name__ == "__main__":
 
     if args.with_madmin:
         from madmin.madmin import madmin_start
+
+        device_Updater = deviceUpdater(ws_server)
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
-                          args=(args, db_wrapper, ws_server, mapping_manager))
+                          args=(args, db_wrapper, ws_server, mapping_manager, device_Updater))
         t_madmin.daemon = True
         t_madmin.start()
 

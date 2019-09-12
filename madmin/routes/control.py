@@ -17,7 +17,8 @@ from utils.adb import ADBConnect
 from utils.madGlobals import ScreenshotType
 
 class control(object):
-    def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app):
+    def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app,
+                 deviceUpdater):
         self._db: DbWrapperBase = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
@@ -25,6 +26,7 @@ class control(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._adb_connect = ADBConnect(self._args)
+        self._device_updater = deviceUpdater
 
         self._mapping_manager: MappingManager = mapping_manager
 
@@ -50,7 +52,10 @@ class control(object):
             ("/get_uploaded_files", self.get_uploaded_files),
             ("/uploaded_files", self.uploaded_files),
             ("/delete_file", self.delete_file),
-            ("/install_file", self.install_file)
+            ("/install_file", self.install_file),
+            ("/get_install_log", self.get_install_log),
+            ("/delete_log_entry", self.delete_log_entry),
+            ("/install_status", self.install_status)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -410,7 +415,7 @@ class control(object):
         adb = devicemappings.get(origin, {}).get('adb', False)
 
         if os.path.exists(os.path.join(self._args.upload_path, filename)):
-            if useadb:
+            if useadb == 'True':
                 if self._adb_connect.push_file(adb, origin, os.path.join(self._args.upload_path, filename)) and  \
                     self._adb_connect.send_shell_command(
                         adb, origin, "pm install -r /sdcard/Download/" + str(filename)):
@@ -418,12 +423,30 @@ class control(object):
                 else:
                     flash('File not successfully uploaded :(')
             else:
-                temp_comm = self._ws_server.get_origin_communicator(origin)
-                temp_comm.install_apk(os.path.join(self._args.upload_path, filename), 120)
-                flash('File successfully installed')
+                self._device_updater.add_update(origin=origin, file=filename, id=int(time.time()))
+                flash('File successfully queued')
 
         return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
 
+    @auth_required
+    @logger.catch
+    def get_install_log(self):
+        return_log = []
+        log = self._device_updater.get_log()
+        for entry in log:
+            return_log.append(log[entry])
 
+        return jsonify(return_log)
 
+    @auth_required
+    def delete_log_entry(self):
+        id_ = request.args.get('id')
+        self._device_updater.delete_log_id(id_)
+        return redirect(getBasePath(request) + '/install_status')
 
+    @auth_required
+    @logger.catch
+    def install_status(self):
+        return render_template('installation_status.html',
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Installation Status")
