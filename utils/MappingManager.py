@@ -209,6 +209,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_mode() if routemanager is not None else None
 
+    def routemanager_get_name(self, routemanager_name: str) -> Optional[str]:
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.name if routemanager is not None else None
+
     def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         if routemanager is not None and isinstance(routemanager, RouteManagerIV.RouteManagerIV):
@@ -248,6 +252,7 @@ class MappingManager:
             return areas
 
         raw_areas = self.__data_manager.get_data('area')
+        print(raw_areas)
 
         thread_pool = ThreadPool(processes=4)
 
@@ -277,7 +282,8 @@ class MappingManager:
             area_dict = {"mode":              area["mode"],
                          "geofence_included": area["geofence_included"],
                          "geofence_excluded": area.get("geofence_excluded", None),
-                         "routecalc":         area["routecalc"]}
+                         "routecalc":         area["routecalc"],
+                         "name":              area['name']}
             # also build a routemanager for each area...
 
             # grab coords
@@ -432,6 +438,7 @@ class MappingManager:
             area_dict['geofence_excluded'] = area.get(
                     'geofence_excluded', None)
             area_dict['init'] = area.get('init', False)
+            area_dict['name'] = area['name']
             areas[area_uri] = area_dict
         return areas
 
