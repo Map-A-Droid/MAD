@@ -1,0 +1,90 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function () {
+    $("#submit").click(function() {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        save_data = {
+            'monlist': $("#monlist").val(),
+        };
+        mon_ids_iv = $("#mon_ids_iv").val();
+        try {
+            save_data['mon_ids_iv'] = JSON.parse(mon_ids_iv).map(Number);
+            valid = true;
+        } catch(err) {
+            if(mon_ids_iv.includes(',')) {
+                mon_ids_iv = mon_ids_iv.split(',').map(Number);
+                save_data['mon_ids_iv'] = mon_ids_iv;
+                valid = true;
+            } else {
+                alert('Please enter a list of comma-seperated pokemon ids');
+            }
+        }
+        if(valid) {
+            $.ajax({
+                url : "{{ uri }}",
+                data : JSON.stringify(save_data),
+                type : '{{ method }}',
+                contentType : 'application/json',
+                success: function(data, status, xhr) {
+                  if(xhr.status < 400)
+                    window.location.replace('{{ redirect }}');
+                },
+                error: function(data, status, xhr) {
+                    $("label[for]").removeClass('btn-danger');
+                    if(data['responseJSON'] != undefined) {
+                        $.each(data['responseJSON']['missing'], function() {
+                            var elem = $("label[for="+ this +"]");
+                            elem[0].innerHTML = elem.attr('for') +' - Required Field';
+                            elem.addClass('btn-danger');
+                        });
+                        $.each(data['responseJSON']['invalid'], function() {
+                            var field = this.split(/:(.+)/)[0];
+                            var expected = this.split(/:(.+)/)[1];
+                            var elem = $("label[for="+ field +"]");
+                            elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
+                            elem.addClass('btn-danger');
+                        });
+                        $.unblockUI();
+                        alert('One or more fields failed validation');
+                    } else {
+                        $.unblockUI();
+                        alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                    }
+                }
+            });
+        }
+    });
+});
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+
+<h1 class="display-4">{{ element.monlist }}</h1>
+
+<div class="row">
+  <div class="col-sm">
+    <div class="form-group">
+      <label for="monlist">monlist</label>
+      <input type="input" class="form-control" id="monlist" name="monlist" value="{{ element.monlist }}">
+      <small class="form-text text-muted">monlist</small>
+    </div>
+    <div class="form-group">
+      <label for="mon_ids_iv">mon_ids_iv</label>
+      <input type="input" class="form-control" id="mon_ids_iv" name="mon_ids_iv" value="{{ element.mon_ids_iv }}">
+      <small class="form-text text-muted">mon_ids_iv</small>
+    </div>
+    <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+</div>
+{% endblock %}
+

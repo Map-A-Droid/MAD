@@ -36,10 +36,11 @@ class config(object):
         routes = [
             ("/showmonsidpicker", self.showmonsidpicker),
             ("/settings", self.settings),
+            ("/settings/areas", self.settings_areas),
             ("/settings/auth", self.settings_auth),
             ("/settings/devices", self.settings_devices),
+            ("/settings/ivlists", self.settings_ivlist),
             ("/settings/shared", self.settings_shared),
-            ("/settings/areas", self.settings_areas),
             ("/settings/walker", self.settings_walkers),
             ("/settings/walker/areaeditor", self.setting_walkers_area),
             ("/reload", self.reload)
@@ -154,6 +155,19 @@ class config(object):
                 'walkers': '/api/walker',
                 'pools': '/api/devicesetting'
             },
+        }
+        return self.process_element(**required_data)
+
+    @logger.catch
+    @auth_required
+    def settings_ivlist(self):
+        required_data = {
+            'identifier': 'id',
+            'base_uri': '/api/monivlist',
+            'redirect': '/settings/ivlists',
+            'html_single': 'settings_singleivlist.html',
+            'html_all': 'settings_ivlists.html',
+            'subtab': 'monivlist',
         }
         return self.process_element(**required_data)
 
