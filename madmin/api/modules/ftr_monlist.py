@@ -1,8 +1,8 @@
 from .. import apiHandler
 
 class APIMonList(apiHandler.ResourceHandler):
-    config_section = 'monlist'
-    component = 'monlist'
+    config_section = 'monivlist'
+    component = 'monivlist'
     description = 'Add/Update/Delete Pokemon Lists (honestly i have no idea)'
 
     configuration = {

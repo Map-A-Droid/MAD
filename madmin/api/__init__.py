@@ -9,7 +9,7 @@ valid_modules = {
     'auth': ftr_auth.APIAuth,
     'device': ftr_device.APIDevice,
     'devicesetting': ftr_devicesetting.APIDeviceSetting,
-    'monlist': ftr_monlist.APIMonList,
+    'monivlist': ftr_monlist.APIMonList,
     'walker': ftr_walker.APIWalker,
     'walkerarea': ftr_walkerarea.APIWalkerArea
 }
