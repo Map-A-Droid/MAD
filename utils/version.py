@@ -2,7 +2,7 @@ import json
 import sys
 
 from utils.logging import logger
-
+import shutil
 from .convert_mapping import convert_mappings
 
 current_version = 13
@@ -305,13 +305,22 @@ class MADVersion(object):
             old_data = {}
             new_data = {}
             cache = {}
-            with open('configs/mappings.json', 'rb') as fh:
+            target = '%s.bk' % (self._application_args.mappings,)
+            try:
+                shutil.copy(self._application_args.mappings, target)
+            except IOError as e:
+                print('Unable to clone configuration.  Exiting')
+                sys.exit(1)
+            with open(self._application_args.mappings, 'rb') as fh:
                 old_data = json.load(fh)
+            walkerarea = 'walkerarea'
+            walkerarea_ind = 0
             for key in update_order:
-                entries = old_data[key]
+                try:
+                    entries = old_data[key]
+                except:
+                    entries = []
                 cache[key] = {}
-                walkerarea = 'walkerarea'
-                walkerarea_ind = 0
                 if type(entries) is dict:
                     continue
                 index = 0

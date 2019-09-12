@@ -12,7 +12,7 @@ version.json
 configs/config.ini
 *.calc
 configs/geofences/*
-configs/mappings.json
+configs/mappings.json*
 configs/mappings_org.json
 .idea/*
 .idea
