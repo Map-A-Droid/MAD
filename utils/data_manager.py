@@ -110,7 +110,7 @@ class DataManager(object):
         identifier = kwargs.get('identifier', None)
         (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
         processed = False
-        if identifier is None:
+        if identifier is None and action != 'post':
             raise UnknownIdentifier(location, identifier)
         if action == 'patch':
             if identifier not in self.__raw[config_section]['entries']:
