@@ -27,25 +27,29 @@ class deviceUpdater(object):
                 item = self._update_queue.get()
                 id_, origin, file_, counter = (item[0], item[1], item[2], item[4])
 
-                logger.info("Update for {} (File: {}) started".format(str(origin), str(file)))
-                self._log[id]['status'] = 'processing'
-                self.update_status_log()
+                if id_ in self._log:
 
-                temp_comm = self._websocket.get_origin_communicator(origin)
-                if temp_comm is None:
-                    counter = counter + 1
-                    logger.error('Cannot update device {} with {} - Device not connected'
-                                 .format(str(origin), str(file_)))
-                    self.add_update(origin, file_, id_, counter, 'not connected')
+                    logger.info("Update for {} (File: {}) started".format(str(origin), str(file)))
+                    self._log[id]['status'] = 'processing'
+                    self.update_status_log()
 
-                else:
-                    if temp_comm.install_apk(os.path.join(self._args.upload_path, file_), 240):
-                        self._log[id]['status'] = 'success'
-                        self.update_status_log()
-                    else:
-                        logger.error('Cannot update device {} with {} - Installations failed'
+                    temp_comm = self._websocket.get_origin_communicator(origin)
+                    if temp_comm is None:
+                        counter = counter + 1
+                        logger.error('Cannot update device {} with {} - Device not connected'
                                      .format(str(origin), str(file_)))
-                        self.add_update(origin, file_, id_, counter, 'failure')
+                        self.add_update(origin, file_, id_, counter, 'not connected')
+
+                    else:
+                        if temp_comm.install_apk(os.path.join(self._args.upload_path, file_), 240):
+                            self._log[id]['status'] = 'success'
+                            self.update_status_log()
+                        else:
+                            logger.error('Cannot update device {} with {} - Installations failed'
+                                         .format(str(origin), str(file_)))
+                            self.add_update(origin, file_, id_, counter, 'failure')
+
+
 
                 time.sleep(5)
 
