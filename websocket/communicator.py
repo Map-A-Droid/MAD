@@ -36,7 +36,7 @@ class Communicator:
         try:
             result = self.websocket_handler.send_and_wait(
                     self.worker_id, self.worker_instance_ref, message, timeout, byte_command=byte_command)
-            return result is not None and "OK" in result
+            return result is not None and "OK" == result.strip()
         finally:
             self.__sendMutex.release()
 
