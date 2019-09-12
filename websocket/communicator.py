@@ -32,6 +32,7 @@ class Communicator:
         return self.__run_and_ok_bytes(command, timeout)
 
     def __run_and_ok_bytes(self, message, timeout: float, byte_command: int = None) -> bool:
+        # send_and_wait(self, id, worker_instance, message, timeout, byte_command: int = None)
         self.__sendMutex.acquire()
         try:
             result = self.websocket_handler.send_and_wait(
@@ -44,8 +45,8 @@ class Communicator:
         # TODO: check if file exists...
         with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
             data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
-        with self.__sendMutex:
-            return self.__run_and_ok_bytes(1, data, timeout)
+        #with self.__sendMutex:
+        return self.__run_and_ok_bytes(data, timeout, 1)
 
     def startApp(self, package_name):
         return self.__runAndOk("more start {}\r\n".format(package_name), self.__command_timeout)

@@ -1,9 +1,16 @@
 import json
 import os
 import time
+from enum import Enum
 from multiprocessing import  Queue
 from threading import  RLock, Thread
 from utils.logging import logger
+
+class jobType(Enum):
+    INSTALLATION = 0
+    REBOOT = 1
+    RESTART = 2
+
 
 class deviceUpdater(object):
     def __init__(self, websocket, args):
@@ -12,6 +19,7 @@ class deviceUpdater(object):
         self._update_mutex = RLock()
         self._log = {}
         self._args = args
+        self._current_job_id: int = None
         if os.path.exists('update_log.json'):
             with open('update_log.json') as logfile:
                 self._log = json.load(logfile)
@@ -28,6 +36,7 @@ class deviceUpdater(object):
                 id_, origin, file_, counter = (item[0], item[1], item[2], item[4])
 
                 if id_ in self._log:
+                    self._current_job_id = int(id_)
 
                     logger.info("Update for {} (File: {}) started".format(str(origin), str(file_)))
                     self._log[id_]['status'] = 'processing'
@@ -41,12 +50,13 @@ class deviceUpdater(object):
                         self.add_update(origin, file_, id_, counter, 'not connected')
 
                     else:
-                        if temp_comm.install_apk(os.path.join(self._args.upload_path, file_), 240):
+                        if temp_comm.install_apk(os.path.join(self._args.upload_path, file_), 120):
                             self._log[id]['status'] = 'success'
                             self.update_status_log()
                         else:
                             logger.error('Cannot update device {} with {} - Installations failed'
                                          .format(str(origin), str(file_)))
+                            counter = counter + 1
                             self.add_update(origin, file_, id_, counter, 'failure')
 
 
@@ -96,9 +106,11 @@ class deviceUpdater(object):
             self._update_mutex.release()
 
     def delete_log_id(self, id):
-        if id in self._log:
+        if id in self._log and self._current_job_id != id:
             del self._log[id]
             self.update_status_log()
+            return True
+        return False
 
     def get_log(self):
         return self._log

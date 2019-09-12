@@ -441,7 +441,10 @@ class control(object):
     @auth_required
     def delete_log_entry(self):
         id_ = request.args.get('id')
-        self._device_updater.delete_log_id(id_)
+        if self._device_updater.delete_log_id(id_):
+            flash('Job successfully deleted')
+        else:
+            flash('Job not successfully deleted(')
         return redirect(getBasePath(request) + '/install_status')
 
     @auth_required
