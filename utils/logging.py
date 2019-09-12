@@ -10,7 +10,7 @@ def initLogging(args):
     _, log_file_level = logLevel(args.log_file_level, args.verbose)
     log_trace = log_level <= 10
     log_file_trace = log_file_level <= 10
-    colorize = args.log_colors
+    colorize = not args.no_log_colors
 
     logconfig = {
         "levels": [
