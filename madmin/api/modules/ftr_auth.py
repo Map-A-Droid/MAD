@@ -30,7 +30,3 @@ class APIAuth(apiHandler.ResourceHandler):
             }
         }
     }
-
-    def validate_dependencies(self):
-        # A credential can be removed without causing any issues (other than devices not connecting)
-        return True

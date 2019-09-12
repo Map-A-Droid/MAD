@@ -621,8 +621,3 @@ class APIArea(apiHandler.ResourceHandler):
             }
         }
     }
-   
-
-    def validate_dependencies(self):
-        # An area can be removed without harming a walker so no checks are requiredd
-        return True

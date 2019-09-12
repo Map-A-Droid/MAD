@@ -185,7 +185,3 @@ class APIDeviceSetting(apiHandler.ResourceHandler):
             }
         }
     }
-
-    def validate_dependencies(self):
-        # TODO - Validate a device is not aligned to you
-        return True

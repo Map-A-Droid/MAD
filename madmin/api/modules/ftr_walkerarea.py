@@ -61,19 +61,3 @@ class APIWalkerArea(apiHandler.ResourceHandler):
             }
         }
     }
-
-
-    # def post(self, identifier, api_req, *args, **kwargs):
-    #     resp = super(APIWalkerArea, self).post(identifier, api_req, *args, **kwargs)
-    #     if resp.status_code == 201:
-    #         uri = resp.headers.get('X-Uri')
-    #         walker_uri = api_req.headers.get('Walker')
-    #         if walker_uri and walker_uri.isdigit():
-    #             walker_uri = '/api/walker/%s' % (walker_uri,)
-    #         # TODO - Come up with a way to perform a patch to update the walker vs handling in JS
-    #         self._manager['walker'].put()
-    #     return resp
-
-    def validate_dependencies(self):
-        # A device can be freely removed without any issues
-        return True

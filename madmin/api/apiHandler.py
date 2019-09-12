@@ -3,6 +3,7 @@ import flask
 import json
 from madmin.functions import auth_required
 from . import apiResponse, apiRequest, apiException
+import utils.data_manager
 
 class ResourceHandler(object):
     """ Base handler for API calls
@@ -175,13 +176,10 @@ class ResourceHandler(object):
 
     def delete(self, identifier, *args, **kwargs):
         """ API Call to remove data """
-        if not self.validate_dependencies():
-            headers = {
-                'X-Status': 'Failed dependency check'
-            }
-            return apiResponse.APIResponse(self._logger, self.api_req)(None, 412,  headers=headers)
         try:
             self._data_manager.delete_data(self.component, identifier=identifier)
+        except utils.data_manager.DataManagerDependencyError as err:
+            return apiResponse.APIResponse(self._logger, self.api_req)(json.dumps(err.dependencies), 412)
         except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         else:

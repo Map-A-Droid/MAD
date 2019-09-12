@@ -30,7 +30,3 @@ class APIWalker(apiHandler.ResourceHandler):
             }
         }
     }
-
-    def validate_dependencies(self):
-        # TODO - Validate you are not aligned to a device
-        return True

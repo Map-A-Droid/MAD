@@ -7,6 +7,11 @@ import six
 class DataManagerException(Exception):
     pass
 
+class DataManagerDependencyError(Exception):
+    def __init__(self, dependencies):
+        self.dependencies = dependencies
+        super(DataManagerDependencyError, self).__init__(dependencies)
+
 class UnknownIdentifier(DataManagerException):
     pass
 
@@ -21,8 +26,31 @@ class DataManager(object):
         self.update()
         config_section = location
         try:
+            removal_list = []
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
+            self.has_any_dependencies(location, config_section, identifier)
+            # If we are removing a walker, check to see if we can remove any walkerareas
+            if config_section == 'walker':
+                uri = self.generate_uri(location, identifier)
+                walker_config = self.get_data(location, identifier=identifier)
+                for walkerarea_uri in walker_config['setup']:
+                    try:
+                        self.delete_data(walkerarea_uri)
+                    except DataManagerDependencyError as err:
+                        # This should fire for every occasion because its assigned to this walker.  Check to see if
+                        # the walkerarea is only assigned to the walker.  If so, slate it for removal
+                        # This is a for loop on the off-chance it has been added to the walker multiple times
+                        valid = True
+                        for failure in err.dependencies:
+                            if failure['uri'] != uri:
+                                valid = False
+                                break
+                        if valid:
+                            removal_list.append(walkerarea_uri)
             del self.__raw[config_section]['entries'][identifier]
+            self.save_config()
+            for uri in removal_list:
+                self.delete_data(uri)
         except AttributeError:
             self._logger.debug('Invalid URI set in location, {}', location)
             return None
@@ -30,7 +58,6 @@ class DataManager(object):
             self._logger.debug('Data for {},{} not found in configuration file', location, identifier)
             self._logger.debug(self.__raw)
             return None
-        self.save_config()
         return True
 
     def generate_uri(self, location, *args):
@@ -69,6 +96,83 @@ class DataManager(object):
                 converted_data[self.generate_uri(location, key)] = val
             data = converted_data
         return data
+
+    def has_any_dependencies(self, location, config_section, identifier):
+        uri = self.generate_uri(location, identifier)
+        if config_section == 'areas':
+            # Check for any walkerareas that use the area
+            dependency_failures = []
+            for walkerarea_uri, walkerarea in self.get_data('walkerarea').items():
+                if walkerarea['walkerarea'] != uri:
+                    continue
+                failure = {
+                    'uri': walkerarea_uri,
+                    'name': walkerarea['walkertext']
+                }
+                dependency_failures.append(failure)
+            if dependency_failures:
+                raise DataManagerDependencyError(dependency_failures)
+        elif config_section == 'auth':
+            # Auth does not have dependencies for any objects
+            pass
+        elif config_section == 'devices':
+            # Devices are not dependencies for any objects
+            pass
+        elif config_section == 'devicesettings':
+            # Check for any devices that use the devicesetting
+            dependency_failures = []
+            for device_uri, device in self.get_data('device').items():
+                if device['pool'] != uri:
+                    continue
+                failure = {
+                    'uri': device_uri,
+                    'name': device['origin']
+                }
+                dependency_failures.append(failure)
+            if dependency_failures:
+                raise DataManagerDependencyError(dependency_failures)
+        elif config_section == 'monivlist':
+            # Check for any areas that use the monivlist
+            dependency_failures = []
+            for area_uri, area in self.get_data('areas').items():
+                try:
+                    if area['settings']['mon_ids_iv'] != uri:
+                        continue
+                except KeyError:
+                    continue
+                failure = {
+                    'uri': area_uri,
+                    'name': area['name']
+                }
+                dependency_failures.append(failure)
+            if dependency_failures:
+                raise DataManagerDependencyError(dependency_failures)
+        elif config_section == 'walker':
+            # Check for any devices that use the walker
+            dependency_failures = []
+            for device_uri, device in self.get_data('device').items():
+                if device['walker'] != uri:
+                    continue
+                failure = {
+                    'uri': device_uri,
+                    'name': device['origin']
+                }
+                dependency_failures.append(failure)
+            if dependency_failures:
+                raise DataManagerDependencyError(dependency_failures)
+        elif config_section == 'walkerarea':
+            # Check for any walkers that use the walkerarea
+            dependency_failures = []
+            for walker_uri, walker in self.get_data('walker').items():
+                if uri not in walker['setup']:
+                    continue
+                failure = {
+                    'uri': walker_uri,
+                    'name': walker['walkername']
+                }
+                dependency_failures.append(failure)
+            if dependency_failures:
+                raise DataManagerDependencyError(dependency_failures)
 
     def __process_location(self, location, identifier=None):
         if '/' in location:

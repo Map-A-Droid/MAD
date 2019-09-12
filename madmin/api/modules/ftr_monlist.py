@@ -29,7 +29,3 @@ class APIMonList(apiHandler.ResourceHandler):
             }
         }
     }
-
-    def validate_dependencies(self):
-        # TODO - Figure out requirements
-        return True

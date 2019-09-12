@@ -283,8 +283,3 @@ class APIDevice(apiHandler.ResourceHandler):
             }
         }
     }
-
-
-    def validate_dependencies(self):
-        # A device can be freely removed without any issues
-        return True
