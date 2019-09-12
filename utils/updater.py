@@ -29,8 +29,8 @@ class deviceUpdater(object):
 
                 if id_ in self._log:
 
-                    logger.info("Update for {} (File: {}) started".format(str(origin), str(file)))
-                    self._log[id]['status'] = 'processing'
+                    logger.info("Update for {} (File: {}) started".format(str(origin), str(file_)))
+                    self._log[id_]['status'] = 'processing'
                     self.update_status_log()
 
                     temp_comm = self._websocket.get_origin_communicator(origin)
