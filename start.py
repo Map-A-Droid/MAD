@@ -27,6 +27,7 @@ from utils.madGlobals import terminate_mad
 from utils.rarity import Rarity
 from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
+import utils.data_manager
 from watchdog.observers import Observer
 from websocket.WebsocketServer import WebsocketServer
 
@@ -208,11 +209,13 @@ if __name__ == "__main__":
     t_file_watcher = None
     t_whw = None
 
+    data_manager = utils.data_manager.DataManager(logger, args)
+
     if args.only_scan or args.only_routes:
         MappingManagerManager.register('MappingManager', MappingManager)
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
-        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, False)
+        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, False)
         filename = args.mappings
         if not os.path.exists(filename):
             logger.error(
@@ -293,7 +296,7 @@ if __name__ == "__main__":
         from madmin.madmin import madmin_start
         logger.info("Starting Madmin on Port: {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
-                          args=(args, db_wrapper, ws_server, mapping_manager))
+                          args=(args, db_wrapper, ws_server, mapping_manager, data_manager))
         t_madmin.daemon = True
         t_madmin.start()
 
