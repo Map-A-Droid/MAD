@@ -43,7 +43,7 @@ $(document).ready(function () {
     </tr>
   </thead>
   <tbody>
-    {% for pool_id, devicesetting in devicesettings.items() %}
+    {% for pool_id, devicesetting in devicesetting.items() %}
     <tr>
       <td class="align-middle">
         <a href="settings/shared?id={{ pool_id }}">{{ devicesetting.devicepool }}</a>

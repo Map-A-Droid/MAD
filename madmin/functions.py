@@ -1,4 +1,3 @@
-import collections
 import json
 import datetime
 import os
@@ -7,11 +6,6 @@ from flask import (make_response, request)
 from functools import update_wrapper, wraps
 from math import floor
 from utils.walkerArgs import parseArgs
-
-try:
-    collectionsAbc = collections.abc
-except:
-    collectionsAbc = collections
 
 mapping_args = parseArgs()
 
@@ -107,25 +101,3 @@ def generate_device_screenshot_path(phone_name: str, device_mappings: dict, args
         screenshot_ending = ".png"
     screenshot_filename = "screenshot_{}{}".format(phone_name, screenshot_ending)
     return os.path.join(args.temp_path, screenshot_filename)
-
-def recursive_update(d, u, append=False, settings=False):
-    for k, v in six.iteritems(u):
-        dv = d.get(k, {})
-        if append and isinstance(dv, list):
-            d[k] = dv + v
-        elif isinstance(v, collections.Mapping):
-            d[k] = recursive_update(dv, v, append=append, settings=k.lower() == 'settings')
-        else:
-            if settings and v is None:
-                try:
-                    del d[k]
-                except KeyError:
-                    pass
-            elif settings and type(v) is str and len(v) == 0:
-                try:
-                    del d[k]
-                except KeyError:
-                    pass
-            else:
-                d[k] = v
-    return d

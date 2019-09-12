@@ -1,12 +1,14 @@
 from .modules import *
+from .import apiRequest, apiResponse
+import collections
+import flask
 
 BASE_URI = '/api'
 valid_modules = {
-    'base': ftr_base.APIACore,
-    'areas': ftr_area.APIArea,
+    'area': ftr_area.APIArea,
     'auth': ftr_auth.APIAuth,
-    'devices': ftr_device.APIDevice,
-    'devicesettings': ftr_devicesetting.APIDeviceSetting,
+    'device': ftr_device.APIDevice,
+    'devicesetting': ftr_devicesetting.APIDeviceSetting,
     'monlist': ftr_monlist.APIMonList,
     'walker': ftr_walker.APIWalker,
     'walkerarea': ftr_walkerarea.APIWalkerArea
@@ -24,14 +26,23 @@ class APIHandler(object):
         _logger: logger (loguru.logger): MADmin debug logger
         _modules (dict): Dictionary of APIHandlers for referring to the other API sections
     """
-    def __init__(self, logger, args, app):
+    def __init__(self, logger, args, app, data_manager):
         self._logger = logger
         self._args = args
         self._app = app
         self._modules = {}
+        self._app.route(BASE_URI, methods=['GET'])(self.process_request)
         for mod_name, module in valid_modules.items():
-            self._modules[mod_name] = module(logger, args, app, BASE_URI, self)
+            tmp = module(logger, args, app, BASE_URI, data_manager)
+            self._modules[tmp.uri_base] = tmp.description
 
-    def __getitem__(self, key):
-        """ Used to access API modules """
-        return self._modules[key]
+    def create_routes(self):
+        self._app.route(self.uri_base, methods=['GET'], endpoint=self.component)(self.process_request)
+
+    def process_request(self):
+        """ API call to get data """
+        api_req = apiRequest.APIRequest(self._logger, flask.request)
+        data = collections.OrderedDict()
+        for uri, elem in self._modules.items():
+            data[uri] = elem
+        return apiResponse.APIResponse(self._logger, api_req)(data, 200)

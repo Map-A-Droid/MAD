@@ -1,7 +1,7 @@
 import collections
 import flask
 import json
-from madmin.functions import auth_required, recursive_update
+from madmin.functions import auth_required
 from . import apiResponse, apiRequest, apiException
 
 class ResourceHandler(object):
@@ -12,16 +12,16 @@ class ResourceHandler(object):
         args (dict): Arguments used by MADmin during launch
         app (flask.app): Flask web-app used for MADmin
         base (str): Base URI of the API
-        manager (APIHandler): Manager for handling the API calls
+        data_manager (data_manager): Manager for interacting with the datasource
     """
     config_section = None
     component = None
     iterable = True
     default_sort = None
-    def __init__(self, logger, args, app, base, manager):
+    def __init__(self, logger, args, app, base, data_manager):
         self._logger = logger
         self._app = app
-        self._manager = manager
+        self._data_manager = data_manager
         self._base = base
         self._args = args
         self.api_req = None
@@ -99,10 +99,6 @@ class ResourceHandler(object):
             value = int(value)
         return value
 
-    def generate_uri(self, identifier):
-        """ Returns the URI resource from the uri_base """
-        return '%s/%s' % (self.uri_base, identifier,)
-
     def get_def(self, key, config):
         try:
             return config[key]
@@ -119,42 +115,6 @@ class ResourceHandler(object):
             return self.configuration[mode]
         if type(self.configuration) is dict and ('fields' in self.configuration or 'settings' in self.configuration):
             return self.configuration
-
-    def load_config(self, section=None):
-        config = None
-        try:
-            with open('configs/mappings.json', 'rb') as fh:
-                config = json.load(fh)
-            if section:
-                config = config[section]
-        except Exception as err:
-            self._logger.warn(err)
-        return config
-
-    def lookup_object(self, identifier=None):
-        section_data = self.load_config(self.config_section)
-        identifier = self.parse_identifier(identifier)
-        if identifier is not None:
-            return section_data['entries'][identifier]
-        else:
-            return section_data['entries']
-
-    def parse_identifier(self, identifier):
-        if '/' in identifier:
-            identifier = identifier[identifier.rfind('/')+1:]
-        return identifier
-
-    def save_config(self, config):
-        with open(self._args.mappings, 'w') as outfile:
-            json.dump(config, outfile, indent=4, sort_keys=True)
-
-    def validate_data(self, **kwargs):
-        valid_data = None
-        formatting_errors = []
-        missing_required_fields = []
-
-    def validate_entry(self, entry, expected):
-        pass
 
     # =====================================
     # ========= API Functionality =========
@@ -175,7 +135,7 @@ class ResourceHandler(object):
         if identifier is None and flask.request.method != 'POST':
             # Use an ordered dict so we can guarantee the order is returned per the class specification
             ordered_data = collections.OrderedDict()
-            raw_data = self.load_config(self.config_section)['entries']
+            raw_data = self._data_manager.get_data(self.component)
             if self.default_sort and len(raw_data) > 0:
                 sort_elem = raw_data[list(raw_data.keys())[0]][self.default_sort]
                 if type(sort_elem) == str:
@@ -185,7 +145,7 @@ class ResourceHandler(object):
             else:
                 sorted_keys = list(raw_data.keys())
             for key in sorted_keys:
-                ordered_data[self.generate_uri(key)] = raw_data[key]
+                ordered_data[key] = raw_data[key]
             return apiResponse.APIResponse(self._logger, self.api_req)(ordered_data, 200)
         else:
             if flask.request.method == 'DELETE':
@@ -215,18 +175,16 @@ class ResourceHandler(object):
 
     def delete(self, identifier, *args, **kwargs):
         """ API Call to remove data """
-        mapping_data = self.load_config()
         if not self.validate_dependencies():
             headers = {
                 'X-Status': 'Failed dependency check'
             }
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 412,  headers=headers)
         try:
-            del mapping_data[self.config_section]['entries'][identifier]
-        except KerError:
+            self._data_manager.delete_data(self.component, identifier=identifier)
+        except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         else:
-            self.save_config(mapping_data)
             headers = {
                 'X-Status': 'Successfully deleted the object'
             }
@@ -235,38 +193,26 @@ class ResourceHandler(object):
     def get(self, identifier, *args, **kwargs):
         """ API call to get data """
         try:
-            return apiResponse.APIResponse(self._logger, self.api_req)(self.lookup_object(identifier), 200)
+            return apiResponse.APIResponse(self._logger, self.api_req)(self._data_manager.get_data(self.component, identifier=identifier), 200)
         except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
 
     def patch(self, identifier, *args, **kwargs):
         """ API call to update data """
-        mapping_data = self.load_config()
         mode = self.api_req.headers.get('Mode')
         append = self.api_req.headers.get('X-Append')
         try:
-            mapping_data[self.config_section]['entries'][identifier] = recursive_update(mapping_data[self.config_section]['entries'][identifier],
-                                                                                        self.api_req.data,
-                                                                                        append=append)
-            self.save_config(mapping_data)
+            self._data_manager.set_data(self.api_req.data, self.component, 'patch', identifier=identifier, append=append)
         except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         else:
-            self.save_config(mapping_data)
             headers = {
                 'X-Status': 'Successfully updated the object'
             }
-            return apiResponse.APIResponse(self._logger, self.api_req)(self.lookup_object(identifier), 204,  headers=headers)
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 204,  headers=headers)
 
     def post(self, identifier, *args, **kwargs):
-        mapping_data = self.load_config()
-        mode = self.api_req.headers.get('Mode')
-        append = self.api_req.headers.get('X-Append')
-        index = str(int(mapping_data[self.config_section]['index']))
-        uri_key = self.generate_uri(index)
-        mapping_data[self.config_section]['entries'][index] = self.api_req.data
-        mapping_data[self.config_section]['index'] = int(index) + 1
-        self.save_config(mapping_data)
+        uri_key = self._data_manager.set_data(self.api_req.data, self.component, 'post')
         headers = {
             'Location': uri_key,
             'X-Uri': uri_key,
@@ -276,19 +222,15 @@ class ResourceHandler(object):
 
     def put(self, identifier, *args, **kwargs):
         """ API call to replace an object """
-        mapping_data = self.load_config()
-        mode = self.api_req.headers.get('Mode')
-        append = self.api_req.headers.get('X-Append')
         try:
-            mapping_data[self.config_section]['entries'][identifier] = self.api_req.data
+            self._data_manager.set_data(self.api_req.data, self.component, 'put', identifier=identifier,)
         except KeyError:
             headers = {
-                'X-Status': err
+                'X-Status': 'Object does not exist to update'
             }
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404, headers=headers)
         else:
-            self.save_config(mapping_data)
             headers = {
                 'X-Status': 'Successfully replaced the object'
             }
-            return apiResponse.APIResponse(self._logger, self.api_req)(self.lookup_object(identifier), 204, headers=headers)
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 204, headers=headers)

@@ -58,7 +58,7 @@ $(document).ready(function () {
     </tr>
   </thead>
   <tbody>
-  {% for dev_uri, device in devices.items() %}
+  {% for dev_uri, device in device.items() %}
     <tr>
       <td class="align-middle">
         <a href="settings/devices?id={{ dev_uri }}">{{ device.origin }}</a>

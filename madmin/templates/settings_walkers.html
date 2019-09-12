@@ -53,7 +53,7 @@ $(document).ready(function () {
           Number of Areas: {{ walker.setup|length }}<br>
           Areas: {% for walkerarea_uri in walker.setup %}
             {% if loop.index > 1 %},{% endif %}
-            {{ areas[walkerareaconfig[walkerarea_uri]['walkerarea']].name }}
+            {{ areas[walkerarea[walkerarea_uri]['walkerarea']].name }}
           {% endfor %}
         </p>
       </td>

@@ -1,5 +1,4 @@
 __all__ = [
-    'ftr_base',
     'ftr_area',
     'ftr_auth',
     'ftr_device',

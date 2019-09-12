@@ -148,7 +148,7 @@
                 </tbody>
                 <tbody class="row_position ui-sortable">
                     {% for walkerarea_uri in element.setup %}
-                        {% set area = walkerareaconfig[walkerarea_uri] %}
+                        {% set area = walkerarea[walkerarea_uri] %}
                         <tr id='{{ walkerarea_uri }}'>
                             <td><img src="static/sort.png" class="handle ui-sortable-handle"></td>
                             <td class='index'>{{ loop.index }}</td>

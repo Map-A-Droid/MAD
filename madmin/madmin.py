@@ -25,7 +25,7 @@ app = Flask(__name__)
 log = logger
 
 
-def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager):
+def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager):
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
     app.config["basePath"] = args.madmin_base_path
     app.logger.removeHandler(default_handler)
@@ -35,8 +35,8 @@ def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
     statistics(db_wrapper, args, app)
     control(db_wrapper, args, mapping_manager, ws_server, logger, app)
     map(db_wrapper, args, mapping_manager, app)
-    api = APIHandler(logger, args, app)
-    config(db_wrapper, args, logger, app, mapping_manager, api)
+    api = APIHandler(logger, args, app, data_manager)
+    config(db_wrapper, args, logger, app, mapping_manager, data_manager)
     ocr(db_wrapper, args, logger, app)
     path(db_wrapper, args, app)
 

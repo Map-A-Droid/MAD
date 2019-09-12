@@ -43,7 +43,7 @@ $(document).ready(function () {
     </tr>
   </thead>
   <tbody>
-    {% for area_id, area in areas.items() %}
+    {% for area_id, area in area.items() %}
     <tr>
       <td class="align-middle">
         <a href="settings/areas?id={{ area_id }}&mode={{ area.mode }}">{{ area.name }}</a>

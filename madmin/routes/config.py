@@ -9,13 +9,12 @@ from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
 from utils.MappingManager import MappingManager
 from utils.logging import logger
-from utils.local_api import LocalAPI
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class config(object):
-    def __init__(self, db, args, logger, app, mapping_manager: MappingManager, api):
+    def __init__(self, db, args, logger, app, mapping_manager: MappingManager, data_manager):
         self._db = db
         self._args = args
         if self._args.madmin_time == "12":
@@ -25,14 +24,13 @@ class config(object):
         self._adb_connect = ADBConnect(self._args)
         self._ws_connected_phones: list = []
         self._logger = logger
-        self._api = api
+        self._data_manager = data_manager
         self._app = app
         self._app.config["TEMPLATES_AUTO_RELOAD"] = True
         cache.init_app(self._app)
         self._mapping_mananger = mapping_manager
 
         self.add_route()
-        self.api = LocalAPI(logger, args)
 
     def add_route(self):
         routes = [
@@ -67,16 +65,16 @@ class config(object):
         else:
             uri = base_uri
         mode = request.args.get("mode", None)
-        settings_vars = self.process_settings_vars(self._api[subtab].configuration, mode=mode)
+        settings_vars = self.process_settings_vars(self._data_manager.get_api_attribute(subtab, 'configuration'), mode=mode)
         if request.method == 'GET':
             included_data = {}
             if required_uris:
                 for key, tmp_uri in required_uris.items():
-                    included_data[key] = self.api.get(tmp_uri).json()
+                    included_data[key] = self._data_manager.get_data(tmp_uri)
             # Mode was required for this operation but was not present.  Return the base element
             if mode_required and mode is None:
-                req = self.api.get(base_uri)
-                element = req.json()
+                req = self._data_manager.get_data(base_uri)
+                element = req
                 included_data[subtab] = element
                 return render_template(html_all,
                                        subtab=subtab,
@@ -91,8 +89,8 @@ class config(object):
                                        method='POST',
                                        settings_vars=settings_vars,
                                        **included_data)
-            req = self.api.get(uri)
-            element = req.json()
+            req = self._data_manager.get_data(uri)
+            element = req
             included_data[subtab] = element
             if identifier:
                 return render_template(html_single,
@@ -124,7 +122,7 @@ class config(object):
             'redirect': '/settings/areas',
             'html_single': 'settings_singlearea.html',
             'html_all': 'settings_areas.html',
-            'subtab': 'areas',
+            'subtab': 'area',
             'mode_required': True
         }
         return self.process_element(**required_data)
@@ -151,7 +149,7 @@ class config(object):
             'redirect': '/settings/devices',
             'html_single': 'settings_singledevice.html',
             'html_all': 'settings_devices.html',
-            'subtab': 'devices',
+            'subtab': 'device',
             'required_uris': {
                 'walkers': '/api/walker',
                 'pools': '/api/devicesetting'
@@ -168,7 +166,7 @@ class config(object):
             'redirect': '/settings/shared',
             'html_single': 'settings_singlesharedsetting.html',
             'html_all': 'settings_sharedsettings.html',
-            'subtab': 'devicesettings',
+            'subtab': 'devicesetting',
             'var_parser_section': 'devices',
             'required_uris': {},
         }
@@ -186,7 +184,7 @@ class config(object):
             'subtab': 'walker',
             'required_uris': {
                 'areas': '/api/area',
-                'walkerareaconfig': '/api/walkerarea'
+                'walkerarea': '/api/walkerarea'
             },
         }
         return self.process_element(**required_data)
@@ -202,14 +200,14 @@ class config(object):
         if walkerarea_uri is not None:
             if '/api/walkerarea/' not in walkerarea_uri:
                 walkerarea_uri = '/api/walkerarea/%s' % (walkerarea_uri,)
-            walkerareaconfig = self.api.get(walkerarea_uri).json()
+            walkerareaconfig = self._data_manager.get_data(walkerarea_uri)
         else:
             walkerarea_uri = '/api/walkerarea'
             walkerareaconfig = {}
         if '/api/walker/' not in walkeruri:
             walkeruri = '/api/walker/%s' % (walkeruri,)
-        walkerconfig = self.api.get(walkeruri).json()
-        areaconfig = self.api.get('/api/area').json()
+        walkerconfig = self._data_manager.get_data(walkeruri)
+        areaconfig = self._data_manager.get_data('/api/area')
         walkertypes = ['coords','countdown', 'idle', 'period', 'round', 'timer']
         mappings = {
             'uri': walkerarea_uri,
