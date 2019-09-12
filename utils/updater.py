@@ -50,8 +50,8 @@ class deviceUpdater(object):
                         self.add_update(origin, file_, id_, counter, 'not connected')
 
                     else:
-                        if temp_comm.install_apk(os.path.join(self._args.upload_path, file_), 120):
-                            self._log[id]['status'] = 'success'
+                        if temp_comm.install_apk(os.path.join(self._args.upload_path, file_), 240):
+                            self._log[id_]['status'] = 'success'
                             self.update_status_log()
                         else:
                             logger.error('Cannot update device {} with {} - Installations failed'
@@ -106,11 +106,9 @@ class deviceUpdater(object):
             self._update_mutex.release()
 
     def delete_log_id(self, id):
-        if id in self._log and self._current_job_id != id:
+        if id in self._log:
             del self._log[id]
             self.update_status_log()
-            return True
-        return False
 
     def get_log(self):
         return self._log
