@@ -8,7 +8,9 @@ from utils.MappingManager import MappingManagerManager, MappingManager
 from utils.logging import initLogging, logger
 from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
+import utils.data_manager
 from websocket.WebsocketServer import WebsocketServer
+
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -27,9 +29,9 @@ def generate_mappingjson():
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 
-def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager):
+def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager):
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, ws_server, mapping_manager)
+    madmin_start(args, db_wrapper, ws_server, mapping_manager, data_manager)
 
 
 if __name__ == "__main__":
@@ -55,11 +57,13 @@ if __name__ == "__main__":
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
+    data_manager = utils.data_manager.DataManager(logger, args)
+
     MappingManagerManager.register('MappingManager', MappingManager)
     mapping_manager_manager = MappingManagerManager()
     mapping_manager_manager.start()
     mapping_manager_stop_event = mapping_manager_manager.Event()
-    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, True)
+    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, True)
 
     ws_server = WebsocketServer(args, None, db_wrapper, mapping_manager, None, True)
     t_ws = Thread(name='scanner', target=ws_server.start_server)
@@ -69,6 +73,6 @@ if __name__ == "__main__":
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
     t_flask = Thread(name='madmin', target=start_madmin,
-                     args=(args, db_wrapper, ws_server, mapping_manager))
+                     args=(args, db_wrapper, ws_server, mapping_manager, data_manager))
     t_flask.daemon = False
     t_flask.start()
