@@ -27,6 +27,10 @@ class deviceUpdater(object):
                 item = self._update_queue.get()
                 id_, origin, file_, counter = (item[0], item[1], item[2], item[4])
 
+                logger.info("Update for {} (File: {}) started".format(str(origin), str(file)))
+                self._log[id]['status'] = 'processing'
+                self.update_status_log()
+
                 temp_comm = self._websocket.get_origin_communicator(origin)
                 if temp_comm is None:
                     counter = counter + 1
@@ -46,7 +50,7 @@ class deviceUpdater(object):
                 time.sleep(5)
 
             except KeyboardInterrupt as e:
-                logger.info("MITMDataProcessor received keyboard interrupt, stopping")
+                logger.info("process_update_queue received keyboard interrupt, stopping")
                 break
 
             time.sleep(5)
