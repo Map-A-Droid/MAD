@@ -380,10 +380,10 @@ class control(object):
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(self._args.upload_path, filename))
-                flash('File successfully uploaded')
+                flash('File could be uploaded successfully')
                 return redirect('/uploaded_files')
             else:
-                flash('Allowed file type is apk')
+                flash('Allowed file type is apk only!')
                 return redirect(getBasePath(request) + request.url)
 
         return render_template('upload.html', header="File Upload", title="File Upload")
@@ -405,7 +405,7 @@ class control(object):
         filename = request.args.get('filename')
         if os.path.exists(os.path.join(self._args.upload_path, filename)):
             os.remove(os.path.join(self._args.upload_path, filename))
-            flash('File successfully deleted')
+            flash('File could be deleted successfully')
         return redirect(getBasePath(request) + '/uploaded_files')
 
     @auth_required
@@ -424,13 +424,13 @@ class control(object):
                 if self._adb_connect.push_file(adb, origin, os.path.join(self._args.upload_path, filename)) and  \
                     self._adb_connect.send_shell_command(
                         adb, origin, "pm install -r /sdcard/Download/" + str(filename)):
-                    flash('File successfully installed')
+                    flash('File could be installed successfully')
                 else:
-                    flash('File not successfully uploaded :(')
+                    flash('File could not be installed successfully :(')
             else:
                 self._device_updater.add_job(origin=origin, file=filename, id=int(time.time()),
                                              type=jobType.INSTALLATION)
-                flash('File successfully queued')
+                flash('File successfully queued --> See Job Status')
 
         return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
 
@@ -448,9 +448,9 @@ class control(object):
     def delete_log_entry(self):
         id_ = request.args.get('id')
         if self._device_updater.delete_log_id(id_):
-            flash('Job successfully deleted')
+            flash('Job could be deleted successfully')
         else:
-            flash('Job not successfully deleted')
+            flash('Job could not be deleted successfully')
         return redirect(getBasePath(request) + '/install_status')
 
     @auth_required

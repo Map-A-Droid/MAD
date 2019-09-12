@@ -39,7 +39,7 @@ class deviceUpdater(object):
                 if id_ in self._log:
                     self._current_job_id = int(id_)
 
-                    logger.info("Job for {} (File: {}) started".format(str(origin), str(file_)))
+                    logger.info("Job for {} (File: {}) started (ID: {})".format(str(origin), str(file_), str(id_)))
                     self._log[id_]['status'] = 'processing'
                     self.update_status_log()
 
@@ -47,19 +47,19 @@ class deviceUpdater(object):
 
                     if temp_comm is None:
                         counter = counter + 1
-                        logger.error('Cannot start job {} on device {} - File: {} - Device not connected'
-                                     .format(str(jobtype), str(origin), str(file_)))
+                        logger.error('Cannot start job {} on device {} - File: {} - Device not connected (ID: {})'
+                                     .format(str(jobtype), str(origin), str(file_), str(id_)))
                         self.add_job(origin, file_, id_, jobtype, counter, 'not connected')
 
                     else:
                         if self.start_job_type(item, jobtype, temp_comm):
-                            logger.info('Job {} successfully processed - Device {} - File {}'
-                                         .format(str(jobtype), str(origin), str(file_)))
+                            logger.info('Job {} could be executed successfully - Device {} - File {} (ID: {})'
+                                         .format(str(jobtype), str(origin), str(file_), str(id_)))
                             self._log[id_]['status'] = 'success'
                             self.update_status_log()
                         else:
-                            logger.error('Job {} not successfully processed - Device {} - File {}'
-                                         .format(str(jobtype), str(origin), str(file_)))
+                            logger.error('Job {} could not be executed successfully - Device {} - File {} (ID: {})'
+                                         .format(str(jobtype), str(origin), str(file_), str(id_)))
                             counter = counter + 1
                             self.add_job(origin, file_, id_, jobtype, counter, 'failure')
 
@@ -84,12 +84,11 @@ class deviceUpdater(object):
             'counter': int(counter),
             'jobtype': str(type)
         })
-        logger.info(self._log[id])
 
         if counter > 3:
-            logger.error("Job {} for {} (File: {}) failed 3 times in row - aborting"
-                         .format(str(type), str(origin), str(file)))
-            self._log[id]['status'] = 'abort'
+            logger.error("Job for {} (File: {} - Type {}) failed 3 times in row - aborting (ID: {})"
+                         .format(str(origin), str(file), str(type), str(id)))
+            self._log[id]['status'] = 'faulty'
         else:
             self._update_queue.put((id, origin, file, status, counter, type))
 
@@ -116,9 +115,8 @@ class deviceUpdater(object):
     def start_job_type(self, item, jobtype, ws_conn):
         if jobtype == jobType.INSTALLATION:
             file_ = item[2]
-            test = ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240)
-            print (test)
-            return True
+            if ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240):
+                return True
         elif jobtype == jobType.REBOOT:
             if ws_conn.reboot():
                 return True
