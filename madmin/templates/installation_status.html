@@ -14,6 +14,7 @@
             "columns": [
                 { data: 'origin', title: 'Device' },
                 { data: 'file', title: 'File' },
+                { data: 'jobtype', title: 'Jobtype' },
                 { data: 'status', title: 'Status' },
                 { data: '', title: 'Date/Time' },
                 { data: '', title: 'Delete' },
@@ -21,7 +22,7 @@
             ],
             "columnDefs": [
                 {
-                    "targets": [4],
+                    "targets": [5],
                     "render": function (data, type, row) {
 
                          var link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a>";
@@ -30,7 +31,7 @@
                     }
                 },
                 {
-                    "targets": [3],
+                    "targets": [4],
                     "render": function (data, type, row) {
 
                          var date = new Date(row.id*1000);
@@ -44,7 +45,7 @@
                     }
                 },
             ],
-            "order": [[1, "desc"]],
+            "order": [[4, "desc"]],
             "responsive": {{ responsive }},
         });
 	}
@@ -64,7 +65,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Uploaded Files</h2>
+<h2>Jobstatus</h2>
 <p>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}

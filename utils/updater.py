@@ -10,6 +10,7 @@ class jobType(Enum):
     INSTALLATION = 0
     REBOOT = 1
     RESTART = 2
+    STOP = 3
 
 
 class deviceUpdater(object):
@@ -29,39 +30,38 @@ class deviceUpdater(object):
         t_updater.start()
 
     def process_update_queue(self):
-        logger.info("Starting Device Updater processor")
+        logger.info("Starting Device Job processor")
         while True:
             try:
                 item = self._update_queue.get()
-                id_, origin, file_, counter = (item[0], item[1], item[2], item[4])
+                id_, origin, file_, counter, jobtype = (item[0], item[1], item[2], item[4], item[5])
 
                 if id_ in self._log:
                     self._current_job_id = int(id_)
 
-                    logger.info("Update for {} (File: {}) started".format(str(origin), str(file_)))
+                    logger.info("Job for {} (File: {}) started".format(str(origin), str(file_)))
                     self._log[id_]['status'] = 'processing'
                     self.update_status_log()
 
                     temp_comm = self._websocket.get_origin_communicator(origin)
+
                     if temp_comm is None:
                         counter = counter + 1
-                        logger.error('Cannot update device {} with {} - Device not connected'
-                                     .format(str(origin), str(file_)))
-                        self.add_update(origin, file_, id_, counter, 'not connected')
+                        logger.error('Cannot start job {} on device {} - File: {} - Device not connected'
+                                     .format(str(jobtype), str(origin), str(file_)))
+                        self.add_job(origin, file_, id_, jobtype, counter, 'not connected')
 
                     else:
-                        if temp_comm.install_apk(os.path.join(self._args.upload_path, file_), 240):
+                        if self.start_job_type(item, jobtype, temp_comm):
+                            logger.info('Job {} successfully processed - Device {} - File {}'
+                                         .format(str(jobtype), str(origin), str(file_)))
                             self._log[id_]['status'] = 'success'
                             self.update_status_log()
                         else:
-                            logger.error('Cannot update device {} with {} - Installations failed'
-                                         .format(str(origin), str(file_)))
+                            logger.error('Job {} not successfully processed - Device {} - File {}'
+                                         .format(str(jobtype), str(origin), str(file_)))
                             counter = counter + 1
-                            self.add_update(origin, file_, id_, counter, 'failure')
-
-
-
-                time.sleep(5)
+                            self.add_job(origin, file_, id_, jobtype, counter, 'failure')
 
             except KeyboardInterrupt as e:
                 logger.info("process_update_queue received keyboard interrupt, stopping")
@@ -69,31 +69,29 @@ class deviceUpdater(object):
 
             time.sleep(5)
 
-    def add_update(self, origin, file, id, counter=0, status='pending'):
-        logger.info('Adding App Update for Device {} - File: {} (ID: {})'.format(str(origin), str(file), str(id)))
-        if id in self._log:
-            self._log[id] = ({
-                'id': id,
-                'origin': origin,
-                'file': file,
-                'status': status,
-                'counter': int(counter)
-            })
-        else:
+    def add_job(self, origin, file, id, type, counter=0, status='pending'):
+        logger.info('Adding Job {} for Device {} - File: {} (ID: {})'
+                    .format(str(type), str(origin), str(file), str(id)))
+
+        if id not in self._log:
             self._log[id] = {}
-            self._log[id] = ({
-                'id': id,
-                'origin': origin,
-                'file': file,
-                'status': status,
-                'counter': int(counter)
-            })
+
+        self._log[id] = ({
+            'id': id,
+            'origin': origin,
+            'file': file,
+            'status': status,
+            'counter': int(counter),
+            'jobtype': str(type)
+        })
+        logger.info(self._log[id])
 
         if counter > 3:
-            logger.error("Update for {} (File: {}) failed 3 times in row - aborting".format(str(origin), str(file)))
+            logger.error("Job {} for {} (File: {}) failed 3 times in row - aborting"
+                         .format(str(type), str(origin), str(file)))
             self._log[id]['status'] = 'abort'
         else:
-            self._update_queue.put((id, origin, file, status, counter))
+            self._update_queue.put((id, origin, file, status, counter, type))
 
         self.update_status_log()
 
@@ -106,12 +104,34 @@ class deviceUpdater(object):
             self._update_mutex.release()
 
     def delete_log_id(self, id):
-        if id in self._log:
+        if id in self._log and id != self._current_job_id:
             del self._log[id]
             self.update_status_log()
+            return True
+        return False
 
     def get_log(self):
         return self._log
+
+    def start_job_type(self, item, jobtype, ws_conn):
+        if jobtype == jobType.INSTALLATION:
+            file_ = item[2]
+            if ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 120):
+                return True
+        elif jobtype == jobType.REBOOT:
+            if ws_conn.reboot():
+                return True
+        elif jobtype == jobType.RESTART:
+            if ws_conn.restartApp("com.nianticlabs.pokemongo"):
+                return True
+        elif jobtype == jobType.STOP:
+            if ws_conn.stopApp("com.nianticlabs.pokemongo"):
+                return True
+        return False
+
+
+
+
 
 
 

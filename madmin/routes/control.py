@@ -16,6 +16,8 @@ from utils.logging import logger
 from utils.adb import ADBConnect
 from utils.madGlobals import ScreenshotType
 
+from utils.updater import jobType
+
 class control(object):
     def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app,
                  deviceUpdater):
@@ -242,11 +244,13 @@ class control(object):
             temp_comm = self._ws_server.get_origin_communicator(origin)
             if restart:
                 self._logger.info('MADMin: trying to restart game on {}', str(origin))
-                temp_comm.restartApp("com.nianticlabs.pokemongo")
+                self._device_updater.add_job(origin=origin, file=None, id=int(time.time()),
+                                             type=jobType.RESTART)
                 time.sleep(1)
             else:
                 self._logger.info('MADMin: trying to stop game on {}', str(origin))
-                temp_comm.stopApp("com.nianticlabs.pokemongo")
+                self._device_updater.add_job(origin=origin, file=None, id=int(time.time()),
+                                             type=jobType.STOP)
 
             self._logger.info('MADMin: WS command successfully ({})', str(origin))
         time.sleep(2)
@@ -265,8 +269,8 @@ class control(object):
                         adb, origin,"am broadcast -a android.intent.action.BOOT_COMPLETED")):
             self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
         else:
-            temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.reboot()
+            self._device_updater.add_job(origin=origin, file=None, id=int(time.time()),
+                                         type=jobType.REBOOT)
         return redirect(getBasePath(request) + '/phonecontrol')
 
     @auth_required
@@ -423,7 +427,8 @@ class control(object):
                 else:
                     flash('File not successfully uploaded :(')
             else:
-                self._device_updater.add_update(origin=origin, file=filename, id=int(time.time()))
+                self._device_updater.add_job(origin=origin, file=filename, id=int(time.time()),
+                                             type=jobType.INSTALLATION)
                 flash('File successfully queued')
 
         return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
@@ -444,7 +449,7 @@ class control(object):
         if self._device_updater.delete_log_id(id_):
             flash('Job successfully deleted')
         else:
-            flash('Job not successfully deleted(')
+            flash('Job not successfully deleted')
         return redirect(getBasePath(request) + '/install_status')
 
     @auth_required
