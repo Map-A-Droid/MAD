@@ -405,7 +405,8 @@ class control(object):
         filename = request.args.get('filename')
         if os.path.exists(os.path.join(self._args.upload_path, filename)):
             os.remove(os.path.join(self._args.upload_path, filename))
-        return self.uploaded_files()
+            flash('File successfully deleted')
+        return redirect(getBasePath(request) + '/uploaded_files')
 
     @auth_required
     @logger.catch

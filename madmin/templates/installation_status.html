@@ -14,13 +14,22 @@
             "columns": [
                 { data: 'origin', title: 'Device' },
                 { data: 'file', title: 'File' },
-                { data: 'jobtype', title: 'Jobtype' },
+                { data: '', title: 'Jobtype' },
                 { data: 'status', title: 'Status' },
                 { data: '', title: 'Date/Time' },
                 { data: '', title: 'Delete' },
                 { data: 'counter', title: 'Retry Counter' }
             ],
             "columnDefs": [
+            {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+
+                        var jobtype = row.jobtype;
+
+                        return jobtype.split(".")[1];
+                    }
+                },
                 {
                     "targets": [5],
                     "render": function (data, type, row) {
@@ -69,11 +78,9 @@
 <p>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}
-		<ul class=flashes>
 		{% for message in messages %}
-		  {{ message }}
+		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
 		{% endfor %}
-		</ul>
 	  {% endif %}
 	{% endwith %}
 </p>

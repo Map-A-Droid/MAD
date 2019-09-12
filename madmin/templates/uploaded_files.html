@@ -53,11 +53,9 @@
 <p>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}
-		<ul class=flashes>
 		{% for message in messages %}
-		  {{ message }}
+		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
 		{% endfor %}
-		</ul>
 	  {% endif %}
 	{% endwith %}
 </p>

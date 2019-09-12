@@ -116,8 +116,9 @@ class deviceUpdater(object):
     def start_job_type(self, item, jobtype, ws_conn):
         if jobtype == jobType.INSTALLATION:
             file_ = item[2]
-            if ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 120):
-                return True
+            test = ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240)
+            print (test)
+            return True
         elif jobtype == jobType.REBOOT:
             if ws_conn.reboot():
                 return True
