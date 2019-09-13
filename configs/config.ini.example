@@ -72,6 +72,7 @@
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
 #language:                   # Language for quests (default:en - others: de (more soon))
 #mitm_status_password: SetPls # Header Authorization password for MITM /status/ page
+#advanced_config             # Enables additional settings when creating and editing areas
 
 # MADmin statistics
 ######################

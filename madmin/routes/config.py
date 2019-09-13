@@ -68,7 +68,9 @@ class config(object):
         mode = request.args.get("mode", None)
         settings_vars = self.process_settings_vars(self._data_manager.get_api_attribute(subtab, 'configuration'), mode=mode)
         if request.method == 'GET':
-            included_data = {}
+            included_data = {
+                'advcfg': self._args.advanced_config
+            }
             if required_uris:
                 for key, tmp_uri in required_uris.items():
                     included_data[key] = self._data_manager.get_data(tmp_uri)

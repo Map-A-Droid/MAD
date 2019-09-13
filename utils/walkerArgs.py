@@ -239,6 +239,8 @@ def parseArgs():
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
+    parser.add_argument('-advcfg', '--advanced_config', default=False, type=bool,
+                        help='Enables additional information to be modified when working with areas')
 
     # mappings.json auto reloader
 
