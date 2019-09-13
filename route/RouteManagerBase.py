@@ -39,6 +39,7 @@ class RoutePoolEntry:
     has_prio_event: bool = False
     prio_coords: Location = Location(0.0, 0.0)
     worker_sleeping: float = 0
+    last_round_prio_event: bool = False
 
 
 class RouteManagerBase(ABC):
@@ -462,6 +463,7 @@ class RouteManagerBase(ABC):
                 logger.info('Worker {} getting a nearby prio event {}', origin, prioevent)
                 self._routepool[origin].has_prio_event = False
                 self.__set_routepool_entry_location(origin, prioevent)
+                self._routepool[origin].last_round_prio_event = True
                 return prioevent
 
         # first check if a location is available, if not, block until we have one...
@@ -580,6 +582,7 @@ class RouteManagerBase(ABC):
                             str(self.name), str(next_coord), str(len(self._routepool[origin].queue)))
 
                 self._last_round_prio[origin] = False
+                self._routepool[origin].last_round_prio_event = False
             logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
                 self.name), str(next_coord))
             if self._check_coords_before_returning(next_coord.lat, next_coord.lng):
@@ -619,7 +622,8 @@ class RouteManagerBase(ABC):
         temp_distance = distance_worker
 
         for worker in self._routepool.keys():
-            if worker == origin or self._routepool[worker].has_prio_event:
+            if worker == origin or self._routepool[worker].has_prio_event \
+                    or self._routepool[origin].last_round_prio_event:
                 continue
             worker_pos = self._routepool[worker].current_pos
             prio_distance = get_distance_of_two_points_in_meters(worker_pos.lat, worker_pos.lng,
