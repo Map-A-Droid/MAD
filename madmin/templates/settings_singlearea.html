@@ -84,6 +84,7 @@ $(document).ready(function () {
 <h1 class="display-4">{{ element.name }} <small class="text-muted lead">{{ element.mode }}</small></h1>
 
 <div class="row">
+  {% if settings_vars.settings is defined %}
   <div class="col-sm">
     {% for key, field in settings_vars.settings|dictsort %}
     <div class="form-group">
@@ -101,6 +102,8 @@ $(document).ready(function () {
     </div>
     {% endfor %}  
   </div>
+  {% endif %}
+  {% if settings_vars.fields is defined %}
   <div class="col-sm">
     {% for key, field in settings_vars.fields|dictsort %}
     <div class="form-group">
@@ -117,6 +120,8 @@ $(document).ready(function () {
       <small class="form-text text-muted">{{ field.settings.description }}</small>
     </div>
     {% endfor %}
-    <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+  {% endif %}
+  <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
 </div>
 {% endblock %}

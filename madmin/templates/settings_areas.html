@@ -58,7 +58,20 @@ $(document).ready(function () {
     <tr>
       <th style="width: 50%">Name</th>
       <th style="width: 30%">Settings</th>
-      <th style="width: 20%" class= "text-right align-middle"><a href='settings/areas?id=new'><button type="button" class="btn btn-success"><i class="fas fa-plus"></i></button></a></th>
+      <th style="width: 20%" class= "text-right align-middle">
+        <div class="dropdown">
+            <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                Create new Area
+            </button>
+            <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
+                <a class="dropdown-item" href="settings/areas?id=new&mode=idle">[idle] Idle</a>
+                <a class="dropdown-item" href="settings/areas?id=new&mode=iv_mitm">[iv_mitm] Mon IV</a>
+                <a class="dropdown-item" href="settings/areas?id=new&mode=mon_mitm">[mon_mitm] Overlay scanner (MITM)</a>
+                <a class="dropdown-item" href="settings/areas?id=new&mode=pokestops">[pokestops] Quest Discovery</a>
+                <a class="dropdown-item" href="settings/areas?id=new&mode=raids_mitm">[raids_mitm] Raid Discovery</a>
+            </div>
+        </div>
+      </th>
     </tr>
   </thead>
   <tbody>
@@ -83,5 +96,5 @@ $(document).ready(function () {
     {% endfor %}
   </tbody>
 </table>
-<div id='no-configured-elements' class="alert alert-info">No credentials configured</div>
+<div id='no-configured-elements' class="alert alert-info">No areas configured</div>
 {% endblock %}
