@@ -510,11 +510,11 @@ class WorkerBase(ABC):
         return True
 
     def set_job_activated(self):
-        self.self._job_activated = True
+        self._job_activated = True
         return True
 
     def set_job_deactivated(self):
-        self.self._job_activated = False
+        self._job_activated = False
         return True
 
     def _internal_grab_next_location(self):
