@@ -522,10 +522,10 @@ class WorkerBase(ABC):
             self._geofix_sleeptime = 0
 
         if self.get_devicesettings_value("job", False):
-            logger.info("Worker {} get a job - waiting".format(str(self.id)))
+            logger.info("Worker {} get a job - waiting".format(str(self._id)))
             while self.get_devicesettings_value("job", False) and not self._stop_worker_event.is_set() :
                 time.sleep(10)
-            logger.info("Worker {} processed the job - go on".format(str(self.id)))
+            logger.info("Worker {} processed the job - go on".format(str(self._id)))
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
