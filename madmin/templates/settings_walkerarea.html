@@ -7,12 +7,45 @@
 {% block scripts %}
 {{ super() }}
 <script>
+    function validate_walker() {
+        var digitsOnlyNotEmptyPattern = "^[0-9]+$";
+        var hourPattern = "((2[0-3]|[01]?[0-9]):([0-5][0-9]))";
+        var rangeHoursPattern = "("+hourPattern+"-"+hourPattern+")";
+        validateWalkervalueMsg = "";
+        var rules = {
+            countdown : [digitsOnlyNotEmptyPattern, "Please set correct number of seconds - digits only."],
+            timer : ['^'+hourPattern+'$', "Please set correct time (24h format: XX:XX)."],
+            round: [digitsOnlyNotEmptyPattern, "Please set correct number of rounds - digits only."],
+            period : ['^'+rangeHoursPattern+'$', "Please set correct time (24h format: XX:XX-XX:XX)."],
+            coords: ['^(|'+hourPattern+'|'+rangeHoursPattern+')$', "Please set correct time."],
+            idle: ['^('+hourPattern+'|'+rangeHoursPattern+')$', "Please set correct time."],
+        };
+        var type = $("select[name='walkertype']").val();
+        var value = $("input[name=walkervalue]").val();
+        if (!(type in rules)) {
+            console.log("No rule implemented for " + type + " please fix :)");
+            return true;
+        }
+        var ruleToUse = new RegExp(rules[type][0], "");
+        if (ruleToUse.test(value)) {
+            return true;
+        } else {
+            validateWalkervalueMsg = rules[type][1];
+            $("#walkervalue-error").remove()
+            elem = '<em id="walkervalue-error" class="error help-block">'+ validateWalkervalueMsg +'</em>';
+            $("input[name=walkervalue]").parent().append(elem);
+            return false;
+        }
+    }
   $(document).ready(function () {
     $("#submit").click(function() {
-      // $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Saving shared device configuration...</h2>' });
-      save_data = {
+        if(validate_walker() == false) {
+            return;
+        }
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Saving shared device configuration...</h2>' });
+        save_data = {
           'settings': {}
-      }
+        }
       $(".form-control").each(function() {
           var obj = $(this);
           var name = obj.attr('name');
@@ -33,7 +66,6 @@
               save_data['pool'] = null;
           }
       });
-      console.log(save_data);
       $.ajax({
         url : '{{ uri }}',
         data : JSON.stringify(save_data),
@@ -106,7 +138,7 @@
     <div class="form-group">
       <label>Value for Walkermode</label><br>
       <small class="form-text text-muted"></small>
-      <input type="text" class="form-control" name="walkervalue" data-rule-validatewalkervalue="true" value="{{ element.walkervalue }}">
+      <input type="text" class="form-control" name="walkervalue" value="{{ element.walkervalue }}">
     </div>
     <div class="form-group">
       <label>Max. Walker in Area</label><br>
