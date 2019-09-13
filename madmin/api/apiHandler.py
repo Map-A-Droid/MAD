@@ -197,7 +197,6 @@ class ResourceHandler(object):
 
     def patch(self, identifier, *args, **kwargs):
         """ API call to update data """
-        mode = self.api_req.headers.get('Mode')
         append = self.api_req.headers.get('X-Append')
         try:
             self._data_manager.set_data(self.api_req.data, self.component, 'patch', identifier=identifier, append=append)
@@ -210,7 +209,11 @@ class ResourceHandler(object):
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 204,  headers=headers)
 
     def post(self, identifier, *args, **kwargs):
-        uri_key = self._data_manager.set_data(self.api_req.data, self.component, 'post')
+        mode = self.api_req.headers.get('X-Mode')
+        try:
+            uri_key = self._data_manager.set_data(self.api_req.data, self.component, 'post', mode=mode)
+        except utils.data_manager.DataManagerInvalidMode as err:
+            return apiResponse.APIResponse(self._logger, self.api_req)('Invalid mode specified: %s' % (err.mode,), 400)
         headers = {
             'Location': uri_key,
             'X-Uri': uri_key,

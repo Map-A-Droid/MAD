@@ -12,6 +12,11 @@ class DataManagerDependencyError(Exception):
         self.dependencies = dependencies
         super(DataManagerDependencyError, self).__init__(dependencies)
 
+class DataManagerInvalidMode(Exception):
+    def __init__(self, mode):
+        self.mode = mode
+        super(DataManagerInvalidMode, self).__init__(mode)
+
 class UnknownIdentifier(DataManagerException):
     pass
 
@@ -225,6 +230,13 @@ class DataManager(object):
             self.save_config()
             return True
         elif action == 'post':
+            if config_section == 'areas':
+                try:
+                    mode = kwargs.get('mode', None)
+                    self.get_api_attribute(location, 'configuration')[mode]
+                    data['mode'] = mode
+                except (AttributeError, KeyError):
+                    raise DataManagerInvalidMode(mode)
             index = str(self.__raw[config_section]['index'])
             uri_key = self.generate_uri(config_section, index)
             self.__raw[config_section]['entries'][index] = data
