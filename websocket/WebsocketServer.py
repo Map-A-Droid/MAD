@@ -614,3 +614,18 @@ class WebsocketServer(object):
         if self.__current_users.get(origin, None) is not None:
             return self.__current_users[origin][1].set_geofix_sleeptime(sleeptime)
         return False
+
+    def set_update_sleeptime_worker(self, origin, sleeptime):
+        if self.__current_users.get(origin, None) is not None:
+            return self.__current_users[origin][1].set_geofix_sleeptime(sleeptime)
+        return False
+
+    def set_job_activated(self, origin):
+        if self.__current_users.get(origin, None) is not None:
+            return self.__current_users[origin][1].set_job_activated()
+        return False
+
+    def set_job_deactivated(self, origin):
+        if self.__current_users.get(origin, None) is not None:
+            return self.__current_users[origin][1].set_job_deactivated()
+        return False

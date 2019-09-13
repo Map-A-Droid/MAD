@@ -60,10 +60,11 @@ class WorkerBase(ABC):
         self._screen_y = 0
         self._lastStart = ""
         self._geofix_sleeptime = 0
+        self._job_activated: bool = False
         self._pogoWindowManager = pogoWindowManager
         self._waittime_without_delays = 0
         self._transporttype = 0
-        self._not_injected_count:int = 0
+        self._not_injected_count: int = 0
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
 
@@ -508,6 +509,14 @@ class WorkerBase(ABC):
         self._geofix_sleeptime = sleeptime
         return True
 
+    def set_job_activated(self):
+        self.self._job_activated = True
+        return True
+
+    def set_job_deactivated(self):
+        self.self._job_activated = False
+        return True
+
     def _internal_grab_next_location(self):
         # TODO: consider adding runWarningThreadEvent.set()
         self._last_known_state["last_location"] = self.last_location
@@ -520,6 +529,12 @@ class WorkerBase(ABC):
                         str(self._geofix_sleeptime))
             time.sleep(int(self._geofix_sleeptime))
             self._geofix_sleeptime = 0
+
+        if self._job_activated:
+            logger.info("Worker {} get a job - waiting".format(str(self.id)))
+            while self._job_activated and not self._stop_worker_event.is_set() :
+                time.sleep(10)
+            logger.info("Worker {} processed the job - go on".format(str(self.id)))
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 

@@ -52,6 +52,8 @@ class deviceUpdater(object):
                         self.add_job(origin, file_, id_, jobtype, counter, 'not connected')
 
                     else:
+                        # stop worker
+                        self._websocket.set_job_activated(origin)
                         if self.start_job_type(item, jobtype, temp_comm):
                             logger.info('Job {} could be executed successfully - Device {} - File {} (ID: {})'
                                          .format(str(jobtype), str(origin), str(file_), str(id_)))
@@ -62,6 +64,9 @@ class deviceUpdater(object):
                                          .format(str(jobtype), str(origin), str(file_), str(id_)))
                             counter = counter + 1
                             self.add_job(origin, file_, id_, jobtype, counter, 'failure')
+
+                        # start worker
+                        self._websocket.set_job_deactivated(origin)
 
             except KeyboardInterrupt as e:
                 logger.info("process_update_queue received keyboard interrupt, stopping")
