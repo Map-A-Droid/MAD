@@ -56,6 +56,7 @@ class ResourceHandler(object):
                 else:
                     entry_def = self.get_def(key, config['fields'])
                 expected = entry_def['settings'].get('expected', str)
+                none_val = entry_def['settings'].get('empty', '')
                 if (val is None or (val and len(val) == 0)) and entry_def['settings'].get('require', False):
                     missing.append(key)
                     continue
@@ -63,7 +64,7 @@ class ResourceHandler(object):
                     # We only want to skip the value if its a POST operation.  If not, we want them to be removed from recursive_update
                     if (val is None or (val and 'len' in dir(val) and len(val) == 0)) and settings and operation == 'POST':
                         continue
-                    save_data[key] = self.format_value(val, expected)
+                    save_data[key] = self.format_value(val, expected, none_val)
                 except:
                     user_readable_types = {
                         str: 'string (MapADroid)',
@@ -75,11 +76,9 @@ class ResourceHandler(object):
                     invalid.append('%s:%s' % (key, user_readable_types[expected]))
         return (save_data, invalid, missing)
 
-    def format_value(self, value, expected):
+    def format_value(self, value, expected, none_val):
         if value in ["None", None]:
-            if expected == str:
-                return ""
-            return None
+            return none_val
         elif expected == 'list':
             if '[' in value and ']' in value:
                 if ':' in value:
