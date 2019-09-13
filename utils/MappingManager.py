@@ -252,7 +252,6 @@ class MappingManager:
             return areas
 
         raw_areas = self.__data_manager.get_data('area')
-        print(raw_areas)
 
         thread_pool = ThreadPool(processes=4)
 
@@ -300,7 +299,7 @@ class MappingManager:
                 area['settings']['mon_ids_iv_raw'] = \
                     self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
 
-            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, None,
+            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager, uri, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
                                                                  mode_mapping.get(mode, {}).get("max_count", 99999999),
                                                                  area["geofence_included"],
