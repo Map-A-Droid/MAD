@@ -54,6 +54,9 @@ class deviceUpdater(object):
                     else:
                         # stop worker
                         self._websocket.set_job_activated(origin)
+                        self._log[id_]['status'] = 'starting'
+                        self.update_status_log()
+                        time.sleep(30)
                         if self.start_job_type(item, jobtype, temp_comm):
                             logger.info('Job {} could be executed successfully - Device {} - File {} (ID: {})'
                                          .format(str(jobtype), str(origin), str(file_), str(id_)))

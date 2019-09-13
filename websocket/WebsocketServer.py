@@ -237,6 +237,7 @@ class WebsocketServer(object):
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'finished', False)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_action_time', None)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_cleanup_time', None)
+                    self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)
                     await asyncio.sleep(1) # give the settings a moment... (dirty "workaround" against race condition)
                 walker_index = devicesettings.get('walker_area_index', 0)
 
@@ -621,11 +622,7 @@ class WebsocketServer(object):
         return False
 
     def set_job_activated(self, origin):
-        if self.__current_users.get(origin, None) is not None:
-            return self.__current_users[origin][1].set_job_activated()
-        return False
+        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', True)
 
     def set_job_deactivated(self, origin):
-        if self.__current_users.get(origin, None) is not None:
-            return self.__current_users[origin][1].set_job_deactivated()
-        return False
+        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)
