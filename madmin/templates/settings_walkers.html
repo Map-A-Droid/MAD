@@ -1,0 +1,87 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script>
+$(document).ready(function () {
+    $(".delete").click(function() {
+        if(confirm('Are you sure you want to delete this resource?')) {
+            var elem =  $(this);
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Deleting a {{ subtab }}...</h2>' });
+            $.ajax({
+                url : $(this).data('identifier'),
+                type : 'DELETE',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 202) {
+                        elem.parent().parent().remove();
+                        toggleConfiguredElement();
+                    }
+                },
+                error: function(data, status, xhr) {
+                    if(data.status == 412) {
+                        var dependencies = JSON.parse(data.responseJSON);
+                        var msg = 'The following entities have a dependency on this element:';
+                        $.each(dependencies, function() {
+                            msg += "\n"+ this['name'] +" ("+ this['uri'] +")";
+                        });
+                        alert(msg);
+                    } else {
+                        alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                    }
+                }
+            });
+            $.unblockUI();
+        }
+    });
+    // Toggle on boot
+    toggleConfiguredElement();
+  });
+
+  function toggleConfiguredElement() {
+    if($(".delete").length == 0) {
+        $('#no-configured-elements').show();
+    } else {
+        $('#no-configured-elements').hide();
+    }
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<table class="table table-striped table-hover">
+  <thead class="thead-dark">
+    <tr>
+      <th style="width: 40%">Name</th>
+      <th style="width: 40%">Settings</th>
+      <th style="width: 20%" class= "text-right align-middle"><a href='settings/walker?id=new'><button type="button" class="btn btn-success"><i class="fas fa-plus"></i></button></a></th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for walker_uri, walker in walker.items() %}
+    <tr>
+      <td class="align-middle">
+        <a href="settings/walker?id={{ walker_uri }}">{{ walker.walkername }}</a>
+      </td>
+      <td>
+        <p style="font-size: 65%; min-height: 40px; display: inline-box">
+          Number of Areas: {{ walker.setup|length }}<br>
+          Areas: {% for walkerarea_uri in walker.setup %}
+            {% if loop.index > 1 %},{% endif %}
+            {{ areas[walkerarea[walkerarea_uri]['walkerarea']].name }}
+          {% endfor %}
+        </p>
+      </td>
+      <td class="text-right align-middle">
+        <button data-identifier='{{ walker_uri }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+<div id='no-configured-elements' class="alert alert-info">No walkers configured</div>
+{% endblock %}

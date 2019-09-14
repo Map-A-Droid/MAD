@@ -8,6 +8,7 @@
     {% else %}
     <title>MADmin</title>
     {% endif %}
+    <base href="{{config.basePath}}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
@@ -46,7 +47,7 @@
                     <a href="quests" class="nav-link">Quests</a>
                   </li>
                   <li class="nav-item">
-                    <a href="showsettings" class="nav-link">Mapping Editor</a>
+                    <a href="settings" class="nav-link">Settings</a>
                   </li>
                   <li class="nav-item">
                     <a href="status" class="nav-link">Status</a>
@@ -64,6 +65,7 @@
                     <a href="phonecontrol" class="nav-link">Phonecontrol</a>
                   </li>
               </ul>
+              <button type="button" class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold" id="reload">Apply settings</a>
           </div>
         </div>
     </nav>
@@ -77,6 +79,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js" integrity="sha384-rgWRqC0OFPisxlUvl332tiM/qmaNxnlY46eksSZD84t+s2vZlqGeHrncwIRX7CGp" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js" integrity="sha256-9wRM03dUw6ABCs+AU69WbK33oktrlXamEXMvxUaF+KU=" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js" crossorigin="anonymous""></script>
+    <script>
+      $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $("#reload").click(function() {
+          if (confirm('Do you really want reload and apply settings?')) {
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+            $(location).attr('href', 'reload')
+          }
+        });
+      });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
 

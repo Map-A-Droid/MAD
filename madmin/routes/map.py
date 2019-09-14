@@ -79,7 +79,8 @@ class map(object):
         geofences = {}
 
         areas = self._mapping_manager.get_areas()
-        for name, area in areas.items():
+        for uri, area in areas.items():
+            name = area['name']
             geofence_include = {}
             geofence_exclude = {}
             geofence_name = 'Unknown'
@@ -141,6 +142,7 @@ class map(object):
 
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
+            name = self._mapping_manager.routemanager_get_name(routemanager)
             route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_route(routemanager)
 
             if route is None:
@@ -152,7 +154,7 @@ class map(object):
                     getCoordFloat(location.lat), getCoordFloat(location.lng)
                 ])
             routeexport.append({
-                "name": routemanager,
+                "name": name,
                 "mode": mode,
                 "coordinates": route_serialized
             })
@@ -167,6 +169,7 @@ class map(object):
 
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
+            name = self._mapping_manager.routemanager_get_name(routemanager)
             route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_prioroute(routemanager)
 
             if route is None:
@@ -181,7 +184,7 @@ class map(object):
                 })
 
             routeexport.append({
-                "name": routemanager,
+                "name": name,
                 "mode": mode,
                 "coordinates": route_serialized
             })

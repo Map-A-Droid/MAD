@@ -220,6 +220,9 @@ def parseArgs():
     parser.add_argument('-mmpassword', '--madmin_password', default='',
                         help='Password for MADmin Frontend.')
 
+    parser.add_argument('-mmbp', '--madmin_base_path', default='/',
+                        help='Base path for madmin')
+
     parser.add_argument('-pfile', '--position_file', default='current',
                         help='Filename for bot\'s current position (Default: current)')
 
@@ -237,6 +240,8 @@ def parseArgs():
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
+    parser.add_argument('-advcfg', '--advanced_config', default=False, type=bool,
+                        help='Enables additional information to be modified when working with areas')
 
     parser.add_argument('-ld', '--lure_duration', default='30', type=int,
                         help='Lure duration in minutes. (Default: 30)')

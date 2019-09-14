@@ -1,250 +1,238 @@
 {
-    "areas": [
-        {
-            "coords_spawns_known": true,
-            "geofence_excluded": null,
-            "geofence_included": "configs/geofences/ND_mon.txt",
-            "init": false,
-            "mode": "mon_mitm",
-            "name": "test123",
-            "routecalc": "test123",
-            "route_calc_algorithm": "optimized",
-            "settings": {
-                "delay_after_prio_event": null,
-                "max_distance": 200,
-                "priority_queue_clustering_timedelta": 300,
-                "remove_from_queue_backlog": 500,
-                "speed": 70,
-                "starve_route": false
-            }
-        },
-        {
-            "geofence_excluded": null,
-            "geofence_included": "configs/geofences/ND_raid.txt",
-            "init": false,
-            "mode": "raids_mitm",
-            "name": "huehuedurr",
-            "routecalc": "nd_raid",
-            "route_calc_algorithm": "quick",
-            "settings": {
-                "delay_after_prio_event": 50,
-                "max_distance": 200,
-                "priority_queue_clustering_timedelta": 600,
-                "remove_from_queue_backlog": 1200,
-                "speed": 70,
-                "starve_route": true
-            }
-        },
-        {
-            "coords_spawns_known": true,
-            "geofence_excluded": null,
-            "geofence_included": "configs/geofences/iv_total.txt",
-            "init": false,
-            "mode": "iv_mitm",
-            "name": "iv_total",
-            "routecalc": "iv_total",
-            "settings": {
-                "delay_after_prio_event": 0,
-                "max_distance": 500,
-                "min_time_left_seconds": 600,
-                "mon_ids_iv": "global_mon_list",
-                "priority_queue_clustering_timedelta": 50,
-                "remove_from_queue_backlog": 300,
-                "speed": 28,
-                "starve_route": true
-            }
-        },
-        {
-            "geofence_excluded": null,
-            "geofence_included": "configs/geofences/iv_total.txt",
-            "mode": "pokestops",
-            "name": "quests",
-            "routecalc": "superduperquest",
-            "settings": {
-                "max_distance": 400,
-                "speed": 30
-            }
-        },
-        {
-            "geofence_included": "configs/geofences/quest_small.txt",
-            "init": false,
-            "mode": "pokestops",
-            "name": "quest_small",
-            "routecalc": "quest_small",
-            "settings": {}
-        }
-    ],
-    "auth": [
-        {
-            "password": "12345",
-            "username": "grennith"
-        },
-        {
-            "password": "test123",
-            "username": "cec"
-        }
-    ],
-    "devices": [
-        {
-            "origin": "redmi",
-            "pool": "Globalpool",
-            "settings": {
-            },
-            "walker": "huehuedurr"
-        },
-        {
-            "origin": "samsung",
-            "settings": {
-                "cool_down_sleep": false,
-                "post_pogo_start_delay": 60,
-                "post_teleport_delay": 7,
-                "post_turn_screen_on_delay": 10,
-                "post_walk_delay": 0,
-                "reboot": false,
-                "restart_pogo": 0,
-                "injection_thresh_reboot": 20,
-                "walk_after_teleport_distance": 1,
-                "account_rotation": true,
-                "logintype": "ptc",
-                "ptc_login": "PTC_1,PTC_PASS_1|PTC_2,PTC_PASS_2|PTC_3,PTC_PASS_3"
-            },
-            "walker": "test123"
-        },
-        {
-            "origin": "samsung_iv",
-            "settings": {
-                "cool_down_sleep": false,
-                "post_pogo_start_delay": 60,
-                "post_teleport_delay": 7,
-                "post_turn_screen_on_delay": 10,
-                "post_walk_delay": 0,
-                "reboot": true,
-                "reboot_thresh": 10,
-                "restart_pogo": 0,
-                "injection_thresh_reboot": 10,
-                "walk_after_teleport_distance": 1,
-                "account_rotation": false,
-                "logintype": "google",
-                "ggl_login": "GGL1@gmail.com"
-            },
-            "walker": "iv_total"
-        }
-    ],
-    "devicesettings": [
-        {
-            "devicepool": "Globalpool",
-            "settings": {
-                "cool_down_sleep": false,
-                "delay_after_hatch": 2,
-                "mitm_wait_timeout": 35,
-                "post_pogo_start_delay": 120,
-                "post_screenshot_delay": 2,
-                "post_teleport_delay": 7,
-                "post_turn_screen_on_delay": 2,
-                "post_walk_delay": 1,
-                "reboot": true,
-                "reboot_thresh": 5,
-                "restart_pogo": 0,
-                "restart_thresh": 5,
-                "route_calc_algorithm": "optimized"
-            }
-        }
-    ],
-    "walker": [
-        {
-            "setup": [
-                {
-                    "walkerarea": "quest_small",
-                    "walkermax": "1",
-                    "walkertext": "Small_Quest_Area_-_just_max._1_walker_-_from_1:00_till_6:00_or_end_of_coords",
-                    "walkertype": "coords",
-                    "walkervalue": "1:00-6:00"
-                },
-                {
-                    "walkerarea": "test123",
-                    "walkermax": "",
-                    "walkertext": "Daymode_-_starts_with_end_of_Quest_areas_-_till_1:00",
-                    "walkertype": "timer",
-                    "walkervalue": "1:00"
-                },
-                {
-                    "walkerarea": "quests",
-                    "walkermax": "",
-                    "walkertext": "Bigger_Questarea_-_infinitely_walker_-_from_1:00_-_6:00_or_end_of_coords",
-                    "walkertype": "coords",
-                    "walkervalue": "1:00-6:00"
+    "areas": {
+        "entries": {
+            "0": {
+                "coords_spawns_known": true,
+                "geofence_excluded": null,
+                "geofence_included": "configs/geofences/ND_mon.txt",
+                "init": false,
+                "mode": "mon_mitm",
+                "name": "test123",
+                "route_calc_algorithm": "optimized",
+                "routecalc": "test123",
+                "settings": {
+                    "delay_after_prio_event": null,
+                    "max_distance": 200,
+                    "priority_queue_clustering_timedelta": 300,
+                    "remove_from_queue_backlog": 500,
+                    "speed": 70,
+                    "starve_route": false
                 }
-            ],
-            "walkername": "quest_example"
-        },
-        {
-            "setup": [
-                {
-                    "walkerarea": "huehuedurr",
-                    "walkermax": "",
-                    "walkertext": "One_Round_of_this_area",
-                    "walkertype": "round",
-                    "walkervalue": "1"
-                },
-                {
-                    "walkerarea": "test123",
-                    "walkermax": "1",
-                    "walkertext": "One_Walker_-_one_Round_f.e._Raid_checking",
-                    "walkertype": "round",
-                    "walkervalue": "1"
-                },
-                {
-                    "walkerarea": "huehuedurr",
-                    "walkermax": "",
-                    "walkertext": "Only_Mon_checking_from_21:00_till_6:00",
-                    "walkertype": "timer",
-                    "walkervalue": "21:00-3:00"
-                },
-                {
-                    "walkerarea": "test123",
-                    "walkermax": "",
-                    "walkertext": "Idle_between_3:00_and_6:00",
-                    "walkertype": "idle",
-                    "walkervalue": "3:00-5:00"
-                },
-                {
-                    "walkerarea": "quest_small",
-                    "walkermax": "1",
-                    "walkertext": "Check_quests_with_one_device",
-                    "walkertype": "coords",
-                    "walkervalue": "5:00-6:00"
+            },
+            "1": {
+                "geofence_excluded": null,
+                "geofence_included": "configs/geofences/ND_raid.txt",
+                "init": false,
+                "mode": "raids_mitm",
+                "name": "huehuedurr",
+                "route_calc_algorithm": "quick",
+                "routecalc": "nd_raid",
+                "settings": {
+                    "delay_after_prio_event": 50,
+                    "max_distance": 200,
+                    "priority_queue_clustering_timedelta": 600,
+                    "remove_from_queue_backlog": 1200,
+                    "speed": 70,
+                    "starve_route": true
                 }
-            ],
-            "walkername": "raid_mon_example"
-        },
-        {
-            "setup": [
-                {
-                    "walkerarea": "iv_total",
-                    "walkermax": "",
-                    "walkertext": "Check_one_hour_for_IVs",
-                    "walkertype": "countdown",
-                    "walkervalue": "3600"
-                },
-                {
-                    "walkerarea": "huehuedurr",
-                    "walkermax": "1",
-                    "walkertext": "Check_one_round_with_one_device_for_raids",
-                    "walkertype": "round",
-                    "walkervalue": "1"
+            },
+            "2": {
+                "coords_spawns_known": true,
+                "geofence_excluded": null,
+                "geofence_included": "configs/geofences/iv_total.txt",
+                "init": false,
+                "mode": "iv_mitm",
+                "name": "iv_total",
+                "routecalc": "iv_total",
+                "settings": {
+                    "delay_after_prio_event": 0,
+                    "max_distance": 500,
+                    "min_time_left_seconds": 600,
+                    "mon_ids_iv": "/api/monlist/0",
+                    "priority_queue_clustering_timedelta": 50,
+                    "remove_from_queue_backlog": 300,
+                    "speed": 28,
+                    "starve_route": true
                 }
-            ],
-            "walkername": "iv_checker"
-        }
-    ],
-    "monivlist": [
-        {
-            "mon_ids_iv": [
-                1,
-                2,
-                3
-            ],
-            "monlist": "global_mon_list"
-        }
-    ]
+            },
+            "3": {
+                "geofence_excluded": null,
+                "geofence_included": "configs/geofences/iv_total.txt",
+                "mode": "pokestops",
+                "name": "quests",
+                "routecalc": "superduperquest",
+                "settings": {
+                    "max_distance": 400,
+                    "speed": 30
+                }
+            },
+            "4": {
+                "geofence_included": "configs/geofences/quest_small.txt",
+                "init": false,
+                "mode": "pokestops",
+                "name": "quest_small",
+                "routecalc": "quest_small",
+                "settings": {}
+            }
+        },
+        "index": 5
+    },
+    "auth": {
+        "entries": {
+            "0": {
+                "password": "12345",
+                "username": "grennith"
+            },
+            "1": {
+                "password": "test123",
+                "username": "cec"
+            }
+        },
+        "index": 2
+    },
+    "devices": {
+        "entries": {},
+        "index": 0
+    },
+    "devicesettings": {
+        "entries": {
+            "0": {
+                "devicepool": "Globalpool",
+                "settings": {
+                    "cool_down_sleep": false,
+                    "delay_after_hatch": 2,
+                    "mitm_wait_timeout": 35,
+                    "post_pogo_start_delay": 120,
+                    "post_screenshot_delay": 2,
+                    "post_teleport_delay": 7,
+                    "post_turn_screen_on_delay": 2,
+                    "post_walk_delay": 1,
+                    "reboot": true,
+                    "reboot_thresh": 5,
+                    "restart_pogo": 0,
+                    "restart_thresh": 5,
+                    "route_calc_algorithm": "optimized"
+                }
+            }
+        },
+        "index": 1
+    },
+    "monivlist": {
+        "entries": {
+            "0": {
+                "mon_ids_iv": [
+                    1,
+                    2,
+                    3
+                ],
+                "monlist": "global_mon_list"
+            }
+        },
+        "index": 1
+    },
+    "walker": {
+        "entries": {
+            "0": {
+                "setup": [
+                    "/api/walkerarea/0",
+                    "/api/walkerarea/1",
+                    "/api/walkerarea/2"
+                ],
+                "walkername": "quest_example"
+            },
+            "1": {
+                "setup": [
+                    "/api/walkerarea/3",
+                    "/api/walkerarea/4",
+                    "/api/walkerarea/5",
+                    "/api/walkerarea/6",
+                    "/api/walkerarea/7"
+                ],
+                "walkername": "raid_mon_example"
+            },
+            "2": {
+                "setup": [
+                    "/api/walkerarea/8",
+                    "/api/walkerarea/9"
+                ],
+                "walkername": "iv_checker"
+            }
+        },
+        "index": 3
+    },
+    "walkerarea": {
+        "entries": {
+            "0": {
+                "walkerarea": "/api/area/4",
+                "walkermax": "1",
+                "walkertext": "Small_Quest_Area_-_just_max._1_walker_-_from_1:00_till_6:00_or_end_of_coords",
+                "walkertype": "coords",
+                "walkervalue": "1:00-6:00"
+            },
+            "1": {
+                "walkerarea": "/api/area/0",
+                "walkermax": "",
+                "walkertext": "Daymode_-_starts_with_end_of_Quest_areas_-_till_1:00",
+                "walkertype": "timer",
+                "walkervalue": "1:00"
+            },
+            "2": {
+                "walkerarea": "/api/area/3",
+                "walkermax": "",
+                "walkertext": "Bigger_Questarea_-_infinitely_walker_-_from_1:00_-_6:00_or_end_of_coords",
+                "walkertype": "coords",
+                "walkervalue": "1:00-6:00"
+            },
+            "3": {
+                "walkerarea": "/api/area/1",
+                "walkermax": "",
+                "walkertext": "One_Round_of_this_area",
+                "walkertype": "round",
+                "walkervalue": "1"
+            },
+            "4": {
+                "walkerarea": "/api/area/0",
+                "walkermax": "1",
+                "walkertext": "One_Walker_-_one_Round_f.e._Raid_checking",
+                "walkertype": "round",
+                "walkervalue": "1"
+            },
+            "5": {
+                "walkerarea": "/api/area/1",
+                "walkermax": "",
+                "walkertext": "Only_Mon_checking_from_21:00_till_6:00",
+                "walkertype": "timer",
+                "walkervalue": "21:00-3:00"
+            },
+            "6": {
+                "walkerarea": "/api/area/0",
+                "walkermax": "",
+                "walkertext": "Idle_between_3:00_and_6:00",
+                "walkertype": "idle",
+                "walkervalue": "3:00-5:00"
+            },
+            "7": {
+                "walkerarea": "/api/area/4",
+                "walkermax": "1",
+                "walkertext": "Check_quests_with_one_device",
+                "walkertype": "coords",
+                "walkervalue": "5:00-6:00"
+            },
+            "8": {
+                "walkerarea": "/api/area/2",
+                "walkermax": "",
+                "walkertext": "Check_one_hour_for_IVs",
+                "walkertype": "countdown",
+                "walkervalue": "3600"
+            },
+            "9": {
+                "walkerarea": "/api/area/1",
+                "walkermax": "1",
+                "walkertext": "Check_one_round_with_one_device_for_raids",
+                "walkertype": "round",
+                "walkervalue": "1"
+            }
+        },
+        "index": 10
+    }
 }
