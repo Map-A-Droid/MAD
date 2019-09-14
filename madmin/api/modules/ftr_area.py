@@ -130,7 +130,11 @@ class APIArea(apiHandler.ResourceHandler):
                 },
                 "mon_ids_iv": {
                     "settings": {
-                        "type": "monlistselect",
+                        "type": "lookup",
+                        "display": {
+                            "name": "monlist",
+                            "section": "monivlist"
+                        },
                         "require": False,
                         "description": "Select global mon list",
                         "output": int,
@@ -246,12 +250,16 @@ class APIArea(apiHandler.ResourceHandler):
                 },
                 "mon_ids_iv": {
                     "settings": {
-                        "type": "monlistselect",
+                        "type": "lookup",
+                        "display": {
+                            "name": "monlist",
+                            "section": "monivlist"
+                        },
                         "require": False,
                         "description": "Select global mon list",
                         "output": int,
                         "showmonsidpicker": True,
-                        "expected": "list"
+                        "expected": list
                     }
                 },
                 "min_time_left_seconds": {
@@ -493,7 +501,11 @@ class APIArea(apiHandler.ResourceHandler):
                 },
                 "mon_ids_iv": {
                     "settings": {
-                        "type": "monlistselect",
+                        "type": "lookup",
+                        "display": {
+                            "name": "monlist",
+                            "section": "monivlist"
+                        },
                         "require": False,
                         "description": "Select global mon list",
                         "output": int,

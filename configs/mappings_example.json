@@ -48,7 +48,7 @@
                     "delay_after_prio_event": 0,
                     "max_distance": 500,
                     "min_time_left_seconds": 600,
-                    "mon_ids_iv": "global_mon_list",
+                    "mon_ids_iv": "/api/monlist/0",
                     "priority_queue_clustering_timedelta": 50,
                     "remove_from_queue_backlog": 300,
                     "speed": 28,

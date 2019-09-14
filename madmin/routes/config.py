@@ -56,8 +56,9 @@ class config(object):
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
         var_parser_section = kwargs.get('var_parser_section', subtab)
-        required_uris = kwargs.get('required_uris')
+        required_uris = kwargs.get('required_uris', {})
         mode_required = kwargs.get('mode_required', False)
+        passthrough = kwargs.get('passthrough', {})
         identifier = request.args.get(key)
         uri = identifier
         if uri:
@@ -71,9 +72,10 @@ class config(object):
             included_data = {
                 'advcfg': self._args.advanced_config
             }
-            if required_uris:
-                for key, tmp_uri in required_uris.items():
-                    included_data[key] = self._data_manager.get_data(tmp_uri)
+            for key, tmp_uri in required_uris.items():
+                included_data[key] = self._data_manager.get_data(tmp_uri)
+            for key, val in passthrough.items():
+                included_data[key] = val
             # Mode was required for this operation but was not present.  Return the base element
             if mode_required and mode is None:
                 req = self._data_manager.get_data(base_uri)
@@ -126,6 +128,9 @@ class config(object):
             'html_single': 'settings_singlearea.html',
             'html_all': 'settings_areas.html',
             'subtab': 'area',
+            'required_uris': {
+                'monlist': '/api/monivlist'
+            },
             'mode_required': True
         }
         return self.process_element(**required_data)
@@ -163,6 +168,29 @@ class config(object):
     @logger.catch
     @auth_required
     def settings_ivlist(self):
+        try:
+            identifier = request.args.get('id')
+            current_mons = self._data_manager.get_data(identifier)['mon_ids_iv']
+        except Exception as err:
+            current_mons = []
+        mondata = open_json_file('pokemon')
+        current_mons_list = []
+        for mon_id in current_mons:
+            try:
+                mon_name = i8ln(mondata[str(mon_id)]["name"])
+            except KeyError:
+                mon_name = "No-name-in-file-please-fix"
+            current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
+        # Why o.O
+        stripped_mondata = {}
+        for mon_id in mondata:
+            stripped_mondata[mondata[str(mon_id)]["name"]] = mon_id
+            if os.environ['LANGUAGE'] != "en":
+                try:
+                    localized_name = i8ln(mondata[str(mon_id)]["name"])
+                    stripped_mondata[localized_name] = mon_id
+                except KeyError:
+                    pass
         required_data = {
             'identifier': 'id',
             'base_uri': '/api/monivlist',
@@ -170,6 +198,9 @@ class config(object):
             'html_single': 'settings_singleivlist.html',
             'html_all': 'settings_ivlists.html',
             'subtab': 'monivlist',
+            'passthrough': {
+                'current_mons_list': current_mons_list
+            }
         }
         return self.process_element(**required_data)
 

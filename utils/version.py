@@ -334,10 +334,35 @@ class MADVersion(object):
                         'entries': {}
                     }
                 for entry in entries:
+                    if key == 'monivlist':
+                        cache[key][entry['monlist']] = index
                     if key == 'devicesettings':
                         cache[key][entry['devicepool']] = index
                     elif key == 'areas':
                         cache[key][entry['name']] = index
+                        try:
+                            mon_list = entry['settings']['mon_ids_iv']
+                            if type(mon_list) is list:
+                                monlist_ind = new_data['monivlist']['index']
+                                new_data['monivlist']['entries'][index] = {
+                                    'monlist': 'Update List',
+                                    'mon_ids_iv': mon_list
+                                }
+                                entry['settings']['mon_ids_iv'] = '/api/monlist/%s' % (monlist_ind)
+                                new_data['monivlist']['index'] += 1
+                            else:
+                                try:
+                                    name = mon_list
+                                    uri = '/api/monlist/%s' % (cache['monivlist'][name])
+                                    entry['settings']['mon_ids_iv'] = uri
+                                except:
+                                    # No name match.  Maybe an old record so lets toss it
+                                    del entry['settings']['mon_ids_iv']
+                        except KeyError:
+                            pass
+                        except:
+                            # No monlist specified
+                            pass
                     elif key == 'walker':
                         cache[key][entry['walkername']] = index
                         valid_areas = []
