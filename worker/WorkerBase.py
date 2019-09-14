@@ -568,7 +568,7 @@ class WorkerBase(ABC):
 
             if returncode != ScreenType.POGO:
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
                                                    ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
@@ -578,7 +578,7 @@ class WorkerBase(ABC):
                     time.sleep(5)
                     self._reboot()
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
                                                    ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count < 3:
