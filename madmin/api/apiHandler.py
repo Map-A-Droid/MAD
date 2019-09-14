@@ -57,14 +57,15 @@ class ResourceHandler(object):
                     entry_def = self.get_def(key, config['fields'])
                 expected = entry_def['settings'].get('expected', str)
                 none_val = entry_def['settings'].get('empty', '')
-                if (val is None or (val and len(val) == 0)) and entry_def['settings'].get('require', False):
+                formated_val = self.format_value(val, expected, none_val)
+                if (formated_val is None or (formated_val and len(formated_val) == 0)) and entry_def['settings'].get('require', False):
                     missing.append(key)
                     continue
                 try:
                     # We only want to skip the value if its a POST operation.  If not, we want them to be removed from recursive_update
                     if (val is None or (val and 'len' in dir(val) and len(val) == 0)) and settings and operation == 'POST':
                         continue
-                    save_data[key] = self.format_value(val, expected, none_val)
+                    save_data[key] = formated_val
                 except:
                     user_readable_types = {
                         str: 'string (MapADroid)',
@@ -77,9 +78,7 @@ class ResourceHandler(object):
         return (save_data, invalid, missing)
 
     def format_value(self, value, expected, none_val):
-        if value in ["None", None]:
-            return none_val
-        elif expected == 'list':
+        if expected == 'list':
             if '[' in value and ']' in value:
                 if ':' in value:
                     tempvalue = []
@@ -97,6 +96,10 @@ class ResourceHandler(object):
             value = float(value)
         elif expected == int:
             value = int(value)
+        elif expected == str:
+            value = value.strip()
+        if value in ["None", None, ""]:
+            return none_val
         return value
 
     def get_def(self, key, config):
