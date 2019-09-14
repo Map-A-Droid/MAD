@@ -20,7 +20,7 @@ class APIMonList(apiHandler.ResourceHandler):
             "mon_ids_iv": {
                 "settings": {
                     "type": "text",
-                    "require": False,
+                    "require": True,
                     "description": "Encounter these mon ids while walking (Put in brackets [1,2,3] as comma separated list!)",
                     "output": "int",
                     "showmonsidpicker": True,
