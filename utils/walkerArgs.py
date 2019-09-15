@@ -294,7 +294,7 @@ def parseArgs():
                               " python time module docs for details."
                               " Default: %%Y%%m%%d_%%H%%M_<SN>.log."))
     parser.add_argument('--no_log_colors', action="store_true", default=False,
-                        help=("Disable colored logs.")
+                        help=("Disable colored logs."))
 
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"
