@@ -62,6 +62,8 @@ class control(object):
             phones = []
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
+        # Sort devices by name.
+        phones = sorted(phones)
         for phonename in phones:
             ws_connected_phones.append(phonename)
             add_text = ""
