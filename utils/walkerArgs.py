@@ -293,6 +293,8 @@ def parseArgs():
                               " with the instance's status name. Read the"
                               " python time module docs for details."
                               " Default: %%Y%%m%%d_%%H%%M_<SN>.log."))
+    parser.add_argument('--no_log_colors', action="store_true", default=False,
+                        help=("Disable colored logs.")
 
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"
@@ -303,8 +305,6 @@ def parseArgs():
 
     parser.add_argument('-ahn', '--auto_hatch_number', type=int, default=0,
                         help='Auto hatch of level 5 Pokemon ID')
-    parser.add_argument('--no_log_colors', action="store_true", default=False,
-                        help=("Option to enable/disable colored logs."))
 
     verbose = parser.add_mutually_exclusive_group()
     verbose.add_argument('-v', action='count', default=0, dest='verbose',
