@@ -79,7 +79,7 @@
         });
         $('#area').change(function(){
         area = ( $(this).find("option:selected").attr('value') );
-        window.location.href = 'quests?fence=' + area
+        window.location.href = '{{request.path}}?fence=' + area
     });
     });
 
