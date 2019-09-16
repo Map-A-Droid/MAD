@@ -266,7 +266,7 @@ class map(object):
         coords = []
 
         fence = request.args.get("fence", None)
-        if fence is not None and fence is not 'None':
+        if fence not in (None, 'None'):
             fence = generate_coords_from_geofence(self._mapping_manager, fence)
         else:
             fence = None
