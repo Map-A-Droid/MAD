@@ -1,4 +1,4 @@
-from flask import (send_from_directory, render_template)
+from flask import (send_from_directory, render_template, request)
 from madmin.functions import (auth_required, nocache)
 from utils.functions import (generate_path)
 
@@ -81,13 +81,15 @@ class path(object):
 
     @auth_required
     def quest(self):
+        fence = request.args.get("fence", None)
         return render_template('quests.html', pub=False,
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show daily Quests")
+                               title="show daily Quests", fence=fence)
 
     @auth_required
     def quest_pub(self):
+        fence = request.args.get("fence", None)
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show daily Quests")
+                               title="show daily Quests", fence=fence)
 

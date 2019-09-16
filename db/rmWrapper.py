@@ -757,7 +757,7 @@ class RmWrapper(DbWrapperBase):
             return list_of_coords
 
     def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
-                       oSwLat=None, oSwLon=None, timestamp=None):
+                       oSwLat=None, oSwLon=None, timestamp=None, fence=None):
         logger.debug("RmWrapper::quests_from_db called")
         questinfo = {}
 
@@ -791,6 +791,10 @@ class RmWrapper(DbWrapperBase):
         elif timestamp is not None:
             oquery_where = " AND trs_quest.quest_timestamp >= {}".format(timestamp)
             query_where = query_where + oquery_where
+
+        if fence is not None:
+            query_where = query_where + " and ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
+                                        "POINT(pokestop.latitude, pokestop.longitude))".format(str(fence))
 
         res = self.execute(query + query_where)
 

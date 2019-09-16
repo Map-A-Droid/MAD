@@ -6,14 +6,14 @@ from flask import (jsonify, render_template, request, redirect)
 from flask_caching import Cache
 
 from db.dbWrapperBase import DbWrapperBase
-from madmin.functions import auth_required, getCoordFloat, getBoundParameter, getBasePath
+from madmin.functions import (auth_required, getCoordFloat, getBoundParameter,
+                              getBasePath, get_geofences, generate_coords_from_geofence)
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.gamemechanicutil import get_raid_boss_cp
 from utils.questGen import generate_quest
 from utils.s2Helper import S2Helper
 from utils.logging import logger
-from pathlib import Path
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
@@ -45,7 +45,7 @@ class map(object):
             ("/get_quests", self.get_quests),
             ("/get_map_mons", self.get_map_mons),
             ("/get_cells", self.get_cells),
-            ("/savefence", self.savefence),
+            ("/savefence", self.savefence)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -77,7 +77,6 @@ class map(object):
     @auth_required
     def get_geofence(self):
         geofences = {}
-
         areas = self._mapping_manager.get_areas()
         for uri, area in areas.items():
             name = area['name']
@@ -124,7 +123,7 @@ class map(object):
 
             geofences[name] = {'include': geofence_include,
                                'exclude': geofence_exclude}
-
+        geofences = get_geofences(self._mapping_manager)
         geofencexport = []
         for name, fences in geofences.items():
             coordinates = []
@@ -266,6 +265,12 @@ class map(object):
     def get_quests(self):
         coords = []
 
+        fence = request.args.get("fence", None)
+        if fence is not None and fence is not 'None':
+            fence = generate_coords_from_geofence(self._mapping_manager, fence)
+        else:
+            fence = None
+
         neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
         timestamp = request.args.get("timestamp", None)
 
@@ -278,7 +283,8 @@ class map(object):
             oNeLon=oNeLon,
             oSwLat=oSwLat,
             oSwLon=oSwLon,
-            timestamp=timestamp
+            timestamp=timestamp,
+            fence=fence
         )
 
         for stopid in data:
@@ -372,6 +378,3 @@ class map(object):
         file.close()
 
         return redirect(getBasePath(request) + "/map", code=302)
-
-
-
