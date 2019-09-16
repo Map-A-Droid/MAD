@@ -77,6 +77,10 @@
                 setTimeout($.unblockUI, 500);
             }
         });
+        $('#area').change(function(){
+        area = ( $(this).find("option:selected").attr('value') );
+        window.location.href = 'quests?fence=' + area
+    });
     });
 
     function build_name(row) {
@@ -135,6 +139,19 @@
 {% block content %}
 {% if not pub %}
 <h2>Quests</h2>
+ <div class="p-3 mb-2 bg-secondary text-white">
+        <h5>Select Area</h5><select id=area name=area method="GET" action="/">
+    {% for stop_fence in stop_fences %}
+         {% if stop_fence == fence %}
+              <option value= "{{stop_fence}}" SELECTED>{{stop_fence}}</option>"
+         {% else %}
+               <option value= "{{stop_fence}}">{{stop_fence}}</option>"
+         {% endif %}
+    {% endfor %}
+</select>
+
+ </div>
+
 {% endif %}
 <table id="show-data" class="table"></table>
 {% endblock %}

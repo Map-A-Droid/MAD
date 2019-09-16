@@ -36,8 +36,7 @@ def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
     map(db_wrapper, args, mapping_manager, app)
     api = APIHandler(logger, args, app, data_manager)
     config(db_wrapper, args, logger, app, mapping_manager, data_manager)
-
-    path(db_wrapper, args, app)
+    path(db_wrapper, args, app, mapping_manager)
 
     app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
 
