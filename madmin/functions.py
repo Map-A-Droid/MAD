@@ -92,6 +92,7 @@ def generate_device_screenshot_path(phone_name: str, device_mappings: dict, args
     screenshot_filename = "screenshot_{}{}".format(phone_name, screenshot_ending)
     return os.path.join(args.temp_path, screenshot_filename)
 
+
 def get_geofences(mapping_manager, fence_type=None):
     areas = mapping_manager.get_areas()
     geofences = {}
@@ -144,6 +145,7 @@ def get_geofences(mapping_manager, fence_type=None):
                            'exclude': geofence_exclude}
 
     return geofences
+
 
 def generate_coords_from_geofence(mapping_manager, fence):
     first_coord: str = None
