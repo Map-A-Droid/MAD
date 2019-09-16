@@ -5,7 +5,7 @@ from flask import (make_response, request)
 from functools import update_wrapper, wraps
 from math import floor
 from utils.walkerArgs import parseArgs
-
+from pathlib import Path
 mapping_args = parseArgs()
 
 
@@ -91,3 +91,78 @@ def generate_device_screenshot_path(phone_name: str, device_mappings: dict, args
         screenshot_ending = ".png"
     screenshot_filename = "screenshot_{}{}".format(phone_name, screenshot_ending)
     return os.path.join(args.temp_path, screenshot_filename)
+
+def get_geofences(mapping_manager):
+    areas = mapping_manager.get_areas()
+    geofences = {}
+    for name, area in areas.items():
+        geofence_include = {}
+        geofence_exclude = {}
+        geofence_name = 'Unknown'
+        geofence_included = Path(area["geofence_included"])
+        if not geofence_included.is_file():
+            continue
+        with geofence_included.open() as gf:
+            for line in gf:
+                line = line.strip()
+                if not line:  # Empty line.
+                    continue
+                elif line.startswith("["):  # Name line.
+                    geofence_name = line.replace("[", "").replace("]", "")
+                    geofence_include[geofence_name] = []
+                else:  # Coordinate line.
+                    lat, lon = line.split(",")
+                    geofence_include[geofence_name].append([
+                        getCoordFloat(lat),
+                        getCoordFloat(lon)
+                    ])
+
+        if area['geofence_excluded']:
+            geofence_name = 'Unknown'
+            geofence_excluded = Path(area["geofence_excluded"])
+            if not geofence_excluded.is_file():
+                continue
+            with geofence_excluded.open() as gf:
+                for line in gf:
+                    line = line.strip()
+                    if not line:  # Empty line.
+                        continue
+                    elif line.startswith("["):  # Name line.
+                        geofence_name = line.replace("[", "").replace("]", "")
+                        geofence_exclude[geofence_name] = []
+                    else:  # Coordinate line.
+                        lat, lon = line.split(",")
+                        geofence_exclude[geofence_name].append([
+                            getCoordFloat(lat),
+                            getCoordFloat(lon)
+                        ])
+
+        geofences[name] = {'include': geofence_include,
+                           'exclude': geofence_exclude}
+
+    return geofences
+
+def generate_coords_from_geofence(mapping_manager, fence):
+    first_coord: str = None
+    fence_string: str = ""
+
+    geofences = get_geofences(mapping_manager)
+    if fence not in geofences:
+        return ""
+
+    geofencexport = []
+    for name, fences in geofences.items():
+        if name != fence:
+                continue
+        coordinates = []
+        for fname, coords in fences.get('include').items():
+            coordinates.append([coords, fences.get('exclude').get(fname, [])])
+        geofencexport.append({'name': name, 'coordinates': coordinates})
+
+    for coord in geofencexport[0]["coordinates"][0][0]:
+        if first_coord is None:
+            first_coord = str(coord[0]) + " " + str(coord[1])
+        fence_string = fence_string + str(coord[0]) + " " + str(coord[1]) + ", "
+
+    fence_string = fence_string + first_coord
+    return fence_string

@@ -1402,4 +1402,3 @@ class DbWrapperBase(ABC):
         logger.debug(query)
         self.execute(query, commit=True)
 
-

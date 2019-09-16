@@ -69,7 +69,7 @@
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width=100px /><br /><h2>Load..</h2>' });
         $.ajax({
             type: "GET",
-            url: "get_quests",
+            url: "get_quests?fence={{fence}}",
             success: function (result) {
                 setGrid('#show-data', result);
             },
