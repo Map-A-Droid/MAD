@@ -98,8 +98,8 @@ class path(object):
         fence = request.args.get("fence", None)
         stop_fences = []
         stop_fences.append('All')
-        for fence in get_geofences(self._mapping_manager, 'pokestops'):
-            stop_fences.append(fence)
+        for possible_fence in get_geofences(self._mapping_manager, 'pokestops'):
+            stop_fences.append(possible_fence)
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)
