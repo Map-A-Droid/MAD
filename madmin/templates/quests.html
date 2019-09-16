@@ -139,7 +139,8 @@
 {% block content %}
 {% if not pub %}
 <h2>Quests</h2>
- <div class="p-3 mb-2 bg-secondary text-white">
+{% endif %}
+<div class="p-3 mb-2 bg-secondary text-white">
         <h5>Select Area</h5><select id=area name=area method="GET" action="/">
     {% for stop_fence in stop_fences %}
          {% if stop_fence == fence %}
@@ -149,9 +150,6 @@
          {% endif %}
     {% endfor %}
 </select>
-
  </div>
-
-{% endif %}
 <table id="show-data" class="table"></table>
 {% endblock %}
