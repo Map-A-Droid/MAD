@@ -31,7 +31,7 @@ def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
     logging.basicConfig(handlers=[InterceptHandler()], level=0)
 
     # load routes
-    statistics(db_wrapper, args, app)
+    statistics(db_wrapper, args, app, mapping_manager)
     control(db_wrapper, args, mapping_manager, ws_server, logger, app)
     map(db_wrapper, args, mapping_manager, app)
     api = APIHandler(logger, args, app, data_manager)
