@@ -2,7 +2,7 @@ import ast
 import os
 import json
 import glob
-from flask import (render_template, request, redirect, url_for)
+from flask import (render_template, request, redirect, url_for, Response)
 from flask_caching import Cache
 from functools import cmp_to_key
 from madmin.functions import auth_required, getBasePath
@@ -10,6 +10,7 @@ from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
 from utils.MappingManager import MappingManager
 from utils.logging import logger
+import re
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
@@ -35,12 +36,12 @@ class config(object):
 
     def add_route(self):
         routes = [
-            ("/showmonsidpicker", self.showmonsidpicker),
             ("/settings", self.settings),
             ("/settings/areas", self.settings_areas),
             ("/settings/auth", self.settings_auth),
             ("/settings/devices", self.settings_devices),
             ("/settings/ivlists", self.settings_ivlist),
+            ("/settings/monsearch", self.monsearch),
             ("/settings/shared", self.settings_shared),
             ("/settings/walker", self.settings_walkers),
             ("/settings/walker/areaeditor", self.setting_walkers_area),
@@ -48,6 +49,37 @@ class config(object):
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
+
+    def get_pokemon(self):
+        mondata = open_json_file('pokemon')
+        # Why o.O
+        stripped_mondata = {}
+        for mon_id in mondata:
+            stripped_mondata[mondata[str(mon_id)]["name"]] = mon_id
+            if os.environ['LANGUAGE'] != "en":
+                try:
+                    localized_name = i8ln(mondata[str(mon_id)]["name"])
+                    stripped_mondata[localized_name] = mon_id
+                except KeyError:
+                    pass
+        return {
+            'mondata': mondata,
+            'locale': stripped_mondata
+        }
+
+    @auth_required
+    @logger.catch
+    def monsearch(self):
+        search = request.args.get('search')
+        pokemon = []
+        if search or (search and len(search) >= 3):
+            all_pokemon = self.get_pokemon()
+            r = re.compile('.*%s.*' % (re.escape(search)), re.IGNORECASE)
+            mon_names = list(filter(r.search, all_pokemon['locale'].keys()))
+            for name in sorted(mon_names):
+                mon_id = all_pokemon['locale'][name]
+                pokemon.append({"mon_name": name, "mon_id": str(mon_id)})
+        return Response(json.dumps(pokemon), mimetype='application/json')
 
     def process_element(self, **kwargs):
         key = kwargs.get('identifier')
@@ -175,7 +207,8 @@ class config(object):
             current_mons = self._data_manager.get_data(identifier)['mon_ids_iv']
         except Exception as err:
             current_mons = []
-        mondata = open_json_file('pokemon')
+        all_pokemon = self.get_pokemon()
+        mondata = all_pokemon['mondata']
         current_mons_list = []
         for mon_id in current_mons:
             try:
@@ -183,16 +216,6 @@ class config(object):
             except KeyError:
                 mon_name = "No-name-in-file-please-fix"
             current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
-        # Why o.O
-        stripped_mondata = {}
-        for mon_id in mondata:
-            stripped_mondata[mondata[str(mon_id)]["name"]] = mon_id
-            if os.environ['LANGUAGE'] != "en":
-                try:
-                    localized_name = i8ln(mondata[str(mon_id)]["name"])
-                    stripped_mondata[localized_name] = mon_id
-                except KeyError:
-                    pass
         required_data = {
             'identifier': 'id',
             'base_uri': '/api/monivlist',
@@ -275,90 +298,6 @@ class config(object):
     @auth_required
     def settings(self):
         return redirect("/{}/settings/devices".format(self._args.madmin_base_path), code=302)
-
-    @auth_required
-    @logger.catch
-    def showmonsidpicker(self):
-        edit = request.args.get('edit')
-        type = request.args.get('type')
-        header = ""
-        title = ""
-
-        if request.method == 'GET' and (not edit or not type):
-            return render_template('showmonsidpicker.html', error_msg="How did you end up here? Missing params.",
-                                   header=header, title=title)
-
-        with open(self._args.mappings) as f:
-            mapping = json.load(f)
-
-        if "areas" not in mapping:
-            return render_template('showmonsidpicker.html',
-                                   error_msg="No areas defined at all, please configure first.", header=header,
-                                   title=title)
-
-        this_area = None
-        this_area_index = -1
-        for t_area in mapping["monivlist"]:
-            this_area_index += 1
-            if t_area['monlist'] == edit:
-                this_area = t_area
-                break
-
-        if this_area == None:
-            return render_template('showmonsidpicker.html',
-                                   error_msg="No area (" + edit + " with mode: " + type + ") found in mappings, add it first.",
-                                   header=header, title=title)
-
-        title = "Mons ID Picker for " + edit
-        header = "Editing area " + edit + " (" + type + ")"
-        backurl = "config?type=" + type + "&area=monivlist&block=fields&edit=" + edit
-
-
-        if request.method == 'POST':
-            new_mons_list = request.form.get('current_mons_list')
-            if not new_mons_list:
-                return redirect("/showsettings", code=302)
-            # force single 'string' value to tuple. Not pretty, but it works.
-            mapping["monivlist"][this_area_index]["mon_ids_iv"] = ast.literal_eval(new_mons_list+",")
-
-            with open(self._args.mappings, 'w') as outfile:
-                json.dump(mapping, outfile, indent=4, sort_keys=True)
-            return redirect(backurl, code=302)
-
-        if "mon_ids_iv" not in this_area:
-            current_mons = []
-        else:
-            current_mons = this_area["mon_ids_iv"]
-
-        mondata = open_json_file('pokemon')
-
-        current_mons_list = []
-
-        for mon_id in current_mons:
-            try:
-                mon_name = i8ln(mondata[str(mon_id)]["name"])
-            except KeyError:
-                mon_name = "No-name-in-file-please-fix"
-            current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
-
-        # Why o.O
-        stripped_mondata = {}
-        for mon_id in mondata:
-            stripped_mondata[mondata[str(mon_id)]["name"]] = mon_id
-            if os.environ['LANGUAGE'] != "en":
-                try:
-                    localized_name = i8ln(mondata[str(mon_id)]["name"])
-                    stripped_mondata[localized_name] = mon_id
-                except KeyError:
-                    pass
-
-        formhiddeninput = '<form action="showmonsidpicker?edit=' + edit + '&type=' + type + '" id="showmonsidpicker" method="post">'
-        formhiddeninput += '<input type="hidden" id="current_mons_list" name="current_mons_list" value="' + str(
-            current_mons) + '">'
-        formhiddeninput += '<button type="submit" class="btn btn-success">Save</button></form>'
-        return render_template('showmonsidpicker.html', backurl=backurl, formhiddeninput=formhiddeninput,
-                               current_mons_list=current_mons_list, stripped_mondata=stripped_mondata, header=header,
-                               title=title)
 
     @auth_required
     def reload(self):
