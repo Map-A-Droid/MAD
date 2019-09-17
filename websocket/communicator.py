@@ -57,6 +57,9 @@ class Communicator:
         else:
             return True
 
+    def passthrough(self, command):
+        return self.__runAndOk("passthrough {}\r\n".format(command), self.__command_timeout)
+
     def reboot(self) -> bool:
         return self.__runAndOk("more reboot now\r\n", self.__command_timeout)
 

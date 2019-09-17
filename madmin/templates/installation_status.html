@@ -59,6 +59,13 @@
             ],
             "order": [[4, "desc"]],
             "responsive": {{ responsive }},
+            "stateSave": true,
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_INSTALL_STATUS_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_INSTALL_STATUS_' + settings.sInstance ) )
+            }
         });
 	}
 

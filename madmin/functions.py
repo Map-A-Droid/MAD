@@ -40,13 +40,21 @@ def uploaded_files(datetimeformat):
     for file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
         creationdate = datetime.datetime.fromtimestamp(
             creation_date(file)).strftime(datetimeformat)
-        fileJson = ({'filename': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
+        fileJson = ({'jobname': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
         files.append(fileJson)
-    processJson = ({'filename': 'Reboot-Phone', 'creation': '', 'type': 'jobType.REBOOT'})
+
+    if os.path.exists('commands.json'):
+        with open('commands.json') as logfile:
+            commands = json.load(logfile)
+
+        for command in commands:
+            files.append({'jobname': command['SYNTAX'], 'creation': '', 'type': command['TYPE']})
+
+    processJson = ({'jobname': 'Reboot-Phone', 'creation': '', 'type': 'jobType.REBOOT'})
     files.append(processJson)
-    processJson = ({'filename': 'Restart-Pogo', 'creation': '', 'type': 'jobType.RESTART'})
+    processJson = ({'jobname': 'Restart-Pogo', 'creation': '', 'type': 'jobType.RESTART'})
     files.append(processJson)
-    processJson = ({'filename': 'Stop-Pogo', 'creation': '', 'type': 'jobType.STOP'})
+    processJson = ({'jobname': 'Stop-Pogo', 'creation': '', 'type': 'jobType.STOP'})
     files.append(processJson)
     return files
 

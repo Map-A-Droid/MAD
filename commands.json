@@ -1,0 +1,10 @@
+[
+	{
+		"TYPE": "jobType.PASSTHROUGH",
+		"SYNTAX": "/sdcard/Download/test.sh"
+	},
+	{
+		"TYPE": "jobType.PASSTHROUGH",
+		"SYNTAX": "/sdcard/Download/test2.sh | grep test*"
+	}
+]

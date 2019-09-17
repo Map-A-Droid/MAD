@@ -414,7 +414,7 @@ class control(object):
     @logger.catch
     def install_file(self):
 
-        filename = request.args.get('filename')
+        jobname = request.args.get('jobname')
         origin = request.args.get('origin')
         useadb = request.args.get('adb', False)
         type_ = request.args.get('type', None)
@@ -422,24 +422,23 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
         adb = devicemappings.get(origin, {}).get('adb', False)
 
-        if os.path.exists(os.path.join(self._args.upload_path, filename)):
+        if os.path.exists(os.path.join(self._args.upload_path, jobname)):
             if useadb == 'True':
-                if self._adb_connect.push_file(adb, origin, os.path.join(self._args.upload_path, filename)) and  \
+                if self._adb_connect.push_file(adb, origin, os.path.join(self._args.upload_path, jobname)) and  \
                     self._adb_connect.send_shell_command(
-                        adb, origin, "pm install -r /sdcard/Download/" + str(filename)):
+                        adb, origin, "pm install -r /sdcard/Download/" + str(jobname)):
                     flash('File could be installed successfully')
                 else:
                     flash('File could not be installed successfully :(')
             else:
-                self._device_updater.add_job(origin=origin, file=filename, id=int(time.time()),
+                self._device_updater.add_job(origin=origin, file=jobname, id=int(time.time()),
                                              type=type_)
                 flash('File successfully queued --> See Job Status')
 
         elif type_ != jobType.INSTALLATION:
-            self._device_updater.add_job(origin=origin, file=filename, id=int(time.time()),
+            self._device_updater.add_job(origin=origin, file=jobname, id=int(time.time()),
                                          type=type_)
             flash('Job successfully queued --> See Job Status')
-
 
         return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
 
@@ -473,15 +472,15 @@ class control(object):
     @auth_required
     @logger.catch()
     def install_file_all_devices(self):
-        filename = request.args.get('filename', None)
+        jobname = request.args.get('jobname', None)
         type_ = request.args.get('type', None)
-        if filename is None or type_ is None:
+        if jobname is None or type_ is None:
             flash('No File or Type selected')
             return redirect(getBasePath(request) + '/install_status')
 
         devices = self._mapping_manager.get_all_devices()
         for device in devices:
-            self._device_updater.add_job(origin=device, file=filename, id=int(time.time()),
+            self._device_updater.add_job(origin=device, file=jobname, id=int(time.time()),
                                          type=type_)
             time.sleep(1)
 

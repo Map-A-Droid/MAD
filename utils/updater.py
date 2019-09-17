@@ -11,6 +11,7 @@ class jobType(Enum):
     REBOOT = 1
     RESTART = 2
     STOP = 3
+    PASSTHROUGH = 4
 
 class deviceUpdater(object):
     def __init__(self, websocket, args):
@@ -65,7 +66,7 @@ class deviceUpdater(object):
 
                     if temp_comm is None:
                         counter = counter + 1
-                        logger.error('Cannot start job {} on device {} - File: {} - Device not connected (ID: {})'
+                        logger.error('Cannot start job {} on device {} - File/Job: {} - Device not connected (ID: {})'
                                      .format(str(jobtype), str(origin), str(file_), str(id_)))
                         self.add_job(origin, file_, id_, jobtype, counter, 'not connected')
 
@@ -77,17 +78,17 @@ class deviceUpdater(object):
                         time.sleep(30)
                         try:
                             if self.start_job_type(item, jobtype, temp_comm):
-                                logger.info('Job {} could be executed successfully - Device {} - File {} (ID: {})'
+                                logger.info('Job {} could be executed successfully - Device {} - File/Job {} (ID: {})'
                                              .format(str(jobtype), str(origin), str(file_), str(id_)))
                                 self._log[id_]['status'] = 'success'
                                 self.update_status_log()
                             else:
-                                logger.error('Job {} could not be executed successfully - Device {} - File {} (ID: {})'
+                                logger.error('Job {} could not be executed successfully - Device {} - File/Job {} (ID: {})'
                                              .format(str(jobtype), str(origin), str(file_), str(id_)))
                                 counter = counter + 1
                                 self.add_job(origin, file_, id_, jobtype, counter, 'failure')
                         except:
-                            logger.error('Job {} could not be executed successfully - Device {} - File {} (ID: {})'
+                            logger.error('Job {} could not be executed successfully - Device {} - File/Job {} (ID: {})'
                                          .format(str(jobtype), str(origin), str(file_), str(id_)))
                             counter = counter + 1
                             self.add_job(origin, file_, id_, jobtype, counter, 'interrupted')
@@ -104,7 +105,7 @@ class deviceUpdater(object):
             time.sleep(5)
 
     def add_job(self, origin, file, id, type, counter=0, status='pending'):
-        logger.info('Adding Job {} for Device {} - File: {} (ID: {})'
+        logger.info('Adding Job {} for Device {} - File/Job: {} (ID: {})'
                     .format(str(type), str(origin), str(file), str(id)))
 
         if id not in self._log:
@@ -120,7 +121,7 @@ class deviceUpdater(object):
         })
 
         if counter > 3:
-            logger.error("Job for {} (File: {} - Type {}) failed 3 times in row - aborting (ID: {})"
+            logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - aborting (ID: {})"
                          .format(str(origin), str(file), str(type), str(id)))
             self._log[id]['status'] = 'faulty'
         else:
@@ -151,14 +152,14 @@ class deviceUpdater(object):
             file_ = item[2]
             return ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240)
         elif jobtype == jobType.REBOOT:
-            if ws_conn.reboot():
-                return True
+            return ws_conn.reboot()
         elif jobtype == jobType.RESTART:
-            if ws_conn.restartApp("com.nianticlabs.pokemongo"):
-                return True
+            return ws_conn.restartApp("com.nianticlabs.pokemongo")
         elif jobtype == jobType.STOP:
-            if ws_conn.stopApp("com.nianticlabs.pokemongo"):
-                return True
+            return ws_conn.stopApp("com.nianticlabs.pokemongo")
+        elif jobtype == jobType.PASSTHROUGH:
+            command = item[2]
+            return ws_conn.passtrought(command)
         return False
 
     def delete_log(self):

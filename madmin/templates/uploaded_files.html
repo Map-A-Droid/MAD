@@ -12,7 +12,7 @@
         $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
-                { data: 'filename', title: 'Filename / Process' },
+                { data: 'jobname', title: 'Filename / Process' },
                 { data: 'creation', title: 'Added' },
                 { data: 'type', title: 'Type' },
                 { data: '', title: '' }
@@ -32,11 +32,11 @@
                     "render": function (data, type, row) {
                          var dellink = ""
                         {% if origin %}
-                            var link = "<a href='install_file?filename=" + row.filename + "&origin={{origin}}&adb={{adb}}&type=" + row.type + "' class='confirm' title='Do you really want to start this job?'><img src='static/install.png' width='30'></a>";
+                            var link = "<a href='install_file?jobname=" + row.jobname + "&origin={{origin}}&adb={{adb}}&type=" + row.type + "' class='confirm' title='Do you really want to start this job?'><img src='static/install.png' width='30'></a>";
                         {% else %}
-                            var link = "<a href='install_file_all_devices?filename=" + row.filename + "&type=" + row.type + "' class='confirm' title='Do you really want to start this job on all devices?'><img src='static/install_all.png' width='30'></a>";
+                            var link = "<a href='install_file_all_devices?jobname=" + row.jobname + "&type=" + row.type + "' class='confirm' title='Do you really want to start this job on all devices?'><img src='static/install_all.png' width='30'></a>";
                             if(row.type == "jobType.INSTALLATION") {
-                                dellink = " <a href='delete_file?filename=" + row.filename + "' class='confirm' title='Do you really want to delete this file?'><img src='static/delete.png' width='30'></a>"
+                                dellink = " <a href='delete_file?filename=" + row.jobname + "' class='confirm' title='Do you really want to delete this file?'><img src='static/delete.png' width='30'></a>"
                             }
                         {% endif %}
 
