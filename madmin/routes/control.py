@@ -59,7 +59,8 @@ class control(object):
             ("/delete_log_entry", self.delete_log_entry),
             ("/install_status", self.install_status),
             ("/install_file_all_devices", self.install_file_all_devices),
-            ("/restart_job", self.restart_job)
+            ("/restart_job", self.restart_job),
+            ("/delete_log", self.delete_log)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -246,13 +247,12 @@ class control(object):
             temp_comm = self._ws_server.get_origin_communicator(origin)
             if restart:
                 self._logger.info('MADMin: trying to restart game on {}', str(origin))
-                self._device_updater.add_job(origin=origin, file=None, id=int(time.time()),
-                                             type=jobType.RESTART)
+                temp_comm.restartApp("com.nianticlabs.pokemongo")
+
                 time.sleep(1)
             else:
                 self._logger.info('MADMin: trying to stop game on {}', str(origin))
-                self._device_updater.add_job(origin=origin, file=None, id=int(time.time()),
-                                             type=jobType.STOP)
+                temp_comm.stopApp("com.nianticlabs.pokemongo")
 
             self._logger.info('MADMin: WS command successfully ({})', str(origin))
         time.sleep(2)
@@ -271,8 +271,8 @@ class control(object):
                         adb, origin,"am broadcast -a android.intent.action.BOOT_COMPLETED")):
             self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
         else:
-            self._device_updater.add_job(origin=origin, file=None, id=int(time.time()),
-                                         type=jobType.REBOOT)
+            temp_comm = self._ws_server.get_origin_communicator(origin)
+            temp_comm.reboot()
         return redirect(getBasePath(request) + '/phonecontrol')
 
     @auth_required
@@ -417,6 +417,7 @@ class control(object):
         filename = request.args.get('filename')
         origin = request.args.get('origin')
         useadb = request.args.get('adb', False)
+        type_ = request.args.get('type', None)
 
         devicemappings = self._mapping_manager.get_all_devicemappings()
         adb = devicemappings.get(origin, {}).get('adb', False)
@@ -431,8 +432,14 @@ class control(object):
                     flash('File could not be installed successfully :(')
             else:
                 self._device_updater.add_job(origin=origin, file=filename, id=int(time.time()),
-                                             type=jobType.INSTALLATION)
+                                             type=type_)
                 flash('File successfully queued --> See Job Status')
+
+        elif type_ != jobType.INSTALLATION:
+            self._device_updater.add_job(origin=origin, file=filename, id=int(time.time()),
+                                         type=type_)
+            flash('Job successfully queued --> See Job Status')
+
 
         return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
 
@@ -449,6 +456,7 @@ class control(object):
     @auth_required
     def delete_log_entry(self):
         id_ = request.args.get('id')
+        jobtype = request.args.get('type')
         if self._device_updater.delete_log_id(id_):
             flash('Job could be deleted successfully')
         else:
@@ -466,14 +474,15 @@ class control(object):
     @logger.catch()
     def install_file_all_devices(self):
         filename = request.args.get('filename', None)
-        if filename is None:
-            flash('No File selected')
+        type_ = request.args.get('type', None)
+        if filename is None or type_ is None:
+            flash('No File or Type selected')
             return redirect(getBasePath(request) + '/install_status')
 
         devices = self._mapping_manager.get_all_devices()
         for device in devices:
             self._device_updater.add_job(origin=device, file=filename, id=int(time.time()),
-                                         type=jobType.INSTALLATION)
+                                         type=type_)
             time.sleep(1)
 
         flash('File successfully queued')
@@ -489,4 +498,10 @@ class control(object):
             return redirect(getBasePath(request) + '/install_status')
 
         flash('unknown id - restart failed')
+        return redirect(getBasePath(request) + '/install_status')
+
+    @auth_required
+    @logger.catch()
+    def delete_log(self):
+        self._device_updater.delete_log()
         return redirect(getBasePath(request) + '/install_status')

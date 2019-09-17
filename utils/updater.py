@@ -95,6 +95,8 @@ class deviceUpdater(object):
                         # start worker
                         self._websocket.set_job_deactivated(origin)
 
+                    self._current_job_id = 0
+
             except KeyboardInterrupt as e:
                 logger.info("process_update_queue received keyboard interrupt, stopping")
                 break
@@ -159,3 +161,6 @@ class deviceUpdater(object):
                 return True
         return False
 
+    def delete_log(self):
+        for job in self._log.copy():
+            self.delete_log_id(job)

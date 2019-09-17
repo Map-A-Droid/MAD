@@ -40,8 +40,14 @@ def uploaded_files(datetimeformat):
     for file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
         creationdate = datetime.datetime.fromtimestamp(
             creation_date(file)).strftime(datetimeformat)
-        screenJson = ({'filename': os.path.basename(file), 'creation': creationdate})
-        files.append(screenJson)
+        fileJson = ({'filename': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
+        files.append(fileJson)
+    processJson = ({'filename': 'Reboot-Phone', 'creation': '', 'type': 'jobType.REBOOT'})
+    files.append(processJson)
+    processJson = ({'filename': 'Restart-Pogo', 'creation': '', 'type': 'jobType.RESTART'})
+    files.append(processJson)
+    processJson = ({'filename': 'Stop-Pogo', 'creation': '', 'type': 'jobType.STOP'})
+    files.append(processJson)
     return files
 
 

@@ -34,7 +34,7 @@
                     "targets": [5],
                     "render": function (data, type, row) {
 
-                         var link = "<center><a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a> - <a href='restart_job?id=" + row.id + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a></center>";
+                         var link = "<center><a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a> - <a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a></center>";
 
                         return link;
                     }
@@ -88,4 +88,6 @@
 	{% endwith %}
 </p>
 <table id="show-data" class="table" style="width:100%;"></table>
+<div class="alert alert-warning"><a href="/delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a></div>
+
 {% endblock %}
