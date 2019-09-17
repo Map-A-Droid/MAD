@@ -48,6 +48,7 @@ class deviceUpdater(object):
                 self._log[job]['status'] = 'canceled'
                 self.update_status_log()
 
+    logger.catch()
     def process_update_queue(self):
         logger.info("Starting Device Job processor")
         while True:
@@ -58,7 +59,7 @@ class deviceUpdater(object):
                 if id_ in self._log:
                     self._current_job_id = int(id_)
 
-                    logger.info("Job for {} (File: {}) started (ID: {})".format(str(origin), str(file_), str(id_)))
+                    logger.info("Job for {} (File/Job: {}) started (ID: {})".format(str(origin), str(file_), str(id_)))
                     self._log[id_]['status'] = 'processing'
                     self.update_status_log()
 
@@ -75,6 +76,7 @@ class deviceUpdater(object):
                         self._websocket.set_job_activated(origin)
                         self._log[id_]['status'] = 'starting'
                         self.update_status_log()
+                        logger.info('Job processor waiting for worker start resting - Device {}'.format(str(origin)))
                         time.sleep(30)
                         try:
                             if self.start_job_type(item, jobtype, temp_comm):
@@ -88,7 +90,8 @@ class deviceUpdater(object):
                                 counter = counter + 1
                                 self.add_job(origin, file_, id_, jobtype, counter, 'failure')
                         except:
-                            logger.error('Job {} could not be executed successfully - Device {} - File/Job {} (ID: {})'
+                            logger.error('Job {} could not be executed successfully (fatal error) '
+                                         '- Device {} - File/Job {} (ID: {})'
                                          .format(str(jobtype), str(origin), str(file_), str(id_)))
                             counter = counter + 1
                             self.add_job(origin, file_, id_, jobtype, counter, 'interrupted')
@@ -148,6 +151,7 @@ class deviceUpdater(object):
         return self._log
 
     def start_job_type(self, item, jobtype, ws_conn):
+        jobtype = jobType[jobtype.split('.')[1]]
         if jobtype == jobType.INSTALLATION:
             file_ = item[2]
             return ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240)
@@ -159,7 +163,8 @@ class deviceUpdater(object):
             return ws_conn.stopApp("com.nianticlabs.pokemongo")
         elif jobtype == jobType.PASSTHROUGH:
             command = item[2]
-            return ws_conn.passtrought(command)
+            ws_conn.passthrough(command)
+            return True
         return False
 
     def delete_log(self):
