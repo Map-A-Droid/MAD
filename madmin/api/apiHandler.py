@@ -78,26 +78,17 @@ class ResourceHandler(object):
         return (save_data, invalid, missing)
 
     def format_value(self, value, expected, none_val):
-        if expected == 'list':
-            if '[' in value and ']' in value:
-                if ':' in value:
-                    tempvalue = []
-                    valuearray = value.replace('[', '').replace(']', '').replace(
-                        ' ', '').replace("'", '').split(',')
-                    for k in valuearray:
-                        tempvalue.append(str(k))
-                    value = tempvalue
-                else:
-                    value = list(value.replace('[', '').replace(']', '').split(','))
-                    value = [int(i) for i in value]
-        elif expected == bool:
-            value = True if value.lower() == "true" else False
-        elif expected == float:
-            value = float(value)
-        elif expected == int:
-            value = int(value)
-        elif expected == str:
-            value = value.strip()
+        try:
+            if expected == bool:
+                value = True if value.lower() == "true" else False
+            elif expected == float:
+                value = float(value)
+            elif expected == int:
+                value = int(value)
+            elif expected == str:
+                value = value.strip()
+        except:
+            pass
         if value in ["None", None, ""]:
             return none_val
         return value
