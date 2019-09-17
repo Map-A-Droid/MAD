@@ -297,10 +297,10 @@ class config(object):
     @logger.catch
     @auth_required
     def settings(self):
-        return redirect("/{}/settings/devices".format(self._args.madmin_base_path), code=302)
+        return redirect("/settings/devices", code=302)
 
     @auth_required
     def reload(self):
         if not self._args.auto_reload_config:
             self._mapping_mananger.update()
-        return redirect("/{}/settings".format(self._args.madmin_base_path), code=302)
+        return redirect("/settings", code=302)
