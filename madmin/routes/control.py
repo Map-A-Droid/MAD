@@ -57,7 +57,9 @@ class control(object):
             ("/install_file", self.install_file),
             ("/get_install_log", self.get_install_log),
             ("/delete_log_entry", self.delete_log_entry),
-            ("/install_status", self.install_status)
+            ("/install_status", self.install_status),
+            ("/install_file_all_devices", self.install_file_all_devices),
+            ("/restart_job", self.restart_job)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -459,3 +461,32 @@ class control(object):
         return render_template('installation_status.html',
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="Installation Status")
+
+    @auth_required
+    @logger.catch()
+    def install_file_all_devices(self):
+        filename = request.args.get('filename', None)
+        if filename is None:
+            flash('No File selected')
+            return redirect(getBasePath(request) + '/install_status')
+
+        devices = self._mapping_manager.get_all_devices()
+        for device in devices:
+            self._device_updater.add_job(origin=device, file=filename, id=int(time.time()),
+                                         type=jobType.INSTALLATION)
+            time.sleep(1)
+
+        flash('File successfully queued')
+        return redirect(getBasePath(request) + '/install_status')
+
+    @auth_required
+    @logger.catch()
+    def restart_job(self):
+        id = request.args.get('id', None)
+        if id is not None:
+            self._device_updater.restart_job(id)
+            flash('Job requeued')
+            return redirect(getBasePath(request) + '/install_status')
+
+        flash('unknown id - restart failed')
+        return redirect(getBasePath(request) + '/install_status')

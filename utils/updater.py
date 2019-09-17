@@ -12,7 +12,6 @@ class jobType(Enum):
     RESTART = 2
     STOP = 3
 
-
 class deviceUpdater(object):
     def __init__(self, websocket, args):
         self._websocket = websocket
@@ -25,9 +24,28 @@ class deviceUpdater(object):
             with open('update_log.json') as logfile:
                 self._log = json.load(logfile)
 
+        self.kill_old_jobs()
+
         t_updater = Thread(name='apk_updater', target=self.process_update_queue)
         t_updater.daemon = False
         t_updater.start()
+
+    def restart_job(self, id):
+        if id in self._log:
+            origin = self._log[id]['origin']
+            file_ = self._log[id]['file']
+            jobtype = self._log[id]['jobtype']
+            self.add_job(origin, file_, id, jobtype, counter=0, status='requeued')
+
+        return True
+
+    def kill_old_jobs(self):
+        logger.info("Checking for outdated jobs")
+        for job in self._log:
+            if self._log[job]['status'] in ('pending', 'starting', 'processing', 'not connected'):
+                logger.debug("Cancel job {} - it is outdated".format(str(job)))
+                self._log[job]['status'] = 'canceled'
+                self.update_status_log()
 
     def process_update_queue(self):
         logger.info("Starting Device Job processor")
@@ -57,16 +75,22 @@ class deviceUpdater(object):
                         self._log[id_]['status'] = 'starting'
                         self.update_status_log()
                         time.sleep(30)
-                        if self.start_job_type(item, jobtype, temp_comm):
-                            logger.info('Job {} could be executed successfully - Device {} - File {} (ID: {})'
-                                         .format(str(jobtype), str(origin), str(file_), str(id_)))
-                            self._log[id_]['status'] = 'success'
-                            self.update_status_log()
-                        else:
+                        try:
+                            if self.start_job_type(item, jobtype, temp_comm):
+                                logger.info('Job {} could be executed successfully - Device {} - File {} (ID: {})'
+                                             .format(str(jobtype), str(origin), str(file_), str(id_)))
+                                self._log[id_]['status'] = 'success'
+                                self.update_status_log()
+                            else:
+                                logger.error('Job {} could not be executed successfully - Device {} - File {} (ID: {})'
+                                             .format(str(jobtype), str(origin), str(file_), str(id_)))
+                                counter = counter + 1
+                                self.add_job(origin, file_, id_, jobtype, counter, 'failure')
+                        except:
                             logger.error('Job {} could not be executed successfully - Device {} - File {} (ID: {})'
                                          .format(str(jobtype), str(origin), str(file_), str(id_)))
                             counter = counter + 1
-                            self.add_job(origin, file_, id_, jobtype, counter, 'failure')
+                            self.add_job(origin, file_, id_, jobtype, counter, 'interrupted')
 
                         # start worker
                         self._websocket.set_job_deactivated(origin)
@@ -134,11 +158,4 @@ class deviceUpdater(object):
             if ws_conn.stopApp("com.nianticlabs.pokemongo"):
                 return True
         return False
-
-
-
-
-
-
-
 

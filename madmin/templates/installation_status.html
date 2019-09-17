@@ -17,7 +17,7 @@
                 { data: '', title: 'Jobtype' },
                 { data: 'status', title: 'Status' },
                 { data: '', title: 'Date/Time' },
-                { data: '', title: 'Delete' },
+                { data: '', title: 'Action' },
                 { data: 'counter', title: 'Retry Counter' }
             ],
             "columnDefs": [
@@ -34,7 +34,7 @@
                     "targets": [5],
                     "render": function (data, type, row) {
 
-                         var link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a>";
+                         var link = "<center><a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a> - <a href='restart_job?id=" + row.id + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a></center>";
 
                         return link;
                     }
@@ -47,8 +47,11 @@
                          var hours = date.getHours();
                          var minutes = "0" + date.getMinutes();
                          var seconds = "0" + date.getSeconds();
+                         var year = date.getFullYear();
+                         var month = "0" + (date.getMonth() + 1);
+                         var day = "0" + date.getDate();
 
-                         var link = hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+                         var link = year + '-' + month.substr(-2) + '-' +  day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
 
                         return link;
                     }
