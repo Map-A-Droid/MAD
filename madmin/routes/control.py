@@ -483,8 +483,8 @@ class control(object):
 
         devices = self._mapping_manager.get_all_devices()
         for device in devices:
-            self._device_updater.add_job(origin=device, file=jobname, id_=int(time.time()),
-                                         type=type_)
+            self._device_updater.preadd_job(origin=device, job=jobname, id_=int(time.time()),
+                                            type=type_)
             time.sleep(1)
 
         flash('File successfully queued')
