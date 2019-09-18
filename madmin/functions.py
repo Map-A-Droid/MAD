@@ -2,13 +2,15 @@ import json
 import datetime
 import os
 import six
+import glob
 from flask import (make_response, request)
 from functools import update_wrapper, wraps
 from math import floor
 from utils.walkerArgs import parseArgs
+from utils.functions import (creation_date)
 from pathlib import Path
-mapping_args = parseArgs()
 
+mapping_args = parseArgs()
 
 def auth_required(func):
     @wraps(func)
@@ -28,6 +30,37 @@ def auth_required(func):
         return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
     return decorated
+
+
+def allowed_file(filename):
+    ALLOWED_EXTENSIONS = set(['apk', 'txt'])
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+
+
+def uploaded_files(datetimeformat):
+    files = []
+    for file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
+        creationdate = datetime.datetime.fromtimestamp(
+            creation_date(file)).strftime(datetimeformat)
+        fileJson = ({'jobname': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
+        files.append(fileJson)
+
+    if os.path.exists('commands.json'):
+        with open('commands.json') as logfile:
+            commands = json.load(logfile)
+
+        for command in commands:
+            files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})
+
+    processJson = ({'jobname': 'Reboot-Phone', 'creation': '', 'type': 'jobType.REBOOT'})
+    files.append(processJson)
+    processJson = ({'jobname': 'Restart-Pogo', 'creation': '', 'type': 'jobType.RESTART'})
+    files.append(processJson)
+    processJson = ({'jobname': 'Stop-Pogo', 'creation': '', 'type': 'jobType.STOP'})
+    files.append(processJson)
+    processJson = ({'jobname': 'Start-Pogo', 'creation': '', 'type': 'jobType.START'})
+    files.append(processJson)
+    return files
 
 
 def nocache(view):

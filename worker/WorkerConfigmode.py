@@ -71,6 +71,12 @@ class WorkerConfigmode(object):
     def set_geofix_sleeptime(self, sleeptime):
         return True
 
+    def set_job_activated(self):
+        return True
+
+    def set_job_deactivated(self):
+        return True
+
     def check_walker(self):
         mode = self._walker['walkertype']
         if mode == "countdown":

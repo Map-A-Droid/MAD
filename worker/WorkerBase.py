@@ -63,7 +63,7 @@ class WorkerBase(ABC):
         self._pogoWindowManager = pogoWindowManager
         self._waittime_without_delays = 0
         self._transporttype = 0
-        self._not_injected_count:int = 0
+        self._not_injected_count: int = 0
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
 
@@ -520,6 +520,9 @@ class WorkerBase(ABC):
                         str(self._geofix_sleeptime))
             time.sleep(int(self._geofix_sleeptime))
             self._geofix_sleeptime = 0
+
+        self._check_for_mad_job()
+
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
@@ -531,6 +534,17 @@ class WorkerBase(ABC):
                 while not self._restart_pogo():
                     logger.warning("failed starting pogo")
                     # TODO: stop after X attempts
+
+    def _check_for_mad_job(self):
+        if self.get_devicesettings_value("job", False):
+            logger.info("Worker {} get a job - waiting".format(str(self._id)))
+            while self.get_devicesettings_value("job", False) and not self._stop_worker_event.is_set():
+                time.sleep(10)
+            logger.info("Worker {} processed the job - checking screen and go on ".format(str(self._id)))
+            if not self._check_windows():
+                logger.error('Kill Worker...')
+                self._stop_worker_event.set()
+                return False
 
     def _check_location_is_valid(self):
         if self.current_location is None:

@@ -10,6 +10,7 @@ from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
 import utils.data_manager
 from websocket.WebsocketServer import WebsocketServer
+from utils.updater import deviceUpdater
 
 
 args = parseArgs()
@@ -28,10 +29,15 @@ def generate_mappingjson():
     with open(args.mappings, 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
 
+def create_folder(folder):
+    if not os.path.exists(folder):
+        logger.info(str(folder) + ' created')
+        os.makedirs(folder)
 
-def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager):
+
+def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater):
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, ws_server, mapping_manager, data_manager)
+    madmin_start(args, db_wrapper, ws_server, mapping_manager, data_manager, deviceUpdater)
 
 
 if __name__ == "__main__":
@@ -45,6 +51,9 @@ if __name__ == "__main__":
     filename = args.mappings
     if not os.path.exists(filename):
         generate_mappingjson()
+
+    create_folder(args.file_path)
+    create_folder(args.upload_path)
 
     db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
 
@@ -69,9 +78,11 @@ if __name__ == "__main__":
     t_ws.daemon = False
     t_ws.start()
 
+    device_Updater = deviceUpdater(ws_server, args)
+
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
     t_flask = Thread(name='madmin', target=start_madmin,
-                     args=(args, db_wrapper, ws_server, mapping_manager, data_manager))
+                     args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater))
     t_flask.daemon = False
     t_flask.start()

@@ -76,7 +76,13 @@
             "order": [[0, "asc"]],
             "responsive": {{ responsive }},
             "autoWidth": false,
-            "stateSave": true
+            "stateSave": true,
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_STATUS_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_STATUS_' + settings.sInstance ) )
+            }
         });
     }
 
