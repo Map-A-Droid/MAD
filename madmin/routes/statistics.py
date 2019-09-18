@@ -401,11 +401,15 @@ class statistics(object):
         coords = []
         known = []
         unknown = []
+        processed_fences = []
 
         possible_fences = get_geofences(self._mapping_manager, 'mon_mitm')
         for possible_fence in possible_fences:
 
             for subfence in possible_fences[possible_fence]['include']:
+                if subfence in processed_fences:
+                    continue
+                processed_fences.append(subfence)
                 fence = generate_coords_from_geofence(self._mapping_manager, subfence)
                 known.clear()
                 unknown.clear()

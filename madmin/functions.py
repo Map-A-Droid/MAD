@@ -163,3 +163,15 @@ def generate_coords_from_geofence(mapping_manager, fence):
 
     fence_string.append(fence_string[0])
     return ",".join(fence_string)
+
+def get_quest_areas(mapping_manager):
+    stop_fences = []
+    stop_fences.append('All')
+    possible_fences = get_geofences(mapping_manager, 'pokestops')
+    for possible_fence in get_geofences(mapping_manager, 'pokestops'):
+        for subfence in possible_fences[possible_fence]['include']:
+            if subfence in stop_fences:
+                continue
+            stop_fences.append(subfence)
+
+    return stop_fences

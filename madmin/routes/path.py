@@ -1,5 +1,5 @@
 from flask import (send_from_directory, render_template, request)
-from madmin.functions import (auth_required, nocache, get_geofences)
+from madmin.functions import (auth_required, nocache, get_geofences, get_quest_areas)
 from utils.functions import (generate_path)
 from utils.MappingManager import MappingManager
 from utils.logging import logger
@@ -85,12 +85,7 @@ class path(object):
     @logger.catch()
     def quest(self):
         fence = request.args.get("fence", None)
-        stop_fences = []
-        stop_fences.append('All')
-        possible_fences = get_geofences(self._mapping_manager, 'pokestops')
-        for possible_fence in get_geofences(self._mapping_manager, 'pokestops'):
-            for subfence in possible_fences[possible_fence]['include']:
-                stop_fences.append(subfence)
+        stop_fences = get_quest_areas(self._mapping_manager)
         return render_template('quests.html', pub=False,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)
@@ -98,12 +93,7 @@ class path(object):
     @auth_required
     def quest_pub(self):
         fence = request.args.get("fence", None)
-        stop_fences = []
-        stop_fences.append('All')
-        possible_fences = get_geofences(self._mapping_manager, 'pokestops')
-        for possible_fence in get_geofences(self._mapping_manager, 'pokestops'):
-            for subfence in possible_fences[possible_fence]['include']:
-                stop_fences.append(subfence)
+        stop_fences = get_quest_areas(self._mapping_manager)
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)
