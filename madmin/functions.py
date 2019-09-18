@@ -56,6 +56,8 @@ def uploaded_files(datetimeformat):
     files.append(processJson)
     processJson = ({'jobname': 'Stop-Pogo', 'creation': '', 'type': 'jobType.STOP'})
     files.append(processJson)
+    processJson = ({'jobname': 'Start-Pogo', 'creation': '', 'type': 'jobType.START'})
+    files.append(processJson)
     return files
 
 

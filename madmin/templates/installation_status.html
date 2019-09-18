@@ -17,24 +17,44 @@
                 { data: '', title: 'Jobtype' },
                 { data: 'status', title: 'Status' },
                 { data: '', title: 'Date/Time' },
-                { data: '', title: 'Action' },
-                { data: 'counter', title: 'Retry Counter' }
+                { data: '', title: 'Action' }
             ],
             "columnDefs": [
-            {
-                    "targets": [2],
+                {
+                    "targets": [1],
                     "render": function (data, type, row) {
 
-                        var jobtype = row.jobtype;
+                        if(row.jobtype == 'jobType.PASSTHROUGH') {
 
-                        return jobtype.split(".")[1];
+                            if(typeof row.returning === "undefined" ) {
+                                var returning = "<p id='info'>-</p>";
+                            } else if (row.returning.includes('unknown command')) {
+                                var returning = "<p id='outdated'>OUTDATED RGC VERSION - PLEASE UPDATE</div>";
+                            } else {
+                                var returning = "<p id='info'>" + row.returning + "</p>";
+                            }
+
+                            return row.file +"<br><b>RETURNING:</b>" + returning;
+
+                        } else {
+
+                            return row.file;
+
+                        }
+
+                    }
+                },
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+                        return row.jobtype.split(".")[1];
                     }
                 },
                 {
                     "targets": [5],
                     "render": function (data, type, row) {
 
-                         var link = "<center><a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a> - <a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a></center>";
+                         var link = "<center><a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a> <a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a></center>";
 
                         return link;
                     }
@@ -60,6 +80,7 @@
             "order": [[4, "desc"]],
             "responsive": {{ responsive }},
             "stateSave": true,
+            "stripeClasses": [ 'odd', 'even' ],
             "stateSaveCallback": function(settings,data) {
             localStorage.setItem( 'MAD_INSTALL_STATUS_' + settings.sInstance, JSON.stringify(data) )
             },
@@ -81,6 +102,18 @@
         });
     });
 </script>
+<style>
+	p#outdated {
+        color: red;
+        font-weight: 700;
+    }
+    p#info {
+        color: black;
+        font-weight: 200;
+    }
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
 {% endblock %}
 
 {% block content %}

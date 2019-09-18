@@ -46,6 +46,14 @@
             ],
             "order": [[1, "desc"]],
             "responsive": {{ responsive }},
+            "stateSave": true,
+            "stripeClasses": [ 'odd', 'even' ],
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_INSTALL_FILES_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_INSTALL_FILES_' + settings.sInstance ) )
+            }
         });
 	}
 
@@ -61,6 +69,10 @@
         });
     });
 </script>
+<style>
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
 {% endblock %}
 
 {% block content %}

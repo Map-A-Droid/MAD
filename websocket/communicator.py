@@ -58,7 +58,11 @@ class Communicator:
             return True
 
     def passthrough(self, command):
-        return self.__runAndOk("passthrough {}\r\n".format(command), self.__command_timeout)
+        response = self.websocket_handler.send_and_wait(self.worker_id,
+                                                        self.worker_instance_ref,
+                                                        "passthrough {}".format(command),
+                                                        self.__command_timeout)
+        return response
 
     def reboot(self) -> bool:
         return self.__runAndOk("more reboot now\r\n", self.__command_timeout)

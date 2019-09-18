@@ -431,12 +431,12 @@ class control(object):
                 else:
                     flash('File could not be installed successfully :(')
             else:
-                self._device_updater.preadd_job(origin=origin, job=jobname, id=int(time.time()),
+                self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
                                              type=type_)
                 flash('File successfully queued --> See Job Status')
 
         elif type_ != jobType.INSTALLATION:
-            self._device_updater.preadd_job(origin=origin, job=jobname, id=int(time.time()),
+            self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
                                          type=type_)
             flash('Job successfully queued --> See Job Status')
 
@@ -481,7 +481,7 @@ class control(object):
 
         devices = self._mapping_manager.get_all_devices()
         for device in devices:
-            self._device_updater.add_job(origin=device, file=jobname, id=int(time.time()),
+            self._device_updater.add_job(origin=device, file=jobname, id_=int(time.time()),
                                          type=type_)
             time.sleep(1)
 
@@ -491,7 +491,7 @@ class control(object):
     @auth_required
     @logger.catch()
     def restart_job(self):
-        id = request.args.get('id', None)
+        id: int = request.args.get('id', None)
         if id is not None:
             self._device_updater.restart_job(id)
             flash('Job requeued')
