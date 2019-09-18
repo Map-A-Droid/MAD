@@ -26,11 +26,12 @@ log = logger
 
 def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, deviceUpdater):
     # load routes
-    statistics(db_wrapper, args, app)
+
+    statistics(db_wrapper, args, app, mapping_manager)
     control(db_wrapper, args, mapping_manager, ws_server, logger, app, deviceUpdater)
     map(db_wrapper, args, mapping_manager, app)
     config(db_wrapper, args, logger, app, mapping_manager)
-    path(db_wrapper, args, app)
+    path(db_wrapper, args, app, mapping_manager)
 
     app.config["SEND_FILE_MAX_AGE_DEFAULT"] = 0
     app.logger.removeHandler(default_handler)

@@ -2,7 +2,7 @@ import datetime
 import json
 import time
 from flask import (jsonify, render_template, request)
-from madmin.functions import auth_required
+from madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
 from utils.language import i8ln
 from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp, form_mapper
 from utils.geo import get_distance_of_two_points_in_meters
@@ -10,10 +10,11 @@ from utils.logging import logger
 
 
 class statistics(object):
-    def __init__(self, db, args, app):
+    def __init__(self, db, args, app, mapping_manager):
         self._db = db
         self._args = args
         self._app = app
+        self._mapping_manager = mapping_manager
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
@@ -29,7 +30,9 @@ class statistics(object):
             ("/statistics_detection_worker_data", self.statistics_detection_worker_data),
             ("/statistics_detection_worker", self.statistics_detection_worker),
             ("/status", self.status),
-            ("/get_status", self.get_status)
+            ("/get_status", self.get_status),
+            ("/get_spawnpoints_stats", self.get_spawnpoints_stats),
+            ("/statistics_spawns", self.statistics_spawns)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -390,4 +393,49 @@ class statistics(object):
     def get_status(self):
         data = json.loads(self._db.download_status())
         return jsonify(data)
+
+    @auth_required
+    @logger.catch()
+    def get_spawnpoints_stats(self):
+
+        coords = []
+        known = []
+        unknown = []
+        processed_fences = []
+
+        possible_fences = get_geofences(self._mapping_manager, 'mon_mitm')
+        for possible_fence in possible_fences:
+
+            for subfence in possible_fences[possible_fence]['include']:
+                if subfence in processed_fences:
+                    continue
+                processed_fences.append(subfence)
+                fence = generate_coords_from_geofence(self._mapping_manager, subfence)
+                known.clear()
+                unknown.clear()
+
+                data = json.loads(
+                    self._db.download_spawns(
+                        fence=fence
+                    )
+                )
+
+                for spawnid in data:
+                    if data[str(spawnid)]["endtime"] == None:
+                        unknown.append(spawnid)
+                    else:
+                        known.append(spawnid)
+                coords.append({'fence': subfence, 'known': len(known), 'unknown': len(unknown),
+                               'sum': len(known) + len(unknown)})
+
+        stats = {'spawnpoints': coords}
+        return jsonify(stats)
+
+    @auth_required
+    def statistics_spawns(self):
+        return render_template('statistics/spawn_statistics.html', title="MAD Spawnpoint Statisics",
+                               time=self._args.madmin_time,
+                               responsive=str(self._args.madmin_noresponsive).lower())
+
+
 

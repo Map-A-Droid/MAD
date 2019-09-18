@@ -658,10 +658,11 @@ class DbWrapperBase(ABC):
         self.execute(query_trs_spawn, commit=True)
         self.execute(query_trs_spawnsightings, commit=True)
 
-    def download_spawns(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None,
-                        oSwLat=None, oSwLon=None, timestamp=None):
+    def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
+                        oSwLat=None, oSwLon=None, timestamp=None, fence=None):
         logger.debug("dbWrapper::download_spawns")
         spawn = {}
+        query_where = ""
 
         query = (
             "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
@@ -669,10 +670,11 @@ class DbWrapperBase(ABC):
             "FROM `trs_spawn`"
         )
 
-        query_where = (
-            " WHERE (latitude >= {} AND longitude >= {} "
-            " AND latitude <= {} AND longitude <= {}) "
-        ).format(swLat, swLon, neLat, neLon)
+        if neLat is not None:
+            query_where = (
+                " WHERE (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(swLat, swLon, neLat, neLon)
 
         if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
             oquery_where = (
@@ -689,6 +691,10 @@ class DbWrapperBase(ABC):
             ).format(tsdt)
 
             query_where = query_where + oquery_where
+
+        if fence is not None:
+            query_where = query_where + " where ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
+                                        "POINT(trs_spawn.latitude, trs_spawn.longitude))".format(str(fence))
 
         query = query + query_where
         res = self.execute(query)
@@ -1401,5 +1407,4 @@ class DbWrapperBase(ABC):
         query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
         logger.debug(query)
         self.execute(query, commit=True)
-
 

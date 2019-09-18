@@ -582,7 +582,7 @@ class WorkerBase(ABC):
 
             if returncode != ScreenType.POGO:
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
                                                    ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
@@ -592,7 +592,7 @@ class WorkerBase(ABC):
                     time.sleep(5)
                     self._reboot()
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
                                                    ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count < 3:
@@ -620,14 +620,15 @@ class WorkerBase(ABC):
                     while not self._stop_worker_event.is_set():
                         time.sleep(10)
 
-                elif returncode == ScreenType.ERROR:
+                elif returncode == ScreenType.ERROR or returncode == ScreenType.FAILURE:
                     logger.warning('Something wrong with screendetection')
                     loginerrorcounter += 1
 
-                if loginerrorcounter == 4 or returncode == ScreenType.SN:
+                if loginerrorcounter == 3 or returncode == ScreenType.SN:
                     logger.error('Cannot login again - (clear pogo game data and) restart phone / SN Error')
                     self._stop_worker_event.set()
                     self._stop_pogo()
+                    self._communicator.clearAppCache("com.nianticlabs.pokemongo")
                     time.sleep(5)
                     if self.get_devicesettings_value('clear_game_data', True):
                         logger.info('Clearing game data')
@@ -638,6 +639,7 @@ class WorkerBase(ABC):
                     logger.error('Cannot login two times in row - restart pogo')
                     self._stop_pogo()
                     time.sleep(5)
+                    self._communicator.clearAppCache("com.nianticlabs.pokemongo")
                     self._turn_screen_on_and_start_pogo()
 
                 self._last_screen_type = returncode
