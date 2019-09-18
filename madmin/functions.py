@@ -148,26 +148,17 @@ def get_geofences(mapping_manager, fence_type=None):
 
 
 def generate_coords_from_geofence(mapping_manager, fence):
-    first_coord: str = None
-    fence_string: str = ""
-
+    fence_string = []
     geofences = get_geofences(mapping_manager)
-    if fence not in geofences:
-        return ""
-
-    geofencexport = []
+    coordinates = []
     for name, fences in geofences.items():
-        if name != fence:
-                continue
-        coordinates = []
         for fname, coords in fences.get('include').items():
-            coordinates.append([coords, fences.get('exclude').get(fname, [])])
-        geofencexport.append({'name': name, 'coordinates': coordinates})
+            if fname != fence:
+                continue
+            coordinates.append(coords)
 
-    for coord in geofencexport[0]["coordinates"][0][0]:
-        if first_coord is None:
-            first_coord = str(coord[0]) + " " + str(coord[1])
-        fence_string = fence_string + str(coord[0]) + " " + str(coord[1]) + ", "
+    for coord in coordinates[0]:
+        fence_string.append(str(coord[0]) + " " + str(coord[1]))
 
-    fence_string = fence_string + first_coord
-    return fence_string
+    fence_string.append(fence_string[0])
+    return ",".join(fence_string)

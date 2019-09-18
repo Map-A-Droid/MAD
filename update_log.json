@@ -1,0 +1,18 @@
+{
+    "1568790173": {
+        "id": 1568790173,
+        "origin": "tv",
+        "file": "Stop-Pogo",
+        "status": "faulty",
+        "counter": 4,
+        "jobtype": "jobType.STOP"
+    },
+    "1568790174": {
+        "id": 1568790174,
+        "origin": "tv",
+        "file": "/sdcard/download/update.sh",
+        "status": "faulty",
+        "counter": 4,
+        "jobtype": "jobType.PASSTHROUGH"
+    }
+}
