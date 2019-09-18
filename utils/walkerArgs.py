@@ -314,10 +314,7 @@ def parseArgs():
                          type=int, dest='verbose')
     parser.set_defaults(DEBUG=False)
 
-    parser.add_argument('-nc', '--no_color', action='store_true', default=False,
-                        help=("Disable colored output in stdout and stderr"))
-	
-	args = parser.parse_args()
+    args = parser.parse_args()
 
     # Allow status name and date formatting in log filename.
     args.log_filename = strftime(args.log_filename)

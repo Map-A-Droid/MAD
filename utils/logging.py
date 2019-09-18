@@ -11,44 +11,14 @@ def initLogging(args):
     log_trace = log_level <= 10
     log_file_trace = log_file_level <= 10
 
-    if args.no_color:
-        logconfig = {
-            "levels": [
-            {"name": "DEBUG2", "no": 9},
-            {"name": "DEBUG3", "no": 8},
-            {"name": "DEBUG4", "no": 7},
-            {"name": "DEBUG5", "no": 6}
-        ],
-            "handlers": [
-            {
-                "sink": sys.stdout,
-                "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
-                "colorize": False,
-                "level": log_level,
-                "enqueue": True,
-                "filter": errorFilter
-            },
-            {
-                "sink": sys.stderr,
-                "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
-
-                "colorize": False,
-                "level": "ERROR",
-                "backtrace": log_trace,
-                "enqueue": True
-            }
-        ]
-    }
-
-    if not args.no_color:
-        logconfig = {
-            "levels": [
+    logconfig = {
+        "levels": [
             {"name": "DEBUG2", "no": 9, "color": "<blue>"},
             {"name": "DEBUG3", "no": 8, "color": "<blue>"},
             {"name": "DEBUG4", "no": 7, "color": "<blue>"},
             {"name": "DEBUG5", "no": 6, "color": "<blue>"}
         ],
-            "handlers": [
+        "handlers": [
             {
                 "sink": sys.stdout,
                 "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
