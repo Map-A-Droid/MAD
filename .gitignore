@@ -11,6 +11,7 @@ version.json
 configs/config.ini
 *.calc
 configs/geofences/*
+upload/*
 files/*
 configs/mappings.json
 configs/mappings_org.json
@@ -22,7 +23,8 @@ configs/coords/*
 *.stats
 .vscode/*
 status.json
-
+update_log.json
+commands.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

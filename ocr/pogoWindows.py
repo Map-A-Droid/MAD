@@ -741,13 +741,16 @@ class PogoWindows:
                                               (screenshot, identifier)).get()
 
     def __internal_get_screen_text(self, screenshot, identifier):
-        returning_dict : dict = []
         logger.debug(
             "get_screen_text: Reading screen text - identifier {}", identifier)
 
-        returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=20,
+        try:
+            returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=20,
                                                        config='--dpi 70')
+        except:
+            returning_dict = []
 
-        return returning_dict
-
-
+        if isinstance(returning_dict, dict):
+            return returning_dict
+        else:
+            return []

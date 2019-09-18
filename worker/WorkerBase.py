@@ -63,7 +63,7 @@ class WorkerBase(ABC):
         self._pogoWindowManager = pogoWindowManager
         self._waittime_without_delays = 0
         self._transporttype = 0
-        self._not_injected_count:int = 0
+        self._not_injected_count: int = 0
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
 
@@ -520,6 +520,9 @@ class WorkerBase(ABC):
                         str(self._geofix_sleeptime))
             time.sleep(int(self._geofix_sleeptime))
             self._geofix_sleeptime = 0
+
+        self._check_for_mad_job()
+
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
@@ -531,6 +534,17 @@ class WorkerBase(ABC):
                 while not self._restart_pogo():
                     logger.warning("failed starting pogo")
                     # TODO: stop after X attempts
+
+    def _check_for_mad_job(self):
+        if self.get_devicesettings_value("job", False):
+            logger.info("Worker {} get a job - waiting".format(str(self._id)))
+            while self.get_devicesettings_value("job", False) and not self._stop_worker_event.is_set():
+                time.sleep(10)
+            logger.info("Worker {} processed the job - checking screen and go on ".format(str(self._id)))
+            if not self._check_windows():
+                logger.error('Kill Worker...')
+                self._stop_worker_event.set()
+                return False
 
     def _check_location_is_valid(self):
         if self.current_location is None:
@@ -558,17 +572,17 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
-    def _check_windows(self):
+    def _check_windows(self, quickcheck = False):
         logger.info('Checking pogo screen...')
         loginerrorcounter: int = 0
         returncode: ScreenType = ScreenType.UNDEFINED
 
         while not returncode == ScreenType.POGO and not self._stop_worker_event.is_set():
-            returncode = self._WordToScreenMatching.matchScreen()
+            returncode = self._WordToScreenMatching.matchScreen(quickcheck)
 
             if returncode != ScreenType.POGO:
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
                                                    ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
@@ -578,7 +592,7 @@ class WorkerBase(ABC):
                     time.sleep(5)
                     self._reboot()
 
-                if (self._last_screen_type not in (ScreenType.UNDEFINED, ScreenType.ERROR,
+                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
                                                    ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count < 3:
@@ -606,14 +620,15 @@ class WorkerBase(ABC):
                     while not self._stop_worker_event.is_set():
                         time.sleep(10)
 
-                elif returncode == ScreenType.ERROR:
+                elif returncode == ScreenType.ERROR or returncode == ScreenType.FAILURE:
                     logger.warning('Something wrong with screendetection')
                     loginerrorcounter += 1
 
-                if loginerrorcounter == 4 or returncode == ScreenType.SN:
+                if loginerrorcounter == 3 or returncode == ScreenType.SN:
                     logger.error('Cannot login again - (clear pogo game data and) restart phone / SN Error')
                     self._stop_worker_event.set()
                     self._stop_pogo()
+                    self._communicator.clearAppCache("com.nianticlabs.pokemongo")
                     time.sleep(5)
                     if self.get_devicesettings_value('clear_game_data', True):
                         logger.info('Clearing game data')
@@ -621,7 +636,7 @@ class WorkerBase(ABC):
                     self._reboot()
 
                 if loginerrorcounter == 2:
-				    logger.error('Cannot login two times in row - doing magisk and restart pogo')
+				            logger.error('Cannot login two times in row - doing magisk and restart pogo')
                     self._stop_pogo()
                     time.sleep(5)
                     self._communicator.magiskOff("com.nianticlabs.pokemongo")
@@ -629,6 +644,7 @@ class WorkerBase(ABC):
                     self._communicator.magiskOn("com.nianticlabs.pokemongo")
                     time.sleep(1)
                     self._turn_screen_on_and_start_pogo()
+                    
                     
                 self._last_screen_type = returncode
 

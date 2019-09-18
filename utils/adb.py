@@ -108,3 +108,16 @@ class ADBConnect(object):
             logger.exception(
                 'MADmin: Exception occurred while making screenswipe ({}): {}.', str(origin), e)
         return False
+
+    def push_file(self, adb, origin, filename):
+        try:
+            device = self._client.device(adb)
+            if device is not None:
+                device.shell("adb push  " + str(filename) + " /sdcard/Download")
+                logger.info('MADMin ADB Push File {} to {})', str(filename), str(origin))
+                time.sleep(1)
+                return True
+        except Exception as e:
+            logger.exception(
+                'MADmin: Exception occurred while making screenswipe ({}): {}.', str(origin), e)
+        return False

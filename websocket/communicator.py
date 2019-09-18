@@ -29,13 +29,22 @@ class Communicator:
             self.__sendMutex.release()
 
     def __runAndOk(self, command, timeout) -> bool:
+        return self.__run_and_ok_bytes(command, timeout)
+
+    def __run_and_ok_bytes(self, message, timeout: float, byte_command: int = None) -> bool:
         self.__sendMutex.acquire()
         try:
             result = self.websocket_handler.send_and_wait(
-                    self.worker_id, self.worker_instance_ref, command, timeout)
-            return result is not None and "OK" in result
+                    self.worker_id, self.worker_instance_ref, message, timeout, byte_command=byte_command)
+            return result is not None and "OK" == result.strip()
         finally:
             self.__sendMutex.release()
+
+    def install_apk(self, filepath: str, timeout: float) -> bool:
+        # TODO: check if file exists...
+        with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
+            data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
+        return self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=1)
 
     def startApp(self, package_name):
         return self.__runAndOk("more start {}\r\n".format(package_name), self.__command_timeout)
@@ -47,6 +56,13 @@ class Communicator:
             return False
         else:
             return True
+
+    def passthrough(self, command):
+        response = self.websocket_handler.send_and_wait(self.worker_id,
+                                                        self.worker_instance_ref,
+                                                        "passthrough {}".format(command),
+                                                        self.__command_timeout)
+        return response
 
     def reboot(self) -> bool:
         return self.__runAndOk("more reboot now\r\n", self.__command_timeout)

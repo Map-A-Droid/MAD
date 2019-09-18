@@ -42,6 +42,9 @@ class WorkerConfigmode(object):
     def start_worker(self):
         logger.info("Worker {} started in configmode", str(self._id))
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
+        logger.debug("Setting device to idle for routemanager")
+        self._db_wrapper.update_trs_status_to_idle(self._id)
+        logger.debug("Device set to idle for routemanager {}", str(self._id))
         while self.check_walker() and not self._stop_worker_event.is_set():
             position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
             if position_type is None:
@@ -66,6 +69,12 @@ class WorkerConfigmode(object):
             logger.warning("Worker {} stop called", str(self._id))
 
     def set_geofix_sleeptime(self, sleeptime):
+        return True
+
+    def set_job_activated(self):
+        return True
+
+    def set_job_deactivated(self):
         return True
 
     def check_walker(self):

@@ -547,3 +547,11 @@ class MappingManager:
             except Exception as e:
                 logger.exception(
                         'Exception occurred while updating device mappings: {}.', e)
+
+    def get_all_devices(self):
+        devices = []
+        device_arr = self.__raw_json["devices"]
+        for device in device_arr:
+            devices.append(device['origin'])
+
+        return devices

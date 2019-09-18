@@ -98,6 +98,9 @@ def parseArgs():
     parser.add_argument('-tmp', '--temp_path', default='temp',
                         help='Temp Folder for OCR Scanning. Default: temp')
 
+    parser.add_argument('-upload', '--upload_path', default='upload',
+                        help='Path for uploaded Files via madmin and for device installation. Default: upload')
+
     parser.add_argument('-pgasset', '--pogoasset', required=False,
                         help=('Path to Pogo Asset.'
                               'See https://github.com/ZeChrales/PogoAssets/'))
@@ -293,6 +296,8 @@ def parseArgs():
                               " with the instance's status name. Read the"
                               " python time module docs for details."
                               " Default: %%Y%%m%%d_%%H%%M_<SN>.log."))
+    parser.add_argument('--no_log_colors', action="store_true", default=False,
+                        help=("Disable colored logs."))
 
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"

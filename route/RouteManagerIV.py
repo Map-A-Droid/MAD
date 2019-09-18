@@ -70,9 +70,9 @@ class RouteManagerIV(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
+                self._is_started = True
                 logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
-                self._is_started = True
         finally:
             self._manager_mutex.release()
         return True
@@ -85,6 +85,7 @@ class RouteManagerIV(RouteManagerBase):
             self._stop_update_thread.clear()
         self._is_started = False
         self._round_started_time = None
+        self._init_route_queue()
 
     def _check_coords_before_returning(self, lat, lng):
         return True

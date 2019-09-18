@@ -12,8 +12,8 @@ from utils.MappingManager import MappingManager, MappingManagerManager
 import calendar
 import datetime
 import gc
-import glob
 import os
+import pkg_resources
 import time
 from threading import Thread, active_count
 
@@ -27,8 +27,8 @@ from utils.madGlobals import terminate_mad
 from utils.rarity import Rarity
 from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
-from watchdog.observers import Observer
 from websocket.WebsocketServer import WebsocketServer
+from utils.updater import deviceUpdater
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -157,7 +157,19 @@ def create_folder(folder):
         os.makedirs(folder)
 
 
+def check_dependencies():
+    with open("requirements.txt", "r") as f:
+        deps = f.readlines()
+        try:
+            pkg_resources.require(deps)
+        except pkg_resources.VersionConflict as version_error:
+            logger.error("Some dependencies aren't met. Required: {} (Installed: {})", version_error.req, version_error.dist)
+            sys.exit(1)
+
+
 if __name__ == "__main__":
+    check_dependencies()
+
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
 
@@ -173,6 +185,7 @@ if __name__ == "__main__":
     # create folders
     create_folder(args.raidscreen_path)
     create_folder(args.file_path)
+    create_folder(args.upload_path)
 
     if args.only_ocr:
         logger.error(
@@ -263,9 +276,11 @@ if __name__ == "__main__":
 
     if args.with_madmin:
         from madmin.madmin import madmin_start
+
+        device_Updater = deviceUpdater(ws_server, args)
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
-                          args=(args, db_wrapper, ws_server, mapping_manager))
+                          args=(args, db_wrapper, ws_server, mapping_manager, device_Updater))
         t_madmin.daemon = True
         t_madmin.start()
 

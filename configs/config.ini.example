@@ -24,14 +24,14 @@
 ######################
 
 #ws_ip:                     # IP for websockt to listen on (for RGC). Default: 0.0.0.0
-#ws_port:                   # Port of the websocket to listen on. Default: 8080
+#ws_port:                   # Highly recommended to change. Port of the websocket to listen on. Default: 8080
 #websocket_command_timeout: # The max time to wait for a command to return (in seconds). Default: 30 seconds.
 
 # MITM Receiver (Pogodroid data)
 ######################
 
 #mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
-#mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
+#mitmreceiver_port:         # Highly recommended to change. Port to listen on for proto data (MITM data). Default: 8000.
 #mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
 
 # Walk Settings
@@ -48,6 +48,7 @@
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
 #mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
+#upload_path:                # Path for uploaded Files via madmin and for device installation. (Default: upload/)
 
 # other settings
 ######################
@@ -60,7 +61,7 @@
 #lure_duration:              # Lure duration in minutes (Default: 30)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
-#language:                   # Language for quests (default:en - others: de (more soon))
+#language:                   # Language for several things like quests or mon names in the IV list (default:en - others: de, fr )
 #mitm_status_password: SetPls # Header Authorization password for MITM /status/ page
 
 # MADmin statistics
@@ -91,7 +92,7 @@
 #with_madmin                 # Start Madmin
 #madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
 #madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
-#madmin_port:                # MADmin web port (Default: 5000)
+#madmin_port:                # Highly recommended to change. MADmin web port (Default: 5000)
 #madmin_time:                # MADmin clock format (12/24) (Default: 24)
 #madmin_noresponsive         # MADmin deactivate responsive tables
 #unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)

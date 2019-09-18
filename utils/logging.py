@@ -10,6 +10,7 @@ def initLogging(args):
     _, log_file_level = logLevel(args.log_file_level, args.verbose)
     log_trace = log_level <= 10
     log_file_trace = log_file_level <= 10
+    colorize = not args.no_log_colors
 
     logconfig = {
         "levels": [
@@ -22,7 +23,7 @@ def initLogging(args):
             {
                 "sink": sys.stdout,
                 "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
-                "colorize": True,
+                "colorize": colorize,
                 "level": log_level,
                 "enqueue": True,
                 "filter": errorFilter
@@ -31,7 +32,7 @@ def initLogging(args):
                 "sink": sys.stderr,
                 "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
 
-                "colorize": True,
+                "colorize": colorize,
                 "level": "ERROR",
                 "backtrace": log_trace,
                 "enqueue": True

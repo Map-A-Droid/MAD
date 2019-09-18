@@ -1,0 +1,46 @@
+{
+	"DEMO Job Rehide Pogo Magisk":
+	[
+		{
+			"TYPE": "jobType.STOP",
+		    "SYNTAX": "Stop-Pogo"
+	    },
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "su -c magiskhide --rm com.nianticlabs.pokemongo"
+	    },
+	    {
+		    "TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "su -c magiskhide --add com.nianticlabs.pokemongo"
+	    },
+		{
+			"TYPE": "jobType.START",
+		    "SYNTAX": "Start-Pogo"
+	    }
+    ],
+	"DEMO Job Start Update Script":
+	[
+		{
+			"TYPE": "jobType.STOP",
+		    "SYNTAX": "Stop-Pogo"
+	    },
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "/sdcard/download/update.sh"
+	    }
+    ],
+	"Readout RGC Version":
+	[
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName"
+	    }
+    ],
+	"Readout Pogoroid Version":
+	[
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName"
+	    }
+    ]
+}
