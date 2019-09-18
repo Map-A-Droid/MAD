@@ -395,30 +395,34 @@ class statistics(object):
         return jsonify(data)
 
     @auth_required
+    @logger.catch()
     def get_spawnpoints_stats(self):
 
         coords = []
         known = []
         unknown = []
 
-        for possible_fence in get_geofences(self._mapping_manager, 'mon_mitm'):
-            fence = generate_coords_from_geofence(self._mapping_manager, possible_fence)
-            known.clear()
-            unknown.clear()
+        possible_fences = get_geofences(self._mapping_manager, 'mon_mitm')
+        for possible_fence in possible_fences:
 
-            data = json.loads(
-                self._db.download_spawns(
-                    fence=fence
+            for subfence in possible_fences[possible_fence]['include']:
+                fence = generate_coords_from_geofence(self._mapping_manager, subfence)
+                known.clear()
+                unknown.clear()
+
+                data = json.loads(
+                    self._db.download_spawns(
+                        fence=fence
+                    )
                 )
-            )
 
-            for spawnid in data:
-                if data[str(spawnid)]["endtime"] == None:
-                    unknown.append(spawnid)
-                else:
-                    known.append(spawnid)
-            coords.append({'fence': possible_fence, 'known': len(known), 'unknown': len(unknown),
-                           'sum': len(known) + len(unknown)})
+                for spawnid in data:
+                    if data[str(spawnid)]["endtime"] == None:
+                        unknown.append(spawnid)
+                    else:
+                        known.append(spawnid)
+                coords.append({'fence': subfence, 'known': len(known), 'unknown': len(unknown),
+                               'sum': len(known) + len(unknown)})
 
         stats = {'spawnpoints': coords}
         return jsonify(stats)
