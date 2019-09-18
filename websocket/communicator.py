@@ -36,7 +36,7 @@ class Communicator:
         try:
             result = self.websocket_handler.send_and_wait(
                     self.worker_id, self.worker_instance_ref, message, timeout, byte_command=byte_command)
-            return result is not None and "OK" in result
+            return result is not None and "OK" == result.strip()
         finally:
             self.__sendMutex.release()
 
@@ -44,8 +44,7 @@ class Communicator:
         # TODO: check if file exists...
         with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
             data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
-        with self.__sendMutex:
-            return self.__run_and_ok_bytes(1, data, timeout)
+        return self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=1)
 
     def startApp(self, package_name):
         return self.__runAndOk("more start {}\r\n".format(package_name), self.__command_timeout)
@@ -57,6 +56,13 @@ class Communicator:
             return False
         else:
             return True
+
+    def passthrough(self, command):
+        response = self.websocket_handler.send_and_wait(self.worker_id,
+                                                        self.worker_instance_ref,
+                                                        "passthrough {}".format(command),
+                                                        self.__command_timeout)
+        return response
 
     def reboot(self) -> bool:
         return self.__runAndOk("more reboot now\r\n", self.__command_timeout)

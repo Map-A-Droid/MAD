@@ -237,6 +237,7 @@ class WebsocketServer(object):
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'finished', False)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_action_time', None)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_cleanup_time', None)
+                    self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)
                     await asyncio.sleep(1) # give the settings a moment... (dirty "workaround" against race condition)
                 walker_index = devicesettings.get('walker_area_index', 0)
 
@@ -522,7 +523,7 @@ class WebsocketServer(object):
             to_be_sent: str = u"%s;%s" % (str(message_id), message)
             logger.debug("To be sent: {}", to_be_sent.strip())
         elif byte_command is not None:
-            to_be_sent: bytes = (1).to_bytes(4, byteorder='big')
+            to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
             to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
             to_be_sent += message
         else:
@@ -560,7 +561,10 @@ class WebsocketServer(object):
         return result
 
     def send_and_wait(self, id, worker_instance, message, timeout, byte_command: int = None):
-        logger.debug("{} sending command: {}", str(id), message.strip())
+        if isinstance(message, bytes):
+            logger.debug("{} sending binary: {}", str(id), str(message[:10]))
+        else:
+            logger.debug("{} sending command: {}", str(id), message.strip())
         try:
             # future: Handle = self._add_task_to_loop(self.__send_and_wait_internal(id, worker_instance, message,
             #                                                                       timeout))
@@ -611,3 +615,14 @@ class WebsocketServer(object):
         if self.__current_users.get(origin, None) is not None:
             return self.__current_users[origin][1].set_geofix_sleeptime(sleeptime)
         return False
+
+    def set_update_sleeptime_worker(self, origin, sleeptime):
+        if self.__current_users.get(origin, None) is not None:
+            return self.__current_users[origin][1].set_geofix_sleeptime(sleeptime)
+        return False
+
+    def set_job_activated(self, origin):
+        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', True)
+
+    def set_job_deactivated(self, origin):
+        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)
