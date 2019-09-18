@@ -644,7 +644,7 @@ class WorkerBase(ABC):
                     self._communicator.magiskOn("com.nianticlabs.pokemongo")
                     time.sleep(1)
                     self._turn_screen_on_and_start_pogo()
-                    
+
                 self._last_screen_type = returncode
 
         logger.info('Checking pogo screen is finished')
