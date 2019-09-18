@@ -82,7 +82,7 @@ class Communicator:
     def magiskOn(self, package_name) -> bool:
         return self.__runAndOk("passthrough magiskhide --add {}".format(package_name), self.__command_timeout)
 	
-	def turnScreenOn(self) -> bool:
+    def turnScreenOn(self) -> bool:
         return self.__runAndOk("more screen on\r\n", self.__command_timeout)
 
     def click(self, x, y) -> bool:
