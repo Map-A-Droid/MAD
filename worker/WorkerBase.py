@@ -636,7 +636,7 @@ class WorkerBase(ABC):
                     self._reboot()
 
                 if loginerrorcounter == 2:
-				            logger.error('Cannot login two times in row - doing magisk and restart pogo')
+                    logger.error('Cannot login two times in row - doing magisk and restart pogo')
                     self._stop_pogo()
                     time.sleep(5)
                     self._communicator.magiskOff("com.nianticlabs.pokemongo")
@@ -644,7 +644,6 @@ class WorkerBase(ABC):
                     self._communicator.magiskOn("com.nianticlabs.pokemongo")
                     time.sleep(1)
                     self._turn_screen_on_and_start_pogo()
-                    
                     
                 self._last_screen_type = returncode
 
