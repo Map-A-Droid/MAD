@@ -1,10 +1,28 @@
-[
-	{
-		"TYPE": "jobType.PASSTHROUGH",
-		"SYNTAX": "/sdcard/Download/test.sh"
-	},
-	{
-		"TYPE": "jobType.PASSTHROUGH",
-		"SYNTAX": "/sdcard/Download/test2.sh | grep test*"
-	}
-]
+{
+	"DEMO Job Rehide Pogo Magisk":
+	[
+		{
+			"TYPE": "jobType.STOP",
+		    "SYNTAX": "Stop-Pogo"
+	    },
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "magiskhide --rm com.nianticlabs.pokemongo"
+	    },
+	    {
+		    "TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "magiskhide --add com.nianticlabs.pokemongo"
+	    }
+    ],
+	"DEMO Job Start Update Script":
+	[
+		{
+			"TYPE": "jobType.STOP",
+		    "SYNTAX": "Stop-Pogo"
+	    },
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "/sdcard/download/update.sh"
+	    }
+    ]
+}

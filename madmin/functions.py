@@ -48,7 +48,7 @@ def uploaded_files(datetimeformat):
             commands = json.load(logfile)
 
         for command in commands:
-            files.append({'jobname': command['SYNTAX'], 'creation': '', 'type': command['TYPE']})
+            files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})
 
     processJson = ({'jobname': 'Reboot-Phone', 'creation': '', 'type': 'jobType.REBOOT'})
     files.append(processJson)

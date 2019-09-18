@@ -12,6 +12,7 @@ class jobType(Enum):
     RESTART = 2
     STOP = 3
     PASSTHROUGH = 4
+    CHAIN = 99
 
 class deviceUpdater(object):
     def __init__(self, websocket, args):
@@ -20,16 +21,23 @@ class deviceUpdater(object):
         self._update_mutex = RLock()
         self._log = {}
         self._args = args
+        self._commands: dict = {}
         self._current_job_id: int = None
         if os.path.exists('update_log.json'):
             with open('update_log.json') as logfile:
                 self._log = json.load(logfile)
 
+        self.init_jobs()
         self.kill_old_jobs()
 
         t_updater = Thread(name='apk_updater', target=self.process_update_queue)
         t_updater.daemon = False
         t_updater.start()
+
+    def init_jobs(self):
+        if os.path.exists('commands.json'):
+            with open('commands.json') as logfile:
+                self._commands = json.load(logfile)
 
     def restart_job(self, id):
         if id in self._log:
@@ -56,11 +64,11 @@ class deviceUpdater(object):
                 item = self._update_queue.get()
                 id_, origin, file_, counter, jobtype = (item[0], item[1], item[2], item[4], item[5])
 
-                if id_ in self._log:
+                if int(id_) in self._log:
                     self._current_job_id = int(id_)
 
                     logger.info("Job for {} (File/Job: {}) started (ID: {})".format(str(origin), str(file_), str(id_)))
-                    self._log[id_]['status'] = 'processing'
+                    self._log[int(id_)]['status'] = 'processing'
                     self.update_status_log()
 
                     temp_comm = self._websocket.get_origin_communicator(origin)
@@ -74,7 +82,7 @@ class deviceUpdater(object):
                     else:
                         # stop worker
                         self._websocket.set_job_activated(origin)
-                        self._log[id_]['status'] = 'starting'
+                        self._log[int(id_)]['status'] = 'starting'
                         self.update_status_log()
                         logger.info('Job processor waiting for worker start resting - Device {}'.format(str(origin)))
                         time.sleep(30)
@@ -82,7 +90,7 @@ class deviceUpdater(object):
                             if self.start_job_type(item, jobtype, temp_comm):
                                 logger.info('Job {} could be executed successfully - Device {} - File/Job {} (ID: {})'
                                              .format(str(jobtype), str(origin), str(file_), str(id_)))
-                                self._log[id_]['status'] = 'success'
+                                self._log[int(id_)]['status'] = 'success'
                                 self.update_status_log()
                             else:
                                 logger.error('Job {} could not be executed successfully - Device {} - File/Job {} (ID: {})'
@@ -107,14 +115,24 @@ class deviceUpdater(object):
 
             time.sleep(5)
 
+    def preadd_job(self, origin, job, id, type):
+        if jobType[type.split('.')[1]] == jobType.CHAIN:
+            logger.info('Processing Jobchain {} for Device {} (ID: {})'
+                        .format(str(job), str(origin), str(id)))
+            for subjob in self._commands[job]:
+                self.add_job(origin, subjob['SYNTAX'], int(time.time()), subjob['TYPE'])
+                time.sleep(1)
+        else:
+            self.add_job(origin, job, id, type)
+
     def add_job(self, origin, file, id, type, counter=0, status='pending'):
         logger.info('Adding Job {} for Device {} - File/Job: {} (ID: {})'
                     .format(str(type), str(origin), str(file), str(id)))
 
         if id not in self._log:
-            self._log[id] = {}
+            self._log[int(id)] = {}
 
-        self._log[id] = ({
+        self._log[int(id)] = ({
             'id': id,
             'origin': origin,
             'file': file,
@@ -140,9 +158,10 @@ class deviceUpdater(object):
         finally:
             self._update_mutex.release()
 
+    @logger.catch()
     def delete_log_id(self, id):
-        if id in self._log and id != self._current_job_id:
-            del self._log[id]
+        if int(id) != self._current_job_id:
+            del self._log[int(id)]
             self.update_status_log()
             return True
         return False

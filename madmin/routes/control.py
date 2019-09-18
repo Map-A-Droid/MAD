@@ -431,12 +431,12 @@ class control(object):
                 else:
                     flash('File could not be installed successfully :(')
             else:
-                self._device_updater.add_job(origin=origin, file=jobname, id=int(time.time()),
+                self._device_updater.preadd_job(origin=origin, job=jobname, id=int(time.time()),
                                              type=type_)
                 flash('File successfully queued --> See Job Status')
 
         elif type_ != jobType.INSTALLATION:
-            self._device_updater.add_job(origin=origin, file=jobname, id=int(time.time()),
+            self._device_updater.preadd_job(origin=origin, job=jobname, id=int(time.time()),
                                          type=type_)
             flash('Job successfully queued --> See Job Status')
 
@@ -453,6 +453,7 @@ class control(object):
         return jsonify(return_log)
 
     @auth_required
+    @logger.catch()
     def delete_log_entry(self):
         id_ = request.args.get('id')
         jobtype = request.args.get('type')
