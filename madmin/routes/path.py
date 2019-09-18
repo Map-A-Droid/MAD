@@ -13,7 +13,7 @@ class path(object):
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
-            self._mapping_manager = mapping_manager
+        self._mapping_manager = mapping_manager
         self.add_route()
 
     def add_route(self):
