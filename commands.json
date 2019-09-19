@@ -1,0 +1,16 @@
+{
+	"Readout RGC Version":
+	[
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName"
+	    }
+    ],
+	"Readout Pogodroid Version":
+	[
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName"
+	    }
+    ]
+}
