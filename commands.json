@@ -36,7 +36,7 @@
 		    "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName"
 	    }
     ],
-	"Readout Pogoroid Version":
+	"Readout Pogodroid Version":
 	[
 		{
 			"TYPE": "jobType.PASSTHROUGH",
