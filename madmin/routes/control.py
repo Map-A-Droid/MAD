@@ -60,7 +60,9 @@ class control(object):
             ("/install_status", self.install_status),
             ("/install_file_all_devices", self.install_file_all_devices),
             ("/restart_job", self.restart_job),
-            ("/delete_log", self.delete_log)
+            ("/delete_log", self.delete_log),
+            ("/get_all_workers", self.get_all_workers),
+            ("/job_for_worker", self.job_for_worker)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -487,7 +489,7 @@ class control(object):
                                             type=type_)
             time.sleep(1)
 
-        flash('File successfully queued')
+        flash('Job successfully queued')
         return redirect(getBasePath(request) + '/install_status')
 
     @auth_required
@@ -506,4 +508,26 @@ class control(object):
     @logger.catch()
     def delete_log(self):
         self._device_updater.delete_log()
+        return redirect(getBasePath(request) + '/install_status')
+
+    @auth_required
+    def get_all_workers(self):
+        devices = self._mapping_manager.get_all_devices()
+        devicesreturn = []
+        for device in devices:
+            devicesreturn.append({'worker': device})
+
+        return jsonify(devicesreturn)
+
+    @auth_required
+    def job_for_worker(self):
+        jobname = request.args.get('jobname', None)
+        type_ = request.args.get('type', None)
+        devices = request.args.getlist('device[]')
+        for device in devices:
+            self._device_updater.preadd_job(origin=device, job=jobname, id_=int(time.time()),
+                                            type=type_)
+            time.sleep(1)
+
+        flash('Job successfully queued')
         return redirect(getBasePath(request) + '/install_status')

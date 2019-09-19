@@ -29,7 +29,8 @@ class path(object):
             ("/gyms", self.gyms),
             ("/unknown", self.unknown),
             ("/quests", self.quest),
-            ("/quests_pub", self.quest_pub)
+            ("/quests_pub", self.quest_pub),
+            ("/pick_worker", self.pickworker)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -97,4 +98,11 @@ class path(object):
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)
+
+    @auth_required
+    def pickworker(self):
+        jobname = request.args.get("jobname", None)
+        type = request.args.get("type", None)
+        return render_template('workerpicker.html', responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Select Worker", jobname=jobname, type=type)
 

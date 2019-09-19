@@ -34,7 +34,7 @@
                         {% if origin %}
                             var link = "<a href='install_file?jobname=" + row.jobname + "&origin={{origin}}&adb={{adb}}&type=" + row.type + "' class='confirm' title='Do you really want to start this job?'><img src='static/install.png' width='30'></a>";
                         {% else %}
-                            var link = "<a href='install_file_all_devices?jobname=" + row.jobname + "&type=" + row.type + "' class='confirm' title='Do you really want to start this job on all devices?'><img src='static/install_all.png' width='30'></a>";
+                            var link = "<a href='pick_worker?jobname=" + row.jobname + "&type=" + row.type + "' title='Install on selected devices'><img src='static/filter.png' width='30'></a> <a href='install_file_all_devices?jobname=" + row.jobname + "&type=" + row.type + "' class='confirm' title='Do you really want to start this job on all devices?'><img src='static/install_all.png' width='30'></a>";
                             if(row.type == "jobType.INSTALLATION") {
                                 dellink = " <a href='delete_file?filename=" + row.jobname + "' class='confirm' title='Do you really want to delete this file?'><img src='static/delete.png' width='30'></a>"
                             }
