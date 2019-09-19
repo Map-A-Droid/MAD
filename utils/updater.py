@@ -36,6 +36,7 @@ class deviceUpdater(object):
         t_updater.start()
 
     def init_jobs(self):
+        self._commands =  {}
         if os.path.exists('commands.json'):
             with open('commands.json') as logfile:
                 self._commands = json.load(logfile)

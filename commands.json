@@ -1,5 +1,5 @@
 {
-	"DEMO Job Rehide Pogo Magisk":
+	"Rehide Pogo Magisk":
 	[
 		{
 			"TYPE": "jobType.STOP",
@@ -18,7 +18,7 @@
 		    "SYNTAX": "Start-Pogo"
 	    }
     ],
-	"DEMO Job Start Update Script":
+	"Start Update Script":
 	[
 		{
 			"TYPE": "jobType.STOP",
@@ -42,5 +42,19 @@
 			"TYPE": "jobType.PASSTHROUGH",
 		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName"
 	    }
-    ]
+    ],
+	"Enable ADB over TCP": [
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+			"SYNTAX": "su -c setprop service.adb.tcp.port 5555"
+		},
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+			"SYNTAX": "su -c stop adbd"
+		},
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+			"SYNTAX": "su -c start adbd"
+		}
+	]
 }
