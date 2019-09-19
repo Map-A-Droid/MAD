@@ -216,7 +216,7 @@ class WebsocketServer(object):
             if self._configmode:
                 worker = WorkerConfigmode(self.args, origin, self, walker = None,
                                           mapping_manager = self.__mapping_manager, mitm_mapper = self.__mitm_mapper,
-                                          db_wrapper = self.__db_wrapper)
+                                          db_wrapper = self.__db_wrapper, routemanager_name=None)
                 logger.debug("Starting worker for {}", str(origin))
                 new_worker_thread = Thread(
                     name='worker_%s' % origin, target=worker.start_worker)
@@ -237,6 +237,7 @@ class WebsocketServer(object):
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'finished', False)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_action_time', None)
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'last_cleanup_time', None)
+                    self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)
                     await asyncio.sleep(1) # give the settings a moment... (dirty "workaround" against race condition)
                 walker_index = devicesettings.get('walker_area_index', 0)
 
@@ -295,9 +296,11 @@ class WebsocketServer(object):
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', 0)
 
                 # set global mon_iv
-                client_mapping['mon_ids_iv'] = \
-                    self.__mapping_manager.routemanager_get_settings(walker_area_name).get("mon_ids_iv", [])
-
+                routemanager_settings = self.__mapping_manager.routemanager_get_settings(walker_area_name)
+                if routemanager_settings is not None:
+                    client_mapping['mon_ids_iv'] =\
+                        self.__mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None),
+                                                           walker_area_name)
             else:
                 walker_routemanager_mode = None
 
@@ -313,11 +316,6 @@ class WebsocketServer(object):
                                     mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
                                     db_wrapper=self.__db_wrapper,
                                     pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
-            elif walker_routemanager_mode in ["raids_ocr"]:
-                from worker.WorkerOCR import WorkerOCR
-                worker = WorkerOCR(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
-                                   mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
-                                   pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
             elif walker_routemanager_mode in ["pokestops"]:
                 worker = WorkerQuests(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
                                       mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
@@ -326,7 +324,7 @@ class WebsocketServer(object):
             elif walker_routemanager_mode in ["idle"]:
                 worker = WorkerConfigmode(self.args, origin, self, walker=walker_settings,
                                           mapping_manager=self.__mapping_manager, mitm_mapper=self.__mitm_mapper,
-                                          db_wrapper=self.__db_wrapper)
+                                          db_wrapper=self.__db_wrapper, routemanager_name=walker_area_name)
             else:
                 logger.error("Mode not implemented")
                 sys.exit(1)
@@ -463,7 +461,7 @@ class WebsocketServer(object):
         response = None
         if isinstance(message, str):
             logger.debug("Receiving message: {}", str(message.strip()))
-            splitup = message.split(";")
+            splitup = message.split(";", 1)
             id = int(splitup[0])
             response = splitup[1]
         else:
@@ -508,7 +506,7 @@ class WebsocketServer(object):
         next_message = OutgoingMessage(id, to_be_sent)
         await self.__send_queue.put(next_message)
 
-    async def __send_and_wait_internal(self, id, worker_instance, message, timeout):
+    async def __send_and_wait_internal(self, id, worker_instance, message, timeout, byte_command: int = None):
         async with self.__users_mutex:
             user_entry = self.__current_users.get(id, None)
 
@@ -521,8 +519,16 @@ class WebsocketServer(object):
 
         await self.__set_request(message_id, message_event)
 
-        to_be_sent = u"%s;%s" % (str(message_id), message)
-        logger.debug("To be sent: {}", to_be_sent.strip())
+        if isinstance(message, str):
+            to_be_sent: str = u"%s;%s" % (str(message_id), message)
+            logger.debug("To be sent: {}", to_be_sent.strip())
+        elif byte_command is not None:
+            to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
+            to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
+            to_be_sent += message
+        else:
+            logger.fatal("Tried to send invalid message (bytes without byte command or no byte/str passed)")
+            return None
         await self.__send(id, to_be_sent)
 
         # now wait for the response!
@@ -554,15 +560,18 @@ class WebsocketServer(object):
                         id), str(result[:10]))
         return result
 
-    def send_and_wait(self, id, worker_instance, message, timeout):
-        logger.debug("{} sending command: {}", str(id), message.strip())
+    def send_and_wait(self, id, worker_instance, message, timeout, byte_command: int = None):
+        if isinstance(message, bytes):
+            logger.debug("{} sending binary: {}", str(id), str(message[:10]))
+        else:
+            logger.debug("{} sending command: {}", str(id), message.strip())
         try:
             # future: Handle = self._add_task_to_loop(self.__send_and_wait_internal(id, worker_instance, message,
             #                                                                       timeout))
             logger.debug("Appending send_and_wait to {}".format(str(self.__loop)))
             with self.__loop_mutex:
                 future = asyncio.run_coroutine_threadsafe(
-                        self.__send_and_wait_internal(id, worker_instance, message, timeout), self.__loop)
+                        self.__send_and_wait_internal(id, worker_instance, message, timeout, byte_command=byte_command), self.__loop)
             result = future.result()
         except WebsocketWorkerRemovedException:
             logger.error("Worker {} was removed, propagating exception".format(id))
@@ -606,3 +615,14 @@ class WebsocketServer(object):
         if self.__current_users.get(origin, None) is not None:
             return self.__current_users[origin][1].set_geofix_sleeptime(sleeptime)
         return False
+
+    def set_update_sleeptime_worker(self, origin, sleeptime):
+        if self.__current_users.get(origin, None) is not None:
+            return self.__current_users[origin][1].set_geofix_sleeptime(sleeptime)
+        return False
+
+    def set_job_activated(self, origin):
+        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', True)
+
+    def set_job_deactivated(self, origin):
+        self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)

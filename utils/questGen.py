@@ -120,7 +120,9 @@ def questtask(typeid, condition, target):
         arr['wb'] = ""
         arr['type'] = ""
         arr['poke'] = ""
-        text = _("Catch {0} {type}Pokemon{wb}.")
+        arr['different'] = ""
+
+        text = _("Catch {0}{different} {type}Pokemon{wb}.")
         match_object = re.search(r'"pokemon_type": \[([0-9, ]+)\]', condition)
         if match_object is not None:
             pt = match_object.group(1).split(', ')
@@ -134,8 +136,10 @@ def questtask(typeid, condition, target):
                         pokemonTypes[ty].title() + (_('-type ')
                                                     if last == cur else '-, ')
                     cur += 1
-        if re.search(r"'type': 3", condition) is not None:
+        if re.search(r'"type": 3', condition) is not None:
             arr['wb'] = _(" with weather boost")
+        elif re.search(r'"type": 21', condition) is not None:
+            arr['different'] = _(" different species of")
         match_object = re.search(r'"pokemon_ids": \[([0-9, ]+)\]', condition)
         if match_object is not None:
             pt = match_object.group(1).split(', ')
@@ -152,7 +156,7 @@ def questtask(typeid, condition, target):
     elif typeid == 5:
         text = _("Spin {0} Pokestops or Gyms.")
         if re.search(r'"type": 12', condition) is not None:
-            text = _("Spin {0} never visited Pokestops or Gyms.")
+            text = _("Spin {0} Pokestops you haven't visited before")
     elif typeid == 6:
         text = _("Hatch {0} Eggs.")
     elif typeid == 7:
@@ -244,6 +248,49 @@ def questtask(typeid, condition, target):
         text = _('Trade {0} Pokemon.')
     elif typeid == 24:
         text = _('Send {0} gifts to friends.')
+    elif typeid == 27:
+        # PVP against trainer or team leader.
+        if re.search(r'"type": 22', condition) is not None:
+            text = _('Battle a Team Leader {0} times')
+        elif re.search(r'"type": 23', condition) is not None:
+            text = _('Battle another Trainer {0} times')
+    elif typeid == 28:
+        # Take snapshots quest
+        if re.search(r'"type": 2', condition) is not None:
+            arr['poke'] = ""
+
+            match_object = re.search(
+                r'"pokemon_ids": \[([0-9, ]+)\]', condition)
+            if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['poke'] = i8ln(pokemonname(pt[0]))
+                else:
+                    for ty in pt:
+                        arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
+                            '' if last == cur else ', ')
+                        cur += 1
+                text = _("Take {0} snapshots of {poke}")
+        elif re.search(r'"type": 1', condition) is not None:
+            text = _("Take {0} snapshots of {type} Pokemon")
+            arr['wb'] = ""
+            arr['type'] = ""
+            arr['poke'] = ""
+            match_object = re.search(
+                r'"pokemon_type": \[([0-9, ]+)\]', condition)
+            if match_object is not None:
+                pt = match_object.group(1).split(', ')
+                last = len(pt)
+                cur = 1
+                if last == 1:
+                    arr['type'] = pokemonTypes[pt[0]].title() + _('-type ')
+                else:
+                    for ty in pt:
+                        arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
+                            _('-type ') if last == cur else '-, ')
+                        cur += 1
 
     if int(target) == int(1):
         text = text.replace(_(' Eggs'), _('n Egg'))
@@ -251,6 +298,8 @@ def questtask(typeid, condition, target):
         text = text.replace(_(' Battles'), _(' Battle'))
         text = text.replace(_(' candies'), _(' candy'))
         text = text.replace(_(' gifts'), _(' gift'))
+        text = text.replace(_(' {0} snapshots'), _(' a snapshot'))
+        text = text.replace(_('Make {0} {type}{curve}Throws'), _('Make a {type}{curve}Throw'))
         text = text.replace(_(' {0} times'), '')
         arr['0'] = _("a")
 

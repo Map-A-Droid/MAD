@@ -1,5 +1,6 @@
 import collections
 import time
+import math
 from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
@@ -33,10 +34,12 @@ class MITMBase(WorkerBase):
 
         self._reboot_count = 0
         self._restart_count = 0
+        self._screendetection_count = 0
         self._rec_data_time = ""
         self._mitm_mapper = mitm_mapper
         self._latest_encounter_update = 0
         self._encounter_ids = {}
+        self._current_sleep_time = 0
 
         self._mitm_mapper.collect_location_stats(self._id, self.current_location, 1, time.time(), 2, 0,
                                                  self._mapping_manager.routemanager_get_mode(self._routemanager_name),
@@ -100,25 +103,32 @@ class MITMBase(WorkerBase):
                                                      self._transporttype)
 
             self._restart_count += 1
+            self._screendetection_count += 1
 
             restart_thresh = self.get_devicesettings_value("restart_thresh", 5)
             reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3)
-            if self._mapping_manager.routemanager_get_route_stats(self._routemanager_name) is not None:
+            if self._mapping_manager.routemanager_get_route_stats(self._routemanager_name, self._id) is not None:
                 if self._init:
                     restart_thresh = self.get_devicesettings_value("restart_thresh", 5) * 2
                     reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3) * 2
+
+            if self._screendetection_count >= math.ceil(restart_thresh / 2):
+                self._screendetection_count = 0
+                if not self._check_windows(quickcheck=True):
+                    logger.error('Something wrong with that worker - kill it....')
+                    self._stop_worker_event.set()
 
             if self._restart_count > restart_thresh:
                 self._reboot_count += 1
                 if self._reboot_count > reboot_thresh \
                         and self.get_devicesettings_value("reboot", False):
-                    logger.error("Rebooting {}", str(self._id))
+                    logger.error("Too many timeouts - Rebooting device {}", str(self._id))
                     self._reboot(mitm_mapper=self._mitm_mapper)
                     raise InternalStopWorkerException
 
                 # self._mitm_mapper.
                 self._restart_count = 0
-                logger.error("Restarting Pogo {}", str(self._id))
+                logger.error("Too many timeouts - Restarting game on {}", str(self._id))
                 self._restart_pogo(True, self._mitm_mapper)
 
         self.worker_stats()
@@ -126,22 +136,30 @@ class MITMBase(WorkerBase):
 
     def _wait_for_injection(self):
         self._not_injected_count = 0
+        injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
         while not self._mitm_mapper.get_injection_status(self._id):
-            self._check_ggl_login()
-            if self._not_injected_count >= 20:
-                logger.error("Worker {} not get injected in time - reboot", str(self._id))
+
+            self._check_for_mad_job()
+
+            if self._not_injected_count >= injection_thresh_reboot:
+                logger.error("Worker {} not injected in time - reboot", str(self._id))
                 self._reboot(self._mitm_mapper)
                 return False
-            logger.info("Worker {} is not injected till now (Count: {})", str(self._id), str(self._not_injected_count))
+            logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {}/{})",
+                        str(self._id), str(self._not_injected_count), str(injection_thresh_reboot))
+            if self._not_injected_count in [3, 6, 9, 15] and not self._stop_worker_event.isSet():
+                logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
+                        str(self._id), str(self._not_injected_count))
+                self._check_windows()
             if self._stop_worker_event.isSet():
-                logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                logger.error("Worker {} killed while waiting for injection", str(self._id))
                 return False
             self._not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
                 wait_time += 1
                 if self._stop_worker_event.isSet():
-                    logger.error("Worker {} get killed while waiting for injection", str(self._id))
+                    logger.error("Worker {} killed while waiting for injection", str(self._id))
                     return False
                 time.sleep(1)
         return True
@@ -159,7 +177,7 @@ class MITMBase(WorkerBase):
         x, y = self._resocalc.get_coords_quest_menu(self)[0], \
             self._resocalc.get_coords_quest_menu(self)[1]
         self._communicator.click(int(x), int(y))
-        time.sleep(2 + int(delayadd))
+        time.sleep(6 + int(delayadd))
 
         trashcancheck = self._get_trash_positions()
         if trashcancheck is None:
@@ -234,7 +252,7 @@ class MITMBase(WorkerBase):
             self.current_location.lat), str(self.current_location.lng))
         logger.debug('Last Pos: {} {}', str(
             self.last_location.lat), str(self.last_location.lng))
-        routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name)
+        routemanager_status = self._mapping_manager.routemanager_get_route_stats(self._routemanager_name, self._id)
         if routemanager_status is None:
             logger.warning("Routemanager not available")
             routemanager_status = [None, None]
@@ -256,7 +274,8 @@ class MITMBase(WorkerBase):
             'RoutePos':          str(routemanager_status[0]),
             'RouteMax':          str(routemanager_status[1]),
             'Init':              str(routemanager_init),
-            'LastProtoDateTime': str(self._rec_data_time)
+            'LastProtoDateTime': str(self._rec_data_time),
+            'CurrentSleepTime': str(self._current_sleep_time)
         }
 
         self._db_wrapper.save_status(dataToSave)

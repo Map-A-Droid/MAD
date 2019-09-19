@@ -95,7 +95,6 @@ done < <(query "select gym_id from gym as g join pokestop as p on p.pokestop_id=
 }
 
 case "$dbtype" in
- monocle) update_mon ;;
       rm) update_rm  ;;
-       *) echo "unknown dbtype, only valid options are monocle and rm, suck it" && exit 4 ;;
+       *) echo "unknown dbtype, only valid options is 'rm', suck it" && exit 4 ;;
 esac

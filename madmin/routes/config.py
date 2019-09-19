@@ -1,12 +1,14 @@
 import ast
 import os
 import json
+import glob
 from flask import (render_template, request, redirect)
+from functools import cmp_to_key
 from madmin.functions import auth_required, getBasePath
 from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
 from utils.MappingManager import MappingManager
-
+from utils.logging import InterceptHandler, logger
 
 class config(object):
     def __init__(self, db, args, logger, app, mapping_manager: MappingManager):
@@ -206,8 +208,7 @@ class config(object):
         else:
             header = "Add new " + walker
 
-        return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings",
-                               running_ocr=(self._args.only_ocr))
+        return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings")
 
     @auth_required
     def savesortwalker(self):
@@ -255,6 +256,7 @@ class config(object):
         return redirect(getBasePath(request) + "/config?type=walker&area=walker&block=fields&edit=" + str(walker),
                         code=302)
 
+    @logger.catch()
     @auth_required
     def config(self):
         fieldwebsite = []
@@ -302,6 +304,10 @@ class config(object):
                         if oldfields['devicepool'] == edit:
                             oldvalues = oldfields
                             _checkfield = 'devicepool'
+                    if 'monlist' in oldfields:
+                        if oldfields['monlist'] == edit:
+                            oldvalues = oldfields
+                            _checkfield = 'monlist'
                     if 'walkername' in oldfields:
                         if oldfields['walkername'] == edit:
                             oldvalues = oldfields
@@ -332,6 +338,10 @@ class config(object):
             if 'devicesettings' in area:
                 if area['devicesettings'] == type:
                     _name = area['devicesettings']
+                    compfields = area
+            if 'monivlist' in area:
+                if area['monivlist'] == type:
+                    _name = area['monivlist']
                     compfields = area
 
         for field in compfields[block]:
@@ -526,6 +536,65 @@ class config(object):
                 _temp = _temp + '</select></div>'
                 fieldwebsite.append(str(_temp))
 
+            if field['settings']['type'] == 'monlistselect':
+                _temp = '<div class="form-group"><label>' + str(
+                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
+                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                temp_mapping = {}
+                temp_mapping['monivlist'] = []
+                with open(self._args.mappings) as f:
+                    mapping = json.load(f)
+                    if 'monivlist' not in mapping:
+                        mapping['monivlist'] = []
+                temp_mapping['monivlist'].append({'monlist': None})
+                for monlist_temp in mapping['monivlist']:
+                    temp_mapping['monivlist'].append({'monlist': monlist_temp['monlist']})
+                for option in temp_mapping['monivlist']:
+                    if edit:
+                        if field['name'] in oldvalues['settings']:
+                            if str(oldvalues['settings'][field['name']]).lower() == str(option['monlist']).lower():
+                                sel = 'selected'
+                        else:
+                            if not option['monlist']:
+                                sel = 'selected'
+                    _temp = _temp + '<option value="' + \
+                            str(option['monlist']) + '" ' + sel + '>' + \
+                            str(option['monlist']) + '</option>'
+                    sel = ''
+                _temp = _temp + '</select></div>'
+                fieldwebsite.append(str(_temp))
+
+            if field['settings']['type'] == 'fenceselect':
+                _temp = '<div class="form-group"><label>' + str(
+                    field['name']) + '</label><br /><small class="form-text text-muted">' + str(
+                    field['settings']['description']) + '</small><select class="form-control" name="' + str(
+                    field['name']) + '" ' + lockvalue + ' ' + req + '>'
+                temp_mapping = {}
+                temp_mapping['fence'] = []
+                geofence_file_path = self._args.geofence_file_path
+                existing_fences = glob.glob(os.path.join(geofence_file_path, '*.txt'))
+                temp_mapping['fence'].append({'fence': None, 'realpath': None})
+                for geofence_temp in existing_fences:
+                    temp_mapping['fence'].append({'fence': os.path.basename(geofence_temp),
+                                                  'realpath': geofence_temp})
+
+                for option in temp_mapping['fence']:
+                    if edit:
+                        if field['name'] in oldvalues:
+                            if os.path.basename(str(oldvalues[field['name']])).lower() == \
+                                    os.path.basename(str(option['fence'])).lower():
+                                sel = 'selected'
+                        else:
+                            if not option['fence']:
+                                sel = 'selected'
+                    _temp = _temp + '<option value="' + \
+                            str(option['realpath']) + '" ' + sel + '>' + \
+                            os.path.splitext(str(option['fence']))[0] + '</option>'
+                    sel = ''
+                _temp = _temp + '</select></div>'
+                fieldwebsite.append(str(_temp))
+
             if field['settings']['type'] == 'poolselect':
                 _temp = '<div class="form-group"><label>' + str(
                     field['name']) + '</label><br /><small class="form-text text-muted">' + str(
@@ -607,7 +676,7 @@ class config(object):
                 '<button type="submit" class="btn btn-primary">Save</button></form>')
 
         return render_template('parser.html', editform=fieldwebsite, header=header, title="edit settings",
-                               walkernr=_walkernr, edit=edit, tabarea=tabarea, running_ocr=(self._args.only_ocr))
+                               walkernr=_walkernr, edit=edit, tabarea=tabarea)
 
     @auth_required
     def delsetting(self):
@@ -631,6 +700,8 @@ class config(object):
                 _checkfield = 'walkername'
             if 'devicepool' in entry:
                 _checkfield = 'devicepool'
+            if 'monlist' in entry:
+                _checkfield = 'monlist'
 
             if str(edit) == str(entry[_checkfield]):
                 del mapping[area][key]
@@ -667,6 +738,8 @@ class config(object):
                 mapping['walker'] = []
             if 'devicesettings' not in mapping:
                 mapping['devicesettings'] = []
+            if 'monivlist' not in mapping:
+                mapping['monivlist'] = []
 
         with open('madmin/static/vars/settings.json') as f:
             settings = json.load(f)
@@ -683,6 +756,8 @@ class config(object):
                     _checkfield = 'walkername'
                 if 'devicepool' in entry:
                     _checkfield = 'devicepool'
+                if 'monlist' in entry:
+                    _checkfield = 'monlist'
 
                 if str(edit) == str(entry[_checkfield]):
                     if str(block) == str("settings"):
@@ -757,6 +832,7 @@ class config(object):
             value = value.replace(' ', '_')
         return value
 
+    @logger.catch
     @auth_required
     def showsettings(self):
         tab_content = ''
@@ -767,6 +843,8 @@ class config(object):
                 mapping['walker'] = []
             if 'devicesettings' not in mapping:
                 mapping['devicesettings'] = []
+            if 'monivlist' not in mapping:
+                mapping['monivlist'] = []
 
         with open('madmin/static/vars/settings.json') as f:
             settings = json.load(f)
@@ -789,7 +867,7 @@ class config(object):
             _quick = settings[var].get('quickview', False)
             _quicksett = settings[var].get('quickview_settings', False)
 
-            for output in mapping[var]:
+            for output in sorted(mapping[var], key=cmp_to_key(self.sort_by_name_if_exists)):
                 quickadd, quickline = '', ''
                 mode = output.get('mode', _typearea)
                 if settings[var]['could_edit']:
@@ -862,7 +940,7 @@ class config(object):
                                settings=tab_content,
                                tabarea=tabarea,
                                title="Mapping Editor", responsive=str(self._args.madmin_noresponsive).lower(),
-                               running_ocr=self._args.only_ocr, autoreloadconfig=self._args.auto_reload_config)
+                               autoreloadconfig=self._args.auto_reload_config)
 
     @auth_required
     def addnew(self):
@@ -877,10 +955,10 @@ class config(object):
             line = line + '<h3><a href="config?type=' + str(output['name']) + '&area=' + str(
                 area) + '&block=fields">' + str(output['name']) + '</a></h3><h5>' + str(
                 output['description']) + '</h5><hr>'
-
-        return render_template('sel_type.html', line=line, title="Type selector", running_ocr=(self._args.only_ocr))
+        return render_template('sel_type.html', line=line, title="Type selector")
 
     @auth_required
+    @logger.catch
     def showmonsidpicker(self):
         edit = request.args.get('edit')
         type = request.args.get('type')
@@ -901,9 +979,9 @@ class config(object):
 
         this_area = None
         this_area_index = -1
-        for t_area in mapping["areas"]:
+        for t_area in mapping["monivlist"]:
             this_area_index += 1
-            if t_area["name"] == edit and t_area["mode"] == type:
+            if t_area['monlist'] == edit:
                 this_area = t_area
                 break
 
@@ -914,28 +992,24 @@ class config(object):
 
         title = "Mons ID Picker for " + edit
         header = "Editing area " + edit + " (" + type + ")"
-        backurl = "config?type=" + type + "&area=areas&block=settings&edit=" + edit
+        backurl = "config?type=" + type + "&area=monivlist&block=fields&edit=" + edit
 
-        if "settings" not in this_area:
-            return render_template('showmonsidpicker.html',
-                                   error_msg="No settings key found for area " + edit + "(" + type + "). Configure it first.",
-                                   header=header, title=title)
 
         if request.method == 'POST':
             new_mons_list = request.form.get('current_mons_list')
             if not new_mons_list:
                 return redirect("/showsettings", code=302)
-
-            mapping["areas"][this_area_index]["settings"]["mon_ids_iv"] = ast.literal_eval(new_mons_list)
+            # force single 'string' value to tuple. Not pretty, but it works.
+            mapping["monivlist"][this_area_index]["mon_ids_iv"] = ast.literal_eval(new_mons_list+",")
 
             with open(self._args.mappings, 'w') as outfile:
                 json.dump(mapping, outfile, indent=4, sort_keys=True)
             return redirect(backurl, code=302)
 
-        if "mon_ids_iv" not in this_area["settings"]:
+        if "mon_ids_iv" not in this_area:
             current_mons = []
         else:
-            current_mons = this_area["settings"]["mon_ids_iv"]
+            current_mons = this_area["mon_ids_iv"]
 
         mondata = open_json_file('pokemon')
 
@@ -972,8 +1046,27 @@ class config(object):
         if not self._args.auto_reload_config:
             self._mapping_mananger.update()
         return redirect(getBasePath(request) + "/showsettings", code=302)
+    
+    def cmp_by_key(self, a, b, key):
+           # RIP python2 cmp()
+           return (a[key].lower() > b[key].lower()) - (a[key].lower() < b[key].lower())
 
-
-
-
-
+    def sort_by_name_if_exists(self, a, b):
+        # Sort areas by "name"
+        if "name" in a and "name" in b:
+            return self.cmp_by_key(a, b, "name")
+        # Devices by origin
+        elif "origin" in a and "origin" in b:
+            return self.cmp_by_key(a, b, "origin")
+        # Walkers by walkername
+        elif "walkername" in a and "walkername" in b:
+            return self.cmp_by_key(a, b, "walkername")
+        # Global mon list by monlist
+        elif "monlist" in a and "monlist" in b:
+            return self.cmp_by_key(a, b, "monlist")
+        # auth list by username
+        elif "username" in a and "username" in b:
+            return self.cmp_by_key(a, b, "username")
+        # Leave rest unsorted
+        else:
+            return 0

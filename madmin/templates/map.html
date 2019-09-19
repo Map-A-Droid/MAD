@@ -5,6 +5,7 @@
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
 <link rel="stylesheet" href="static/style/madmin.css?1561125653674" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.2/dist/leaflet.draw.css" />
 {% endblock %}
 
 {% block scripts %}
@@ -19,6 +20,7 @@ var setlng = {{ setlng }};
 <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/js/leaflet-sidebar.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
 <script src="static/js/madmin.js"></script>
 {% endblock %}
 
@@ -162,6 +164,11 @@ var setlng = {{ setlng }};
         </div>
 
         <div class="modal-body">
+          <div class="form-group">
+            <label for="injectLocation">Selected location</label>
+            <input type="text" id="injectLocation" class="form-control">
+          </div>
+
           <div class="form-group">
             <label for="injectWorker">Would you like to send a scanner to update this location?</label>
             <select id="injectionWorker" class="form-control">

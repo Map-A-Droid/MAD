@@ -120,6 +120,9 @@
                 detection = result.detection
                 detection_empty = result.detection_empty
                 location_info = result.location_info
+                shiny = result.shiny
+
+
 
                 setGrid('#show-data-good-pokemon', good_spawns, [
                     { data: 'id', title: 'Mon-ID' },
@@ -128,10 +131,27 @@
                     { data: 'iv', title: 'IV' },
                     { data: 'lvl', title: 'Level' },
                     { data: 'cp', title: 'CP' },
-                    { data: 'periode', title: 'Scantime' },
+                    { data: 'periode', title: 'Scantime' }
                 ], [
                 {
                     "targets": [2],
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " width=100>";
+                    }
+                }
+                ]);
+
+                setGrid('#show-data-shiny', shiny, [
+                    { data: 'sum', title: 'Sum of all' },
+                    { data: 'shiny', title: 'Shiny' },
+                    { data: 'name', title: 'Name' },
+                    { data: null, title: 'Pic' },
+                    { data: 'ratio', title: 'Ratio' },
+                    { data: 'worker', title: 'Worker' }
+
+                ], [
+                {
+                    "targets": [3],
                     "render": function (data, type, row) {
                         return "<img src=" + row.img + " width=100>";
                     }
@@ -491,4 +511,7 @@
 <br>
 <h2>Recent Perfect Pokemon</h2>
 <table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
+<br>
+<h2>Shiny Stats</h2>
+<table id="show-data-shiny" class="table" style="width:100%;"></table>
 {% endblock %}

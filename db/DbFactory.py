@@ -2,7 +2,6 @@ import sys
 from multiprocessing.managers import SyncManager
 
 from db.dbWrapperBase import DbWrapperBase
-from db.monocleWrapper import MonocleWrapper, MonocleWrapperManager
 from db.rmWrapper import RmWrapper, RmWrapperManager
 from utils.logging import logger
 
@@ -16,14 +15,12 @@ class DbFactory:
             rm_wrapper_manager.start()
             rm_wrapper = rm_wrapper_manager.RmWrapper(args)
             return rm_wrapper, rm_wrapper_manager
-            # return RmWrapper(args)
         elif args.db_method == "monocle":
-            MonocleWrapperManager.register('MonocleWrapper', MonocleWrapper)
-            monocle_wrapper_manager = MonocleWrapperManager()
-            monocle_wrapper_manager.start()
-            monocle_wrapper = monocle_wrapper_manager.MonocleWrapper(args)
-            return monocle_wrapper, monocle_wrapper_manager
-            # return MonocleWrapper(args)
+            logger.error(
+                "MAD has dropped Monocle support. Please consider checking out the "
+                "'migrate_to_rocketmap.sh' script in the scripts folder."
+            )
+            sys.exit(1)
         else:
             logger.error("Invalid db_method in config. Exiting")
             sys.exit(1)
