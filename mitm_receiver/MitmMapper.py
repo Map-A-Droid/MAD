@@ -26,6 +26,8 @@ class MitmMapper(object):
         self.__mapping_mutex = Lock()
         self.__mapping_manager: MappingManager = mapping_manager
         self.__injected = {}
+        self.__last_cellsid = {}
+        self.__last_possibly_moved = {}
         self.__application_args = args
         self.__db_wrapper: DbWrapperBase = db_wrapper
         self.__playerstats_db_update_stop: Event = Event()
@@ -180,3 +182,23 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).gen_player_stats(inventory_proto)
 
+    def submit_gmo_for_location(self, origin, payload):
+        logger.debug4("submit_gmo_for_location of {}", origin)
+        cells = payload.get("cells", None)
+        
+        if cells is None:
+            return
+
+        current_cells_id = sorted(list(map(lambda x : x['id'], cells)))
+        if origin in self.__last_cellsid:
+            last_cells_id = self.__last_cellsid[origin]
+            self.__last_cellsid[origin] = current_cells_id
+            if last_cells_id != current_cells_id:
+                self.__last_possibly_moved[origin] = time.time()
+        else:
+            self.__last_cellsid[origin] = current_cells_id
+            self.__last_possibly_moved[origin] = time.time()
+        logger.debug4("Done submit_gmo_for_location of {} with {}", origin, current_cells_id)
+
+    def get_last_timestamp_possible_moved(self, origin):
+        return self.__last_possibly_moved.get(origin, None)
