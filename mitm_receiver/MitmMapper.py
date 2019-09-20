@@ -182,28 +182,23 @@ class MitmMapper(object):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).gen_player_stats(inventory_proto)
 
-     def submit_gmo_for_location(self, origin, payload):
-         logger.debug4("submit_gmo_for_location of {}", origin)
-         cells = payload.get("cells", None)
-         # can this even happen?
-         if cells is None:
-             return
- 
-         current_cells_id = sorted(list(map(lambda x : x['id'], cells)))
-         if origin in self.__last_cellsid:
-              last_cells_id = self.__last_cellsid[origin]
-              self.__last_cellsid[origin] = current_cells_id
-              if last_cells_id != current_cells_id:
-                  #logger.debug4("Worker {} has moved from {} to {}", origin, last_cells_id, current_cells_id)
-                  self.__last_possibly_moved[origin] = time.time()
-                  # update timestamp
-              #else:
-                  #logger.debug4("Worker {} has NOT moved from {} to {}", origin, last_cells_id, current_cells_id)
-         else:
-             # just started, nothing to do here
-             self.__last_cellsid[origin] = current_cells_id
-             self.__last_possibly_moved[origin] = time.time()
-         logger.debug4("Done submit_gmo_for_location of {} with {}", origin, current_cells_id)
- 
-     def get_last_timestamp_possible_moved(self, origin):
-         return self.__last_possibly_moved.get(origin, None)
+    def submit_gmo_for_location(self, origin, payload):
+        logger.debug4("submit_gmo_for_location of {}", origin)
+        cells = payload.get("cells", None)
+        
+        if cells is None:
+            return
+
+        current_cells_id = sorted(list(map(lambda x : x['id'], cells)))
+        if origin in self.__last_cellsid:
+            last_cells_id = self.__last_cellsid[origin]
+            self.__last_cellsid[origin] = current_cells_id
+            if last_cells_id != current_cells_id:
+                self.__last_possibly_moved[origin] = time.time()
+        else:
+            self.__last_cellsid[origin] = current_cells_id
+            self.__last_possibly_moved[origin] = time.time()
+        logger.debug4("Done submit_gmo_for_location of {} with {}", origin, current_cells_id)
+
+    def get_last_timestamp_possible_moved(self, origin):
+        return self.__last_possibly_moved.get(origin, None)
