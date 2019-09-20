@@ -1329,3 +1329,49 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query)
 
         return res
+
+    def statistics_get_shiny_stats_v2(self, timestamp_from: int, timestamp_to: int):
+        logger.debug('Fetching shiny_stats_v2 pokemon stats from db')
+        logger.debug('timestamp_from: {}', timestamp_from)
+        logger.debug('timestamp_to: {}', timestamp_to)
+        data = ()
+
+        query = (
+            "SELECT pokemon.pokemon_id, pokemon.form, pokemon.latitude, pokemon.longitude, pokemon.gender, pokemon.costume, "
+            "tr.count, tr.timestamp_scan, tr.worker, pokemon.encounter_id FROM pokemon "
+            "JOIN trs_stats_detect_raw tr on CAST(tr.type_id as unsigned int)=pokemon.encounter_id "
+            "WHERE tr.is_shiny=1 "
+        )
+
+        if timestamp_from:
+            logger.debug('timestamp_from set: {}', timestamp_from)
+            query = query + "AND UNIX_TIMESTAMP(last_modified) > %s "
+            data = data + (timestamp_from,)
+        if timestamp_to:
+            logger.debug('timestamp_to set: {}', timestamp_to)
+            query = query + "AND UNIX_TIMESTAMP(last_modified) < %s "
+            data = data + (timestamp_to,)
+        query = query + " GROUP BY pokemon.encounter_id ORDER BY tr.timestamp_scan DESC"
+        logger.debug('Final query: {}', query)
+        logger.debug('data: {}', data)
+        res = self.execute(query, data)
+        return res
+
+    def statistics_get_shiny_stats_global_v2(self, mon_id_list: set, timestamp_from: int, timestamp_to: int):
+        logger.debug('Fetching shiny_stats_global_v2')
+        data = ()
+
+        query = (
+                "SELECT count(*), pokemon_id, form, gender, costume FROM pokemon WHERE individual_attack IS NOT NULL "
+        )
+        query = query + "AND pokemon_id IN(" + ",".join(map(str, mon_id_list)) + ") "
+        if timestamp_from:
+            query = query + " AND UNIX_TIMESTAMP(last_modified) > %s "
+            data = data + (timestamp_from,)
+        if timestamp_to:
+            query = query + " AND UNIX_TIMESTAMP(last_modified) < %s "
+            data = data + (timestamp_to,)
+        query = query + "GROUP BY pokemon_id, form"
+        logger.debug('Final query for shiny_stats_global_v2: {}', query)
+        res = self.execute(query, data)
+        return res
