@@ -145,8 +145,8 @@ class deviceUpdater(object):
                 if id_ in self._log:
                     self._current_job_id = id_
 
-                    if 'processingdate' in self._log:
-                        del self._log['processingdate']
+                    if 'processingdate' in self._log[id_]:
+                        del self._log[id_]['processingdate']
 
                     logger.info(
                         "Job for {} (File/Job: {}) started (ID: {})".format(str(origin), str(file_), str(id_)))

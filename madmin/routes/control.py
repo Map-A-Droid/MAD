@@ -69,6 +69,7 @@ class control(object):
 
     @auth_required
     @nocache
+    @logger.catch()
     def get_phonescreens(self):
         if not os.path.exists(os.path.join(self._args.temp_path, "madmin")):
             os.makedirs(os.path.join(self._args.temp_path, "madmin"))
@@ -134,8 +135,7 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol",
-                               files=uploaded_files(self._datetimeformat))
+        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):
@@ -238,7 +238,8 @@ class control(object):
 
         adb = devicemappings.get(origin, {}).get('adb', False)
         self._logger.info('MADmin: Restart Pogo ({})', str(origin))
-        if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
+        if useadb == 'True' and \
+                self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
             self._logger.info('MADMin: ADB shell force-stop game command successfully ({})', str(origin))
             if restart:
                 time.sleep(1)
