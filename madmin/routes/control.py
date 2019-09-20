@@ -396,7 +396,7 @@ class control(object):
 
     @auth_required
     def get_uploaded_files(self):
-        return jsonify(uploaded_files(self._datetimeformat))
+        return jsonify(uploaded_files(self._datetimeformat, self._device_updater.return_commands()))
 
     @auth_required
     def uploaded_files(self):

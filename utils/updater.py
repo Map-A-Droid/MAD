@@ -1,5 +1,6 @@
 import json
 import os
+import glob
 import time
 from enum import Enum
 from multiprocessing import  Queue
@@ -36,10 +37,25 @@ class deviceUpdater(object):
         t_updater.start()
 
     def init_jobs(self):
-        self._commands =  {}
+        self._commands = {}
         if os.path.exists('commands.json'):
-            with open('commands.json') as logfile:
-                self._commands = json.load(logfile)
+            with open('commands.json') as cmdfile:
+                self._commands = json.loads(cmdfile.read())
+
+        # load personal commands
+
+        for file in glob.glob(os.path.join("personal_commands", "*.json")):
+            with open(file) as personal_command:
+                peronal_cmd = json.loads(personal_command.read())
+            for command in peronal_cmd:
+                if command in self._commands:
+                    logger.error("Command {} already exist - skipping".format(str(command)))
+                else:
+                    logger.info('Loading personal command: {}'.format(command))
+                    self._commands[command] = peronal_cmd[command]
+
+    def return_commands(self):
+        return self._commands
 
     @logger.catch()
     def restart_job(self, id_: int):
@@ -59,7 +75,7 @@ class deviceUpdater(object):
                 self._log[job]['status'] = 'canceled'
                 self.update_status_log()
 
-    logger.catch()
+    @logger.catch()
     def process_update_queue(self):
         logger.info("Starting Device Job processor")
         while True:

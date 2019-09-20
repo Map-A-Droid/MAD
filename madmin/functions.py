@@ -36,7 +36,7 @@ def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 
-def uploaded_files(datetimeformat):
+def uploaded_files(datetimeformat, jobs):
     files = []
     for file in glob.glob(str(mapping_args.upload_path) + "/*.apk"):
         creationdate = datetime.datetime.fromtimestamp(
@@ -44,12 +44,8 @@ def uploaded_files(datetimeformat):
         fileJson = ({'jobname': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
         files.append(fileJson)
 
-    if os.path.exists('commands.json'):
-        with open('commands.json') as logfile:
-            commands = json.load(logfile)
-
-        for command in commands:
-            files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})
+    for command in jobs:
+        files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})
 
     processJson = ({'jobname': 'Reboot-Phone', 'creation': '', 'type': 'jobType.REBOOT'})
     files.append(processJson)
@@ -195,6 +191,7 @@ def generate_coords_from_geofence(mapping_manager, fence):
 
     fence_string.append(fence_string[0])
     return ",".join(fence_string)
+
 
 def get_quest_areas(mapping_manager):
     stop_fences = []
