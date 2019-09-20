@@ -6,81 +6,211 @@
 
 {% block scripts %}
 {{ super() }}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+
 <script>
-$(document).ready(function () {
-    $("#submit").click(function() {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
-        save_data = {
-            'mon_ids_iv': [],
-            'monlist': $("#monlist").val()
-        };
-        $.each($(".added-pokemon"), function() {
-            mon_id = $(this).data('monid');
-            if(!save_data['mon_ids_iv'].includes(mon_id)) {
-                save_data['mon_ids_iv'].push(mon_id);
-            }
-        });
-        $.ajax({
-            url : "{{ uri }}",
-            data : JSON.stringify(save_data),
-            type : '{{ method }}',
-            contentType : 'application/json',
-            success: function(data, status, xhr) {
-              if(xhr.status < 400)
-                window.location.replace('{{ redirect }}');
-            },
-            error: function(data, status, xhr) {
-                $("label[for]").removeClass('btn-danger');
-                if(data['responseJSON'] != undefined) {
-                    $.each(data['responseJSON']['missing'], function() {
-                        var elem = $("label[for="+ this +"]");
-                        elem[0].innerHTML = elem.attr('for') +' - Required Field';
-                        elem.addClass('btn-danger');
-                    });
-                    $.each(data['responseJSON']['invalid'], function() {
-                        var field = this.split(/:(.+)/)[0];
-                        var expected = this.split(/:(.+)/)[1];
-                        var elem = $("label[for="+ field +"]");
-                        elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
-                        elem.addClass('btn-danger');
-                    });
-                    $.unblockUI();
-                    alert('One or more fields failed validation');
-                } else {
-                    $.unblockUI();
-                    alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+    $(document).ready(function () {
+        $("#submit").click(function() {
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+            save_data = {
+                'mon_ids_iv': get_mon_list(),
+                'monlist': $("#monlist").val()
+            };
+            $.ajax({
+                url : "{{ uri }}",
+                data : JSON.stringify(save_data),
+                type : '{{ method }}',
+                contentType : 'application/json',
+                success: function(data, status, xhr) {
+                  if(xhr.status < 400)
+                    window.location.replace('{{ redirect }}');
+                },
+                error: function(data, status, xhr) {
+                    $("label[for]").removeClass('btn-danger');
+                    if(data['responseJSON'] != undefined) {
+                        $.each(data['responseJSON']['missing'], function() {
+                            var elem = $("label[for="+ this +"]");
+                            elem[0].innerHTML = elem.attr('for') +' - Required Field';
+                            elem.addClass('btn-danger');
+                        });
+                        $.each(data['responseJSON']['invalid'], function() {
+                            var field = this.split(/:(.+)/)[0];
+                            var expected = this.split(/:(.+)/)[1];
+                            var elem = $("label[for="+ field +"]");
+                            elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
+                            elem.addClass('btn-danger');
+                        });
+                        $.unblockUI();
+                        alert('One or more fields failed validation');
+                    } else {
+                        $.unblockUI();
+                        alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                    }
                 }
-            }
+            });
         });
+        $(document).on('click', '.delete', function() {
+            $(this).parent().parent().remove();
+        });
+
+        var fixHelper = function(e, ui) {
+            ui.children().each(function() {
+                $(this).width($(this).width());
+            });
+            return ui;
+        };
+
+        $( "tbody" ).sortable({
+            helper: fixHelper,
+            handle: '.handle',
+            delay: 150,
+        }).disableSelection();
     });
-    $(".delete").click(function() {
-        $(this).parent().remove();
+
+    $(".section-switcher").click(function() {
+        $("#pokemon-search").val('');
+        $("#pokemon-search").trigger('keyup');
+        toggle_visibility();
     });
-});
+
+    $("#pokemon-search").keyup(function() {
+        var val = $(this).val();
+        $("#pokemon-search-output").empty();
+        if(val.length >= 3) {
+            $.ajax({
+                url : "/settings/monsearch",
+                data : jQuery.param({'search': val, 'monlist': '{{ uri }}'}),
+                type : 'GET',
+                contentType : 'application/json',
+                success: function(data, status, xhr) {
+                    $.each(data, function() {
+                        var elem = document.createElement('li');
+                        elem.className = 'add-pokemon';
+                        elem.setAttribute('data-identifier', this.mon_id);
+                        elem.innerHTML = this.mon_name;
+                        $("#pokemon-search-output").append(elem);
+                    });
+                    $(".add-pokemon").click(function() {
+                        if(!get_mon_list().includes($(this).data('identifier'))) {
+                            elem = generate_row(this);
+                            $("#selected-pokemon").append(elem);
+                            toggle_visibility();
+                        } else {
+                            alert('Pokemon already added to list!');
+                        }
+                    })
+                }
+            });
+        }
+    });
+
+    function generate_row(elem) {
+        var mon_id = $(elem).data('identifier');
+        var mon_name = elem.innerHTML;
+        var row = document.createElement('tr');
+        row.setAttribute('data-monid', mon_id);
+        // Rows
+        var td_sortable = document.createElement('td');
+        var img = document.createElement('img');
+        img.src='static/sort.png';
+        img.className = 'handle ui-sortable-handle';
+        td_sortable.appendChild(img);
+
+        var td_monid = document.createElement('td');
+        var bold = document.createElement('b');
+        bold.innerHTML = '#'+ mon_id;
+        td_monid.appendChild(bold);
+
+        var td_monname = document.createElement('td');
+        bold = document.createElement('b');
+        bold.innerHTML = mon_name;
+        td_monname.appendChild(bold);
+
+        var td_remove = document.createElement('td');
+        var rem = document.createElement('button')
+        rem.setAttribute('data-identifier', mon_id);
+        rem.setAttribute('type', 'button');
+        rem.className = 'delete btn btn-danger btn-sm';
+        var fa = document.createElement('i');
+        fa.className = 'fas fa-trash-alt';
+        rem.appendChild(fa);
+        td_remove.appendChild(rem);
+
+        row.appendChild(td_sortable);
+        row.appendChild(td_monid);
+        row.appendChild(td_monname);
+        row.appendChild(td_remove);
+        return row;
+    }
+    function get_mon_list() {
+        pokemon_list = [];
+        $.each($("tr[data-monid]"), function() {
+            mon_id = $(this).data('monid');
+            pokemon_list.push(mon_id);
+        });
+        return pokemon_list;
+    }
+
+    function toggle_visibility() {
+        if($("#pokemon-order").is(':visible') == true) {
+            $("#pokemon-order").hide();
+            $("#pokemon-finder").show();
+        } else {
+            $("#pokemon-order").show();
+            $("#pokemon-finder").hide();
+        }
+    }
 </script>
+<style>
+    #pokemon-finder {
+        display: none;
+    }
+</style>
 {% endblock %}
 
 {% block content %}
 {{ super() }}
-
-
 <h1 class="display-4">{{ element.monlist }}</h1>
-
 <div class="row">
-  <div class="col-sm">
-    <div class="form-group">
-      <label for="monlist">monlist</label>
-      <input type="input" class="form-control" id="monlist" name="monlist" value="{{ element.monlist }}">
-      <small class="form-text text-muted">monlist</small>
-    </div>
-    <div class="form-group">
-      <label for="mon_ids_iv">Selected Pokemon</label>
-      {% for mon in current_mons_list %}
-        <small class="form-text text-muted added-pokemon" data-monid='{{ mon.mon_id }}'><button data-identifier='{{ area_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>{{ mon.mon_name }}</small>
-      {% endfor %}
+    <div class="col-sm">
+        <div class="form-group">
+          <label for="monlist">monlist</label>
+          <input type="input" class="form-control" id="monlist" name="monlist" value="{{ element.monlist }}">
+          <small class="form-text text-muted">monlist</small>
+        </div>
+        <div class="form-group" id='pokemon-order'>
+            <label for="setup">setup</label>
+            <small class="form-text text-muted">Pokemon Order</small>
+            <table class="table">
+                <tbody>
+                    <tr>
+                        <th></th>
+                        <th>Mon ID</th>
+                        <th>Mon Name</th>
+                        <th><button type="button" class="btn btn-success section-switcher" id="pokemon-picker"><i class="fas fa-plus"></i></button></th>
+                    </tr>
+                </tbody>
+                <tbody id='selected-pokemon' class="row_position ui-sortable">
+                    {% for mon in current_mons_list %}
+                        <tr data-monid='{{ mon.mon_id }}'>
+                            <td><img src="static/sort.png" class="handle ui-sortable-handle"></td>
+                            <td><b>#{{ mon.mon_id }}</b></td>
+                            <td><b>{{ mon.mon_name }}</b></td>
+                            <td><button data-identifier='{{ mon.mon_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button></button></td>
+                        </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="form-group" id='pokemon-finder'>
+            <button type="button" class="btn btn-info section-switcher" id="pokemon-selector">Switch to Order</button><br>
+            Pokemon Search<input type='text' id='pokemon-search'>
+            <ul id='pokemon-search-output'>
+            </ul>
+        </div>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
-  </div>
 </div>
 {% endblock %}
-
