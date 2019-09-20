@@ -2,20 +2,25 @@ import datetime
 import time
 import os
 import cv2
-from flask import (render_template, request, redirect)
+import glob
+from flask import (render_template, request, redirect, flash, jsonify)
+from werkzeug.utils import secure_filename
 
 from db.dbWrapperBase import DbWrapperBase
-from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache)
+from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache, allowed_file,
+                              uploaded_files)
 from utils.MappingManager import MappingManager
-from utils.functions import (creation_date, generate_phones,
-                             image_resize)
+from utils.functions import (creation_date, generate_phones, image_resize)
+from utils.logging import logger
 
 from utils.adb import ADBConnect
 from utils.madGlobals import ScreenshotType
 
+from utils.updater import jobType
 
 class control(object):
-    def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app):
+    def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app,
+                 deviceUpdater):
         self._db: DbWrapperBase = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
@@ -23,6 +28,7 @@ class control(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._adb_connect = ADBConnect(self._args)
+        self._device_updater = deviceUpdater
 
         self._mapping_manager: MappingManager = mapping_manager
 
@@ -43,10 +49,23 @@ class control(object):
             ("/clear_game_data", self.clear_game_data),
             ("/send_gps", self.send_gps),
             ("/send_text", self.send_text),
-            ("/send_command", self.send_command)
+            ("/upload", self.upload),
+            ("/send_command", self.send_command),
+            ("/get_uploaded_files", self.get_uploaded_files),
+            ("/uploaded_files", self.uploaded_files),
+            ("/delete_file", self.delete_file),
+            ("/install_file", self.install_file),
+            ("/get_install_log", self.get_install_log),
+            ("/delete_log_entry", self.delete_log_entry),
+            ("/install_status", self.install_status),
+            ("/install_file_all_devices", self.install_file_all_devices),
+            ("/restart_job", self.restart_job),
+            ("/delete_log", self.delete_log),
+            ("/get_all_workers", self.get_all_workers),
+            ("/job_for_worker", self.job_for_worker)
         ]
         for route, view_func in routes:
-            self._app.route(route)(view_func)
+            self._app.route(route, methods=['GET', 'POST'])(view_func)
 
     @auth_required
     @nocache
@@ -62,6 +81,8 @@ class control(object):
             phones = []
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
+        # Sort devices by name.
+        phones = sorted(phones)
         for phonename in phones:
             ws_connected_phones.append(phonename)
             add_text = ""
@@ -114,7 +135,7 @@ class control(object):
                             )
 
         return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol",
-                               running_ocr=(self._args.only_ocr))
+                               files=uploaded_files(self._datetimeformat))
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):
@@ -212,17 +233,32 @@ class control(object):
     def quit_pogo(self):
         origin = request.args.get('origin')
         useadb = request.args.get('adb')
+        restart = request.args.get('restart')
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
         self._logger.info('MADmin: Restart Pogo ({})', str(origin))
         if useadb == 'True' and self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
-            self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
+            self._logger.info('MADMin: ADB shell force-stop game command successfully ({})', str(origin))
+            if restart:
+                time.sleep(1)
+                started = self._adb_connect.send_shell_command(adb, origin, "am start com.nianticlabs.pokemongo")
+                if started:
+                    self._logger.info('MADMin: ADB shell start game command successfully ({})', str(origin))
+                else:
+                    self._logger.error('MADMin: ADB shell start game command failed ({})', str(origin))
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.stopApp("com.nianticlabs.pokemongo")
-            self._logger.info('MADMin: WS command successfully ({})', str(origin))
+            if restart:
+                self._logger.info('MADMin: trying to restart game on {}', str(origin))
+                temp_comm.restartApp("com.nianticlabs.pokemongo")
 
+                time.sleep(1)
+            else:
+                self._logger.info('MADMin: trying to stop game on {}', str(origin))
+                temp_comm.stopApp("com.nianticlabs.pokemongo")
+
+            self._logger.info('MADMin: WS command successfully ({})', str(origin))
         time.sleep(2)
         return self.take_screenshot(origin, useadb)
 
@@ -334,3 +370,164 @@ class control(object):
 
         time.sleep(2)
         return self.take_screenshot(origin, useadb)
+
+    @auth_required
+    @logger.catch
+    def upload(self):
+        if request.method == 'POST':
+            # check if the post request has the file part
+            if 'file' not in request.files:
+                flash('No file part')
+                return redirect(request.url)
+            file = request.files['file']
+            if file.filename == '':
+                flash('No file selected for uploading')
+                return redirect(request.url)
+            if file and allowed_file(file.filename):
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(self._args.upload_path, filename))
+                flash('File could be uploaded successfully')
+                return redirect('/uploaded_files')
+            else:
+                flash('Allowed file type is apk only!')
+                return redirect(getBasePath(request) + request.url)
+
+        return render_template('upload.html', header="File Upload", title="File Upload")
+
+    @auth_required
+    def get_uploaded_files(self):
+        return jsonify(uploaded_files(self._datetimeformat))
+
+    @auth_required
+    def uploaded_files(self):
+        origin = request.args.get('origin', False)
+        useadb = request.args.get('adb', False)
+        return render_template('uploaded_files.html',
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Uploaded Files", origin=origin, adb=useadb)
+
+    @auth_required
+    def delete_file(self):
+        filename = request.args.get('filename')
+        if os.path.exists(os.path.join(self._args.upload_path, filename)):
+            os.remove(os.path.join(self._args.upload_path, filename))
+            flash('File could be deleted successfully')
+        return redirect(getBasePath(request) + '/uploaded_files')
+
+    @auth_required
+    @logger.catch
+    def install_file(self):
+
+        jobname = request.args.get('jobname')
+        origin = request.args.get('origin')
+        useadb = request.args.get('adb', False)
+        type_ = request.args.get('type', None)
+
+        devicemappings = self._mapping_manager.get_all_devicemappings()
+        adb = devicemappings.get(origin, {}).get('adb', False)
+
+        if os.path.exists(os.path.join(self._args.upload_path, jobname)):
+            if useadb == 'True':
+                if self._adb_connect.push_file(adb, origin, os.path.join(self._args.upload_path, jobname)) and  \
+                    self._adb_connect.send_shell_command(
+                        adb, origin, "pm install -r /sdcard/Download/" + str(jobname)):
+                    flash('File could be installed successfully')
+                else:
+                    flash('File could not be installed successfully :(')
+            else:
+                self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
+                                             type=type_)
+                flash('File successfully queued --> See Job Status')
+
+        elif type_ != jobType.INSTALLATION:
+            self._device_updater.preadd_job(origin=origin, job=jobname, id_=int(time.time()),
+                                         type=type_)
+            flash('Job successfully queued --> See Job Status')
+
+        return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
+
+    @auth_required
+    @logger.catch
+    def get_install_log(self):
+        return_log = []
+        log = self._device_updater.get_log()
+        for entry in log:
+            return_log.append(log[entry])
+
+        return jsonify(return_log)
+
+    @auth_required
+    @logger.catch()
+    def delete_log_entry(self):
+        id_ = request.args.get('id')
+        jobtype = request.args.get('type')
+        if self._device_updater.delete_log_id(id_):
+            flash('Job could be deleted successfully')
+        else:
+            flash('Job could not be deleted successfully')
+        return redirect(getBasePath(request) + '/install_status')
+
+    @auth_required
+    @logger.catch
+    def install_status(self):
+        return render_template('installation_status.html',
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Installation Status")
+
+    @auth_required
+    @logger.catch()
+    def install_file_all_devices(self):
+        jobname = request.args.get('jobname', None)
+        type_ = request.args.get('type', None)
+        if jobname is None or type_ is None:
+            flash('No File or Type selected')
+            return redirect(getBasePath(request) + '/install_status')
+
+        devices = self._mapping_manager.get_all_devices()
+        for device in devices:
+            self._device_updater.preadd_job(origin=device, job=jobname, id_=int(time.time()),
+                                            type=type_)
+            time.sleep(1)
+
+        flash('Job successfully queued')
+        return redirect(getBasePath(request) + '/install_status')
+
+    @auth_required
+    @logger.catch()
+    def restart_job(self):
+        id: int = request.args.get('id', None)
+        if id is not None:
+            self._device_updater.restart_job(id)
+            flash('Job requeued')
+            return redirect(getBasePath(request) + '/install_status')
+
+        flash('unknown id - restart failed')
+        return redirect(getBasePath(request) + '/install_status')
+
+    @auth_required
+    @logger.catch()
+    def delete_log(self):
+        self._device_updater.delete_log()
+        return redirect(getBasePath(request) + '/install_status')
+
+    @auth_required
+    def get_all_workers(self):
+        devices = self._mapping_manager.get_all_devices()
+        devicesreturn = []
+        for device in devices:
+            devicesreturn.append({'worker': device})
+
+        return jsonify(devicesreturn)
+
+    @auth_required
+    def job_for_worker(self):
+        jobname = request.args.get('jobname', None)
+        type_ = request.args.get('type', None)
+        devices = request.args.getlist('device[]')
+        for device in devices:
+            self._device_updater.preadd_job(origin=device, job=jobname, id_=int(time.time()),
+                                            type=type_)
+            time.sleep(1)
+
+        flash('Job successfully queued')
+        return redirect(getBasePath(request) + '/install_status')

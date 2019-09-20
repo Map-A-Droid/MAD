@@ -29,6 +29,7 @@ class ScreenType(Enum):
     MARKETING = 12
     CONSENT = 13
     SN = 14
+    UPDATE = 15
     QUEST = 20
     ERROR = 100
     CLOSE = 500
@@ -60,6 +61,8 @@ class WordToScreenMatching(object):
         detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data')
         detect_SN: list = ('kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
                            'logiciel')
+        detect_Forceupdate: list = ('continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
+                                    'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer')
 
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
@@ -71,6 +74,7 @@ class WordToScreenMatching(object):
         self._ScreenType[12] = detect_Marketing
         self._ScreenType[14] = detect_SN
         self._ScreenType[7] = detect_WrongPassword
+        self._ScreenType[15] = detect_Forceupdate
         self._globaldict: dict = []
         self._ratio: float = 0.0
 
@@ -171,7 +175,7 @@ class WordToScreenMatching(object):
 
         return np.asarray(sort_lines, dtype=np.int32)
 
-    def matchScreen(self):
+    def matchScreen(self, quickcheck = False):
         pogoTopmost = self._communicator.isPogoTopmost()
         screenpath = self.get_screenshot_path()
         topmostapp = self._communicator.topmostApp()
@@ -190,8 +194,8 @@ class WordToScreenMatching(object):
             return ScreenType.CLOSE
         elif self._nextscreen != ScreenType.UNDEFINED:
             returntype = ScreenType(self._nextscreen)
-        elif not self.get_devicesettings_value('screendetection', False):
-            logger.info('No more screen detection - disabled...')
+        elif not self.get_devicesettings_value('screendetection', False) or quickcheck:
+            logger.info('No more screen detection - disabled or quickcheck...')
             return ScreenType.DISABLED
         else:
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
@@ -209,7 +213,12 @@ class WordToScreenMatching(object):
                 return ScreenType.ERROR
 
             self._height, self._width, _ = frame_org.shape
-            frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
+            frame_color = frame_org
+            diff: int = 1
+            if self._width < 1080:
+                logger.info('Resize screen ...')
+                frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
+                diff = 2
             frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
             self._ratio = self._height / self._width
             self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
@@ -255,6 +264,10 @@ class WordToScreenMatching(object):
             self._nextscreen = ScreenType.UNDEFINED
             return ScreenType.CONSENT
 
+        elif ScreenType(returntype) == ScreenType.UPDATE:
+            self._nextscreen = ScreenType.UNDEFINED
+            return ScreenType.UPDATE
+
         elif ScreenType(returntype) == ScreenType.SN:
             self._nextscreen = ScreenType.UNDEFINED
             return ScreenType.SN
@@ -271,7 +284,7 @@ class WordToScreenMatching(object):
                 if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_text.split(",")):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
-                    click_x, click_y = (x + w / 2) / 2, (y + h / 2) / 2
+                    click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(2)
@@ -310,17 +323,17 @@ class WordToScreenMatching(object):
             temp_dict: dict = {}
             n_boxes = len(self._globaldict['level'])
             for i in range(n_boxes):
-                if 'Facebook' in (self._globaldict['text'][i]): temp_dict['Facebook'] = self._globaldict['top'][i] / 2
-                if 'CLUB' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / 2
+                if 'Facebook' in (self._globaldict['text'][i]): temp_dict['Facebook'] = self._globaldict['top'][i] / diff
+                if 'CLUB' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / diff
                 # french ...
-                if 'DRESSEURS' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / 2
+                if 'DRESSEURS' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / diff
 
                 if self.get_devicesettings_value('logintype', 'google') == 'ptc':
                     self._nextscreen = ScreenType.PTC
                     if 'CLUB' in (self._globaldict['text'][i]):
                         (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                         self._globaldict['width'][i], self._globaldict['height'][i])
-                        click_x, click_y = (x + w / 2) / 2, (y + h / 2) / 2
+                        click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         time.sleep(5)
@@ -331,7 +344,7 @@ class WordToScreenMatching(object):
                     if 'Google' in (self._globaldict['text'][i]):
                         (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                         self._globaldict['width'][i], self._globaldict['height'][i])
-                        click_x, click_y = (x + w / 2) / 2, (y + h / 2) / 2
+                        click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         time.sleep(5)
@@ -417,7 +430,7 @@ class WordToScreenMatching(object):
                 if any(elem in (self._globaldict['text'][i]) for elem in click_text.split(",")):
                     (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
                                     self._globaldict['width'][i], self._globaldict['height'][i])
-                    click_x, click_y = (x + w / 2) / 2, (y + h / 2) / 2
+                    click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(2)

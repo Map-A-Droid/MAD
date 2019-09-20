@@ -63,6 +63,8 @@ class WorkerQuests(MITMBase):
         self._level_mode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
         self._ignore_spinned_stops = self._mapping_manager.routemanager_get_settings(self._routemanager_name)\
             .get("ignore_spinned_stops", True)
+        self._always_cleanup = self._mapping_manager.routemanager_get_settings(self._routemanager_name)\
+            .get("cleanup_every_spin", False)
 
         self._rotation_waittime = self.get_devicesettings_value('rotation_waittime', 300)
 
@@ -240,7 +242,7 @@ class WorkerQuests(MITMBase):
                 if delay_used > 7200:  # There's a maximum of 2 hours wait time
                     delay_used = 7200
             logger.debug(
-                    "Need more sleep after Teleport: {} seconds!", str(delay_used))
+                    "Need more sleep after Teleport: {} seconds!", str(int(delay_used)))
         else:
             logger.info("main: Walking...")
             self._transporttype = 1
@@ -289,7 +291,7 @@ class WorkerQuests(MITMBase):
         if self.get_devicesettings_value('last_action_time', None) is not None:
             timediff = time.time() - self.get_devicesettings_value('last_action_time', 0)
             logger.info(
-                    "Timediff between now and last action time: {}", str(float(timediff)))
+                    "Timediff between now and last action time: {}", str(int(timediff)))
             delay_used = delay_used - timediff
         elif self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
             logger.info('Starting first time - we wait because of some default pogo delays ...')
@@ -307,17 +309,23 @@ class WorkerQuests(MITMBase):
             delay_used = -1
 
         if delay_used < 0:
-            logger.info('No more cooldowntime - start over')
+            self._current_sleep_time = 0
+            logger.info('No need to wait before spinning, continuing...')
         else:
             delay_used = math.floor(delay_used)
             logger.info("Real sleep time: {} seconds: next action {}",
                         str(delay_used), str(datetime.now() + timedelta(seconds=delay_used)))
             cleanupbox = False
             lastcleanupbox = self.get_devicesettings_value('last_cleanup_time', None)
+
+            self._current_sleep_time = delay_used
+            self.worker_stats()
+
             if lastcleanupbox is not None:
                 if time.time() - lastcleanupbox > 900:
                     # just cleanup if last cleanup time > 15 minutes ago
                     cleanupbox = True
+            self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._id, delay_used)
             while time.time() <= int(cur_time) + int(delay_used):
                 if delay_used > 200 and cleanupbox:
                     self.clear_thread_task = 1
@@ -325,9 +333,11 @@ class WorkerQuests(MITMBase):
                 if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                         or self._stop_worker_event.is_set():
                     logger.error("Worker {} get killed while sleeping", str(self._id))
+                    self._current_sleep_time = 0
                     raise InternalStopWorkerException
                 time.sleep(1)
 
+        self._current_sleep_time = 0
         self.set_devicesettings_value("last_location", self.current_location)
         self.last_location = self.current_location
         return cur_time, True
@@ -483,7 +493,7 @@ class WorkerQuests(MITMBase):
                     stop_inventory_clear.set()
                 logger.warning('Find no item to delete - scrolling ({} times)', str(error_counter))
                 self._communicator.touchandhold(int(200), int(600), int(200), int(100))
-                time.sleep(2)
+                time.sleep(5)
 
             trashcancheck = self._get_trash_positions()
 
@@ -654,7 +664,7 @@ class WorkerQuests(MITMBase):
             # wait for GMO in case we moved too far away
             data_received = self._wait_for_data(
                     timestamp=timestamp, proto_to_wait_for=106, timeout=35)
-            if data_received == LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
+            if data_received != LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
                 logger.info("Stop {}, {} considered to be ignored in the next round due to failed spinnable check",
                             str(self.current_location.lat), str(self.current_location.lng))
                 self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
@@ -689,23 +699,31 @@ class WorkerQuests(MITMBase):
                     self._checkPogoClose(takescreen=False)
 
             to += 1
+        if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED] and self._rocket:
+            logger.info('Check for Team Rocket Dialog or other open window')
+            self.process_rocket()
         return data_received
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
     #  /FortSearchResponse.proto#L12
     def _handle_stop(self, timestamp: float):
         to = 0
+        timeout = 35
+        if self._rocket:
+            timeout = 90
         data_received = FortSearchResultTypes.UNDEFINED
+
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
             logger.info('Spin Stop')
             data_received = self._wait_for_data(
-                timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=35)
+                timestamp=self._stop_process_time, proto_to_wait_for=101, timeout=timeout)
             time.sleep(1)
-            if self._rocket or not self._check_pogo_main_screen_tr():
-                logger.info('Check for Team Rocket Dialog or other open window')
-                self.process_rocket()
             if data_received == FortSearchResultTypes.INVENTORY:
-                logger.error('Box is full ... Next round!')
+                logger.info('Box is full... Next round!')
+                if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._id,
+                                                                     self.current_location.lat,
+                                                                     self.current_location.lng):
+                    logger.warning('Cannot process this stop again')
                 self.clear_thread_task = 1
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
@@ -713,7 +731,7 @@ class WorkerQuests(MITMBase):
                     logger.info('NOT received new Quest - previously spun the stop/cooldown')
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
-                if not self.get_devicesettings_value('cleanup_every_spin', False):
+                if not self._always_cleanup:
                     self._clear_quest_counter += 1
                     if self._clear_quest_counter == 3:
                         logger.info('Getting 3 quests - clean them')
@@ -752,7 +770,7 @@ class WorkerQuests(MITMBase):
                 self._turn_map(self._delay_add)
                 time.sleep(1)
                 self._stop_process_time = math.floor(time.time())
-                if self._open_pokestop(timestamp) is None:
+                if self._open_pokestop(self._stop_process_time) is None:
                     return
                 to += 1
 
@@ -817,6 +835,8 @@ class WorkerQuests(MITMBase):
 
     def process_rocket(self):
         logger.debug('Closing Rocket Dialog')
+        self._communicator.click(100, 100)
+        time.sleep(1)
         self._communicator.click(100, 100)
         time.sleep(1)
         self._communicator.click(100, 100)

@@ -40,9 +40,8 @@ async def hello(websocket, path):
                 print("Response: {}".format(str(response.strip())))
             else:
                 print("Received binary data starting with {}. Storing it.".format(str(response[:10])))
-                fh = open("derp.jpg", "wb")
-                fh.write(response)
-                fh.close()
+                with open("derp.jpg", "wb") as fh:
+                    fh.write(response)
 
 print("Initializing websocket server")
 start_server = websockets.serve(hello, '0.0.0.0', 8080)

@@ -27,12 +27,11 @@ class PogoWindows:
             logger.info('PogoWindows: Temp directory created')
         self.temp_dir_path = temp_dir_path
         self.__thread_pool = ThreadPool(processes=thread_count)
-        self.__thread_pool_tesseract = ThreadPool(processes=1)
 
     def __most_present_colour(self, filename, max_colours):
-        img = Image.open(filename)
-        # put a higher value if there are many colors in your image
-        colors = img.getcolors(max_colours)
+        with Image.open(filename) as img:
+            # put a higher value if there are many colors in your image
+            colors = img.getcolors(max_colours)
         max_occurrence, most_present = 0, 0
         try:
             for c in colors:
@@ -73,8 +72,8 @@ class PogoWindows:
         tempPathColoured = self.temp_dir_path + "/" + str(identifier) + "_gpsError.png"
         cv2.imwrite(tempPathColoured, gpsError)
 
-        col = Image.open(tempPathColoured)
-        width, height = col.size
+        with Image.open(tempPathColoured) as col:
+            width, height = col.size
 
         # check for the colour of the GPS error
         if self.__most_present_colour(tempPathColoured, width * height) == (240, 75, 95):
@@ -640,7 +639,8 @@ class PogoWindows:
         # resize image
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
         cv2.imwrite(temp_path_item, gray)
-        text = pytesseract.image_to_string(Image.open(temp_path_item))
+        with Image.open(temp_path_item) as im:
+            text = pytesseract.image_to_string(im)
         return text
 
     def check_pogo_mainscreen(self, filename, identifier):
@@ -737,19 +737,20 @@ class PogoWindows:
             logger.error("get_screen_text: image does not exist")
             return False
 
-        return self.__thread_pool_tesseract.apply_async(self.__internal_get_screen_text,
+        return self.__thread_pool.apply_async(self.__internal_get_screen_text,
                                               (screenshot, identifier)).get()
 
     def __internal_get_screen_text(self, screenshot, identifier):
-        returning_dict : dict = []
         logger.debug(
             "get_screen_text: Reading screen text - identifier {}", identifier)
 
         try:
-            returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT)
-        except Exception as e:
-            logger.error("get_screen_text: {}", e)
+            returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=20,
+                                                       config='--dpi 70')
+        except:
+            returning_dict = []
 
-        return returning_dict
-
-
+        if isinstance(returning_dict, dict):
+            return returning_dict
+        else:
+            return []

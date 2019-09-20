@@ -1,0 +1,60 @@
+{
+	"Rehide Pogo Magisk":
+	[
+		{
+			"TYPE": "jobType.STOP",
+		    "SYNTAX": "Stop-Pogo"
+	    },
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "su -c magiskhide --rm com.nianticlabs.pokemongo"
+	    },
+	    {
+		    "TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "su -c magiskhide --add com.nianticlabs.pokemongo"
+	    },
+		{
+			"TYPE": "jobType.START",
+		    "SYNTAX": "Start-Pogo"
+	    }
+    ],
+	"Start Update Script":
+	[
+		{
+			"TYPE": "jobType.STOP",
+		    "SYNTAX": "Stop-Pogo"
+	    },
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "/sdcard/download/update.sh"
+	    }
+    ],
+	"Readout RGC Version":
+	[
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName"
+	    }
+    ],
+	"Readout Pogodroid Version":
+	[
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName"
+	    }
+    ],
+	"Enable ADB over TCP": [
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+			"SYNTAX": "su -c setprop service.adb.tcp.port 5555"
+		},
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+			"SYNTAX": "su -c stop adbd"
+		},
+		{
+			"TYPE": "jobType.PASSTHROUGH",
+			"SYNTAX": "su -c start adbd"
+		}
+	]
+}

@@ -30,11 +30,6 @@ mode_mapping = {
         "range_init": 145,
         "max_count": 100000
     },
-    "raids_ocr": {
-        "range": 490,
-        "range_init": 490,
-        "max_count": 7
-    },
     "pokestops": {
         "s2_cell_level": 13,
         "range": 0.001,
@@ -184,6 +179,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_rounds(worker_name) if routemanager is not None else None
 
+    def routemanager_redo_stop(self, routemanager_name: str, worker_name: str, lat: float, lon: float) -> bool:
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
+
     def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[int]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_registered_workers() if routemanager is not None else None
@@ -226,6 +225,10 @@ class MappingManager:
     def routemanager_get_settings(self, routemanager_name: str) -> Optional[dict]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_settings() if routemanager is not None else None
+
+    def routemanager_set_worker_sleeping(self, routemanager_name: str, worker_name: str, sleep_duration: float):
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        routemanager.set_worker_sleeping(worker_name, sleep_duration)
 
     def routemanager_get_position_type(self, routemanager_name: str, worker_name: str) -> Optional[str]:
         routemanager = self.__fetch_routemanager(routemanager_name)
@@ -290,7 +293,7 @@ class MappingManager:
             # also build a routemanager for each area...
 
             # grab coords
-            # first check if init is false or raids_ocr is set as mode, if so, grab the coords from DB
+            # first check if init is false, if so, grab the coords from DB
             # coords = np.loadtxt(area["coords"], delimiter=',')
             geofence_helper = GeofenceHelper(
                     area["geofence_included"], area.get("geofence_excluded", None))
@@ -393,7 +396,7 @@ class MappingManager:
                 while walker_settings < len(walker_arr):
                     if walker_arr[walker_settings]['walkername'] == walker:
                         device_dict["walker"] = walker_arr[walker_settings].get(
-                                'setup', [])
+                            'setup', [])
                         break
                     walker_settings += 1
             devices[device["origin"]] = device_dict
@@ -402,10 +405,10 @@ class MappingManager:
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
                        init: bool = False, range_init: int = 630, including_stops: bool = False) -> List[Location]:
         coords: List[Location] = []
-        if mode == "raids_ocr" or not init:
+        if not init:
             # grab data from DB depending on mode
             # TODO: move routemanagers to factory
-            if mode == "raids_ocr" or mode == "raids_mitm":
+            if mode == "raids_mitm":
                 coords = self.__db_wrapper.gyms_from_db(geofence_helper)
                 if including_stops:
                     coords.extend(self.__db_wrapper.stops_from_db(geofence_helper))
@@ -544,3 +547,11 @@ class MappingManager:
             except Exception as e:
                 logger.exception(
                         'Exception occurred while updating device mappings: {}.', e)
+
+    def get_all_devices(self):
+        devices = []
+        device_arr = self.__raw_json["devices"]
+        for device in device_arr:
+            devices.append(device['origin'])
+
+        return devices

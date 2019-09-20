@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2019-07-29 20:56+0200\n"
-"PO-Revision-Date: 2019-07-29 20:57+0200\n"
+"POT-Creation-Date: 2019-09-06 20:18+0200\n"
+"PO-Revision-Date: 2019-09-06 20:27+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr_FR\n"
@@ -38,8 +38,10 @@ msgstr "à effet"
 msgid "Excellent"
 msgstr "Excellent"
 
-msgid "Catch {0} {type}Pokemon{wb}."
-msgstr "Attrape {0} Pokémon {type}{wb}."
+#, fuzzy
+#| msgid "Catch {0} {type}Pokemon{wb}."
+msgid "Catch {0}{different} {type}Pokemon{wb}."
+msgstr "Attrape {0}{different} Pokémon {type}{wb}."
 
 msgid "-type "
 msgstr " "
@@ -50,16 +52,17 @@ msgstr "ou "
 msgid " with weather boost"
 msgstr " boostés par la météo"
 
+msgid " different species of"
+msgstr " différentes espèces de"
+
 msgid "Catch {0} {poke}."
 msgstr "Attrape {0} {poke}."
 
 msgid "Spin {0} Pokestops or Gyms."
 msgstr "Fais tourner {0} PokéStops ou Arènes."
 
-#, fuzzy
-#| msgid "Spin {0} Pokestops you haven't visited before."
 msgid "Spin {0} Pokestops you haven't visited before"
-msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes. "
+msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes."
 
 msgid "Hatch {0} Eggs."
 msgstr "Fais éclore {0} Œufs."
@@ -109,10 +112,8 @@ msgstr "Utilise un objet pour faire évoluer un Pokémon."
 msgid "Evolve {0} {type}Pokemon"
 msgstr "Fais évoluer {0} {type}Pokémon."
 
-#, fuzzy
-#| msgid "Evolve {0} Pokemon."
 msgid "Evolve {0} {poke}."
-msgstr "Fais évoluer {0} Pokémon."
+msgstr "Fais évoluer {0} {poke}."
 
 msgid " in a row"
 msgstr " à la suite"
@@ -131,6 +132,18 @@ msgstr "Échange {0} fois des Pokémon."
 
 msgid "Send {0} gifts to friends."
 msgstr "Envoie {0} Cadeaux à des amis."
+
+msgid "Battle a Team Leader {0} times"
+msgstr "Combattre un chef {0} fois"
+
+msgid "Battle another Trainer {0} times"
+msgstr "Combattez un autre joueur {0} mal"
+
+msgid "Take {0} snapshots of {poke}"
+msgstr "Prendre {0} instantanés de {poke}"
+
+msgid "Take {0} snapshots of {type} Pokemon"
+msgstr "Prends {0} photos de Pokémon de type {type}."
 
 msgid " Eggs"
 msgstr " Œufs"
@@ -161,6 +174,22 @@ msgstr " cadeau"
 
 msgid " gifts"
 msgstr " cadeaux"
+
+msgid " a snapshot"
+msgstr " un instantané"
+
+#, fuzzy
+#| msgid "Take {0} snapshots of {poke}"
+msgid " {0} snapshots"
+msgstr "Prendre {0} instantanés de {poke}"
+
+msgid "Make a {type}{curve}Throw"
+msgstr "Fais {type} lancers {curve}{inrow}."
+
+#, fuzzy
+#| msgid "Make {0} {type}{curve}Throws{inrow}."
+msgid "Make {0} {type}{curve}Throws"
+msgstr "Fais {0} {type} lancers {curve}{inrow}."
 
 msgid " {0} times"
 msgstr " {0} fois"

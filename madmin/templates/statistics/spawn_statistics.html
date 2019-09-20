@@ -16,6 +16,10 @@
 <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
 <script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
 <script>
+
+
+
+
     $(function () {
 
         var options_dots = {
@@ -52,11 +56,12 @@
         var options_bars = {
             xaxis: {
                 mode: "time",
-            {% if time == "12" %}
-                timeformat: "%I:00 %p",
-            {% else %}
-                timeformat: "%H:00",
-            {% endif %}
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:00:00 %p",
+                {% else %}
+                timeformat: "%d.%m<br>%H:00:00",
+                {% endif %}
+                minTickSize: [3, "hour"],
                 timezone: "browser"
             },
             series: {
@@ -72,6 +77,10 @@
                 hoverable: true,
                 borderWidth: 2,
                 backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            },
+            legend: {
+                container: $("#legendContainer_quest"),
+                noColumns: 0
             }
         };
 
@@ -102,98 +111,20 @@
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
 
         $.ajax({
-            "url": "get_game_stats_mon?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
+            "url": "get_spawnpoints_stats",
             "type": "GET",
             "cache": false,
             "dataType": "json",
             success: function (result) {
-                spawn = result.spawn
-                good_spawns = result.good_spawns
-                detection = result.detection
-                shiny = result.shiny
-                shiny_worker = result.shiny_worker
-                shiny_hour = result.shiny_hour
-                shiny_stats_avg = result.shiny_stats_avg
 
-                setGrid('#show-data-good-pokemon', good_spawns, [
-                    { data: 'id', title: 'Mon-ID' },
-                    { data: 'name', title: 'Name' },
-                    { data: null, title: 'Pic' },
-                    { data: 'iv', title: 'IV' },
-                    { data: 'lvl', title: 'Level' },
-                    { data: 'cp', title: 'CP' },
-                    { data: 'periode', title: 'Scantime' }
-                ], [
-                {
-                    "targets": [2],
-                    "render": function (data, type, row) {
-                        return "<img src=" + row.img + " width=100>";
-                    }
-                }
+                spawnpoint_count = result.spawnpoints
+
+                setGrid('#show-spawnpoints-stats', spawnpoint_count, [
+                    { data: 'fence', title: 'Fence' },
+                    { data: 'sum', title: 'Spawnpoints' },
+                    { data: 'known', title: 'known' },
+                    { data: 'unknown', title: 'unknown' }
                 ]);
-
-                setGrid('#show-data-shiny-worker', shiny_worker, [
-                    { data: 'worker', title: 'Worker' },
-                    { data: 'sum', title: 'Total Shiny Encounters' }
-
-                ]);
-
-                setGrid('#show-data-shiny', shiny, [
-                    { data: 'sum', title: 'Encounters' },
-                    { data: 'shiny', title: 'Shiny' },
-                    { data: 'name', title: 'Name' },
-                    { data: null, title: 'Pic' },
-                    { data: 'ratio', title: 'Ratio (%)' },
-                    { data: 'worker', title: 'Worker' },
-		    { data: 'periode', title: 'Last seen' }
-                ], [
-                {
-                    "targets": [3],
-                    "render": function (data, type, row) {
-                        return "<img src=" + row.img + " width=100>";
-                    }
-                }
-                ]);
-                setGrid('#show-data-shiny-avg', shiny_stats_avg, [
-                    { data: 'total_nonshiny_encounters', title: 'Encounters' },
-                    { data: 'total_shiny_encounters', title: 'Shiny' },
-                    { data: 'name', title: 'Name' },
-                    { data: null, title: 'Pic' },
-                    { data: 'click_for_shiny', title: 'Odds (1 in X Encounters)' }
-
-                ], [
-                {
-                    "targets": [3],
-                    "render": function (data, type, row) {
-                        return "<img src=" + row.img + " width=100>";
-                    }
-                }
-                ]);
-
-                $.plot($("#flot_spawn"), [
-                    {
-                        data: spawn.iv,
-                        label: "IV Spawns / Hour"
-                    },
-                    {
-                        data: spawn.noniv,
-                        label: "NonIV Spawns / Hour"
-                    },
-                    {
-                        data: spawn.sum,
-                        label: "Sum Spawns / Hour"
-                    }
-                ], options_dots);
-                $("#flot_spawn").UseTooltip();
-
-                $.plot($("#flot_shiny_hour"), [
-                    {
-                        data: shiny_hour,
-                        label: "Shiny / Hour"
-                    }
-                ], options_bars);
-                $("#flot_shiny_hour").UseTooltip();
-
 
             },
             complete: function () {
@@ -304,6 +235,7 @@
             "paging": true,
             "columns": columns,
             "ordering": true,
+            "order": [[1, "desc"]],
             "columnDefs": defs,
             "responsive": {{ responsive }},
             "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
@@ -350,7 +282,7 @@
         height: 300px;
     }
 
-    #flot_shiny_hour {
+    #flot_stop {
         width: 100%;
         height: 300px;
     }
@@ -376,36 +308,11 @@
     table.dataTable tr.odd { background-color: #F8F8F8; }
     table.dataTable tr.even { background-color: white; }
 </style>
+
+
 {% endblock %}
 
 {% block content %}
-<h2>Spawn Statistics</h2>
-<div id="selector">
-    View {{ minutes_spawn }} minutes <br>Set:
-    <a href="statistics_mon?minutes_spawn=10">10</a>
-    <a href="statistics_mon?minutes_spawn=60">60</a>
-    <a href="statistics_mon?minutes_spawn=120">120</a>
-    <a href="statistics_mon?minutes_spawn=240">240</a>
-    <a href="statistics_mon?minutes_spawn=480">480</a>
-    <a href="statistics_mon?minutes_spawn=1440">1440</a>
-    <a href="statistics_mon?minutes_spawn=10080">One Week</a>
-    </div>
-<br>
-<div id="legendContainer_spawn"></div>
-<div id="flot_spawn"></div>
-<br>
-<h2>Last 300 Perfect Pokemon</h2>
-<table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
-<br>
-<h2>Detected Shiny / Hour (all Workers)</h2>
-<div id="flot_shiny_hour"></div>
-<br>
-<h2>Shiny Stats per Workers</h2>
-<table id="show-data-shiny" class="table" style="width:100%;"></table>
-<br>
-<h2>Global Shiny Stats</h2>
-<table id="show-data-shiny-avg" class="table" style="width:100%;"></table>
-<br>
-<h2>Shiny Amount per Worker</h2>
-<table id="show-data-shiny-worker" class="table" style="width:100%;"></table>
+<h2>Spawnpoint Statistics</h2>
+<table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
 {% endblock %}

@@ -5,8 +5,8 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: \n"
-"POT-Creation-Date: 2019-06-07 21:26+0200\n"
-"PO-Revision-Date: 2019-06-08 10:12+0200\n"
+"POT-Creation-Date: 2019-09-06 20:18+0200\n"
+"PO-Revision-Date: 2019-09-06 20:27+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: de_DE\n"
@@ -38,8 +38,8 @@ msgstr "Curveball"
 msgid "Excellent"
 msgstr "fabelhafte"
 
-msgid "Catch {0} {type}Pokemon{wb}."
-msgstr "Fange {0} {type}Pokemon{wb}."
+msgid "Catch {0}{different} {type}Pokemon{wb}."
+msgstr "Fange {0}{different} {type}Pokemon{wb}."
 
 msgid "-type "
 msgstr "  "
@@ -50,13 +50,18 @@ msgstr "oder "
 msgid " with weather boost"
 msgstr " mit Wetterverstärkung"
 
+msgid " different species of"
+msgstr " verschiedene"
+
 msgid "Catch {0} {poke}."
 msgstr "Fange {0} {poke}"
 
 msgid "Spin {0} Pokestops or Gyms."
 msgstr "Drehe {0} Pokestops oder Arenen."
 
-msgid "Spin {0} Pokestops you haven't visited before."
+#, fuzzy
+#| msgid "Spin {0} Pokestops you haven't visited before."
+msgid "Spin {0} Pokestops you haven't visited before"
 msgstr "Drehe {0} Pokestops die Du noch nicht besucht hast."
 
 msgid "Hatch {0} Eggs."
@@ -128,6 +133,18 @@ msgstr "Tausche {0} Pokemon."
 msgid "Send {0} gifts to friends."
 msgstr "Sende {0} Geschenke an Freunde."
 
+msgid "Battle a Team Leader {0} times"
+msgstr "Bekämpfe einen Teamleiter {0} mal"
+
+msgid "Battle another Trainer {0} times"
+msgstr "Bekämpfe einen anderen Spieler {0} mal"
+
+msgid "Take {0} snapshots of {poke}"
+msgstr "Schieße {0} Fotos von {poke}"
+
+msgid "Take {0} snapshots of {type} Pokemon"
+msgstr "Schieße {0} Fotos von {type}Pokemon."
+
 msgid " Eggs"
 msgstr " Eier"
 
@@ -157,6 +174,21 @@ msgstr " Geschenk"
 
 msgid " gifts"
 msgstr " Geschenke"
+
+msgid " a snapshot"
+msgstr " Foto"
+
+#, fuzzy
+#| msgid "Take {0} snapshots of {poke}"
+msgid " {0} snapshots"
+msgstr "Schieße {0} Fotos von {poke}"
+
+msgid "Make a {type}{curve}Throw"
+msgstr "Lande einen {type}{curve} Würfe {inrow}."
+
+#, fuzzy
+msgid "Make {0} {type}{curve}Throws"
+msgstr "Lande {0} {type}{curve} Würfe {inrow}."
 
 msgid " {0} times"
 msgstr " {0} mal"

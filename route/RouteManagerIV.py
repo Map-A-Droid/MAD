@@ -9,7 +9,7 @@ class RouteManagerIV(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 60
 
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         return True
 
     def _recalc_route_workertype(self):
@@ -63,25 +63,29 @@ class RouteManagerIV(RouteManagerBase):
             # just set a value to enable the queue
             self.delay_after_timestamp_prio = 5
 
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
+
     def _start_routemanager(self):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
+                self._is_started = True
                 logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
-                self._is_started = True
         finally:
             self._manager_mutex.release()
+        return True
 
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
-            self._update_prio_queue_thread.join()
             self._update_prio_queue_thread = None
             self._stop_update_thread.clear()
         self._is_started = False
         self._round_started_time = None
+        self._init_route_queue()
 
     def _check_coords_before_returning(self, lat, lng):
         return True

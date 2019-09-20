@@ -33,6 +33,9 @@ class RouteManagerRaids(RouteManagerBase):
         return self.db_wrapper.get_next_raid_hatches(self.delay_after_timestamp_prio,
                                                      self.geofence_helper)
 
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
+
     def _get_coords_post_init(self):
         return self.db_wrapper.gyms_from_db(self.geofence_helper)
 
@@ -46,20 +49,28 @@ class RouteManagerRaids(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
-                logger.info("Starting routemanager {}", str(self.name))
-                self._start_priority_queue()
                 self._is_started = True
-                self._init_route_queue()
+                logger.info("Starting routemanager {}", str(self.name))
+                if self.mode != "idle":
+                    self._start_priority_queue()
+                    self._start_check_routepools()
+                    self._init_route_queue()
+
                 self._first_round_finished = False
         finally:
             self._manager_mutex.release()
+
+        return True
 
     def _quit_route(self):
         logger.info("Shutdown Route {}", str(self.name))
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
-            self._update_prio_queue_thread.join()
             self._update_prio_queue_thread = None
+            self._stop_update_thread.clear()
+        if self._check_routepools_thread is not None:
+            self._stop_update_thread.set()
+            self._check_routepools_thread = None
             self._stop_update_thread.clear()
         self._is_started = False
         self._round_started_time = None

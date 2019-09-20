@@ -5,7 +5,7 @@
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
-"POT-Creation-Date: 2019-07-29 20:56+0200\n"
+"POT-Creation-Date: 2019-09-06 20:18+0200\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -36,7 +36,7 @@ msgstr ""
 msgid "Excellent"
 msgstr ""
 
-msgid "Catch {0} {type}Pokemon{wb}."
+msgid "Catch {0}{different} {type}Pokemon{wb}."
 msgstr ""
 
 msgid "-type "
@@ -46,6 +46,9 @@ msgid "or "
 msgstr ""
 
 msgid " with weather boost"
+msgstr ""
+
+msgid " different species of"
 msgstr ""
 
 msgid "Catch {0} {poke}."
@@ -126,6 +129,18 @@ msgstr ""
 msgid "Send {0} gifts to friends."
 msgstr ""
 
+msgid "Battle a Team Leader {0} times"
+msgstr ""
+
+msgid "Battle another Trainer {0} times"
+msgstr ""
+
+msgid "Take {0} snapshots of {poke}"
+msgstr ""
+
+msgid "Take {0} snapshots of {type} Pokemon"
+msgstr ""
+
 msgid " Eggs"
 msgstr ""
 
@@ -154,6 +169,18 @@ msgid " gift"
 msgstr ""
 
 msgid " gifts"
+msgstr ""
+
+msgid " a snapshot"
+msgstr ""
+
+msgid " {0} snapshots"
+msgstr ""
+
+msgid "Make a {type}{curve}Throw"
+msgstr ""
+
+msgid "Make {0} {type}{curve}Throws"
 msgstr ""
 
 msgid " {0} times"

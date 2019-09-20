@@ -96,7 +96,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)"
           }
         },
         {
@@ -148,6 +148,14 @@
             "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)"
           }
         },
+      	{
+					"name": "injection_thresh_reboot",
+					"settings": {
+						"type": "text",
+						"require": "false",
+						"description": "Reboot (if enable) device after not injecting for X times (Default: 20)."
+					}
+				},
         {
           "name": "post_screenshot_delay",
           "settings": {
@@ -229,7 +237,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)"
+            "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (Example: address|address)"
           }
         },
         {
@@ -237,7 +245,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)"
+            "description": "PTC User/Password (Format: username,password)<br>Use | to set more the one account (Example: username1,password1|username2,password2)"
           }
         },
         {
@@ -375,7 +383,7 @@
           "settings": {
             "type": "text",
             "require": "false",
-            "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)"
+            "description": "Restart Pogo every N location-changes. (Default: 0 - disabled)"
           }
         },
         {
@@ -571,7 +579,7 @@
             "type": "option",
             "require": "true",
             "values": "true|false",
-            "description": "Scan all spawnpoints or just ones with unknown endtimes"
+            "description": "True = scan all spawnpoints, false = scan spawnpoints with unknown endtimes"
           }
         }
       ],

@@ -6,9 +6,8 @@ class RouteManagerMon(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 180
 
-    def _get_coords_after_finish_route(self):
+    def _get_coords_after_finish_route(self) -> bool:
         self._init_route_queue()
-        self.get_worker_workerpool()
         return True
 
     def _recalc_route_workertype(self):
@@ -52,20 +51,28 @@ class RouteManagerMon(RouteManagerBase):
         self._manager_mutex.acquire()
         try:
             if not self._is_started:
+                self._is_started = True
                 logger.info("Starting routemanager {}", str(self.name))
                 if not self.init: self._start_priority_queue()
-                self._is_started = True
+                self._start_check_routepools()
                 self._init_route_queue()
                 self._first_round_finished = False
         finally:
             self._manager_mutex.release()
+        return True
+
+    def _delete_coord_after_fetch(self) -> bool:
+        return False
 
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
         if self._update_prio_queue_thread is not None:
             self._stop_update_thread.set()
-            self._update_prio_queue_thread.join()
             self._update_prio_queue_thread = None
+            self._stop_update_thread.clear()
+        if self._check_routepools_thread is not None:
+            self._stop_update_thread.set()
+            self._check_routepools_thread = None
             self._stop_update_thread.clear()
         self._is_started = False
         self._round_started_time = None
