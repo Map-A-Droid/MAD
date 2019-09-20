@@ -283,10 +283,12 @@ class deviceUpdater(object):
     def get_log(self):
         return self._log
 
+    @logger.catch()
     def start_job_type(self, item, jobtype, ws_conn):
         jobtype = jobType[jobtype.split('.')[1]]
         if jobtype == jobType.INSTALLATION:
-            return ws_conn.install_apk(os.path.join(self._args.upload_path, item[2]), 240)
+            file_ = self._log[str(item)]['file']
+            return ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240)
         elif jobtype == jobType.REBOOT:
             return ws_conn.reboot()
         elif jobtype == jobType.RESTART:
@@ -296,11 +298,11 @@ class deviceUpdater(object):
         elif jobtype == jobType.START:
             return ws_conn.startApp("com.nianticlabs.pokemongo")
         elif jobtype == jobType.PASSTHROUGH:
-            command = item[2]
+            command = self._log[str(item)]['file']
             returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
-            self._log[str(item[0])]['returning'] = returning
+            self._log[str(item)]['returning'] = returning
             self.update_status_log()
-            return False if 'KO' in returning else True
+            return returning if 'KO' not in returning else False
         return False
 
     def delete_log(self):
