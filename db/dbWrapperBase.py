@@ -1316,8 +1316,9 @@ class DbWrapperBase(ABC):
         )
         self.execute(query, commit=True)
 
+        # stop deleting shiny entries. For science, please (-:
         query = (
-            "delete from trs_stats_detect_raw where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
+            "delete from trs_stats_detect_raw where timestamp_scan < (UNIX_TIMESTAMP() - 604800) AND is_shiny = 0"
         )
         self.execute(query, commit=True)
 
