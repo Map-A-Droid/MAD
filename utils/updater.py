@@ -2,6 +2,7 @@ import json
 import os
 import glob
 import time
+from datetime import datetime, timedelta
 from enum import Enum
 from multiprocessing import  Queue
 from threading import  RLock, Thread
@@ -54,6 +55,8 @@ class deviceUpdater(object):
                     logger.info('Loading personal command: {}'.format(command))
                     self._commands[command] = peronal_cmd[command]
 
+        print(self._commands)
+
     def return_commands(self):
         return self._commands
 
@@ -70,7 +73,7 @@ class deviceUpdater(object):
     def kill_old_jobs(self):
         logger.info("Checking for outdated jobs")
         for job in self._log:
-            if self._log[job]['status'] in ('pending', 'starting', 'processing', 'not connected'):
+            if self._log[job]['status'] in ('pending', 'starting', 'processing', 'not connected', 'future'):
                 logger.debug("Cancel job {} - it is outdated".format(str(job)))
                 self._log[job]['status'] = 'canceled'
                 self.update_status_log()
@@ -81,52 +84,72 @@ class deviceUpdater(object):
         while True:
             try:
                 item = self._update_queue.get()
-                id_, origin, file_, counter, jobtype = (item[0], item[1], item[2], item[4], item[5])
 
-                if id_ in self._log:
-                    self._current_job_id = id_
+                id_ = item
+                origin = self._log[str(id_)]['origin']
+                file_ = self._log[str(id_)]['file']
+                counter = self._log[str(id_)]['counter']
+                jobtype = self._log[str(id_)]['jobtype']
+                waittime = self._log[str(id_)].get('waittime', 0)
+                processtime = self._log[str(id_)].get('processingdate', None)
 
-                    logger.info("Job for {} (File/Job: {}) started (ID: {})".format(str(origin), str(file_), str(id_)))
-                    self._log[id_]['status'] = 'processing'
-                    self.update_status_log()
+                if datetime.fromtimestamp(processtime) > datetime.now():
+                    logger.info('In future! - re-add to queue')
+                    self.add_job(origin=origin, file=file_, id_=id_, type=jobtype, counter=counter,
+                                 status='future', waittime=waittime, processtime=processtime)
 
-                    temp_comm = self._websocket.get_origin_communicator(origin)
+                else:
 
-                    if temp_comm is None:
-                        counter = counter + 1
-                        logger.error('Cannot start job {} on device {} - File/Job: {} - Device not connected (ID: {})'
-                                     .format(str(jobtype), str(origin), str(file_), str(id_)))
-                        self.add_job(origin, file_, id_, jobtype, counter, 'not connected')
+                    if id_ in self._log:
+                        self._current_job_id = id_
 
-                    else:
-                        # stop worker
-                        self._websocket.set_job_activated(origin)
-                        self._log[id_]['status'] = 'starting'
+                        logger.info(
+                            "Job for {} (File/Job: {}) started (ID: {})".format(str(origin), str(file_), str(id_)))
+                        self._log[id_]['status'] = 'processing'
+                        self._log[id_]['lastprocess'] = int(time.time())
                         self.update_status_log()
-                        logger.info('Job processor waiting for worker start resting - Device {}'.format(str(origin)))
-                        #time.sleep(30)
-                        try:
-                            if self.start_job_type(item, jobtype, temp_comm):
-                                logger.info('Job {} could be executed successfully - Device {} - File/Job {} (ID: {})'
-                                             .format(str(jobtype), str(origin), str(file_), str(id_)))
-                                self._log[id_]['status'] = 'success'
-                                self.update_status_log()
-                            else:
-                                logger.error('Job {} could not be executed successfully - Device {} - File/Job {} (ID: {})'
+
+                        temp_comm = self._websocket.get_origin_communicator(origin)
+
+                        if temp_comm is None:
+                            counter = counter + 1
+                            logger.error(
+                                'Cannot start job {} on device {} - File/Job: {} - Device not connected (ID: {})'
+                                .format(str(jobtype), str(origin), str(file_), str(id_)))
+                            self.add_job(origin, file_, id_, jobtype, counter, 'not connected')
+
+                        else:
+                            # stop worker
+                            self._websocket.set_job_activated(origin)
+                            self._log[id_]['status'] = 'starting'
+                            self.update_status_log()
+                            logger.info(
+                                'Job processor waiting for worker start resting - Device {}'.format(str(origin)))
+                            # time.sleep(30)
+                            try:
+                                if self.start_job_type(item, jobtype, temp_comm):
+                                    logger.info(
+                                        'Job {} could be executed successfully - Device {} - File/Job {} (ID: {})'
+                                        .format(str(jobtype), str(origin), str(file_), str(id_)))
+                                    self._log[id_]['status'] = 'success'
+                                    self.update_status_log()
+                                else:
+                                    logger.error(
+                                        'Job {} could not be executed successfully - Device {} - File/Job {} (ID: {})'
+                                        .format(str(jobtype), str(origin), str(file_), str(id_)))
+                                    counter = counter + 1
+                                    self.add_job(origin, file_, id_, jobtype, counter, 'failure')
+                            except:
+                                logger.error('Job {} could not be executed successfully (fatal error) '
+                                             '- Device {} - File/Job {} (ID: {})'
                                              .format(str(jobtype), str(origin), str(file_), str(id_)))
                                 counter = counter + 1
-                                self.add_job(origin, file_, id_, jobtype, counter, 'failure')
-                        except:
-                            logger.error('Job {} could not be executed successfully (fatal error) '
-                                         '- Device {} - File/Job {} (ID: {})'
-                                         .format(str(jobtype), str(origin), str(file_), str(id_)))
-                            counter = counter + 1
-                            self.add_job(origin, file_, id_, jobtype, counter, 'interrupted')
+                                self.add_job(origin, file_, id_, jobtype, counter, 'interrupted')
 
-                        # start worker
-                        self._websocket.set_job_deactivated(origin)
+                            # start worker
+                            self._websocket.set_job_deactivated(origin)
 
-                    self._current_job_id = 0
+                        self._current_job_id = 0
 
             except KeyboardInterrupt as e:
                 logger.info("process_update_queue received keyboard interrupt, stopping")
@@ -139,33 +162,39 @@ class deviceUpdater(object):
             logger.info('Processing Jobchain {} for Device {} (ID: {})'
                         .format(str(job), str(origin), str(id_)))
             for subjob in self._commands[job]:
-                self.add_job(origin, subjob['SYNTAX'], int(time.time()), subjob['TYPE'])
+                self.add_job(origin=origin, file=subjob['SYNTAX'], id_=int(time.time()), type=subjob['TYPE'],
+                             waittime=subjob.get('WAITTIME',0))
                 time.sleep(1)
         else:
-            self.add_job(origin, job, int(id_), type)
+            self.add_job(origin=origin, file=job, id_=int(id_), type=type, waittime=subjob.get('WAITTIME',0))
 
-    def add_job(self, origin, file, id_: int, type, counter=0, status='pending'):
+    def add_job(self, origin, file, id_: int, type, counter=0, status='pending', waittime=0, processtime=None):
         logger.info('Adding Job {} for Device {} - File/Job: {} (ID: {})'
                     .format(str(type), str(origin), str(file), str(id_)))
 
         if id_ not in self._log:
             self._log[str(id_)] = {}
+            self._log[str(id_)] = ({
+                'id': int(id_),
+                'origin': origin,
+                'file': file,
+                'status': status,
+                'counter': int(counter),
+                'jobtype': str(type)
+            })
+        else:
+            self._log[str(id_)]['status'] = status
 
-        self._log[str(id_)] = ({
-            'id': int(id_),
-            'origin': origin,
-            'file': file,
-            'status': status,
-            'counter': int(counter),
-            'jobtype': str(type)
-        })
+        if counter == 0 and waittime > 0 and processtime is None:
+            self._log[str(id_)]['processingdate'] = datetime.timestamp(datetime.now() + timedelta(minutes=waittime))
+            self._log[str(id_)]['waittime'] = waittime
 
         if counter > 3:
             logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - aborting (ID: {})"
                          .format(str(origin), str(file), str(type), str(id_)))
             self._log[id_]['status'] = 'faulty'
         else:
-            self._update_queue.put((str(id_), origin, file, status, counter, type))
+            self._update_queue.put(str(id_))
 
         self.update_status_log()
 
@@ -205,7 +234,7 @@ class deviceUpdater(object):
             returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
             self._log[str(item[0])]['returning'] = returning
             self.update_status_log()
-            return True
+            return False if 'KO' in returning else True
         return False
 
     def delete_log(self):

@@ -10,7 +10,8 @@
 	[
 		{
 			"TYPE": "jobType.PASSTHROUGH",
-		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName"
+		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName",
+			"WAITTIME": 2
 	    }
     ]
 }

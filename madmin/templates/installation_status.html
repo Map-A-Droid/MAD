@@ -63,19 +63,21 @@
                     "targets": [4],
                     "render": function (data, type, row) {
 
-                         var date = new Date(row.id*1000);
-                         var hours = date.getHours();
-                         var minutes = "0" + date.getMinutes();
-                         var seconds = "0" + date.getSeconds();
-                         var year = date.getFullYear();
-                         var month = "0" + (date.getMonth() + 1);
-                         var day = "0" + date.getDate();
+                        var initdatetime = tstodt(row.id);
+                        var nextdatetime = "-"
+                        var lastdatetime = "-"
 
-                         var link = year + '-' + month.substr(-2) + '-' +  day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+                        if ('lastprocess' in row) {
+                            lastdatetime = tstodt(row.lastprocess);
+                        }
 
-                        return link;
+                        if ('processingdate' in row) {
+                            nextdatetime = tstodt(row.processingdate);
+                        }
+
+                         return "<b>Init:</b> " + initdatetime + "<br><b>Process: </b> " + lastdatetime + "<br><b>Next: </b>" + nextdatetime;
                     }
-                },
+                }
             ],
             "order": [[4, "desc"]],
             "responsive": {{ responsive }},
@@ -88,6 +90,20 @@
             return JSON.parse( localStorage.getItem( 'MAD_INSTALL_STATUS_' + settings.sInstance ) )
             }
         });
+	}
+
+	function tstodt(ts) {
+	                     var date = new Date(ts*1000);
+                         var hours = date.getHours();
+                         var minutes = "0" + date.getMinutes();
+                         var seconds = "0" + date.getSeconds();
+                         var year = date.getFullYear();
+                         var month = "0" + (date.getMonth() + 1);
+                         var day = "0" + date.getDate();
+
+                         var link = year + '-' + month.substr(-2) + '-' +  day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+                         return link;
 	}
 
     $(document).ready(function () {
