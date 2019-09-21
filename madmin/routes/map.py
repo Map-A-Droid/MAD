@@ -7,7 +7,7 @@ from flask_caching import Cache
 
 from db.dbWrapperBase import DbWrapperBase
 from madmin.functions import (auth_required, getCoordFloat, getBoundParameter,
-                              getBasePath, get_geofences, generate_coords_from_geofence)
+                              getBasePath, get_geofences, generate_coords_from_geofence, Path)
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.gamemechanicutil import get_raid_boss_cp
@@ -379,3 +379,4 @@ class map(object):
         file.close()
 
         return redirect(getBasePath(request) + "/map", code=302)
+
