@@ -12,7 +12,6 @@ import utils.data_manager
 from websocket.WebsocketServer import WebsocketServer
 from utils.updater import deviceUpdater
 
-
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
 initLogging(args)
@@ -35,9 +34,21 @@ def create_folder(folder):
         os.makedirs(folder)
 
 
+<<<<<<< HEAD
 def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater):
     from madmin.madmin import madmin_start
     madmin_start(args, db_wrapper, ws_server, mapping_manager, data_manager, deviceUpdater)
+=======
+def create_folder(folder):
+    if not os.path.exists(folder):
+        logger.info(str(folder) + ' created')
+        os.makedirs(folder)
+
+
+def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, deviceUpdater):
+    from madmin.madmin import madmin_start
+    madmin_start(args, db_wrapper, ws_server, mapping_manager, deviceUpdater)
+>>>>>>> c6a73e3edcef01fa57ae3bd9ef2d5567ff7eca7b
 
 
 if __name__ == "__main__":
