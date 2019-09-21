@@ -388,7 +388,7 @@ class control(object):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(self._args.upload_path, filename))
                 flash('File could be uploaded successfully')
-                return redirect('/uploaded_files')
+                return redirect(getBasePath(request) + '/uploaded_files')
             else:
                 flash('Allowed file type is apk only!')
                 return redirect(getBasePath(request) + request.url)
@@ -461,7 +461,6 @@ class control(object):
     @logger.catch()
     def delete_log_entry(self):
         id_ = request.args.get('id')
-        jobtype = request.args.get('type')
         if self._device_updater.delete_log_id(id_):
             flash('Job could be deleted successfully')
         else:
