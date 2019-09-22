@@ -71,6 +71,12 @@
 #stat_gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
 #statistic_interval:         # Update interval for the usage generator in seconds (Default: 60)
 
+# Job Status Messages
+######################
+#job_dt_wh                    # Send job status to discord (Default: False)
+#job_dt_wh_url:               # Discord Webhook URL for job messages
+#job_dt_send_type:            # Kind of Job Messages to send - separated by pipe | (Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)
+
 # ADB
 ######################
 #use_adb                      # Use ADB for phonecontrol (Default: False)

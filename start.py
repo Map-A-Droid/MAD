@@ -234,10 +234,14 @@ if __name__ == "__main__":
                 sys.exit(0)
 
             pogoWindowManager = None
+            jobstatus: dict = {}
             MitmMapperManager.register('MitmMapper', MitmMapper)
             mitm_mapper_manager = MitmMapperManager()
             mitm_mapper_manager.start()
             mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
+
+            # init jobprocessor
+            device_Updater = deviceUpdater(ws_server, args, jobstatus)
 
             from ocr.pogoWindows import PogoWindows
             pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
@@ -277,10 +281,9 @@ if __name__ == "__main__":
     if args.with_madmin:
         from madmin.madmin import madmin_start
 
-        device_Updater = deviceUpdater(ws_server, args)
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
-                          args=(args, db_wrapper, ws_server, mapping_manager, device_Updater))
+                          args=(args, db_wrapper, ws_server, mapping_manager, device_Updater, jobstatus))
         t_madmin.daemon = True
         t_madmin.start()
 

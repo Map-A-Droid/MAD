@@ -18,3 +18,4 @@ requests~=2.22
 s2sphere~=0.2
 watchdog~=0.9
 websockets>=7
+discord-webhook~=0.4.1

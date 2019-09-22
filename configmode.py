@@ -34,9 +34,9 @@ def create_folder(folder):
         os.makedirs(folder)
 
 
-def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, deviceUpdater):
+def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, deviceUpdater, jobstatus):
     from madmin.madmin import madmin_start
-    madmin_start(args, db_wrapper, ws_server, mapping_manager, deviceUpdater)
+    madmin_start(args, db_wrapper, ws_server, mapping_manager, deviceUpdater, jobstatus)
 
 
 if __name__ == "__main__":
@@ -75,11 +75,13 @@ if __name__ == "__main__":
     t_ws.daemon = False
     t_ws.start()
 
-    device_Updater = deviceUpdater(ws_server, args)
+    jobstatus: dict = {}
+
+    device_Updater = deviceUpdater(ws_server, args, jobstatus)
 
     logger.success(
         'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
     t_flask = Thread(name='madmin', target=start_madmin,
-                     args=(args, db_wrapper, ws_server, mapping_manager, device_Updater))
+                     args=(args, db_wrapper, ws_server, mapping_manager, device_Updater, jobstatus))
     t_flask.daemon = False
     t_flask.start()

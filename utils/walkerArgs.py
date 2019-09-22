@@ -80,6 +80,15 @@ def parseArgs():
                             'The delay in minutes to wait after an egg has hatched to move to the location of the '
                             'gym. Default: 3.5'))
 
+    # job discord settings
+    parser.add_argument('-jobdtwh', '--job_dt_wh', action='store_true', default=False,
+                        help='Send job status to discord')
+    parser.add_argument('-jobdtwhurl', '--job_dt_wh_url', required=False, default="", type=str,
+                        help='Discord Webhook URL for job messages')
+    parser.add_argument('-jobdtsdtyp', '--job_dt_send_type', required=False, default="SUCCESS|FAILURE|NOCONNECT|TERMINATED",
+                        type=str, help='Kind of Job Messages to send - separated by pipe | '
+                                       '(Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)')
+
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=True,
                         help='Use this instance only for scanning.')

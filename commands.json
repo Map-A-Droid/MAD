@@ -3,7 +3,8 @@
 	[
 		{
 			"TYPE": "jobType.PASSTHROUGH",
-		    "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName"
+		    "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName",
+			"FIELDNAME": "RGC_Version"
 	    }
     ],
 	"Readout Pogodroid Version":
@@ -11,7 +12,7 @@
 		{
 			"TYPE": "jobType.PASSTHROUGH",
 		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName",
-			"WAITTIME": 2
+			"FIELDNAME": "POGODROID_Version"
 	    }
     ]
 }
