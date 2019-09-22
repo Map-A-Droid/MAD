@@ -285,6 +285,7 @@ class deviceUpdater(object):
 
     @logger.catch()
     def start_job_type(self, item, jobtype, ws_conn):
+        logger.debug("Starting job with {} and item {}", jobtype, item)
         jobtype = jobType[jobtype.split('.')[1]]
         if jobtype == jobType.INSTALLATION:
             file_ = self._log[str(item)]['file']
