@@ -143,7 +143,7 @@
                         <th>Walkermode</th>
                         <th>Setting</th>
                         <th>Max. Devices</th>
-                        <th>{% if uri != '/api/walker' %}<a href='/settings/walker/areaeditor?id={{ uri }}'><button type="button" class="btn btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
+                        <th>{% if uri != '/api/walker' %}<a href='{{ redirect }}/areaeditor?id={{ uri }}'><button type="button" class="btn btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
                     </tr>
                 </tbody>
                 <tbody class="row_position ui-sortable">
@@ -157,7 +157,7 @@
                             <td class='walkervalue' data-save='{{ area.walkervalue }}'>{{ area.walkervalue }}</td>
                             <td class='walkermax' data-save='{{ area.walkermax }}'>{{ area.walkermax }}</td>
                             <td>
-                                <a href="/settings/walker/areaeditor?id={{ uri }}&walkerarea={{ walkerarea_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+                                <a href="{{ redirect }}/areaeditor?id={{ uri }}&walkerarea={{ walkerarea_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
                                 <button type="button" class="btn btn-danger btn-sm delete" data-identifier="{{ loop.index }}"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>

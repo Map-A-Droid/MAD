@@ -85,10 +85,10 @@
               data : JSON.stringify(walkerarea_data),
               type : 'PATCH',
               contentType : 'application/json',
-              success: $(location).attr("href", '/settings/walker?id={{ walkeruri }}')
+              success: $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}')
             });
           } else {
-            $(location).attr("href", '/settings/walker?id={{ walkeruri }}');
+            $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
           }
         }
       });

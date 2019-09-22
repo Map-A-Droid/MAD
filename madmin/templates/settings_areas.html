@@ -64,11 +64,11 @@ $(document).ready(function () {
                 Create new Area
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                <a class="dropdown-item" href="settings/areas?id=new&mode=idle">[idle] Idle</a>
-                <a class="dropdown-item" href="settings/areas?id=new&mode=iv_mitm">[iv_mitm] Mon IV</a>
-                <a class="dropdown-item" href="settings/areas?id=new&mode=mon_mitm">[mon_mitm] Overlay scanner (MITM)</a>
-                <a class="dropdown-item" href="settings/areas?id=new&mode=pokestops">[pokestops] Quest Discovery</a>
-                <a class="dropdown-item" href="settings/areas?id=new&mode=raids_mitm">[raids_mitm] Raid Discovery</a>
+                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=idle">[idle] Idle</a>
+                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=iv_mitm">[iv_mitm] Mon IV</a>
+                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=mon_mitm">[mon_mitm] Overlay scanner (MITM)</a>
+                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=pokestops">[pokestops] Quest Discovery</a>
+                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=raids_mitm">[raids_mitm] Raid Discovery</a>
             </div>
         </div>
       </th>
@@ -78,7 +78,7 @@ $(document).ready(function () {
     {% for area_id, area in area.items() %}
     <tr>
       <td class="align-middle">
-        <a href="settings/areas?id={{ area_id }}&mode={{ area.mode }}">{{ area.name }}</a>
+        <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.mode }}">{{ area.name }}</a>
       </td>
       <td>
         <p style="font-size: 65%; min-height: 40px; display: inline-box">
