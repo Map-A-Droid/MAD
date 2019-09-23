@@ -542,8 +542,8 @@ class MappingManager:
 
     def get_all_devices(self):
         devices = []
-        device_arr = self.__raw_json["devices"]
-        for device in device_arr:
+        devices_raw = self.__data_manager.get_data('device')
+        for device_uri, device in devices_raw.items():
             devices.append(device['origin'])
 
         return devices
