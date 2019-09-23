@@ -287,7 +287,8 @@ class config(object):
             'walker': walkerconfig,
             'walkeruri': walkeruri,
             'areas': areaconfig,
-            'walkertypes': walkertypes
+            'walkertypes': walkertypes,
+            'redirect': '/settings/walker'
         }
         return render_template('settings_walkerarea.html',
                                subtab="walker",

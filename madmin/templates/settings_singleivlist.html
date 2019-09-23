@@ -8,7 +8,7 @@
 {{ super() }}
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
-<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+<script type="text/javascript" src="/static/js/jquery.Aplus.min.js"></script>
 
 <script>
     $(document).ready(function () {
@@ -195,7 +195,7 @@
                 <tbody id='selected-pokemon' class="row_position ui-sortable">
                     {% for mon in current_mons_list %}
                         <tr data-monid='{{ mon.mon_id }}'>
-                            <td><img src="static/sort.png" class="handle ui-sortable-handle"></td>
+                            <td><img src="/static/sort.png" class="handle ui-sortable-handle"></td>
                             <td><b>#{{ mon.mon_id }}</b></td>
                             <td><b>{{ mon.mon_name }}</b></td>
                             <td><button data-identifier='{{ mon.mon_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button></button></td>

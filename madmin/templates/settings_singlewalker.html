@@ -113,6 +113,7 @@
     function processChange() {
         $('.row_position tr').each(function (index) {
             $(this).find('.index')[0].innerHTML = index+1;
+            $(this).find('.delete').attr('data-identifier', index+1);
         });
     }
 
@@ -150,7 +151,7 @@
                     {% for walkerarea_uri in element.setup %}
                         {% set area = walkerarea[walkerarea_uri] %}
                         <tr id='{{ walkerarea_uri }}'>
-                            <td><img src="static/sort.png" class="handle ui-sortable-handle"></td>
+                            <td><img src="/static/sort.png" class="handle ui-sortable-handle"></td>
                             <td class='index'>{{ loop.index }}</td>
                             <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><b>{{ areas[area['walkerarea']].name }}</b><br>{{ area.walkertext }}</td>
                             <td class='walkertype' data-save='{{ area.walkertype }}'>{{ area.walkertype }}</td>
