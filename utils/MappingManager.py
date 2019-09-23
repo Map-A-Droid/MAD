@@ -133,6 +133,8 @@ class MappingManager:
             return []
         if listname is not None and listname in self._monlists:
             return self._monlists[listname]
+        elif listname is None:
+            return []
         else:
             logger.error("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
                          listname, areaname)
