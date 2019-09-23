@@ -13,7 +13,7 @@
 <script>
     $(document).ready(function () {
         $("#submit").click(function() {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
             save_data = {
                 'mon_ids_iv': get_mon_list(),
                 'monlist': $("#monlist").val()
