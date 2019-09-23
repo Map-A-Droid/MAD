@@ -240,9 +240,6 @@ if __name__ == "__main__":
             mitm_mapper_manager.start()
             mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
 
-            # init jobprocessor
-            device_Updater = deviceUpdater(ws_server, args, jobstatus)
-
             from ocr.pogoWindows import PogoWindows
             pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
 
@@ -255,6 +252,9 @@ if __name__ == "__main__":
             t_ws = Thread(name='scanner', target=ws_server.start_server)
             t_ws.daemon = False
             t_ws.start()
+
+            # init jobprocessor
+            device_Updater = deviceUpdater(ws_server, args, jobstatus)
 
             webhook_worker = None
             if args.webhook:

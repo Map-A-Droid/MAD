@@ -259,6 +259,10 @@ class deviceUpdater(object):
                                     self._log[id_]['laststatus'] = 'failure'
                                     self._globaljoblog[globalid]['lastjobid'] = id_
                                     jobstatus = jobReturn.FAILURE
+
+                                # start worker
+                                self._websocket.set_job_deactivated(origin)
+
                             except:
                                 logger.error('Job {} could not be executed successfully (fatal error) '
                                              '- Device {} - File/Job {} (ID: {})'
@@ -268,9 +272,6 @@ class deviceUpdater(object):
                                 self._log[id_]['laststatus'] = 'interrupted'
                                 self._globaljoblog[globalid]['lastjobid'] = id_
                                 jobstatus = jobReturn.FAILURE
-
-                    # start worker
-                    self._websocket.set_job_deactivated(origin)
 
                     # check jobstatus and readd if possible
                     if jobstatus != jobReturn.SUCCESS:
@@ -378,26 +379,33 @@ class deviceUpdater(object):
 
     @logger.catch()
     def start_job_type(self, item, jobtype, ws_conn):
-        jobtype = jobType[jobtype.split('.')[1]]
-        if jobtype == jobType.INSTALLATION:
-            file_ = self._log[str(item)]['file']
-            return ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240)
-        elif jobtype == jobType.REBOOT:
-            return ws_conn.reboot()
-        elif jobtype == jobType.RESTART:
-            return ws_conn.restartApp("com.nianticlabs.pokemongo")
-        elif jobtype == jobType.STOP:
-            return ws_conn.stopApp("com.nianticlabs.pokemongo")
-        elif jobtype == jobType.START:
-            return ws_conn.startApp("com.nianticlabs.pokemongo")
-        elif jobtype == jobType.PASSTHROUGH:
-            command = self._log[str(item)]['file']
-            returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
-            self._log[str(item)]['returning'] = returning
-            self.update_status_log()
-            self.set_returning(origin=self._log[str(item)]['origin'], fieldname=self._log[str(item)].get('fieldname'),
-                               value=returning)
-            return returning if 'KO' not in returning else False
+        try:
+            jobtype = jobType[jobtype.split('.')[1]]
+            if jobtype == jobType.INSTALLATION:
+                file_ = self._log[str(item)]['file']
+                return ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 240)
+            elif jobtype == jobType.REBOOT:
+                return ws_conn.reboot()
+            elif jobtype == jobType.RESTART:
+                return ws_conn.restartApp("com.nianticlabs.pokemongo")
+            elif jobtype == jobType.STOP:
+                return ws_conn.stopApp("com.nianticlabs.pokemongo")
+            elif jobtype == jobType.START:
+                return ws_conn.startApp("com.nianticlabs.pokemongo")
+            elif jobtype == jobType.PASSTHROUGH:
+                command = self._log[str(item)]['file']
+                returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
+                self._log[str(item)]['returning'] = returning
+                self.update_status_log()
+                self.set_returning(origin=self._log[str(item)]['origin'],
+                                   fieldname=self._log[str(item)].get('fieldname'),
+                                   value=returning)
+                return returning if 'KO' not in returning else False
+            return False
+        except Exception as e:
+            logger.error('Error while getting response from phone - Reason: {}'
+                         .format(str(e)))
+
         return False
 
     def delete_log(self, onlysuccess=False):
