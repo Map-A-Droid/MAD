@@ -238,9 +238,6 @@ class deviceUpdater(object):
                             self._websocket.set_job_activated(origin)
                             self._log[id_]['status'] = 'starting'
                             self.update_status_log()
-                            logger.info(
-                                'Job processor waiting for worker start resting - Device {}'.format(str(origin)))
-                            # time.sleep(30)
                             try:
                                 if self.start_job_type(item, jobtype, temp_comm):
                                     logger.info(
@@ -334,7 +331,7 @@ class deviceUpdater(object):
     @logger.catch()
     def add_job(self, globalid, origin, file, id_: int, type, counter=0, status='pending', waittime=0, processtime=None,
                 redo=False, fieldname=None):
-        if id_ not in self._log:
+        if str(id_) not in self._log:
             self._log[str(id_)] = {}
             self._log[str(id_)] = ({
                 'id': int(id_),
@@ -373,8 +370,10 @@ class deviceUpdater(object):
             return True
         return False
 
-    def get_log(self):
-        return self._log
+    def get_log(self, withautojobs=False):
+        if withautojobs:
+            return [self._log[x] for x in self._log if self._log[x]['auto']]
+        return [self._log[x] for x in self._log if not self._log[x]['auto']]
 
     @logger.catch()
     def start_job_type(self, item, jobtype, ws_conn):
@@ -395,17 +394,23 @@ class deviceUpdater(object):
             returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
             self._log[str(item)]['returning'] = returning
             self.update_status_log()
-            print(self._log[str(item)])
             self.set_returning(origin=self._log[str(item)]['origin'], fieldname=self._log[str(item)].get('fieldname'),
                                value=returning)
             return returning if 'KO' not in returning else False
         return False
 
-    def delete_log(self):
-        for job in self._log.copy():
-            self.delete_log_id(job)
+    def delete_log(self, onlysuccess=False):
+        if onlysuccess:
+            for job in self._log.copy():
+                if self._log[job]['status'] == 'success' and not self._log[job]['redo']:
+                    self.delete_log_id(job)
+        else:
+            for job in self._log.copy():
+                if not self._log[job]['redo']: self.delete_log_id(job)
 
     def send_webhook(self, id_, status):
+        if not self._log[str(id_)]['auto']:
+            return
 
         try:
             if jobReturn(status).name not in self._args.job_dt_send_type.split('|') or not self._args.job_dt_wh:
@@ -415,6 +420,8 @@ class deviceUpdater(object):
             file_ = self._log[str(id_)]['file']
             processtime = self._log[str(id_)].get('processingdate', None)
             returning = self._log[str(id_)].get('returning', '-')
+
+            logger.info("Send discord status for device {} (Job: {})".format(str(origin), str(file_)))
 
             embed = DiscordEmbed(title='MAD Job Status', description='Automatic Job processed', color=242424)
             embed.set_author(name='MADBOT')

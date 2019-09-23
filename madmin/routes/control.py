@@ -450,10 +450,11 @@ class control(object):
     @auth_required
     @logger.catch
     def get_install_log(self):
+        withautojobs = request.args.get('withautojobs', False)
         return_log = []
-        log = self._device_updater.get_log()
+        log = self._device_updater.get_log(withautojobs=withautojobs)
         for entry in log:
-            return_log.append(log[entry])
+            return_log.append(entry)
 
         return jsonify(return_log)
 
@@ -470,9 +471,10 @@ class control(object):
     @auth_required
     @logger.catch
     def install_status(self):
+        withautojobs = request.args.get('withautojobs', False)
         return render_template('installation_status.html',
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Installation Status")
+                               title="Installation Status", withautojobs=withautojobs)
 
     @auth_required
     @logger.catch()
@@ -507,7 +509,8 @@ class control(object):
     @auth_required
     @logger.catch()
     def delete_log(self):
-        self._device_updater.delete_log()
+        onlysuccess = request.args.get('only_success', False)
+        self._device_updater.delete_log(onlysuccess=onlysuccess)
         return redirect(getBasePath(request) + '/install_status')
 
     @auth_required

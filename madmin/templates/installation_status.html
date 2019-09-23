@@ -120,7 +120,11 @@
         $("#navgyms").addClass("active");
         $.ajax({
             type: "GET",
-            url: "get_install_log",
+            {% if withautojobs == "true" %}
+                url: "get_install_log?withautojobs=true",
+            {% else %}
+                url: "get_install_log",
+            {% endif %}
             success: function (result) {
                 setGrid('#show-data', result);
             }
@@ -153,6 +157,8 @@
 	{% endwith %}
 </p>
 <table id="show-data" class="table" style="width:100%;"></table>
-<div class="alert alert-warning"><a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a></div>
-
+{% if not withautojobs %}
+<div class="alert alert-warning"><a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a><br>
+<a href="delete_log?only_success=true" class='confirm' title='Do you really want to delete the logs?'>Delete successful Jobs</a></div>
+{% endif %}
 {% endblock %}
