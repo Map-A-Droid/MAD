@@ -323,7 +323,8 @@ class deviceUpdater(object):
 
                 self.add_job(globalid=globalid, origin=origin, file=subjob['SYNTAX'], id_=int(time.time()),
                              type=subjob['TYPE'], waittime=subjob.get('WAITTIME', 0),
-                             redo=self._globaljoblog[globalid].get('redo', False), fieldname=subjob['FIELDNAME'])
+                             redo=self._globaljoblog[globalid].get('redo', False),
+                             fieldname=subjob.get('FIELDNAME', 'unknown'))
                 time.sleep(1)
         else:
             self.add_job(globalid=globalid, origin=origin, file=job, id_=int(id_), type=type)

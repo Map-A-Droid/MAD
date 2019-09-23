@@ -62,7 +62,8 @@ class control(object):
             ("/restart_job", self.restart_job),
             ("/delete_log", self.delete_log),
             ("/get_all_workers", self.get_all_workers),
-            ("/job_for_worker", self.job_for_worker)
+            ("/job_for_worker", self.job_for_worker),
+            ("/reload_jobs", self.reload_jobs)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -446,6 +447,13 @@ class control(object):
             flash('Job successfully queued --> See Job Status')
 
         return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
+
+    @auth_required
+    def reload_jobs(self):
+        logger.info("Reload existing jobs")
+        self._device_updater.init_jobs()
+        return redirect(getBasePath(request) + '/uploaded_files')
+
 
     @auth_required
     @logger.catch
