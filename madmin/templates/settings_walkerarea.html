@@ -90,6 +90,28 @@
           } else {
             $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
           }
+        },
+        error: function(data, status, xhr) {
+            $("label[for]").removeClass('btn-danger');
+            if(data['responseJSON'] != undefined) {
+                $.each(data['responseJSON']['missing'], function() {
+                    var elem = $("label[for="+ this +"]");
+                    elem[0].innerHTML = elem.attr('for') +' - Required Field';
+                    elem.addClass('btn-danger');
+                });
+                $.each(data['responseJSON']['invalid'], function() {
+                    var field = this.split(/:(.+)/)[0];
+                    var expected = this.split(/:(.+)/)[1];
+                    var elem = $("label[for="+ field +"]");
+                    elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
+                    elem.addClass('btn-danger');
+                });
+                $.unblockUI();
+                alert('One or more fields failed validation');
+            } else {
+                $.unblockUI();
+                alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+            }
         }
       });
     });
@@ -108,7 +130,7 @@
 <div class="row">
   <div class="col-sm-8">
     <div class="form-group">
-      <label>Area</label><br>
+      <label for='walkerarea'>Area</label><br>
       <small class="form-text text-muted">Select the Area</small>
       <select class="form-control" name="walkerarea" required="" aria-invalid="false">
         {% for uri, area in areas.items() %}
@@ -117,7 +139,7 @@
       </select>
     </div>
     <div class="form-group">
-      <label>Walkermode</label><br>
+      <label for='walkertype'>Walkermode</label><br>
       <small class="form-text text-muted">Choose the way to end the route:<br>
         <b>countdown</b>: Kill worker after X seconds<br>
         <b>timer</b>: Kill worker after X:XX o´clock (Format: 24h f.e. 21:30 -&gt; 9:30 pm)<br>
@@ -136,17 +158,17 @@
       </select>
     </div>
     <div class="form-group">
-      <label>Value for Walkermode</label><br>
+      <label for='walkervalue'>Value for Walkermode</label><br>
       <small class="form-text text-muted"></small>
       <input type="text" class="form-control" name="walkervalue" value="{{ element.walkervalue }}">
     </div>
     <div class="form-group">
-      <label>Max. Walker in Area</label><br>
+      <label for='walkermax'>Max. Walker in Area</label><br>
       <small class="form-text text-muted">Empty = infinitely</small>
       <input type="text" class="form-control" name="walkermax" value="{{ element.walkermax if element.walkermax else '' }}">
     </div>
     <div class="form-group">
-      <label>Description</label><br>
+      <label for='walkertext'>Description</label><br>
       <small class="form-text text-muted"></small>
       <input type="text" class= "form-control" name="walkertext" value="{{ element.walkertext }}">
     </div>
