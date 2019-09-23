@@ -58,7 +58,7 @@ class ResourceHandler(object):
                 expected = entry_def['settings'].get('expected', str)
                 none_val = entry_def['settings'].get('empty', '')
                 formated_val = self.format_value(val, expected, none_val)
-                if (formated_val is None or (formated_val and len(formated_val) == 0)) and entry_def['settings'].get('require', False):
+                if (formated_val is None or (formated_val and 'len' in dir(formated_val) and len(formated_val) == 0)) and entry_def['settings'].get('require', False):
                     missing.append(key)
                     continue
                 try:
