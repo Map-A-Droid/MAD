@@ -365,6 +365,7 @@ class MADVersion(object):
                     entries = []
                 cache[key] = {}
                 if type(entries) is dict:
+                    new_data[key] = entries
                     continue
                 index = 0
                 new_data[key] = {
