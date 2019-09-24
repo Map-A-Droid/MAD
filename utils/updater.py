@@ -458,6 +458,7 @@ class deviceUpdater(object):
                 return
 
             from discord_webhook import DiscordWebhook, DiscordEmbed
+            _webhook = DiscordWebhook(url=self._args.job_dt_wh_url)
 
             origin = self._log[str(id_)]['origin']
             file_ = self._log[str(id_)]['file']
@@ -474,8 +475,8 @@ class deviceUpdater(object):
             embed.add_embed_field(name='Status', value=jobReturn(status).name)
             embed.add_embed_field(name='Next run',
                                   value=str(datetime.fromtimestamp(processtime) if processtime is not None else "-"))
-            self._webhook.add_embed(embed)
-            self._webhook.execute()
+            _webhook.add_embed(embed)
+            _webhook.execute()
             embed = None
         except Exception as e:
             logger.error('Cannot send discord webhook for origin {} - Job {} - Reason: {}'.format(
