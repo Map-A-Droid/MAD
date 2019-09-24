@@ -85,7 +85,15 @@
               data : JSON.stringify(walkerarea_data),
               type : 'PATCH',
               contentType : 'application/json',
-              success: $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}')
+              success: function(data, status, xhr) {
+                $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
+              },
+              error: function(data, status, xhr) {
+                console.log(data);
+                console.log(status);
+                console.log(xhr);
+                alert('Something bad happened.  Check console for output');
+              }
             });
           } else {
             $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
