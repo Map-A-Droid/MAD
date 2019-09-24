@@ -62,7 +62,8 @@ class control(object):
             ("/restart_job", self.restart_job),
             ("/delete_log", self.delete_log),
             ("/get_all_workers", self.get_all_workers),
-            ("/job_for_worker", self.job_for_worker)
+            ("/job_for_worker", self.job_for_worker),
+            ("/reload_jobs", self.reload_jobs)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -448,12 +449,20 @@ class control(object):
         return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
 
     @auth_required
+    def reload_jobs(self):
+        logger.info("Reload existing jobs")
+        self._device_updater.init_jobs()
+        return redirect(getBasePath(request) + '/uploaded_files')
+
+
+    @auth_required
     @logger.catch
     def get_install_log(self):
+        withautojobs = request.args.get('withautojobs', False)
         return_log = []
-        log = self._device_updater.get_log()
+        log = self._device_updater.get_log(withautojobs=withautojobs)
         for entry in log:
-            return_log.append(log[entry])
+            return_log.append(entry)
 
         return jsonify(return_log)
 
@@ -470,9 +479,10 @@ class control(object):
     @auth_required
     @logger.catch
     def install_status(self):
+        withautojobs = request.args.get('withautojobs', False)
         return render_template('installation_status.html',
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Installation Status")
+                               title="Installation Status", withautojobs=withautojobs)
 
     @auth_required
     @logger.catch()
@@ -507,7 +517,8 @@ class control(object):
     @auth_required
     @logger.catch()
     def delete_log(self):
-        self._device_updater.delete_log()
+        onlysuccess = request.args.get('only_success', False)
+        self._device_updater.delete_log(onlysuccess=onlysuccess)
         return redirect(getBasePath(request) + '/install_status')
 
     @auth_required

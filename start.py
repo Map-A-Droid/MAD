@@ -234,6 +234,7 @@ if __name__ == "__main__":
                 sys.exit(0)
 
             pogoWindowManager = None
+            jobstatus: dict = {}
             MitmMapperManager.register('MitmMapper', MitmMapper)
             mitm_mapper_manager = MitmMapperManager()
             mitm_mapper_manager.start()
@@ -251,6 +252,9 @@ if __name__ == "__main__":
             t_ws = Thread(name='scanner', target=ws_server.start_server)
             t_ws.daemon = False
             t_ws.start()
+
+            # init jobprocessor
+            device_Updater = deviceUpdater(ws_server, args, jobstatus)
 
             webhook_worker = None
             if args.webhook:
@@ -277,10 +281,9 @@ if __name__ == "__main__":
     if args.with_madmin:
         from madmin.madmin import madmin_start
 
-        device_Updater = deviceUpdater(ws_server, args)
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
-                          args=(args, db_wrapper, ws_server, mapping_manager, device_Updater))
+                          args=(args, db_wrapper, ws_server, mapping_manager, device_Updater, jobstatus))
         t_madmin.daemon = True
         t_madmin.start()
 

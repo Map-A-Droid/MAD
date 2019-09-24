@@ -14,8 +14,8 @@
             "columns": [
                 { data: 'origin', title: 'Device' },
                 { data: 'file', title: 'File / Command' },
-                { data: '', title: 'Jobtype' },
                 { data: 'status', title: 'Status' },
+                { data: '', title: 'Init Date/Time' },
                 { data: '', title: 'Date/Time' },
                 { data: '', title: 'Action' }
             ],
@@ -45,27 +45,32 @@
                     }
                 },
                 {
-                    "targets": [2],
+                    "targets": [5],
                     "render": function (data, type, row) {
-                        return row.jobtype.split(".")[1];
+                         var redolink = "";
+                         var link = "<img src='static/autojob.png' alt='automatic job' width='30'>";
+
+                         if(!row.auto) {
+                             link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a>";
+                             redolink = "<a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a>";
+                         }
+
+                         return link + " " + redolink;
                     }
                 },
                 {
-                    "targets": [5],
+                    "targets": [3],
                     "render": function (data, type, row) {
-
-                         var link = "<center><a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a> <a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a></center>";
-
-                        return link;
+                        return tstodt(row.id);
                     }
                 },
                 {
                     "targets": [4],
                     "render": function (data, type, row) {
 
-                        var initdatetime = tstodt(row.id);
                         var nextdatetime = "-"
                         var lastdatetime = "-"
+                        var laststatus = "-"
 
                         if ('lastprocess' in row) {
                             lastdatetime = tstodt(row.lastprocess);
@@ -75,11 +80,15 @@
                             nextdatetime = tstodt(row.processingdate);
                         }
 
-                         return "<b>Init:</b> " + initdatetime + "<br><b>Process: </b> " + lastdatetime + "<br><b>Next: </b>" + nextdatetime;
+                        if ('laststatus' in row) {
+                            laststatus = row.laststatus;
+                        }
+
+                         return "<b>Processed: </b> " + lastdatetime + "<br><b>Next: </b>" + nextdatetime + "<br><b>Last status: </b>" + laststatus;
                     }
                 }
             ],
-            "order": [[4, "desc"]],
+            "order": [[3, "desc"]],
             "responsive": {{ responsive }},
             "stateSave": true,
             "stripeClasses": [ 'odd', 'even' ],
@@ -111,7 +120,11 @@
         $("#navgyms").addClass("active");
         $.ajax({
             type: "GET",
-            url: "get_install_log",
+            {% if withautojobs == "true" %}
+                url: "get_install_log?withautojobs=true",
+            {% else %}
+                url: "get_install_log",
+            {% endif %}
             success: function (result) {
                 setGrid('#show-data', result);
             }
@@ -144,6 +157,8 @@
 	{% endwith %}
 </p>
 <table id="show-data" class="table" style="width:100%;"></table>
-<div class="alert alert-warning"><a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a></div>
-
+{% if not withautojobs %}
+<div class="alert alert-warning"><a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a><br>
+<a href="delete_log?only_success=true" class='confirm' title='Do you really want to delete the logs?'>Delete successful Jobs</a></div>
+{% endif %}
 {% endblock %}
