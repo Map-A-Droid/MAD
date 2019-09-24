@@ -80,7 +80,7 @@ def parseArgs():
                             'The delay in minutes to wait after an egg has hatched to move to the location of the '
                             'gym. Default: 3.5'))
 
-    # job discord settings
+    # job processor
     parser.add_argument('-jobdtwh', '--job_dt_wh', action='store_true', default=False,
                         help='Send job status to discord')
     parser.add_argument('-jobdtwhurl', '--job_dt_wh_url', required=False, default="", type=str,
@@ -88,6 +88,8 @@ def parseArgs():
     parser.add_argument('-jobdtsdtyp', '--job_dt_send_type', required=False, default="SUCCESS|FAILURE|NOCONNECT|TERMINATED",
                         type=str, help='Kind of Job Messages to send - separated by pipe | '
                                        '(Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)')
+    parser.add_argument('-jobrtnc', '--job_restart_notconnect', required=False, type=int, default=0,
+                        help='Restart job if device is not connected (in minutes). Default: 0 (Off)')
 
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=True,
