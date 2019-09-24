@@ -252,6 +252,17 @@ class RmWrapper(DbWrapperBase):
             pokemon_display = {}
             # initialize to not run into nullpointer
 
+        # ditto detector
+
+        if pokemon_data.get('id') in (46, 48, 163, 165, 193, 223, 293, 316) and \
+            pokemon_display.get('weather_boosted_value', None) is not None \
+            and (pokemon_data.get("individual_attack") < 4 or pokemon_data.get("individual_defense") < 4 or
+                 pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3):
+            # mon must be a ditto :D
+            mon_id = 132
+        else:
+            mon_id = pokemon_data.get('id')
+
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
@@ -272,7 +283,7 @@ class RmWrapper(DbWrapperBase):
         vals = (
             encounter_id,
             spawnid,
-            pokemon_data.get('id'),
+            mon_id,
             latitude, longitude, despawn_time,
             pokemon_data.get("individual_attack"),
             pokemon_data.get("individual_defense"),
