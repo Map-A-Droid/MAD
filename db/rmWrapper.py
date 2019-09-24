@@ -261,7 +261,7 @@ class RmWrapper(DbWrapperBase):
                  pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3):
             # mon must be a ditto :D
             mon_id = 132
-            gender = None
+            gender = 2
         else:
             mon_id = pokemon_data.get('id')
             gender = pokemon_display.get("gender_value", None)
