@@ -255,13 +255,16 @@ class RmWrapper(DbWrapperBase):
         # ditto detector
 
         if pokemon_data.get('id') in (13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399) and \
-            pokemon_display.get('weather_boosted_value', None) is not None \
+                (pokemon_display.get('weather_boosted_value', None) is not None
+                  and pokemon_display.get('weather_boosted_value', None) > 0) \
             and (pokemon_data.get("individual_attack") < 4 or pokemon_data.get("individual_defense") < 4 or
                  pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3):
             # mon must be a ditto :D
             mon_id = 132
+            gender = None
         else:
             mon_id = pokemon_data.get('id')
+            gender = pokemon_display.get("gender_value", None)
 
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
@@ -294,7 +297,7 @@ class RmWrapper(DbWrapperBase):
             pokemon_data.get("cp_multiplier"),
             pokemon_data.get("weight"),
             pokemon_data.get("height"),
-            pokemon_display.get("gender_value", None),
+            gender,
             float(capture_probability_list[0]),
             float(capture_probability_list[1]),
             float(capture_probability_list[2]),
