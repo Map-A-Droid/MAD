@@ -120,7 +120,7 @@ class WebsocketServer(object):
         async with self.__users_mutex:
             for id, worker in self.__current_users.items():
                 logger.info('Closing connections to device {}.', id)
-                worker[2].close()
+                await worker[2].close()
 
         if self.__loop is not None:
             self.__loop.call_soon_threadsafe(self.__loop.stop)
@@ -373,7 +373,7 @@ class WebsocketServer(object):
             # retrieve next message from queue to be sent, block if empty
             next = None
             while next is None and websocket_client_connection.open:
-                logger.debug("Retrieving next message to send")
+                logger.debug("Fetching next message to send")
                 next = await self.__retrieve_next_send(websocket_client_connection)
                 if next is None:
                     # logger.debug("next is None, stopping connection...")
@@ -521,11 +521,12 @@ class WebsocketServer(object):
 
         if isinstance(message, str):
             to_be_sent: str = u"%s;%s" % (str(message_id), message)
-            logger.debug("To be sent: {}", to_be_sent.strip())
+            logger.debug("To be sent to {}: {}", id, to_be_sent.strip())
         elif byte_command is not None:
             to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
             to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
             to_be_sent += message
+            logger.debug("To be sent to {} (message ID: {}): {}", id, message_id, str(to_be_sent[:10]))
         else:
             logger.fatal("Tried to send invalid message (bytes without byte command or no byte/str passed)")
             return None

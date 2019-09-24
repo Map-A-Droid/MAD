@@ -128,11 +128,17 @@ class MappingManager:
 
     def get_monlist(self, listname, areaname):
         if type(listname) is list:
-            logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json'
-                         ' - Using a empty list now!!'.format(str(areaname)))
+            logger.error('Area {} is using old list format instead of global mon list. Please check your mappings.json.'
+                         ' Using empty list instead.'.format(str(areaname)))
             return []
-        if listname is not None: return self._monlists[listname]
-        return []
+        if listname is not None and listname in self._monlists:
+            return self._monlists[listname]
+        elif listname is None:
+            return []
+        else:
+            logger.error("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
+                         listname, areaname)
+            return []
 
     def get_all_routemanager_names(self):
         return self._routemanagers.keys()

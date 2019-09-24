@@ -416,7 +416,6 @@ class deviceUpdater(object):
         except Exception as e:
             logger.error('Error while getting response from phone - Reason: {}'
                          .format(str(e)))
-
         return False
 
     def delete_log(self, onlysuccess=False):
