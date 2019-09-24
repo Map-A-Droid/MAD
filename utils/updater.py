@@ -7,7 +7,6 @@ from enum import Enum
 from multiprocessing import  Queue
 from threading import  RLock, Thread
 from utils.logging import logger
-from discord_webhook import DiscordWebhook, DiscordEmbed
 
 
 class jobType(Enum):
@@ -436,6 +435,8 @@ class deviceUpdater(object):
         try:
             if jobReturn(status).name not in self._args.job_dt_send_type.split('|') or not self._args.job_dt_wh:
                 return
+
+            from discord_webhook import DiscordWebhook, DiscordEmbed
 
             origin = self._log[str(id_)]['origin']
             file_ = self._log[str(id_)]['file']
