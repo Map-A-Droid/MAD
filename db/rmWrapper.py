@@ -252,6 +252,24 @@ class RmWrapper(DbWrapperBase):
             pokemon_display = {}
             # initialize to not run into nullpointer
 
+        # ditto detector
+
+        if pokemon_data.get('id') in (13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399) and \
+                (pokemon_display.get('weather_boosted_value', None) is not None
+                  and pokemon_display.get('weather_boosted_value', None) > 0) \
+            and (pokemon_data.get("individual_attack") < 4 or pokemon_data.get("individual_defense") < 4 or
+                 pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3):
+            # mon must be a ditto :D
+            mon_id = 132
+            gender = 2
+            move_1 = 242
+            move_2 = 133
+        else:
+            mon_id = pokemon_data.get('id')
+            gender = pokemon_display.get("gender_value", None)
+            move_1 = pokemon_data.get("move_1")
+            move_2 = pokemon_data.get("move_2")
+
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
@@ -272,18 +290,18 @@ class RmWrapper(DbWrapperBase):
         vals = (
             encounter_id,
             spawnid,
-            pokemon_data.get('id'),
+            mon_id,
             latitude, longitude, despawn_time,
             pokemon_data.get("individual_attack"),
             pokemon_data.get("individual_defense"),
             pokemon_data.get("individual_stamina"),
-            pokemon_data.get("move_1"),
-            pokemon_data.get("move_2"),
+            move_1,
+            move_2,
             pokemon_data.get("cp"),
             pokemon_data.get("cp_multiplier"),
             pokemon_data.get("weight"),
             pokemon_data.get("height"),
-            pokemon_display.get("gender_value", None),
+            gender,
             float(capture_probability_list[0]),
             float(capture_probability_list[1]),
             float(capture_probability_list[2]),
