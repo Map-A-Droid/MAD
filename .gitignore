@@ -2,8 +2,8 @@ gym_info.json
 ocr/screenshots/*
 ocr/gym_img/*
 ocr/mon_img/*
-ocr/www_hash/*
 temp/*
+personal_commands/*
 ocr/weather/*
 version.json
 *.pyc
@@ -12,6 +12,8 @@ version.json
 configs/config.ini
 *.calc
 configs/geofences/*
+upload/*
+files/*
 configs/mappings.json
 configs/mappings_org.json
 .idea/*
@@ -22,7 +24,8 @@ configs/coords/*
 *.stats
 .vscode/*
 status.json
-
+update_log.json
+commands.json
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

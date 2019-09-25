@@ -46,7 +46,7 @@ class WebhookWorker:
         if size == 0:
             return [payload]
 
-        return [payload[x : x + size] for x in range(0, len(payload), size)]
+        return [payload[x: x + size] for x in range(0, len(payload), size)]
 
     def __is_in_excluded_area(self, coordinate):
         for gfh in self.__geofence_helpers:
@@ -268,7 +268,6 @@ class WebhookWorker:
                 "time_changed": weather["last_updated"],
             }
 
-            # required by PA but not provided by Monocle
             if weather.get("latitude", None) is None:
                 weather_payload["latitude"] = S2Helper.middle_of_cell(
                     weather["s2_cell_id"]
@@ -344,6 +343,9 @@ class WebhookWorker:
             if raid["is_ex_raid_eligible"] is not None:
                 raid_payload["is_ex_raid_eligible"] = raid["is_ex_raid_eligible"]
 
+            if raid["is_exclusive"] is not None:
+                raid_payload["is_exclusive"] = raid["is_exclusive"]
+
             if raid["gender"] is not None:
                 raid_payload["gender"] = raid["gender"]
 
@@ -362,10 +364,10 @@ class WebhookWorker:
             if self.__is_in_excluded_area([mon["latitude"], mon["longitude"]]):
                 continue
 
-            if mon["pokemon_id"] in self.__IV_MON and (
-                mon["individual_attack"] is None
-                and mon["individual_defense"] is None
-                and mon["individual_stamina"] is None
+            if (
+                not self.__args.pokemon_webhook_nonivs
+                and mon["pokemon_id"] in self.__IV_MON
+                and (mon["individual_attack"] is None)
             ):
                 # skipping this mon since IV has not been scanned yet
                 continue
@@ -383,17 +385,15 @@ class WebhookWorker:
             # get rarity
             pokemon_rarity = self.__rarity.rarity_by_id(pokemonid=mon["pokemon_id"])
 
-            # used by RM
             if mon.get("cp_multiplier", None) is not None:
                 mon_payload["cp_multiplier"] = mon["cp_multiplier"]
                 mon_payload["pokemon_level"] = calculate_mon_level(mon["cp_multiplier"])
 
-            # used by Monocle
-            if mon.get("level", None) is not None:
-                mon_payload["pokemon_level"] = mon["level"]
-
             if mon["form"] is not None and mon["form"] > 0:
                 mon_payload["form"] = mon["form"]
+
+            if mon["costume"] is not None:
+                mon_payload["costume"] = mon["costume"]
 
             if mon["cp"] is not None:
                 mon_payload["cp"] = mon["cp"]
@@ -429,7 +429,10 @@ class WebhookWorker:
                 mon["weather_boosted_condition"] is not None
                 and mon["weather_boosted_condition"] > 0
             ):
-                mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
+                if self.__args.quest_webhook_flavor == "default":
+                    mon_payload["boosted_weather"] = mon["weather_boosted_condition"]
+                if self.__args.quest_webhook_flavor == "poracle":
+                    mon_payload["weather"] = mon["weather_boosted_condition"]
 
             entire_payload = {"type": "pokemon", "message": mon_payload}
             ret.append(entire_payload)
@@ -478,14 +481,25 @@ class WebhookWorker:
                 "pokestop_id": pokestop["pokestop_id"],
                 "latitude": pokestop["latitude"],
                 "longitude": pokestop["longitude"],
-                "lure_expiration": pokestop["lure_expiration"],
-                "lure_id": pokestop["active_fort_modifier"],
                 "updated": pokestop["last_updated"],
                 "last_modified": pokestop["last_modified"]
             }
 
+            if 'active_fort_modifier' in pokestop and pokestop["active_fort_modifier"]:
+                pokestop_payload["lure_expiration"] = pokestop["lure_expiration"]
+                pokestop_payload["lure_id"] = pokestop["active_fort_modifier"]
+
             if pokestop["image"]:
                 pokestop_payload["url"] = pokestop["image"]
+
+            if pokestop["incident_start"]:
+                pokestop_payload["incident_start"] = pokestop["incident_start"]
+
+            if pokestop["incident_expiration"]:
+                pokestop_payload["incident_expiration"] = pokestop["incident_expiration"]
+
+            if pokestop["incident_grunt_type"]:
+                pokestop_payload["incident_grunt_type"] = pokestop["incident_grunt_type"]
 
             entire_payload = {"type": "pokestop", "message": pokestop_payload}
             ret.append(entire_payload)
@@ -529,6 +543,8 @@ class WebhookWorker:
                 self.__geofence_helpers.append(geofence_helper_of_area)
 
     def __create_payload(self):
+        logger.debug("Fetching data changed since {}", self.__last_check)
+
         # the payload that is about to be sent
         full_payload = []
 
@@ -576,19 +592,23 @@ class WebhookWorker:
         except Exception:
             logger.exception("Error while creating webhook payload")
 
+        logger.debug2("Done fetching data + building payload")
+
         return full_payload
 
     def run_worker(self):
         logger.info("Starting webhook worker thread")
 
         while not terminate_mad.is_set():
+            preparing_timestamp = int(time.time())
+
             # fetch data and create payload
             full_payload = self.__create_payload()
 
             # send our payload
             self.__send_webhook(full_payload)
 
-            self.__last_check = int(time.time())
+            self.__last_check = preparing_timestamp
             time.sleep(self.__worker_interval_sec)
 
         logger.info("Stopping webhook worker thread")

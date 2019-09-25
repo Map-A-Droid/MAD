@@ -1,5 +1,6 @@
 import math
 import time
+from datetime import datetime
 
 from db.dbWrapperBase import DbWrapperBase
 from mitm_receiver.MitmMapper import MitmMapper
@@ -26,7 +27,12 @@ class WorkerMITM(MITMBase):
 
     def _post_move_location_routine(self, timestamp):
         # TODO: pass the appropiate proto number if IV?
-        self._wait_for_data(timestamp)
+        if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
+            self._wait_for_data(timestamp)
+        else:
+            logger.info('Currently in INIT Mode - process next coord')
+            self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+            self.worker_stats()
 
     def _move_to_location(self):
         if not self._mapping_manager.routemanager_present(self._routemanager_name) \
@@ -35,14 +41,17 @@ class WorkerMITM(MITMBase):
         routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
         # get the distance from our current position (last) to the next gym (cur)
         distance = get_distance_of_two_points_in_meters(float(self.last_location.lat),
-                                                        float(
-                                                            self.last_location.lng),
-                                                        float(
-                                                            self.current_location.lat),
+                                                        float(self.last_location.lng),
+                                                        float(self.current_location.lat),
                                                         float(self.current_location.lng))
         logger.debug('Moving {} meters to the next position', round(distance, 2))
-        speed = routemanager_settings.get("speed", 0)
-        max_distance = routemanager_settings.get("max_distance", None)
+        if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
+            speed = routemanager_settings.get("speed", 0)
+            max_distance = routemanager_settings.get("max_distance", None)
+        else:
+            speed = int(25)
+            max_distance = int(200)
+
         if (speed == 0 or
                 (max_distance and 0 < max_distance < distance)
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
@@ -114,7 +123,6 @@ class WorkerMITM(MITMBase):
 
     def _pre_work_loop(self):
         logger.info("MITM worker starting")
-        self._check_ggl_login()
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
@@ -131,8 +139,8 @@ class WorkerMITM(MITMBase):
 
         cur_time = time.time()
         start_result = False
+        self._mitm_mapper.set_injection_status(self._id, False)
         while not pogo_topmost:
-            self._mitm_mapper.set_injection_status(self._id, False)
             start_result = self._communicator.startApp(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
@@ -147,6 +155,8 @@ class WorkerMITM(MITMBase):
             reached_raidtab = True
 
         self._wait_pogo_start_delay()
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
 
         return reached_raidtab
 
@@ -177,12 +187,14 @@ class WorkerMITM(MITMBase):
             scanmode = "mons"
             routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
-                ids_iv = routemanager_settings.get("mon_ids_iv", None)
+                ids_iv = self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None),
+                                                           self._routemanager_name)
         elif routemanager_mode == "raids_mitm":
             scanmode = "raids"
             routemanager_settings = self._mapping_manager.routemanager_get_settings(self._routemanager_name)
             if routemanager_settings is not None:
-                ids_iv = routemanager_settings.get("mon_ids_iv", None)
+                ids_iv = self._mapping_manager.get_monlist(routemanager_settings.get("mon_ids_iv", None),
+                                                           self._routemanager_name)
         elif routemanager_mode == "iv_mitm":
             scanmode = "ivs"
             ids_iv = self._mapping_manager.routemanager_get_encounter_ids_left(self._routemanager_name)

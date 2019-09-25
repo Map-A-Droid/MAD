@@ -5,7 +5,7 @@ from utils.logging import logger
 
 from .convert_mapping import convert_mappings
 
-current_version = 10
+current_version = 13
 
 
 class MADVersion(object):
@@ -54,7 +54,7 @@ class MADVersion(object):
                 except Exception as e:
                     logger.info("Unexpected error: {}", e)
 
-            # Adding form column for rm / monocle if not exists
+            # Adding form column if it doesnt exist
             if self._application_args.db_method == "rm":
                 alter_query = (
                     "ALTER TABLE raid "
@@ -62,13 +62,6 @@ class MADVersion(object):
                 )
                 column_exist = self.dbwrapper.check_column_exists(
                     'raid', 'form')
-            elif self._application_args.db_method == "monocle":
-                alter_query = (
-                    "ALTER TABLE raids "
-                    "ADD form smallint(6) DEFAULT NULL"
-                )
-                column_exist = self.dbwrapper.check_column_exists(
-                    'raids', 'form')
             else:
                 logger.error("Invalid db_method in config. Exiting")
                 sys.exit(1)
@@ -89,74 +82,6 @@ class MADVersion(object):
                 self.dbwrapper.execute(alter_query, commit=True)
             except Exception as e:
                 logger.info("Unexpected error: {}", e)
-        if self._version < 3:
-            if self._application_args.db_method == "monocle":
-                # Add Weather Index
-                alter_query = (
-                    "ALTER TABLE weather ADD UNIQUE s2_cell_id (s2_cell_id) USING BTREE"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
-                # Change Mon Unique Index
-                alter_query = (
-                    "ALTER TABLE sightings DROP INDEX timestamp_encounter_id_unique"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
-                alter_query = (
-                    "ALTER TABLE sightings DROP INDEX encounter_id;"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
-                alter_query = (
-                    "CREATE TABLE sightings_temp LIKE sightings;"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
-                alter_query = (
-                    "ALTER TABLE sightings_temp ADD UNIQUE(encounter_id);"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
-                alter_query = (
-                    "INSERT IGNORE INTO sightings_temp SELECT * FROM sightings ORDER BY id;"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
-                alter_query = (
-                    "RENAME TABLE sightings TO backup_sightings, sightings_temp TO sightings;"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
-                alter_query = (
-                    "DROP TABLE backup_sightings;"
-                )
-                try:
-                    self.dbwrapper.execute(alter_query, commit=True)
-                except Exception as e:
-                    logger.info("Unexpected error: {}", e)
-
         if self._version < 7:
             alter_query = (
                 "ALTER TABLE trs_status "
@@ -203,18 +128,6 @@ class MADVersion(object):
             except Exception as e:
                 logger.info("Unexpected error: {}", e)
 
-            if self._application_args.db_method == "monocle":
-                alter_query = (
-                    "alter table sightings add column costume smallint(6) default 0"
-                )
-                column_exist = self.dbwrapper.check_column_exists(
-                    'sightings', 'costume')
-                if column_exist == 0:
-                    try:
-                        self.dbwrapper.execute(alter_query, commit=True)
-                    except Exception as e:
-                        logger.info("Unexpected error: {}", e)
-
             alter_query = (
                 "ALTER TABLE trs_status "
                 "CHANGE currentPos currentPos VARCHAR(50) NULL DEFAULT NULL, "
@@ -240,10 +153,13 @@ class MADVersion(object):
                 "ADD quest_template VARCHAR(100) NULL DEFAULT NULL "
                 "AFTER quest_reward"
             )
-            try:
-                self.dbwrapper.execute(alter_query, commit=True)
-            except Exception as e:
-                logger.exception("Unexpected error: {}", e)
+            column_exist = self.dbwrapper.check_column_exists(
+                'trs_quest', 'quest_template')
+            if column_exist == 0:
+                try:
+                    self.dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
 
         if self._version < 9:
             alter_query = (
@@ -270,6 +186,65 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+
+        if self._version < 11:
+            query = (
+                "ALTER TABLE trs_stats_detect_raw "
+                "ADD is_shiny TINYINT(1) NOT NULL DEFAULT '0' "
+                "AFTER count"
+            )
+            column_exist = self.dbwrapper.check_column_exists(
+                'trs_stats_detect_raw', 'is_shiny')
+            if column_exist == 0:
+                try:
+                    self.dbwrapper.execute(query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
+
+        if self._version < 12:
+            query = (
+                "ALTER TABLE trs_stats_detect_raw "
+                "ADD INDEX typeworker (worker, type_id)"
+            )
+            index_exist = self.dbwrapper.check_index_exists(
+                'trs_stats_detect_raw', 'typeworker')
+
+            if index_exist >= 1:
+                query = (
+                    "ALTER TABLE trs_stats_detect_raw DROP INDEX typeworker, ADD INDEX typeworker (worker, type_id)"
+                )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+
+            query = (
+                "ALTER TABLE trs_stats_detect_raw "
+                "ADD INDEX shiny (is_shiny)"
+            )
+            index_exist = self.dbwrapper.check_index_exists(
+                'trs_stats_detect_raw', 'shiny')
+
+            if index_exist >= 1:
+                query = (
+                    "ALTER TABLE trs_stats_detect_raw DROP INDEX shiny, ADD INDEX shiny (is_shiny)"
+                )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+
+        if self._version < 13:
+            # Adding current_sleep for worker status
+            if self.dbwrapper.check_column_exists('trs_status', 'currentSleepTime') == 0:
+                query = (
+                    "ALTER TABLE trs_status "
+                    "ADD currentSleepTime INT(11) NOT NULL DEFAULT 0"
+                )
+                try:
+                    self.dbwrapper.execute(query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
 
         self.set_version(current_version)
 

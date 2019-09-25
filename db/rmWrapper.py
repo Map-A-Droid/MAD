@@ -1,12 +1,8 @@
-import shutil
-import sys
 import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
 from multiprocessing.managers import SyncManager
 from typing import List, Optional
-
-import requests
 
 from db.dbWrapperBase import DbWrapperBase
 from utils.collections import Location
@@ -42,78 +38,28 @@ class RmWrapper(DbWrapperBase):
                 "table": "gym",
                 "column": "is_ex_raid_eligible",
                 "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_start",
+                "ctype": "datetime NULL"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_expiration",
+                "ctype": "datetime NULL"
+            },
+            {
+                "table": "pokestop",
+                "column": "incident_grunt_type",
+                "ctype": "smallint(1) NULL"
             }
         ]
 
         for field in fields:
             self._check_create_column(field)
 
-    def auto_hatch_eggs(self):
-        logger.debug("RmWrapper::auto_hatch_eggs called")
-        now = (datetime.now())
-        now_timestamp = time.mktime(datetime.utcfromtimestamp(
-            float(time.time())).timetuple())
-
-        mon_id = self.application_args.auto_hatch_number
-
-        if mon_id == 0:
-            logger.warning("You have enabled auto hatch but not the mon_id "
-                           "so it will mark them as zero so they will remain unhatched...")
-
-        logger.debug("Time used to find eggs: " + str(now))
-        timecheck = now_timestamp
-
-        query_for_count = (
-            "SELECT gym_id, UNIX_TIMESTAMP(start), UNIX_TIMESTAMP(end) "
-            "FROM raid "
-            "WHERE start <= FROM_UNIXTIME(%s) AND end >= FROM_UNIXTIME(%s) "
-            "AND level = 5 AND IFNULL(pokemon_id, 0) = 0"
-        )
-
-        vals = (
-            timecheck, timecheck
-        )
-
-        res = self.execute(query_for_count, vals)
-        rows_that_need_hatch_count = len(res)
-        logger.debug("Rows that need updating: {}".format(
-            rows_that_need_hatch_count))
-
-        if rows_that_need_hatch_count > 0:
-            counter = 0
-            query = (
-                "UPDATE raid "
-                "SET pokemon_id = %s "
-                "WHERE gym_id = %s"
-            )
-
-            for row in res:
-                logger.debug(row)
-                vals = (
-                    mon_id, row[0]
-                )
-                affected_rows = self.execute(query, vals, commit=True)
-
-                if affected_rows == 1:
-                    counter = counter + 1
-                elif affected_rows > 1:
-                    logger.error(
-                        'Something is wrong with the indexing on your table you raids on this id {}', row[0])
-                else:
-                    logger.error(
-                        'The row we wanted to update did not get updated that had id {}', row[0])
-
-            if counter == rows_that_need_hatch_count:
-                logger.info(
-                    "{} gym(s) were updated as part of the regular level 5 egg hatching checks", counter)
-            else:
-                logger.warning(
-                    "There was an issue and the number expected the hatch did not match the successful updates. "
-                    "Expected {} Actual {}", rows_that_need_hatch_count, counter)
-        else:
-            logger.info('No Eggs due for hatching')
-
-    def db_timestring_to_unix_timestamp(self, timestring):
+    def __db_timestring_to_unix_timestamp(self, timestring):
         try:
             dt = datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
         except ValueError:
@@ -145,328 +91,11 @@ class RmWrapper(DbWrapperBase):
                 logger.debug("Excluded hatch at {}, {} since the coordinate is not inside the given include fences", str(
                     latitude), str(longitude))
                 continue
-            timestamp = self.db_timestring_to_unix_timestamp(str(start))
+            timestamp = self.__db_timestring_to_unix_timestamp(str(start))
             data.append((timestamp + delay_after_hatch,
                          Location(latitude, longitude)))
 
         logger.debug("Latest Q: {}", str(data))
-        return data
-
-    def submit_raid(self, gym, pkm, lvl, start, end, type, raid_no, capture_time, unique_hash="123",
-                    MonWithNoEgg=False):
-        logger.debug("RmWrapper::submit_raid called")
-        logger.debug("[Crop: {} ({}) ] submit_raid: Submitting raid", str(
-            raid_no), str(unique_hash))
-
-        if self.raid_exist(gym, type, raid_no, unique_hash=str(unique_hash), mon=pkm):
-            self.refresh_times(gym, raid_no, capture_time)
-            logger.debug("[Crop: {} ({})] submit_raid: {} already submitted, ignoring", str(
-                raid_no), str(unique_hash), str(type))
-            logger.debug("RmWrapper::submit_raid done")
-            return False
-
-        if start is not None:
-            start_db = datetime.utcfromtimestamp(
-                float(start)).strftime("%Y-%m-%d %H:%M:%S")
-            start = time.mktime(
-                datetime.utcfromtimestamp(float(start)).timetuple())
-
-        if end is not None:
-            end_db = datetime.utcfromtimestamp(
-                float(end)).strftime("%Y-%m-%d %H:%M:%S")
-            end = time.mktime(
-                datetime.utcfromtimestamp(float(end)).timetuple())
-
-        egg_hatched = False
-
-        now_timestamp = time.mktime(
-            datetime.utcfromtimestamp(float(capture_time)).timetuple())
-        logger.debug(now_timestamp)
-
-        logger.debug("[Crop: {} ({})] submit_raid: Submitting something of type {}", str(
-            raid_no), str(unique_hash), str(type))
-        logger.info("Submitting gym: {}, lvl: {}, start and spawn: {}, end: {}, mon: {}",
-                    gym, lvl, start, end, pkm)
-
-        # always insert timestamp to last_scanned to have rows change if raid has been reported before
-
-        if MonWithNoEgg:
-            start = int(end) - (int(self.application_args.raid_time) * 60)
-            query = (
-                "UPDATE raid "
-                "SET level = %s, spawn = FROM_UNIXTIME(%s), start = %s, end = %s, "
-                "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s "
-                "WHERE gym_id = %s"
-            )
-            vals = (
-                lvl, now_timestamp, start, end_db, pkm, int(
-                    time.time()), '999', '1', '1', gym
-            )
-        elif end is None or start is None:
-            # no end or start time given, just update anything there is
-            logger.info(
-                "Updating without end- or starttime - we should've seen the egg before")
-            query = (
-                "UPDATE raid "
-                "SET level = %s, pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s "
-                "WHERE gym_id = %s"
-            )
-            vals = (
-                lvl, pkm, int(time.time()), '999', '1', '1', gym
-            )
-            found_end_time, end_time = self.get_raid_endtime(
-                gym, raid_no, unique_hash=unique_hash)
-            if found_end_time:
-                egg_hatched = True
-        else:
-            query = (
-                "UPDATE raid "
-                "SET level = %s, spawn = FROM_UNIXTIME(%s), start = %s, end = %s, "
-                "pokemon_id = %s, last_scanned = FROM_UNIXTIME(%s), cp = %s, "
-                "move_1 = %s, move_2 = %s "
-                "WHERE gym_id = %s"
-            )
-            vals = (
-                lvl, now_timestamp, start_db, end_db, pkm, int(
-                    time.time()), '999', '1', '1', gym
-            )
-
-        affected_rows = self.execute(query, vals, commit=True)
-
-        if affected_rows == 0 and not egg_hatched:
-            # we need to insert the raid...
-            if MonWithNoEgg:
-                # submit mon without egg info -> we have an endtime
-                logger.debug("Inserting mon without egg")
-                start = end - (int(self.application_args.raid_time) * 60)
-                query = (
-                    "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, "
-                    "move_1, move_2) "
-                    "VALUES(%s, %s, FROM_UNIXTIME(%s), %s, %s, %s, "
-                    "FROM_UNIXTIME(%s), 999, 1, 1)"
-                )
-                vals = (
-                    gym, lvl, now_timestamp, start_db, end_db, pkm, int(
-                        time.time())
-                )
-            elif end is None and start is None:
-                logger.debug("Inserting without end or start")
-                # no end or start time given, just inserting won't help much...
-                logger.warning("Useless to insert without endtime...")
-                return False
-            else:
-                # we have start and end, mon is either with egg or we're submitting an egg
-                start = int(end) - (int(self.application_args.raid_time) * 60)
-                query = (
-                    "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, last_scanned, cp, "
-                    "move_1, move_2) "
-                    "VALUES (%s, %s, FROM_UNIXTIME(%s), %s, %s, %s, "
-                    "FROM_UNIXTIME(%s), 999, 1, 1)"
-                )
-                vals = (gym, lvl, now_timestamp, start_db,
-                        end_db, pkm, int(time.time()))
-
-            self.execute(query, vals, commit=True)
-
-        logger.debug("[Crop: {} ({})] submit_raid: Submit finished",
-                    str(raid_no), str(unique_hash))
-        self.refresh_times(gym, raid_no, capture_time)
-
-        logger.debug("RmWrapper::submit_raid done")
-        return True
-
-    def read_raid_endtime(self, gym, raid_no, unique_hash="123"):
-        logger.debug("RmWrapper::read_raid_endtime called")
-        logger.debug("[Crop: {} ({})] read_raid_endtime: Check DB for existing mon", str(
-            raid_no), str(unique_hash))
-        now = datetime.utcfromtimestamp(
-            time.time()).strftime("%Y-%m-%d %H:%M:%S")
-
-        query = (
-            "SELECT raid.end "
-            "FROM raid "
-            "WHERE STR_TO_DATE(raid.end, '%Y-%m-%d %H:%i:%S') >= "
-            "STR_TO_DATE(%s, '%Y-%m-%d %H:%i:%S') AND gym_id = %s"
-        )
-        vals = (
-            now, gym
-        )
-
-        res = self.execute(query, vals)
-        number_of_rows = len(res)
-
-        if number_of_rows > 0:
-            for row in res:
-                logger.debug("[Crop: {} ({})] read_raid_endtime: Found Rows: {}", str(
-                    raid_no), str(unique_hash), str(number_of_rows))
-                logger.debug("[Crop: {} ({})] read_raid_endtime: Endtime already submitted", str(
-                    raid_no), str(unique_hash))
-                logger.debug("RmWrapper::read_raid_endtime done")
-                return True
-
-        logger.debug("[Crop: {} ({})] read_raid_endtime: Endtime is new", str(
-            raid_no), str(unique_hash))
-        logger.debug("RmWrapper::read_raid_endtime done")
-        return False
-
-    def get_raid_endtime(self, gym, raid_no, unique_hash="123"):
-        logger.debug("RmWrapper::get_raid_endtime called")
-        logger.debug("[Crop: {} ({})] get_raid_endtime: Check DB for existing mon", str(
-            raid_no), str(unique_hash))
-
-        now = datetime.utcfromtimestamp(
-            time.time()).strftime('%Y-%m-%d %H:%M:%S')
-        query = (
-            "SELECT UNIX_TIMESTAMP(raid.end) "
-            "FROM raid "
-            "WHERE STR_TO_DATE(raid.end, \'%Y-%m-%d %H:%i:%S\') >= "
-            "STR_TO_DATE(%s, \'%Y-%m-%d %H:%i:%S\') and gym_id = %s"
-        )
-        vals = (
-            now, gym
-        )
-
-        res = self.execute(query, vals)
-        number_of_rows = len(res)
-
-        if number_of_rows > 0:
-            for row in res:
-                logger.debug("[Crop: {} ({})] get_raid_endtime: Returning found endtime", str(
-                    raid_no), str(unique_hash))
-                logger.debug("[Crop: {} ({})] get_raid_endtime: Time: {}", str(
-                    raid_no), str(unique_hash), str(row[0]))
-
-                return True, row[0]
-
-        logger.debug("[Crop: {} ({}) ] get_raid_endtime: No matching endtime found", str(
-            raid_no), str(unique_hash))
-        return False, None
-
-    def raid_exist(self, gym, type, raid_no, unique_hash="123", mon=0):
-        logger.debug("RmWrapper::raid_exist called")
-        logger.debug("[Crop: {} ({})] raid_exist: Check DB for existing entry", str(
-            raid_no), str(unique_hash))
-        now = datetime.utcfromtimestamp(
-            time.time()).strftime('%Y-%m-%d %H:%M:%S')
-
-        # TODO: consider reducing the code...
-
-        if type == "EGG":
-            logger.debug("[Crop: {} ({})] raid_exist: Check for egg", str(
-                raid_no), str(unique_hash))
-            query = (
-                "SELECT start "
-                "FROM raid "
-                "WHERE STR_TO_DATE(raid.start, '%Y-%m-%d %H:%i:%S') >= "
-                "STR_TO_DATE(%s, '%Y-%m-%d %H:%i:%S') and gym_id = %s"
-            )
-            vals = (
-                now, gym
-            )
-
-            res = self.execute(query, vals)
-            number_of_rows = len(res)
-            if number_of_rows > 0:
-                logger.debug("[Crop: {} ({})] raid_exist: Found Rows: {}", str(
-                    raid_no), str(unique_hash), str(number_of_rows))
-                logger.debug("[Crop: {} ({})] raid_exist: Egg already submitted", str(
-                    raid_no), str(unique_hash))
-                logger.debug("RmWrapper::raid_exist done")
-                return True
-            else:
-                logger.debug("[Crop: {} ({})] raid_exist: Egg is new",
-                            str(raid_no), str(unique_hash))
-                logger.debug("RmWrapper::raid_exist done")
-                return False
-        else:
-            logger.debug("[Crop: {} ({})] raid_exist: Check for MON", str(
-                raid_no), str(unique_hash))
-            query = (
-                "SELECT start "
-                "FROM raid "
-                "WHERE STR_TO_DATE(raid.start, '%Y-%m-%d %H:%i:%S') <= "
-                "STR_TO_DATE(%s, '%Y-%m-%d %H:%i:%S') AND "
-                "STR_TO_DATE(raid.end, '%Y-%m-%d %H:%i:%S') >= "
-                "STR_TO_DATE(%s, '%Y-%m-%d %H:%i:%S') "
-                "AND gym_id = %s AND pokemon_id = %s"
-            )
-            vals = (
-                now, now, gym, mon
-            )
-
-            res = self.execute(query, vals)
-            number_of_rows = len(res)
-            if number_of_rows > 0:
-                logger.debug("[Crop: {} ({})] raid_exist: Found Rows: {}", str(
-                    raid_no), str(unique_hash), str(number_of_rows))
-                logger.debug("[Crop: {} ({})] raid_exist: Mon already submitted", str(
-                    raid_no), str(unique_hash))
-                logger.debug("RmWrapper::raid_exist done")
-                return True
-            else:
-                logger.debug("[Crop: {} ({})] raid_exist: Mon is new",
-                            str(raid_no), str(unique_hash))
-                logger.debug("RmWrapper::raid_exist done")
-                return False
-
-    def refresh_times(self, gym, raid_no, capture_time, unique_hash="123"):
-        logger.debug("RmWrapper::refresh_times called")
-        logger.debug("[Crop: {} ({})] raid_exist: Check for Egg",
-                     str(raid_no), str(unique_hash))
-        now = datetime.utcfromtimestamp(
-            float(capture_time)).strftime("%Y-%m-%d %H:%M:%S")
-
-        query = (
-            "UPDATE gym "
-            "SET last_modified = %s, last_scanned = %s "
-            "WHERE gym_id = %s"
-        )
-        vals = (
-            now, now, gym
-        )
-        self.execute(query, vals, commit=True)
-
-        query = (
-            "UPDATE raid "
-            "SET last_scanned = %s "
-            "WHERE gym_id = %s"
-        )
-        vals = (
-            now, gym
-        )
-        self.execute(query, vals, commit=True)
-
-    def get_near_gyms(self, lat, lng, hash, raid_no, dist, unique_hash="123"):
-        logger.debug("RmWrapper::get_near_gyms called")
-
-        query = (
-            "SELECT gym.gym_id, "
-            "( 6371 * "
-            "acos( cos(radians(%s)) "
-            "* cos(radians(latitude)) "
-            "* cos(radians(longitude) - radians(%s)) "
-            "+ sin(radians(%s)) "
-            "* sin(radians(latitude))"
-            ")"
-            ") "
-            "AS distance, gym.latitude, gym.longitude, gymdetails.name, gymdetails.description, gymdetails.url "
-            "FROM gym "
-            "LEFT JOIN gymdetails ON gym.gym_id = gymdetails.gym_id "
-            "HAVING distance <= %s OR distance IS NULL "
-            "ORDER BY distance"
-        )
-
-        vals = (
-            float(lat), float(lng), float(lat), float(dist)
-        )
-        data = []
-        res = self.execute(query, vals)
-        for (gym_id, distance, latitude, longitude, name, description, url) in res:
-            data.append([gym_id, distance, latitude,
-                         longitude, name, description, url])
-        logger.debug("RmWrapper::get_near_gyms done")
         return data
 
     def set_scanned_location(self, lat, lng, capture_time):
@@ -484,58 +113,7 @@ class RmWrapper(DbWrapperBase):
         vals = (cell_id, lat, lng, now, -1, -1, -1, -1, -1, -1, -1, -1)
         self.execute(query, vals, commit=True)
 
-        logger.debug(
-            "RmWrapper::set_scanned_location Done setting location...")
         return True
-
-    def download_gym_images(self):
-        logger.debug("RmWrapper::download_gym_images called")
-        import os
-        gyminfo = {}
-
-        url_image_path = os.getcwd() + '/ocr/gym_img/'
-
-        file_path = os.path.dirname(url_image_path)
-        if not os.path.exists(file_path):
-            os.makedirs(file_path)
-
-        query = (
-            "SELECT gym.gym_id, gym.team_id, gym.latitude, gym.longitude, gymdetails.name, "
-            "gymdetails.description, gymdetails.url "
-            "FROM gym INNER JOIN gymdetails "
-            "WHERE gym.gym_id = gymdetails.gym_id"
-        )
-
-        res = self.execute(query)
-
-        for (gym_id, team_id, latitude, longitude, name, description, url) in res:
-            if url is not None:
-                filename = url_image_path + '_' + str(gym_id) + '_.jpg'
-                logger.debug('Downloading', filename)
-                self.__download_img(str(url), str(filename))
-
-        logger.debug('Finished downloading gym images...')
-
-        return True
-
-    def get_gym_infos(self, id=False):
-        logger.debug("RmWrapper::get_gym_infos called")
-        gyminfo = {}
-
-        query = (
-            "SELECT gym.gym_id, gym.latitude, gym.longitude, "
-            "gymdetails.name, gymdetails.description, gymdetails.url, "
-            "gym.team_id "
-            "FROM gym INNER JOIN gymdetails "
-            "WHERE gym.gym_id = gymdetails.gym_id"
-        )
-
-        res = self.execute(query)
-
-        for (gym_id, latitude, longitude, name, description, url, team_id) in res:
-            gyminfo[gym_id] = self.__encode_hash_json(team_id, float(latitude), float(longitude), str(name).replace('"', '\\"').replace('\n', '\\n'),
-                                                      description, url)
-        return gyminfo
 
     def gyms_from_db(self, geofence_helper):
         logger.debug("RmWrapper::gyms_from_db called")
@@ -628,32 +206,6 @@ class RmWrapper(DbWrapperBase):
         else:
             return list_of_coords
 
-    def update_insert_weather(self, cell_id, gameplay_weather, capture_time, cloud_level=0, rain_level=0, wind_level=0,
-                              snow_level=0, fog_level=0, wind_direction=0, weather_daytime=0):
-        logger.debug("RmWrapper::update_insert_weather called")
-        now = datetime.utcfromtimestamp(
-            time.time()).strftime('%Y-%m-%d %H:%M:%S')
-
-        real_lat, real_lng = S2Helper.middle_of_cell(cell_id)
-        if weather_daytime == 2 and gameplay_weather == 3:
-            gameplay_weather = 13
-
-        # TODO: put severity and warn_weather properly
-        query = 'INSERT INTO weather (s2_cell_id, latitude, longitude, cloud_level, rain_level, wind_level, ' \
-                'snow_level, fog_level, wind_direction, gameplay_weather, severity, warn_weather, world_time, ' \
-                'last_updated) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) ' \
-                'ON DUPLICATE KEY UPDATE fog_level=%s, cloud_level=%s, snow_level=%s, wind_direction=%s, ' \
-                'world_time=%s, latitude=%s, longitude=%s, gameplay_weather=%s, last_updated=%s'
-        data = (cell_id, real_lat, real_lng, cloud_level, rain_level, wind_level, snow_level, fog_level,
-                wind_direction, gameplay_weather, None, None, weather_daytime, str(
-                    now),
-                fog_level, cloud_level, snow_level, wind_direction, weather_daytime, real_lat, real_lng,
-                gameplay_weather, str(now))
-
-        self.execute(query, data, commit=True)
-
-        return True
-
     def submit_mon_iv(self, origin: str, timestamp: float, encounter_proto: dict, mitm_mapper):
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
         if wild_pokemon is None:
@@ -675,11 +227,12 @@ class RmWrapper(DbWrapperBase):
         longitude = wild_pokemon.get("longitude")
         pokemon_data = wild_pokemon.get("pokemon_data")
         encounter_id = wild_pokemon['encounter_id']
+        shiny = wild_pokemon['pokemon_data']['display'].get('is_shiny', 0)
 
         if encounter_id < 0:
             encounter_id = encounter_id + 2**64
 
-        mitm_mapper.collect_mon_iv_stats(origin, encounter_id)
+        mitm_mapper.collect_mon_iv_stats(origin, encounter_id, int(shiny))
 
         if getdetspawntime is None:
             logger.debug("{}: updating IV mon #{} at {}, {}. Despawning at {} (init)",
@@ -699,6 +252,24 @@ class RmWrapper(DbWrapperBase):
             pokemon_display = {}
             # initialize to not run into nullpointer
 
+        # ditto detector
+
+        if pokemon_data.get('id') in (13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399) and \
+                (pokemon_display.get('weather_boosted_value', None) is not None
+                  and pokemon_display.get('weather_boosted_value', None) > 0) \
+            and (pokemon_data.get("individual_attack") < 4 or pokemon_data.get("individual_defense") < 4 or
+                 pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3):
+            # mon must be a ditto :D
+            mon_id = 132
+            gender = 2
+            move_1 = 242
+            move_2 = 133
+        else:
+            mon_id = pokemon_data.get('id')
+            gender = pokemon_display.get("gender_value", None)
+            move_1 = pokemon_data.get("move_1")
+            move_2 = pokemon_data.get("move_2")
+
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
             "individual_attack, individual_defense, individual_stamina, move_1, move_2, cp, cp_multiplier, "
@@ -713,24 +284,24 @@ class RmWrapper(DbWrapperBase):
             "gender=VALUES(gender), catch_prob_1=VALUES(catch_prob_1), catch_prob_2=VALUES(catch_prob_2), "
             "catch_prob_3=VALUES(catch_prob_3), rating_attack=VALUES(rating_attack), "
             "rating_defense=VALUES(rating_defense), weather_boosted_condition=VALUES(weather_boosted_condition), "
-            "costume=VALUES(costume), form=VALUES(form)"
+            "costume=VALUES(costume), form=VALUES(form), pokemon_id=VALUES(pokemon_id)"
         )
 
         vals = (
             encounter_id,
             spawnid,
-            pokemon_data.get('id'),
+            mon_id,
             latitude, longitude, despawn_time,
             pokemon_data.get("individual_attack"),
             pokemon_data.get("individual_defense"),
             pokemon_data.get("individual_stamina"),
-            pokemon_data.get("move_1"),
-            pokemon_data.get("move_2"),
+            move_1,
+            move_2,
             pokemon_data.get("cp"),
             pokemon_data.get("cp_multiplier"),
             pokemon_data.get("weight"),
             pokemon_data.get("height"),
-            pokemon_display.get("gender_value", None),
+            gender,
             float(capture_probability_list[0]),
             float(capture_probability_list[1]),
             float(capture_probability_list[2]),
@@ -819,11 +390,12 @@ class RmWrapper(DbWrapperBase):
 
         query_pokestops = (
             "INSERT INTO pokestop (pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "last_updated, active_fort_modifier) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+            "last_updated, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_updated=VALUES(last_updated), lure_expiration=VALUES(lure_expiration), "
             "last_modified=VALUES(last_modified), latitude=VALUES(latitude), longitude=VALUES(longitude), "
-            "active_fort_modifier=VALUES(active_fort_modifier) "
+            "active_fort_modifier=VALUES(active_fort_modifier), incident_start=VALUES(incident_start), "
+            "incident_expiration=VALUES(incident_expiration), incident_grunt_type=VALUES(incident_grunt_type)"
         )
 
         for cell in cells:
@@ -859,7 +431,8 @@ class RmWrapper(DbWrapperBase):
         query_gym_details = (
             "INSERT INTO gymdetails (gym_id, name, url, last_scanned) "
             "VALUES (%s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned)"
+            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
+            "url=IF(VALUES(url) IS NOT NULL AND VALUES(url) <> '', VALUES(url), url)"
         )
 
         for cell in cells:
@@ -897,6 +470,44 @@ class RmWrapper(DbWrapperBase):
         self.executemany(query_gym, gym_args, commit=True)
         self.executemany(query_gym_details, gym_details_args, commit=True)
         logger.debug("{}: submit_gyms done", str(origin))
+        return True
+
+    def submit_gym_proto(self, origin, map_proto):
+        logger.debug("Updating gym sent by {}", str(origin))
+        if map_proto.get("result", 0) != 1:
+            return False
+        status = map_proto.get("gym_status_and_defenders", None)
+        if status is None:
+            return False
+        fort_proto = status.get("pokemon_fort_proto", None)
+        if fort_proto is None:
+            return False
+        gym_id = fort_proto["id"]
+        name = map_proto["name"]
+        description = map_proto["description"]
+        url = map_proto["url"]
+
+        set_keys = []
+        vals = []
+
+        if name is not None and name != "":
+            set_keys.append("name=%s")
+            vals.append(name)
+        if description is not None and description != "":
+            set_keys.append("description=%s")
+            vals.append(description)
+        if url is not None and url != "":
+            set_keys.append("url=%s")
+            vals.append(url)
+
+        if len(set_keys) == 0:
+            return False
+
+        query = "UPDATE gymdetails SET " + ",".join(set_keys) + " WHERE gym_id = %s"
+        vals.append(gym_id)
+
+        self.execute((query), tuple(vals), commit=True)
+
         return True
 
     def submit_raids_map_proto(self, origin: str, map_proto: dict, mitm_mapper):
@@ -1054,50 +665,37 @@ class RmWrapper(DbWrapperBase):
             i += 1
         return to_be_encountered
 
-    def __encode_hash_json(self, team_id, latitude, longitude, name, description, url):
-        return (
-            {'team_id': team_id, 'latitude': latitude, 'longitude': longitude, 'name': name, 'description': '',
-             'url': url})
-
-    def __download_img(self, url, file_name):
-        retry = 1
-        if not url:
-            return
-        while retry <= 5:
-            try:
-                r = requests.get(url, stream=True, timeout=10)
-                if r.status_code == 200:
-                    with open(file_name, 'wb') as f:
-                        r.raw.decode_content = True
-                        shutil.copyfileobj(r.raw, f)
-                    break
-            except KeyboardInterrupt:
-                logger.info('Ctrl-C interrupted')
-                sys.exit(1)
-            except Exception:
-                retry = retry + 1
-                logger.info('Download error', url)
-                if retry <= 5:
-                    logger.info('retry: {}', retry)
-                else:
-                    logger.info('Failed to download after 5 retry')
-
     def __extract_args_single_pokestop(self, stop_data):
         if stop_data['type'] != 1:
             logger.warning("{} is not a pokestop", str(stop_data))
             return None
+
         now = datetime.utcfromtimestamp(
             time.time()).strftime("%Y-%m-%d %H:%M:%S")
         last_modified = datetime.utcfromtimestamp(
             stop_data['last_modified_timestamp_ms'] / 1000).strftime("%Y-%m-%d %H:%M:%S")
-        # lure isn't present anymore...
         lure = '1970-01-01 00:00:00'
         active_fort_modifier = None
+        incident_start = None
+        incident_expiration = None
+        incident_grunt_type = None
+
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
-            lure = datetime.utcfromtimestamp(30 * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
+            lure = datetime.utcfromtimestamp(self.application_args.lure_duration * 60 + (stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
 
-        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier
+        if "pokestop_display" in stop_data:
+            start_ms = stop_data["pokestop_display"]["incident_start_ms"]
+            expiration_ms = stop_data["pokestop_display"]["incident_expiration_ms"]
+            incident_grunt_type = stop_data["pokestop_display"]["character_display"]["character"]
+
+            if start_ms > 0:
+                incident_start = datetime.utcfromtimestamp(start_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+            if expiration_ms > 0:
+                incident_expiration = datetime.utcfromtimestamp(expiration_ms / 1000).strftime("%Y-%m-%d %H:%M:%S")
+
+        return stop_data['id'], 1, stop_data['latitude'], stop_data['longitude'], last_modified, lure, now, active_fort_modifier, incident_start, incident_expiration, incident_grunt_type
 
     def __extract_args_single_weather(self, client_weather_data, time_of_day, received_timestamp):
         now = datetime.utcfromtimestamp(
@@ -1177,7 +775,7 @@ class RmWrapper(DbWrapperBase):
             return list_of_coords
 
     def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
-                       oSwLat=None, oSwLon=None, timestamp=None):
+                       oSwLat=None, oSwLon=None, timestamp=None, fence=None):
         logger.debug("RmWrapper::quests_from_db called")
         questinfo = {}
 
@@ -1212,6 +810,10 @@ class RmWrapper(DbWrapperBase):
             oquery_where = " AND trs_quest.quest_timestamp >= {}".format(timestamp)
             query_where = query_where + oquery_where
 
+        if fence is not None:
+            query_where = query_where + " and ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
+                                        "POINT(pokestop.latitude, pokestop.longitude))".format(str(fence))
+
         res = self.execute(query + query_where)
 
         for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
@@ -1233,9 +835,10 @@ class RmWrapper(DbWrapperBase):
     def get_stops_changed_since(self, timestamp):
         query = (
             "SELECT pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier, "
-            "last_modified, last_updated "
+            "last_modified, last_updated, incident_start, incident_expiration, incident_grunt_type "
             "FROM pokestop "
-            "WHERE DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 AND last_updated >= %s"
+            "WHERE last_updated >= %s AND (DATEDIFF(lure_expiration, '1970-01-01 00:00:00') > 0 OR "
+            "incident_start IS NOT NULL)"
         )
 
         tsdt = datetime.utcfromtimestamp(timestamp).strftime("%Y-%m-%d %H:%M:%S")
@@ -1243,17 +846,21 @@ class RmWrapper(DbWrapperBase):
 
         ret = []
         for (pokestop_id, latitude, longitude, lure_expiration, name, image, active_fort_modifier,
-                last_modified, last_updated) in res:
+                last_modified, last_updated, incident_start, incident_expiration, incident_grunt_type) in res:
+
             ret.append({
                 'pokestop_id': pokestop_id,
                 'latitude': latitude,
                 'longitude': longitude,
-                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()),
+                'lure_expiration': int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()) if lure_expiration is not None else None,
                 'name': name,
                 'image': image,
                 'active_fort_modifier': active_fort_modifier,
-                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
-                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp())
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()) if last_modified is not None else None,
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()) if last_updated is not None else None,
+                "incident_start": int(incident_start.replace(tzinfo=timezone.utc).timestamp()) if incident_start is not None else None,
+                "incident_expiration": int(incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if incident_expiration is not None else None,
+                "incident_grunt_type": incident_grunt_type
             })
 
         return ret
@@ -1705,3 +1312,18 @@ class RmWrapper(DbWrapperBase):
             })
 
         return mons
+
+    def statistics_get_shiny_stats(self):
+        logger.debug('Fetching shiny pokemon stats from db')
+        query = (
+            "SELECT (select count(DISTINCT encounter_id) from pokemon inner join trs_stats_detect_raw on "
+            "CAST(trs_stats_detect_raw.type_id as unsigned int)=pokemon.encounter_id where pokemon.pokemon_id=a.pokemon_id and "
+            "trs_stats_detect_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT encounter_id), a.pokemon_id,"
+            "b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'), a.form, b.timestamp_scan "
+            "FROM pokemon a left join trs_stats_detect_raw b on a.encounter_id=CAST(b.type_id as unsigned int) where b.is_shiny=1 group by "
+            "b.is_shiny, a.pokemon_id, a.form, b.worker order by b.timestamp_scan DESC "
+        )
+
+        res = self.execute(query)
+
+        return res

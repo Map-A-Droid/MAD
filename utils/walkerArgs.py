@@ -31,13 +31,13 @@ def parseArgs():
     parser.add_argument('-cf', '--config',
                         is_config_file=True, help='Set configuration file')
     parser.add_argument('-mf', '--mappings', default=os.getenv('MAD_CONFIG',
-                            os.path.join(os.path.dirname(__file__),
-                            '../configs/mappings.json')),
+                        os.path.join(os.path.dirname(__file__),
+                                     '../configs/mappings.json')),
                         help='Set mappings file')
 
     # MySQL
-    parser.add_argument('-dbm', '--db_method', required=False,
-                        help='DB scheme to be used. Either "monocle" or "rm".')
+    parser.add_argument('-dbm', '--db_method', required=False, default="rm",
+                        help='LEGACY: DB scheme to be used')
     parser.add_argument('-dbip', '--dbip', required=False,
                         help='IP of MySql Server.')
     parser.add_argument('-dbuser', '--dbusername', required=False,
@@ -80,11 +80,22 @@ def parseArgs():
                             'The delay in minutes to wait after an egg has hatched to move to the location of the '
                             'gym. Default: 3.5'))
 
+    # job processor
+    parser.add_argument('-jobdtwh', '--job_dt_wh', action='store_true', default=False,
+                        help='Send job status to discord')
+    parser.add_argument('-jobdtwhurl', '--job_dt_wh_url', required=False, default="", type=str,
+                        help='Discord Webhook URL for job messages')
+    parser.add_argument('-jobdtsdtyp', '--job_dt_send_type', required=False, default="SUCCESS|FAILURE|NOCONNECT|TERMINATED",
+                        type=str, help='Kind of Job Messages to send - separated by pipe | '
+                                       '(Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)')
+    parser.add_argument('-jobrtnc', '--job_restart_notconnect', required=False, type=int, default=0,
+                        help='Restart job if device is not connected (in minutes). Default: 0 (Off)')
+
     # Runtypes
-    parser.add_argument('-os', '--only_scan', action='store_true', default=False,
+    parser.add_argument('-os', '--only_scan', action='store_true', default=True,
                         help='Use this instance only for scanning.')
     parser.add_argument('-oo', '--only_ocr', action='store_true', default=False,
-                        help='Use this instance only for OCR.')
+                        help='LEGACY: Use this instance only for OCR.')
     parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
                         help='Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.')
     parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
@@ -93,12 +104,13 @@ def parseArgs():
                         help='Start madmin as instance.')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
-    parser.add_argument('-nocr', '--no_ocr', action='store_true', default=False,
-                        help='Activate if you not using OCR for Quest or Raidscanning.')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
                         help='Temp Folder for OCR Scanning. Default: temp')
+
+    parser.add_argument('-upload', '--upload_path', default='upload',
+                        help='Path for uploaded Files via madmin and for device installation. Default: upload')
 
     parser.add_argument('-pgasset', '--pogoasset', required=False,
                         help=('Path to Pogo Asset.'
@@ -106,9 +118,6 @@ def parseArgs():
 
     parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots',  # TODO: check if user appended / or not and deal accordingly (rmeove it?)
                         help='Folder for processed Raidscreens. Default: ocr/screenshots')
-
-    parser.add_argument('-unkpath', '--unknown_path', default='ocr/unknown',
-                        help='Folder for unknows Gyms or Mons. Default: ocr/unknown')
 
     # div. settings
 
@@ -169,6 +178,8 @@ def parseArgs():
                         help='Comma-separated list of area names to exclude elements from within to be sent to a webhook')
     parser.add_argument('-pwh', '--pokemon_webhook', action='store_true', default=False,
                         help='Activate pokemon webhook support')
+    parser.add_argument('-pwhn', '--pokemon_webhook_nonivs', action='store_true', default=False,
+                        help='Send non-IVd pokemon even if they are on Global Mon List')
     parser.add_argument('-swh', '--pokestop_webhook', action='store_true', default=False,
                         help='Activate pokestop webhook support')
     parser.add_argument('-wwh', '--weather_webhook', action='store_true', default=False,
@@ -232,10 +243,17 @@ def parseArgs():
     parser.add_argument('-qpub', '--quests_public', action='store_true', default=False,
                         help='Enables MADmin /quests_pub endpoint for public quests overview')
 
+    parser.add_argument('--geofence_file_path',
+                        help='Defines directory to save created madmin map geofence files',
+                        default='configs/geofences')
+
     # etc
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
                         help='Raid Battle time in minutes. (Default: 45)')
+
+    parser.add_argument('-ld', '--lure_duration', default='30', type=int,
+                        help='Lure duration in minutes. (Default: 30)')
 
     # mappings.json auto reloader
 
@@ -283,12 +301,14 @@ def parseArgs():
     parser.add_argument("--log_file_retention", default="10",
                         help=("Amount of days to keep file logs. Set to 0 to"
                               " keep them forever (Default: 10)"))
-    parser.add_argument('--log_filename', default='%Y%m%d_%H%M_<SN>.log', 
+    parser.add_argument('--log_filename', default='%Y%m%d_%H%M_<SN>.log',
                         help=("Defines the log filename to be saved."
                               " Allows date formatting, and replaces <SN>"
                               " with the instance's status name. Read the"
                               " python time module docs for details."
                               " Default: %%Y%%m%%d_%%H%%M_<SN>.log."))
+    parser.add_argument('--no_log_colors', action="store_true", default=False,
+                        help=("Disable colored logs."))
 
     parser.add_argument("-sn", "--status-name", default="mad",
                         help=("Enable status page database update using"

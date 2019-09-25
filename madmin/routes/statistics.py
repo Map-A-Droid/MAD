@@ -2,17 +2,19 @@ import datetime
 import json
 import time
 from flask import (jsonify, render_template, request)
-from madmin.functions import auth_required
+from madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
 from utils.language import i8ln
-from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp
+from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp, form_mapper
 from utils.geo import get_distance_of_two_points_in_meters
+from utils.logging import logger
 
 
 class statistics(object):
-    def __init__(self, db, args, app):
+    def __init__(self, db, args, app, mapping_manager):
         self._db = db
         self._args = args
         self._app = app
+        self._mapping_manager = mapping_manager
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
@@ -22,11 +24,15 @@ class statistics(object):
     def add_route(self):
         routes = [
             ("/statistics", self.statistics),
+            ("/statistics_mon", self.statistics_mon),
             ("/get_game_stats", self.game_stats),
+            ("/get_game_stats_mon", self.game_stats_mon),
             ("/statistics_detection_worker_data", self.statistics_detection_worker_data),
             ("/statistics_detection_worker", self.statistics_detection_worker),
             ("/status", self.status),
-            ("/get_status", self.get_status)
+            ("/get_status", self.get_status),
+            ("/get_spawnpoints_stats", self.get_spawnpoints_stats),
+            ("/statistics_spawns", self.statistics_spawns)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -36,18 +42,31 @@ class statistics(object):
         minutes_usage = request.args.get('minutes_usage')
         if not minutes_usage:
             minutes_usage = 120
+
+        return render_template('statistics/statistics.html', title="MAD Statisics", minutes_usage=minutes_usage,
+                               time=self._args.madmin_time,
+                               responsive=str(self._args.madmin_noresponsive).lower())
+
+    @auth_required
+    def statistics_mon(self):
         minutes_spawn = request.args.get('minutes_spawn')
         if not minutes_spawn:
             minutes_spawn = 120
 
-        return render_template('statistics.html', title="MAD Statisics", minutes_spawn=minutes_spawn,
-                               minutes_usage=minutes_usage, time=self._args.madmin_time, running_ocr=self._args.only_ocr,
+        return render_template('statistics/mon_statistics.html', title="MAD Mon Statisics", minutes_spawn=minutes_spawn,
+                               time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
     def game_stats(self):
         minutes_usage = request.args.get('minutes_usage', 10)
-        minutes_spawn = request.args.get('minutes_spawn', 10)
+
+        # statistics_get_detection_count
+        data = self._db.statistics_get_detection_count(grouped=False)
+        detection = []
+        for dat in data:
+            detection.append({'worker': str(dat[1]), 'mons': str(dat[2]), 'mons_iv': str(dat[3]),
+                              'raids': str(dat[4]), 'quests': str(dat[5])})
 
         data = self._db.statistics_get_location_info()
         location_info = []
@@ -62,13 +81,6 @@ class statistics(object):
             detection_empty.append({'lat': str(dat[1]), 'lng': str(dat[2]), 'worker': str(dat[3]),
                                     'count': str(dat[0]), 'type': str(dat[4]), 'lastscan': str(dat[5]),
                                     'countsuccess': str(dat[6])})
-
-        # statistics_get_detection_count
-        data = self._db.statistics_get_detection_count(grouped=False)
-        detection = []
-        for dat in data:
-            detection.append({'worker': str(dat[1]), 'mons': str(dat[2]), 'mons_iv': str(dat[3]),
-                              'raids': str(dat[4]), 'quests': str(dat[5])})
 
         # Stop
         stop = []
@@ -132,10 +144,18 @@ class statistics(object):
                 text = 'Instinct'
             gym.append({'label': text, 'data': dat[1], 'color': color})
 
+        stats = {'gym': gym,  'detection_empty': detection_empty, 'quest': quest, 'stop': stop, 'usage': usage,
+                 'location_info': location_info, 'detection': detection}
+        return jsonify(stats)
+
+    @logger.catch
+    def game_stats_mon(self):
+        minutes_spawn = request.args.get('minutes_spawn', 10)
+
         # Spawn
         iv = []
         noniv = []
-        sum = []
+        sumg = []
         sumup = {}
 
         data = self._db.statistics_get_pokemon_count(minutes_spawn)
@@ -151,9 +171,28 @@ class statistics(object):
                 sumup[(self.utc2local(dat[0]) * 1000)] = dat[1]
 
         for dat in sumup:
-            sum.append([dat, sumup[dat]])
+            sumg.append([dat, sumup[dat]])
 
-        spawn = {'iv': iv, 'noniv': noniv, 'sum': sum}
+        spawn = {'iv': iv, 'noniv': noniv, 'sum': sumg}
+
+        #shiny hour
+
+        shiny_hour_temp = {}
+        shiny_hour_calc = {}
+        shiny_hour = []
+        data = self._db.statistics_get_shiny_stats_hour()
+        for dat in data:
+            if dat[1] not in shiny_hour_temp:
+                shiny_hour_temp[dat[1]] = dat[0]
+
+        for dat in shiny_hour_temp:
+            if shiny_hour_temp[dat] not in shiny_hour_calc: shiny_hour_calc[shiny_hour_temp[dat]] = 0
+            shiny_hour_calc[shiny_hour_temp[dat]] += 1
+
+        for dat in sorted(shiny_hour_calc):
+            sht = ([self.utc2local(dat * 60 * 60) * 1000, shiny_hour_calc[dat]])
+            shiny_hour.append(sht)
+
 
         # good_spawns avg
         good_spawns = []
@@ -170,11 +209,66 @@ class statistics(object):
             good_spawns.append({'id': dat[1], 'iv': round(calculate_iv(dat[3], dat[4], dat[5]), 0),
                                 'lvl': lvl, 'cp': dat[7], 'img': monPic,
                                 'name': monName,
-                                'periode': datetime.datetime.fromtimestamp(dat[2]).strftime(self._datetimeformat)})
+                                'periode': datetime.datetime.fromtimestamp
+                                (self.utc2local(dat[2])).strftime(self._datetimeformat)})
 
-        stats = {'spawn': spawn, 'gym': gym, 'detection': detection, 'detection_empty': detection_empty,
-                 'quest': quest, 'stop': stop, 'usage': usage, 'good_spawns': good_spawns,
-                 'location_info': location_info}
+        shiny_stats = []
+        shiny_worker = {}
+        shiny_avg = {}
+        data = self._db.statistics_get_shiny_stats()
+        for dat in data:
+            form_suffix = "%02d" % form_mapper(dat[2], dat[5])
+            mon = "%03d" % dat[2]
+            monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+            monName_raw = (get_raid_boss_cp(dat[2]))
+            monName = i8ln(monName_raw['name'])
+            diff : int = dat[0]
+            if diff == 0:
+                logger.warning('No deeper mon stats are possible - not enought data '
+                               '(check config.ini // game_stats_raw)')
+                diff = 1
+
+            ratio = round(dat[1] * 100 / diff, 2)
+            if dat[3] not in shiny_worker: shiny_worker[dat[3]] = 0
+            shiny_worker[dat[3]] += dat[1]
+
+            if dat[2] not in shiny_avg: shiny_avg[dat[2]] = {}
+            if dat[5] not in shiny_avg[dat[2]]:
+                shiny_avg[dat[2]][dat[5]] = {}
+                shiny_avg[dat[2]][dat[5]]['total_shiny'] = []
+                shiny_avg[dat[2]][dat[5]]['total_nonshiny'] = []
+
+            shiny_avg[dat[2]][dat[5]]['total_shiny'].append(dat[1])
+            shiny_avg[dat[2]][dat[5]]['total_nonshiny'].append(diff)
+
+            shiny_stats.append({'sum': dat[0], 'shiny': dat[1], 'img': monPic, 'name': monName, 'ratio': ratio,
+                                'worker': dat[3], 'encounterid': dat[4],
+                                'periode': datetime.datetime.fromtimestamp
+                                (self.utc2local(dat[6])).strftime(self._datetimeformat)})
+
+        shiny_stats_avg = []
+        for dat in shiny_avg:
+            for form_dat in shiny_avg[dat]:
+
+                form_suffix = "%02d" % form_mapper(dat, form_dat)
+                mon = "%03d" % dat
+                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+                monName_raw = (get_raid_boss_cp(dat))
+                monName = i8ln(monName_raw['name'])
+
+                total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
+                total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
+                shiny_avg_click = round(total_nonshiny_encounters / total_shiny_encounters, 0)
+
+                shiny_stats_avg.append({'name': monName, 'img': monPic, 'total_shiny_encounters': total_shiny_encounters,
+                                        'total_nonshiny_encounters': total_nonshiny_encounters, 'click_for_shiny': shiny_avg_click})
+
+        shiny_stats_worker = []
+        for dat in shiny_worker:
+            shiny_stats_worker.append({'sum': shiny_worker[dat], 'worker': dat})
+
+        stats = {'spawn': spawn, 'good_spawns': good_spawns, 'shiny': shiny_stats, 'shiny_worker': shiny_stats_worker,
+                 'shiny_hour': shiny_hour, 'shiny_stats_avg': shiny_stats_avg}
         return jsonify(stats)
 
     def utc2local(self, ts):
@@ -287,17 +381,61 @@ class statistics(object):
         worker = request.args.get('worker')
 
         return render_template('statistics_worker.html', title="MAD Worker Statisics", minutes=minutes,
-                               time=self._args.madmin_time, worker=worker, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time, worker=worker,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
     def status(self):
         return render_template('status.html', responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Worker status",
-                               running_ocr=(self._args.only_ocr))
+                               title="Worker status")
 
     @auth_required
     def get_status(self):
         data = json.loads(self._db.download_status())
         return jsonify(data)
+
+    @auth_required
+    @logger.catch()
+    def get_spawnpoints_stats(self):
+
+        coords = []
+        known = []
+        unknown = []
+        processed_fences = []
+
+        possible_fences = get_geofences(self._mapping_manager, 'mon_mitm')
+        for possible_fence in possible_fences:
+
+            for subfence in possible_fences[possible_fence]['include']:
+                if subfence in processed_fences:
+                    continue
+                processed_fences.append(subfence)
+                fence = generate_coords_from_geofence(self._mapping_manager, subfence)
+                known.clear()
+                unknown.clear()
+
+                data = json.loads(
+                    self._db.download_spawns(
+                        fence=fence
+                    )
+                )
+
+                for spawnid in data:
+                    if data[str(spawnid)]["endtime"] == None:
+                        unknown.append(spawnid)
+                    else:
+                        known.append(spawnid)
+                coords.append({'fence': subfence, 'known': len(known), 'unknown': len(unknown),
+                               'sum': len(known) + len(unknown)})
+
+        stats = {'spawnpoints': coords}
+        return jsonify(stats)
+
+    @auth_required
+    def statistics_spawns(self):
+        return render_template('statistics/spawn_statistics.html', title="MAD Spawnpoint Statisics",
+                               time=self._args.madmin_time,
+                               responsive=str(self._args.madmin_noresponsive).lower())
+
+
 

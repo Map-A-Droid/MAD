@@ -6,10 +6,11 @@ from loguru import logger
 
 
 def initLogging(args):
-    log_level = logLevel(args.log_level, args.verbose)
-    log_file_level = logLevel(args.log_file_level, args.verbose)
+    log_level_label, log_level = logLevel(args.log_level, args.verbose)
+    _, log_file_level = logLevel(args.log_file_level, args.verbose)
     log_trace = log_level <= 10
     log_file_trace = log_file_level <= 10
+    colorize = not args.no_log_colors
 
     logconfig = {
         "levels": [
@@ -22,7 +23,7 @@ def initLogging(args):
             {
                 "sink": sys.stdout,
                 "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
-                "colorize": True,
+                "colorize": colorize,
                 "level": log_level,
                 "enqueue": True,
                 "filter": errorFilter
@@ -31,9 +32,10 @@ def initLogging(args):
                 "sink": sys.stderr,
                 "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
 
-                "colorize": True,
+                "colorize": colorize,
                 "level": "ERROR",
-                "backtrace": log_trace,
+                "diagnose": log_trace,
+                "backtrace": True,
                 "enqueue": True
             }
         ]
@@ -44,7 +46,8 @@ def initLogging(args):
             "sink": os.path.join(args.log_path, args.log_filename),
             "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
             "level": log_file_level,
-            "backtrace": log_file_trace,
+            "backtrace": True,
+            "diagnose": log_file_trace,
             "enqueue": True,
             "encoding": "UTF-8"
         }
@@ -64,35 +67,65 @@ def initLogging(args):
         logger.error("Logging parameters/configuration is invalid.")
         sys.exit(1)
 
-    logger.info("Setting log level to {}", str(log_level))
+    logger.info("Setting log level to {} ({}).", str(log_level), log_level_label)
 
 
 def logLevel(arg_log_level, arg_debug_level):
-    levelswitch = {
-        "TRACE": 5,
-        "DEBUG5": 6,
-        "DEBUG4": 7,
-        "DEBUG3": 8,
-        "DEBUG2": 9,
-        "DEBUG": 10,
-        "INFO": 20,
-        "SUCCESS": 25,
-        "WARNING": 30,
-        "ERROR": 40,
-        "CRITICAL": 50
-    }
+    # List has an order, dict doesn't. We need the guaranteed order to
+    # determine debug level based on arg_debug_level.
+    verbosity_levels = [
+        ("TRACE", 5),
+        ("DEBUG5", 6),
+        ("DEBUG4", 7),
+        ("DEBUG3", 8),
+        ("DEBUG2", 9),
+        ("DEBUG", 10),
+        ("INFO", 20),
+        ("SUCCESS", 25),
+        ("WARNING", 30),
+        ("ERROR", 40),
+        ("CRITICAL", 50)
+    ]
+    # Case insensitive.
+    arg_log_level = arg_log_level.upper() if arg_log_level else None
+    # Easy label->level lookup.
+    verbosity_map = {k.upper(): v for k, v in verbosity_levels}
 
-    forced_log_level = levelswitch.get(arg_log_level, None)
+    # Log level by label.
+    forced_log_level = verbosity_map.get(arg_log_level, None)
     if forced_log_level:
-        return forced_log_level
+        return (arg_log_level, forced_log_level)
 
+    # Default log level.
     if arg_debug_level == 0:
-        return 20
+        return ('INFO', verbosity_map.get('INFO'))
 
-    # DEBUG=10; starting with -v equals to args.verbose==1
-    # starting with -vv equals to args.verbose==2 etc.
-    loglevel = 11 - arg_debug_level
-    return loglevel
+    # Log level based on count(-v) verbosity arguments.
+    # Limit it to allowed grades, starting at DEBUG.
+    debug_log_level_idx = next(key for key, (label, level) in enumerate(verbosity_levels) if label == 'DEBUG')
+
+    # Limit custom verbosity to existing grades.
+    debug_levels = verbosity_levels[:debug_log_level_idx + 1]
+    debug_levels_length = len(debug_levels)
+
+    if arg_debug_level < 0 or arg_debug_level > debug_levels_length:
+        # Only show the message once per startup. This method is currently called once
+        # for console logging, once for file logging.
+        if not hasattr(logLevel, 'bounds_exceeded'):
+            logger.debug("Verbosity -v={} is outside of the bounds [0, {}]. Changed to nearest limit.",
+                         str(arg_debug_level),
+                         str(debug_levels_length))
+            logLevel.bounds_exceeded = True
+
+        arg_debug_level = min(arg_debug_level, debug_levels_length)
+        arg_debug_level = max(arg_debug_level, 0)
+
+    # List goes from TRACE to DEBUG, -v=1=DEBUG is last index.
+    # Note: List length is 1-based and so is count(-v).
+    debug_level_idx = debug_levels_length - arg_debug_level
+    debug_label, debug_level = debug_levels[debug_level_idx]
+
+    return (debug_label, debug_level)
 
 
 def errorFilter(record):

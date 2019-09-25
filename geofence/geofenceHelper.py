@@ -94,6 +94,8 @@ class GeofenceHelper:
         # Read coordinates of excluded areas from file.
         if geofence_file:
             with open(geofence_file) as f:
+                first_line = True
+                
                 for line in f:
                     line = line.strip()
                     if len(line) == 0:  # Empty line.
@@ -106,7 +108,17 @@ class GeofenceHelper:
                             'polygon': []
                         })
                         logger.debug('Found geofence: {}', name)
+                        first_line = False
                     else:  # Coordinate line.
+                        if first_line:
+                            # Geofence file with no name
+                            geofences.append({
+                                'excluded': excluded,
+                                'name': 'unnamed',
+                                'polygon': []
+                            })
+                            logger.debug('Found geofence with no name')
+
                         lat, lon = line.split(",")
                         LatLon = {'lat': float(lat), 'lon': float(lon)}
                         geofences[-1]['polygon'].append(LatLon)

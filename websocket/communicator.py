@@ -29,13 +29,22 @@ class Communicator:
             self.__sendMutex.release()
 
     def __runAndOk(self, command, timeout) -> bool:
+        return self.__run_and_ok_bytes(command, timeout)
+
+    def __run_and_ok_bytes(self, message, timeout: float, byte_command: int = None) -> bool:
         self.__sendMutex.acquire()
         try:
             result = self.websocket_handler.send_and_wait(
-                    self.worker_id, self.worker_instance_ref, command, timeout)
-            return result is not None and "OK" in result
+                    self.worker_id, self.worker_instance_ref, message, timeout, byte_command=byte_command)
+            return result is not None and "OK" == result.strip()
         finally:
             self.__sendMutex.release()
+
+    def install_apk(self, filepath: str, timeout: float) -> bool:
+        # TODO: check if file exists...
+        with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
+            data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
+        return self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=1)
 
     def startApp(self, package_name):
         return self.__runAndOk("more start {}\r\n".format(package_name), self.__command_timeout)
@@ -47,6 +56,13 @@ class Communicator:
             return False
         else:
             return True
+
+    def passthrough(self, command):
+        response = self.websocket_handler.send_and_wait(self.worker_id,
+                                                        self.worker_instance_ref,
+                                                        "passthrough {}".format(command),
+                                                        self.__command_timeout)
+        return response
 
     def reboot(self) -> bool:
         return self.__runAndOk("more reboot now\r\n", self.__command_timeout)
@@ -73,12 +89,18 @@ class Communicator:
                     str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))),
                 self.__command_timeout)
 
-    def touchandhold(self, x1, y1, x2, y2) -> bool:
-        return self.__runAndOk("touch swipe {} {} {} {} 3000".format(
-            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2)))), self.__command_timeout)
+    def touchandhold(self, x1, y1, x2, y2, time:int = 3000) -> bool:
+        return self.__runAndOk("touch swipe {} {} {} {} {}".format(
+            str(int(round(x1))), str(int(round(y1))), str(int(round(x2))), str(int(round(y2))), str(int(time)))
+            , self.__command_timeout)
 
     def getscreensize(self) -> str:
         response = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref, "screen size",
+                                                        self.__command_timeout)
+        return response
+
+    def uiautomator(self) -> str:
+        response = self.websocket_handler.send_and_wait(self.worker_id, self.worker_instance_ref, "more uiautomator",
                                                         self.__command_timeout)
         return response
 
@@ -115,9 +137,8 @@ class Communicator:
         else:
             logger.debug("Storing screenshot...")
 
-            fh = open(path, "wb")
-            fh.write(encoded)
-            fh.close()
+            with open(path, "wb") as fh:
+                fh.write(encoded)
             logger.debug("Done storing, returning")
             return True
 
@@ -126,6 +147,9 @@ class Communicator:
 
     def homeButton(self) -> bool:
         return self.__runAndOk("touch keyevent 3", self.__command_timeout)
+
+    def enterButton(self) -> bool:
+        return self.__runAndOk("touch keyevent 61", self.__command_timeout)
 
     def sendText(self, text):
         return self.__runAndOk("touch text " + str(text), self.__command_timeout)

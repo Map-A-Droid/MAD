@@ -12,7 +12,6 @@
 # You need to have MySQL Database and User/Grants already created!
 # If you just need clean schema you can install it via scripts/databasesetup.py
 
-#db_method:                  # The DB scheme to use. Either "monocle" or "rm" (without the quotes)
 #dbip:                       # IP adress or hostname of the mysql server
 #dbusername:                 # USERname for database
 #dbpassword:                 # Password for that username
@@ -25,14 +24,14 @@
 ######################
 
 #ws_ip:                     # IP for websockt to listen on (for RGC). Default: 0.0.0.0
-#ws_port:                   # Port of the websocket to listen on. Default: 8080
+#ws_port:                   # Highly recommended to change. Port of the websocket to listen on. Default: 8080
 #websocket_command_timeout: # The max time to wait for a command to return (in seconds). Default: 30 seconds.
 
 # MITM Receiver (Pogodroid data)
 ######################
 
 #mitmreceiver_ip:           # IP to listen on for proto data (MITM data). Default: 0.0.0.0 (every interface).
-#mitmreceiver_port:         # Port to listen on for proto data (MITM data). Default: 8000.
+#mitmreceiver_port:         # Highly recommended to change. Port to listen on for proto data (MITM data). Default: 8000.
 #mitmreceiver_data_workers: # Amount of workers to work off the data that queues up. Default: 2
 
 # Walk Settings
@@ -41,24 +40,15 @@
 #initial_restart:            # Initial Pogo restart when scanner starts. (Default: true)
 #delay_after_hatch:          # Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)
 
-# Runtype settings
-######################
-
-#only_scan                   # running this instance in scanning mode without OCR tracing
-#only_ocr                    # running this instance in ocr mode without Scanning
-#ocr_multitask               # running OCR as multiprocessing task
-#ocr_thread_count:           # amount of processes/threads to run analysis with
-#no_ocr                      # activate this if you dont want to use mode ocr_raid or questscanner
-
 # path settings
 ######################
 
 #pogoasset:                  # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
 #raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
-#unknown_path:               # Path for not automaticly detected gyms or mons (Default: unknown/)
 #file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
 #mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
+#upload_path:                # Path for uploaded Files via madmin and for device installation. (Default: upload/)
 
 # other settings
 ######################
@@ -68,9 +58,10 @@
 #npFrom:                     # Matching Zoom - Start Value (Default: 0.2 [for width = 720px]. 0.5 for width = 1080px)
 #gym_scan_distance:          # Distance of scanned Gyms (Default: 6) - reduce if you scan an area with many gyms at one place
 #weather                     # Detect weather - if your frontend support this!
+#lure_duration:              # Lure duration in minutes (Default: 30)
 #home_lat:                   # Center Lat of your scan location (Default: 0.0)
 #home_lng:                   # Center Lng of your scan location (Default: 0.0)
-#language:                   # Language for quests (default:en - others: de (more soon))
+#language:                   # Language for several things like quests or mon names in the IV list (default:en - others: de, fr )
 #mitm_status_password: SetPls # Header Authorization password for MITM /status/ page
 
 # MADmin statistics
@@ -79,6 +70,13 @@
 #status-name:                # Setup name for this instance - if not set: PID of the process will be used
 #stat_gc                     # Enable statistics for collected object (garbage collector) - if you really need this info
 #statistic_interval:         # Update interval for the usage generator in seconds (Default: 60)
+
+# Job Processor
+######################
+#job_dt_wh                    # Send job status to discord (Default: False)
+#job_dt_wh_url:               # Discord Webhook URL for job messages
+#job_dt_send_type:            # Kind of Job Messages to send - separated by pipe | (Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)
+#job_restart_notconnect:      # Restart job if device is not connected (in minutes). Default: 0 (Off)
 
 # ADB
 ######################
@@ -101,28 +99,31 @@
 #with_madmin                 # Start Madmin
 #madmin_sort:                # MADmin sort column Raid/Gym (5= Modify / 6 = Create) (Default: 6)
 #madmin_ip:                  # MADmin listening interface (Default: 0.0.0.0)
-#madmin_port:                # MADmin web port (Default: 5000)
+#madmin_port:                # Highly recommended to change. MADmin web port (Default: 5000)
 #madmin_time:                # MADmin clock format (12/24) (Default: 24)
 #madmin_noresponsive         # MADmin deactivate responsive tables
 #unknown_gym_distance:       # MADmin show matchable gyms with this radius (Default: 10)
 #madmin_user: madmin         # MADmin username for login
 #madmin_password: MySecret   # MADmin password for login
 #quests_public               # Disables login for /quests_pub, /get_quests and /asset to use /quests_pub as public quest overview
+#geofence_file_path:         # Defines directory to save created madmin map geofence files (Default: configs/geofences)
 
 # webhook
 ######################
 #webhook                     # Activate support for webhook
 #webhook_url:                # webhook endpoint (multiple seperated by comma)
                              #  use [<type>] in front of the url, if you want to split data between multiple endpoints. Ex: [pokemon]http://foo.com,[raid]http://bar.com
-                             #  possible types are: pokemon, raid, gym, weather, pokestop
+                             #  possible types are: pokemon, raid, gym, weather, pokestop, quest
 #webhook_submit_exraids      # Send Ex-raids to the webhook if detected
 #webhook_excluded_areas      # Comma-separated list of area names to exclude elements from within an area to be sent to a webhook.
 #weather_webhook             # Activate support for weather webhook (remember to enable weather support in other settings section too!)
 #pokemon_webhook             # Activate support for pokemon webhook
-#pokestop_webhook            # Activate support for pokestop webhook (lures)
+#pokestop_webhook            # Activate support for pokestop webhook (lures and Team Rocket incidents)
 #gym_webhook                 # Activate support for gym webhook (NOT required for raids!)
 #quest_webhook               # Activate support for quest webhook
 #quest_webhook_flavor:       # Mode for quest webhooks (default or poracle)
+#pokemon_webhook_nonivs      # By default MAD will not send mons without IV checked if they are on ANY Global Mon List. Enable this to have them (sometimes) send twice
+                             # once without IV, once with IV. Make sure your webhook reciever can work with the same encounter send twice [e.g. PokeAlarm needs dev branch] 
 
 # Dynamic Rarity
 ######################
@@ -139,9 +140,9 @@
 ######################
 #no_file_logs                # Disable file logging (Default: file logging is enabled by default)
 #log_path:                   # Defines directory to save log files to (Default: logs/)
-#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN> 
+#log_filename:               # Defines the log filename to be saved. Allows date formatting, and replaces <SN>
                              #  with the instance's status name (Default: Default: %Y%m%d_%H%M_<SN>.log)
-#log_file_rotation:          # This parameter expects a human-readable value like '18:00', 'sunday', 'weekly', 'monday 
+#log_file_rotation:          # This parameter expects a human-readable value like '18:00', 'sunday', 'weekly', 'monday
                              #  at 12:00' or a maximum file size like '100 MB' or '0.5 GB'. Set to '0' to disable completely. (Default: 50 MB)
-#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs. 
+#log_level:                  # Forces a certain log level. By default by the -v command to show DEBUG logs.
                              #  Custom log levels like DEBUG[1-5] can be used too

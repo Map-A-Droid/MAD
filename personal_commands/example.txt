@@ -1,0 +1,14 @@
+{
+	"EXAMPLE - save as .json": 
+	[
+		{
+			"TYPE": "jobType.STOP",
+			"SYNTAX": "Stop-Pogo"
+		},
+		{
+			"TYPE": "jobType.START",
+			"SYNTAX": "Start-Pogo",
+			"WAITTIME": 5
+		}
+	]
+}
