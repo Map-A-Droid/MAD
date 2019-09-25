@@ -30,6 +30,7 @@ from utils.walkerArgs import parseArgs
 import utils.data_manager
 from websocket.WebsocketServer import WebsocketServer
 from utils.updater import deviceUpdater
+from utils.functions import generate_mappingjson
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -86,19 +87,6 @@ def install_thread_excepthook():
                 sys.excepthook(exc_type, exc_value, exc_trace)
     Thread.run = run_thread
     Process.run = run_process
-
-
-def generate_mappingjson():
-    import json
-    newfile = {}
-    newfile['areas'] = []
-    newfile['auth'] = []
-    newfile['devices'] = []
-    newfile['walker'] = []
-    newfile['devicesettings'] = []
-    with open(args.mappings, 'w') as outfile:
-        json.dump(newfile, outfile, indent=4, sort_keys=True)
-
 
 def find_referring_graphs(obj):
     REFERRERS_TO_IGNORE = [locals(), globals(), gc.garbage]

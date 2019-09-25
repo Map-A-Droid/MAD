@@ -11,22 +11,11 @@ from utils.walkerArgs import parseArgs
 import utils.data_manager
 from websocket.WebsocketServer import WebsocketServer
 from utils.updater import deviceUpdater
+from utils.functions import generate_mappingjson
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
 initLogging(args)
-
-
-def generate_mappingjson():
-    import json
-    newfile = {}
-    newfile['areas'] = []
-    newfile['auth'] = []
-    newfile['devices'] = []
-    newfile['walker'] = []
-    newfile['devicesettings'] = []
-    with open(args.mappings, 'w') as outfile:
-        json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 def create_folder(folder):
     if not os.path.exists(folder):
