@@ -262,9 +262,13 @@ class RmWrapper(DbWrapperBase):
             # mon must be a ditto :D
             mon_id = 132
             gender = 2
+            move_1 = 242
+            move_2 = 133
         else:
             mon_id = pokemon_data.get('id')
             gender = pokemon_display.get("gender_value", None)
+            move_1 = pokemon_data.get("move_1")
+            move_2 = pokemon_data.get("move_2")
 
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
@@ -291,8 +295,8 @@ class RmWrapper(DbWrapperBase):
             pokemon_data.get("individual_attack"),
             pokemon_data.get("individual_defense"),
             pokemon_data.get("individual_stamina"),
-            pokemon_data.get("move_1"),
-            pokemon_data.get("move_2"),
+            move_1,
+            move_2,
             pokemon_data.get("cp"),
             pokemon_data.get("cp_multiplier"),
             pokemon_data.get("weight"),
