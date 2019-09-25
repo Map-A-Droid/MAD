@@ -72,7 +72,7 @@ class RouteManagerBase(ABC):
         self._roundcount: int = 0
 
         # we want to store the workers using the routemanager
-        self._workers_registered: List[str] = []
+        self._workers_registered: Dict = {}
         self._workers_registered_mutex = RLock()
 
         # waiting till routepool is filled up
@@ -144,30 +144,32 @@ class RouteManagerBase(ABC):
         with self._manager_mutex:
             self._coords_unstructured = None
 
-    def register_worker(self, worker_name) -> bool:
+    def register_worker(self, worker_name, walker_name) -> bool:
         self._workers_registered_mutex.acquire()
         try:
-            if worker_name in self._workers_registered:
+            if walker_name in self._workers_registered and worker_name in self._workers_registered[walker_name]:
                 logger.info("Worker {} already registered to routemanager {}", str(
                     worker_name), str(self.name))
                 return False
             else:
-                logger.info("Worker {} registering to routemanager {}",
-                            str(worker_name), str(self.name))
-                self._workers_registered.append(worker_name)
+                logger.info("Worker {} registering to routemanager {} - walker {}",
+                            str(worker_name), str(self.name), str(walker_name))
+                if walker_name not in self._workers_registered:
+                    self._workers_registered[walker_name] = []
+                self._workers_registered[walker_name].append(worker_name)
                 self._positiontyp[worker_name] = 0
                 return True
 
         finally:
             self._workers_registered_mutex.release()
 
-    def unregister_worker(self, worker_name):
+    def unregister_worker(self, worker_name, walker_name):
         self._workers_registered_mutex.acquire()
         try:
-            if worker_name in self._workers_registered:
+            if walker_name in self._workers_registered and worker_name in self._workers_registered[walker_name]:
                 logger.info("Worker {} unregistering from routemanager {}", str(
                     worker_name), str(self.name))
-                self._workers_registered.remove(worker_name)
+                self._workers_registered[walker_name].remove(worker_name)
                 if worker_name in self._routepool:
                     logger.info("Deleting old routepool of {}", str(worker_name))
                     del self._routepool[worker_name]
@@ -177,12 +179,19 @@ class RouteManagerBase(ABC):
                     "Worker {} failed unregistering from routemanager {} since subscription was previously lifted",
                     str(
                         worker_name), str(self.name))
-            if len(self._workers_registered) == 0 and self._is_started:
+            if self.count_all_workers() == 0 and self._is_started:
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self._quit_route()
         finally:
             self._workers_registered_mutex.release()
+
+    def count_all_workers(self):
+        workers = 0
+        for walker in self._workers_registered:
+            workers += len(self._workers_registered[walker])
+
+        return workers
 
     def stop_worker(self):
         self._workers_registered_mutex.acquire()
@@ -195,7 +204,7 @@ class RouteManagerBase(ABC):
                 if worker in self._routepool:
                     logger.info("Deleting old routepool of {}", str(worker))
                     del self._routepool[worker]
-            if len(self._workers_registered) == 0 and self._is_started:
+            if self.count_all_workers() == 0 and self._is_started:
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self._quit_route()
@@ -431,7 +440,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].last_access = time.time()
                 self._routepool[origin].worker_sleeping = 0
 
-    def get_next_location(self, origin: str) -> Optional[Location]:
+    def get_next_location(self, origin: str, walker_name: str) -> Optional[Location]:
         logger.debug("get_next_location of {} called", str(self.name))
 
         if not self._is_started:
@@ -447,8 +456,8 @@ class RouteManagerBase(ABC):
 
         with self._manager_mutex:
             with self._workers_registered_mutex:
-                if origin not in self._workers_registered:
-                    self.register_worker(origin)
+                if not walker_name in self._workers_registered and origin not in self._workers_registered[walker_name]:
+                    self.register_worker(origin, walker_name)
 
             if origin not in self._routepool:
                 logger.debug("No subroute/routepool entry of {} present, creating it", origin)
@@ -609,7 +618,7 @@ class RouteManagerBase(ABC):
         logger.debug('Check distances from worker to prioQ coord')
         temp_distance: float = 0.0
         closer_worker = None
-        if len(self._workers_registered) == 1:
+        if self.count_all_workers() == 1:
             logger.debug('Route has only one worker - no distance check')
             return False
 
@@ -685,17 +694,17 @@ class RouteManagerBase(ABC):
             return True
         with self._manager_mutex:
             logger.debug("Updating all routepools")
-            if len(self._workers_registered) == 0:
+            if self.count_all_workers() == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
 
-            if len(self._workers_registered) > len(self._current_route_round_coords):
+            if self.count_all_workers() > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
             else:
                 try:
                     new_subroute_length = math.floor(len(self._current_route_round_coords) /
-                                                     len(self._workers_registered))
+                                                     self.count_all_workers())
                     if new_subroute_length == 0:
                         return False
                 except Exception as e:
@@ -877,13 +886,14 @@ class RouteManagerBase(ABC):
     def get_rounds(self, origin: str) -> int:
         return self.check_worker_rounds()
 
-    def get_registered_workers(self) -> int:
+    def get_registered_workers(self, walker_name) -> int:
         self._workers_registered_mutex.acquire()
         try:
-            return len(self._workers_registered)
+            if walker_name not in self._workers_registered:
+                return 0
+            return len(self._workers_registered[walker_name])
         finally:
             self._workers_registered_mutex.release()
-        
 
     def get_position_type(self, origin: str) -> Optional[str]:
         return self._positiontyp.get(origin, None)

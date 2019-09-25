@@ -73,6 +73,8 @@ class WorkerBase(ABC):
         if self.last_location is None:
             self.last_location = Location(0.0, 0.0)
 
+        self._walker_area_name = self.get_devicesettings_value('walker_name')
+
         if self.get_devicesettings_value('last_mode', None) is not None and \
                 self.get_devicesettings_value('last_mode') in ("raids_mitm", "mon_mitm", "iv_mitm"):
             # Reset last_location - no useless waiting delays (otherwise stop mode)
@@ -125,7 +127,8 @@ class WorkerBase(ABC):
         walkermax = self._walker.get('walkermax', False)
         if not walkermax:
             return True
-        reg_workers = self._mapping_manager.routemanager_get_registered_workers(self._routemanager_name)
+        reg_workers = self._mapping_manager.routemanager_get_registered_workers(self._routemanager_name,
+                                                                                self._walker_area_name)
         if int(reg_workers) > int(walkermax):
             return False
         return True
@@ -260,7 +263,7 @@ class WorkerBase(ABC):
         # register worker  in routemanager
         logger.info("Try to register {} in Routemanager {}", str(
             self._id), str(self._routemanager_name))
-        self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
+        self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id, self._walker_area_name)
 
         self._work_mutex.release()
 
@@ -305,7 +308,8 @@ class WorkerBase(ABC):
         self._cleanup()
         logger.info(
             "Internal cleanup of {} signalling end to websocketserver", str(self._id))
-        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
+        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id,
+                                                                  self._walker_area_name)
         self._communicator.cleanup_websocket()
 
         logger.info("Stopped Route")
@@ -523,7 +527,8 @@ class WorkerBase(ABC):
 
         self._check_for_mad_job()
 
-        self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id)
+        self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name, self._id,
+                                                                                     self._walker_area_name)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
     def _init_routine(self):

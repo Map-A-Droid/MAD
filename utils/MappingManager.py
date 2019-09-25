@@ -155,22 +155,22 @@ class MappingManager:
         with self.__mappings_mutex:
             return routemanager_name in self._routemanagers.keys()
 
-    def routemanager_get_next_location(self, routemanager_name: str, origin: str) -> Optional[Location]:
+    def routemanager_get_next_location(self, routemanager_name: str, origin: str, walker_name: str) -> Optional[Location]:
         routemanager = self.__fetch_routemanager(routemanager_name)
-        return routemanager.get_next_location(origin) if routemanager is not None else None
+        return routemanager.get_next_location(origin, walker_name) if routemanager is not None else None
 
     def routemanager_stop(self, routemanager_name: str):
         routemanager = self.__fetch_routemanager(routemanager_name)
         if routemanager is not None:
             routemanager.stop_routemanager()
 
-    def register_worker_to_routemanager(self, routemanager_name: str, worker_name: str) -> bool:
+    def register_worker_to_routemanager(self, routemanager_name: str, worker_name: str, walker_name: str) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_name)
-        return routemanager.register_worker(worker_name) if routemanager is not None else False
+        return routemanager.register_worker(worker_name, walker_name) if routemanager is not None else False
 
-    def unregister_worker_from_routemanager(self, routemanager_name: str, worker_name: str):
+    def unregister_worker_from_routemanager(self, routemanager_name: str, worker_name: str, walker_name: str):
         routemanager = self.__fetch_routemanager(routemanager_name)
-        return routemanager.unregister_worker(worker_name) if routemanager is not None else None
+        return routemanager.unregister_worker(worker_name, walker_name) if routemanager is not None else None
 
     def routemanager_add_coords_to_be_removed(self, routemanager_name: str, lat: float, lon: float):
         routemanager = self.__fetch_routemanager(routemanager_name)
@@ -189,9 +189,9 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
 
-    def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[int]:
+    def routemanager_get_registered_workers(self, routemanager_name: str, walker_name: str) -> Optional[int]:
         routemanager = self.__fetch_routemanager(routemanager_name)
-        return routemanager.get_registered_workers() if routemanager is not None else None
+        return routemanager.get_registered_workers(walker_name) if routemanager is not None else None
 
     def routemanager_get_ids_iv(self, routemanager_name: str) -> Optional[List[int]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
@@ -382,6 +382,7 @@ class MappingManager:
             device_dict = {}
             device_dict.clear()
             walker = device["walker"]
+            device_dict["walker_name"] = str(walker)
             device_dict["adb"] = device.get("adbname", None)
             pool = device.get("pool", None)
             settings = device.get("settings", None)
@@ -396,6 +397,8 @@ class MappingManager:
                     pool_settings += 1
             else:
                 device_dict["settings"] = device.get("settings", None)
+
+            device_dict["settings"]['walker_name'] = str(walker)
 
             if walker:
                 walker_settings = 0
