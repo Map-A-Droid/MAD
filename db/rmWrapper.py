@@ -261,14 +261,16 @@ class RmWrapper(DbWrapperBase):
                  pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3):
             # mon must be a ditto :D
             mon_id = 132
-            gender = 2
+            gender = 3
             move_1 = 242
             move_2 = 133
+            form = 0
         else:
             mon_id = pokemon_data.get('id')
             gender = pokemon_display.get("gender_value", None)
             move_1 = pokemon_data.get("move_1")
             move_2 = pokemon_data.get("move_2")
+            form = pokemon_display.get("form_value", None)
 
         query = (
             "INSERT INTO pokemon (encounter_id, spawnpoint_id, pokemon_id, latitude, longitude, disappear_time, "
@@ -309,7 +311,7 @@ class RmWrapper(DbWrapperBase):
             pokemon_display.get('weather_boosted_value', None),
             now,
             pokemon_display.get("costume_value", None),
-            pokemon_display.get("form_value", None)
+            form
         )
 
         self.execute(query, vals, commit=True)
