@@ -647,7 +647,7 @@ class WorkerBase(ABC):
                     time.sleep(1)
                     self._reboot()
 
-               self._last_screen_type = returncode
+                self._last_screen_type = returncode
 
         logger.info('Checking pogo screen is finished')
         return True
