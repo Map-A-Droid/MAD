@@ -319,5 +319,5 @@ def questtask(typeid, condition, target):
     for key, val in arr.items():
         text = text.replace('{'+key+'}', str(val))
 
-    text = text.replace('  ', ' ').trim()
+    text = text.replace('  ', ' ').strip()
     return text
