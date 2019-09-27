@@ -21,19 +21,19 @@
   },
   "5": {
     "prototext": "QUEST_SPIN_POKESTOP",
-    "text": "Spin {0} pokéstop(s)"
+    "text": "Spin {0} Pokestops or Gyms"
   },
   "6": {
     "prototext": "QUEST_HATCH_EGG",
-    "text": "Hatch {0} egg(s)"
+    "text": "Hatch {0} eggs"
   },
   "7": {
     "prototext": "QUEST_COMPLETE_GYM_BATTLE",
-    "text": "Complete {0} gym battle(s)"
+    "text": "Battle in a Gym {0} times"
   },
   "8": {
     "prototext": "QUEST_COMPLETE_RAID_BATTLE",
-    "text": "Complete {0} raid battle(s)"
+    "text": "Battle in {0} Raids"
   },
   "9": {
     "prototext": "QUEST_COMPLETE_QUEST",
@@ -57,11 +57,11 @@
   },
   "14": {
     "prototext": "QUEST_UPGRADE_POKEMON",
-    "text": "Power up a pokémon {0} times"
+    "text": "Power up a Pokemon {0} times"
   },
   "15": {
     "prototext": "QUEST_EVOLVE_POKEMON",
-    "text": "Evolve {0} pokémon"
+    "text": "Evolve {0} Pokémon"
   },
   "16": {
     "prototext": "QUEST_LAND_TROW",
@@ -69,7 +69,7 @@
   },
   "17": {
     "prototext": "QUEST_GET_BUDDY_CANDY",
-    "text": "Walk your buddy to earn {0} candy"
+    "text": "Earn {0} candies walking with your buddy"
   },
   "18": {
     "prototext": "QUEST_BADGE_RANK",
@@ -89,7 +89,7 @@
   },
   "22": {
     "prototext": "QUEST_ADD_FRIEND",
-    "text": "Become new friends with {0} "
+    "text": "Make {0] friends"
   },
   "23": {
     "prototext": "QUEST_TRADE_POKEMON",
@@ -97,7 +97,7 @@
   },
   "24": {
     "prototext": "QUEST_SEND_GIFT",
-    "text": "Send {0} gift(s)"
+    "text": "Send {0} gifts to friends"
   },
   "25": {
     "prototext": "QUEST_EVOLVE_INTO_POKEMON",
