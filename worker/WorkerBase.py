@@ -638,16 +638,16 @@ class WorkerBase(ABC):
                 if loginerrorcounter == 2:
 
                     logger.error('Cannot login two times in row - toggling magiskhide on/off and restarting pogo')
-                     self._stop_pogo()
-                     time.sleep(5)
-                     self._communicator.magisk_off("com.nianticlabs.pokemongo")
-                     self._communicator.clearAppCache("com.nianticlabs.pokemongo")
-                     time.sleep(1)
-                     self._communicator.magisk_on("com.nianticlabs.pokemongo")
-                     time.sleep(1)
-                     self._reboot()
+                    self._stop_pogo()
+                    time.sleep(5)
+                    self._communicator.magisk_off("com.nianticlabs.pokemongo")
+                    self._communicator.clearAppCache("com.nianticlabs.pokemongo")
+                    time.sleep(1)
+                    self._communicator.magisk_on("com.nianticlabs.pokemongo")
+                    time.sleep(1)
+                    self._reboot()
 
-               self._last_screen_type = returncode
+                self._last_screen_type = returncode
 
         logger.info('Checking pogo screen is finished')
         return True
