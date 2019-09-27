@@ -81,7 +81,7 @@ class Communicator:
 
     def magisk_on(self, package_name) -> bool:
         return self.passthrough("magiskhide --add {}".format(package_name))
-    
+
     def turnScreenOn(self) -> bool:
         return self.__runAndOk("more screen on\r\n", self.__command_timeout)
 
