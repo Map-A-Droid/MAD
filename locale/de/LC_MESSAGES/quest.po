@@ -179,7 +179,7 @@ msgstr "Tausche {0} Pokemon"
 
 #: questGen.py:258
 msgid "Trade Pokemon caught {distance} km apart"
-msgstr "Tausche Pokemon die mit einer Entfernung von {} km gefangen wurden"
+msgstr "Tausche Pokemon die mit einer Entfernung von {distance} km gefangen wurden"
 
 #: questGen.py:260
 msgid "Trade {0} Pokemon caught {distance} km apart"
