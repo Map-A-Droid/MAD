@@ -7,7 +7,7 @@ from enum import Enum
 from multiprocessing import  Queue
 from threading import  RLock, Thread
 from utils.logging import logger
-
+from queue import Empty
 
 class jobType(Enum):
     INSTALLATION = 0
@@ -46,9 +46,10 @@ class deviceUpdater(object):
         self.kill_old_jobs()
         self.load_automatic_jobs()
 
-        t_updater = Thread(name='apk_updater', target=self.process_update_queue)
-        t_updater.daemon = False
-        t_updater.start()
+        self.t_updater = None
+        self.t_updater = Thread(name='apk_updater', target=self.process_update_queue)
+        self.t_updater.daemon = True
+        self.t_updater.start()
 
     def init_jobs(self):
         self._commands = {}
@@ -127,7 +128,11 @@ class deviceUpdater(object):
         while True:
             try:
                 jobstatus = jobReturn.UNKNOWN
-                item = self._update_queue.get()
+                try:
+                    item = self._update_queue.get()
+                except Empty:
+                    time.sleep(2)
+                    continue
 
                 if item not in self._log:
                     continue
@@ -318,6 +323,8 @@ class deviceUpdater(object):
 
             except KeyboardInterrupt as e:
                 logger.info("process_update_queue received keyboard interrupt, stopping")
+                if self.t_updater is not None:
+                    self.t_updater.join()
                 break
 
             time.sleep(5)
