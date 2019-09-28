@@ -6,192 +6,276 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2019-09-06 20:18+0200\n"
-"PO-Revision-Date: 2019-09-06 20:27+0200\n"
-"Last-Translator: \n"
-"Language-Team: \n"
+"PO-Revision-Date: 2019-09-27 11:34+0200\n"
+"Last-Translator: cec\n"
+"Language-Team: discord\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 2.2.1\n"
+"X-Generator: Poedit 2.2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
+#: questGen.py:29 questGen.py:85
 msgid "Item"
 msgstr "Item"
 
+#: questGen.py:33 questGen.py:35 questGen.py:86
 msgid "Stardust"
 msgstr "Sternenstaub"
 
+#: questGen.py:36 questGen.py:87
 msgid "Pokemon"
 msgstr "Pokemon"
 
+#: questGen.py:114
 msgid "Great"
 msgstr "großartige"
 
+#: questGen.py:114
 msgid "Nice"
 msgstr "gute"
 
+#: questGen.py:115
 msgid "Curveball"
 msgstr "Curveball"
 
+#: questGen.py:115
 msgid "Excellent"
 msgstr "fabelhafte"
 
-msgid "Catch {0}{different} {type}Pokemon{wb}."
-msgstr "Fange {0}{different} {type}Pokemon{wb}."
+#: questGen.py:126
+msgid "Catch {0}{different} {type}Pokemon{wb}"
+msgstr "Fange {0}{different} {type}Pokemon{wb}"
 
+#: questGen.py:133 questGen.py:137 questGen.py:208 questGen.py:212
+#: questGen.py:300 questGen.py:304
 msgid "-type "
 msgstr "  "
 
+#: questGen.py:136 questGen.py:153 questGen.py:211 questGen.py:229
+#: questGen.py:284 questGen.py:303
 msgid "or "
 msgstr "oder "
 
+#: questGen.py:141
 msgid " with weather boost"
 msgstr " mit Wetterverstärkung"
 
+#: questGen.py:143
 msgid " different species of"
 msgstr " verschiedene"
 
-msgid "Catch {0} {poke}."
+#: questGen.py:156
+msgid "Catch {0} {poke}"
 msgstr "Fange {0} {poke}"
 
-msgid "Spin {0} Pokestops or Gyms."
-msgstr "Drehe {0} Pokestops oder Arenen."
+#: questGen.py:158
+msgid "Spin {0} Pokestops or Gyms"
+msgstr "Drehe {0} Pokestops oder Arenen"
 
+#: questGen.py:160
 #, fuzzy
-#| msgid "Spin {0} Pokestops you haven't visited before."
+#| msgid "Spin {0} Pokestops you haven't visited before"
 msgid "Spin {0} Pokestops you haven't visited before"
-msgstr "Drehe {0} Pokestops die Du noch nicht besucht hast."
+msgstr "Drehe {0} Pokestops die Du noch nicht besucht hast"
 
-msgid "Hatch {0} Eggs."
-msgstr "Brüte {0} Eier aus."
+#: questGen.py:162
+msgid "Hatch {0} Eggs"
+msgstr "Brüte {0} Eier aus"
 
-msgid "Win {0} Gym Battles."
-msgstr "Gewinne {0} Arenakämpfe."
+#: questGen.py:165
+msgid "Win {0} Gym Battles"
+msgstr "Gewinne {0} Arenakämpfe"
 
-msgid "Use a supereffective Charged Attack in {0} Gym battles."
-msgstr "Benutze eine super effektive Ladeattacke in {0} Arenakämpfen."
+#: questGen.py:167
+msgid "Use a supereffective Charged Attack in {0} Gym battles"
+msgstr "Benutze eine super effektive Ladeattacke in {0} Arenakämpfen"
 
-msgid "Battle in a Gym {0} times."
-msgstr "Kämpfe {0} mal in einer Arena."
+#: questGen.py:169
+msgid "Battle in a Gym {0} times"
+msgstr "Kämpfe {0} mal in einer Arena"
 
-msgid "Win {0} Raids."
-msgstr "Gewinne {0} Raids."
+#: questGen.py:172
+msgid "Win {0} Raids"
+msgstr "Gewinne {0} Raids"
 
-msgid "Win a level 3 or higher raid."
-msgstr "Gewinne einen Level 3 oder höheren Raid."
+#: questGen.py:174
+msgid "Win a level 3 or higher raid"
+msgstr "Gewinne einen Level 3 oder höheren Raid"
 
-msgid "Win a level 2 or higher raid."
-msgstr "Gewinne einen Level 2 oder höheren Raid."
+#: questGen.py:176
+msgid "Win a level 2 or higher raid"
+msgstr "Gewinne einen Level 2 oder höheren Raid"
 
-msgid "Battle in {0} Raids."
-msgstr "Kämpfe in {0} Raids."
+#: questGen.py:178
+msgid "Battle in {0} Raids"
+msgstr "Kämpfe in {0} Raids"
 
-msgid "Transfer {0} Pokemon."
-msgstr "Verschicke {0} Pokemon."
+#: questGen.py:180
+msgid "Transfer {0} Pokemon"
+msgstr "Verschicke {0} Pokemon"
 
-msgid "Favourite {0} Pokemon."
-msgstr "Favourite {0} Pokemon."
+#: questGen.py:182
+msgid "Favourite {0} Pokemon"
+msgstr "Favourite {0} Pokemon"
 
-msgid "Use {0} {type}Berries to help catch Pokemon."
-msgstr "Benutze {0} {type} Beeren um ein Pokemon zu fangen."
+#: questGen.py:184
+msgid "Use {0} {type}Berries to help catch Pokemon"
+msgstr "Benutze {0} {type} Beeren um ein Pokemon zu fangen"
 
+#: questGen.py:189
 msgid " Berry"
 msgstr " Beeren"
 
-msgid "Power up Pokemon {0} times."
-msgstr "Power up Pokemon  {0} mal."
+#: questGen.py:191
+msgid "Power up Pokemon {0} times"
+msgstr "Power up Pokemon  {0} mal"
 
-msgid "Evolve {0} Pokemon."
-msgstr "Entwickle {0} Pokemon."
+#: questGen.py:193
+msgid "Evolve {0} Pokemon"
+msgstr "Entwickle {0} Pokemon"
 
-msgid "Use an item to evolve a Pokemon."
-msgstr "Benutze einen Item um ein Pokemon zu entwickeln."
+#: questGen.py:195
+msgid "Use an item to evolve a Pokemon"
+msgstr "Benutze einen Item um ein Pokemon zu entwickeln"
 
+#: questGen.py:197
 msgid "Evolve {0} {type}Pokemon"
-msgstr "Entwickle {0} {type}Pokemon."
+msgstr "Entwickle {0} {type}Pokemon"
 
-msgid "Evolve {0} {poke}."
-msgstr "Entwickle {0} {poke}."
+#: questGen.py:232
+msgid "Evolve {0} {poke}"
+msgstr "Entwickle {0} {poke}"
 
+#: questGen.py:238
 msgid " in a row"
 msgstr " hintereinander"
 
+#: questGen.py:240
 msgid "Curveball "
 msgstr "Curvebälle"
 
-msgid "Make {0} {type}{curve}Throws{inrow}."
-msgstr "Lande {0} {type}{curve} Würfe {inrow}."
+#: questGen.py:244
+msgid "Make {0} {type}{curve}Throws{inrow}"
+msgstr "Lande {0} {type}{curve} Würfe {inrow}"
 
-msgid "Earn {0} Candies walking with your buddy."
-msgstr "Verdiene {0} Bonbons mit deinem Begleiter."
+#: questGen.py:246
+msgid "Earn {0} Candies walking with your buddy"
+msgstr "Verdiene {0} Bonbons mit deinem Begleiter"
 
-msgid "Trade {0} Pokemon."
-msgstr "Tausche {0} Pokemon."
+#: questGen.py:249
+msgid "Make a new friend"
+msgstr "Schließe eine neue Freundschaft"
 
-msgid "Send {0} gifts to friends."
-msgstr "Sende {0} Geschenke an Freunde."
+#: questGen.py:251
+msgid "Schließe {0} neue Freundschafte"
+msgstr ""
 
+#: questGen.py:253
+msgid "Trade {0} Pokemon"
+msgstr "Tausche {0} Pokemon"
+
+#: questGen.py:258
+msgid "Trade Pokemon caught {distance} km apart"
+msgstr "Tausche Pokemon die mit einer Entfernung von {distance} km gefangen wurden"
+
+#: questGen.py:260
+msgid "Trade {0} Pokemon caught {distance} km apart"
+msgstr "Tausche {0} Pokemon die mit einer Entfernung von {distance} km gefangen wurden"
+
+#: questGen.py:262
+msgid "Send {0} gifts to friends"
+msgstr "Sende {0} Geschenke an Freunde"
+
+#: questGen.py:266
 msgid "Battle a Team Leader {0} times"
 msgstr "Bekämpfe einen Teamleiter {0} mal"
 
+#: questGen.py:268
 msgid "Battle another Trainer {0} times"
 msgstr "Bekämpfe einen anderen Spieler {0} mal"
 
+#: questGen.py:287
 msgid "Take {0} snapshots of {poke}"
 msgstr "Schieße {0} Fotos von {poke}"
 
+#: questGen.py:289
 msgid "Take {0} snapshots of {type} Pokemon"
-msgstr "Schieße {0} Fotos von {type}Pokemon."
+msgstr "Schieße {0} Fotos von {type}Pokemon"
 
+#: questGen.py:308
 msgid " Eggs"
 msgstr " Eier"
 
+#: questGen.py:308
 msgid "n Egg"
 msgstr " Ei"
 
+#: questGen.py:309
 msgid " Raid"
 msgstr " Raid"
 
+#: questGen.py:309
 msgid " Raids"
 msgstr " Raids"
 
+#: questGen.py:310
 msgid " Battle"
 msgstr "kampf"
 
+#: questGen.py:310
 msgid " Battles"
 msgstr "kämpfe"
 
+#: questGen.py:311
 msgid " candies"
 msgstr " Bonbons"
 
+#: questGen.py:311
 msgid " candy"
 msgstr " Bonbon"
 
+#: questGen.py:312
 msgid " gift"
 msgstr " Geschenk"
 
+#: questGen.py:312
 msgid " gifts"
 msgstr " Geschenke"
 
+#: questGen.py:313
+msgid " Pokestop"
+msgstr " Pokestop"
+
+#: questGen.py:313
+msgid " Pokestops"
+msgstr " Pokestops"
+
+#: questGen.py:314
 msgid " a snapshot"
 msgstr " Foto"
 
+#: questGen.py:314
 #, fuzzy
 #| msgid "Take {0} snapshots of {poke}"
 msgid " {0} snapshots"
 msgstr "Schieße {0} Fotos von {poke}"
 
+#: questGen.py:315
 msgid "Make a {type}{curve}Throw"
-msgstr "Lande einen {type}{curve} Würfe {inrow}."
+msgstr "Lande einen {type}{curve} Würfe {inrow}"
 
+#: questGen.py:315
 #, fuzzy
 msgid "Make {0} {type}{curve}Throws"
-msgstr "Lande {0} {type}{curve} Würfe {inrow}."
+msgstr "Lande {0} {type}{curve} Würfe {inrow}"
 
+#: questGen.py:316
 msgid " {0} times"
 msgstr " {0} mal"
 
+#: questGen.py:317
 msgid "a"
 msgstr "1"

@@ -23,6 +23,7 @@ def generate_quest(quest):
     item_amount = 1
     pokemon_id = '000'
     pokemon_name = ''
+    item_type = ''
     pokemon_form = extractForm(quest["quest_reward"])
 
     if quest_reward_type == _('Item'):
@@ -122,7 +123,7 @@ def questtask(typeid, condition, target):
         arr['poke'] = ""
         arr['different'] = ""
 
-        text = _("Catch {0}{different} {type}Pokemon{wb}.")
+        text = _("Catch {0}{different} {type}Pokemon{wb}")
         match_object = re.search(r'"pokemon_type": \[([0-9, ]+)\]', condition)
         if match_object is not None:
             pt = match_object.group(1).split(', ')
@@ -152,47 +153,46 @@ def questtask(typeid, condition, target):
                     arr['poke'] += (_('or ') if last == cur else '') + \
                         i8ln(pokemonname(ty)) + ('' if last == cur else ', ')
                     cur += 1
-            text = _('Catch {0} {poke}.')
+            text = _('Catch {0} {poke}')
     elif typeid == 5:
-        text = _("Spin {0} Pokestops or Gyms.")
+        text = _("Spin {0} Pokestops or Gyms")
         if re.search(r'"type": 12', condition) is not None:
             text = _("Spin {0} Pokestops you haven't visited before")
     elif typeid == 6:
-        text = _("Hatch {0} Eggs.")
+        text = _("Hatch {0} Eggs")
     elif typeid == 7:
         if re.search(r'"type": 9', condition) is not None:
-            text = _("Win {0} Gym Battles.")
+            text = _("Win {0} Gym Battles")
         elif re.search(r'"type": 10', condition) is not None:
-            text = _("Use a supereffective Charged Attack in {0} Gym battles.")
+            text = _("Use a supereffective Charged Attack in {0} Gym battles")
         else:
-            text = _("Battle in a Gym {0} times.")
+            text = _("Battle in a Gym {0} times")
     elif typeid == 8:
         if re.search(r'"type": 6', condition) is not None:
-            text = _("Win {0} Raids.")
+            text = _("Win {0} Raids")
             if re.search(r'"raid_level": \[3, 4, 5\]', condition) is not None:
-                text = _('Win a level 3 or higher raid.')
+                text = _('Win a level 3 or higher raid')
             if re.search(r'"raid_level": \[2, 3, 4, 5\]', condition) is not None:
-                text = _('Win a level 2 or higher raid.')
+                text = _('Win a level 2 or higher raid')
         else:
-            text = _("Battle in {0} Raids.")
+            text = _("Battle in {0} Raids")
     elif typeid == 10:
-        text = _("Transfer {0} Pokemon.")
+        text = _("Transfer {0} Pokemon")
     elif typeid == 11:
-        test = _("Favourite {0} Pokemon.")
+        test = _("Favourite {0} Pokemon")
     elif typeid == 13:
-        text = _('Use {0} {type}Berries to help catch Pokemon.')
+        text = _('Use {0} {type}Berries to help catch Pokemon')
         arr['type'] = ""
         match_object = re.search(r'"item": ([0-9]+)', condition)
         if match_object is not None:
             arr['type'] = items[match_object.group(
                 1)]['name'].replace(_(' Berry'), '')+" "
     elif typeid == 14:
-        text = _('Power up Pokemon {0} times.')
+        text = _('Power up Pokemon {0} times')
     elif typeid == 15:
-        text = _("Evolve {0} Pokemon.")
-        # [{'type': 1, 'with_pokemon_type': {'pokemon_type': [12]}}]
+        text = _("Evolve {0} Pokemon")
         if re.search(r'"type": 11', condition) is not None:
-            text = _("Use an item to evolve a Pokemon.")
+            text = _("Use an item to evolve a Pokemon")
         elif re.search(r'"type": 1', condition) is not None:
             text = _("Evolve {0} {type}Pokemon")
             arr['wb'] = ""
@@ -229,7 +229,7 @@ def questtask(typeid, condition, target):
                         arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
                             '' if last == cur else ', ')
                         cur += 1
-                text = _('Evolve {0} {poke}.')
+                text = _('Evolve {0} {poke}')
     elif typeid == 16:
         arr['inrow'] = ""
         arr['curve'] = ""
@@ -241,13 +241,25 @@ def questtask(typeid, condition, target):
         match_object = re.search(r'"throw_type": ([0-9]{2})', condition)
         if match_object is not None:
             arr['type'] = throwTypes[match_object.group(1)]+" "
-        text = _("Make {0} {type}{curve}Throws{inrow}.")
+        text = _("Make {0} {type}{curve}Throws{inrow}")
     elif typeid == 17:
-        text = _('Earn {0} Candies walking with your buddy.')
+        text = _('Earn {0} Candies walking with your buddy')
+    elif typeid == 22:
+        if int(target) == int(1):
+            text = _('Make a new friend')
+        else:
+            text = _('Make {0} new friends')
     elif typeid == 23:
-        text = _('Trade {0} Pokemon.')
+        text = _('Trade {0} Pokemon')
+        arr['distance'] = ""
+        if re.search(r'"type": 25', condition) is not None:
+            arr['distance'] = re.search(r'"distance_km": ([0-9, ]+)', condition).group(1)
+            if int(target) == int(1):
+                text = _('Trade Pokemon caught {distance} km apart')
+            else:
+                text = _('Trade {0} Pokemon caught {distance} km apart')
     elif typeid == 24:
-        text = _('Send {0} gifts to friends.')
+        text = _('Send {0} gifts to friends')
     elif typeid == 27:
         # PVP against trainer or team leader.
         if re.search(r'"type": 22', condition) is not None:
@@ -298,6 +310,7 @@ def questtask(typeid, condition, target):
         text = text.replace(_(' Battles'), _(' Battle'))
         text = text.replace(_(' candies'), _(' candy'))
         text = text.replace(_(' gifts'), _(' gift'))
+        text = text.replace(_(' Pokestops'), _(' Pokestop'))
         text = text.replace(_(' {0} snapshots'), _(' a snapshot'))
         text = text.replace(_('Make {0} {type}{curve}Throws'), _('Make a {type}{curve}Throw'))
         text = text.replace(_(' {0} times'), '')
@@ -306,6 +319,5 @@ def questtask(typeid, condition, target):
     for key, val in arr.items():
         text = text.replace('{'+key+'}', str(val))
 
-    text = text.replace(' .', '.')
-    text = text.replace('  ', ' ')
+    text = text.replace('  ', ' ').strip()
     return text
