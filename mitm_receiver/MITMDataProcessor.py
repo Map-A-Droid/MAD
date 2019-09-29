@@ -59,7 +59,8 @@ class MitmDataProcessor(Process):
 
         if type and not raw:
             logger.debug2("Running stats collector of {}".format(origin))
-            self.__mitm_mapper.run_stats_collector(origin)
+            if self.__application_args.game_stats:
+                self.__mitm_mapper.run_stats_collector(origin)
 
             logger.debug4("Received payload: {}", data["payload"])
             if type == 106:

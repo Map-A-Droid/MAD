@@ -24,6 +24,7 @@ class PlayerStats(object):
         self._last_processed_timestamp = 0
         self._db_wrapper: DbWrapperBase = db_wrapper
         self._stats_period = 0
+        self._generate_stats = application_args.game_stats
         self.__mapping_mutex = Lock()
         self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent
 
@@ -95,6 +96,8 @@ class PlayerStats(object):
                 self._last_processed_timestamp = time.time()
 
     def stats_collect_mon(self, encounter_id: str):
+        if not self._generate_stats:
+            return
         with self.__mapping_mutex:
             if 106 not in self.__stats_collected:
                 self.__stats_collected[106] = {}
@@ -112,6 +115,8 @@ class PlayerStats(object):
                 self.__stats_collected[106]['mon'][encounter_id] += 1
 
     def stats_collect_mon_iv(self, encounter_id: str, shiny: int):
+        if not self._generate_stats:
+            return
         with self.__mapping_mutex:
             if 102 not in self.__stats_collected:
                 self.__stats_collected[102] = {}
@@ -131,6 +136,8 @@ class PlayerStats(object):
                 self.__stats_collected[102]['mon_iv'][encounter_id]['count'] += 1
 
     def stats_collect_raid(self, gym_id: str):
+        if not self._generate_stats:
+            return
         with self.__mapping_mutex:
             if 106 not in self.__stats_collected:
                 self.__stats_collected[106] = {}
@@ -148,6 +155,8 @@ class PlayerStats(object):
                 self.__stats_collected[106]['raid'][gym_id] += 1
 
     def stats_collect_quest(self, stop_id):
+        if not self._generate_stats:
+            return
         with self.__mapping_mutex:
             if 106 not in self.__stats_collected:
                 self.__stats_collected[106] = {}
