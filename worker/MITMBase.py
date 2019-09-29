@@ -147,7 +147,7 @@ class MITMBase(WorkerBase):
                 return False
             logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {}/{})",
                         str(self._id), str(self._not_injected_count), str(injection_thresh_reboot))
-            if self._not_injected_count in [0, 3, 6, 9, 15] and not self._stop_worker_event.isSet():
+            if self._not_injected_count in [3, 6, 9, 15] and not self._stop_worker_event.isSet():
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                         str(self._id), str(self._not_injected_count))
                 self._check_windows()

@@ -106,8 +106,6 @@ class WorkerQuests(MITMBase):
         else:
             # initial cleanup old quests
             if not self._init:
-                if self.get_devicesettings_value('screendetection', False):
-                    self._check_quest()
                 self.clear_thread_task = 2
 
     def _health_check(self):

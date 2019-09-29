@@ -31,7 +31,7 @@ class ColorAnalyser(object):
         self._logger.debug("Detected Colors: {}".format(str(self.number_counter)))
         self.percentage_of_first = (float(self.number_counter[0][1]) / self.total_pixels)
         self._logger.debug("Detected most color percent value: {}".format(str(self.percentage_of_first)))
-        if self.percentage_of_first > 0.7:
+        if self.percentage_of_first > 0.85:
             return self.number_counter[0][0]
         else:
             return None
