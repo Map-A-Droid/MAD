@@ -1159,7 +1159,7 @@ new Vue({
       }
 
       var ivtext = "";
-      if (iv !== 0) {
+      if (mon["cp"]  > 0) {
         ivtext = `
             <div class="iv">
               <i class="fas fa-award"></i> IV: <strong style="color: ${ivcolor}">${Math.round(iv * 100) / 100}%</strong>
