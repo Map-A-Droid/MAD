@@ -66,7 +66,7 @@ class MITMBase(WorkerBase):
                     datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
-        while (data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time())):
+        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time()):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
@@ -114,7 +114,7 @@ class MITMBase(WorkerBase):
 
             if self._screendetection_count >= math.ceil(restart_thresh / 2):
                 self._screendetection_count = 0
-                if not self._check_windows(quickcheck=True):
+                if not self._check_windows(quickcheck=False):
                     logger.error('Something wrong with that worker - kill it....')
                     self._stop_worker_event.set()
 
@@ -147,7 +147,7 @@ class MITMBase(WorkerBase):
                 return False
             logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {}/{})",
                         str(self._id), str(self._not_injected_count), str(injection_thresh_reboot))
-            if self._not_injected_count in [3, 6, 9, 15] and not self._stop_worker_event.isSet():
+            if self._not_injected_count in [0, 3, 6, 9, 15] and not self._stop_worker_event.isSet():
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                         str(self._id), str(self._not_injected_count))
                 self._check_windows()
@@ -172,12 +172,13 @@ class MITMBase(WorkerBase):
         """
         pass
 
-    def _clear_quests(self, delayadd):
+    def _clear_quests(self, delayadd, openmenu=True):
         logger.debug('{_clear_quests} called')
-        x, y = self._resocalc.get_coords_quest_menu(self)[0], \
-            self._resocalc.get_coords_quest_menu(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(6 + int(delayadd))
+        if openmenu:
+            x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+                self._resocalc.get_coords_quest_menu(self)[1]
+            self._communicator.click(int(x), int(y))
+            time.sleep(6 + int(delayadd))
 
         trashcancheck = self._get_trash_positions()
         if trashcancheck is None:

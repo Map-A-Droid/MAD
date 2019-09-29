@@ -66,6 +66,7 @@ class WorkerBase(ABC):
         self._not_injected_count: int = 0
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
+        self._loginerrorcounter: int = 0
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self.get_devicesettings_value("last_location", None)
@@ -574,7 +575,7 @@ class WorkerBase(ABC):
 
     def _check_windows(self, quickcheck = False):
         logger.info('Checking pogo screen...')
-        loginerrorcounter: int = 0
+
         returncode: ScreenType = ScreenType.UNDEFINED
 
         while not returncode == ScreenType.POGO and not self._stop_worker_event.is_set():
@@ -587,10 +588,8 @@ class WorkerBase(ABC):
                         and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
                     logger.warning('Pogo freeze - restart Phone')
-                    self._stop_worker_event.set()
-                    self._stop_pogo()
-                    time.sleep(5)
                     self._reboot()
+                    break
 
                 if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
                                                    ScreenType.PERMISSION)) \
@@ -599,19 +598,26 @@ class WorkerBase(ABC):
                     self._same_screen_count += 1
                     logger.warning('Getting same screen again - maybe Pogo freeze?')
 
+                if returncode == ScreenType.BLACK:
+                    logger.info("Found Black / White Screen - waiting ...")
+                    time.sleep(20)
+
                 if returncode == ScreenType.GAMEDATA or returncode == ScreenType.CONSENT:
                     logger.warning('Error getting Gamedata or strange ggl message appears')
                     self._stop_pogo()
-                    time.sleep(5)
-                    self._turn_screen_on_and_start_pogo()
+                    time.sleep(2)
+                    self._communicator.startApp("com.nianticlabs.pokemongo")
+                    time.sleep(1)
+                    self._wait_pogo_start_delay()
 
                 elif returncode == ScreenType.CLOSE:
                     logger.warning('Pogo not in foreground...')
-                    self._start_pogo()
+                    self._communicator.startApp("com.nianticlabs.pokemongo")
+                    time.sleep(1)
+                    self._wait_pogo_start_delay()
 
                 elif returncode == ScreenType.DISABLED:
                     # Screendetection is disabled
-                    returncode == ScreenType.POGO
                     break
 
                 elif returncode == ScreenType.UPDATE:
@@ -622,30 +628,29 @@ class WorkerBase(ABC):
 
                 elif returncode == ScreenType.ERROR or returncode == ScreenType.FAILURE:
                     logger.warning('Something wrong with screendetection')
-                    loginerrorcounter += 1
+                    self._loginerrorcounter += 1
 
-                if loginerrorcounter == 3 or returncode == ScreenType.SN:
-                    logger.error('Cannot login again - (clear pogo game data and) restart phone / SN Error')
-                    self._stop_worker_event.set()
+                elif returncode == ScreenType.SN:
+                    logger.warning('Getting SN Screen - reset Magisk Settings')
+                    time.sleep(3)
                     self._stop_pogo()
-                    self._communicator.clearAppCache("com.nianticlabs.pokemongo")
-                    time.sleep(5)
-                    if self.get_devicesettings_value('clear_game_data', True):
-                        logger.info('Clearing game data')
-                        self._communicator.resetAppdata("com.nianticlabs.pokemongo")
-                    self._reboot()
-
-                if loginerrorcounter == 2:
-
-                    logger.error('Cannot login two times in row - toggling magiskhide on/off and restarting pogo')
-                    self._stop_pogo()
-                    time.sleep(5)
                     self._communicator.magisk_off("com.nianticlabs.pokemongo")
                     self._communicator.clearAppCache("com.nianticlabs.pokemongo")
                     time.sleep(1)
                     self._communicator.magisk_on("com.nianticlabs.pokemongo")
                     time.sleep(1)
                     self._reboot()
+                    break
+
+                if self._loginerrorcounter == 3:
+                    logger.error('Cannot login again - (clear pogo game data and) restart phone')
+                    self._stop_pogo()
+                    self._communicator.clearAppCache("com.nianticlabs.pokemongo")
+                    if self.get_devicesettings_value('clear_game_data', True):
+                        logger.info('Clearing game data')
+                        self._communicator.resetAppdata("com.nianticlabs.pokemongo")
+                    self._reboot()
+                    break
 
                 self._last_screen_type = returncode
 
@@ -680,7 +685,7 @@ class WorkerBase(ABC):
             logger.error("_check_windows: Failed getting screenshot")
             return False
 
-        while not returncode == ScreenType.POGO:
+        while not returncode == ScreenType.POGO and not self._stop_worker_event.isSet():
             returncode = self._WordToScreenMatching.checkQuest(self.get_screenshot_path())
 
             if returncode == ScreenType.QUEST:
@@ -710,14 +715,11 @@ class WorkerBase(ABC):
             time.sleep(2)
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                  delayAfter=2)
-
             if questloop > 5:
                 logger.warning("Give up - maybe research screen is there...")
                 return ScreenType.POGO
                 break
-
             questloop += 1
-
             firstround = False
 
         return
@@ -737,9 +739,6 @@ class WorkerBase(ABC):
         return stop_result
 
     def _reboot(self, mitm_mapper: Optional[MitmMapper] = None):
-        if not self.get_devicesettings_value("reboot", True):
-            logger.warning("Skipping reboot, disabled in device settings.")
-            return True
         try:
             start_result = self._communicator.reboot()
         except WebsocketWorkerRemovedException:

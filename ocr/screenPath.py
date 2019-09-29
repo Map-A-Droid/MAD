@@ -12,6 +12,7 @@ from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
 import numpy as np
 from utils.madGlobals import ScreenshotType
+from ocr.backgroundDetector import ColorAnalyser
 
 class ScreenType(Enum):
     UNDEFINED = -1
@@ -32,6 +33,7 @@ class ScreenType(Enum):
     UPDATE = 15
     QUEST = 20
     ERROR = 100
+    BLACK = 110
     CLOSE = 500
     DISABLED = 999
 
@@ -47,22 +49,23 @@ class WordToScreenMatching(object):
         self._id = id
         self._applicationArgs = args
         self._mapping_manager = mapping_mananger
-        detect_ReturningScreen: list = ('ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER')
-        detect_LoginScreen: list = ('KIDS', 'Google', 'Facebook')
-        detect_PTC: list = ('Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS')
-        detect_FailureRetryScreen: list = ('TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
-                                           'connexion.', 'connexion')
-        detect_FailureLoginScreen: list = ('Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
-                                           'Authentification', 'Essaye')
-        detect_WrongPassword: list = ('incorrect.', 'attempts', 'falsch.', 'gesperrt')
-        detect_Birthday: list = ('Geburtdatum', 'birth.', 'naissance.', 'date')
-        detect_Marketing: list = ('Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
-                                  'notifications', 'évenements,', 'evenements,', 'offres')
-        detect_Gamedata: list = ('Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data')
-        detect_SN: list = ('kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
-                           'logiciel')
-        detect_Forceupdate: list = ('continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
-                                    'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer')
+        self._backgrounddetector = ColorAnalyser(logger)
+        detect_ReturningScreen: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
+        detect_LoginScreen: list = ['KIDS', 'Google', 'Facebook']
+        detect_PTC: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
+        detect_FailureRetryScreen: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
+                                           'connexion.', 'connexion']
+        detect_FailureLoginScreen: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
+                                           'Authentification', 'Essaye']
+        detect_WrongPassword: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
+        detect_Birthday: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
+        detect_Marketing: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
+                                  'notifications', 'évenements,', 'evenements,', 'offres']
+        detect_Gamedata: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
+        detect_SN: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
+                           'logiciel']
+        detect_Forceupdate: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
+                                    'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer']
 
         self._ScreenType[2] = detect_ReturningScreen
         self._ScreenType[3] = detect_LoginScreen
@@ -212,6 +215,18 @@ class WordToScreenMatching(object):
                 logger.error("Screenshot corrupted :(")
                 return ScreenType.ERROR
 
+            backgroundcolor = self._backgrounddetector.detect(image=screenpath)
+
+            if backgroundcolor is not None and (
+                    (backgroundcolor[0] == 0 and
+                     backgroundcolor[1] == 0 and
+                     backgroundcolor[2] == 0) or (
+                    backgroundcolor[0] == 255 and
+                    backgroundcolor[1] == 255 and
+                    backgroundcolor[2] == 255)):
+                # Background is black - Loading ...
+                return ScreenType.BLACK
+
             self._height, self._width, _ = frame_org.shape
             frame_color = frame_org
             diff: int = 1
@@ -221,18 +236,22 @@ class WordToScreenMatching(object):
                 diff = 2
             frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
             self._ratio = self._height / self._width
-            self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
-            if 'text' not in self._globaldict:
-                logger.error('Error while text detection')
-                return ScreenType.ERROR
-            n_boxes = len(self._globaldict['level'])
-            for i in range(n_boxes):
+            textes = [frame, frame_color]
+
+            for text in textes:
+                self._globaldict = self._pogoWindowManager.get_screen_text(text, self._id)
+                if 'text' not in self._globaldict:
+                    logger.error('Error while text detection')
+                    return ScreenType.ERROR
+                n_boxes = len(self._globaldict['level'])
+                for i in range(n_boxes):
+                    if returntype != -1: break
+                    if len(self._globaldict['text'][i]) > 3:
+                        for z in self._ScreenType:
+                            if self._globaldict['top'][i] > self._height / 4 and \
+                                    self._globaldict['text'][i] in self._ScreenType[z]:
+                                returntype = z
                 if returntype != -1: break
-                if len(self._globaldict['text'][i]) > 3:
-                    for z in self._ScreenType:
-                        if self._globaldict['top'][i] > self._height / 4 and \
-                                self._globaldict['text'][i] in self._ScreenType[z]:
-                            returntype = z
 
         if ScreenType(returntype) != ScreenType.UNDEFINED:
             logger.info("Processing Screen: {}", str(ScreenType(returntype)))
@@ -248,7 +267,7 @@ class WordToScreenMatching(object):
                 username = ggl_login.username
 
             if self.parse_ggl(self._communicator.uiautomator(), username):
-                time.sleep(40)
+                time.sleep(50)
                 return ScreenType.GGL
             return ScreenType.ERROR
 
@@ -413,7 +432,7 @@ class WordToScreenMatching(object):
 
             # button
             self._communicator.click(self._width / 2, button_y)
-            time.sleep(40)
+            time.sleep(50)
             return ScreenType.PTC
 
         elif ScreenType(returntype) == ScreenType.FAILURE:
@@ -451,7 +470,6 @@ class WordToScreenMatching(object):
             return ScreenType.ERROR
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
-            #pytesseract.image_to_data(frame, output_type=Output.DICT)
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         n_boxes = len(self._globaldict['level'])
         for i in range(n_boxes):

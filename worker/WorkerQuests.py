@@ -91,7 +91,7 @@ class WorkerQuests(MITMBase):
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
-                if self.get_devicesettings_value('screendetection', False): self._check_quest()
+
                 self.set_devicesettings_value('account_rotation_started', True)
             time.sleep(10)
         else:
@@ -105,7 +105,10 @@ class WorkerQuests(MITMBase):
             logger.info("Starting Level Mode")
         else:
             # initial cleanup old quests
-            if not self._init: self.clear_thread_task = 2
+            if not self._init:
+                if self.get_devicesettings_value('screendetection', False):
+                    self._check_quest()
+                self.clear_thread_task = 2
 
     def _health_check(self):
         """
@@ -300,7 +303,7 @@ class WorkerQuests(MITMBase):
             logger.debug("No last action time found - no calculation")
             delay_used = -1
 
-        if  self.get_devicesettings_value('screendetection', False) and \
+        if self.get_devicesettings_value('screendetection', False) and \
                 self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
                 and self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
             # Waiting time to long and more then one account - switch! (not level mode!!)
@@ -381,7 +384,6 @@ class WorkerQuests(MITMBase):
             data_received = self._open_pokestop(math.floor(time.time()))
             if data_received is not None and data_received == LatestReceivedType.STOP:
                 self._handle_stop(math.floor(time.time()))
-
 
         else:
             logger.debug('Currently in INIT Mode - no Stop processing')
