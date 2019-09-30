@@ -248,22 +248,22 @@ class WorkerBase(ABC):
                                                                                str(startcoords[1])))
             self._communicator.setLocation(startcoords[0], startcoords[1], 0)
 
-        self._work_mutex.acquire()
+
         try:
+            self._work_mutex.acquire()
             self._turn_screen_on_and_start_pogo()
             self._get_screen_size()
+            # register worker  in routemanager
+            logger.info("Try to register {} in Routemanager {}", str(
+                self._id), str(self._routemanager_name))
+            self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
             # no cleanup required here? TODO: signal websocket server somehow
             self._stop_worker_event.set()
             return
-
-        # register worker  in routemanager
-        logger.info("Try to register {} in Routemanager {}", str(
-            self._id), str(self._routemanager_name))
-        self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
-
-        self._work_mutex.release()
+        finally:
+            self._work_mutex.release()
 
         self._async_io_looper_thread = Thread(name=str(self._id) + '_asyncio_' + self._id,
                                               target=self._start_asyncio_loop)
@@ -277,25 +277,26 @@ class WorkerBase(ABC):
         # check if pogo is topmost and start if necessary
         logger.debug(
             "_internal_health_check: Calling _start_pogo routine to check if pogo is topmost")
-        self._work_mutex.acquire()
-        logger.debug("_internal_health_check: worker lock acquired")
-        logger.debug("Checking if we need to restart pogo")
-        # Restart pogo every now and then...
-        restart_pogo_setting = self.get_devicesettings_value("restart_pogo", 0)
-        if restart_pogo_setting > 0:
-            # logger.debug("main: Current time - lastPogoRestart: {}", str(curTime - lastPogoRestart))
-            # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
-            if self._location_count > restart_pogo_setting:
-                logger.info(
-                    "scanned {} locations, restarting game on {}", str(restart_pogo_setting), str(self._id))
-                pogo_started = self._restart_pogo()
-                self._location_count = 0
+        try:
+            self._work_mutex.acquire()
+            logger.debug("_internal_health_check: worker lock acquired")
+            logger.debug("Checking if we need to restart pogo")
+            # Restart pogo every now and then...
+            restart_pogo_setting = self.get_devicesettings_value("restart_pogo", 0)
+            if restart_pogo_setting > 0:
+                # logger.debug("main: Current time - lastPogoRestart: {}", str(curTime - lastPogoRestart))
+                # if curTime - lastPogoRestart >= (args.restart_pogo * 60):
+                if self._location_count > restart_pogo_setting:
+                    logger.info(
+                        "scanned {} locations, restarting game on {}", str(restart_pogo_setting), str(self._id))
+                    pogo_started = self._restart_pogo()
+                    self._location_count = 0
+                else:
+                    pogo_started = self._start_pogo()
             else:
                 pogo_started = self._start_pogo()
-        else:
-            pogo_started = self._start_pogo()
-
-        self._work_mutex.release()
+        finally:
+            self._work_mutex.release()
         logger.debug("_internal_health_check: worker lock released")
         return pogo_started
 
