@@ -541,11 +541,7 @@ class WorkerBase(ABC):
             logger.info("Worker {} get a job - waiting".format(str(self._id)))
             while self.get_devicesettings_value("job", False) and not self._stop_worker_event.is_set():
                 time.sleep(10)
-            logger.info("Worker {} processed the job - checking screen and go on ".format(str(self._id)))
-            if not self._check_windows():
-                logger.error('Kill Worker...')
-                self._stop_worker_event.set()
-                return False
+            logger.info("Worker {} processed the job and go on ".format(str(self._id)))
 
     def _check_location_is_valid(self):
         if self.current_location is None:

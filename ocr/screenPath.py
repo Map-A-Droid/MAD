@@ -178,7 +178,7 @@ class WordToScreenMatching(object):
 
         return np.asarray(sort_lines, dtype=np.int32)
 
-    def matchScreen(self, quickcheck = False):
+    def matchScreen(self):
         pogoTopmost = self._communicator.isPogoTopmost()
         screenpath = self.get_screenshot_path()
         topmostapp = self._communicator.topmostApp()
@@ -197,8 +197,8 @@ class WordToScreenMatching(object):
             return ScreenType.CLOSE
         elif self._nextscreen != ScreenType.UNDEFINED:
             returntype = ScreenType(self._nextscreen)
-        elif not self.get_devicesettings_value('screendetection', False) or quickcheck:
-            logger.info('No more screen detection - disabled or quickcheck...')
+        elif not self.get_devicesettings_value('screendetection', False):
+            logger.info('No more screen detection - disabled ...')
             return ScreenType.DISABLED
         else:
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),

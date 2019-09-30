@@ -120,7 +120,7 @@ class RouteManagerBase(ABC):
     def _start_check_routepools(self):
         self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
                                                target=self._check_routepools)
-        self._check_routepools_thread.daemon = False
+        self._check_routepools_thread.daemon = True
         self._check_routepools_thread.start()
 
     def stop_routemanager(self):
