@@ -433,7 +433,7 @@ class WorkerQuests(MITMBase):
             while not self._start_inventory_clear.is_set():
                 if self._stop_worker_event.is_set():
                     return
-                time.sleep(0.5)
+                time.sleep(1)
             if self.clear_thread_task > 0:
                 self._work_mutex.acquire()
                 try:
@@ -454,7 +454,9 @@ class WorkerQuests(MITMBase):
                     logger.error("Worker removed while clearing quest/box")
                     self._stop_worker_event.set()
                     return
-                self._work_mutex.release()
+                finally:
+                    self._work_mutex.release()
+            time.sleep(1)
 
     def clear_box(self, delayadd):
         stop_inventory_clear = Event()
