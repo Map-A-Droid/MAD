@@ -7,7 +7,7 @@ class ColorAnalyser(object):
     def __init__(self, logger):
         self.img = ""
         self._logger = logger
-        self.number_counter = ""
+
         self.manual_count = {}
         self.w, self.h, self.channels = 0, 0, 0
         self.total_pixels = 0
@@ -23,7 +23,7 @@ class ColorAnalyser(object):
                     self.manual_count[RGB] = 1
 
     def detect(self, image):
-        self.img = cv2.imread(image, 1)
+        self.img = image
         self.w, self.h, self.channels = self.img.shape
         self.total_pixels = self.w * self.h
         self.count()
@@ -31,7 +31,10 @@ class ColorAnalyser(object):
         self._logger.debug("Detected Colors: {}".format(str(self.number_counter)))
         self.percentage_of_first = (float(self.number_counter[0][1]) / self.total_pixels)
         self._logger.debug("Detected most color percent value: {}".format(str(self.percentage_of_first)))
+        self.manual_count = {}
         if self.percentage_of_first > 0.85:
-            return self.number_counter[0][0]
+            returning_color = self.number_counter[0][0]
+            self.number_counter = ""
+            return returning_color
         else:
             return None

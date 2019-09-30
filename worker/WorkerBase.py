@@ -596,7 +596,7 @@ class WorkerBase(ABC):
                     logger.warning('Getting same screen again - maybe Pogo freeze?')
 
                 if returncode == ScreenType.BLACK:
-                    logger.info("Found Black / White Screen - waiting ...")
+                    logger.info("Found Black Loading Screen - waiting ...")
                     time.sleep(20)
 
                 if returncode == ScreenType.GAMEDATA or returncode == ScreenType.CONSENT:

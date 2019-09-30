@@ -2,8 +2,7 @@ import cv2
 import os
 import time
 import re
-import sys
-sys.path.append("..")
+
 import xml.etree.ElementTree as ET
 from utils.logging import logger
 from utils.MappingManager import MappingManager
@@ -13,6 +12,7 @@ from enum import Enum
 import numpy as np
 from utils.madGlobals import ScreenshotType
 from ocr.backgroundDetector import ColorAnalyser
+
 
 class ScreenType(Enum):
     UNDEFINED = -1
@@ -215,15 +215,12 @@ class WordToScreenMatching(object):
                 logger.error("Screenshot corrupted :(")
                 return ScreenType.ERROR
 
-            backgroundcolor = self._backgrounddetector.detect(image=screenpath)
+            backgroundcolor = self._backgrounddetector.detect(image=frame_org[100:200, 100:200])
 
             if backgroundcolor is not None and (
-                    (backgroundcolor[0] == 0 and
-                     backgroundcolor[1] == 0 and
-                     backgroundcolor[2] == 0) or (
-                    backgroundcolor[0] == 255 and
-                    backgroundcolor[1] == 255 and
-                    backgroundcolor[2] == 255)):
+                    backgroundcolor[0] == 0 and
+                    backgroundcolor[1] == 0 and
+                    backgroundcolor[2] == 0):
                 # Background is black - Loading ...
                 return ScreenType.BLACK
 
