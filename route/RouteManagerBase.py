@@ -120,7 +120,7 @@ class RouteManagerBase(ABC):
     def _start_check_routepools(self):
         self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
                                                target=self._check_routepools)
-        self._check_routepools_thread.daemon = False
+        self._check_routepools_thread.daemon = True
         self._check_routepools_thread.start()
 
     def stop_routemanager(self):
@@ -215,7 +215,7 @@ class RouteManagerBase(ABC):
                                                           self._cluster_priority_queue_criteria())
             self._update_prio_queue_thread = Thread(name="prio_queue_update_" + self.name,
                                                     target=self._update_priority_queue_loop)
-            self._update_prio_queue_thread.daemon = False
+            self._update_prio_queue_thread.daemon = True
             self._update_prio_queue_thread.start()
 
     # list_coords is a numpy array of arrays!

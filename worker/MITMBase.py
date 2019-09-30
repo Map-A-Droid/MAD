@@ -66,7 +66,7 @@ class MITMBase(WorkerBase):
                     datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
-        while (data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time())):
+        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time()):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
@@ -103,7 +103,6 @@ class MITMBase(WorkerBase):
                                                      self._transporttype)
 
             self._restart_count += 1
-            self._screendetection_count += 1
 
             restart_thresh = self.get_devicesettings_value("restart_thresh", 5)
             reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3)
@@ -111,12 +110,6 @@ class MITMBase(WorkerBase):
                 if self._init:
                     restart_thresh = self.get_devicesettings_value("restart_thresh", 5) * 2
                     reboot_thresh = self.get_devicesettings_value("reboot_thresh", 3) * 2
-
-            if self._screendetection_count >= math.ceil(restart_thresh / 2):
-                self._screendetection_count = 0
-                if not self._check_windows(quickcheck=True):
-                    logger.error('Something wrong with that worker - kill it....')
-                    self._stop_worker_event.set()
 
             if self._restart_count > restart_thresh:
                 self._reboot_count += 1
@@ -147,9 +140,9 @@ class MITMBase(WorkerBase):
                 return False
             logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {}/{})",
                         str(self._id), str(self._not_injected_count), str(injection_thresh_reboot))
-            if self._not_injected_count in [3, 6, 9, 15] and not self._stop_worker_event.isSet():
+            if self._not_injected_count in [3, 6, 9, 15, 18] and not self._stop_worker_event.isSet():
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
-                        str(self._id), str(self._not_injected_count))
+                            str(self._id), str(self._not_injected_count))
                 self._check_windows()
             if self._stop_worker_event.isSet():
                 logger.error("Worker {} killed while waiting for injection", str(self._id))
@@ -172,12 +165,13 @@ class MITMBase(WorkerBase):
         """
         pass
 
-    def _clear_quests(self, delayadd):
+    def _clear_quests(self, delayadd, openmenu=True):
         logger.debug('{_clear_quests} called')
-        x, y = self._resocalc.get_coords_quest_menu(self)[0], \
-            self._resocalc.get_coords_quest_menu(self)[1]
-        self._communicator.click(int(x), int(y))
-        time.sleep(6 + int(delayadd))
+        if openmenu:
+            x, y = self._resocalc.get_coords_quest_menu(self)[0], \
+                self._resocalc.get_coords_quest_menu(self)[1]
+            self._communicator.click(int(x), int(y))
+            time.sleep(6 + int(delayadd))
 
         trashcancheck = self._get_trash_positions()
         if trashcancheck is None:

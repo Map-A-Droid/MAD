@@ -49,6 +49,8 @@ class MitmMapper(object):
     def __internal_playerstats_db_update_consumer(self):
         try:
             while not self.__playerstats_db_update_stop.is_set():
+                if not self.__application_args.game_stats:
+                    break
                 try:
                     with self.__playerstats_db_update_mutex:
                         next_item = self.__playerstats_db_update_queue.get_nowait()

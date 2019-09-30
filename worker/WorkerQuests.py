@@ -91,7 +91,7 @@ class WorkerQuests(MITMBase):
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
-                if self.get_devicesettings_value('screendetection', False): self._check_quest()
+
                 self.set_devicesettings_value('account_rotation_started', True)
             time.sleep(10)
         else:
@@ -105,7 +105,8 @@ class WorkerQuests(MITMBase):
             logger.info("Starting Level Mode")
         else:
             # initial cleanup old quests
-            if not self._init: self.clear_thread_task = 2
+            if not self._init:
+                self.clear_thread_task = 2
 
     def _health_check(self):
         """
@@ -300,7 +301,7 @@ class WorkerQuests(MITMBase):
             logger.debug("No last action time found - no calculation")
             delay_used = -1
 
-        if  self.get_devicesettings_value('screendetection', False) and \
+        if self.get_devicesettings_value('screendetection', False) and \
                 self._WordToScreenMatching.return_memory_account_count() > 1 and delay_used >= self._rotation_waittime \
                 and self.get_devicesettings_value('account_rotation', False) and not self._level_mode:
             # Waiting time to long and more then one account - switch! (not level mode!!)
@@ -368,26 +369,26 @@ class WorkerQuests(MITMBase):
             #switch if player lvl >= 30
             self.switch_account()
 
-        self._work_mutex.acquire()
-        if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
-            logger.info("Processing Stop / Quest...")
+        try:
+            self._work_mutex.acquire()
+            if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
+                logger.info("Processing Stop / Quest...")
 
-            reachedMainMenu = self._check_pogo_main_screen(10, False)
-            if not reachedMainMenu:
-                self._restart_pogo(mitm_mapper=self._mitm_mapper)
+                reachedMainMenu = self._check_pogo_main_screen(10, False)
+                if not reachedMainMenu:
+                    self._restart_pogo(mitm_mapper=self._mitm_mapper)
 
-            logger.info('Open Stop')
+                logger.info('Open Stop')
+                data_received = self._open_pokestop(math.floor(time.time()))
+                if data_received is not None and data_received == LatestReceivedType.STOP:
+                    self._handle_stop(math.floor(time.time()))
 
-            data_received = self._open_pokestop(math.floor(time.time()))
-            if data_received is not None and data_received == LatestReceivedType.STOP:
-                self._handle_stop(math.floor(time.time()))
-
-
-        else:
-            logger.debug('Currently in INIT Mode - no Stop processing')
-            time.sleep(5)
-        logger.debug("Releasing lock")
-        self._work_mutex.release()
+            else:
+                logger.debug('Currently in INIT Mode - no Stop processing')
+                time.sleep(5)
+        finally:
+            logger.debug("Releasing lock")
+            self._work_mutex.release()
 
     def _start_pogo(self):
         pogo_topmost = self._communicator.isPogoTopmost()
@@ -428,15 +429,15 @@ class WorkerQuests(MITMBase):
     def _clear_thread(self):
         logger.info('Starting clear Quest Thread')
         while not self._stop_worker_event.is_set():
-            time.sleep(0.5)
+            time.sleep(1)
             # wait for event signal
             while not self._start_inventory_clear.is_set():
                 if self._stop_worker_event.is_set():
                     return
-                time.sleep(0.5)
+                time.sleep(1)
             if self.clear_thread_task > 0:
-                self._work_mutex.acquire()
                 try:
+                    self._work_mutex.acquire()
                     # TODO: less magic numbers?
                     time.sleep(1)
                     if self.clear_thread_task == 1:
@@ -454,7 +455,8 @@ class WorkerQuests(MITMBase):
                     logger.error("Worker removed while clearing quest/box")
                     self._stop_worker_event.set()
                     return
-                self._work_mutex.release()
+                finally:
+                    self._work_mutex.release()
 
     def clear_box(self, delayadd):
         stop_inventory_clear = Event()
