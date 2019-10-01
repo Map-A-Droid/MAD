@@ -11,8 +11,8 @@ from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
 import numpy as np
 from utils.madGlobals import ScreenshotType
-from ocr.backgroundDetector import ColorAnalyser
-
+from PIL import Image
+import gc
 
 class ScreenType(Enum):
     UNDEFINED = -1
@@ -49,7 +49,6 @@ class WordToScreenMatching(object):
         self._id = id
         self._applicationArgs = args
         self._mapping_manager = mapping_mananger
-        self._backgrounddetector = ColorAnalyser(logger)
         detect_ReturningScreen: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
         detect_LoginScreen: list = ['KIDS', 'Google', 'Facebook']
         detect_PTC: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
@@ -205,17 +204,10 @@ class WordToScreenMatching(object):
                                                 delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
-            try:
-                frame_org = cv2.imread(screenpath)
-            except Exception:
-                logger.error("Screenshot corrupted :(")
-                return ScreenType.ERROR
+            frame_org = Image.open(screenpath)
+            self._height, self._width, = frame_org.size
 
-            if frame_org is None:
-                logger.error("Screenshot corrupted :(")
-                return ScreenType.ERROR
-
-            backgroundcolor = self._backgrounddetector.detect(image=frame_org[100:200, 100:200])
+            backgroundcolor = self.most_frequent_colour(frame_org.crop((100, 100, 200, 200)))
 
             if backgroundcolor is not None and (
                     backgroundcolor[0] == 0 and
@@ -224,14 +216,14 @@ class WordToScreenMatching(object):
                 # Background is black - Loading ...
                 return ScreenType.BLACK
 
-            self._height, self._width, _ = frame_org.shape
+            self._height, self._width,  = frame_org.size
             frame_color = frame_org
             diff: int = 1
             if self._width < 1080:
                 logger.info('Resize screen ...')
-                frame_color = cv2.resize(frame_org, None, fx=2, fy=2)
+                frame_color = frame_org.resize([int(2 * s) for s in frame_org.size])
                 diff = 2
-            frame = cv2.cvtColor(frame_color, cv2.COLOR_BGR2GRAY)
+            frame = frame_color.convert('1')
             self._ratio = self._height / self._width
             textes = [frame, frame_color]
 
@@ -249,6 +241,8 @@ class WordToScreenMatching(object):
                                     self._globaldict['text'][i] in self._ScreenType[z]:
                                 returntype = z
                 if returntype != -1: break
+
+        gc.collect()
 
         if ScreenType(returntype) != ScreenType.UNDEFINED:
             logger.info("Processing Screen: {}", str(ScreenType(returntype)))
@@ -614,6 +608,23 @@ class WordToScreenMatching(object):
             self._lastScreenshotTaken = time.time()
             time.sleep(delayAfter)
             return True
+
+    def most_frequent_colour(self, image):
+
+        w, h = image.size
+
+        pixels = image.getcolors(w * h)
+
+        most_frequent_pixel = pixels[0]
+
+        for count, colour in pixels:
+            if count > most_frequent_pixel[0]:
+                most_frequent_pixel = (count, colour)
+
+        print (most_frequent_pixel[1])
+        pixels = None
+
+        return most_frequent_pixel[1]
 
 
 if __name__ == '__main__':
