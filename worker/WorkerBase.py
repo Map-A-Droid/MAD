@@ -307,15 +307,16 @@ class WorkerBase(ABC):
         self._cleanup()
         logger.info(
             "Internal cleanup of {} signalling end to websocketserver", str(self._id))
-        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
-        self._communicator.cleanup_websocket()
 
-        logger.info("Stopped Route")
-        # self.stop_worker()
         if self._async_io_looper_thread is not None:
             logger.info("Stopping worker's asyncio loop")
             self.loop.call_soon_threadsafe(self.loop.stop)
             self._async_io_looper_thread.join()
+            time.sleep(1)
+
+        logger.info("Stopped Route")
+        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
+        self._communicator.cleanup_websocket()
 
         logger.info("Internal cleanup of {} finished", str(self._id))
 
