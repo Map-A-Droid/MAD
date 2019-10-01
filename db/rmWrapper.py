@@ -939,7 +939,7 @@ class RmWrapper(DbWrapperBase):
             "weather_boosted_condition, last_modified, "
             "(trs_spawn.calc_endminsec IS NOT NULL) AS verified "
             "FROM pokemon "
-            "LEFT JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint "
+            "INNER JOIN trs_spawn ON pokemon.spawnpoint_id = trs_spawn.spawnpoint "
             "WHERE last_modified >= %s"
         )
 
