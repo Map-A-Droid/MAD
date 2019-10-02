@@ -201,6 +201,10 @@ class WebsocketServer(object):
                     "Worker with origin {} is already running, killing the running one and have client reconnect",
                     str(origin))
                 self.__current_users.get(origin)[1].stop_worker()
+                ## todo: do this better :D
+                logger.info("Old worker thread is still alive - waiting 20 seconds")
+                await asyncio.sleep(20)
+                logger.info("Reconnect ...")
                 return
 
             self.__users_connecting.append(origin)
