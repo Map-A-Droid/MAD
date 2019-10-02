@@ -205,7 +205,6 @@ class WordToScreenMatching(object):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
             frame_org = Image.open(screenpath)
-            self._height, self._width, = frame_org.size
 
             backgroundcolor = self.most_frequent_colour(frame_org.crop((100, 100, 200, 200)))
 
@@ -216,22 +215,24 @@ class WordToScreenMatching(object):
                 # Background is black - Loading ...
                 return ScreenType.BLACK
 
-            self._height, self._width,  = frame_org.size
-            frame_color = frame_org
-            diff: int = 1
+            self._width, self._height = frame_org.size
+
             if self._width < 1080:
                 logger.info('Resize screen ...')
-                frame_color = frame_org.resize([int(2 * s) for s in frame_org.size])
-                diff = 2
-            frame = frame_color.convert('1')
+                frame_color = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
+                diff: int = 2
+            else:
+                frame_color = frame_org
+                diff: int = 1
+
+            frame = frame_color.convert('LA')
             self._ratio = self._height / self._width
             textes = [frame, frame_color]
 
             for text in textes:
                 self._globaldict = self._pogoWindowManager.get_screen_text(text, self._id)
                 if 'text' not in self._globaldict:
-                    logger.error('Error while text detection')
-                    return ScreenType.ERROR
+                    continue
                 n_boxes = len(self._globaldict['level'])
                 for i in range(n_boxes):
                     if returntype != -1: break
@@ -243,6 +244,10 @@ class WordToScreenMatching(object):
                 if returntype != -1: break
 
         gc.collect()
+
+        if 'text' not in self._globaldict:
+            logger.error('Error while text detection')
+            return ScreenType.ERROR
 
         if ScreenType(returntype) != ScreenType.UNDEFINED:
             logger.info("Processing Screen: {}", str(ScreenType(returntype)))
@@ -612,16 +617,14 @@ class WordToScreenMatching(object):
     def most_frequent_colour(self, image):
 
         w, h = image.size
-
         pixels = image.getcolors(w * h)
-
         most_frequent_pixel = pixels[0]
 
         for count, colour in pixels:
             if count > most_frequent_pixel[0]:
                 most_frequent_pixel = (count, colour)
 
-        print (most_frequent_pixel[1])
+        logger.debug ("Most frequent pixel on picture: {}".format(str(most_frequent_pixel[1])))
         pixels = None
 
         return most_frequent_pixel[1]
