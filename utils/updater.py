@@ -508,8 +508,7 @@ class deviceUpdater(object):
 
                     job = autocommand['job']
 
-                    if len(origins) > 1:
-                        globalid = int(time.time())
+                    globalid = int(time.time())
 
                     self._globaljoblog[globalid] = {}
                     self._globaljoblog[globalid]['redo'] = redo
