@@ -499,29 +499,31 @@ class deviceUpdater(object):
             logger.info('Found {} autojobs - add them'.format(str(len(autocommands))))
 
             for autocommand in autocommands:
-                globalid = autocommand.get('uniqueid', int(time.time()))
-                redo = autocommand.get('redo', False)
-                algo = self.get_job_algo_value(algotyp=autocommand.get('algotype', 'flex'),
-                                               algovalue=autocommand.get('algovalue', 0))
-                startwithinit = autocommand.get('startwithinit', False)
                 origins = autocommand['origins'].split('|')
-                job = autocommand['job']
-
-                self._globaljoblog[globalid] = {}
-                self._globaljoblog[globalid]['redo'] = redo
-                self._globaljoblog[globalid]['algo'] = algo
-                self._globaljoblog[globalid]['algovalue'] = autocommand.get('algovalue', 0)
-                self._globaljoblog[globalid]['algotype'] = autocommand.get('algotype', 'flex')
-                self._globaljoblog[globalid]['startwithinit'] = startwithinit
-                self._globaljoblog[globalid]['autojob'] = True
-                self._globaljoblog[globalid]['redoonerror'] = autocommand.get('redoonerror', False)
-
                 for origin in origins:
+                    redo = autocommand.get('redo', False)
+                    algo = self.get_job_algo_value(algotyp=autocommand.get('algotype', 'flex'),
+                                                   algovalue=autocommand.get('algovalue', 0))
+                    startwithinit = autocommand.get('startwithinit', False)
+
+                    job = autocommand['job']
+
+                    if len(origins) > 1:
+                        globalid = int(time.time())
+
+                    self._globaljoblog[globalid] = {}
+                    self._globaljoblog[globalid]['redo'] = redo
+                    self._globaljoblog[globalid]['algo'] = algo
+                    self._globaljoblog[globalid]['algovalue'] = autocommand.get('algovalue', 0)
+                    self._globaljoblog[globalid]['algotype'] = autocommand.get('algotype', 'flex')
+                    self._globaljoblog[globalid]['startwithinit'] = startwithinit
+                    self._globaljoblog[globalid]['autojob'] = True
+                    self._globaljoblog[globalid]['redoonerror'] = autocommand.get('redoonerror', False)
+
                     self.preadd_job(origin=origin, job=job, id_=int(time.time()),
-                                    type=str(jobType.CHAIN), globalid=globalid)
+                                    type=str(jobType.CHAIN))
                     # get a unique id !
                     time.sleep(1)
-
         else:
             logger.info('Did not find any automatic jobs')
 
