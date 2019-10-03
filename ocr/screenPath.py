@@ -1,4 +1,3 @@
-import cv2
 import os
 import time
 import re
@@ -458,16 +457,10 @@ class WordToScreenMatching(object):
             return ScreenType.POGO
 
     def checkQuest(self, screenpath):
-        try:
-            frame = cv2.imread(screenpath)
-        except Exception:
-            logger.error("Screenshot corrupted :(")
-            return ScreenType.UNDEFINED
 
-        if frame is None:
-            logger.error("Screenshot corrupted :(")
-            return ScreenType.ERROR
-        frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
+        frame = Image.open(screenpath)
+        frame = frame.convert('LA')
+
         self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         n_boxes = len(self._globaldict['level'])
@@ -475,13 +468,14 @@ class WordToScreenMatching(object):
             if any(elem in (self._globaldict['text'][i]) for elem in click_text.split(",")):
                 logger.info('Found research menu')
                 self._communicator.click(100, 100)
+                frame.close()
                 return ScreenType.QUEST
 
         logger.info('Listening to Dr. blabla - please wait')
 
         self._communicator.backButton()
         time.sleep(3)
-
+        frame.close()
         return ScreenType.UNDEFINED
 
     def parse_permission(self, xml):
@@ -632,14 +626,4 @@ class WordToScreenMatching(object):
 
         return most_frequent_pixel[1]
 
-
-if __name__ == '__main__':
-    screen = WordToScreenMatching(None, None, "test")
-    screen.matchScreen("screenshot_tv_grant.jpg")
-    #frame = cv2.imread('screenshot.jpg')
-    #h, w, _ = frame.shape
-    #frame = cv2.resize(frame, None, fx=2, fy=2)
-    #frame = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #self._height, self._width, _ = frame.shape
-    #print(pytesseract.image_to_data(frame, output_type=Output.DICT))
 

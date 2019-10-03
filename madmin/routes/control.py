@@ -1,8 +1,7 @@
 import datetime
 import time
 import os
-import cv2
-import glob
+from PIL import Image
 from flask import (render_template, request, redirect, flash, jsonify)
 from werkzeug.utils import secure_filename
 
@@ -178,8 +177,8 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         filename = generate_device_screenshot_path(origin, devicemappings, self._args)
-        img = cv2.imread(filename, 0)
-        height, width = img.shape[:2]
+        with Image.open(filename) as screenshot:
+            width, height = screenshot.size
 
         real_click_x = int(width / float(click_x))
         real_click_y = int(height / float(click_y))
@@ -208,8 +207,8 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         filename = generate_device_screenshot_path(origin, devicemappings, self._args)
-        img = cv2.imread(filename, 0)
-        height, width = img.shape[:2]
+        with Image.open(filename) as screenshot:
+            width, height = screenshot.size
 
         real_click_x = int(width / float(click_x))
         real_click_y = int(height / float(click_y))
