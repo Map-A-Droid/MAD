@@ -175,6 +175,8 @@ class PlayerStats(object):
 
     def stats_collect_location_data(self, location, datarec, start_timestamp, type, rec_timestamp, walker,
                                     transporttype):
+        if not self._generate_stats:
+            return
         with self.__mapping_mutex:
             if 'location' not in self.__stats_collected:
                 self.__stats_collected['location'] = []
