@@ -66,7 +66,8 @@ class MITMBase(WorkerBase):
                     datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
-        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time()):
+        while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time()) \
+                and not self._stop_worker_event.is_set():
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
