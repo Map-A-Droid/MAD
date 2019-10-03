@@ -213,6 +213,7 @@ class WordToScreenMatching(object):
                     backgroundcolor[1] == 0 and
                     backgroundcolor[2] == 0):
                 # Background is black - Loading ...
+                frame_org.close()
                 return ScreenType.BLACK
 
             self._width, self._height = frame_org.size
@@ -229,6 +230,8 @@ class WordToScreenMatching(object):
             self._ratio = self._height / self._width
             textes = [frame, frame_color]
 
+            frame_org.close()
+
             for text in textes:
                 self._globaldict = self._pogoWindowManager.get_screen_text(text, self._id)
                 if 'text' not in self._globaldict:
@@ -243,8 +246,6 @@ class WordToScreenMatching(object):
                                 returntype = z
                 if returntype != -1: break
 
-        frame, frame_color = None, None
-        frame_org.close()
         gc.collect()
 
         if 'text' not in self._globaldict:
