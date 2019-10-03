@@ -356,6 +356,7 @@ class WebsocketServer(object):
             await websocket_client_connection.close()
         finally:
             async with self.__users_mutex:
+                await asyncio.sleep(20)
                 self.__users_connecting.remove(origin)
         return True
 
