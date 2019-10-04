@@ -76,7 +76,6 @@ class WordToScreenMatching(object):
         self._ScreenType[14] = detect_SN
         self._ScreenType[7] = detect_WrongPassword
         self._ScreenType[15] = detect_Forceupdate
-        self._globaldict: dict = []
         self._ratio: float = 0.0
 
         self._logintype: LoginType = -1
@@ -177,6 +176,7 @@ class WordToScreenMatching(object):
         return np.asarray(sort_lines, dtype=np.int32)
 
     def matchScreen(self):
+        globaldict: dict = {}
         pogoTopmost = self._communicator.isPogoTopmost()
         screenpath = self.get_screenshot_path()
         topmostapp = self._communicator.topmostApp()
@@ -229,16 +229,16 @@ class WordToScreenMatching(object):
             textes = [frame, frame_color]
 
             for text in textes:
-                self._globaldict = self._pogoWindowManager.get_screen_text(text, self._id)
-                if 'text' not in self._globaldict:
+                globaldict = self._pogoWindowManager.get_screen_text(text, self._id)
+                if 'text' not in globaldict:
                     continue
-                n_boxes = len(self._globaldict['level'])
+                n_boxes = len(globaldict['level'])
                 for i in range(n_boxes):
                     if returntype != -1: break
-                    if len(self._globaldict['text'][i]) > 3:
+                    if len(globaldict['text'][i]) > 3:
                         for z in self._ScreenType:
-                            if self._globaldict['top'][i] > self._height / 4 and \
-                                    self._globaldict['text'][i] in self._ScreenType[z]:
+                            if globaldict['top'][i] > self._height / 4 and \
+                                    globaldict['text'][i] in self._ScreenType[z]:
                                 returntype = z
                 if returntype != -1: break
 
@@ -247,7 +247,7 @@ class WordToScreenMatching(object):
             frame_color.close()
             textes.clear()
 
-            if 'text' not in self._globaldict:
+            if 'text' not in globaldict:
                 logger.error('Error while text detection')
                 return ScreenType.ERROR
 
@@ -298,11 +298,11 @@ class WordToScreenMatching(object):
         elif ScreenType(returntype) == ScreenType.MARKETING:
             self._nextscreen = ScreenType.POGO
             click_text = 'ERLAUBEN,ALLOW,AUTORISER'
-            n_boxes = len(self._globaldict['level'])
+            n_boxes = len(globaldict['level'])
             for i in range(n_boxes):
-                if any(elem.lower() in (self._globaldict['text'][i].lower()) for elem in click_text.split(",")):
-                    (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                    self._globaldict['width'][i], self._globaldict['height'][i])
+                if any(elem.lower() in (globaldict['text'][i].lower()) for elem in click_text.split(",")):
+                    (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
+                                    globaldict['width'][i], globaldict['height'][i])
                     click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
@@ -340,18 +340,18 @@ class WordToScreenMatching(object):
 
         elif ScreenType(returntype) == ScreenType.LOGINSELECT:
             temp_dict: dict = {}
-            n_boxes = len(self._globaldict['level'])
+            n_boxes = len(globaldict['level'])
             for i in range(n_boxes):
-                if 'Facebook' in (self._globaldict['text'][i]): temp_dict['Facebook'] = self._globaldict['top'][i] / diff
-                if 'CLUB' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / diff
+                if 'Facebook' in (globaldict['text'][i]): temp_dict['Facebook'] = globaldict['top'][i] / diff
+                if 'CLUB' in (globaldict['text'][i]): temp_dict['CLUB'] = globaldict['top'][i] / diff
                 # french ...
-                if 'DRESSEURS' in (self._globaldict['text'][i]): temp_dict['CLUB'] = self._globaldict['top'][i] / diff
+                if 'DRESSEURS' in (globaldict['text'][i]): temp_dict['CLUB'] = globaldict['top'][i] / diff
 
                 if self.get_devicesettings_value('logintype', 'google') == 'ptc':
                     self._nextscreen = ScreenType.PTC
-                    if 'CLUB' in (self._globaldict['text'][i]):
-                        (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                        self._globaldict['width'][i], self._globaldict['height'][i])
+                    if 'CLUB' in (globaldict['text'][i]):
+                        (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
+                                        globaldict['width'][i], globaldict['height'][i])
                         click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
@@ -360,9 +360,9 @@ class WordToScreenMatching(object):
 
                 else:
                     self._nextscreen = ScreenType.UNDEFINED
-                    if 'Google' in (self._globaldict['text'][i]):
-                        (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                        self._globaldict['width'][i], self._globaldict['height'][i])
+                    if 'Google' in (globaldict['text'][i]):
+                        (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
+                                        globaldict['width'][i], globaldict['height'][i])
                         click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
@@ -444,11 +444,11 @@ class WordToScreenMatching(object):
         elif ScreenType(returntype) == ScreenType.RETRY:
             self._nextscreen = ScreenType.UNDEFINED
             click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
-            n_boxes = len(self._globaldict['level'])
+            n_boxes = len(globaldict['level'])
             for i in range(n_boxes):
-                if any(elem in (self._globaldict['text'][i]) for elem in click_text.split(",")):
-                    (x, y, w, h) = (self._globaldict['left'][i], self._globaldict['top'][i],
-                                    self._globaldict['width'][i], self._globaldict['height'][i])
+                if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
+                    (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
+                                    globaldict['width'][i], globaldict['height'][i])
                     click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
@@ -463,11 +463,11 @@ class WordToScreenMatching(object):
         frame = Image.open(screenpath)
         frame = frame.convert('LA')
 
-        self._globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
+        globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
-        n_boxes = len(self._globaldict['level'])
+        n_boxes = len(globaldict['level'])
         for i in range(n_boxes):
-            if any(elem in (self._globaldict['text'][i]) for elem in click_text.split(",")):
+            if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
                 logger.info('Found research menu')
                 self._communicator.click(100, 100)
                 frame.close()

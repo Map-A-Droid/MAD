@@ -668,6 +668,16 @@ class WorkerBase(ABC):
         logger.info('Switching finished ...')
         return True
 
+    def trigger_check_research(self):
+        if "pokestops" in self._valid_modes():
+            logger.warning("Cannot check for research menu while pokestops mode")
+            return
+        reached_main_menu = self._check_pogo_main_screen(3, True)
+        if reached_main_menu:
+            self._check_quest()
+            time.sleep(2)
+        return
+
     def _check_quest(self):
         logger.info('Precheck Quest Menu')
         questcounter: int = 0
@@ -710,7 +720,7 @@ class WorkerBase(ABC):
             x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                    self._resocalc.get_coords_quest_menu(self)[1]
             self._communicator.click(int(x), int(y))
-            time.sleep(2)
+            time.sleep(5)
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                  delayAfter=2)
             if questloop > 5:

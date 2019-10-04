@@ -557,6 +557,7 @@ class WebsocketServer(object):
         if event_triggered:
             logger.debug("Received answer in time, popping response")
             await self.__reset_fail_counter(id)
+            await self.__remove_request(message_id)
             result = await self.__pop_response(message_id)
             if isinstance(result, str):
                 logger.debug("Response to {}: {}",
@@ -620,6 +621,11 @@ class WebsocketServer(object):
     def set_geofix_sleeptime_worker(self, origin, sleeptime):
         if self.__current_users.get(origin, None) is not None:
             return self.__current_users[origin][1].set_geofix_sleeptime(sleeptime)
+        return False
+
+    def trigger_worker_check_research(self, origin):
+        if self.__current_users.get(origin, None) is not None:
+            return self.__current_users[origin][1].trigger_check_research()
         return False
 
     def set_update_sleeptime_worker(self, origin, sleeptime):
