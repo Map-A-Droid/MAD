@@ -741,6 +741,7 @@ class PogoWindows:
                                               (screenshot, identifier)).get()
 
     def __internal_get_screen_text(self, screenshot, identifier):
+        returning_dict = []
         logger.debug(
             "get_screen_text: Reading screen text - identifier {}", identifier)
 

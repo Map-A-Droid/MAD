@@ -216,20 +216,17 @@ class WordToScreenMatching(object):
                 return ScreenType.BLACK
 
             self._width, self._height = frame_org.size
+            frame_color = frame_org
+            diff: int = 1
 
             if self._width < 1080:
                 logger.info('Resize screen ...')
                 frame_color = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
                 diff: int = 2
-            else:
-                frame_color = frame_org
-                diff: int = 1
 
             frame = frame_color.convert('LA')
             self._ratio = self._height / self._width
             textes = [frame, frame_color]
-
-            frame_org.close()
 
             for text in textes:
                 self._globaldict = self._pogoWindowManager.get_screen_text(text, self._id)

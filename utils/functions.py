@@ -19,13 +19,12 @@ def generate_path(path):
 def image_resize(image, savepath, width=None, height=None):
     basewidth = width
     filename = os.path.basename(image)
-    img = Image.open(image)
-    wpercent = (basewidth / float(img.size[0]))
-    hsize = int((float(img.size[1]) * float(wpercent)))
-    img = img.resize((basewidth, hsize), Image.ANTIALIAS)
-    pre, _ = os.path.splitext(filename)
-
-    img.save(os.path.join(savepath, str(pre) + '.jpg'))
+    with Image.open(image) as img:
+        wpercent = (basewidth / float(img.size[0]))
+        hsize = int((float(img.size[1]) * float(wpercent)))
+        img = img.resize((basewidth, hsize), Image.ANTIALIAS)
+        pre, _ = os.path.splitext(filename)
+        img.save(os.path.join(savepath, str(pre) + '.jpg'))
 
     return True
 
@@ -34,7 +33,7 @@ def pngtojpg(image):
     pre, _ = os.path.splitext(image)
     with Image.open(image) as im:
         rgb_im = im.convert('RGB')
-    rgb_im.save(pre + '.jpg')
+        rgb_im.save(pre + '.jpg')
     return True
 
 

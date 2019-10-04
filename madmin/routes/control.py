@@ -161,7 +161,7 @@ class control(object):
                                      screenshot_quality, screenshot_type)
 
         filename = generate_device_screenshot_path(origin, devicemappings, self._args)
-        image_resize(filename, os.path.join(self._args.temp_path, "madmin"), width=250)
+        resize = image_resize(filename, os.path.join(self._args.temp_path, "madmin"), width=250)
 
         creationdate = datetime.datetime.fromtimestamp(
             creation_date(filename)).strftime(self._datetimeformat)
