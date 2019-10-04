@@ -245,6 +245,11 @@ class WordToScreenMatching(object):
                                 returntype = z
                 if returntype != -1: break
 
+            frame_org.close()
+            frame.close()
+            frame_color.close()
+            textes.clear()
+
         gc.collect()
 
         if 'text' not in self._globaldict:
