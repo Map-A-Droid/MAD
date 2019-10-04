@@ -247,11 +247,11 @@ class WordToScreenMatching(object):
             frame_color.close()
             textes.clear()
 
-        gc.collect()
+            if 'text' not in self._globaldict:
+                logger.error('Error while text detection')
+                return ScreenType.ERROR
 
-        if 'text' not in self._globaldict:
-            logger.error('Error while text detection')
-            return ScreenType.ERROR
+        gc.collect()
 
         if ScreenType(returntype) != ScreenType.UNDEFINED:
             logger.info("Processing Screen: {}", str(ScreenType(returntype)))
