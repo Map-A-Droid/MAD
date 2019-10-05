@@ -11,10 +11,10 @@ import numpy as np
 import pytesseract
 from pytesseract import Output
 from PIL import Image
-# from numpy import round, ones, uint8
-# from tinynumpy import tinynumpy as np
+
 from utils.logging import logger
 from ocr.matching_trash import trash_image_matching
+
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 
@@ -27,6 +27,41 @@ class PogoWindows:
             logger.info('PogoWindows: Temp directory created')
         self.temp_dir_path = temp_dir_path
         self.__thread_pool = ThreadPool(processes=thread_count)
+
+        # screendetection
+
+        self._ScreenType: dict = {}
+
+        detect_ReturningScreen: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
+        detect_LoginScreen: list = ['KIDS', 'Google', 'Facebook']
+        detect_PTC: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
+        detect_FailureRetryScreen: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
+                                           'connexion.', 'connexion']
+        detect_FailureLoginScreen: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
+                                           'Authentification', 'Essaye']
+        detect_WrongPassword: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
+        detect_Birthday: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
+        detect_Marketing: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
+                                  'notifications', 'évenements,', 'evenements,', 'offres']
+        detect_Gamedata: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
+        detect_SN: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
+                           'logiciel']
+        detect_Forceupdate: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
+                                    'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer']
+
+        self._ScreenType[2] = detect_ReturningScreen
+        self._ScreenType[3] = detect_LoginScreen
+        self._ScreenType[4] = detect_PTC
+        self._ScreenType[5] = detect_FailureLoginScreen
+        self._ScreenType[6] = detect_FailureRetryScreen
+        self._ScreenType[8] = detect_Gamedata
+        self._ScreenType[1] = detect_Birthday
+        self._ScreenType[12] = detect_Marketing
+        self._ScreenType[14] = detect_SN
+        self._ScreenType[7] = detect_WrongPassword
+        self._ScreenType[15] = detect_Forceupdate
+
+
 
     def __most_present_colour(self, filename, max_colours):
         with Image.open(filename) as img:
@@ -756,3 +791,70 @@ class PogoWindows:
             return returning_dict
         else:
             return []
+
+    def most_frequent_colour(self, screenshot, identifier):
+        if screenshot is None:
+            logger.error("get_screen_text: image does not exist")
+            return False
+
+        return self.__thread_pool.apply_async(self.__most_frequent_colour_internal,
+                                              (screenshot, identifier)).get()
+
+    def __most_frequent_colour_internal(self, image, identifier):
+        logger.debug(
+            "most_frequent_colour_internal: Reading screen text - identifier {}", identifier)
+        with Image.open(image) as img:
+            w, h = img.size
+            pixels = img.getcolors(w * h)
+            most_frequent_pixel = pixels[0]
+
+            for count, colour in pixels:
+                if count > most_frequent_pixel[0]:
+                    most_frequent_pixel = (count, colour)
+
+            logger.debug("Most frequent pixel on {} screen: {}".format(str(identifier), (most_frequent_pixel[1])))
+
+        return most_frequent_pixel[1]
+
+
+    def screendetection_get_type(self, image, identifier):
+
+        return self.__thread_pool.apply_async(self.__screendetection_get_type_internal,
+                                              (image, identifier)).get()
+
+    def __screendetection_get_type_internal(self, image, identifier):
+        returntype = -1
+        diff: int = 1
+        logger.debug(
+            "most_frequent_colour_internal: Reading screen text - identifier {}", identifier)
+
+        with Image.open(image) as frame_org:
+            width, height = frame_org.size
+
+            if width < 1080:
+                logger.info('Resize screen ...')
+                frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
+                diff: int = 2
+
+            frame = frame_org.convert('LA')
+            textes = [frame, frame_org]
+
+            for text in textes:
+                globaldict = self.__internal_get_screen_text(text, identifier)
+                if 'text' not in globaldict:
+                    continue
+                n_boxes = len(globaldict['level'])
+                for i in range(n_boxes):
+                    if returntype != -1: break
+                    if len(globaldict['text'][i]) > 3:
+                        for z in self._ScreenType:
+                            if globaldict['top'][i] > height / 4 and \
+                                    globaldict['text'][i] in self._ScreenType[z]:
+                                returntype = z
+                if returntype != -1: break
+
+
+
+
+
+        return returntype, globaldict, width, height

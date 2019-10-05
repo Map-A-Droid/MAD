@@ -145,7 +145,8 @@ class MITMBase(WorkerBase):
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                             str(self._id), str(self._not_injected_count))
                 self._check_windows()
-            if self._stop_worker_event.isSet():
+            position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
+            if self._stop_worker_event.isSet() or position_type is None:
                 logger.error("Worker {} killed while waiting for injection", str(self._id))
                 return False
             self._not_injected_count += 1

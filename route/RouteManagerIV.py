@@ -79,13 +79,8 @@ class RouteManagerIV(RouteManagerBase):
 
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
-        if self._update_prio_queue_thread is not None:
-            self._stop_update_thread.set()
-            self._update_prio_queue_thread = None
-            self._stop_update_thread.clear()
         self._is_started = False
         self._round_started_time = None
-        self._init_route_queue()
 
     def _check_coords_before_returning(self, lat, lng):
         return True

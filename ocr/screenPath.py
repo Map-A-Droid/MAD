@@ -44,38 +44,9 @@ class LoginType(Enum):
 
 class WordToScreenMatching(object):
     def __init__(self, communicator, pogoWindowManager, id, resocalc, mapping_mananger: MappingManager, args):
-        self._ScreenType: dict = {}
         self._id = id
         self._applicationArgs = args
         self._mapping_manager = mapping_mananger
-        detect_ReturningScreen: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
-        detect_LoginScreen: list = ['KIDS', 'Google', 'Facebook']
-        detect_PTC: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
-        detect_FailureRetryScreen: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
-                                           'connexion.', 'connexion']
-        detect_FailureLoginScreen: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
-                                           'Authentification', 'Essaye']
-        detect_WrongPassword: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
-        detect_Birthday: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
-        detect_Marketing: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
-                                  'notifications', 'évenements,', 'evenements,', 'offres']
-        detect_Gamedata: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
-        detect_SN: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
-                           'logiciel']
-        detect_Forceupdate: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
-                                    'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer']
-
-        self._ScreenType[2] = detect_ReturningScreen
-        self._ScreenType[3] = detect_LoginScreen
-        self._ScreenType[4] = detect_PTC
-        self._ScreenType[5] = detect_FailureLoginScreen
-        self._ScreenType[6] = detect_FailureRetryScreen
-        self._ScreenType[8] = detect_Gamedata
-        self._ScreenType[1] = detect_Birthday
-        self._ScreenType[12] = detect_Marketing
-        self._ScreenType[14] = detect_SN
-        self._ScreenType[7] = detect_WrongPassword
-        self._ScreenType[15] = detect_Forceupdate
         self._ratio: float = 0.0
 
         self._logintype: LoginType = -1
@@ -203,55 +174,24 @@ class WordToScreenMatching(object):
                                                 delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
-            frame_org = Image.open(screenpath)
 
-            backgroundcolor = self.most_frequent_colour(frame_org.crop((100, 100, 200, 200)))
+            backgroundcolor = self._pogoWindowManager.most_frequent_colour(screenpath, self._id)
 
             if backgroundcolor is not None and (
                     backgroundcolor[0] == 0 and
                     backgroundcolor[1] == 0 and
                     backgroundcolor[2] == 0):
                 # Background is black - Loading ...
-                frame_org.close()
                 return ScreenType.BLACK
 
-            self._width, self._height = frame_org.size
-            frame_color = frame_org
-            diff: int = 1
+            returntype, globaldict, self._width, self._height = \
+                self._pogoWindowManager.screendetection_get_type(screenpath, self._id)
 
-            if self._width < 1080:
-                logger.info('Resize screen ...')
-                frame_color = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
-                diff: int = 2
-
-            frame = frame_color.convert('LA')
             self._ratio = self._height / self._width
-            textes = [frame, frame_color]
-
-            for text in textes:
-                globaldict = self._pogoWindowManager.get_screen_text(text, self._id)
-                if 'text' not in globaldict:
-                    continue
-                n_boxes = len(globaldict['level'])
-                for i in range(n_boxes):
-                    if returntype != -1: break
-                    if len(globaldict['text'][i]) > 3:
-                        for z in self._ScreenType:
-                            if globaldict['top'][i] > self._height / 4 and \
-                                    globaldict['text'][i] in self._ScreenType[z]:
-                                returntype = z
-                if returntype != -1: break
-
-            frame_org.close()
-            frame.close()
-            frame_color.close()
-            textes.clear()
 
             if 'text' not in globaldict:
                 logger.error('Error while text detection')
                 return ScreenType.ERROR
-
-        gc.collect()
 
         if ScreenType(returntype) != ScreenType.UNDEFINED:
             logger.info("Processing Screen: {}", str(ScreenType(returntype)))
@@ -460,25 +400,24 @@ class WordToScreenMatching(object):
 
     def checkQuest(self, screenpath):
 
-        frame = Image.open(screenpath)
-        frame = frame.convert('LA')
+        with Image.open(screenpath) as frame:
+            frame = frame.convert('LA')
 
-        globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
-        click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
-        n_boxes = len(globaldict['level'])
-        for i in range(n_boxes):
-            if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
-                logger.info('Found research menu')
-                self._communicator.click(100, 100)
-                frame.close()
-                return ScreenType.QUEST
+            globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
+            click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
+            n_boxes = len(globaldict['level'])
+            for i in range(n_boxes):
+                if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
+                    logger.info('Found research menu')
+                    self._communicator.click(100, 100)
+                    return ScreenType.QUEST
 
-        logger.info('Listening to Dr. blabla - please wait')
+            logger.info('Listening to Dr. blabla - please wait')
 
-        self._communicator.backButton()
-        time.sleep(3)
-        frame.close()
-        return ScreenType.UNDEFINED
+            self._communicator.backButton()
+            time.sleep(3)
+            return ScreenType.UNDEFINED
+
 
     def parse_permission(self, xml):
         if xml is None:
@@ -613,19 +552,6 @@ class WordToScreenMatching(object):
             time.sleep(delayAfter)
             return True
 
-    def most_frequent_colour(self, image):
 
-        w, h = image.size
-        pixels = image.getcolors(w * h)
-        most_frequent_pixel = pixels[0]
-
-        for count, colour in pixels:
-            if count > most_frequent_pixel[0]:
-                most_frequent_pixel = (count, colour)
-
-        logger.debug ("Most frequent pixel on picture: {}".format(str(most_frequent_pixel[1])))
-        pixels = None
-
-        return most_frequent_pixel[1]
 
 

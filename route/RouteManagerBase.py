@@ -124,12 +124,24 @@ class RouteManagerBase(ABC):
         self._check_routepools_thread.start()
 
     def stop_routemanager(self):
+        # call routetype stoppper
+        self._quit_route()
+
         self._stop_update_thread.set()
 
         if self._update_prio_queue_thread is not None:
-            self._update_prio_queue_thread.join()
+            while self._update_prio_queue_thread.isAlive():
+                time.sleep(1)
+                logger.debug("Shutdown Prio Queue Thread - waiting...")
+                self._update_prio_queue_thread.join(5)
+        logger.debug("Shutdown Prio Queue Thread - done...")
         if self._check_routepools_thread is not None:
-            self._check_routepools_thread.join()
+            while self._check_routepools_thread.isAlive():
+                time.sleep(1)
+                logger.debug("Shutdown Routepool Thread - waiting...")
+                self._check_routepools_thread.join(5)
+        logger.debug("Shutdown Routepool Thread - done...")
+        logger.info("Shutdown of route {} completed".format(str(self.name)))
 
     def _init_route_queue(self):
         with self._manager_mutex:
@@ -177,10 +189,13 @@ class RouteManagerBase(ABC):
                     "Worker {} failed unregistering from routemanager {} since subscription was previously lifted",
                     str(
                         worker_name), str(self.name))
+                if worker_name in self._routepool:
+                    logger.info("Deleting old routepool of {}", str(worker_name))
+                    del self._routepool[worker_name]
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
-                self._quit_route()
+                self.stop_routemanager()
         finally:
             self._workers_registered_mutex.release()
 
@@ -198,7 +213,7 @@ class RouteManagerBase(ABC):
             if len(self._workers_registered) == 0 and self._is_started:
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
-                self._quit_route()
+                self.stop_routemanager()
         finally:
             self._workers_registered_mutex.release()
 
@@ -279,7 +294,13 @@ class RouteManagerBase(ABC):
             # newQueue = self._db_wrapper.get_next_raid_hatches(self._delayAfterHatch, self._geofenceHelper)
             new_queue = self._retrieve_latest_priority_queue()
             self._merge_priority_queue(new_queue)
-            time.sleep(self._priority_queue_update_interval())
+            redocounter = 0
+            while redocounter <= self._priority_queue_update_interval() and not self._stop_update_thread.is_set():
+                redocounter += 1
+                time.sleep(1)
+                if self._stop_update_thread.is_set():
+                    logger.info("Kill Prio Queue loop while sleeping")
+                    break
 
     def _merge_priority_queue(self, new_queue):
         if new_queue is not None:
@@ -666,6 +687,7 @@ class RouteManagerBase(ABC):
             while i < 60 and not self._stop_update_thread.is_set():
                 if self._stop_update_thread.is_set():
                     logger.info("Stop checking routepools")
+                    break
                 i += 1
                 time.sleep(1)
 
