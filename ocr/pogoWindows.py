@@ -853,8 +853,4 @@ class PogoWindows:
                                 returntype = z
                 if returntype != -1: break
 
-
-
-
-
-        return returntype, globaldict, width, height
+        return returntype, globaldict, width, height, diff

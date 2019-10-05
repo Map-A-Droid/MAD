@@ -184,7 +184,7 @@ class WordToScreenMatching(object):
                 # Background is black - Loading ...
                 return ScreenType.BLACK
 
-            returntype, globaldict, self._width, self._height = \
+            returntype, globaldict, self._width, self._height, diff = \
                 self._pogoWindowManager.screendetection_get_type(screenpath, self._id)
 
             self._ratio = self._height / self._width
