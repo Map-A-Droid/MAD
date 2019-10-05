@@ -15,4 +15,5 @@
 <div id=button><a href='quit_pogo?origin=<<phonename>>&adb=<<adb_option>>' id='quit' origin=<<phonename>>>Quit Pogo</a></div>
 <div id=button><a href='restart_phone?origin=<<phonename>>&adb=<<adb_option>>' class='confirm' title='Do you really want to restart phone?'>Reboot Phone</a></div>
 <div id=button><a href='uploaded_files?origin=<<phonename>>&adb=<<adb_option>>'>Process Job</a></div>
+<div id=button><a href='trigger_research_menu?origin=<<phonename>>'>Trigger Research Menu</a></div>
 </div>

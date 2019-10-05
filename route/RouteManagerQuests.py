@@ -39,6 +39,7 @@ class RouteManagerQuests(RouteManagerBase):
                               nofile=True)
 
         self._init_route_queue()
+        self._routecopy = None
 
     def __init__(self, db_wrapper: DbWrapperBase, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
@@ -96,7 +97,7 @@ class RouteManagerQuests(RouteManagerBase):
             self._manager_mutex.release()
 
     def _restore_original_route(self):
-        if not self._tempinit:
+        if not self._tempinit and self._routecopy is not None:
             logger.info("Restoring original route")
             self._route = self._routecopy.copy()
 
@@ -212,15 +213,12 @@ class RouteManagerQuests(RouteManagerBase):
 
     def _quit_route(self):
         logger.info('Shutdown Route {}', str(self.name))
-        self._is_started = False
-        self._round_started_time = None
-        if self.init: self._first_started = False
-        self._restore_original_route()
-        self._shutdown_route = False
-        if self._check_routepools_thread is not None:
-            self._stop_update_thread.set()
-            self._check_routepools_thread = None
-            self._stop_update_thread.clear()
+        if self._is_started:
+            self._is_started = False
+            self._round_started_time = None
+            if self.init: self._first_started = False
+            self._restore_original_route()
+            self._shutdown_route = False
 
     def _check_coords_before_returning(self, lat, lng):
         if self.init:

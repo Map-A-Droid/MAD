@@ -50,6 +50,7 @@ class MitmMapper(object):
         try:
             while not self.__playerstats_db_update_stop.is_set():
                 if not self.__application_args.game_stats:
+                    logger.info("Playerstats are disabled")
                     break
                 try:
                     with self.__playerstats_db_update_mutex:
@@ -80,6 +81,10 @@ class MitmMapper(object):
             data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats, last_processed_timestamp)
             self.__db_wrapper.submit_stats_locations_raw(data_send_location_raw)
             self.__db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
+
+        data_send_stats.clear()
+        data_send_location.clear()
+
         self.__db_wrapper.cleanup_statistics()
 
     def shutdown(self):

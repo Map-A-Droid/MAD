@@ -471,7 +471,7 @@ class MappingManager:
         for list in monlists_arr:
             monlist[list['monlist']] = list.get('mon_ids_iv', None)
         return monlist
-
+    logger.catch()
     def update(self, full_lock=False):
         """
         Updates the internal mappings and routemanagers
@@ -485,6 +485,8 @@ class MappingManager:
             routemanagers_tmp = self.__get_latest_routemanagers()
             auths_tmp = self.__get_latest_auths()
 
+            for area in self._routemanagers:
+                self._routemanagers[area]['routemanager'].stop_routemanager()
 
             logger.info("Restoring old devicesettings")
             for dev in self._devicemappings:

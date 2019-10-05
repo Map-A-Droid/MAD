@@ -226,7 +226,10 @@ class WorkerBase(ABC):
         # do some other stuff in the main process
         while not self._stop_worker_event.isSet():
             time.sleep(1)
-        t_main_work.join()
+
+        while t_main_work.isAlive():
+            time.sleep(1)
+            t_main_work.join()
         logger.info("Worker {} stopped gracefully", str(self._id))
         # async_result.get()
         return self._last_known_state
@@ -303,6 +306,7 @@ class WorkerBase(ABC):
     def _internal_cleanup(self):
         # set the event just to make sure - in case of exceptions for example
         self._stop_worker_event.set()
+        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
         logger.info("Internal cleanup of {} started", str(self._id))
         self._cleanup()
         logger.info(
@@ -312,10 +316,8 @@ class WorkerBase(ABC):
             logger.info("Stopping worker's asyncio loop")
             self.loop.call_soon_threadsafe(self.loop.stop)
             self._async_io_looper_thread.join()
-            time.sleep(1)
+            time.sleep(10)
 
-        logger.info("Stopped Route")
-        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._id)
         self._communicator.cleanup_websocket()
 
         logger.info("Internal cleanup of {} finished", str(self._id))
@@ -668,6 +670,16 @@ class WorkerBase(ABC):
         logger.info('Switching finished ...')
         return True
 
+    def trigger_check_research(self):
+        if "pokestops" in self._valid_modes():
+            logger.warning("Cannot check for research menu while pokestops mode")
+            return
+        reached_main_menu = self._check_pogo_main_screen(3, True)
+        if reached_main_menu:
+            self._check_quest()
+            time.sleep(2)
+        return
+
     def _check_quest(self):
         logger.info('Precheck Quest Menu')
         questcounter: int = 0
@@ -710,7 +722,7 @@ class WorkerBase(ABC):
             x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                    self._resocalc.get_coords_quest_menu(self)[1]
             self._communicator.click(int(x), int(y))
-            time.sleep(2)
+            time.sleep(5)
             self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                  delayAfter=2)
             if questloop > 5:

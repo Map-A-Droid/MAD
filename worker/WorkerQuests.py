@@ -424,7 +424,9 @@ class WorkerQuests(MITMBase):
 
     def _cleanup(self):
         if self.clear_thread is not None:
-            self.clear_thread.join()
+            while self.clear_thread.isAlive():
+                self.clear_thread.join()
+                time.sleep(1)
 
     def _clear_thread(self):
         logger.info('Starting clear Quest Thread')

@@ -83,14 +83,14 @@ class PlayerStats(object):
         logger.debug2("Creating stats_collector task for {}".format(self._id))
         with self.__mapping_mutex:
             if not self._stats_collector_start:
-                if time.time() - self._last_processed_timestamp > 600 or self.compare_hour(self._last_processed_timestamp):
-                    stats_collected_tmp = deepcopy(self.__stats_collected)
-                    del self.__stats_collected
-                    self.__stats_collected = {}
+                if time.time() - self._last_processed_timestamp > 300 or \
+                        self.compare_hour(self._last_processed_timestamp):
+
                     self._last_processed_timestamp = time.time()
 
-                    self.__mitm_mapper_parent.add_stats_to_process(self._id, stats_collected_tmp,
+                    self.__mitm_mapper_parent.add_stats_to_process(self._id, self.__stats_collected.copy(),
                                                                    self._last_processed_timestamp)
+                    self.__stats_collected.clear()
             else:
                 self._stats_collector_start = False
                 self._last_processed_timestamp = time.time()
@@ -175,6 +175,8 @@ class PlayerStats(object):
 
     def stats_collect_location_data(self, location, datarec, start_timestamp, type, rec_timestamp, walker,
                                     transporttype):
+        if not self._generate_stats:
+            return
         with self.__mapping_mutex:
             if 'location' not in self.__stats_collected:
                 self.__stats_collected['location'] = []

@@ -38,7 +38,6 @@ class path(object):
             self._app.route(route)(view_func)
 
     @auth_required
-    @nocache
     def pushscreens(self, path):
         return send_from_directory(generate_path(self._args.temp_path), path)
 

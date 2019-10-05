@@ -118,6 +118,7 @@ def get_system_infos(db_wrapper):
     pid = os.getpid()
     py = psutil.Process(pid)
     gc.set_threshold(5, 1, 1)
+    gc.enable()
 
     while not terminate_mad.is_set():
         logger.debug('Starting internal Cleanup')
