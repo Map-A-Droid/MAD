@@ -83,12 +83,12 @@ class PlayerStats(object):
         logger.debug2("Creating stats_collector task for {}".format(self._id))
         with self.__mapping_mutex:
             if not self._stats_collector_start:
-                if time.time() - self._last_processed_timestamp > 600 or \
+                if time.time() - self._last_processed_timestamp > 300 or \
                         self.compare_hour(self._last_processed_timestamp):
 
                     self._last_processed_timestamp = time.time()
 
-                    self.__mitm_mapper_parent.add_stats_to_process(self._id, self.__stats_collected,
+                    self.__mitm_mapper_parent.add_stats_to_process(self._id, self.__stats_collected.copy(),
                                                                    self._last_processed_timestamp)
                     self.__stats_collected.clear()
             else:

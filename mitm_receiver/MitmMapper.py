@@ -50,6 +50,7 @@ class MitmMapper(object):
         try:
             while not self.__playerstats_db_update_stop.is_set():
                 if not self.__application_args.game_stats:
+                    logger.info("Playerstats are disabled")
                     break
                 try:
                     with self.__playerstats_db_update_mutex:
