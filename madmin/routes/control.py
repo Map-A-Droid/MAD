@@ -509,6 +509,8 @@ class control(object):
         return_log = []
         log = self._device_updater.get_log(withautojobs=withautojobs)
         for entry in log:
+            if 'jobname' not in entry:
+                entry['jobname'] = entry.get('file', 'Unknown Name')
             return_log.append(entry)
 
         return jsonify(return_log)

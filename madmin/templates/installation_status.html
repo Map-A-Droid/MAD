@@ -13,7 +13,7 @@
             "data": gridData,
             "columns": [
                 { data: 'origin', title: 'Device' },
-                { data: 'file', title: 'File / Command' },
+                { data: 'jobname', title: 'File / Command' },
                 { data: 'status', title: 'Status' },
                 { data: '', title: 'Init Date/Time' },
                 { data: '', title: 'Date/Time' },
@@ -34,7 +34,7 @@
                                 var returning = "<p id='info'>" + row.returning + "</p>";
                             }
 
-                            return row.file +"<br><b>RETURNING:</b>" + returning;
+                            return row.jobname +"<br><b>RETURNING:</b>" + returning;
 
                         } else {
 
