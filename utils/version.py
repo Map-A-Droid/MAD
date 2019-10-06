@@ -255,7 +255,7 @@ class MADVersion(object):
             try:
                 shutil.copy(self._application_args.mappings, target)
             except IOError as e:
-                print('Unable to clone configuration.  Exiting')
+                logger.exception('Unable to clone configuration.  Exiting')
                 sys.exit(1)
             with open(self._application_args.mappings, 'rb') as fh:
                 old_data = json.load(fh)
@@ -267,9 +267,6 @@ class MADVersion(object):
                 except:
                     entries = []
                 cache[key] = {}
-                if type(entries) is dict:
-                    new_data[key] = entries
-                    continue
                 index = 0
                 new_data[key] = {
                     'index': index,
@@ -305,7 +302,8 @@ class MADVersion(object):
                                 except:
                                     # No name match.  Maybe an old record so lets toss it
                                     del entry['settings']['mon_ids_iv']
-                        except KeyError:
+                        except KeyError as err:
+                            # Monlist is not defined for the area
                             pass
                         except:
                             # No monlist specified
@@ -329,11 +327,12 @@ class MADVersion(object):
                         else:
                             entry['setup'] = []
                     elif key == 'devices':
-                        try:
-                            entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
-                        except:
-                            # The pool no longer exists.  Skip the device
-                            continue
+                        if 'pool' in entry:
+                            try:
+                                entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
+                            except:
+                                del entry['pool']
+                                logger.error('DeviceSettings {} is not valid', entry['pool'])
                         try:
                             entry['walker'] = '/api/walker/%s' % (cache['walker'][entry['walker']],)
                         except:

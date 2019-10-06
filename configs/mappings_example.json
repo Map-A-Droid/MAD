@@ -48,7 +48,7 @@
                     "delay_after_prio_event": 0,
                     "max_distance": 500,
                     "min_time_left_seconds": 600,
-                    "mon_ids_iv": "/api/monlist/0",
+                    "mon_ids_iv": "/api/monivlist/0",
                     "priority_queue_clustering_timedelta": 50,
                     "remove_from_queue_backlog": 300,
                     "speed": 28,
@@ -91,8 +91,52 @@
         "index": 2
     },
     "devices": {
-        "entries": {},
-        "index": 0
+        "entries": {
+            "0": {
+                "origin": "redmi",
+                "pool": "/api/devicesetting/0",
+                "settings": {},
+                "walker": "/api/walker/0"
+            },
+            "1": {
+                "origin": "samsung",
+                "settings": {
+                    "account_rotation": true,
+                    "cool_down_sleep": false,
+                    "injection_thresh_reboot": 20,
+                    "logintype": "ptc",
+                    "post_pogo_start_delay": 60,
+                    "post_teleport_delay": 7,
+                    "post_turn_screen_on_delay": 10,
+                    "post_walk_delay": 0,
+                    "ptc_login": "PTC_1,PTC_PASS_1|PTC_2,PTC_PASS_2|PTC_3,PTC_PASS_3",
+                    "reboot": false,
+                    "restart_pogo": 0,
+                    "walk_after_teleport_distance": 1
+                },
+                "walker": "/api/walker/1"
+            },
+            "2": {
+                "origin": "samsung_iv",
+                "settings": {
+                    "account_rotation": false,
+                    "cool_down_sleep": false,
+                    "ggl_login": "GGL1@gmail.com",
+                    "injection_thresh_reboot": 10,
+                    "logintype": "google",
+                    "post_pogo_start_delay": 60,
+                    "post_teleport_delay": 7,
+                    "post_turn_screen_on_delay": 10,
+                    "post_walk_delay": 0,
+                    "reboot": true,
+                    "reboot_thresh": 10,
+                    "restart_pogo": 0,
+                    "walk_after_teleport_distance": 1
+                },
+                "walker": "/api/walker/2"
+            }
+        },
+        "index": 3
     },
     "devicesettings": {
         "entries": {
