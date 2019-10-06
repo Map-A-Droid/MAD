@@ -824,9 +824,10 @@ class PogoWindows:
 
     def __screendetection_get_type_internal(self, image, identifier):
         returntype = -1
+        globaldict = {}
         diff: int = 1
         logger.debug(
-            "most_frequent_colour_internal: Reading screen text - identifier {}", identifier)
+            "__screendetection_get_type_internal: Detecting screen type - identifier {}", identifier)
 
         with Image.open(image) as frame_org:
             width, height = frame_org.size
@@ -852,5 +853,8 @@ class PogoWindows:
                                     globaldict['text'][i] in self._ScreenType[z]:
                                 returntype = z
                 if returntype != -1: break
+
+            frame.close()
+            del textes
 
         return returntype, globaldict, width, height, diff
