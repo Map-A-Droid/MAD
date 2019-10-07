@@ -27,7 +27,7 @@
 		"has_settings": "false",
 		"could_edit": "false",
 		"field": "username",
-		"description": "Add Username and Password for authentication with RGC"
+		"description": "Setup username and password for Pogodroid and RGC authentication"
 	},
 	"devicesettings": {
 		"has_settings": "true",
