@@ -141,19 +141,15 @@ class MITMBase(WorkerBase):
                 return False
             logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {}/{})",
                         str(self._id), str(self._not_injected_count), str(injection_thresh_reboot))
-            if self._not_injected_count in [3, 6, 9, 15, 18] and not self._stop_worker_event.isSet():
+            if self._not_injected_count in [3, 6, 9, 15, 18] and not self._stop_worker_event.is_set():
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                             str(self._id), str(self._not_injected_count))
                 self._check_windows()
-            position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
-            if self._stop_worker_event.isSet() or position_type is None:
-                logger.error("Worker {} killed while waiting for injection", str(self._id))
-                return False
             self._not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
                 wait_time += 1
-                if self._stop_worker_event.isSet():
+                if self._stop_worker_event.is_set():
                     logger.error("Worker {} killed while waiting for injection", str(self._id))
                     return False
                 time.sleep(1)

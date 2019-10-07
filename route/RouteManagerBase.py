@@ -905,7 +905,6 @@ class RouteManagerBase(ABC):
             return len(self._workers_registered)
         finally:
             self._workers_registered_mutex.release()
-        
 
     def get_position_type(self, origin: str) -> Optional[str]:
         return self._positiontyp.get(origin, None)

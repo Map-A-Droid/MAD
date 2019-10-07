@@ -175,15 +175,6 @@ class WordToScreenMatching(object):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
 
-            backgroundcolor = self._pogoWindowManager.most_frequent_colour(screenpath, self._id)
-
-            if backgroundcolor is not None and (
-                    backgroundcolor[0] == 0 and
-                    backgroundcolor[1] == 0 and
-                    backgroundcolor[2] == 0):
-                # Background is black - Loading ...
-                return ScreenType.BLACK
-
             returntype, globaldict, self._width, self._height, diff = \
                 self._pogoWindowManager.screendetection_get_type(screenpath, self._id)
 
@@ -207,7 +198,9 @@ class WordToScreenMatching(object):
                 username = ggl_login.username
 
             if self.parse_ggl(self._communicator.uiautomator(), username):
+                logger.info("Sleeping 50 seconds - please wait!!!!")
                 time.sleep(50)
+
                 return ScreenType.GGL
             return ScreenType.ERROR
 
@@ -372,6 +365,7 @@ class WordToScreenMatching(object):
 
             # button
             self._communicator.click(self._width / 2, button_y)
+            logger.info("Sleeping 50 seconds - please wait!!!!")
             time.sleep(50)
             return ScreenType.PTC
 
@@ -396,6 +390,16 @@ class WordToScreenMatching(object):
             return ScreenType.RETRY
 
         else:
+
+            backgroundcolor = self._pogoWindowManager.most_frequent_colour(screenpath, self._id)
+
+            if backgroundcolor is not None and (
+                    backgroundcolor[0] == 0 and
+                    backgroundcolor[1] == 0 and
+                    backgroundcolor[2] == 0):
+                # Background is black - Loading ...
+                return ScreenType.BLACK
+
             return ScreenType.POGO
 
     def checkQuest(self, screenpath):
@@ -417,7 +421,6 @@ class WordToScreenMatching(object):
             self._communicator.backButton()
             time.sleep(3)
             return ScreenType.UNDEFINED
-
 
     def parse_permission(self, xml):
         if xml is None:

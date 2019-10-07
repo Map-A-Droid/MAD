@@ -27,12 +27,7 @@ class WorkerMITM(MITMBase):
 
     def _post_move_location_routine(self, timestamp):
         # TODO: pass the appropiate proto number if IV?
-        if not self._mapping_manager.routemanager_get_init(self._routemanager_name):
-            self._wait_for_data(timestamp)
-        else:
-            logger.info('Currently in INIT Mode - process next coord')
-            self._rec_data_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-            self.worker_stats()
+        self._wait_for_data(timestamp)
 
     def _move_to_location(self):
         if not self._mapping_manager.routemanager_present(self._routemanager_name) \

@@ -604,17 +604,12 @@ class WorkerBase(ABC):
 
                 if returncode == ScreenType.GAMEDATA or returncode == ScreenType.CONSENT:
                     logger.warning('Error getting Gamedata or strange ggl message appears')
-                    self._stop_pogo()
-                    time.sleep(2)
-                    self._communicator.startApp("com.nianticlabs.pokemongo")
-                    time.sleep(1)
-                    self._wait_pogo_start_delay()
+                    self._loginerrorcounter += 1
+                    self._restart_pogo(True)
 
                 elif returncode == ScreenType.CLOSE:
                     logger.warning('Pogo not in foreground...')
-                    self._communicator.startApp("com.nianticlabs.pokemongo")
-                    time.sleep(1)
-                    self._wait_pogo_start_delay()
+                    self._restart_pogo(True)
 
                 elif returncode == ScreenType.DISABLED:
                     # Screendetection is disabled
@@ -642,11 +637,11 @@ class WorkerBase(ABC):
                     self._reboot()
                     break
 
-                if self._loginerrorcounter == 3:
+                if self._loginerrorcounter == 2:
                     logger.error('Cannot login again - (clear pogo game data and) restart phone')
                     self._stop_pogo()
                     self._communicator.clearAppCache("com.nianticlabs.pokemongo")
-                    if self.get_devicesettings_value('clear_game_data', True):
+                    if self.get_devicesettings_value('clear_game_data', False):
                         logger.info('Clearing game data')
                         self._communicator.resetAppdata("com.nianticlabs.pokemongo")
                     self._reboot()
