@@ -832,6 +832,8 @@ class PogoWindows:
         with Image.open(image) as frame_org:
             width, height = frame_org.size
 
+            logger.debug("Screensize of origin {}: W:{} x H:{}".format(str(identifier), str(width), str(height)))
+
             if width < 1080:
                 logger.info('Resize screen ...')
                 frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
@@ -842,6 +844,7 @@ class PogoWindows:
 
             for text in textes:
                 globaldict = self.__internal_get_screen_text(text, identifier)
+                logger.debug("Screentext: {}".format(str(globaldict)))
                 if 'text' not in globaldict:
                     continue
                 n_boxes = len(globaldict['level'])

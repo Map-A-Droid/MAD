@@ -180,6 +180,8 @@ class WordToScreenMatching(object):
 
             self._ratio = self._height / self._width
 
+            logger.debug("Screenratio of origin {}: {}".format(str(self._id), str(self._ratio)))
+
             if 'text' not in globaldict:
                 logger.error('Error while text detection')
                 return ScreenType.ERROR
