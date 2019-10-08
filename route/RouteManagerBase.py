@@ -140,6 +140,8 @@ class RouteManagerBase(ABC):
                 time.sleep(1)
                 logger.debug("Shutdown Routepool Thread - waiting...")
                 self._check_routepools_thread.join(5)
+        self._update_prio_queue_thread = None
+        self._check_routepools_thread = None
         logger.debug("Shutdown Routepool Thread - done...")
         logger.info("Shutdown of route {} completed".format(str(self.name)))
 
