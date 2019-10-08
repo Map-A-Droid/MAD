@@ -7,6 +7,18 @@ from PIL import Image
 with open('madmin/static/vars/template/phone.tpl', 'r') as file:
     phone_template = file.read().replace('\n', '')
 
+def generate_mappingjson():
+    import json
+    newfile = {}
+    newfile['areas'] = {}
+    newfile['auth'] = {}
+    newfile['devices'] = {}
+    newfile['walker'] = {}
+    newfile['devicesettings'] = {}
+    newfile['monivlist'] = {}
+    newfile['walkerarea'] = {}
+    with open(args.mappings, 'w') as outfile:
+        json.dump(newfile, outfile, indent=4, sort_keys=True)
 
 def creation_date(path_to_file):
     return os.path.getmtime(path_to_file)

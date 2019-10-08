@@ -15,10 +15,10 @@ class RouteManagerMon(RouteManagerBase):
                           nofile=False)
         self._init_route_queue()
 
-    def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
+    def __init__(self, db_wrapper, dbm, uri, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
                  name="unknown", settings=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, coords=coords, max_radius=max_radius,
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, uri=uri, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
