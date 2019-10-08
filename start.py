@@ -27,8 +27,10 @@ from utils.madGlobals import terminate_mad
 from utils.rarity import Rarity
 from utils.version import MADVersion
 from utils.walkerArgs import parseArgs
+import utils.data_manager
 from websocket.WebsocketServer import WebsocketServer
 from utils.updater import deviceUpdater
+from utils.functions import generate_mappingjson
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -85,19 +87,6 @@ def install_thread_excepthook():
                 sys.excepthook(exc_type, exc_value, exc_trace)
     Thread.run = run_thread
     Process.run = run_process
-
-
-def generate_mappingjson():
-    import json
-    newfile = {}
-    newfile['areas'] = []
-    newfile['auth'] = []
-    newfile['devices'] = []
-    newfile['walker'] = []
-    newfile['devicesettings'] = []
-    with open(args.mappings, 'w') as outfile:
-        json.dump(newfile, outfile, indent=4, sort_keys=True)
-
 
 def find_referring_graphs(obj):
     REFERRERS_TO_IGNORE = [locals(), globals(), gc.garbage]
@@ -211,11 +200,13 @@ if __name__ == "__main__":
     t_file_watcher = None
     t_whw = None
 
+    data_manager = utils.data_manager.DataManager(logger, args)
+
     if args.only_scan or args.only_routes:
         MappingManagerManager.register('MappingManager', MappingManager)
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
-        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, False)
+        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, False)
         filename = args.mappings
         if not os.path.exists(filename):
             logger.error(
@@ -280,7 +271,7 @@ if __name__ == "__main__":
         device_Updater = deviceUpdater(ws_server, args)
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
-                          args=(args, db_wrapper, ws_server, mapping_manager, device_Updater))
+                          args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater))
         t_madmin.daemon = True
         t_madmin.start()
 
