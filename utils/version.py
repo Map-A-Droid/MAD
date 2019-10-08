@@ -254,7 +254,7 @@ class MADVersion(object):
             target = '%s.bk' % (self._application_args.mappings,)
             try:
                 shutil.copy(self._application_args.mappings, target)
-            except IOError as e:
+            except IOError:
                 logger.exception('Unable to clone configuration.  Exiting')
                 sys.exit(1)
             with open(self._application_args.mappings, 'rb') as fh:
@@ -264,7 +264,7 @@ class MADVersion(object):
             for key in update_order:
                 try:
                     entries = old_data[key]
-                except:
+                except Exception:
                     entries = []
                 cache[key] = {}
                 index = 0
@@ -299,13 +299,13 @@ class MADVersion(object):
                                     name = mon_list
                                     uri = '/api/monivlist/%s' % (cache['monivlist'][name])
                                     entry['settings']['mon_ids_iv'] = uri
-                                except:
+                                except Exception:
                                     # No name match.  Maybe an old record so lets toss it
                                     del entry['settings']['mon_ids_iv']
-                        except KeyError as err:
+                        except KeyError:
                             # Monlist is not defined for the area
                             pass
-                        except:
+                        except Exception:
                             # No monlist specified
                             pass
                     elif key == 'walker':
@@ -330,12 +330,13 @@ class MADVersion(object):
                         if 'pool' in entry:
                             try:
                                 entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
-                            except:
+                            except Exception:
+                                if entry['pool'] is not None:
+                                    logger.error('DeviceSettings {} is not valid', entry['pool'])
                                 del entry['pool']
-                                logger.error('DeviceSettings {} is not valid', entry['pool'])
                         try:
                             entry['walker'] = '/api/walker/%s' % (cache['walker'][entry['walker']],)
-                        except:
+                        except Exception:
                             # The walker no longer exists.  Skip the device
                             continue
                     new_data[key]['entries'][index] = entry
