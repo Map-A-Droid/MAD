@@ -161,6 +161,7 @@ class statistics(object):
         return jsonify(stats)
 
     @logger.catch
+    @auth_required
     def game_stats_mon(self):
         minutes_spawn = request.args.get('minutes_spawn', 10)
 
@@ -288,6 +289,7 @@ class statistics(object):
         return jsonify(stats)
 
     @logger.catch
+    @auth_required
     def game_stats_shiny_v2(self):
         logger.debug('game_stats_shiny_v2')
         timestamp_from = request.args.get('from', None)
