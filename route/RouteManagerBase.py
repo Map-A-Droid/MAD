@@ -517,7 +517,7 @@ class RouteManagerBase(ABC):
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
-                logger.info("Round of route {} is moving to {}, {} for a priority event",
+                logger.info("Route {} is moving to {}, {} for a priority event",
                             self.name, next_coord.lat, next_coord.lng)
             else:
                 logger.debug("{}: Moving on with route", self.name)
