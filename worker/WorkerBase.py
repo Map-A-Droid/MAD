@@ -258,7 +258,7 @@ class WorkerBase(ABC):
             self._get_screen_size()
             # register worker  in routemanager
             logger.info("Try to register {} in Routemanager {}", str(
-                self._id), str(self._routemanager_name))
+                self._id), str(self._mapping_mananger.routemanager_get_name(self._routemanager_name)))
             self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -334,7 +334,7 @@ class WorkerBase(ABC):
 
         if not self.check_max_walkers_reached():
             logger.warning('Max. Walkers in Area {} - closing connections',
-                           str(self._routemanager_name))
+                           str(self._mapping_mananger.routemanager_get_name(self._routemanager_name)))
             self.set_devicesettings_value('finished', True)
             self._internal_cleanup()
             return
