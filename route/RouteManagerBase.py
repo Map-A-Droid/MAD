@@ -150,7 +150,7 @@ class RouteManagerBase(ABC):
         self._quit_route()
         self._stop_update_thread.set()
 
-        self._joinqueue.set_queue(self.name)
+        if self._joinqueue is not None: self._joinqueue.set_queue(self.name)
         logger.info("Shutdown of route {} completed".format(str(self.name)))
 
     def _init_route_queue(self):
