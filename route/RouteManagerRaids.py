@@ -18,13 +18,13 @@ class RouteManagerRaids(RouteManagerBase):
 
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, settings=None, init=False,
-                 name="unknown"):
+                 name="unknown", joinqueue=None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode
+                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
                                   )
 
     def _retrieve_latest_priority_queue(self):

@@ -129,6 +129,7 @@ class MITMBase(WorkerBase):
         return data_requested
 
     def _wait_for_injection(self):
+        return True
         self._not_injected_count = 0
         injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
         while not self._mitm_mapper.get_injection_status(self._id):

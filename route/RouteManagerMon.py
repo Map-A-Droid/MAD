@@ -17,13 +17,13 @@ class RouteManagerMon(RouteManagerBase):
 
     def __init__(self, db_wrapper, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
-                 name="unknown", settings=None):
+                 name="unknown", settings=None, joinqueue=None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode
+                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
                                   )
         self.coords_spawns_known = coords_spawns_known
 

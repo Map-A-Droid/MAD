@@ -3,6 +3,7 @@ import collections
 import functools
 import math
 import queue
+from queue import Empty
 import sys
 import time
 import logging
@@ -360,7 +361,7 @@ class WebsocketServer(object):
         finally:
             async with self.__users_mutex:
                 self.__users_connecting.remove(origin)
-            await asyncio.sleep(20)
+            await asyncio.sleep(5)
         return True
 
     async def __unregister(self, websocket_client_connection):
