@@ -32,36 +32,24 @@ class PogoWindows:
 
         self._ScreenType: dict = {}
 
-        detect_ReturningScreen: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
-        detect_LoginScreen: list = ['KIDS', 'Google', 'Facebook']
-        detect_PTC: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
-        detect_FailureRetryScreen: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
+        self._ScreenType[2]: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
+        self._ScreenType[3]: list = ['KIDS', 'Google', 'Facebook']
+        self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
+        self._ScreenType[5]: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
                                            'connexion.', 'connexion']
-        detect_FailureLoginScreen: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
+        self._ScreenType[6]: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
                                            'Authentification', 'Essaye']
-        detect_WrongPassword: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
-        detect_Birthday: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
-        detect_Marketing: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
+        self._ScreenType[7]: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
+        self._ScreenType[1]: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
+        self._ScreenType[12]: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
                                   'notifications', 'évenements,', 'evenements,', 'offres']
-        detect_Gamedata: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
-        detect_SN: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
+        self._ScreenType[8]: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
+        self._ScreenType[14]: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
                            'logiciel']
-        detect_Forceupdate: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
+        self._ScreenType[15]: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
                                     'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer']
-
-        self._ScreenType[2] = detect_ReturningScreen
-        self._ScreenType[3] = detect_LoginScreen
-        self._ScreenType[4] = detect_PTC
-        self._ScreenType[5] = detect_FailureLoginScreen
-        self._ScreenType[6] = detect_FailureRetryScreen
-        self._ScreenType[8] = detect_Gamedata
-        self._ScreenType[1] = detect_Birthday
-        self._ScreenType[12] = detect_Marketing
-        self._ScreenType[14] = detect_SN
-        self._ScreenType[7] = detect_WrongPassword
-        self._ScreenType[15] = detect_Forceupdate
-
-
+        self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
+                                      'found.', 'gefunden.', 'Signal']
 
     def __most_present_colour(self, filename, max_colours):
         with Image.open(filename) as img:

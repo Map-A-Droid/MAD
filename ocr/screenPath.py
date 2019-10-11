@@ -31,6 +31,7 @@ class ScreenType(Enum):
     SN = 14
     UPDATE = 15
     QUEST = 20
+    GPS = 21
     ERROR = 100
     BLACK = 110
     CLOSE = 500
@@ -229,6 +230,10 @@ class WordToScreenMatching(object):
         elif ScreenType(returntype) == ScreenType.GAMEDATA:
             self._nextscreen = ScreenType.UNDEFINED
             return ScreenType.GAMEDATA
+
+        elif ScreenType(returntype) == ScreenType.GPS:
+            self._nextscreen = ScreenType.UNDEFINED
+            return ScreenType.GPS
 
         elif ScreenType(returntype) == ScreenType.MARKETING:
             self._nextscreen = ScreenType.POGO
