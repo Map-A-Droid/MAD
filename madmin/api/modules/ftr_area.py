@@ -187,7 +187,7 @@ class APIArea(apiHandler.ResourceHandler):
                     "settings": {
                         "type": "text",
                         "require": True,
-                        "description": "Name of routefile",
+                        "description": "Name of routefile. MAD will automatically append '.calc' to this name.",
                         "expected": str
                     }
                 }

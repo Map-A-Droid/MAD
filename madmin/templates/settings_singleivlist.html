@@ -69,15 +69,10 @@
         }).disableSelection();
     });
 
-    $(".section-switcher").click(function() {
-        $("#pokemon-search").val('');
-        $("#pokemon-search").trigger('keyup');
-        toggle_visibility();
-    });
-
     $("#pokemon-search").keyup(function() {
         var val = $(this).val();
         $("#pokemon-search-output").empty();
+        $(".result-hint").hide();
         if(val.length >= 3) {
             $.ajax({
                 url : "/settings/monsearch",
@@ -85,18 +80,20 @@
                 type : 'GET',
                 contentType : 'application/json',
                 success: function(data, status, xhr) {
+                    $(".result-hint").show();
                     $.each(data, function() {
-                        var elem = document.createElement('li');
-                        elem.className = 'add-pokemon';
+                        var elem = document.createElement('span');
+                        elem.className = 'add-pokemon btn btn-primary btn-sm';
                         elem.setAttribute('data-identifier', this.mon_id);
-                        elem.innerHTML = this.mon_name;
+                        elem.innerHTML = '<i class="fas fa-plus"></i> '+this.mon_name;
                         $("#pokemon-search-output").append(elem);
                     });
                     $(".add-pokemon").click(function() {
                         if(!get_mon_list().includes($(this).data('identifier'))) {
                             elem = generate_row(this);
                             $("#selected-pokemon").append(elem);
-                            toggle_visibility();
+                            $(this).removeClass("btn-primary");
+                            $(this).addClass("btn-success");
                         } else {
                             alert('Pokemon already added to list!');
                         }
@@ -108,25 +105,20 @@
 
     function generate_row(elem) {
         var mon_id = $(elem).data('identifier');
-        var mon_name = elem.innerHTML;
+        var mon_name = $(elem).text();
         var row = document.createElement('tr');
+        row.className = 'table-success'
         row.setAttribute('data-monid', mon_id);
+
         // Rows
         var td_sortable = document.createElement('td');
-        var img = document.createElement('img');
-        img.src='static/sort.png';
-        img.className = 'handle ui-sortable-handle';
-        td_sortable.appendChild(img);
+        td_sortable.innerHTML = '<i class="fa fa-fw fa-sort handle ui-sortable-handle"></i>';
 
         var td_monid = document.createElement('td');
-        var bold = document.createElement('b');
-        bold.innerHTML = '#'+ mon_id;
-        td_monid.appendChild(bold);
+        td_monid.innerHTML = '#'+ mon_id;
 
         var td_monname = document.createElement('td');
-        bold = document.createElement('b');
-        bold.innerHTML = mon_name;
-        td_monname.appendChild(bold);
+        td_monname.innerHTML = mon_name;
 
         var td_remove = document.createElement('td');
         var rem = document.createElement('button')
@@ -152,21 +144,15 @@
         });
         return pokemon_list;
     }
-
-    function toggle_visibility() {
-        if($("#pokemon-order").is(':visible') == true) {
-            $("#pokemon-order").hide();
-            $("#pokemon-finder").show();
-        } else {
-            $("#pokemon-order").show();
-            $("#pokemon-finder").hide();
-        }
-    }
 </script>
 <style>
-    #pokemon-finder {
-        display: none;
-    }
+#pokemon-search-output {
+  margin: 10px 0px;
+}
+
+#pokemon-search-output span {
+  margin-right: 5px;
+}
 </style>
 {% endblock %}
 
@@ -178,37 +164,34 @@
         <div class="form-group">
           <label for="monlist">monlist</label>
           <input type="input" class="form-control" id="monlist" name="monlist" value="{{ element.monlist }}">
-          <small class="form-text text-muted">monlist</small>
+          <small class="form-text text-muted">Name of the mon list</small>
+        </div>
+        <div class="form-gropup" id="add-pokemon">
+          <label for="monlist-search">List of mons</label>
+          <input type="text" id="pokemon-search" placeholder="Search for mon name..." class="form-control">
+          <small class="form-text text-muted result-hint" style="display: none">Click on a result to add it to the list:</small>
+          <div id="pokemon-search-output" class="nav nav-pills"></div>
         </div>
         <div class="form-group" id='pokemon-order'>
-            <label for="setup">setup</label>
-            <small class="form-text text-muted">Pokemon Order</small>
-            <table class="table">
-                <tbody>
+            <table class="table table-hover table-striped table-sm">
+                <thead class="thead-dark">
                     <tr>
                         <th></th>
-                        <th>Mon ID</th>
-                        <th>Mon Name</th>
-                        <th><button type="button" class="btn btn-success section-switcher" id="pokemon-picker"><i class="fas fa-plus"></i></button></th>
+                        <th class="align-middle" colspan="2">Mon #</th>
+                        <th class="align-middle" colspan="2">Mon name</th>
                     </tr>
-                </tbody>
+                </thead>
                 <tbody id='selected-pokemon' class="row_position ui-sortable">
                     {% for mon in current_mons_list %}
                         <tr data-monid='{{ mon.mon_id }}'>
-                            <td><img src="/static/sort.png" class="handle ui-sortable-handle"></td>
-                            <td><b>#{{ mon.mon_id }}</b></td>
-                            <td><b>{{ mon.mon_name }}</b></td>
+                            <td><i class="fa fa-fw fa-sort handle ui-sortable-handle"></i></td>
+                            <td>#{{ mon.mon_id }}</td>
+                            <td>{{ mon.mon_name }}</td>
                             <td><button data-identifier='{{ mon.mon_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button></button></td>
                         </tr>
                     {% endfor %}
                 </tbody>
             </table>
-        </div>
-        <div class="form-group" id='pokemon-finder'>
-            <button type="button" class="btn btn-info section-switcher" id="pokemon-selector">Switch to Order</button><br>
-            Pokemon Search<input type='text' id='pokemon-search'>
-            <ul id='pokemon-search-output'>
-            </ul>
         </div>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>

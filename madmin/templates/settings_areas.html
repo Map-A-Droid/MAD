@@ -56,19 +56,19 @@ $(document).ready(function () {
 <table class="table table-striped table-hover">
   <thead class="thead-dark">
     <tr>
-      <th style="width: 50%">Name</th>
-      <th style="width: 30%">Settings</th>
-      <th style="width: 20%" class= "text-right align-middle">
+      <th style="width: 40%" class="align-middle">Name</th>
+      <th style="width: 40%" class="align-middle">Settings</th>
+      <th style="width: 20%" class="text-right align-middle">
         <div class="dropdown">
-            <button class="btn btn-success dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                Create new Area
+            <button class="btn btn-success btn-sm dropdown-toggle" type="button" id="dropdownMenuButton" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+              <i class="fas fa-plus"></i>
             </button>
             <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=idle">[idle] Idle</a>
-                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=iv_mitm">[iv_mitm] Mon IV</a>
-                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=mon_mitm">[mon_mitm] Overlay scanner (MITM)</a>
-                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=pokestops">[pokestops] Quest Discovery</a>
-                <a class="dropdown-item" href="{{ redirect }}?id=new&mode=raids_mitm">[raids_mitm] Raid Discovery</a>
+              <a class="dropdown-item" href="{{ redirect }}?id=new&mode=idle">Idle <span class="badge badge-secondary">idle</span></a>
+              <a class="dropdown-item" href="{{ redirect }}?id=new&mode=iv_mitm">Mon IV scanner <span class="badge badge-secondary">iv_mitm</span></a>
+              <a class="dropdown-item" href="{{ redirect }}?id=new&mode=mon_mitm">General mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
+              <a class="dropdown-item" href="{{ redirect }}?id=new&mode=pokestops">Quest scanner <span class="badge badge-secondary">pokestops</span></a>
+              <a class="dropdown-item" href="{{ redirect }}?id=new&mode=raids_mitm">Raid scanner <span class="badge badge-secondary">raids_mitm</span></a>
             </div>
         </div>
       </th>

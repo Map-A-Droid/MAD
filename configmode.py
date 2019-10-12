@@ -72,7 +72,7 @@ if __name__ == "__main__":
     device_Updater = deviceUpdater(ws_server, args, jobstatus)
 
     logger.success(
-        'Starting MADmin on port {} - open browser and click "Mapping Editor"', int(args.madmin_port))
+        'Starting MADmin on port {} - Open a browser, visit MADmin and go to "Settings"', int(args.madmin_port))
     t_flask = Thread(name='madmin', target=start_madmin,
                      args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater, jobstatus))
     t_flask.daemon = False

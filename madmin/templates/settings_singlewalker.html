@@ -133,27 +133,23 @@
             <small class="form-text text-muted">walkername</small>
         </div>
         <div class="form-group">
-            <label for="setup">setup</label>
-            <small class="form-text text-muted">Order of areas</small>
-            <table class="table">
-                <tbody>
+            <table class="table table-hover table-striped">
+                <thead class="thead-dark">
                     <tr>
                         <th></th>
-                        <th>Nr.</th>
-                        <th>Area<br>Description</th>
-                        <th>Walkermode</th>
-                        <th>Setting</th>
-                        <th>Max. Devices</th>
-                        <th>{% if uri != '/api/walker' %}<a href='{{ redirect }}/areaeditor?id={{ uri }}'><button type="button" class="btn btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
+                        <th class="align-middle">Area</th>
+                        <th class="align-middle">Walker mode</th>
+                        <th class="align-middle">Setting</th>
+                        <th class="align-middle">Max devices</th>
+                        <th>{% if uri != '/api/walker' %}<a href='{{ redirect }}/areaeditor?id={{ uri }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
                     </tr>
                 </tbody>
                 <tbody class="row_position ui-sortable">
                     {% for walkerarea_uri in element.setup %}
                         {% set area = walkerarea[walkerarea_uri] %}
                         <tr id='{{ walkerarea_uri }}'>
-                            <td><img src="/static/sort.png" class="handle ui-sortable-handle"></td>
-                            <td class='index'>{{ loop.index }}</td>
-                            <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><b>{{ areas[area['walkerarea']].name }}</b><br>{{ area.walkertext }}</td>
+                            <td><i class="fa fa-fw fa-sort handle ui-sortable-handle"></i></td>
+                            <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><a href="/settings/areas?id={{area['walkerarea']}}&mode={{areas[area['walkerarea']].mode}}">{{ areas[area['walkerarea']].name }}</a><br>{{ area.walkertext }}</td>
                             <td class='walkertype' data-save='{{ area.walkertype }}'>{{ area.walkertype }}</td>
                             <td class='walkervalue' data-save='{{ area.walkervalue }}'>{{ area.walkervalue }}</td>
                             <td class='walkermax' data-save='{{ area.walkermax }}'>{{ area.walkermax }}</td>
