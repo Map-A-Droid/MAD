@@ -74,6 +74,9 @@ $(document).ready(function () {
       </th>
     </tr>
   </thead>
+  {% if area is none %}
+    <div id='no-configured-elements' class="alert alert-info">No walker configuration added yet</div>
+  {% else %}
   <tbody>
     {% for area_id, area in area.items() %}
     <tr>
@@ -95,6 +98,6 @@ $(document).ready(function () {
     </tr>
     {% endfor %}
   </tbody>
+  {% endif %}
 </table>
-<div id='no-configured-elements' class="alert alert-info">No areas configured</div>
 {% endblock %}

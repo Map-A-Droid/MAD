@@ -39,7 +39,7 @@ if __name__ == "__main__":
 
     filename = args.mappings
     if not os.path.exists(filename):
-        generate_mappingjson()
+        generate_mappingjson(args.mappings)
 
     create_folder(args.file_path)
     create_folder(args.upload_path)

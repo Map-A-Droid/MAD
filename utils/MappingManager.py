@@ -411,6 +411,10 @@ class MappingManager:
         raw_devices = self.__data_manager.get_data('device')
         raw_walkers = self.__data_manager.get_data('walker')
         raw_pools = self.__data_manager.get_data('devicesetting')
+
+        if raw_devices is None:
+            return devices
+
         for uri, device in raw_devices.items():
             device_dict = {}
             device_dict.clear()
@@ -479,23 +483,30 @@ class MappingManager:
     def __get_latest_areas(self) -> dict:
         areas = {}
         raw_areas = self.__data_manager.get_data('area')
+
+        if raw_areas is None:
+            return areas
+
         for area_uri, area in raw_areas.items():
             area_dict = {}
             area_dict['routecalc'] = area.get('routecalc', None)
             area_dict['mode'] = area['mode']
             area_dict['geofence_included'] = area.get(
-                    'geofence_included', None)
+                'geofence_included', None)
             area_dict['geofence_excluded'] = area.get(
-                    'geofence_excluded', None)
+                'geofence_excluded', None)
             area_dict['init'] = area.get('init', False)
             area_dict['name'] = area['name']
             areas[area_uri] = area_dict
         return areas
 
     def __get_latest_monlists(self) -> dict:
-        # {'mon_ids_iv': [787, 1], 'monlist': 'test'}
         monlist = {}
         monivs = self.__data_manager.get_data('monivlist')
+
+        if monivs is None:
+            return monlist
+
         for uri, elem in monivs.items():
             monlist[uri] = elem.get('mon_ids_iv', None)
         return monlist
