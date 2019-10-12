@@ -7,8 +7,10 @@ import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
+
 from threading import Event, Lock, RLock, Thread
 from typing import Dict, List, Optional, Tuple
+from queue import Queue, Empty
 
 import numpy as np
 
@@ -47,7 +49,7 @@ class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, uri: str, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "optimized"):
+                 level: bool = False, calctype: str = "optimized", joinqueue = None):
         self.db_wrapper: DbWrapperBase = db_wrapper
         self.init: bool = init
         self.name: str = name
@@ -73,6 +75,7 @@ class RouteManagerBase(ABC):
         self._stops_not_processed: Dict[Location, int] = {}
         self._routepool: Dict[str, RoutePoolEntry] = {}
         self._roundcount: int = 0
+        self._joinqueue = joinqueue
 
         # we want to store the workers using the routemanager
         self._workers_registered: List[str] = []
@@ -126,12 +129,8 @@ class RouteManagerBase(ABC):
         self._check_routepools_thread.daemon = True
         self._check_routepools_thread.start()
 
-    def stop_routemanager(self):
-        # call routetype stoppper
-        self._quit_route()
-
-        self._stop_update_thread.set()
-
+    def join_threads(self):
+        logger.info("Join Route Threads")
         if self._update_prio_queue_thread is not None:
             while self._update_prio_queue_thread.isAlive():
                 time.sleep(1)
@@ -143,9 +142,18 @@ class RouteManagerBase(ABC):
                 time.sleep(1)
                 logger.debug("Shutdown Routepool Thread - waiting...")
                 self._check_routepools_thread.join(5)
+
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
-        logger.debug("Shutdown Routepool Thread - done...")
+        self._stop_update_thread.clear()
+        logger.info("Done joining Route Threads")
+
+    def stop_routemanager(self):
+        # call routetype stoppper
+        self._quit_route()
+        self._stop_update_thread.set()
+
+        if self._joinqueue is not None: self._joinqueue.set_queue(self.name)
         logger.info("Shutdown of route {} completed".format(str(self.name)))
 
     def _init_route_queue(self):
@@ -520,7 +528,7 @@ class RouteManagerBase(ABC):
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
-                logger.info("Round of route {} is moving to {}, {} for a priority event",
+                logger.info("Route {} is moving to {}, {} for a priority event",
                             self.name, next_coord.lat, next_coord.lng)
             else:
                 logger.debug("{}: Moving on with route", self.name)

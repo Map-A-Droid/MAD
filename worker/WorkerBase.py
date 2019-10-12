@@ -622,8 +622,12 @@ class WorkerBase(ABC):
                         time.sleep(10)
 
                 elif returncode == ScreenType.ERROR or returncode == ScreenType.FAILURE:
-                    logger.warning('Something wrong with screendetection')
+                    logger.warning('Something wrong with screendetection or pogo failure screen')
                     self._loginerrorcounter += 1
+
+                elif returncode == ScreenType.GPS:
+                    logger.warning("Detecting GPS Error 11 - reboot phone")
+                    self._reboot()
 
                 elif returncode == ScreenType.SN:
                     logger.warning('Getting SN Screen - reset Magisk Settings')

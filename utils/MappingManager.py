@@ -1,7 +1,7 @@
 import json
 import os
 import time
-from queue import Empty
+from queue import Empty, Queue
 from multiprocessing import Lock, Event, Queue
 from multiprocessing.managers import SyncManager
 from multiprocessing.pool import ThreadPool
@@ -44,6 +44,35 @@ mode_mapping = {
 }
 
 
+class JoinQueue(object):
+    def __init__(self, stop_trigger, mapping_manager):
+        self._joinqueue: Queue = Queue()
+        self.__stop_file_watcher_event = stop_trigger
+        self._mapping_mananger = mapping_manager
+        self.__route_join_thread: Thread = Thread(name='route_joiner',
+                                                  target=self.__route_join, )
+        self.__route_join_thread.daemon = True
+        self.__route_join_thread.start()
+
+    def __route_join(self):
+        logger.info("Starting Route join Thread - safemode")
+        while not self.__stop_file_watcher_event.is_set():
+            try:
+                routejoin = self._joinqueue.get_nowait()
+            except Empty as e:
+                time.sleep(1)
+                continue
+            except (EOFError, KeyboardInterrupt) as e:
+                logger.info("Route join thread noticed shutdown")
+                return
+
+            if routejoin is not None:
+                self._mapping_mananger.routemanager_join(routejoin)
+
+    def set_queue(self, item):
+        self._joinqueue.put(item)
+
+
 class MappingManagerManager(SyncManager):
     pass
 
@@ -61,7 +90,7 @@ class MappingManager:
         self._auths: Optional[dict] = None
         self._monlists: Optional[dict] = None
         self.__stop_file_watcher_event: Event = Event()
-
+        self.join_routes_queue = JoinQueue(self.__stop_file_watcher_event, self)
         self.__raw_json: Optional[dict] = None
         self.__mappings_mutex: Lock = Lock()
 
@@ -74,7 +103,7 @@ class MappingManager:
             self.__t_file_watcher.start()
         self.__devicesettings_setter_queue: Queue = Queue()
         self.__devicesettings_setter_consumer_thread: Thread = Thread(name='devicesettings_setter_consumer',
-                                                                      target=self.__devicesettings_setter_consumer)
+                                                                      target=self.__devicesettings_setter_consumer,)
         self.__devicesettings_setter_consumer_thread.daemon = True
         self.__devicesettings_setter_consumer_thread.start()
 
@@ -99,6 +128,7 @@ class MappingManager:
         return self._devicemappings.get(device_name, None).get('settings', None)
 
     def __devicesettings_setter_consumer(self):
+        logger.info("Starting Devicesettings consumer Thread")
         while not self.__stop_file_watcher_event.is_set():
             try:
                 set_settings = self.__devicesettings_setter_queue.get_nowait()
@@ -159,6 +189,11 @@ class MappingManager:
     def routemanager_get_next_location(self, routemanager_name: str, origin: str) -> Optional[Location]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_next_location(origin) if routemanager is not None else None
+
+    def routemanager_join(self, routemanager_name: str):
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        if routemanager is not None:
+            routemanager.join_threads()
 
     def routemanager_stop(self, routemanager_name: str):
         routemanager = self.__fetch_routemanager(routemanager_name)
@@ -321,7 +356,8 @@ class MappingManager:
                                                                  coords_spawns_known=area.get(
                                                                          "coords_spawns_known", False),
                                                                  routefile=area["routecalc"],
-                                                                 calctype=area.get("route_calc_algorithm", "optimized")
+                                                                 calctype=area.get("route_calc_algorithm", "optimized"),
+                                                                 joinqueue=self.join_routes_queue
                                                                  )
 
             if mode not in ("iv_mitm", "idle"):
@@ -463,7 +499,7 @@ class MappingManager:
         for uri, elem in monivs.items():
             monlist[uri] = elem.get('mon_ids_iv', None)
         return monlist
-    logger.catch()
+
     def update(self, full_lock=False):
         """
         Updates the internal mappings and routemanagers
@@ -502,7 +538,6 @@ class MappingManager:
                 self._routemanagers = routemanagers_tmp
                 self._auths = auths_tmp
 
-
         else:
             logger.info("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
@@ -511,7 +546,6 @@ class MappingManager:
                 self._areas = self.__get_latest_areas()
                 self._devicemappings = self.__get_latest_devicemappings()
                 self._auths = self.__get_latest_auths()
-
 
         logger.info("Mappings have been updated")
 
