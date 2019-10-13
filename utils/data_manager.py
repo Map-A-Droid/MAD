@@ -4,21 +4,26 @@ import madmin.api
 import re
 import six
 
+
 class DataManagerException(Exception):
     pass
+
 
 class DataManagerDependencyError(Exception):
     def __init__(self, dependencies):
         self.dependencies = dependencies
         super(DataManagerDependencyError, self).__init__(dependencies)
 
+
 class DataManagerInvalidMode(Exception):
     def __init__(self, mode):
         self.mode = mode
         super(DataManagerInvalidMode, self).__init__(mode)
 
+
 class UnknownIdentifier(DataManagerException):
     pass
+
 
 class DataManager(object):
     def __init__(self, logger, args):
@@ -33,7 +38,10 @@ class DataManager(object):
         try:
             removal_list = []
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
-            self.has_any_dependencies(location, config_section, identifier)
+            try:
+                self.has_any_dependencies(location, config_section, identifier)
+            except Exception as e:
+                print(e)
             # If we are removing a walker, check to see if we can remove any walkerareas
             if config_section == 'walker':
                 uri = self.generate_uri(location, identifier)
@@ -56,6 +64,7 @@ class DataManager(object):
             self.save_config()
             for uri in removal_list:
                 self.delete_data(uri)
+            return None
         except AttributeError:
             self._logger.debug('Invalid URI set in location, {}', location)
             return None
@@ -67,7 +76,7 @@ class DataManager(object):
 
     def generate_uri(self, location, *args):
         try:
-            uri = '/'.join(['{}' for x in range(0, 2+len(args))])
+            uri = '/'.join(['{}' for x in range(0, 2 + len(args))])
             location_args = [madmin.api.BASE_URI, self.translate_location(location), *args]
             return uri.format(*location_args)
         except KeyError:
@@ -107,6 +116,10 @@ class DataManager(object):
         if config_section == 'areas':
             # Check for any walkerareas that use the area
             dependency_failures = []
+
+            if self.get_data("walkerarea") is None:
+                return
+
             for walkerarea_uri, walkerarea in self.get_data('walkerarea').items():
                 if walkerarea['walkerarea'] != uri:
                     continue
@@ -126,6 +139,10 @@ class DataManager(object):
         elif config_section == 'devicesettings':
             # Check for any devices that use the devicesetting
             dependency_failures = []
+
+            if self.get_data("device") is None:
+                return
+
             for device_uri, device in self.get_data('device').items():
                 if device['pool'] != uri:
                     continue
@@ -139,6 +156,10 @@ class DataManager(object):
         elif config_section == 'monivlist':
             # Check for any areas that use the monivlist
             dependency_failures = []
+
+            if self.get_data("areas") is None:
+                return
+
             for area_uri, area in self.get_data('areas').items():
                 try:
                     if area['settings']['mon_ids_iv'] != uri:
@@ -155,6 +176,10 @@ class DataManager(object):
         elif config_section == 'walker':
             # Check for any devices that use the walker
             dependency_failures = []
+
+            if self.get_data("device") is None:
+                return
+
             for device_uri, device in self.get_data('device').items():
                 if device['walker'] != uri:
                     continue
@@ -168,6 +193,10 @@ class DataManager(object):
         elif config_section == 'walkerarea':
             # Check for any walkers that use the walkerarea
             dependency_failures = []
+
+            if self.get_data("walker") is None:
+                return
+
             for walker_uri, walker in self.get_data('walker').items():
                 if uri not in walker['setup']:
                     continue
@@ -237,8 +266,18 @@ class DataManager(object):
                     data['mode'] = mode
                 except (AttributeError, KeyError):
                     raise DataManagerInvalidMode(mode)
-            index = str(self.__raw[config_section]['index'])
+
+            if "index" in self.__raw[config_section]:
+                index = str(self.__raw[config_section]['index'])
+            else:
+                index = 0
+                self.__raw[config_section] = {"index": index}
+
             uri_key = self.generate_uri(config_section, index)
+
+            if "entries" not in self.__raw[config_section]:
+                self.__raw[config_section]['entries'] = {}
+
             self.__raw[config_section]['entries'][index] = data
             self.__raw[config_section]['index'] = int(index) + 1
             self.save_config()

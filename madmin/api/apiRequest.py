@@ -1,6 +1,7 @@
 from . import apiException, global_variables
 import json
 
+
 class APIRequest(object):
     """ Basic processing of the API Request to pull out required information
 
@@ -68,4 +69,4 @@ class APIRequest(object):
         self.accept = accept
         self._logger.debug4('Accept format: {}', accept)
         self.parse_data()
-        
+

@@ -5,6 +5,7 @@ from madmin.functions import auth_required
 from . import apiResponse, apiRequest, apiException
 import utils.data_manager
 
+
 class ResourceHandler(object):
     """ Base handler for API calls
 
@@ -19,6 +20,7 @@ class ResourceHandler(object):
     component = None
     iterable = True
     default_sort = None
+
     def __init__(self, logger, args, app, base, data_manager):
         self._logger = logger
         self._app = app
@@ -47,7 +49,7 @@ class ResourceHandler(object):
         missing = []
         for key, val in data.items():
             if type(val) is dict:
-                (save_data[key], rec_invalid, rec_missing) = self.format_data(val, config, operation, settings=key.lower()=='settings')
+                (save_data[key], rec_invalid, rec_missing) = self.format_data(val, config, operation, settings=key.lower() == 'settings')
                 invalid += rec_invalid
                 missing += rec_missing
             else:
@@ -66,7 +68,7 @@ class ResourceHandler(object):
                     if (val is None or (val and 'len' in dir(val) and len(val) == 0)) and settings and operation == 'POST':
                         continue
                     save_data[key] = formated_val
-                except:
+                except Exception:
                     user_readable_types = {
                         str: 'string (MapADroid)',
                         int: 'Integer (1,2,3)',
@@ -87,7 +89,7 @@ class ResourceHandler(object):
                 value = int(value)
             elif expected == str:
                 value = value.strip()
-        except:
+        except Exception:
             pass
         if value in ["None", None, ""]:
             return none_val
@@ -102,7 +104,7 @@ class ResourceHandler(object):
             return config['settings'][key]
         except KeyError:
             pass
-        return {'settings':{}} if 'settings' in config else {}
+        return {'settings': {}} if 'settings' in config else {}
 
     def get_required_configuration(self, identifier, mode=None):
         if mode and mode in self.configuration:
@@ -154,7 +156,7 @@ class ResourceHandler(object):
             if missing:
                 errors['missing'] = missing
             if invalid:
-                errors['invalid'] = invalid 
+                errors['invalid'] = invalid
             if errors:
                 return apiResponse.APIResponse(self._logger, self.api_req)(errors, 422)
             try:
@@ -165,7 +167,7 @@ class ResourceHandler(object):
                 elif flask.request.method == 'PUT':
                     return self.put(identifier)
             except apiException.APIException as err:
-                return apiResponse.APIResponse(self._logger, self.api_req)(err.reason, err.status_code)                
+                return apiResponse.APIResponse(self._logger, self.api_req)(err.reason, err.status_code)
 
     def delete(self, identifier, *args, **kwargs):
         """ API Call to remove data """
@@ -179,7 +181,7 @@ class ResourceHandler(object):
             headers = {
                 'X-Status': 'Successfully deleted the object'
             }
-            return apiResponse.APIResponse(self._logger, self.api_req)(None, 202,  headers=headers)
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 202, headers=headers)
 
     def get(self, identifier, *args, **kwargs):
         """ API call to get data """
@@ -199,7 +201,7 @@ class ResourceHandler(object):
             headers = {
                 'X-Status': 'Successfully updated the object'
             }
-            return apiResponse.APIResponse(self._logger, self.api_req)(None, 204,  headers=headers)
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 204, headers=headers)
 
     def post(self, identifier, *args, **kwargs):
         mode = self.api_req.headers.get('X-Mode')
