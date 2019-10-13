@@ -160,6 +160,10 @@ def check_dependencies():
 if __name__ == "__main__":
     check_dependencies()
 
+    if not os.path.exists(args.mappings):
+        logger.error("Couldn't find configuration file. Please run 'configmode.py' instead, if this is the first time starting MAD.")
+        sys.exit(1)
+
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
 

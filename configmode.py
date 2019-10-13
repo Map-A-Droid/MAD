@@ -30,11 +30,11 @@ def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
 
 
 if __name__ == "__main__":
-    logger.info('Start MAD configmode - pls wait')
+    logger.info('Starting MAD config mode')
     filename = os.path.join('configs', 'config.ini')
     if not os.path.exists(filename):
         logger.error(
-            'config.ini file not found - check configs folder and copy .example')
+            'config.ini file not found. Check configs folder and copy example config')
         sys.exit(1)
 
     filename = args.mappings

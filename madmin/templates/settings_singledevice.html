@@ -74,9 +74,11 @@ $(document).ready(function () {
 {% block content %}
 {{ super() }}
 
-
 <h1 class="display-4">{{ element.origin }}</h1>
 
+{% if walkers.items()|length == 0 %}
+<div class="alert alert-warning">Couldn't find any walker configurations. Please <a href="/settings/walker?id=new">create</a> one first.</div>
+{% else %}
 <div class="row">
   <div class="col-sm">
     <div class="form-group">
@@ -114,9 +116,11 @@ $(document).ready(function () {
       <label for="pool">pool</label>
       <select class="form-control" name="pool">
         <option>None</option>
+        {% if pools is not none %}
         {% for poolid, pool in pools.items() %}
          <option value="{{ poolid }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
         {% endfor %}
+        {% endif %}
       </select>
       <small class="form-text text-muted">Configuration pool used by this device</small>
     </div>
@@ -128,5 +132,6 @@ $(document).ready(function () {
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
   </div>
 </div>
+{% endif %}
 {% endblock %}
 

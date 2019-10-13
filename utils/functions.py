@@ -18,6 +18,7 @@ def generate_mappingjson(mappings_path):
     newfile['devicesettings'] = {"entries": {}, "index": 0}
     newfile['monivlist'] = {"entries": {}, "index": 0}
     newfile['walkerarea'] = {"entries": {}, "index": 0}
+    newfile['firsttime'] = None
 
     with open(mappings_path, 'w') as outfile:
         json.dump(newfile, outfile, indent=4, sort_keys=True)
