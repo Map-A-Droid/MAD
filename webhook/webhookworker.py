@@ -313,6 +313,7 @@ class WebhookWorker:
                 "longitude": raid["longitude"],
                 "level": raid["level"],
                 "pokemon_id": raid["pokemon_id"],
+                "form": raid["form"],
                 "team_id": raid["team_id"],
                 "cp": raid["cp"],
                 "move_1": raid["move_1"],
@@ -337,7 +338,7 @@ class WebhookWorker:
             if raid["weather_boosted_condition"] is not None:
                 raid_payload["weather"] = raid["weather_boosted_condition"]
 
-            if raid["form"] is not None:
+            if raid["form"] is not None and raid["form"] > 0:
                 raid_payload["form"] = raid["form"]
 
             if raid["is_ex_raid_eligible"] is not None:
@@ -375,6 +376,7 @@ class WebhookWorker:
             mon_payload = {
                 "encounter_id": mon["encounter_id"],
                 "pokemon_id": mon["pokemon_id"],
+                "form":mon["form"],
                 "spawnpoint_id": mon["spawnpoint_id"],
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
