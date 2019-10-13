@@ -377,6 +377,7 @@ class WebhookWorker:
                 "encounter_id": mon["encounter_id"],
                 "pokemon_id": mon["pokemon_id"],
                 "form":mon["form"],
+                "costume":mon["costume"],
                 "spawnpoint_id": mon["spawnpoint_id"],
                 "latitude": mon["latitude"],
                 "longitude": mon["longitude"],
@@ -394,7 +395,7 @@ class WebhookWorker:
             if mon["form"] is not None and mon["form"] > 0:
                 mon_payload["form"] = mon["form"]
 
-            if mon["costume"] is not None:
+            if mon["costume"] is not None and mon["costume"] > 0:
                 mon_payload["costume"] = mon["costume"]
 
             if mon["cp"] is not None:
