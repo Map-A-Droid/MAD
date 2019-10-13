@@ -36,6 +36,8 @@ def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: Ma
     config(db_wrapper, args, logger, app, mapping_manager, data_manager)
     path(db_wrapper, args, app, mapping_manager, jobstatus)
 
+    app.logger.removeHandler(default_handler)
+    logging.basicConfig(handlers=[InterceptHandler()], level=0)
     app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
 
 
