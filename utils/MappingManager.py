@@ -1,4 +1,3 @@
-import json
 import os
 import time
 from queue import Empty, Queue
@@ -59,10 +58,10 @@ class JoinQueue(object):
         while not self.__stop_file_watcher_event.is_set():
             try:
                 routejoin = self._joinqueue.get_nowait()
-            except Empty as e:
+            except Empty:
                 time.sleep(1)
                 continue
-            except (EOFError, KeyboardInterrupt) as e:
+            except (EOFError, KeyboardInterrupt):
                 logger.info("Route join thread noticed shutdown")
                 return
 
@@ -132,10 +131,10 @@ class MappingManager:
         while not self.__stop_file_watcher_event.is_set():
             try:
                 set_settings = self.__devicesettings_setter_queue.get_nowait()
-            except Empty as e:
+            except Empty:
                 time.sleep(0.2)
                 continue
-            except (EOFError, KeyboardInterrupt) as e:
+            except (EOFError, KeyboardInterrupt):
                 logger.info("Devicesettings setter thread noticed shutdown")
                 return
 
@@ -307,9 +306,9 @@ class MappingManager:
             geofence_included = Path(area["geofence_included"])
             if not geofence_included.is_file():
                 raise RuntimeError(
-                        "geofence_included for area '{}' is specified but file does not exist ('{}').".format(
-                                area["name"], geofence_included.resolve()
-                        )
+                    "geofence_included for area '{}' is specified but file does not exist ('{}').".format(
+                        area["name"], geofence_included.resolve()
+                    )
                 )
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
@@ -317,9 +316,9 @@ class MappingManager:
                 geofence_excluded = Path(geofence_excluded_raw_path)
                 if not geofence_excluded.is_file():
                     raise RuntimeError(
-                            "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
-                                    area["name"], geofence_excluded.resolve()
-                            )
+                        "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
+                            area["name"], geofence_excluded.resolve()
+                        )
                     )
 
             area_dict = {"mode":              area["mode"],
@@ -333,11 +332,11 @@ class MappingManager:
             # first check if init is false, if so, grab the coords from DB
             # coords = np.loadtxt(area["coords"], delimiter=',')
             geofence_helper = GeofenceHelper(
-                    area["geofence_included"], area.get("geofence_excluded", None))
+                area["geofence_included"], area.get("geofence_excluded", None))
             mode = area["mode"]
             # build routemanagers
 
-            #map iv list to ids
+            # map iv list to ids
             if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
                 # replace list name
                 area['settings']['mon_ids_iv_raw'] = \
@@ -347,14 +346,13 @@ class MappingManager:
                                                                  mode_mapping.get(mode, {}).get("range", 0),
                                                                  mode_mapping.get(mode, {}).get("max_count", 99999999),
                                                                  area["geofence_included"],
-                                                                 path_to_exclude_geofence = area.get("geofence_excluded", None),
+                                                                 path_to_exclude_geofence=area.get("geofence_excluded", None),
                                                                  mode=mode,
                                                                  settings=area.get("settings", None),
                                                                  init=area.get("init", False),
                                                                  name=area.get("name", "unknown"),
                                                                  level=area.get("level", False),
-                                                                 coords_spawns_known=area.get(
-                                                                         "coords_spawns_known", False),
+                                                                 coords_spawns_known=area.get("coords_spawns_known", False),
                                                                  routefile=area["routecalc"],
                                                                  calctype=area.get("route_calc_algorithm", "optimized"),
                                                                  joinqueue=self.join_routes_queue

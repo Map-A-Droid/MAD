@@ -299,6 +299,5 @@ class DataManager(object):
         try:
             with open(self.__location, 'rb') as fh:
                 self.__raw = json.load(fh)
-            self._logger.debug('Successfully updated the mappings')
         except Exception as err:
             self._logger.critical('Unable to load configuration, {}', err)

@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     {% if title %}
@@ -99,15 +98,11 @@
         $("#reload").click(function() {
           if (confirm('Do you really want reload and apply settings?')) {
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
-            location.reload();
+            $(location).attr('href', '/reload');
           }
         });
       });
     </script>
     {% block scripts %}{% endblock %}
 </body>
-
 </html>
-
-
-
