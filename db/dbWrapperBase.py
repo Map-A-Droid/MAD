@@ -486,11 +486,9 @@ class DbWrapperBase(ABC):
                             spawnid, lat, lng, earliest_unseen, last_scanned, newspawndef, calcendtime
                         )
                     )
-
                 else:
                     earliest_unseen = 99999999
                     last_non_scanned = now
-                    calcendtime = None
 
                     spawnpoint_args_unseen.append(
                         (
@@ -1408,4 +1406,3 @@ class DbWrapperBase(ABC):
         query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
         logger.debug(query)
         self.execute(query, commit=True)
-
