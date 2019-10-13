@@ -1,13 +1,6 @@
 SET FOREIGN_KEY_CHECKS=0;
 SET NAMES utf8mb4;
 
-CREATE TABLE `gomap` (
-  `name` varchar(100) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `latitude` double NOT NULL,
-  `longitude` double NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
 CREATE TABLE `gym` (
   `gym_id` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
   `team_id` smallint(6) NOT NULL DEFAULT 0,
@@ -79,58 +72,6 @@ CREATE TABLE `gympokemon` (
   `last_seen` datetime NOT NULL,
   PRIMARY KEY (`pokemon_uid`),
   KEY `gympokemon_trainer_name` (`trainer_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `hashkeys` (
-  `key` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `maximum` smallint(6) NOT NULL,
-  `remaining` smallint(6) NOT NULL,
-  `peak` smallint(6) NOT NULL,
-  `expires` datetime DEFAULT NULL,
-  `last_updated` datetime NOT NULL,
-  PRIMARY KEY (`key`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `locationaltitude` (
-  `cellid` bigint(20) unsigned NOT NULL,
-  `latitude` double NOT NULL,
-  `longitude` double NOT NULL,
-  `last_modified` datetime DEFAULT NULL,
-  `altitude` double NOT NULL,
-  PRIMARY KEY (`cellid`),
-  KEY `locationaltitude_last_modified` (`last_modified`),
-  KEY `locationaltitude_latitude_longitude` (`latitude`,`longitude`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `mainworker` (
-  `worker_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `message` longtext COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-  `method` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_modified` datetime NOT NULL,
-  `accounts_working` int(11) NOT NULL,
-  `accounts_captcha` int(11) NOT NULL,
-  `accounts_failed` int(11) NOT NULL,
-  `success` int(11) NOT NULL,
-  `fail` int(11) NOT NULL,
-  `empty` int(11) NOT NULL,
-  `skip` int(11) NOT NULL,
-  `captcha` int(11) NOT NULL,
-  `start` int(11) NOT NULL,
-  `elapsed` int(11) NOT NULL,
-  PRIMARY KEY (`worker_name`),
-  KEY `mainworker_last_modified` (`last_modified`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `playerlocale` (
-  `location` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `country` varchar(2) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `language` varchar(2) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `timezone` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  PRIMARY KEY (`location`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -226,53 +167,6 @@ CREATE TABLE `scannedlocation` (
   PRIMARY KEY (`cellid`),
   KEY `scannedlocation_last_modified` (`last_modified`),
   KEY `scannedlocation_latitude_longitude` (`latitude`,`longitude`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `scanspawnpoint` (
-  `scannedlocation_id` bigint(20) unsigned NOT NULL,
-  `spawnpoint_id` bigint(20) unsigned NOT NULL,
-  PRIMARY KEY (`spawnpoint_id`,`scannedlocation_id`),
-  KEY `scanspawnpoint_scannedlocation_id` (`scannedlocation_id`),
-  KEY `scanspawnpoint_spawnpoint_id` (`spawnpoint_id`),
-  CONSTRAINT `scanspawnpoint_ibfk_1` FOREIGN KEY (`scannedlocation_id`) REFERENCES `scannedlocation` (`cellid`),
-  CONSTRAINT `scanspawnpoint_ibfk_2` FOREIGN KEY (`spawnpoint_id`) REFERENCES `spawnpoint` (`id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `spawnpoint` (
-  `id` bigint(20) unsigned NOT NULL,
-  `latitude` double NOT NULL,
-  `longitude` double NOT NULL,
-  `last_scanned` datetime NOT NULL,
-  `kind` varchar(4) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `links` varchar(4) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `missed_count` int(11) NOT NULL,
-  `latest_seen` smallint(6) NOT NULL,
-  `earliest_unseen` smallint(6) NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `spawnpoint_last_scanned` (`last_scanned`),
-  KEY `spawnpoint_latitude_longitude` (`latitude`,`longitude`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `spawnpointdetectiondata` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `encounter_id` bigint(20) unsigned NOT NULL,
-  `spawnpoint_id` bigint(20) unsigned NOT NULL,
-  `scan_time` datetime NOT NULL,
-  `tth_secs` smallint(6) DEFAULT NULL,
-  PRIMARY KEY (`id`),
-  KEY `spawnpointdetectiondata_spawnpoint_id` (`spawnpoint_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `token` (
-  `id` int(11) NOT NULL AUTO_INCREMENT,
-  `token` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_updated` datetime NOT NULL,
-  PRIMARY KEY (`id`),
-  KEY `token_last_updated` (`last_updated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 
@@ -383,24 +277,4 @@ CREATE TABLE `weather` (
   KEY `weather_warn_weather` (`warn_weather`),
   KEY `weather_world_time` (`world_time`),
   KEY `weather_last_updated` (`last_updated`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-
-CREATE TABLE `workerstatus` (
-  `username` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `worker_name` varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `success` int(11) NOT NULL,
-  `fail` int(11) NOT NULL,
-  `no_items` int(11) NOT NULL,
-  `skip` int(11) NOT NULL,
-  `captcha` int(11) NOT NULL,
-  `last_modified` datetime NOT NULL,
-  `message` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
-  `last_scan_date` datetime NOT NULL,
-  `latitude` double DEFAULT NULL,
-  `longitude` double DEFAULT NULL,
-  PRIMARY KEY (`username`),
-  KEY `workerstatus_worker_name` (`worker_name`),
-  KEY `workerstatus_last_modified` (`last_modified`),
-  KEY `workerstatus_last_scan_date` (`last_scan_date`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
