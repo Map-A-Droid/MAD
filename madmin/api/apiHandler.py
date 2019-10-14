@@ -105,11 +105,34 @@ class ResourceHandler(object):
             pass
         return {'settings': {}} if 'settings' in config else {}
 
-    def get_required_configuration(self, identifier, mode=None):
+    def get_required_configuration(self, mode=None):
         if mode and mode in self.configuration:
             return self.configuration[mode]
         if type(self.configuration) is dict and ('fields' in self.configuration or 'settings' in self.configuration):
             return self.configuration
+
+    def get_resource_info(self, config):
+        resource = {
+            'fields': self.get_resource_info_elems(config['fields']),
+            'settings': self.get_resource_info_elems(config['settings'])
+        }
+        return resource
+
+    def get_resource_info_elems(self, config):
+        variables = []
+        for key, field in config.items():
+            settings = field['settings']
+            field_data = {
+                'name': key,
+                'descr': settings['description'],
+                'required': settings['require'],
+            }
+            try:
+                field_data['values'] = settings['values']
+            except:
+                pass
+            variables.append(field_data)
+        return variables
 
     # =====================================
     # ========= API Functionality =========
@@ -127,23 +150,42 @@ class ResourceHandler(object):
         """
         # Begin processing the request
         self.api_req = apiRequest.APIRequest(self._logger, flask.request)
+        mode = self.api_req.headers.get('X-Mode', None)
+        if mode is None:
+            mode = self.api_req.params.get('mode', None)
+        config = self.get_required_configuration(mode=mode)
         if identifier is None and flask.request.method != 'POST':
             try:
                 fetch_all = int(self.api_req.params.get('fetch_all'))
             except:
                 fetch_all = 0
+            try:
+                hide_resource = int(self.api_req.params.get('hide_resource'), 0)
+            except:
+                hide_resource = 0
+            if self.component == 'area':
+                if mode is None:
+                    return apiResponse.APIResponse(self._logger, self.api_req)('A mode must be specified', 400)
+                if mode not in self.configuration:
+                    msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
+                    return apiResponse.APIResponse(self._logger, self.api_req)(msg, 400)
             # Use an ordered dict so we can guarantee the order is returned per the class specification
             disp_field = self.api_req.params.get('display_field', self.default_sort)
             raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field)
-            return apiResponse.APIResponse(self._logger, self.api_req)(raw_data, 200)
+            if hide_resource:
+                response_data = raw_data
+            else:
+                response_data = {
+                    'resource': self.get_resource_info(config),
+                    'results': raw_data
+                }
+            return apiResponse.APIResponse(self._logger, self.api_req)(response_data, 200)
         else:
             if flask.request.method == 'DELETE':
                 return self.delete(identifier)
             elif flask.request.method == 'GET':
                 return self.get(identifier)
             # Validate incoming data and return any issues
-            mode = self.api_req.headers.get('X-Mode', None)
-            config = self.get_required_configuration(identifier, mode=mode)
             (self.api_req.data, invalid, missing) = self.format_data(self.api_req.data, config, flask.request.method)
             errors = {}
             if missing:
