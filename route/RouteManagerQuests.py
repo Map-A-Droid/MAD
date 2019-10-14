@@ -12,8 +12,17 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 class RouteManagerQuests(RouteManagerBase):
     def generate_stop_list(self):
         time.sleep(5)
-        stops = self.db_wrapper.stop_from_db_without_quests(
+        stops, stops_with_visits = self.db_wrapper.stop_from_db_without_quests(
             self.geofence_helper, self._level)
+
+        if self._level:
+            logger.info("Some stops maybe visited before, trying to filter them out... # unfiltered: {}",
+                        str(len(stops)))
+            stops = []
+            for lv in stops_with_visits:
+                if lv.visited_by is None or lv.visited_by == '':
+                    stops.append(Location(lv.lat, lv.lng))
+
         logger.info('Detected stops without quests: {}', str(len(stops)))
         logger.debug('Detected stops without quests: {}', str(stops))
         self._stoplist: List[Location] = stops
@@ -233,7 +242,7 @@ class RouteManagerQuests(RouteManagerBase):
             return True
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', str(stop))
-        if stop not in self._stoplist and not self._level:
+        if stop not in self._stoplist:
             logger.info('Already got this Stop')
             return False
         logger.info('Getting new Stop')

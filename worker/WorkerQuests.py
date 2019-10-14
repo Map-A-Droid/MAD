@@ -610,11 +610,11 @@ class WorkerQuests(MITMBase):
     def _current_position_has_spinnable_stop(self, timestamp: float):
         latest: dict = self._mitm_mapper.request_latest(self._id)
         if latest is None or 106 not in latest.keys():
-            return False
+            return False, False
 
         gmo_cells: list = latest.get(106).get("values", {}).get("payload", {}).get("cells", None)
         if gmo_cells is None:
-            return False
+            return False, False
         for cell in gmo_cells:
             # each cell contains an array of forts, check each cell for a fort with our current location (maybe +-
             # very very little jitter) and check its properties
@@ -635,7 +635,7 @@ class WorkerQuests(MITMBase):
                 fort_type: int = fort.get("type", 0)
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
-                    return False
+                    return False, True
 
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0:
                     logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
@@ -648,32 +648,38 @@ class WorkerQuests(MITMBase):
                     visited: bool = fort.get("visited", False)
                     if visited:
                         logger.info("Levelmode: Stop already visited - skipping it")
-                        return False
+                        self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
+                        return False, True
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
-                return fort_type == 1 and enabled and not closed and cooldown == 0
+                return fort_type == 1 and enabled and not closed and cooldown == 0, False
         # by now we should've found the stop in the GMO
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
-        return False
+        return False, False
 
     def _open_pokestop(self, timestamp: float):
         to = 0
         data_received = LatestReceivedType.UNDEFINED
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
-        if not self._current_position_has_spinnable_stop(timestamp):
-            if self._level_mode:
-                return None
-            # wait for GMO in case we moved too far away
-            data_received = self._wait_for_data(
-                    timestamp=timestamp, proto_to_wait_for=106, timeout=35)
-            if data_received != LatestReceivedType.UNDEFINED and not self._current_position_has_spinnable_stop(timestamp):
-                logger.info("Stop {}, {} considered to be ignored in the next round due to failed spinnable check",
-                            str(self.current_location.lat), str(self.current_location.lng))
-                self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
-                                                                            self.current_location.lat,
-                                                                            self.current_location.lng)
+        spinnable_stop, skip_recheck = self._current_position_has_spinnable_stop(timestamp)
+        if not spinnable_stop:
+            if not skip_recheck:
+                # wait for GMO in case we moved too far away
+                data_received = self._wait_for_data(
+                        timestamp=timestamp, proto_to_wait_for=106, timeout=35)
+                if data_received != LatestReceivedType.UNDEFINED:
+                    spinnable_stop, _ = self._current_position_has_spinnable_stop(timestamp)
+                    if not spinnable_stop:
+                        logger.info("Stop {}, {} "
+                                    "considered to be ignored in the next round due to failed spinnable check",
+                                    str(self.current_location.lat), str(self.current_location.lng))
+                        self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+                                                                                    self.current_location.lat,
+                                                                                    self.current_location.lng)
+                        return None
+            else:
                 return None
         while data_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
@@ -735,6 +741,11 @@ class WorkerQuests(MITMBase):
                     logger.info('NOT received new Quest - previously spun the stop/cooldown')
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
+
+                if self._level_mode:
+                    logger.info("Saving visitation info...")
+                    self._db_wrapper.submit_pokestop_visited(self._id,
+                                                             self.current_location.lat, self.current_location.lng)
                 if not self._always_cleanup:
                     self._clear_quest_counter += 1
                     if self._clear_quest_counter == 3:
@@ -829,6 +840,8 @@ class WorkerQuests(MITMBase):
                 if proto_to_wait_for == 4 and 'inventory_delta' in latest_data['payload'] and \
                         len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return LatestReceivedType.CLEAR
+                if proto_to_wait_for == 106:
+                    return LatestReceivedType.GMO
             else:
                 logger.debug("latest timestamp of proto {} ({}) is older than {}", str(
                         proto_to_wait_for), str(latest_timestamp), str(timestamp))

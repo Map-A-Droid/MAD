@@ -370,6 +370,19 @@ class MADVersion(object):
             with open(self._application_args.mappings, 'w') as outfile:
                 json.dump(settings, outfile, indent=4, sort_keys=True)
 
+        if self._version < 15:
+            query = (
+                "CREATE TABLE IF NOT EXISTS `trs_visited` ("
+                "`pokestop_id` varchar(50) NOT NULL,"
+                "`origin` varchar(50) NOT NULL,"
+                "PRIMARY KEY (`pokestop_id`,`origin`)"
+                ")"
+            )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+
         self.set_version(current_version)
 
     def set_version(self, version):
