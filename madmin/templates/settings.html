@@ -7,25 +7,13 @@
 {% endblock %}
 
 {% block content %}
-<ul class="nav nav-pills nav-fill" style="margin: 20px 0px 40px;">
-  <li class="nav-item">
-    <a class="nav-link {{ "active" if subtab == "device"}}" href="/settings/devices">Devices</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {{ "active" if subtab == "devicesetting" }}" href="/settings/shared">Shared settings</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {{ "active" if subtab == "walker" }}" href="/settings/walker">Walker</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {{ "active" if subtab == "area" }}" href="/settings/areas">Areas</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {{ "active" if subtab == "auth" }}" href="/settings/auth">Auth</a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link {{ "active" if subtab == "monivlist" }}" href="/settings/ivlists">IV Lists</a>
-  </li>
-</ul>
+<nav class="nav nav-pills nav-fill mt-3 mb-3 flex-column flex-sm-row">
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "device"}}" href="/settings/devices">Devices</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "devicesetting" }}" href="/settings/shared">Shared settings</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "area" }}" href="/settings/areas">Areas</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "walker" }}" href="/settings/walker">Walker</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "auth" }}" href="/settings/auth">Auth</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "monivlist" }}" href="/settings/ivlists">IV Lists</a>
+</nav>
 {% endblock %}
 
