@@ -251,7 +251,7 @@ class deviceUpdater(object):
                             try:
                                 if self.start_job_type(item, jobtype, temp_comm):
                                     logger.info(
-                                        'Job {} could be executed successfully - Device {} - File/Job {} (ID: {})'
+                                        'Job {} executed successfully - Device {} - File/Job {} (ID: {})'
                                             .format(str(jobtype), str(origin), str(file_), str(id_)))
                                     self.write_status_log(str(id_), field='status', value='success')
                                     self.write_status_log(str(id_), field='laststatus', value='success')
