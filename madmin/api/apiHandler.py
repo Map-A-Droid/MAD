@@ -1,4 +1,3 @@
-import collections
 import flask
 import json
 from madmin.functions import auth_required
@@ -134,26 +133,9 @@ class ResourceHandler(object):
             except:
                 fetch_all = 0
             # Use an ordered dict so we can guarantee the order is returned per the class specification
-            ordered_data = collections.OrderedDict()
-            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all)
-            if self.default_sort and len(raw_data) > 0:
-                if fetch_all == 1:
-                    sort_elem = raw_data[list(raw_data.keys())[0]][self.default_sort]
-                    if type(sort_elem) == str:
-                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x][self.default_sort].lower()))
-                    else:
-                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x][self.default_sort]))
-                else:
-                    sort_elem = raw_data[list(raw_data.keys())[0]]
-                    if type(sort_elem) == str:
-                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x].lower()))
-                    else:
-                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x]))
-            else:
-                sorted_keys = list(raw_data.keys())
-            for key in sorted_keys:
-                ordered_data[key] = raw_data[key]
-            return apiResponse.APIResponse(self._logger, self.api_req)(ordered_data, 200)
+            disp_field = self.api_req.params.get('display_field', self.default_sort)
+            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field)
+            return apiResponse.APIResponse(self._logger, self.api_req)(raw_data, 200)
         else:
             if flask.request.method == 'DELETE':
                 return self.delete(identifier)

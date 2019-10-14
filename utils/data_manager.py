@@ -107,17 +107,29 @@ class DataManager(object):
             self._logger.debug('Identifier {} not found in {}', identifier, location)
             return None
         if identifier is None and kwargs.get('uri', True):
-            converted_data = {}
-            for key, val in data.items():
-                try:
-                    if fetch_all:
-                        converted_data[self.generate_uri(location, key)] = val
-                    else:
-                        converted_data[self.generate_uri(location, key)] = val[self.get_api_attribute(location, 'default_sort')]
-                except KeyError:
-                    converted_data[self.generate_uri(location, key)] = val
-            data = converted_data
+            disp_field = kwargs.get('display_field', self.get_api_attribute(location, 'default_sort'))
+            try:
+                data = self.get_sorted_data(data, disp_field, location, fetch_all)
+            except:
+                data = self.get_sorted_data(data, self.get_api_attribute(location, 'default_sort'), location, fetch_all)
         return data
+
+    def get_sorted_data(self, data, display, location, fetch_all):
+        ordered_data = collections.OrderedDict()
+        if display and len(data) > 0:
+            sort_elem = data[list(data.keys())[0]][display]
+            if type(sort_elem) == str:
+                sorted_keys = sorted(data, key=lambda x: (data[x][display].lower()))
+            else:
+                sorted_keys = sorted(data, key=lambda x: (data[x][display]))
+        else:
+            sorted_keys = list(data.keys())
+        for key in sorted_keys:
+            if fetch_all:
+                ordered_data[self.generate_uri(location, key)] = data[key]
+            else:
+                ordered_data[self.generate_uri(location, key)] = data[key][display]
+        return ordered_data
 
     def has_any_dependencies(self, location, config_section, identifier):
         uri = self.generate_uri(location, identifier)
