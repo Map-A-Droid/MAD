@@ -89,6 +89,8 @@ class DataManager(object):
     def get_data(self, location, identifier=None, **kwargs):
         self.update()
         config_section = location
+        # Allow it to fetch all of the data by default.  If this is an API request, it will pass in 0 by default
+        fetch_all = kwargs.get('fetch_all', 1)
         try:
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
             data = self.__raw[config_section]['entries']
@@ -107,7 +109,13 @@ class DataManager(object):
         if identifier is None and kwargs.get('uri', True):
             converted_data = {}
             for key, val in data.items():
-                converted_data[self.generate_uri(location, key)] = val
+                try:
+                    if fetch_all:
+                        converted_data[self.generate_uri(location, key)] = val
+                    else:
+                        converted_data[self.generate_uri(location, key)] = val[self.get_api_attribute(location, 'default_sort')]
+                except KeyError:
+                    converted_data[self.generate_uri(location, key)] = val
             data = converted_data
         return data
 

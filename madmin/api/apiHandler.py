@@ -129,15 +129,26 @@ class ResourceHandler(object):
         # Begin processing the request
         self.api_req = apiRequest.APIRequest(self._logger, flask.request)
         if identifier is None and flask.request.method != 'POST':
+            try:
+                fetch_all = int(self.api_req.params.get('fetch_all'))
+            except:
+                fetch_all = 0
             # Use an ordered dict so we can guarantee the order is returned per the class specification
             ordered_data = collections.OrderedDict()
-            raw_data = self._data_manager.get_data(self.component)
+            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all)
             if self.default_sort and len(raw_data) > 0:
-                sort_elem = raw_data[list(raw_data.keys())[0]][self.default_sort]
-                if type(sort_elem) == str:
-                    sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x][self.default_sort].lower()))
+                if fetch_all == 1:
+                    sort_elem = raw_data[list(raw_data.keys())[0]][self.default_sort]
+                    if type(sort_elem) == str:
+                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x][self.default_sort].lower()))
+                    else:
+                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x][self.default_sort]))
                 else:
-                    sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x][self.default_sort]))
+                    sort_elem = raw_data[list(raw_data.keys())[0]]
+                    if type(sort_elem) == str:
+                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x].lower()))
+                    else:
+                        sorted_keys = sorted(raw_data, key=lambda x: (raw_data[x]))
             else:
                 sorted_keys = list(raw_data.keys())
             for key in sorted_keys:
