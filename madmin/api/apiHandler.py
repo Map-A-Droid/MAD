@@ -113,9 +113,17 @@ class ResourceHandler(object):
 
     def get_resource_info(self, config):
         resource = {
-            'fields': self.get_resource_info_elems(config['fields']),
-            'settings': self.get_resource_info_elems(config['settings'])
+            'fields': [],
+            'settings': []
         }
+        try:
+            resource['fields'] = self.get_resource_info_elems(config['fields'])
+        except:
+            pass
+        try:
+            resource['settings'] = self.get_resource_info_elems(config['settings'])
+        except:
+            pass
         return resource
 
     def get_resource_info_elems(self, config):
@@ -160,7 +168,7 @@ class ResourceHandler(object):
             except:
                 fetch_all = 0
             try:
-                hide_resource = int(self.api_req.params.get('hide_resource'), 0)
+                hide_resource = int(self.api_req.params.get('hide_resource', 0))
             except:
                 hide_resource = 0
             if self.component == 'area':
