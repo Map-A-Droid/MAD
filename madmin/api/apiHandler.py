@@ -42,32 +42,61 @@ class ResourceHandler(object):
                 route = '%s/<string:identifier>' % (self.uri_base,)
                 self._app.route(route, methods=['DELETE', 'GET', 'PATCH', 'PUT'], endpoint=self.component)(self.process_request)
 
-    def format_data(self, data, config, operation, settings=False):
+    def format_data(self, data, config, operation):
         save_data = {}
         invalid = []
         missing = []
-        for key, val in data.items():
+        sections = ['fields', 'settings']
+        for section in sections:
+            if section == 'fields':
+                (tmp_save, tmp_inv, tmp_missing) = self.format_section(data, config[section], operation)
+                for key, val in tmp_save.items():
+                    save_data[key] = val
+            else:
+                try:
+                    (tmp_save, tmp_inv, tmp_missing) = self.format_section(data[section], config[section], operation)
+                    save_data[section] = tmp_save
+                except KeyError:
+                    continue
+            invalid += tmp_inv
+            missing += tmp_missing
+        return (save_data, invalid, missing)
+
+    def format_section(self, data, config, operation):
+        save_data = {}
+        invalid = []
+        missing = []
+        for key, entry_def in config.items():
+            try:
+                val = data[key]
+            except KeyError:
+                try:
+                    if entry_def['settings']['require'] == True and operation == 'POST':
+                        missing.append(key)
+                except:
+                    pass
+                continue
             if type(val) is dict:
-                (save_data[key], rec_invalid, rec_missing) = self.format_data(val, config, operation, settings=key.lower() == 'settings')
+                (save_data[key], rec_invalid, rec_missing) = self.format_data(val, current[key], operation)
                 invalid += rec_invalid
                 missing += rec_missing
             else:
-                if settings:
-                    entry_def = self.get_def(key, config['settings'])
-                else:
-                    entry_def = self.get_def(key, config['fields'])
                 expected = entry_def['settings'].get('expected', str)
                 none_val = entry_def['settings'].get('empty', '')
-                formated_val = self.format_value(val, expected, none_val)
-                if (formated_val is None or (formated_val and 'len' in dir(formated_val) and len(formated_val) == 0)) and entry_def['settings'].get('require', False):
-                    missing.append(key)
-                    continue
                 try:
-                    # We only want to skip the value if its a POST operation.  If not, we want them to be removed from recursive_update
-                    if (val is None or (val and 'len' in dir(val) and len(val) == 0)) and settings and operation == 'POST':
-                        continue
+                    # Skip empty values on POST.  If its not a POST, we want it removed from the recursive update
+                    if (val is None or (val and 'len' in dir(val) and len(val) == 0)):
+                        if operation == 'POST':
+                            if entry_def['settings']['require'] == True:
+                                missing.append(key)
+                            continue
+                        else:
+                            formated_val = none_val
+                    else:
+                        formated_val = self.format_value(val, expected, none_val)
                     save_data[key] = formated_val
-                except Exception:
+                except:
+                    self._logger.debug4('Unable to convert key {} [{}]', key, val)
                     user_readable_types = {
                         str: 'string (MapADroid)',
                         int: 'Integer (1,2,3)',
@@ -79,17 +108,14 @@ class ResourceHandler(object):
         return (save_data, invalid, missing)
 
     def format_value(self, value, expected, none_val):
-        try:
-            if expected == bool:
-                value = True if value.lower() == "true" else False
-            elif expected == float:
-                value = float(value)
-            elif expected == int:
-                value = int(value)
-            elif expected == str:
-                value = value.strip()
-        except Exception:
-            pass
+        if expected == bool:
+            value = True if value.lower() == "true" else False
+        elif expected == float:
+            value = float(value)
+        elif expected == int:
+            value = int(value)
+        elif expected == str:
+            value = value.strip()
         if value in ["None", None, ""]:
             return none_val
         return value
