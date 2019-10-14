@@ -38,10 +38,7 @@ class DataManager(object):
         try:
             removal_list = []
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
-            try:
-                self.has_any_dependencies(location, config_section, identifier)
-            except Exception as e:
-                print(e)
+            self.has_any_dependencies(location, config_section, identifier)
             # If we are removing a walker, check to see if we can remove any walkerareas
             if config_section == 'walker':
                 uri = self.generate_uri(location, identifier)

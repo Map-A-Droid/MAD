@@ -167,7 +167,7 @@ class ResourceHandler(object):
         try:
             self._data_manager.delete_data(self.component, identifier=identifier)
         except utils.data_manager.DataManagerDependencyError as err:
-            return apiResponse.APIResponse(self._logger, self.api_req)(json.dumps(err.dependencies), 412)
+            return apiResponse.APIResponse(self._logger, self.api_req)(err.dependencies, 412)
         except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         else:
