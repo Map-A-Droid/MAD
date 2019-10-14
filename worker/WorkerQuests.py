@@ -663,8 +663,6 @@ class WorkerQuests(MITMBase):
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         if not self._current_position_has_spinnable_stop(timestamp):
-            if self._level_mode:
-                return None
             # wait for GMO in case we moved too far away
             data_received = self._wait_for_data(
                     timestamp=timestamp, proto_to_wait_for=106, timeout=35)
