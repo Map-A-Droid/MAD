@@ -79,7 +79,7 @@ class map(object):
         geofences = {}
         areas = self._mapping_manager.get_areas()
         for uri, area in areas.items():
-            name = area['name']
+            aname = area['name']
             geofence_include = {}
             geofence_exclude = {}
             geofence_name = 'Unknown'
@@ -121,15 +121,15 @@ class map(object):
                                 getCoordFloat(lon)
                             ])
 
-            geofences[name] = {'include': geofence_include,
-                               'exclude': geofence_exclude}
+            geofences[aname] = {'include': geofence_include,
+                                'exclude': geofence_exclude}
         geofences = get_geofences(self._mapping_manager)
         geofencexport = []
         for name, fences in geofences.items():
             coordinates = []
             for fname, coords in fences.get('include').items():
                 coordinates.append([coords, fences.get('exclude').get(fname, [])])
-            geofencexport.append({'name': name, 'coordinates': coordinates})
+            geofencexport.append({'name': areas[name]['name'], 'coordinates': coordinates})
 
         return jsonify(geofencexport)
 
