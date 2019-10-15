@@ -4,26 +4,21 @@ import madmin.api
 import re
 import six
 
-
 class DataManagerException(Exception):
     pass
-
 
 class DataManagerDependencyError(Exception):
     def __init__(self, dependencies):
         self.dependencies = dependencies
         super(DataManagerDependencyError, self).__init__(dependencies)
 
-
 class DataManagerInvalidMode(Exception):
     def __init__(self, mode):
         self.mode = mode
         super(DataManagerInvalidMode, self).__init__(mode)
 
-
 class UnknownIdentifier(DataManagerException):
     pass
-
 
 class DataManager(object):
     def __init__(self, logger, args):
@@ -133,10 +128,8 @@ class DataManager(object):
         if config_section == 'areas':
             # Check for any walkerareas that use the area
             dependency_failures = []
-
             if self.get_data("walkerarea") is None:
                 return
-
             for walkerarea_uri, walkerarea in self.get_data('walkerarea').items():
                 if walkerarea['walkerarea'] != uri:
                     continue
@@ -156,10 +149,8 @@ class DataManager(object):
         elif config_section == 'devicesettings':
             # Check for any devices that use the devicesetting
             dependency_failures = []
-
             if self.get_data("device") is None:
                 return
-
             for device_uri, device in self.get_data('device').items():
                 if device['pool'] != uri:
                     continue
@@ -173,11 +164,10 @@ class DataManager(object):
         elif config_section == 'monivlist':
             # Check for any areas that use the monivlist
             dependency_failures = []
-
-            if self.get_data("areas") is None:
+            areas = self.get_data("area")
+            if areas is None:
                 return
-
-            for area_uri, area in self.get_data('areas').items():
+            for area_uri, area in areas.items():
                 try:
                     if area['settings']['mon_ids_iv'] != uri:
                         continue
@@ -193,10 +183,8 @@ class DataManager(object):
         elif config_section == 'walker':
             # Check for any devices that use the walker
             dependency_failures = []
-
             if self.get_data("device") is None:
                 return
-
             for device_uri, device in self.get_data('device').items():
                 if device['walker'] != uri:
                     continue
@@ -210,10 +198,8 @@ class DataManager(object):
         elif config_section == 'walkerarea':
             # Check for any walkers that use the walkerarea
             dependency_failures = []
-
             if self.get_data("walker") is None:
                 return
-
             for walker_uri, walker in self.get_data('walker').items():
                 if uri not in walker['setup']:
                     continue

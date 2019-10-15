@@ -110,6 +110,18 @@ $(document).ready(function () {
     </div>
     {% endfor %}  
   </div>
+  {% else %}
+    <div class="col-sm">
+      <div class="form-group">
+        <label for="mon_ids_iv">mon_ids_iv</label>
+        <select class="form-control" name="mon_ids_iv" setting='true'>
+          <option value='' {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>None</option>
+          {% for uri, data in monlist.items() %}
+          <option value="{{ uri }}" {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>{{ data.monlist|lower }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
   {% endif %}
   {% endif %}
   {% if settings_vars.fields is defined %}
