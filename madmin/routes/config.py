@@ -155,6 +155,11 @@ class config(object):
     @logger.catch
     @auth_required
     def settings_areas(self):
+        fences = {}
+        geofence_file_path = self._args.geofence_file_path
+        existing_fences = sorted(glob.glob(os.path.join(geofence_file_path, '*.txt')))
+        for geofence_temp in existing_fences:
+            fences[geofence_temp] = os.path.basename(geofence_temp)
         required_data = {
             'identifier': 'id',
             'base_uri': '/api/area',
@@ -164,6 +169,9 @@ class config(object):
             'subtab': 'area',
             'required_uris': {
                 'monlist': '/api/monivlist'
+            },
+            'passthrough': {
+                'fences': fences
             },
             'mode_required': True
         }
