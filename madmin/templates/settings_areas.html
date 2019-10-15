@@ -95,12 +95,16 @@ $(document).ready(function () {
           <td class="align-middle">
             <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.mode }}">{{ area.name }}</a> 
           </td>
-          <td><small class="badge badge-secondary">{{area.mode}}</small></td>
+          <td><small class="badge badge-secondary">{{ area.mode }}</small></td>
           <td class="d-none d-lg-table-cell">
             <p style="font-size: 65%; min-height: 40px; display: inline-box">
             {% for key in area.settings|sort %}
-            {%if area.settings[key] != "" %}
+            {% if area.settings[key] != "" %}
+            {% if key == "mon_ids_iv" %}
+            {{ key }}: <a href="/settings/ivlists?id={{area.settings[key]}}">{{ monlist[area.settings[key]].monlist }}</a><br>
+            {% else %}
             {{ key }}: {{ area.settings[key] }}<br>
+            {% endif %}
             {% endif %}
             {% endfor %}
             </p>
