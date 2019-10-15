@@ -22,8 +22,16 @@
         dataTable = $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
-                { data: 'origin', title: 'Origin' },
-                { data: 'routemanager', title: 'Route' },
+                { data: 'origin', title: 'Origin',
+                  "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html("<a href='/settings/devices?id="+oData.origin_id+"'>"+oData.origin+"</a>");
+                  }
+                },
+                { data: 'routemanager', title: 'Route', 
+                  "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
+                    $(nTd).html("<a href='/settings/areas?id="+oData.routemanager_id+"&mode="+oData.routemanager_mode+"'>"+oData.routemanager+"</a>");
+                  }
+                },
                 { data: 'routePos', title: 'Route Pos' },
                 { data: 'routeMax', title: 'Route Length' },
                 { data: 'init', title: 'Init Mode' },

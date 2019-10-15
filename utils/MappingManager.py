@@ -115,6 +115,11 @@ class MappingManager:
     def get_auths(self) -> Optional[dict]:
         return self._auths
 
+    def get_device_id_of(self, device_name: str) -> Optional[str]:
+        for device_id in self.__data_manager.get_data('device'):
+            if self.__data_manager.get_data('device')[device_id]['origin'] == device_name:
+                return device_id
+
     def get_devicemappings_of(self, device_name: str) -> Optional[dict]:
         return self._devicemappings.get(device_name, None)
 
@@ -166,8 +171,8 @@ class MappingManager:
         elif listname is None:
             return []
         else:
-            logger.error("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
-                         listname, areaname)
+            logger.warn("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
+                        listname, areaname)
             return []
 
     def get_all_routemanager_names(self):
