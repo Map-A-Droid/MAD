@@ -261,8 +261,7 @@ class MADVersion(object):
             with open(self._application_args.mappings, 'rb') as fh:
                 old_data = json.load(fh)
 
-            if "firsttime" in old_data:
-                del old_data["firsttime"]
+            if "migrated" in old_data and old_data["migrated"] is True:
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(old_data, outfile, indent=4, sort_keys=True)
             else:
@@ -350,6 +349,9 @@ class MADVersion(object):
                         new_data[key]['entries'][index] = entry
                         index += 1
                     new_data[key]['index'] = index
+
+                new_data['migrated'] = True
+
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(new_data, outfile, indent=4, sort_keys=True)
 
@@ -359,4 +361,3 @@ class MADVersion(object):
         output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)
-
