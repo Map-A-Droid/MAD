@@ -69,7 +69,7 @@ $(document).ready(function () {
                     alert('One or more fields failed validation');
                 } else {
                     $.unblockUI();
-                    alert('Unable to save the {{ subtab }}.  An unknown error occurred');    
+                    alert('Unable to save the {{ subtab }}.  An unknown error occurred');
                 }
             }
         });
@@ -103,11 +103,12 @@ $(document).ready(function () {
         <option value="{{ uri }}" {{ 'selected="selected"' if uri == element.settings[key] }}>{{ data.monlist|lower }}</option>
         {% endfor %}
       </select>
+      {% else %}
       <input type="{{ field.settings.type }}" name="{{ key }}" setting='true' class="form-control" id="{{ key }}" value="{% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}">
       {% endif %}
       <small class="form-text text-muted">{{ field.settings.description }}</small>
     </div>
-    {% endfor %}  
+    {% endfor %}
   </div>
   {% else %}
     <div class="col-sm">
