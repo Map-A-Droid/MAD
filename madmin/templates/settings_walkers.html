@@ -23,7 +23,7 @@ $(document).ready(function () {
                 },
                 error: function(data, status, xhr) {
                     if(data.status == 412) {
-                        var dependencies = JSON.parse(data.responseJSON);
+                        var dependencies = data.responseJSON;
                         var msg = 'The following entities have a dependency on this element:';
                         $.each(dependencies, function() {
                             msg += "\n"+ this['name'] +" ("+ this['uri'] +")";

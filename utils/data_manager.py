@@ -38,10 +38,7 @@ class DataManager(object):
         try:
             removal_list = []
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
-            try:
-                self.has_any_dependencies(location, config_section, identifier)
-            except Exception as e:
-                print(e)
+            self.has_any_dependencies(location, config_section, identifier)
             # If we are removing a walker, check to see if we can remove any walkerareas
             if config_section == 'walker':
                 uri = self.generate_uri(location, identifier)
@@ -89,6 +86,8 @@ class DataManager(object):
     def get_data(self, location, identifier=None, **kwargs):
         self.update()
         config_section = location
+        # Allow it to fetch all of the data by default.  If this is an API request, it will pass in 0 by default
+        fetch_all = kwargs.get('fetch_all', 1)
         try:
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
             data = self.__raw[config_section]['entries']
@@ -105,11 +104,29 @@ class DataManager(object):
             self._logger.debug('Identifier {} not found in {}', identifier, location)
             return None
         if identifier is None and kwargs.get('uri', True):
-            converted_data = {}
-            for key, val in data.items():
-                converted_data[self.generate_uri(location, key)] = val
-            data = converted_data
+            disp_field = kwargs.get('display_field', self.get_api_attribute(location, 'default_sort'))
+            try:
+                data = self.get_sorted_data(data, disp_field, location, fetch_all)
+            except:
+                data = self.get_sorted_data(data, self.get_api_attribute(location, 'default_sort'), location, fetch_all)
         return data
+
+    def get_sorted_data(self, data, display, location, fetch_all):
+        ordered_data = collections.OrderedDict()
+        if display and len(data) > 0:
+            sort_elem = data[list(data.keys())[0]][display]
+            if type(sort_elem) == str:
+                sorted_keys = sorted(data, key=lambda x: (data[x][display].lower()))
+            else:
+                sorted_keys = sorted(data, key=lambda x: (data[x][display]))
+        else:
+            sorted_keys = list(data.keys())
+        for key in sorted_keys:
+            if fetch_all:
+                ordered_data[self.generate_uri(location, key)] = data[key]
+            else:
+                ordered_data[self.generate_uri(location, key)] = data[key][display]
+        return ordered_data
 
     def has_any_dependencies(self, location, config_section, identifier):
         uri = self.generate_uri(location, identifier)
