@@ -499,8 +499,13 @@ class statistics(object):
         data = []
         for device in device_status:
             device['origin_id'] = self._mapping_manager.get_device_id_of(device["origin"])
-            device['routemanager'] = areas[device['routemanager_id']]['name']
-            device['routemanager_mode'] = areas[device['routemanager_id']]['mode']
+            try:
+                device['routemanager'] = areas[device['routemanager_id']]['name']
+                device['routemanager_mode'] = areas[device['routemanager_id']]['mode']
+            except KeyError:
+                device['routemanager'] = 'Unknown Area %s' % (device['routemanager_id'],)
+                device['routemanager_mode'] = 'Unknown Area %s' % (device['routemanager_id'],)
+                device['routemanager_id'] = -1
             data.append(device)
 
         return jsonify(data)
