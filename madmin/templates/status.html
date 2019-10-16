@@ -29,7 +29,11 @@
                 },
                 { data: 'routemanager', title: 'Route', 
                   "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html("<a href='/settings/areas?id="+oData.routemanager_id+"&mode="+oData.routemanager_mode+"'>"+oData.routemanager+"</a>");
+                    if(oData.routemanager_id != -1) {
+                      $(nTd).html("<a href='/settings/areas?id="+oData.routemanager_id+"&mode="+oData.routemanager_mode+"'>"+oData.routemanager+"</a>");
+                    } else {
+                      $(nTd).html(oData.routemanager);
+                    }
                   }
                 },
                 { data: 'routePos', title: 'Route Pos' },
