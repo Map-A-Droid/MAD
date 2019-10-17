@@ -529,7 +529,7 @@ class APIArea(apiHandler.ResourceHandler):
                 },
                 "geofence_included": {
                     "settings": {
-                        "type": "text",
+                        "type": "geofence",
                         "require": True,
                         "empty": None,
                         "description": "Including geofence for scanarea",
