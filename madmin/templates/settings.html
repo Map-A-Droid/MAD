@@ -1,102 +1,19 @@
 {% extends "base.html" %}
 
 {% block header %}
-<style>
-    input[type=text],
-    select,
-    textarea {
-        width: 100%;
-        padding: 12px 20px;
-        margin: 8px 0;
-        display: inline-block;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        box-sizing: border-box;
-    }
-
-    input[type=submit] {
-        width: 100%;
-        background-color: #4CAF50;
-        color: white;
-        padding: 14px 20px;
-        margin: 8px 0;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    }
-
-    input[type=submit]:hover {
-        background-color: #45a049;
-    }
-
-    hr {
-        border-style: solid;
-        border-color: lightgray;
-    }
-
-    table.dataTable {
-        width: 100%;
-    }
-
-    td.quick {
-        font-style: italic;
-        font-size: 9px;
-    }
-
-    td.header {
-        background-color: lightgrey;
-    }
-
-    a#reload {
-        font-weight: bolder;
-    }
-
-}
-</style>
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
-<script>
-    $(document).ready(function () {
-        $("#navsetting").addClass("active");
-
-        $("table").addClass("table");
-        $('table').DataTable({
-            "autoWidth": true,
-            "searching": false,
-            "paging": false,
-            "bInfo": false,
-            "ordering": false
-        });
-        $('body').Aplus();
-        $("#reload").click(function() {
-        var confirm1 = confirm('Do you really want reload mappings?');
-        if (confirm1) {
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
-            $(location).attr('href', 'reload')
-        }
-        });
-    });
-</script>
-
 {% endblock %}
 
 {% block content %}
-<h2>Mapping Editor</h2>
-
-<nav>
-  <div class="nav nav-tabs" id="nav-tab" role="tablist">
-      <a class="nav-item nav-link {% if tabarea == "devices" %}active{% endif %}" id="nav-devices-tab" data-toggle="tab" href="#nav-devices" role="tab" aria-controls="nav-devices" aria-selected="true">Devices</a>
-      <a class="nav-item nav-link {% if tabarea == "devicesettings" %}active{% endif %}" id="nav-devicesettings-tab" data-toggle="tab" href="#nav-devicesettings" role="tab" aria-controls="nav-devicesettings" aria-selected="false">Devicesettings</a>
-      <a class="nav-item nav-link {% if tabarea == "walker" %}active{% endif %}" id="nav-walker-tab" data-toggle="tab" href="#nav-walker" role="tab" aria-controls="nav-walker" aria-selected="false">Walker</a>
-      <a class="nav-item nav-link {% if tabarea == "areas" %}active{% endif %}" id="nav-areas-tab" data-toggle="tab" href="#nav-areas" role="tab" aria-controls="nav-areas" aria-selected="false">Areas</a>
-      <a class="nav-item nav-link {% if tabarea == "auth" %}active{% endif %}" id="nav-auth-tab" data-toggle="tab" href="#nav-auth" role="tab" aria-controls="nav-auth" aria-selected="false">Auth</a>
-      <a class="nav-item nav-link {% if tabarea == "monivlist" %}active{% endif %}" id="nav-auth-tab" data-toggle="tab" href="#nav-monivlist" role="tab" aria-controls="nav-auth" aria-selected="false">Global Mon Lists</a>
-      {% if not autoreloadconfig %}<a href="#" id ="reload" class="btn btn-success">Reload Mapping</a>{% endif %}
-  </div>
+<nav class="nav nav-pills nav-fill mt-3 mb-3 flex-column flex-sm-row">
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "device"}}" href="/settings/devices">Devices</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "devicesetting" }}" href="/settings/shared">Shared settings</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "area" }}" href="/settings/areas">Areas</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "walker" }}" href="/settings/walker">Walker</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "auth" }}" href="/settings/auth">Auth</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "monivlist" }}" href="/settings/ivlists">IV lists</a>
 </nav>
-<div class="tab-content" id="nav-tabContent">
-{{settings | safe }}
-</div>
 {% endblock %}
+

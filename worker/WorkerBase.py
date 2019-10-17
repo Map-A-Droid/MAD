@@ -258,7 +258,7 @@ class WorkerBase(ABC):
             self._get_screen_size()
             # register worker  in routemanager
             logger.info("Try to register {} in Routemanager {}", str(
-                self._id), str(self._routemanager_name))
+                self._id), str(self._mapping_manager.routemanager_get_name(self._routemanager_name)))
             self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
         except WebsocketWorkerRemovedException:
             logger.error("Timeout during init of worker {}", str(self._id))
@@ -328,13 +328,13 @@ class WorkerBase(ABC):
             self._internal_pre_work()
         except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
             logger.error(
-                    "Failed initializing worker {}, connection terminated exceptionally", str(self._id))
+                "Failed initializing worker {}, connection terminated exceptionally", str(self._id))
             self._internal_cleanup()
             return
 
         if not self.check_max_walkers_reached():
             logger.warning('Max. Walkers in Area {} - closing connections',
-                           str(self._routemanager_name))
+                           str(self._mapping_manager.routemanager_get_name(self._routemanager_name)))
             self.set_devicesettings_value('finished', True)
             self._internal_cleanup()
             return
@@ -348,7 +348,7 @@ class WorkerBase(ABC):
                     break
             except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
                 logger.warning(
-                        "Worker {} killed by walker settings", str(self._id))
+                    "Worker {} killed by walker settings", str(self._id))
                 break
 
             try:

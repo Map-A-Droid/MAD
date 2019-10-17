@@ -1,11 +1,13 @@
 import datetime
 import json
 import time
+
 from flask import (jsonify, render_template, request)
+
 from madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
-from utils.language import i8ln
 from utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp, form_mapper
 from utils.geo import get_distance_of_two_points_in_meters
+from utils.language import i8ln
 from utils.logging import logger
 
 
@@ -491,7 +493,21 @@ class statistics(object):
 
     @auth_required
     def get_status(self):
-        data = json.loads(self._db.download_status())
+        device_status = self._db.download_status()
+        areas = self._mapping_manager.get_areas()
+
+        data = []
+        for device in device_status:
+            device['origin_id'] = self._mapping_manager.get_device_id_of(device["origin"])
+            try:
+                device['routemanager'] = areas[device['routemanager_id']]['name']
+                device['routemanager_mode'] = areas[device['routemanager_id']]['mode']
+            except KeyError:
+                device['routemanager'] = 'Unknown Area %s' % (device['routemanager_id'],)
+                device['routemanager_mode'] = 'Unknown Area %s' % (device['routemanager_id'],)
+                device['routemanager_id'] = -1
+            data.append(device)
+
         return jsonify(data)
 
     @auth_required
@@ -521,7 +537,7 @@ class statistics(object):
                 )
 
                 for spawnid in data:
-                    if data[str(spawnid)]["endtime"] == None:
+                    if data[str(spawnid)]["endtime"] is None:
                         unknown.append(spawnid)
                     else:
                         known.append(spawnid)

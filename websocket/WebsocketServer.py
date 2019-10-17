@@ -262,14 +262,14 @@ class WebsocketServer(object):
                 walker_settings = walker_area_array[walker_index]
 
                 # preckeck walker setting
-                while not pre_check_value(walker_settings) and walker_index-1 <= len(walker_area_array):
+                while not pre_check_value(walker_settings) and walker_index - 1 <= len(walker_area_array):
                     walker_area_name = walker_area_array[walker_index]['walkerarea']
                     logger.info(
-                        '{} not using area {} - Walkervalue out of range', str(origin), str(walker_area_name))
+                        '{} not using area {} - Walkervalue out of range', str(origin), str(self.__mapping_manager.routemanager_get_name(walker_area_name)))
                     if walker_index >= len(walker_area_array) - 1:
                         logger.error(
                             'Could not find any working area at this time - check your mappings for device: {}',
-                             str(origin))
+                            str(origin))
                         walker_index = 0
                         self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index)
                         walker_settings = walker_area_array[walker_index]
@@ -296,9 +296,9 @@ class WebsocketServer(object):
 
                 logger.debug('Devicesettings {}: {}', str(origin), devicesettings)
                 logger.info('{} using walker area {} [{}/{}]', str(origin), str(
-                    walker_area_name), str(walker_index+1), str(len(walker_area_array)))
+                    self.__mapping_manager.routemanager_get_name(walker_area_name)), str(walker_index + 1), str(len(walker_area_array)))
                 walker_routemanager_mode = self.__mapping_manager.routemanager_get_mode(walker_area_name)
-                self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index+1)
+                self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index + 1)
                 self.__mapping_manager.set_devicesetting_value_of(origin, 'finished', False)
                 if walker_index >= len(walker_area_array) - 1:
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', 0)

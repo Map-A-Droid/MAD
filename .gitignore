@@ -14,7 +14,7 @@ configs/config.ini
 configs/geofences/*
 upload/*
 files/*
-configs/mappings.json
+configs/mappings.json*
 configs/mappings_org.json
 .idea/*
 .idea

@@ -7,7 +7,7 @@ from flask_caching import Cache
 
 from db.dbWrapperBase import DbWrapperBase
 from madmin.functions import (auth_required, getCoordFloat, getBoundParameter,
-                              getBasePath, get_geofences, generate_coords_from_geofence)
+                              getBasePath, get_geofences, generate_coords_from_geofence, Path)
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.gamemechanicutil import get_raid_boss_cp
@@ -77,15 +77,59 @@ class map(object):
     @auth_required
     def get_geofence(self):
         geofences = {}
+        areas = self._mapping_manager.get_areas()
+        for uri, area in areas.items():
+            aname = area['name']
+            geofence_include = {}
+            geofence_exclude = {}
+            geofence_name = 'Unknown'
+            geofence_included = Path(area["geofence_included"])
+            if not geofence_included.is_file():
+                continue
+            with geofence_included.open() as gf:
+                for line in gf:
+                    line = line.strip()
+                    if not line:  # Empty line.
+                        continue
+                    elif line.startswith("["):  # Name line.
+                        geofence_name = line.replace("[", "").replace("]", "")
+                        geofence_include[geofence_name] = []
+                    else:  # Coordinate line.
+                        lat, lon = line.split(",")
+                        geofence_include[geofence_name].append([
+                            getCoordFloat(lat),
+                            getCoordFloat(lon)
+                        ])
 
+            if area['geofence_excluded']:
+                geofence_name = 'Unknown'
+                geofence_excluded = Path(area["geofence_excluded"])
+                if not geofence_excluded.is_file():
+                    continue
+                with geofence_excluded.open() as gf:
+                    for line in gf:
+                        line = line.strip()
+                        if not line:  # Empty line.
+                            continue
+                        elif line.startswith("["):  # Name line.
+                            geofence_name = line.replace("[", "").replace("]", "")
+                            geofence_exclude[geofence_name] = []
+                        else:  # Coordinate line.
+                            lat, lon = line.split(",")
+                            geofence_exclude[geofence_name].append([
+                                getCoordFloat(lat),
+                                getCoordFloat(lon)
+                            ])
+
+            geofences[aname] = {'include': geofence_include,
+                                'exclude': geofence_exclude}
         geofences = get_geofences(self._mapping_manager)
-
         geofencexport = []
         for name, fences in geofences.items():
             coordinates = []
             for fname, coords in fences.get('include').items():
                 coordinates.append([coords, fences.get('exclude').get(fname, [])])
-            geofencexport.append({'name': name, 'coordinates': coordinates})
+            geofencexport.append({'name': areas[name]['name'], 'coordinates': coordinates})
 
         return jsonify(geofencexport)
 
@@ -97,6 +141,7 @@ class map(object):
 
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
+            name = self._mapping_manager.routemanager_get_name(routemanager)
             route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_route(routemanager)
 
             if route is None:
@@ -108,7 +153,7 @@ class map(object):
                     getCoordFloat(location.lat), getCoordFloat(location.lng)
                 ])
             routeexport.append({
-                "name": routemanager,
+                "name": name,
                 "mode": mode,
                 "coordinates": route_serialized
             })
@@ -123,6 +168,7 @@ class map(object):
 
         for routemanager in routemanager_names:
             mode = self._mapping_manager.routemanager_get_mode(routemanager)
+            name = self._mapping_manager.routemanager_get_name(routemanager)
             route: Optional[List[Location]] = self._mapping_manager.routemanager_get_current_prioroute(routemanager)
 
             if route is None:
@@ -137,7 +183,7 @@ class map(object):
                 })
 
             routeexport.append({
-                "name": routemanager,
+                "name": name,
                 "mode": mode,
                 "coordinates": route_serialized
             })
@@ -333,3 +379,4 @@ class map(object):
         file.close()
 
         return redirect(getBasePath(request) + "/map", code=302)
+

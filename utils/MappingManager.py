@@ -1,4 +1,3 @@
-import json
 import os
 import time
 from queue import Empty, Queue
@@ -59,10 +58,10 @@ class JoinQueue(object):
         while not self.__stop_file_watcher_event.is_set():
             try:
                 routejoin = self._joinqueue.get_nowait()
-            except Empty as e:
+            except Empty:
                 time.sleep(1)
                 continue
-            except (EOFError, KeyboardInterrupt) as e:
+            except (EOFError, KeyboardInterrupt):
                 logger.info("Route join thread noticed shutdown")
                 return
 
@@ -78,10 +77,11 @@ class MappingManagerManager(SyncManager):
 
 
 class MappingManager:
-    def __init__(self, db_wrapper: DbWrapperBase, args, configmode: bool = False):
+    def __init__(self, db_wrapper: DbWrapperBase, args, data_manager, configmode: bool = False):
         self.__db_wrapper: DbWrapperBase = db_wrapper
         self.__args = args
         self.__configmode: bool = configmode
+        self.__data_manager = data_manager
 
         self._devicemappings: Optional[dict] = None
         self._areas: Optional[dict] = None
@@ -115,6 +115,11 @@ class MappingManager:
     def get_auths(self) -> Optional[dict]:
         return self._auths
 
+    def get_device_id_of(self, device_name: str) -> Optional[str]:
+        for device_id in self.__data_manager.get_data('device'):
+            if self.__data_manager.get_data('device')[device_id]['origin'] == device_name:
+                return device_id
+
     def get_devicemappings_of(self, device_name: str) -> Optional[dict]:
         return self._devicemappings.get(device_name, None)
 
@@ -131,10 +136,10 @@ class MappingManager:
         while not self.__stop_file_watcher_event.is_set():
             try:
                 set_settings = self.__devicesettings_setter_queue.get_nowait()
-            except Empty as e:
+            except Empty:
                 time.sleep(0.2)
                 continue
-            except (EOFError, KeyboardInterrupt) as e:
+            except (EOFError, KeyboardInterrupt):
                 logger.info("Devicesettings setter thread noticed shutdown")
                 return
 
@@ -166,8 +171,8 @@ class MappingManager:
         elif listname is None:
             return []
         else:
-            logger.error("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
-                         listname, areaname)
+            logger.warn("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
+                        listname, areaname)
             return []
 
     def get_all_routemanager_names(self):
@@ -248,6 +253,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_mode() if routemanager is not None else None
 
+    def routemanager_get_name(self, routemanager_name: str) -> Optional[str]:
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.name if routemanager is not None else None
+
     def routemanager_get_encounter_ids_left(self, routemanager_name: str) -> Optional[List[int]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         if routemanager is not None and isinstance(routemanager, RouteManagerIV.RouteManagerIV):
@@ -275,16 +284,6 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
-    def __read_mappings_file(self):
-        with open(self.__args.mappings) as f:
-            self.__raw_json = json.load(f)
-            if 'walker' not in self.__raw_json:
-                self.__raw_json['walker'] = []
-            if 'devicesettings' not in self.__raw_json:
-                self.__raw_json['devicesettings'] = []
-            if 'monivlist' not in self.__raw_json:
-                self.__raw_json['monivlist'] = []
-
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
         for set in poolsettings:
@@ -300,21 +299,21 @@ class MappingManager:
         if self.__configmode:
             return areas
 
-        area_arr = self.__raw_json["areas"]
+        raw_areas = self.__data_manager.get_data('area')
 
         thread_pool = ThreadPool(processes=4)
 
         areas_procs = {}
-        for area in area_arr:
+        for uri, area in raw_areas.items():
             if area["geofence_included"] is None:
                 raise RuntimeError("Cannot work without geofence_included")
 
             geofence_included = Path(area["geofence_included"])
             if not geofence_included.is_file():
                 raise RuntimeError(
-                        "geofence_included for area '{}' is specified but file does not exist ('{}').".format(
-                                area["name"], geofence_included.resolve()
-                        )
+                    "geofence_included for area '{}' is specified but file does not exist ('{}').".format(
+                        area["name"], geofence_included.resolve()
+                    )
                 )
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
@@ -322,42 +321,43 @@ class MappingManager:
                 geofence_excluded = Path(geofence_excluded_raw_path)
                 if not geofence_excluded.is_file():
                     raise RuntimeError(
-                            "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
-                                    area["name"], geofence_excluded.resolve()
-                            )
+                        "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
+                            area["name"], geofence_excluded.resolve()
+                        )
                     )
 
             area_dict = {"mode":              area["mode"],
                          "geofence_included": area["geofence_included"],
                          "geofence_excluded": area.get("geofence_excluded", None),
-                         "routecalc":         area["routecalc"]}
+                         "routecalc":         area["routecalc"],
+                         "name":              area['name']}
             # also build a routemanager for each area...
 
             # grab coords
             # first check if init is false, if so, grab the coords from DB
             # coords = np.loadtxt(area["coords"], delimiter=',')
             geofence_helper = GeofenceHelper(
-                    area["geofence_included"], area.get("geofence_excluded", None))
+                area["geofence_included"], area.get("geofence_excluded", None))
             mode = area["mode"]
             # build routemanagers
 
-            #map iv list to ids
+            # map iv list to ids
             if area.get('settings', None) is not None and 'mon_ids_iv' in area['settings']:
                 # replace list name
                 area['settings']['mon_ids_iv_raw'] = \
                     self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
 
-            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, None,
+            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager, uri, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
                                                                  mode_mapping.get(mode, {}).get("max_count", 99999999),
                                                                  area["geofence_included"],
-                                                                 area.get("geofence_excluded", None),
-                                                                 mode=mode, settings=area.get("settings", None),
+                                                                 path_to_exclude_geofence=area.get("geofence_excluded", None),
+                                                                 mode=mode,
+                                                                 settings=area.get("settings", None),
                                                                  init=area.get("init", False),
                                                                  name=area.get("name", "unknown"),
                                                                  level=area.get("level", False),
-                                                                 coords_spawns_known=area.get(
-                                                                         "coords_spawns_known", False),
+                                                                 coords_spawns_known=area.get("coords_spawns_known", False),
                                                                  routefile=area["routecalc"],
                                                                  calctype=area.get("route_calc_algorithm", "optimized"),
                                                                  joinqueue=self.join_routes_queue
@@ -376,7 +376,7 @@ class MappingManager:
                     logger.info("Initializing area {}", area["name"])
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
                                                                                      0, False))
-                    areas_procs[area["name"]] = proc
+                    areas_procs[uri] = proc
                 else:
                     logger.info(
                             "Init mode enabled. Going row-based for {}", str(area.get("name", "unknown")))
@@ -393,10 +393,10 @@ class MappingManager:
                     # gotta feed the route to routemanager... TODO: without recalc...
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
                                                                                      0, False))
-                    areas_procs[area["name"]] = proc
+                    areas_procs[uri] = proc
 
             area_dict["routemanager"] = route_manager
-            areas[area["name"]] = area_dict
+            areas[uri] = area_dict
 
         for area in areas_procs.keys():
             to_be_checked = areas_procs[area]
@@ -411,36 +411,34 @@ class MappingManager:
         devices = {}
         devices.clear()
 
-        device_arr = self.__raw_json["devices"]
-        walker_arr = self.__raw_json["walker"]
-        pool_arr = self.__raw_json["devicesettings"]
-        for device in device_arr:
+        raw_devices = self.__data_manager.get_data('device')
+        raw_walkers = self.__data_manager.get_data('walker')
+        raw_pools = self.__data_manager.get_data('devicesetting')
+
+        if raw_devices is None:
+            return devices
+
+        for uri, device in raw_devices.items():
             device_dict = {}
             device_dict.clear()
             walker = device["walker"]
             device_dict["adb"] = device.get("adbname", None)
             pool = device.get("pool", None)
             settings = device.get("settings", None)
-            if pool:
-                pool_settings = 0
-                while pool_settings < len(pool_arr):
-                    if pool_arr[pool_settings]['devicepool'] == pool:
-                        device_dict["settings"] = self.__inherit_device_settings(settings,
-                                                                                 pool_arr[pool_settings]
-                                                                                 .get('settings', []))
-                        break
-                    pool_settings += 1
-            else:
+            try:
+                device_dict["settings"] = self.__inherit_device_settings(settings,
+                                                                         raw_pools[pool].get('settings', []))
+            except (KeyError, AttributeError):
                 device_dict["settings"] = device.get("settings", None)
 
-            if walker:
-                walker_settings = 0
-                while walker_settings < len(walker_arr):
-                    if walker_arr[walker_settings]['walkername'] == walker:
-                        device_dict["walker"] = walker_arr[walker_settings].get(
-                            'setup', [])
-                        break
-                    walker_settings += 1
+            try:
+                workerareas = []
+                for uri in raw_walkers[walker].get('setup', []):
+                    workerareas.append(self.__data_manager.get_data(uri))
+                device_dict["walker"] = workerareas
+            except (KeyError, AttributeError):
+                device_dict["walker"] = []
+
             devices[device["origin"]] = device_dict
         return devices
 
@@ -476,36 +474,44 @@ class MappingManager:
         Reads current self.__raw_json mappings dict and checks if auth directive is present.
         :return: Dict of username : password
         """
-        auth_arr = self.__raw_json.get("auth", None)
-        if auth_arr is None or len(auth_arr) == 0:
+        raw_auths = self.__data_manager.get_data('auth')
+        if raw_auths is None or len(raw_auths) == 0:
             return None
 
         auths = {}
-        for auth in auth_arr:
+        for uri, auth in raw_auths.items():
             auths[auth["username"]] = auth["password"]
         return auths
 
     def __get_latest_areas(self) -> dict:
         areas = {}
-        areas_arr = self.__raw_json["areas"]
-        for area in areas_arr:
+        raw_areas = self.__data_manager.get_data('area')
+
+        if raw_areas is None:
+            return areas
+
+        for area_uri, area in raw_areas.items():
             area_dict = {}
             area_dict['routecalc'] = area.get('routecalc', None)
             area_dict['mode'] = area['mode']
             area_dict['geofence_included'] = area.get(
-                    'geofence_included', None)
+                'geofence_included', None)
             area_dict['geofence_excluded'] = area.get(
-                    'geofence_excluded', None)
+                'geofence_excluded', None)
             area_dict['init'] = area.get('init', False)
-            areas[area['name']] = area_dict
+            area_dict['name'] = area['name']
+            areas[area_uri] = area_dict
         return areas
 
     def __get_latest_monlists(self) -> dict:
-        # {'mon_ids_iv': [787, 1], 'monlist': 'test'}
         monlist = {}
-        monlists_arr = self.__raw_json["monivlist"]
-        for list in monlists_arr:
-            monlist[list['monlist']] = list.get('mon_ids_iv', None)
+        monivs = self.__data_manager.get_data('monivlist')
+
+        if monivs is None:
+            return monlist
+
+        for uri, elem in monivs.items():
+            monlist[uri] = elem.get('mon_ids_iv', None)
         return monlist
 
     def update(self, full_lock=False):
@@ -513,7 +519,7 @@ class MappingManager:
         Updates the internal mappings and routemanagers
         :return:
         """
-        self.__read_mappings_file()
+        self.__data_manager.update()
         if not full_lock:
             self._monlists = self.__get_latest_monlists()
             areas_tmp = self.__get_latest_areas()
@@ -592,8 +598,8 @@ class MappingManager:
 
     def get_all_devices(self):
         devices = []
-        device_arr = self.__raw_json["devices"]
-        for device in device_arr:
+        devices_raw = self.__data_manager.get_data('device')
+        for device_uri, device in devices_raw.items():
             devices.append(device['origin'])
 
         return devices

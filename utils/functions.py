@@ -8,6 +8,22 @@ with open('madmin/static/vars/template/phone.tpl', 'r') as file:
     phone_template = file.read().replace('\n', '')
 
 
+def generate_mappingjson(mappings_path):
+    import json
+    newfile = {}
+    newfile['areas'] = {"entries": {}, "index": 0}
+    newfile['auth'] = {"entries": {}, "index": 0}
+    newfile['devices'] = {"entries": {}, "index": 0}
+    newfile['walker'] = {"entries": {}, "index": 0}
+    newfile['devicesettings'] = {"entries": {}, "index": 0}
+    newfile['monivlist'] = {"entries": {}, "index": 0}
+    newfile['walkerarea'] = {"entries": {}, "index": 0}
+    newfile['migrated'] = True
+
+    with open(mappings_path, 'w') as outfile:
+        json.dump(newfile, outfile, indent=4, sort_keys=True)
+
+
 def creation_date(path_to_file):
     return os.path.getmtime(path_to_file)
 

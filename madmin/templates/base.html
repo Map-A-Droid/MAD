@@ -1,6 +1,5 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
     <meta charset="utf-8">
     {% if title %}
@@ -8,12 +7,12 @@
     {% else %}
     <title>MADmin</title>
     {% endif %}
+    <base href="{{config.basePath}}">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="https://cdn.datatables.net/responsive/2.2.3/css/responsive.dataTables.min.css" crossorigin="anonymous">
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" integrity="sha384-1UXhfqyOyO+W+XsGhiIFwwD3hsaHRz2XDGMle3b8bXPH5+cMsXVShDoHA3AH/y/p" crossorigin="anonymous">
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" crossorigin="anonymous" />
     {% block header %}{% endblock %}
     {% if not pub %}
     <style>
@@ -31,8 +30,8 @@
     {% if not pub %}
     <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
         <div class="container">
-          <a class="navbar-brand" href=".">
-              <img src="{{ url_for('static', filename='mad_banner_trans.png').lstrip('/') }}" class="brandimg">
+          <a class="navbar-brand" href="/">
+              <img src="{{ url_for('static', filename='mad_banner_trans.png') }}" class="brandimg">
           </a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span class="navbar-toggler-icon"></span>
@@ -40,30 +39,30 @@
           <div id="navbarNav" class="navbar-collapse collapse">
               <ul class="navbar-nav mr-auto">
                   <li class="nav-item">
-                    <a href="map" class="nav-link">Map</a>
+                    <a href="/map" class="nav-link">Map</a>
                   </li>
                   <li class="nav-item">
-                    <a href="quests" class="nav-link">Quests</a>
+                    <a href="/quests" class="nav-link">Quests</a>
                   </li>
                   <li class="nav-item">
-                    <a href="showsettings" class="nav-link">Mapping Editor</a>
+                    <a href="/settings/devices" class="nav-link">Settings</a>
                   </li>
                   <li class="nav-item">
-                    <a href="status" class="nav-link">Status</a>
+                    <a href="/status" class="nav-link">Status</a>
                   </li>
                   <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="statistics" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Statistics
                     </a>
                       <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                      <a href="statistics" class="dropdown-item">Global Stats</a>
-                      <a href="statistics_mon" class="dropdown-item">Mon Stats</a>
-                      <a href="statistics_shiny" class="dropdown-item">Shiny Stats</a>
-                      <a href="statistics_spawns" class="dropdown-item">Spawnpoint Stats</a>
+                      <a href="/statistics" class="dropdown-item">Global Stats</a>
+                      <a href="/statistics_mon" class="dropdown-item">Mon Stats</a>
+                      <a href="/statistics_shiny" class="dropdown-item">Shiny Stats</a>
+                      <a href="/statistics_spawns" class="dropdown-item">Spawnpoint Stats</a>
                     </div>
                   </li>
                   <li class="nav-item">
-                    <a href="phonecontrol" class="nav-link">Phonecontrol</a>
+                    <a href="/phonecontrol" class="nav-link">Phonecontrol</a>
                   </li>
                   <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="uploaded_files" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
@@ -78,6 +77,7 @@
                     </div>
                   </li>
               </ul>
+              <button type="button" class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold" id="reload">Apply settings</a>
           </div>
         </div>
     </nav>
@@ -91,7 +91,18 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/datatables/1.10.19/js/jquery.dataTables.min.js" integrity="sha384-rgWRqC0OFPisxlUvl332tiM/qmaNxnlY46eksSZD84t+s2vZlqGeHrncwIRX7CGp" crossorigin="anonymous"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.blockUI/2.70/jquery.blockUI.min.js" integrity="sha256-9wRM03dUw6ABCs+AU69WbK33oktrlXamEXMvxUaF+KU=" crossorigin="anonymous"></script>
     <script src="https://cdn.datatables.net/responsive/2.2.3/js/dataTables.responsive.min.js" crossorigin="anonymous""></script>
+    <script>
+      $(document).ready(function() {
+        $('[data-toggle="tooltip"]').tooltip();
+
+        $("#reload").click(function() {
+          if (confirm('Do you really want reload and apply settings?')) {
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
+            $(location).attr('href', '/reload');
+          }
+        });
+      });
+    </script>
     {% block scripts %}{% endblock %}
 </body>
-
 </html>

@@ -1020,7 +1020,7 @@ class DbWrapperBase(ABC):
         )
 
         result = self.execute(query)
-        for (origin, currentPos, lastPos, routePos, routeMax, routemanager,
+        for (origin, currentPos, lastPos, routePos, routeMax, routemanager_id,
                 rebootCounter, lastProtoDateTime, lastPogoRestart, init, rebootingOption, restartCounter,
                 globalrebootcount, globalrestartcount, lastPogoReboot, currentSleepTime) in result:
             status = {
@@ -1029,7 +1029,7 @@ class DbWrapperBase(ABC):
                 "lastPos": lastPos,
                 "routePos": routePos,
                 "routeMax": routeMax,
-                "routemanager": routemanager,
+                "routemanager_id": routemanager_id,
                 "rebootCounter": rebootCounter,
                 "lastProtoDateTime": str(lastProtoDateTime) if lastProtoDateTime is not None else None,
                 "lastPogoRestart": str(lastPogoRestart) if lastPogoRestart is not None else None,
@@ -1045,7 +1045,7 @@ class DbWrapperBase(ABC):
 
             workerstatus.append(status)
 
-        return str(json.dumps(workerstatus, indent=4, sort_keys=True))
+        return workerstatus
 
     def statistics_get_quests_count(self, days):
         logger.debug('Fetching quests count from db')
