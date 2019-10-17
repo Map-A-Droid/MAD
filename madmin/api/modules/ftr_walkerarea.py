@@ -43,7 +43,7 @@ class APIWalkerArea(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "empty": None,
+                    "empty": "",
                     "description": "Number of walkers than can be in the area",
                     "lockonedit": False,
                     "expected": int
@@ -53,7 +53,7 @@ class APIWalkerArea(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "empty": None,
+                    "empty": "",
                     "description": "Human-readable description of the walkerarea",
                     "lockonedit": False,
                     "expected": str
