@@ -3,7 +3,8 @@ from .. import apiHandler
 class APIMonList(apiHandler.ResourceHandler):
     config_section = 'monivlist'
     component = 'monivlist'
-    description = 'Add/Update/Delete Pokemon Lists (honestly i have no idea)'
+    default_sort = 'monlist'
+    description = 'Add/Update/Delete Pokemon Lists'
 
     configuration = {
         "fields": {
@@ -21,7 +22,7 @@ class APIMonList(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "description": "Encounter these mon ids while walking (Put in brackets [1,2,3] as comma separated list!)",
+                    "description": "Encounter these mon ids while walking",
                     "output": "int",
                     "showmonsidpicker": True,
                     "expected": list

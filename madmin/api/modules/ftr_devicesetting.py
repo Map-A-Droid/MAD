@@ -114,7 +114,8 @@ class APIDeviceSetting(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart Phone after restart Pogo N times. (Default: 3)"
+                    "description": "Restart Phone after restart Pogo N times. (Default: 3)",
+                    "expected": int
                 }
             },
             "restart_thresh": {
