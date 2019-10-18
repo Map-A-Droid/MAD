@@ -82,5 +82,5 @@ class RouteManagerIV(RouteManagerBase):
         self._is_started = False
         self._round_started_time = None
 
-    def _check_coords_before_returning(self, lat, lng):
+    def _check_coords_before_returning(self, lat, lng, origin):
         return True

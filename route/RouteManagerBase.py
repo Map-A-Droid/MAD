@@ -396,7 +396,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _check_coords_before_returning(self, lat, lng):
+    def _check_coords_before_returning(self, lat, lng, origin):
         """
         Return list of coords to be fetched and used for routecalc
         :return:
@@ -632,7 +632,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].last_round_prio_event = False
             logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
                 self.name), str(next_coord))
-            if self._check_coords_before_returning(next_coord.lat, next_coord.lng):
+            if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
 
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
                         and not self.init:

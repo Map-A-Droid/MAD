@@ -2,30 +2,21 @@ import collections
 import time
 from typing import List
 from db.dbWrapperBase import DbWrapperBase
-from route.RouteManagerBase import RouteManagerBase
-
+from route.RouteManagerBase import RouteManagerBase, RoutePoolEntry
 from utils.logging import logger
+from utils.collections import LocationWithVisits, Location
 
-Location = collections.namedtuple('Location', ['lat', 'lng'])
 
-
-class RouteManagerQuests(RouteManagerBase):
+class RouteManagerLeveling(RouteManagerBase):
     def generate_stop_list(self):
         time.sleep(5)
         stops, stops_with_visits = self.db_wrapper.stop_from_db_without_quests(
-            self.geofence_helper, self._level)
+            self.geofence_helper, True)
 
-        if self._level:
-            logger.info("Some stops maybe visited before, trying to filter them out... # unfiltered: {}",
-                        str(len(stops)))
-            stops = []
-            for lv in stops_with_visits:
-                if lv.visited_by is None or lv.visited_by == '':
-                    stops.append(Location(lv.lat, lv.lng))
-
-        logger.info('Detected stops without quests: {}', str(len(stops)))
-        logger.debug('Detected stops without quests: {}', str(stops))
+        logger.info('Detected stops without quests: {}', str(len(stops_with_visits)))
+        logger.debug('Detected stops without quests: {}', str(stops_with_visits))
         self._stoplist: List[Location] = stops
+        self._stops_with_visits: List[LocationWithVisits] = stops_with_visits
 
     def _retrieve_latest_priority_queue(self):
         return None
@@ -39,6 +30,31 @@ class RouteManagerQuests(RouteManagerBase):
     def _priority_queue_update_interval(self):
         return 0
 
+    def __worker_changed_update_routepools(self):
+        with self._manager_mutex:
+            logger.debug("Updating all routepools")
+            if len(self._workers_registered) == 0:
+                logger.info("No registered workers, aborting __worker_changed_update_routepools...")
+                return False
+
+        _, stops_with_visits = self.db_wrapper.stop_from_db_without_quests(
+            self.geofence_helper, True)
+        any_at_all = False
+        for origin in self._routepool:
+            origin_local_list = []
+            entry: RoutePoolEntry = self._routepool[origin]
+
+            for coord in stops_with_visits:
+                if origin not in str(coord.visited_by):
+                    origin_local_list.append(Location(coord.lat, coord.lng))
+
+            # subroute is all stops unvisited
+            entry.subroute = origin_local_list
+            # let's clean the queue just to make sure
+            entry.queue.clear()
+            any_at_all = len(origin_local_list) > 0 or any_at_all
+        return any_at_all
+
     def _recalc_route_workertype(self):
         if self.init:
             self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
@@ -49,11 +65,11 @@ class RouteManagerQuests(RouteManagerBase):
 
         self._init_route_queue()
 
-    def __init__(self, db_wrapper: DbWrapperBase, dbm, area_id, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapperBase, dbm, uri, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", joinqueue = None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords, max_radius=max_radius,
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, uri=uri,  coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
@@ -63,15 +79,13 @@ class RouteManagerQuests(RouteManagerBase):
                                   )
         self.starve_route = False
         self._stoplist: List[Location] = []
+        self._stops_with_visits: List[LocationWithVisits] = []
 
         self._shutdown_route: bool = False
         self._routecopy: List[Location] = []
         self._tempinit: bool = False
 
     def _get_coords_after_finish_route(self) -> bool:
-        if self._level:
-            logger.info("Level Mode - switch to next area")
-            return False
         self._manager_mutex.acquire()
         try:
 
@@ -245,5 +259,15 @@ class RouteManagerQuests(RouteManagerBase):
         if stop not in self._stoplist:
             logger.info('Already got this Stop')
             return False
+
+        if self._stops_with_visits is None or len(self._stops_with_visits) == 0:
+            logger.info('no visit info so lets go')
+            return True
+
+        for stop in self._stops_with_visits:
+            if stop.lat == lat and stop.lng == lng and stop.visited_by is not None and origin in stop.visited_by:
+                logger.info("Already spun stop, ignore")
+                return False
+
         logger.info('Getting new Stop')
         return True
