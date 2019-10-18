@@ -506,7 +506,8 @@ class RouteManagerBase(ABC):
             logger.debug(
                 "{}: Checking if a location is available...", str(self.name))
             with self._manager_mutex:
-                got_location = self._prio_queue is not None and len(self._prio_queue) > 0 or self.mode != 'iv_mitm'
+                got_location = self._prio_queue is not None and (len(self._prio_queue) > 0 and
+                                                                 self._prio_queue[0][0] < time.time())
                 if not got_location: time.sleep(1)
 
         logger.debug(
