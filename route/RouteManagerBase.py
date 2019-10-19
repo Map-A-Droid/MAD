@@ -506,7 +506,7 @@ class RouteManagerBase(ABC):
             logger.debug(
                 "{}: Checking if a location is available...", str(self.name))
             with self._manager_mutex:
-                if self.mode == "iv_mitm" or self.starve_route:
+                if self.mode == "iv_mitm":
                     got_location = self._prio_queue is not None and len(self._prio_queue) > 0
                     if not got_location: time.sleep(1)
                 else:
@@ -777,7 +777,7 @@ class RouteManagerBase(ABC):
                     if compare(new_subroute, entry.subroute):
                         logger.info("Apparently no changes in subroutes...")
                     else:
-                        logger.critical("Subroute of {} has changed. Replacing entirely", origin)
+                        logger.info("Subroute of {} has changed. Replacing entirely", origin)
                         # TODO: what now?
                         logger.debug('new_subroute: {}', new_subroute)
                         logger.debug('entry.subroute: {}', entry.subroute)
