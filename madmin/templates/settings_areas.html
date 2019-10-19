@@ -101,7 +101,11 @@ $(document).ready(function () {
             {% for key in area.settings|sort %}
             {% if area.settings[key] != "" %}
             {% if key == "mon_ids_iv" %}
-            {{ key }}: <a href="/settings/ivlists?id={{area.settings[key]}}">{{ monlist[area.settings[key]].monlist }}</a><br>
+              {% if area.settings[key] in monlist %}
+              {{ key }}: <a href="/settings/ivlists?id={{area.settings[key]}}">{{ monlist[area.settings[key]].monlist }}</a><br>
+              {% else %}
+              {{ key }}: <b><font color="red">ERROR IN IV LIST - CHECK IT</font></b>
+              {% endif %}
             {% else %}
             {{ key }}: {{ area.settings[key] }}<br>
             {% endif %}

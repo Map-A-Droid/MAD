@@ -145,7 +145,6 @@ class config(object):
                                        **included_data
                                        )
 
-
     def process_settings_vars(self, config, mode=None):
         try:
             return config[mode]
