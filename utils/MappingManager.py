@@ -171,7 +171,7 @@ class MappingManager:
         elif listname is None:
             return []
         else:
-            logger.warn("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
+            logger.warning("IV list '{}' has been used in area '{}' but does not exist. Using empty IV list instead.",
                         listname, areaname)
             return []
 
