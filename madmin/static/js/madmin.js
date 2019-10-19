@@ -1115,9 +1115,18 @@ new Vue({
 
         var spawntiming = `
           <div class="spawn"><i class="fa fa-hourglass-start"></i> Spawn: <strong>${spawntime.format(timeformat)} ${activeText}</strong></div>
-          <div class="despawn"><i class="fa fa-hourglass-end"></i> Despawn: <strong>${despawntime.format(timeformat)}</strong></div>`;
+          <div class="despawn"><i class="fa fa-hourglass-end"></i> Despawn: <strong>${despawntime.format(timeformat)}</strong></div>`
       } else {
-        var spawntiming = "";
+        var spawntiming = ""
+      }
+
+      var last_scanned = moment(spawn["lastscan"])
+      var last_non_scanned = moment(spawn["lastnonscan"])
+
+      if (last_scanned.isBefore(last_non_scanned)) {
+        var last_mon = last_scanned
+      } else {
+        var last_mon = last_non_scanned
       }
 
       return `
@@ -1130,8 +1139,8 @@ new Vue({
          <br>
           <div cla ss="spawnContent">
             <div class="spawnFirstDetection"><i class="fas fa-baby"></i> First seen: <strong>${spawn["first_detection"]}</strong></div>
-            <div class="timestamp"><i class="fas fa-eye"></i> Last seen: <strong>${spawn["lastnonscan"]}</strong></div>
-            <div class="timestamp"><i class="fa fa-clock"></i> Last confirmation: <strong>${spawn["lastscan"]}</strong></div>
+            <div class="timestamp"><i class="fas fa-eye"></i> <abbr title="This is the time a mon has been seen on this spawnpoint.">Last mon seen</abbr>: <strong>${last_mon.format(timeformat)}</strong></div>
+            <div class="timestamp"><i class="fa fa-clock"></i> <abbr title="The timestamp of the last time this spawnpoint's despawn time has been confirmed.">Last confirmation</abbr>: <strong>${spawn["lastscan"]}</strong></div>
             <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown despawn time"}</strong></div>
             <div class="spawnTiming">${spawntiming}</div>
           </div>
