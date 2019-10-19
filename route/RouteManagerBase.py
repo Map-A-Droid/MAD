@@ -507,8 +507,7 @@ class RouteManagerBase(ABC):
                 "{}: Checking if a location is available...", str(self.name))
             with self._manager_mutex:
                 if self.mode == "iv_mitm" or self.starve_route:
-                    got_location = self._prio_queue is not None and (len(self._prio_queue) > 0 and
-                                                                     self._prio_queue[0][0] < time.time())
+                    got_location = self._prio_queue is not None and len(self._prio_queue) > 0
                     if not got_location: time.sleep(1)
                 else:
                     # normal mode - should always have a route
