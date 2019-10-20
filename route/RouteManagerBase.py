@@ -153,7 +153,9 @@ class RouteManagerBase(ABC):
         self._quit_route()
         self._stop_update_thread.set()
 
-        if self._joinqueue is not None: self._joinqueue.set_queue(self.name)
+        if self._joinqueue is not None:
+            logger.info("Adding route {} to joinqueue".format(str(self.name)))
+            self._joinqueue.set_queue(self.name)
         logger.info("Shutdown of route {} completed".format(str(self.name)))
 
     def _init_route_queue(self):
@@ -234,8 +236,9 @@ class RouteManagerBase(ABC):
         return self._is_started
 
     def _start_priority_queue(self):
-        if (self._update_prio_queue_thread is None and (self.delay_after_timestamp_prio is not None or self.mode ==
-                                                        "iv_mitm") and not self.mode == "pokestops"):
+        logger.info("Try to activate PrioQ thread for route {}".format(str(self.name)))
+        if (self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
+            logger.info("PrioQ hhread for route {} could be activate".format(str(self.name)))
             self._prio_queue = []
             if self.mode not in ["iv_mitm", "pokestops"]:
                 self.clustering_helper = ClusteringHelper(self._max_radius,

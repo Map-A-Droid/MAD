@@ -66,6 +66,7 @@ class JoinQueue(object):
                 return
 
             if routejoin is not None:
+                logger.info("Try to join routethreads for route {}".format(str(routejoin)))
                 self._mapping_mananger.routemanager_join(routejoin)
 
     def set_queue(self, item):
