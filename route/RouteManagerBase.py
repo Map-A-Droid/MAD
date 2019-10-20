@@ -117,9 +117,6 @@ class RouteManagerBase(ABC):
         self._check_routepools_thread = None
         self._stop_update_thread = Event()
 
-    def get_route_name(self):
-        return self.name
-
     def get_ids_iv(self) -> Optional[List[int]]:
         if self.settings is not None:
             return self.settings.get("mon_ids_iv_raw", [])
@@ -156,7 +153,7 @@ class RouteManagerBase(ABC):
         self._quit_route()
         self._stop_update_thread.set()
 
-        if self._joinqueue is not None: self._joinqueue.set_queue(self)
+        if self._joinqueue is not None: self._joinqueue.set_queue(self.name)
         logger.info("Shutdown of route {} completed".format(str(self.name)))
 
     def _init_route_queue(self):

@@ -66,8 +66,7 @@ class JoinQueue(object):
                 return
 
             if routejoin is not None:
-                logger.info("Joining Route {}".format(str(routejoin.get_route_name())))
-                routejoin.join_threads()
+                self._mapping_mananger.routemanager_join(routejoin)
 
     def set_queue(self, item):
         self._joinqueue.put(item)
@@ -194,6 +193,11 @@ class MappingManager:
     def routemanager_get_next_location(self, routemanager_name: str, origin: str) -> Optional[Location]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_next_location(origin) if routemanager is not None else None
+
+    def routemanager_join(self, routemanager_name: str):
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        if routemanager is not None:
+            routemanager.join_threads()
 
     def routemanager_stop(self, routemanager_name: str):
         routemanager = self.__fetch_routemanager(routemanager_name)
