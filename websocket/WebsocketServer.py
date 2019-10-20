@@ -181,7 +181,7 @@ class WebsocketServer(object):
             return False
 
         if origin not in self.__mapping_manager.get_all_devicemappings().keys():
-            logger.warning("Register attempt of unknown origin: {}. Have you forgot to hit 'APPLY SETTINGS' in MADmin?".format(origin))
+            logger.warning("Register attempt of unknown Origin: {}".format(origin))
             return False
 
         if origin in self.__users_connecting:
