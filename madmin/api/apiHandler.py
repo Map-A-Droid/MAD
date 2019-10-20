@@ -37,10 +37,10 @@ class ResourceHandler(object):
         """ Creates all pertinent routes to for the API resource """
         if self.component:
             route = self.uri_base
-            self._app.route(route, methods=['GET', 'POST'], endpoint=self.component)(self.process_request)
+            self._app.route(route, methods=['GET', 'POST'], endpoint='api_%s' % (self.component,))(self.process_request)
             if self.iterable:
                 route = '%s/<string:identifier>' % (self.uri_base,)
-                self._app.route(route, methods=['DELETE', 'GET', 'PATCH', 'PUT'], endpoint=self.component)(self.process_request)
+                self._app.route(route, methods=['DELETE', 'GET', 'PATCH', 'PUT'], endpoint='api_%s' % (self.component,))(self.process_request)
 
     def format_data(self, data, config, operation):
         save_data = {}

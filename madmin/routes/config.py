@@ -40,11 +40,11 @@ class config(object):
             ("/settings/areas", self.settings_areas),
             ("/settings/auth", self.settings_auth),
             ("/settings/devices", self.settings_devices),
-            ("/settings/ivlists", self.settings_ivlist),
+            ("/settings/ivlists", self.settings_ivlists),
             ("/settings/monsearch", self.monsearch),
-            ("/settings/shared", self.settings_shared),
+            ("/settings/shared", self.settings_pools),
             ("/settings/walker", self.settings_walkers),
-            ("/settings/walker/areaeditor", self.setting_walkers_area),
+            ("/settings/walker/areaeditor", self.settings_walker_area),
             ("/reload", self.reload)
         ]
         for route, view_func in routes:
@@ -82,9 +82,13 @@ class config(object):
         return Response(json.dumps(pokemon), mimetype='application/json')
 
     def process_element(self, **kwargs):
+        # TODO - This section should be cleaned up a bit to re-use variables
         key = kwargs.get('identifier')
-        base_uri = kwargs.get('base_uri')
-        redirect = kwargs.get('redirect')
+        base_uri_tmpl = url_for(kwargs.get('base_uri'))
+        base_uri = base_uri_tmpl
+        if self._args.madmin_base_path != '/':
+            base_uri = base_uri_tmpl.replace(self._args.madmin_base_path, '')
+        redirect = url_for(kwargs.get('redirect'))
         html_single = kwargs.get('html_single')
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
@@ -94,16 +98,27 @@ class config(object):
         passthrough = kwargs.get('passthrough', {})
         identifier = request.args.get(key)
         uri = identifier
-        if uri:
-            if base_uri not in uri:
-                uri = '%s/%s' % (base_uri, identifier)
-        else:
+        try:
+            int(uri)
+            base_uri_tmpl += '/%s' % (str(uri),)
+            uri = '%s/%s' % (base_uri, str(uri),)
+        except ValueError:
+            # Value passed in was not an integer.  Probably was a URI
+            # TODO - Validate the object exists with the datamanager
+            if uri != 'new':
+                if self._args.madmin_base_path != '/':
+                    base_uri_tmpl = '%s%s' % (self._args.madmin_base_path, uri)
+                else:
+                    base_uri_tmpl = uri
+        except TypeError:
+            # recieved a NoneType - Probably a base element
             uri = base_uri
         mode = request.args.get("mode", None)
         settings_vars = self.process_settings_vars(self._data_manager.get_api_attribute(subtab, 'configuration'), mode=mode)
         if request.method == 'GET':
             included_data = {
-                'advcfg': self._args.advanced_config
+                'advcfg': self._args.advanced_config,
+                'base_uri': base_uri_tmpl
             }
             for key, tmp_uri in required_uris.items():
                 included_data[key] = self._data_manager.get_data(tmp_uri)
@@ -120,7 +135,7 @@ class config(object):
                                        )
             if identifier and identifier == 'new':
                 return render_template(html_single,
-                                       uri=base_uri,
+                                       uri=base_uri_tmpl,
                                        redirect=redirect,
                                        element={'settings':{}},
                                        subtab=subtab,
@@ -132,7 +147,7 @@ class config(object):
             included_data[subtab] = element
             if identifier:
                 return render_template(html_single,
-                                       uri=uri,
+                                       uri=base_uri_tmpl,
                                        redirect=redirect,
                                        element=element,
                                        subtab=subtab,
@@ -161,8 +176,8 @@ class config(object):
             fences[geofence_temp] = os.path.basename(geofence_temp)
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/area',
-            'redirect': '/settings/areas',
+            'base_uri': 'api_area',
+            'redirect': 'settings_areas',
             'html_single': 'settings_singlearea.html',
             'html_all': 'settings_areas.html',
             'subtab': 'area',
@@ -181,8 +196,8 @@ class config(object):
     def settings_auth(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/auth',
-            'redirect': '/settings/auth',
+            'base_uri': 'api_auth',
+            'redirect': 'settings_auth',
             'html_single': 'settings_singleauth.html',
             'html_all': 'settings_auth.html',
             'subtab': 'auth',
@@ -194,8 +209,8 @@ class config(object):
     def settings_devices(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/device',
-            'redirect': '/settings/devices',
+            'base_uri': 'api_device',
+            'redirect': 'settings_devices',
             'html_single': 'settings_singledevice.html',
             'html_all': 'settings_devices.html',
             'subtab': 'device',
@@ -208,7 +223,7 @@ class config(object):
 
     @logger.catch
     @auth_required
-    def settings_ivlist(self):
+    def settings_ivlists(self):
         try:
             identifier = request.args.get('id')
             current_mons = self._data_manager.get_data(identifier)['mon_ids_iv']
@@ -225,8 +240,8 @@ class config(object):
             current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/monivlist',
-            'redirect': '/settings/ivlists',
+            'base_uri': 'api_monivlist',
+            'redirect': 'settings_ivlists',
             'html_single': 'settings_singleivlist.html',
             'html_all': 'settings_ivlists.html',
             'subtab': 'monivlist',
@@ -238,11 +253,11 @@ class config(object):
 
     @logger.catch
     @auth_required
-    def settings_shared(self):
+    def settings_pools(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/devicesetting',
-            'redirect': '/settings/shared',
+            'base_uri': 'api_devicesetting',
+            'redirect': 'settings_pools',
             'html_single': 'settings_singlesharedsetting.html',
             'html_all': 'settings_sharedsettings.html',
             'subtab': 'devicesetting',
@@ -256,8 +271,8 @@ class config(object):
     def settings_walkers(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/walker',
-            'redirect': '/settings/walker',
+            'base_uri': 'api_walker',
+            'redirect': 'settings_walkers',
             'html_single': 'settings_singlewalker.html',
             'html_all': 'settings_walkers.html',
             'subtab': 'walker',
@@ -270,7 +285,7 @@ class config(object):
 
     @logger.catch
     @auth_required
-    def setting_walkers_area(self):
+    def settings_walker_area(self):
         walkerarea_uri = request.args.get("walkerarea", None)
         walkeruri = request.args.get("id", None)
         if walkeruri is None:
@@ -295,7 +310,7 @@ class config(object):
             'walkeruri': walkeruri,
             'areas': areaconfig,
             'walkertypes': walkertypes,
-            'redirect': '/settings/walker'
+            'redirect': url_for('settings_walkers')
         }
         return render_template('settings_walkerarea.html',
                                subtab="walker",

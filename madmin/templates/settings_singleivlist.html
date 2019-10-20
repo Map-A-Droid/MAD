@@ -75,7 +75,7 @@
         $(".result-hint").hide();
         if(val.length >= 3) {
             $.ajax({
-                url : "/settings/monsearch",
+                url : "{{ url_for('monsearch') }}",
                 data : jQuery.param({'search': val, 'monlist': '{{ uri }}'}),
                 type : 'GET',
                 contentType : 'application/json',

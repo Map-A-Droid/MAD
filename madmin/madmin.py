@@ -15,6 +15,7 @@ from madmin.routes.map import map
 from madmin.routes.config import config
 from madmin.routes.path import path
 from madmin.api import APIHandler
+from madmin.reverseproxy import ReverseProxied
 
 
 sys.path.append("..")  # Adds higher directory to python modules path.
@@ -28,6 +29,8 @@ log = logger
 
 def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
     # load routes
+    if args.madmin_base_path:
+        app.wsgi_app = ReverseProxied(app.wsgi_app, script_name=args.madmin_base_path)
 
     statistics(db_wrapper, args, app, mapping_manager)
     control(db_wrapper, args, mapping_manager, ws_server, logger, app, deviceUpdater)

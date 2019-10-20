@@ -37,7 +37,7 @@ class APIHandler(object):
             self._modules[tmp.uri_base] = tmp.description
 
     def create_routes(self):
-        self._app.route(self.uri_base, methods=['GET'], endpoint=self.component)(self.process_request)
+        self._app.route(self.uri_base, methods=['GET'], endpoint='api_%s' % (self.component,))(self.process_request)
 
     def process_request(self):
         """ API call to get data """
