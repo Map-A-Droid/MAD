@@ -364,7 +364,7 @@ class map(object):
         coords = request.args.get('coords', False)
 
         if not name and not coords:
-            return redirect(url_for('map'), 302)
+            return redirect(url_for('map'), code=302)
 
         coords_split = coords.split("|")
         geofence_file_path = self._args.geofence_file_path
@@ -378,5 +378,5 @@ class map(object):
 
         file.close()
 
-        return redirect(url_for('map'), 302)
+        return redirect(url_for('map'), code=302)
 
