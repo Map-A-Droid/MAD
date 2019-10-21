@@ -148,9 +148,9 @@ class RouteManagerBase(ABC):
         self._stop_update_thread.clear()
         logger.info("Done joining Route Threads")
 
-    def stop_routemanager(self):
+    def stop_routemanager(self, joinwithqueue=True):
         # call routetype stoppper
-        if self._joinqueue is not None:
+        if self._joinqueue is not None and joinwithqueue:
             logger.info("Adding route {} to joinqueue".format(str(self.name)))
             self._joinqueue.set_queue(self.name)
 

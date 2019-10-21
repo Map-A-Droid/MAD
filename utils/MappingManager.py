@@ -529,7 +529,9 @@ class MappingManager:
             auths_tmp = self.__get_latest_auths()
 
             for area in self._routemanagers:
-                self._routemanagers[area]['routemanager'].stop_routemanager()
+                logger.info("Stopping all routemanagers and join threads")
+                self._routemanagers[area]['routemanager'].stop_routemanager(joinwithqueue=False)
+                self._routemanagers[area]['routemanager'].join_threads()
 
             logger.info("Restoring old devicesettings")
             for dev in self._devicemappings:
