@@ -5,7 +5,7 @@ import glob
 from flask import (render_template, request, redirect, url_for, Response)
 from flask_caching import Cache
 from functools import cmp_to_key
-from madmin.functions import auth_required, getBasePath
+from madmin.functions import auth_required
 from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
 from utils.MappingManager import MappingManager

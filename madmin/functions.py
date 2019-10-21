@@ -90,12 +90,6 @@ def getBoundParameter(request):
     return neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon
 
 
-def getBasePath(request):
-    if request.referrer:
-        return '/'.join(request.referrer.split('/')[:-1])
-    return ''
-
-
 def decodeHashJson(hashJson):
     data = json.loads(hashJson)
     raidGym = data['gym']
