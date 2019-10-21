@@ -82,12 +82,13 @@ class config(object):
         return Response(json.dumps(pokemon), mimetype='application/json')
 
     def process_element(self, **kwargs):
+        root_path = request.headers['X-Script-Name'] if 'X-Script-Name' in request.headers else self._args.madmin_base_path
         # TODO - This section should be cleaned up a bit to re-use variables
         key = kwargs.get('identifier')
         base_uri_tmpl = url_for(kwargs.get('base_uri'))
         base_uri = base_uri_tmpl
-        if self._args.madmin_base_path != '/':
-            base_uri = base_uri_tmpl.replace(self._args.madmin_base_path, '')
+        if root_path != '/':
+            base_uri = base_uri_tmpl.replace(root_path, '')
         redirect = url_for(kwargs.get('redirect'))
         html_single = kwargs.get('html_single')
         html_all = kwargs.get('html_all')
@@ -106,8 +107,8 @@ class config(object):
             # Value passed in was not an integer.  Probably was a URI
             # TODO - Validate the object exists with the datamanager
             if uri != 'new':
-                if self._args.madmin_base_path != '/':
-                    base_uri_tmpl = '%s%s' % (self._args.madmin_base_path, uri)
+                if root_path != '/':
+                    base_uri_tmpl = '%s%s' % (root_path, uri)
                 else:
                     base_uri_tmpl = uri
         except TypeError:
@@ -320,10 +321,10 @@ class config(object):
     @logger.catch
     @auth_required
     def settings(self):
-        return redirect("/settings/devices", code=302)
+        return redirect(url_for('settings_devices'), code=302)
 
     @auth_required
     def reload(self):
         if not self._args.auto_reload_config:
             self._mapping_mananger.update()
-        return redirect("/settings", code=302)
+        return redirect(url_for('settings_devices'), code=302)
