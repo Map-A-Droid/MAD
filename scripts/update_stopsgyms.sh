@@ -16,7 +16,6 @@ madconf="../configs/config.ini"
 
 # Grab db info from MAD's config file
 ! [[ -f "$madconf" ]] && echo "Unable to find your MAD config. You should be running this in the MAD directory" && exit 2
-dbtype=$(awk -F: '/^db_method/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 dbip=$(awk -F: '/^dbip/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 user=$(awk -F: '/^dbusername/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
 pass=$(awk -F: '/^dbpassword/{print $2}' "$madconf"|awk -F'#' '{print $1}'|sed -e 's,[[:space:]]*$,,' -e 's,^[[:space:]]*,,')
@@ -94,7 +93,4 @@ while read -r eid ;do # delete gyms that are now pokestops
 done < <(query "select gym_id from gym as g join pokestop as p on p.pokestop_id=g.gym_id where g.last_scanned < p.last_updated")
 }
 
-case "$dbtype" in
-      rm) update_rm  ;;
-       *) echo "unknown dbtype, only valid options is 'rm', suck it" && exit 4 ;;
-esac
+update_rm
