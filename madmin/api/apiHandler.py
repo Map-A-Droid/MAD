@@ -199,7 +199,7 @@ class ResourceHandler(object):
             except:
                 hide_resource = 0
             if self.component == 'area':
-                if mode is None:   
+                if mode is None:
                     resource_info = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
                 elif mode not in self.configuration:
                     msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
