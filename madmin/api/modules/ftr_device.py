@@ -285,6 +285,7 @@ class APIDevice(apiHandler.ResourceHandler):
                  "settings": {
                     "type": "text",
                     "require": False,
+                    "empty": None,
                     "description": "Reboot (if enable) device after not injecting for X times in a row (Default: 20)",
                     "expected": int
                 }
