@@ -33,7 +33,7 @@ class APIWalkerArea(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
+                    "empty": "",
                     "description": "Value for walkermode.    Please see above how to configure value",
                     "lockonedit": False,
                     "expected": str
