@@ -280,6 +280,14 @@ class APIDevice(apiHandler.ResourceHandler):
                     "description": "Rotate accounts if player level >= 30 (for leveling mode)",
                     "expected": bool
                 }
+            },
+            "injection_thresh_reboot": {
+                 "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "Reboot (if enable) device after not injecting for X times in a row (Default: 20)",
+                    "expected": int
+                }
             }
         }
     }
