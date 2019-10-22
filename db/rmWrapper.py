@@ -1381,7 +1381,9 @@ class RmWrapper(DbWrapperBase):
 
         # base query to fetch stops
         query = (
-            "SELECT * "
+            "SELECT pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
+            "active_fort_modifier, last_updated, name, image, incident_start, incident_expiration, "
+            "incident_grunt_type "
             "FROM pokestop "
         )
 
