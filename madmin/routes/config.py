@@ -290,17 +290,19 @@ class config(object):
         walkerarea_uri = request.args.get("walkerarea", None)
         walkeruri = request.args.get("id", None)
         if walkeruri is None:
-            return self.settings_walkers()
+            return redirect(url_for('settings_walkers'), code=302)
         # Only pull this if its set.  When creating a new walkerarea it will be empty
         if walkerarea_uri is not None:
-            if '/api/walkerarea/' not in walkerarea_uri:
-                walkerarea_uri = '/api/walkerarea/%s' % (walkerarea_uri,)
+            if '/api/walkerarea/' in walkerarea_uri:
+                walkerarea_uri = walkerarea_uri[walkerarea_uri.rfind('/')+1:]
+            walkerarea_uri = '%s/%s' % (url_for('api_walkerarea'), walkerarea_uri)
             walkerareaconfig = self._data_manager.get_data(walkerarea_uri)
         else:
-            walkerarea_uri = '/api/walkerarea'
+            walkerarea_uri = url_for('api_walkerarea')
             walkerareaconfig = {}
-        if '/api/walker/' not in walkeruri:
-            walkeruri = '/api/walker/%s' % (walkeruri,)
+        if '/api/walker/' in walkeruri:
+            walkeruri = walkeruri[walkeruri.rfind('/')+1:]
+        walkeruri = '%s/%s' % (url_for('api_walker'), walkeruri)
         walkerconfig = self._data_manager.get_data(walkeruri)
         areaconfig = self._data_manager.get_data('/api/area')
         walkertypes = ['coords','countdown', 'idle', 'period', 'round', 'timer']
