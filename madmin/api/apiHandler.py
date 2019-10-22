@@ -206,7 +206,7 @@ class ResourceHandler(object):
                     return apiResponse.APIResponse(self._logger, self.api_req)(msg, 400)
             # Use an ordered dict so we can guarantee the order is returned per the class specification
             disp_field = self.api_req.params.get('display_field', self.default_sort)
-            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field)
+            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field, mode=mode)
             if hide_resource:
                 response_data = raw_data
             else:

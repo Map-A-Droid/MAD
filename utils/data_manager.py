@@ -83,9 +83,16 @@ class DataManager(object):
         config_section = location
         # Allow it to fetch all of the data by default.  If this is an API request, it will pass in 0 by default
         fetch_all = kwargs.get('fetch_all', 1)
+        mode = kwargs.get('mode', None)
         try:
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
             data = self.__raw[config_section]['entries']
+            if mode and config_section == 'areas':
+                valid={}
+                for key, data in data.items():
+                    if data['mode'] == mode:
+                        valid[key] = data
+                data = valid
         except AttributeError:
             self._logger.debug('Invalid URI set in location, {}', location)
             return None
