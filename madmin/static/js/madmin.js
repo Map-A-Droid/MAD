@@ -134,7 +134,8 @@ var leaflet_data = {
   workers: {},
   mons: {},
   monicons: {},
-  cellupdates: {}
+  cellupdates: {},
+  stops: {}
 };
 
 new Vue({
@@ -143,6 +144,7 @@ new Vue({
     raids: {},
     gyms: {},
     quests: {},
+    stops: {},
     spawns: {},
     mons: {},
     cellupdates: {},
@@ -151,6 +153,7 @@ new Vue({
         spawns: false,
         gyms: false,
         quests: false,
+        stops: false,
         workers: false,
         mons: false,
         cellupdates: false
@@ -242,6 +245,13 @@ new Vue({
 
       this.changeStaticLayer("quests", oldVal, newVal);
     },
+    "layers.stat.stops": function(newVal, oldVal) {
+      if (newVal && !init) {
+        this.map_fetch_stops(this.buildUrlFilter(true));
+      }
+
+      this.changeStaticLayer("stops", oldVal, newVal);
+    },
     "layers.stat.mons": function(newVal, oldVal) {
       if (newVal && !init) {
         this.map_fetch_mons(this.buildUrlFilter(true));
@@ -330,6 +340,7 @@ new Vue({
       this.map_fetch_geofences();
       this.map_fetch_spawns(urlFilter);
       this.map_fetch_quests(urlFilter);
+      this.map_fetch_stops(urlFilter);
       this.map_fetch_mons(urlFilter);
       this.map_fetch_prioroutes();
       this.map_fetch_cells(urlFilter);
@@ -717,12 +728,45 @@ new Vue({
             id: quest["pokestop_id"],
             virtual: true,
             icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])
-          }).bindPopup($this.build_stop_popup, { "className": "questpopup"});
+          }).bindPopup($this.build_quest_popup, { "className": "questpopup"});
 
           $this.addMouseEventPopup(leaflet_data["quests"][quest["pokestop_id"]]);
 
           if ($this.layers.stat.quests) {
             leaflet_data["quests"][quest["pokestop_id"]].addTo(map);
+          }
+        });
+      });
+    },
+    map_fetch_stops(urlFilter) {
+      var $this = this;
+
+      if (!$this.layers.stat.stops) {
+        return;
+      }
+
+      axios.get("get_stops" + urlFilter).then(function (res) {
+        res.data.forEach(function(stop) {
+          if ($this.stops[stop["id"]]) {
+            return;
+          }
+
+          $this.stops[stop["id"]] = stop;
+
+          leaflet_data["stops"][stop["id"]] = L.circle([stop["lat"], stop["lon"]], {
+            radius: 8,
+            color: 'blue',
+            fillColor: 'blue',
+            weight: 1,
+            opacity: 0.7,
+            fillOpacity: 0.5,
+            id: stop["id"]
+          }).bindPopup($this.build_stop_popup, { "className": "stoppopup"});
+
+          $this.addMouseEventPopup(leaflet_data["stops"][stop["id"]]);
+
+          if ($this.layers.stat.stops) {
+            leaflet_data["stops"][stop["id"]].addTo(map);
           }
         });
       });
@@ -991,22 +1035,52 @@ new Vue({
           <div class="rewardImg" style="background-image: url(${image}); background-size: ${size}"></div>
         </div>`;
     },
-    build_stop_popup(marker) {
-      var quest = this.quests[marker.options.id];
+    build_stop_base_popup(id, image, name, latitude, longitude) {
+      return `
+          <div class="image" style="background: url(${image}) center center no-repeat;"></div>
+          <div class="name"><strong>${name}</strong></div>
+          <div class="id"><i class="fa fa-fingerprint"></i> <span>${id}</span></div>
+          <div class="coords">
+            <i class="fa fa-map-pin"></i>
+            <a href="https://maps.google.com/?q=${latitude},${longitude}">${latitude}, ${longitude}</a>
+            <a onclick=copyClipboard("${latitude.toFixed(6)}|${longitude.toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
+          </div>`
+    },
+    build_quest_popup(marker) {
+      var quest = this.quests[marker.options.id]
+      var base_popup = this.build_stop_base_popup(quest["pokestop_id"], quest["url"], quest["name"], quest["latitude"], quest["longitude"])
 
       return `
         <div class="content">
-          <div class="image" style="background: url(${quest["url"]}) center center no-repeat;"></div>
-          <div class="name"><strong>${quest["name"]}</strong></div>
-          <div class="id"><i class="fa fa-fingerprint"></i> <span>${quest["pokestop_id"]}</span></div>
-          <div class="coords">
-            <i class="fa fa-map-pin"></i>
-            <a href="https://maps.google.com/?q=${quest["latitude"]},${quest["longitude"]}">${quest["latitude"]}, ${quest["longitude"]}</a>
-            <a onclick=copyClipboard("${quest["latitude"].toFixed(6)}|${quest["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
-          </div>
-          <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: ${moment(quest['timestamp']*1000).format("YYYY-MM-DD HH:mm:ss")}</div>
+          ${base_popup}
+          <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: <strong>${moment(quest['timestamp']*1000).format("YYYY-MM-DD HH:mm:ss")}</strong></div>
           <br>
           ${this.build_quest(quest['quest_reward_type_raw'], quest['quest_task'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type'])}
+        </div>`;
+    },
+    build_stop_popup(marker) {
+      var stop = this.stops[marker.options.id]
+      var base_popup = this.build_stop_base_popup(stop["id"], stop["url"], stop["name"], stop["lat"], stop["lon"])
+
+      var incident = "";
+      var incident_expiration = moment(stop["incident_expiration"]*1000);
+      if (incident_expiration.isAfter(moment())) {
+        incident = `<div class="incident"><i class="fa fa-user-secret"></i> Incident ends: <strong>${incident_expiration.format("YYYY-MM-DD HH:mm:ss")}</strong></div>`
+      }
+
+      var lure = "";
+      var lure_expiration = moment(stop["lure_expiration"]*1000);
+      if (lure_expiration.isAfter(moment())) {
+        lure = `<div class="incident"><i class="fa fa-drumstick-bite"></i> Lure ends: <strong>${lure_expiration.format("YYYY-MM-DD HH:mm:ss")}</strong></div>`
+      }
+
+      return `
+        <div class="content">
+          ${base_popup}
+          <br>
+          <div class="timestamp"><i class="fa fa-clock"></i> Scanned: <strong>${moment(stop["last_updated"]*1000).format("YYYY-MM-DD HH:mm:ss")}</strong></div>
+          ${incident}
+          ${lure}
         </div>`;
     },
     build_gym_popup(marker) {

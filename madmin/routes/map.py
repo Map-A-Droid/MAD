@@ -45,6 +45,7 @@ class map(object):
             ("/get_quests", self.get_quests),
             ("/get_map_mons", self.get_map_mons),
             ("/get_cells", self.get_cells),
+            ("/get_stops", self.get_stops),
             ("/savefence", self.savefence)
         ]
         for route, view_func in routes:
@@ -356,6 +357,44 @@ class map(object):
             })
 
         return jsonify(ret)
+
+    @auth_required
+    def get_stops(self):
+        neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
+        timestamp = request.args.get("timestamp", None)
+
+        coords = []
+
+        data = self._db.get_stops_in_rectangle(
+            neLat,
+            neLon,
+            swLat,
+            swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+        )
+
+        for stopid in data:
+            stop = data[str(stopid)]
+
+            coords.append({
+                "id": stopid,
+                "name": stop["name"],
+                "url": stop["image"],
+                "lat": stop["latitude"],
+                "lon": stop["longitude"],
+                "active_fort_modifier": stop["active_fort_modifier"],
+                "last_updated": stop["last_updated"],
+                "lure_expiration": stop["lure_expiration"],
+                "incident_start": stop["incident_start"],
+                "incident_expiration": stop["incident_expiration"],
+                "incident_grunt_type": stop["incident_grunt_type"]
+            })
+
+        return jsonify(coords)
 
     @logger.catch()
     @auth_required

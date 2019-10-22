@@ -27,6 +27,7 @@ div.container[role="main"] {
 .cellpopup .leaflet-popup-content,
 .questpopup .leaflet-popup-content,
 .gympopup .leaflet-popup-content,
+.stoppopup .leaflet-popup-content,
 .monpopup .leaflet-popup-content {
   width: 400px !important;
   margin: 13px !important;
@@ -36,6 +37,7 @@ div.container[role="main"] {
   font-size: 13px;
 }
 
+.stoppopup .leaflet-popup-content .content,
 .gympopup .leaflet-popup-content .content,
 .questpopup .leaflet-popup-content .content {
   margin-left: 100px;
