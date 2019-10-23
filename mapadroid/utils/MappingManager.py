@@ -13,8 +13,8 @@ from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerBase, RouteManagerIV
 from mapadroid.route import RouteManagerFactory
 from mapadroid.utils.collections import Location
-from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.utils.logging import logger
+from mapadroid.utils.s2Helper import S2Helper
 
 mode_mapping = {
     "raids_mitm": {

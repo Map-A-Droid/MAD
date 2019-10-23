@@ -316,7 +316,7 @@ class WordToScreenMatching(object):
                     if 'Facebook' in temp_dict and 'TRAINER' in temp_dict:
                         click_x = self._width / 2
                         click_y = (temp_dict['Facebook'] + (
-                                    (temp_dict['TRAINER'] - temp_dict['Facebook']) / 2))
+                                (temp_dict['TRAINER'] - temp_dict['Facebook']) / 2))
                         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                         self._communicator.click(click_x, click_y)
                         time.sleep(5)

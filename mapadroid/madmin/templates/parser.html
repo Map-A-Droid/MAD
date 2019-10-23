@@ -91,7 +91,7 @@
         });
     </script>
     <script>
-        var selectedData = new Array();
+        var selectedData = [];
         var fixHelper = function (e, ui) {
             ui.children().each(function () {
                 $(this).width($(this).width());
@@ -125,7 +125,7 @@
         var validateWalkervalueMsg;
         var validateWalkervalueDynamicErrorMsg = function () {
             return validateWalkervalueMsg;
-        }
+        };
         jQuery.validator.addMethod("validatewalkervalue", function (value, element) {
 
             var digitsOnlyNotEmptyPattern = "^[0-9]+$";

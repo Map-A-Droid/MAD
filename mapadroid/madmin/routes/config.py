@@ -1,4 +1,3 @@
-import os
 import glob
 import json
 import os
@@ -10,8 +9,8 @@ from flask_caching import Cache
 from mapadroid.madmin import auth_required
 from mapadroid.utils import ADBConnect
 from mapadroid.utils import MappingManager
-from mapadroid.utils.logging import logger
 from mapadroid.utils.language import i8ln, open_json_file
+from mapadroid.utils.logging import logger
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 

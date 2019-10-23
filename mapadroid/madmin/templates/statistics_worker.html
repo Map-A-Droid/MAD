@@ -111,13 +111,13 @@
                 "cache": false,
                 "dataType": "json",
                 success: function (result) {
-                    receiving = result.receiving
-                    avg = result.avg
-                    locations = result.locations
-                    location_ratio = result.ratio
-                    allspawns = result.allspawns
-                    detections_raw = result.detections_raw
-                    location_raw = result.location_raw
+                    receiving = result.receiving;
+                    avg = result.avg;
+                    locations = result.locations;
+                    location_ratio = result.ratio;
+                    allspawns = result.allspawns;
+                    detections_raw = result.detections_raw;
+                    location_raw = result.location_raw;
 
                     $.plot($("#flot_usage"), receiving,
                         {

@@ -10,7 +10,7 @@
         $.urlParam = function (name) {
             var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
             return results[1] || 0;
-        }
+        };
         $(document).ready(function () {
             $("#submit").click(function () {
                 $.blockUI({message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>'});
@@ -111,6 +111,7 @@
                             {% else %}
                                 <input type="{{ field.settings.type }}" name="{{ key }}" setting='true'
                                        class="form-control" id="{{ key }}" value="
+
                                         {% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}">
                             {% endif %}
                             <small class="form-text text-muted">{{ field.settings.description }}</small>
@@ -159,6 +160,7 @@
                         {% else %}
                             <input type="{{ field.type }}" name="{{ key }}" class="form-control"
                                    id="{{ key }}" value="
+
                                     {% if element[key] is not none and element[key] != 'None' %}{{ element[key] }}{% endif %}">
                         {% endif %}
                         <small class="form-text text-muted">{{ field.settings.description }}</small>

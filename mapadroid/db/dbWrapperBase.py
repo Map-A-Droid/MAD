@@ -11,9 +11,9 @@ from bitstring import BitArray
 from mysql.connector.pooling import MySQLConnectionPool
 
 from mapadroid.utils.collections import Location
+from mapadroid.utils.logging import logger
 from mapadroid.utils.questGen import questtask
 from mapadroid.utils.s2Helper import S2Helper
-from mapadroid.utils.logging import logger
 
 
 class DbWrapperBase(ABC):
@@ -1245,7 +1245,7 @@ class DbWrapperBase(ABC):
             "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) as successcount from "
             "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 and successcount=0 "
             "ORDER BY count(id) DESC"
-            )
+        )
 
         res = self.execute(query)
         return res

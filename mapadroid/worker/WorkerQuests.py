@@ -11,10 +11,10 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException, WebsocketWorkerRemovedException, \
     WebsocketWorkerTimeoutException
 from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
-from mapadroid.utils.logging import logger
 
 
 class FortSearchResultTypes(Enum):

@@ -27,16 +27,14 @@ function loopCoords(coordarray) {
         returning += (element.lat + ',' + element.lng + '|');
     });
     return returning;
-};
-
+}
 function copyClipboard(text) {
     navigator.clipboard.writeText(text.replace("|", ",")).then(function () {
         alert('Copying to clipboard was successful!');
     }, function (err) {
         alert('Could not copy text: ', err);
     });
-};
-
+}
 $(document).on("hidden.bs.modal", "#injectionModal", function (e) {
     locInjectBtn.state("scanmode-activate");
     clickToScanActive = false;
@@ -97,7 +95,7 @@ L.Marker.addInitHook(function () {
 
 // fix gaps in tile rendering
 (function () {
-    var originalInitTile = L.GridLayer.prototype._initTile
+    var originalInitTile = L.GridLayer.prototype._initTile;
     L.GridLayer.include({
         _initTile: function (tile) {
             originalInitTile.call(this, tile);
@@ -108,7 +106,7 @@ L.Marker.addInitHook(function () {
             tile.style.height = tileSize.y + 1 + 'px';
         }
     });
-})()
+})();
 
 // globals
 var map;
@@ -118,7 +116,7 @@ var fetchTimeout = null;
 var clickToScanActive = false;
 var cleanupInterval = null;
 var newfences = {};
-const teamNames = ['Uncontested', 'Mystic', 'Valor', 'Instinct']
+const teamNames = ['Uncontested', 'Mystic', 'Valor', 'Instinct'];
 const iconBasePath = "https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/icons_large";
 
 // object to hold all the markers and elements
@@ -344,7 +342,7 @@ new Vue({
                     var name = worker["name"];
 
                     if ($this["workers"][name]) {
-                        leaflet_data["workers"][name].setLatLng([worker["lat"], worker["lon"]])
+                        leaflet_data["workers"][name].setLatLng([worker["lat"], worker["lon"]]);
 
                         if (map.hasLayer(leaflet_data["workers"][name])) {
                             leaflet_data["workers"][name].bringToFront();
@@ -507,7 +505,7 @@ new Vue({
                     var geojson = {
                         "type": "LineString",
                         "coordinates": $this.convertToLonLat(route.coordinates)
-                    }
+                    };
 
                     // add route to layergroup
                     L.geoJSON(geojson, {
@@ -595,7 +593,7 @@ new Vue({
                     var geojson = {
                         "type": "LineString",
                         "coordinates": $this.convertToLonLat(linecoords)
-                    }
+                    };
 
                     // add route to layergroup
                     L.geoJSON(geojson, {
@@ -931,13 +929,13 @@ new Vue({
             switch (quest_reward_type_raw) {
                 case 2:
                     var image = `${iconBasePath}/rewards/reward_${quest_item_id}_1.png`;
-                    var size = [30, 30]
-                    var anchor = [30, 30]
+                    var size = [30, 30];
+                    var anchor = [30, 30];
                     break;
                 case 3:
                     var image = `${iconBasePath}/rewards/reward_stardust.png`;
-                    var size = [30, 30]
-                    var anchor = [30, 30]
+                    var size = [30, 30];
+                    var anchor = [30, 30];
                     break;
                 case 7:
                     var form = '00';
@@ -945,8 +943,8 @@ new Vue({
                         form = '11';
                     }
                     var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${form}.png`;
-                    var size = [30, 30]
-                    var anchor = [30, 30]
+                    var size = [30, 30];
+                    var anchor = [30, 30];
                     break;
             }
 
@@ -957,7 +955,7 @@ new Vue({
                 iconAnchor: [15, 30],
                 shadowSize: size,
                 shadowAnchor: anchor
-            })
+            });
 
             return icon;
         },
@@ -1002,7 +1000,7 @@ new Vue({
           <div class="coords">
             <i class="fa fa-map-pin"></i>
             <a href="https://maps.google.com/?q=${quest["latitude"]},${quest["longitude"]}">${quest["latitude"]}, ${quest["longitude"]}</a>
-            <a onclick=copyClipboard("${quest["latitude"].toFixed(6)}|${quest["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
+            <a onclick=copyClipboard("${quest["latitude"].toFixed(6)}|${quest["longitude"].toFixed(6)}"); href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
           </div>
           <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: ${moment(quest['timestamp'] * 1000).format("YYYY-MM-DD HH:mm:ss")}</div>
           <br>
@@ -1056,7 +1054,7 @@ new Vue({
           </div>`;
             }
 
-            var gymName = gym["name"] != "unknown" ? gym["name"] : teamNames[gym["team_id"]] + " Gym"
+            var gymName = gym["name"] != "unknown" ? gym["name"] : teamNames[gym["team_id"]] + " Gym";
             var timeformat = "YYYY-MM-DD HH:mm:ss";
             var last_scanned = moment(gym["last_scanned"] * 1000);
 
@@ -1068,7 +1066,7 @@ new Vue({
           <div class="coords">
             <i class="fa fa-map-pin"></i>
             <a href="https://maps.google.com/?q=${gym["lat"]},${gym["lon"]}">${gym["lat"]}, ${gym["lon"]}</a>
-            <a onclick=copyClipboard("${gym["lat"].toFixed(6)}|${gym["lon"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
+            <a onclick=copyClipboard("${gym["lat"].toFixed(6)}|${gym["lon"].toFixed(6)}"); href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
          </div>
          <div class="timestamp"><i class="fa fa-clock"></i> Scanned: ${last_scanned.format(timeformat)}</div>
          ${raidContent}
@@ -1120,8 +1118,8 @@ new Vue({
                 var spawntiming = ""
             }
 
-            var last_scanned = moment(spawn["lastscan"])
-            var last_non_scanned = moment(spawn["lastnonscan"])
+            var last_scanned = moment(spawn["lastscan"]);
+            var last_non_scanned = moment(spawn["lastnonscan"]);
 
             if (last_scanned.isBefore(last_non_scanned)) {
                 var last_mon = last_scanned
@@ -1187,7 +1185,7 @@ new Vue({
           <div class="coords">
             <i class="fa fa-map-pin"></i>
             <a href="https://maps.google.com/?q=${mon["latitude"]},${mon["longitude"]}">${mon["latitude"].toFixed(6)}, ${mon["longitude"].toFixed(6)}</a>
-            <a onclick=copyClipboard("${mon["latitude"].toFixed(6)}|${mon["longitude"].toFixed(6)}") href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
+            <a onclick=copyClipboard("${mon["latitude"].toFixed(6)}|${mon["longitude"].toFixed(6)}"); href="#"><i class="fa fa-clipboard" aria-hidden="true"></i></a>
          </div>
           <div id="timestamp"><i class="fa fa-clock"></i> Modified: ${moment(mon['last_modified'] * 1000).format("YYYY-MM-DD HH:mm:ss")}</div>
           <br>
@@ -1326,7 +1324,7 @@ new Vue({
             });
         },
         convertToLonLat(coords) {
-            lonlat = []
+            lonlat = [];
             coords.forEach(function (coord) {
                 lonlat.push([coord[1], coord[0]]);
             });
@@ -1371,7 +1369,7 @@ new Vue({
             var querystring = new URLSearchParams(bounds).toString();
 
             // temp: update last update timestamp
-            this.updateStoredSetting("fetchTimestamp", Math.floor(Date.now() / 1000))
+            this.updateStoredSetting("fetchTimestamp", Math.floor(Date.now() / 1000));
 
             return "?" + querystring;
         },
@@ -1471,8 +1469,6 @@ new Vue({
 
                 map.setView([setlat, setlng], 20);
             }
-            ;
-
             map.on('zoomend', this.l_event_zoomed);
             map.on('moveend', this.l_event_moveend);
             map.on('click', this.l_event_click);
@@ -1521,8 +1517,8 @@ new Vue({
                 }
 
                 var fencename = prompt("Please enter name of fence", "");
-                coords = loopCoords(layer.getLatLngs())
-                newfences[layer] = fencename
+                coords = loopCoords(layer.getLatLngs());
+                newfences[layer] = fencename;
                 layer.bindPopup('<b>' + fencename + '</b><br><a href=savefence?name=' + fencename + '&coords=' + coords + '>Save to MAD</a>');
                 editableLayers.addLayer(layer);
                 layer.openPopup();
@@ -1531,8 +1527,8 @@ new Vue({
             map.on('draw:edited', function (e) {
                 var layers = e.layers;
                 layers.eachLayer(function (layer) {
-                    coords = loopCoords(layer.getLatLngs())
-                    layer._popup.setContent('<b>' + newfences[layer] + '</b><br><a href=savefence?name=' + newfences[layer] + '&coords=' + coords + '>Save to MAD</a>')
+                    coords = loopCoords(layer.getLatLngs());
+                    layer._popup.setContent('<b>' + newfences[layer] + '</b><br><a href=savefence?name=' + newfences[layer] + '&coords=' + coords + '>Save to MAD</a>');
                     layer.openPopup();
                 });
             });

@@ -7,8 +7,8 @@ from flask import (jsonify, render_template, request)
 from mapadroid.madmin import auth_required, generate_coords_from_geofence, get_geofences
 from mapadroid.utils import calculate_mon_level, calculate_iv, get_raid_boss_cp, form_mapper
 from mapadroid.utils import get_distance_of_two_points_in_meters
-from mapadroid.utils.logging import logger
 from mapadroid.utils.language import i8ln
+from mapadroid.utils.logging import logger
 
 
 class statistics(object):

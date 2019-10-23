@@ -171,7 +171,7 @@ class deviceUpdater(object):
                         self._globaljoblog[globalid].get('autojob', False):
                     logger.debug(
                         'Autjob (no init run) {} on device {} - File/Job: {} - queued to real starttime (ID: {})'
-                        .format(str(jobtype), str(origin), str(file_), str(id_)))
+                            .format(str(jobtype), str(origin), str(file_), str(id_)))
                     # just schedule job - not process the first time
                     processtime = datetime.timestamp(
                         datetime.now() + timedelta(
@@ -221,7 +221,7 @@ class deviceUpdater(object):
                     time.sleep(1)
                     logger.debug(
                         'Job {} on device {} - File/Job: {} - queued of processtime in future (ID: {})'
-                        .format(str(jobtype), str(origin), str(file_), str(id_)))
+                            .format(str(jobtype), str(origin), str(file_), str(id_)))
                     self.add_job(globalid=globalid, origin=origin, file=file_, id_=id_, type=jobtype,
                                  counter=counter,
                                  status='future', waittime=waittime, processtime=processtime, redo=redo)
@@ -300,7 +300,7 @@ class deviceUpdater(object):
                                                            and self._args.job_restart_notconnect == 0):
                         logger.error(
                             "Job for {} (File/Job: {} - Type {}) failed 3 times in row - aborting (ID: {})"
-                            .format(str(origin), str(file_), str(jobtype), str(id_)))
+                                .format(str(origin), str(file_), str(jobtype), str(id_)))
                         self._globaljoblog[globalid]['laststatus'] = 'faulty'
                         self.write_status_log(str(id_), field='status', value='faulty')
 
@@ -319,7 +319,7 @@ class deviceUpdater(object):
                     elif jobstatus == jobReturn.NOCONNECT and self._args.job_restart_notconnect > 0:
                         logger.error(
                             "Job for {} (File/Job: {} - Type {}) failed 3 times in row - requeued it (ID: {})"
-                            .format(str(origin), str(file_), str(jobtype), str(id_)))
+                                .format(str(origin), str(file_), str(jobtype), str(id_)))
                         processtime = datetime.timestamp(
                             datetime.now() + timedelta(minutes=self._args.job_restart_notconnect))
                         self.write_status_log(str(id_), field='processingdate', value=processtime)

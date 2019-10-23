@@ -698,7 +698,7 @@ class RmWrapper(DbWrapperBase):
         if len(stop_data['active_fort_modifier']) > 0:
             active_fort_modifier = stop_data['active_fort_modifier'][0]
             lure = datetime.utcfromtimestamp(self.application_args.lure_duration * 60 + (
-                        stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
+                    stop_data['last_modified_timestamp_ms'] / 1000)).strftime("%Y-%m-%d %H:%M:%S")
 
         if "pokestop_display" in stop_data:
             start_ms = stop_data["pokestop_display"]["incident_start_ms"]
@@ -835,9 +835,10 @@ class RmWrapper(DbWrapperBase):
         res = self.execute(query + query_where)
 
         for (
-        pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
-        quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
-        quest_timestamp, quest_task, quest_reward, quest_template) in res:
+                pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id,
+                quest_reward_type,
+                quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
+                quest_timestamp, quest_task, quest_reward, quest_template) in res:
             mon = "%03d" % quest_pokemon_id
             questinfo[pokestop_id] = ({
                 'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,

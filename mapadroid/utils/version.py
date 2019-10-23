@@ -322,7 +322,7 @@ class MADVersion(object):
                                 for ind, area in enumerate(entry['setup']):
                                     try:
                                         area['walkerarea'] = '/api/area/%s' % (
-                                        cache['areas'][area['walkerarea']],)
+                                            cache['areas'][area['walkerarea']],)
                                     except KeyError:
                                         # The area no longer exists.  Remove from the path
                                         pass
@@ -338,7 +338,7 @@ class MADVersion(object):
                             if 'pool' in entry:
                                 try:
                                     entry['pool'] = '/api/devicesetting/%s' % (
-                                    cache['devicesettings'][entry['pool']],)
+                                        cache['devicesettings'][entry['pool']],)
                                 except Exception:
                                     if entry['pool'] is not None:
                                         logger.error('DeviceSettings {} is not valid', entry['pool'])

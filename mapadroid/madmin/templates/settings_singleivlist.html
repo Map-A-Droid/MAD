@@ -107,7 +107,7 @@
             var mon_id = $(elem).data('identifier');
             var mon_name = $(elem).text();
             var row = document.createElement('tr');
-            row.className = 'table-success'
+            row.className = 'table-success';
             row.setAttribute('data-monid', mon_id);
 
             // Rows
@@ -121,7 +121,7 @@
             td_monname.innerHTML = mon_name;
 
             var td_remove = document.createElement('td');
-            var rem = document.createElement('button')
+            var rem = document.createElement('button');
             rem.setAttribute('data-identifier', mon_id);
             rem.setAttribute('type', 'button');
             rem.className = 'delete btn btn-danger btn-sm';

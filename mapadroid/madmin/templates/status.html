@@ -81,7 +81,7 @@
                             if (data == '0' || data == 0) {
                                 return 'Now'
                             }
-                            var dateToShow = new moment().add(parseInt(data), "seconds")
+                            var dateToShow = new moment().add(parseInt(data), "seconds");
 
                             return dateToShow.fromNow(true);
                         }

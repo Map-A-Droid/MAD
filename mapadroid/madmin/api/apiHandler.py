@@ -206,7 +206,7 @@ class ResourceHandler(object):
                         ','.join(self.configuration.keys()))
                 elif mode not in self.configuration:
                     msg = 'Invalid mode specified [%s].  Valid modes: %s' % (
-                    mode, ','.join(self.configuration.keys()))
+                        mode, ','.join(self.configuration.keys()))
                     return apiResponse.APIResponse(self._logger, self.api_req)(msg, 400)
             # Use an ordered dict so we can guarantee the order is returned per the class specification
             disp_field = self.api_req.params.get('display_field', self.default_sort)

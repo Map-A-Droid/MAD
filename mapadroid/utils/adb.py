@@ -2,8 +2,8 @@ import os
 import sys
 import time
 
-from mapadroid.utils.logging import logger
 from mapadroid.utils.functions import pngtojpg
+from mapadroid.utils.logging import logger
 
 log = logger
 

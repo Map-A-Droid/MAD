@@ -157,7 +157,7 @@
                             icon: "ui-icon-refresh",
                             click: function () {
                                 $(this).dialog("close");
-                                url = url + "&restart=1"
+                                url = url + "&restart=1";
                                 $('div#' + origin).block({message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>'});
                                 $.ajax({
                                     type: "GET",
@@ -238,7 +238,6 @@
                         }
                     });
                 }
-                ;
             });
 
             $(".keyboardbutton").bind("click", function (event) {
@@ -259,7 +258,6 @@
                         }
                     });
                 }
-                ;
             });
 
             $(".downloadbutton").bind("click", function (event) {

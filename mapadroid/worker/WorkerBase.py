@@ -12,7 +12,6 @@ from mapadroid.db.dbWrapperBase import DbWrapperBase
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import ScreenType, WordToScreenMatching
-
 from mapadroid.utils import MappingManager
 from mapadroid.utils.hamming import hamming_distance as hamming_dist
 from mapadroid.utils.logging import logger
@@ -329,7 +328,8 @@ class WorkerBase(ABC):
         try:
             self._internal_pre_work()
         except (
-        InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                InternalStopWorkerException, WebsocketWorkerRemovedException,
+                WebsocketWorkerTimeoutException):
             logger.error(
                 "Failed initializing worker {}, connection terminated exceptionally", str(self._id))
             self._internal_cleanup()
@@ -350,7 +350,8 @@ class WorkerBase(ABC):
                     self.set_devicesettings_value('finished', True)
                     break
             except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    InternalStopWorkerException, WebsocketWorkerRemovedException,
+                    WebsocketWorkerTimeoutException):
                 logger.warning(
                     "Worker {} killed by walker settings", str(self._id))
                 break
@@ -360,7 +361,8 @@ class WorkerBase(ABC):
                 self._internal_health_check()
                 self._health_check()
             except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    InternalStopWorkerException, WebsocketWorkerRemovedException,
+                    WebsocketWorkerTimeoutException):
                 logger.error(
                     "Websocket connection to {} lost while running healthchecks, connection terminated "
                     "exceptionally",
@@ -372,7 +374,8 @@ class WorkerBase(ABC):
                 if settings is None:
                     continue
             except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    InternalStopWorkerException, WebsocketWorkerRemovedException,
+                    WebsocketWorkerTimeoutException):
                 logger.warning(
                     "Worker of {} does not support mode that's to be run, connection terminated exceptionally",
                     str(self._id))
@@ -384,7 +387,8 @@ class WorkerBase(ABC):
                 if not valid:
                     break
             except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    InternalStopWorkerException, WebsocketWorkerRemovedException,
+                    WebsocketWorkerTimeoutException):
                 logger.warning(
                     "Worker {} get non valid coords!", str(self._id))
                 break
@@ -392,7 +396,8 @@ class WorkerBase(ABC):
             try:
                 self._pre_location_update()
             except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    InternalStopWorkerException, WebsocketWorkerRemovedException,
+                    WebsocketWorkerTimeoutException):
                 logger.warning(
                     "Worker of {} stopping because of stop signal in pre_location_update, connection terminated "
                     "exceptionally",
@@ -408,7 +413,8 @@ class WorkerBase(ABC):
                              self.current_location.lat, self.current_location.lng)
                 time_snapshot, process_location = self._move_to_location()
             except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                    InternalStopWorkerException, WebsocketWorkerRemovedException,
+                    WebsocketWorkerTimeoutException):
                 logger.warning(
                     "Worker {} failed moving to new location, stopping worker, connection terminated exceptionally",
                     str(self._id))

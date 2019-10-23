@@ -8,12 +8,12 @@ from flask_caching import Cache
 from mapadroid.db.dbWrapperBase import DbWrapperBase
 from mapadroid.madmin import (auth_required, getCoordFloat, getBoundParameter,
                               getBasePath, get_geofences, generate_coords_from_geofence, Path)
-from mapadroid.utils.collections import Location
 from mapadroid.utils import MappingManager
-from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.utils import generate_quest
 from mapadroid.utils import get_raid_boss_cp
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import logger
+from mapadroid.utils.s2Helper import S2Helper
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 

@@ -7,8 +7,8 @@ from typing import Dict
 
 from mapadroid.db.dbWrapperBase import DbWrapperBase
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
-from mapadroid.utils.collections import Location
 from mapadroid.utils import MappingManager
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import logger
 from mapadroid.utils.walkerArgs import parseArgs
 

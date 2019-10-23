@@ -31,7 +31,7 @@
                 return true;
             } else {
                 validateWalkervalueMsg = rules[type][1];
-                $("#walkervalue-error").remove()
+                $("#walkervalue-error").remove();
                 elem = '<em id="walkervalue-error" class="error help-block">' + validateWalkervalueMsg + '</em>';
                 $("input[name=walkervalue]").parent().append(elem);
                 return false;
@@ -46,7 +46,7 @@
                 $.blockUI({message: '<img src="/static/loading.gif" width="100px" /><br /><h2>Saving shared device configuration...</h2>'});
                 save_data = {
                     'settings': {}
-                }
+                };
                 $(".form-control").each(function () {
                     var obj = $(this);
                     var name = obj.attr('name');
@@ -76,7 +76,7 @@
                         walkerarea_uri = xhr.getResponseHeader('X-Uri');
                         walkerarea_data = {
                             'setup': [walkerarea_uri]
-                        }
+                        };
                         if ('{{ 'PATCH' if element else 'POST' }}' == 'POST') {
                             $.ajax({
                                 beforeSend: function (xhr, settings) {

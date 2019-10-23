@@ -102,6 +102,7 @@
                         {% else %}
                             <input type="{{ field.settings.type }}" name="{{ key }}" setting='true'
                                    class="form-control" id="{{ key }}" value="
+
                                     {% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}">
                         {% endif %}
                         <small class="form-text text-muted">{{ field.settings.description }}</small>

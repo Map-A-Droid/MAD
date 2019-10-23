@@ -16,8 +16,8 @@ from mapadroid.utils import (WebsocketWorkerRemovedException,
                              WebsocketWorkerTimeoutException,
                              WrongAreaInWalker)
 from mapadroid.utils import check_auth
-from mapadroid.utils.logging import logger, InterceptHandler
 from mapadroid.utils import pre_check_value
+from mapadroid.utils.logging import logger, InterceptHandler
 from mapadroid.worker.WorkerConfigmode import WorkerConfigmode
 from mapadroid.worker.WorkerMITM import WorkerMITM
 from mapadroid.worker.WorkerQuests import WorkerQuests

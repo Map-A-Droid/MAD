@@ -45,7 +45,7 @@ def uploaded_files(datetimeformat, jobs):
         creationdate = datetime.datetime.fromtimestamp(
             creation_date(file)).strftime(datetimeformat)
         fileJson = (
-        {'jobname': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
+            {'jobname': os.path.basename(file), 'creation': creationdate, 'type': 'jobType.INSTALLATION'})
         files.append(fileJson)
 
     for command in jobs:
