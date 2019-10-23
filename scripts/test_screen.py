@@ -8,7 +8,7 @@ import pytesseract
 from PIL import Image
 import math
 sys.path.append("..")
-from utils.resolution import Resocalculator
+from mapadroid.utils.resolution import Resocalculator
 
 
 

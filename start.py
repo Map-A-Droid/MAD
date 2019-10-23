@@ -1,4 +1,5 @@
 import sys
+
 py_version = sys.version_info
 if py_version.major < 3 or (py_version.major < 3 and py_version.minor < 6):
     print("MAD requires at least python 3.6! Your version: {}.{}"
@@ -6,8 +7,6 @@ if py_version.major < 3 or (py_version.major < 3 and py_version.minor < 6):
     sys.exit(1)
 from multiprocessing import Process
 from typing import Optional
-
-from utils.MappingManager import MappingManager, MappingManagerManager
 
 import calendar
 import datetime
@@ -19,18 +18,19 @@ from threading import Thread, active_count
 
 import psutil
 
-from db.DbFactory import DbFactory
-from mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
-from mitm_receiver.MITMReceiver import MITMReceiver
-from utils.logging import initLogging, logger
-from utils.madGlobals import terminate_mad
-from utils.rarity import Rarity
-from utils.version import MADVersion
-from utils.walkerArgs import parseArgs
-import utils.data_manager
-from websocket.WebsocketServer import WebsocketServer
-from utils.updater import deviceUpdater
-from utils.functions import generate_mappingjson
+from mapadroid.db import DbFactory
+from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
+from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
+from mapadroid.utils.logging import initLogging, logger
+from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManager import MappingManagerManager
+from mapadroid.utils.data_manager import DataManager
+from mapadroid.utils.madGlobals import terminate_mad
+from mapadroid.utils.rarity import Rarity
+from mapadroid.utils.updater import deviceUpdater
+from mapadroid.utils.version import MADVersion
+from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -85,8 +85,10 @@ def install_thread_excepthook():
                 logger.critical(
                     'Unhandled patched exception ({}): "{}".', exc_type, exc_value)
                 sys.excepthook(exc_type, exc_value, exc_trace)
+
     Thread.run = run_thread
     Process.run = run_process
+
 
 def find_referring_graphs(obj):
     REFERRERS_TO_IGNORE = [locals(), globals(), gc.garbage]
@@ -114,7 +116,7 @@ def get_system_infos(db_wrapper):
         logger.debug('Collecting...')
         n = gc.collect()
         logger.debug('Unreachable objects: {} - Remaining garbage: {} - Running threads: {}',
-                    str(n), str(gc.garbage), str(active_count()))
+                     str(n), str(gc.garbage), str(active_count()))
 
         for obj in gc.garbage:
             for ref in find_referring_graphs(obj):
@@ -153,7 +155,8 @@ def check_dependencies():
         try:
             pkg_resources.require(deps)
         except pkg_resources.VersionConflict as version_error:
-            logger.error("Some dependencies aren't met. Required: {} (Installed: {})", version_error.req, version_error.dist)
+            logger.error("Some dependencies aren't met. Required: {} (Installed: {})", version_error.req,
+                         version_error.dist)
             sys.exit(1)
 
 
@@ -161,7 +164,8 @@ if __name__ == "__main__":
     check_dependencies()
 
     if not os.path.exists(args.mappings):
-        logger.error("Couldn't find configuration file. Please run 'configmode.py' instead, if this is the first time starting MAD.")
+        logger.error(
+            "Couldn't find configuration file. Please run 'configmode.py' instead, if this is the first time starting MAD.")
         sys.exit(1)
 
     # TODO: globally destroy all threads upon sys.exit() for example
@@ -205,13 +209,14 @@ if __name__ == "__main__":
     t_file_watcher = None
     t_whw = None
 
-    data_manager = utils.data_manager.DataManager(logger, args)
+    data_manager = DataManager(logger, args)
 
     if args.only_scan or args.only_routes:
         MappingManagerManager.register('MappingManager', MappingManager)
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
-        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, False)
+        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
+                                                                                 data_manager, False)
         filename = args.mappings
         if not os.path.exists(filename):
             logger.error(
@@ -236,7 +241,8 @@ if __name__ == "__main__":
             mitm_mapper_manager.start()
             mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
 
-            from ocr.pogoWindows import PogoWindows
+            from mapadroid.ocr import PogoWindows
+
             pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
 
             mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
@@ -254,7 +260,7 @@ if __name__ == "__main__":
 
             webhook_worker = None
             if args.webhook:
-                from webhook.webhookworker import WebhookWorker
+                from mapadroid.webhook import WebhookWorker
 
                 rarity = Rarity(args, db_wrapper)
                 rarity.start_dynamic_rarity()
@@ -275,11 +281,12 @@ if __name__ == "__main__":
             t_usage.start()
 
     if args.with_madmin:
-        from madmin.madmin import madmin_start
+        from mapadroid.madmin.madmin import madmin_start
 
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
-                          args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater, jobstatus))
+                          args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater,
+                                jobstatus))
         t_madmin.daemon = True
         t_madmin.start()
 

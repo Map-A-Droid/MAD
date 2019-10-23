@@ -3,7 +3,7 @@
 import sys
 import os
 sys.path.append(os.getcwd())
-import madmin.api
+from mapadroid import madmin
 
 EXPECTED_TYPES = {
     str: 'String',
@@ -41,7 +41,7 @@ def print_section(sect):
 def safe_convert(thing):
     return thing.replace('|', '\|')
 
-for module_name, elem in madmin.api.valid_modules.items():
+for module_name, elem in mapadroid.madmin.api.valid_modules.items():
     print('# %s' % (module_name))
     config = elem.configuration
     if 'fields' in config:

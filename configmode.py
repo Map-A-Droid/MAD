@@ -2,16 +2,15 @@ import os
 import sys
 from threading import Thread
 
-from db.dbWrapperBase import DbWrapperBase
-from db.DbFactory import DbFactory
-from utils.MappingManager import MappingManagerManager, MappingManager
-from utils.logging import initLogging, logger
-from utils.version import MADVersion
-from utils.walkerArgs import parseArgs
-import utils.data_manager
-from websocket.WebsocketServer import WebsocketServer
-from utils.updater import deviceUpdater
-from utils.functions import generate_mappingjson
+from mapadroid.db.DbFactory import DbFactory
+from mapadroid.db.dbWrapperBase import DbWrapperBase
+from mapadroid.utils.version import MADVersion
+from mapadroid.utils.updater import deviceUpdater
+from mapadroid.utils.functions import generate_mappingjson
+from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.MappingManager import MappingManagerManager, MappingManager
+from mapadroid.utils.logging import initLogging, logger
+from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -25,7 +24,7 @@ def create_folder(folder):
 
 
 def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
-    from madmin.madmin import madmin_start
+    from mapadroid.madmin.madmin import madmin_start
     madmin_start(args, db_wrapper, ws_server, mapping_manager, data_manager, deviceUpdater, jobstatus)
 
 
@@ -54,7 +53,7 @@ if __name__ == "__main__":
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
-    data_manager = utils.data_manager.DataManager(logger, args)
+    data_manager = mapadroid.utils.data_manager.DataManager(logger, args)
 
     MappingManagerManager.register('MappingManager', MappingManager)
     mapping_manager_manager = MappingManagerManager()

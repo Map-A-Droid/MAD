@@ -1,0 +1,174 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+    <script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+
+    <script>
+        function setGrid(tableGridHtmlId, gridData) {
+            $(tableGridHtmlId).DataTable({
+                "data": gridData,
+                "columns": [
+                    {data: 'origin', title: 'Device'},
+                    {data: 'jobname', title: 'File / Command'},
+                    {data: 'status', title: 'Status'},
+                    {data: '', title: 'Init Date/Time'},
+                    {data: '', title: 'Date/Time'},
+                    {data: '', title: 'Action'}
+                ],
+                "columnDefs": [
+                    {
+                        "targets": [1],
+                        "render": function (data, type, row) {
+
+                            if (row.jobtype == 'jobType.PASSTHROUGH') {
+
+                                if (typeof row.returning === "undefined") {
+                                    var returning = "<p id='info'>-</p>";
+                                } else if (row.returning.includes('unknown command')) {
+                                    var returning = "<p id='outdated'>OUTDATED RGC VERSION - PLEASE UPDATE</div>";
+                                } else {
+                                    var returning = "<p id='info'>" + row.returning + "</p>";
+                                }
+
+                                return row.jobname + "<br><b>RETURNING:</b>" + returning;
+
+                            } else {
+
+                                return row.file;
+
+                            }
+
+                        }
+                    },
+                    {
+                        "targets": [5],
+                        "render": function (data, type, row) {
+                            var redolink = "";
+                            var link = "<img src='static/autojob.png' alt='automatic job' width='30'>";
+
+                            if (!row.auto) {
+                                link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a>";
+                                redolink = "<a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a>";
+                            }
+
+                            return link + " " + redolink;
+                        }
+                    },
+                    {
+                        "targets": [3],
+                        "render": function (data, type, row) {
+                            return tstodt(row.id);
+                        }
+                    },
+                    {
+                        "targets": [4],
+                        "render": function (data, type, row) {
+
+                            var nextdatetime = "-"
+                            var lastdatetime = "-"
+                            var laststatus = "-"
+
+                            if ('lastprocess' in row) {
+                                lastdatetime = tstodt(row.lastprocess);
+                            }
+
+                            if ('processingdate' in row) {
+                                nextdatetime = tstodt(row.processingdate);
+                            }
+
+                            if ('laststatus' in row) {
+                                laststatus = row.laststatus;
+                            }
+
+                            return "<b>Processed: </b> " + lastdatetime + "<br><b>Next: </b>" + nextdatetime + "<br><b>Last status: </b>" + laststatus;
+                        }
+                    }
+                ],
+                "order": [[3, "desc"]],
+                "responsive": {{ responsive }},
+                "stateSave": true,
+                "stripeClasses": ['odd', 'even'],
+                "stateSaveCallback": function (settings, data) {
+                    localStorage.setItem('MAD_INSTALL_STATUS_' + settings.sInstance, JSON.stringify(data))
+                },
+                "stateLoadCallback": function (settings) {
+                    return JSON.parse(localStorage.getItem('MAD_INSTALL_STATUS_' + settings.sInstance))
+                }
+            });
+        }
+
+        function tstodt(ts) {
+            var date = new Date(ts * 1000);
+            var hours = date.getHours();
+            var minutes = "0" + date.getMinutes();
+            var seconds = "0" + date.getSeconds();
+            var year = date.getFullYear();
+            var month = "0" + (date.getMonth() + 1);
+            var day = "0" + date.getDate();
+
+            var link = year + '-' + month.substr(-2) + '-' + day.substr(-2) + ' ' + hours + ':' + minutes.substr(-2) + ':' + seconds.substr(-2);
+
+            return link;
+        }
+
+        $(document).ready(function () {
+            $('body').Aplus();
+            $("#navgyms").addClass("active");
+            $.ajax({
+                type: "GET",
+                {% if withautojobs == "true" %}
+                    url: "get_install_log?withautojobs=true",
+                {% else %}
+                    url: "get_install_log",
+                {% endif %}
+                success: function (result) {
+                    setGrid('#show-data', result);
+                }
+            });
+        });
+    </script>
+    <style>
+        p#outdated {
+            color: red;
+            font-weight: 700;
+        }
+
+        p#info {
+            color: black;
+            font-weight: 200;
+        }
+
+        table.dataTable tr.odd {
+            background-color: #F8F8F8;
+        }
+
+        table.dataTable tr.even {
+            background-color: white;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+    <h2>Jobstatus</h2>
+    <p>
+        {% with messages = get_flashed_messages() %}
+            {% if messages %}
+                {% for message in messages %}
+                    <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </p>
+    <table id="show-data" class="table" style="width:100%;"></table>
+    {% if not withautojobs %}
+        <div class="alert alert-warning"><a href="delete_log" class='confirm'
+                                            title='Do you really want to delete the log?'>Delete Job
+            Log</a><br>
+            <a href="delete_log?only_success=true" class='confirm'
+               title='Do you really want to delete the logs?'>Delete successful Jobs</a></div>
+    {% endif %}
+{% endblock %}
