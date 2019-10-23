@@ -28,6 +28,9 @@ class APIRequest(object):
         self.headers = dict(request.headers)
         self.process_request()
 
+    def __call__(self):
+        self.parse_data()
+
     def parse_data(self):
         """ Transform the incoming data into a dataset python can utilize """
         data = self._request.get_data()
@@ -35,7 +38,10 @@ class APIRequest(object):
         if data is None or len(data) == 0:
             self.data = None
         elif self.content_type == 'application/json':
-            self.data = json.loads(data)
+            try:
+                self.data = json.loads(data)
+            except ValueError:
+                raise apiException.FormattingError('Invalid JSON.  Please validate the information')
 
     def process_request(self):
         # Determine the content-type of the request and convert accordingly
@@ -68,5 +74,3 @@ class APIRequest(object):
             raise apiException.AcceptException(415)
         self.accept = accept
         self._logger.debug4('Accept format: {}', accept)
-        self.parse_data()
-

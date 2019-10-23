@@ -183,7 +183,14 @@ class ResourceHandler(object):
             Flask.Response
         """
         # Begin processing the request
-        self.api_req = apiRequest.APIRequest(self._logger, flask.request)
+        try:
+            self.api_req = apiRequest.APIRequest(self._logger, flask.request)
+            self.api_req()
+        except apiException.FormattingError as err:
+            headers = {
+                'X-Status': err.reason
+            }
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
         mode = self.api_req.headers.get('X-Mode', None)
         if mode is None:
             mode = self.api_req.params.get('mode', None)
