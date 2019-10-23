@@ -354,10 +354,8 @@ class WebsocketServer(object):
         except WrongAreaInWalker:
             logger.error('Unknown Area in Walker settings - check config')
             await websocket_client_connection.close()
-        except Exception as e:
-            exc_type, exc_value, exc_trace = sys.exc_info()
-            logger.error("Other unhandled exception during register: {}\n{}, {}".format(e.with_traceback(None),
-                                                                                        exc_value, str(e)))
+        except Exception:
+            logger.opt(exception=True).error("Other unhandled exception during registration of {}.", origin)
             await websocket_client_connection.close()
         finally:
             async with self.__users_mutex:
