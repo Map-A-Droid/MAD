@@ -71,7 +71,7 @@ class ResourceHandler(object):
                 val = data[key]
             except KeyError:
                 try:
-                    if entry_def['settings']['require'] == True and operation == 'POST':
+                    if entry_def['settings']['require'] == True and operation in ['POST', 'PUT']:
                         missing.append(key)
                 except:
                     pass
@@ -86,7 +86,7 @@ class ResourceHandler(object):
                 try:
                     # Skip empty values on POST.  If its not a POST, we want it removed from the recursive update
                     if (val is None or (val and 'len' in dir(val) and len(val) == 0)):
-                        if operation == 'POST':
+                        if operation in ['POST', 'PUT']:
                             if entry_def['settings']['require'] == True:
                                 missing.append(key)
                             continue
