@@ -759,7 +759,7 @@ class WorkerBase(ABC):
             mitm_mapper.collect_location_stats(self._id, self.current_location, 1, time.time(), 3, 0,
                                                self._mapping_manager.routemanager_get_mode(self._routemanager_name),
                                                99)
-        self._db_wrapper.save_last_reboot(self._id)
+        self._db_wrapper.save_last_reboot(self._applicationArgs.status_name, self._id)
         self.stop_worker()
         return start_result
 
@@ -774,7 +774,7 @@ class WorkerBase(ABC):
 
     def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = self._stop_pogo()
-        self._db_wrapper.save_last_restart(self._id)
+        self._db_wrapper.save_last_restart(self._applicationArgs.status_name, self._id)
         logger.debug("restartPogo: stop game resulted in {}",
                      str(successful_stop))
         if successful_stop:

@@ -493,7 +493,7 @@ class statistics(object):
 
     @auth_required
     def get_status(self):
-        device_status = self._db.download_status()
+        device_status = self._db.download_status(self._args.status_name)
         areas = self._mapping_manager.get_areas()
 
         data = []

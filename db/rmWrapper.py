@@ -53,6 +53,11 @@ class RmWrapper(DbWrapperBase):
                 "table": "pokestop",
                 "column": "incident_grunt_type",
                 "ctype": "smallint(1) NULL"
+            },
+            {
+                "table": "trs_status",
+                "column": "instance",
+                "ctype": "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL FIRST"
             }
         ]
 
