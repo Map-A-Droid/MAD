@@ -278,7 +278,7 @@ def parseArgs():
 
     # adb
     parser.add_argument('-adb', '--use_adb', action='store_true', default=False,
-                        help='Use ADB for devicecontrol (Default: False)')
+                        help='Use ADB for Device control (Default: False)')
     parser.add_argument('-adbservip', '--adb_server_ip', default='127.0.0.1',
                         help='IP address of ADB server (Default: 127.0.0.1)')
 
