@@ -4,7 +4,7 @@ class APIDevice(apiHandler.ResourceHandler):
     config_section = 'devices'
     component = 'device'
     default_sort = 'origin'
-    description = 'Add/Update/Delete Device (Origin) settings'
+    description = 'Add/Update/Delete device (Origin) settings'
 
     configuration = {
         "fields": {
@@ -125,7 +125,7 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Set click delay for pokestop walker (VPS -> local phone) (Default: 0)",
+                    "description": "Set click delay for pokestop walker (VPS -> local device) (Default: 0)",
                     "expected": float
                 }
             },
@@ -142,7 +142,7 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart Phone after restart Pogo N times. (Default: 3)",
+                    "description": "Restart device after restart Pogo N times. (Default: 3)",
                     "expected": int
                 }
             },
@@ -166,7 +166,7 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Adjust the x-axis click offset on phones with softbars and/or black upper bars. (+ right - left / Default: 0)",
+                    "description": "Adjust the x-axis click offset on devices with softbars and/or black upper bars. (+ right - left / Default: 0)",
                     "expected": int
                 }
             },
@@ -174,7 +174,7 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Adjust the y-axis click offset on phones with softbars and/or black upper bars. (+ down - up / Default: 0)",
+                    "description": "Adjust the y-axis click offset on devices with softbars and/or black upper bars. (+ down - up / Default: 0)",
                     "expected": int
                 }
             },
@@ -234,7 +234,7 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Declare a login address or domain from phone (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)",
+                    "description": "Declare a login address or domain from device (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)",
                     "expected": str
                 }
             },

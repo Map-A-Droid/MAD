@@ -52,7 +52,7 @@ class MITMBase(WorkerBase):
         if timeout is None:
             timeout = self.get_devicesettings_value("mitm_wait_timeout", 45)
 
-        # let's fetch the latest data to add the offset to timeout (in case phone and server times are off...)
+        # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         latest = self._mitm_mapper.request_latest(self._id)
         timestamp_last_data = latest.get("timestamp_last_data", 0)
         timestamp_last_received = latest.get("timestamp_receiver", 0)
