@@ -166,7 +166,7 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Devicecontrol", title="Devicecontrol")
+        return render_template('phonescreens.html', editform=screens_phone, header="Device scontrol", title="Device control")
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):
