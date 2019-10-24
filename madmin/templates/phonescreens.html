@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+
+{% block header %}
+<link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" crossorigin="anonymous">
+<style>
+  input[type=text],
+  select,
+  textarea {
+    width: 100%;
+    padding: 12px 20px;
+    margin: 8px 0;
+    display: inline-block;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+
+  input[type=submit] {
+    width: 100%;
+    background-color: #4CAF50;
+    color: white;
+    padding: 14px 20px;
+    margin: 8px 0;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+  }
+
+  input[type=submit]:hover {
+    background-color: #45a049;
+  }
+
+  #inputdata {
+    border-radius: 5px;
+    background-color: #f2f2f2;
+    padding: 20px;
+    /*width: 80%;*/
+  }
+
+  hr {
+    border-style: solid;
+    border-color: lightgray;
+  }
+
+
+   .screen {
+        float: left;
+        width: 30%;
+        border: black 2px;
+        border-style: solid;
+        margin: 10px;
+    }
+
+    img.screenshot {
+        width: 100%;
+    }
+
+   .phonename {
+        font-size: larger;
+        text-align: center;
+        background-color: lightgray;
+        width: 100%;
+    }
+
+    div#button {
+        width: 100%;
+        text-align: center;
+        background-color: lightgray;
+        color: white;
+        font-size: x-large;
+    }
+
+    div#softbar {
+        width: 100%;
+        float: left;
+    }
+
+    div#softbutton {
+        width: 20%;
+        float: left;
+        text-align: center;
+    }
+
+
+    @media only screen and (max-width: 600px) {
+    .screen {
+        width: 90%;
+        border: black 2px;
+        border-style: solid;
+        margin: 10px;
+    }
+
+    }
+
+}
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+<script>
+ $(document).ready(function() {
+
+ $('body').Aplus();
+ $('dialog-confirm').dialog();
+
+$("a#screenshot").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var url = $(this).attr("href");
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: url,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('div#' + origin).unblock();
+       }
+     });
+   });
+
+$("a#quit").bind("click", function(event) {
+    event.preventDefault();
+    var origin = $(this).attr("origin");
+    var url = $(this).attr("href");
+
+    $("#dialog-confirm").dialog({
+        draggable: false,
+        resizable: false,
+        height: "auto",
+        title: origin,
+        width: "auto",
+        modal: true,
+        buttons: [
+            {
+                text: "Quit",
+                icon: "ui-icon-power",
+                click: function() {
+                     $(this).dialog("close");
+                     $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+                     $.ajax({
+                         type: "GET",
+                         url: url,
+                         success: function(data){
+                             $('#date' + origin).text(data);
+                             $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                             $('div#' + origin).unblock();
+                         }
+                     });
+                }
+            },
+            {
+                text: "Start/Restart",
+                icon: "ui-icon-refresh",
+                click: function() {
+                    $(this).dialog("close");
+                    url = url + "&restart=1"
+                    $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+                    $.ajax({
+                        type: "GET",
+                        url: url,
+                        success: function(data){
+                            $('#date' + origin).text(data);
+                            $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                            $('div#' + origin).unblock();
+                        }
+                    });
+                }
+            },
+            {
+                text: "Cancel",
+                click: function() {
+                    $(this).dialog("close");
+                }
+            }
+        ]
+    });
+});
+
+
+$(".backbutton").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var adb = $(this).attr("adb");
+       var url = $(this).attr("href");
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: 'send_command?origin=' + origin + '&command=back&adb=' + adb,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('div#' + origin).unblock();
+       }
+     });
+   });
+
+$(".homebutton").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var adb = $(this).attr("adb");
+       var url = $(this).attr("href");
+       $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: 'send_command?origin=' + origin + '&command=home&adb=' + adb,
+       success: function(data){
+           $('#date' + origin).text(data);
+           $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('div#' + origin).unblock();
+       }
+     });
+   });
+
+$(".gpsbutton").bind("click", function(event) {
+       event.preventDefault();
+       var coords = prompt("Please enter the new coords:", "0.0,0.0");
+
+       if (coords != null) {
+           var sleeptime = prompt("Additional sleeptime after geofix (in seconds)?", "0");
+           if (sleeptime == null || sleeptime == "") { sleeptime = 0 }
+           var origin = $(this).attr("origin");
+           var adb = $(this).attr("adb");
+           var url = $(this).attr("href");
+           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $.ajax({
+               type: "GET",
+               url: 'send_gps?origin=' + origin + '&coords=' + coords + '&adb=' + adb + '&sleeptime=' + sleeptime,
+               success: function(data){
+                   $('#date' + origin).text(data);
+                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                   $('div#' + origin).unblock();
+               }
+           });
+       };
+   });
+
+$(".keyboardbutton").bind("click", function(event) {
+       event.preventDefault();
+       var text = prompt("Please enter text:", "");
+       if (text != null) {
+           var origin = $(this).attr("origin");
+           var adb = $(this).attr("adb");
+           var url = $(this).attr("href");
+           $('div#' + origin).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+           $.ajax({
+               type: "GET",
+               url: 'send_text?origin=' + origin + '&text=' + text + '&adb=' + adb,
+               success: function(data){
+                   $('#date' + origin).text(data);
+                   $('img#' + origin).attr('src', 'screenshot/madmin/screenshot_' + origin + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+                   $('div#' + origin).unblock();
+               }
+           });
+       };
+   });
+
+$(".downloadbutton").bind("click", function(event) {
+       event.preventDefault();
+       var origin = $(this).attr("origin");
+       var img = $('img#' + origin).attr("src").replace("/madmin", "");
+       window.open(img, '_blank');
+});
+
+
+$(".screenshot").mousedown(function(e){
+e.preventDefault();
+
+    $(this).data("tracking",true);
+    $(this).data("start",{x:e.offsetX,y:e.offsetY,
+                          xe:e.offsetX,ye:e.offsetY});
+
+}).mousemove(function(e){
+    if($(this).data("tracking")){
+        var start = $(this).data("start");
+        var w = Math.abs(e.offsetX);
+        var h = Math.abs(e.offsetY);
+        $(this).data("start",{x:start.x,y:start.y,
+                              xe:w, ye:h});
+
+    }
+}).mouseup(function(e){
+    $(this).data("tracking",false);
+    var start = $(this).data("start");
+    var id = event.target.id;
+    var adb = $(this).attr("adb");
+    var imagex = this.width / (start.x );
+    var imagey = this.height / (start.y);
+    var imagexe = this.width / (start.xe );
+    var imageye = this.height / (start.ye);
+    if (start.x == start.xe && start.y == start.ye) {
+        var url = 'click_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey + '&adb=' + adb
+    } else {
+        var url = 'swipe_screenshot?origin=' + id +'&clickx=' + imagex +'&clicky=' + imagey + '&adb=' + adb + '&clickxe=' + imagexe +'&clickye=' + imageye
+    }
+    $('div#' + id).block({ message: '<img src="static/loading.gif" width="100px"><br><h2>Load...</h2>' });
+       $.ajax({
+       type: "GET",
+       url: url,
+       success: function(data){
+           $('#date' + id).text(data);
+           $('img#' + id).attr('src', 'screenshot/madmin/screenshot_' + id + '.jpg?cachebuster=' + Math.round(new Date().getTime() / 1000));
+           $('div#' + id).unblock();
+       }
+    });
+
+
+});
+
+  });
+
+
+
+</script>
+{% endblock %}
+
+{% block content %}
+
+<h2>{{header | safe }}</h2>
+<h4>Full click and swipe control your devices.</h4>
+<div>
+  {% for item in editform %}
+  {{item | safe }}
+  {% endfor %}
+</div>
+<div id="dialog-confirm" style="display:none;">
+  <p><span class="ui-icon ui-icon-alert" style="float:left; margin:12px 12px 20px 0;"></span>Quit or Restart game?</p>
+</div>
+
+{% endblock %}

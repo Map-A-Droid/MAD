@@ -3,500 +3,198 @@
 {% block header %}
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/css/leaflet-sidebar.min.css" />
-<link rel="stylesheet" href="static/style/madmin.css" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.css">
+<link rel="stylesheet" href="static/style/madmin.css?1561125653674" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet-draw@1.0.2/dist/leaflet.draw.css" />
 {% endblock %}
 
 {% block scripts %}
-<script src="https://use.fontawesome.com/releases/v5.6.3/js/all.js" integrity="sha384-EIHISlAOj4zgYieurP0SdoiBYfGJKkgWedPHH4jCzpCXLmzVsw1ouK59MuUtP4a1" crossorigin="anonymous" defer></script>
+<script>
+var setlat = {{ setlat }};
+var setlng = {{ setlng }};
+</script>
+<script defer src="https://use.fontawesome.com/releases/v5.8.2/js/all.js" integrity="sha384-DJ25uNYET2XCl5ZF++U8eNxPWqcKohUUBUpKGlNLMchM7q4Wjg2CUpjHLaL8yYPH" crossorigin="anonymous"></script>
 <script src="https://vuejs.org/js/vue.min.js"></script>
 <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
 <script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/leaflet-sidebar-v2@3.0.6/js/leaflet-sidebar.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/leaflet-easybutton@2/src/easy-button.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
-<script>
-var map = null;
-var leaflet_data = {
-	layers: {}
-};
-
-new Vue({
-	el: '#app',
-	data: {
-		layers: {},
-		settings: {
-			routes: {
-				coordinateRadius: {
-					raid: 490,
-					quest: 40,
-					mon: 67
-				}
-			}
-		}
-	},
-	watch: {
-		layers: {
-			deep: true,
-			handler: function() {
-				for (k in this.layers) {
-					tlayer = this.layers[k];
-
-					this.updateStoredSetting('layer-'+k, tlayer.show);
-
-					if (tlayer.show == true && !map.hasLayer(leaflet_data["layers"][k])) {
-						map.addLayer(leaflet_data["layers"][k]);
-					} else if (tlayer.show == false && map.hasLayer(leaflet_data["layers"][k])) {
-						map.removeLayer(leaflet_data["layers"][k]);
-					}
-				}
-
-				// make sure certain layers are always on top
-				for (layer in leaflet_data['layers']) {
-					if (layer.startsWith('Worker') || layer.startsWith('Gyms')) {
-						leaflet_data['layers'][layer].bringToFront();
-					}
-				}
-			}
-		},
-		'settings.routes.coordinateRadius': {
-			deep: true,
-			handler: function() {
-				for (routetype in this.settings.routes.coordinateRadius) {
-					this.updateStoredSetting('settings-coordinateRadius-'+routetype, this.settings.routes.coordinateRadius[routetype]);
-					for (layer in this.layers) {
-						if (this.layers[layer].type == "route-"+routetype) {
-							leaflet_data.layers[layer].getLayers().forEach(function(point) {
-								try {
-									point.setRadius(this.settings.routes.coordinateRadius[routetype]);
-								} catch (err) {
-									// yes, this is bad and I know it ...
-								}
-							}, this);
-						}
-					}
-				}
-			}
-		}
-	},
-	mounted() {
-		// init our map first
-		this.initMap();
-
-		// fetch everything
-		this.map_fetch_everything();
-	},
-	methods: {
-		map_fetch_everything() {
-			this.map_fetch_gyms();
-			this.map_fetch_worker();
-			this.map_fetch_routes();
-			this.map_fetch_spawns();
-			this.map_fetch_quests();
-		},
-		map_fetch_worker() {
-			var $this = this;
-			axios.get('/get_position').then(function(res) {
-				res.data.forEach(function(worker) {
-					var name = 'Worker '+worker['name'];
-
-					var workerMarker = L.circleMarker([worker['lat'], worker['lon']], {
-						radius: 7,
-						color: '#E612CB',
-						fillColor: '#E612CB',
-						weight: 1,
-						opacity: 0.9,
-						fillOpacity: 0.9
-					}).bindPopup(name);
-
-					$this.addLayer(name, workerMarker, false, 'worker');
-				});
-			});
-
-			setInterval($this.update_worker_position, 5000);
-		},
-		update_worker_position() {
-			axios.get('/get_position').then(function(res) {
-				res.data.forEach(function(worker) {
-					var name = 'Worker '+worker['name'];
-
-					leaflet_data['layers'][name].setLatLng([worker['lat'], worker['lon']]);
-				});
-			});
-		},
-		map_fetch_gyms() {
-			var $this = this;
-			axios.get('/get_gymcoords').then(function(res) {
-				var l_gyms = L.layerGroup();
-
-				res.data.forEach(function(gym) {
-					switch(gym['team_id']) {
-						default:
-							color = '#888';
-							break;
-						case 1:
-							color = '#0C6DFF';
-							break;
-						case 2:
-							color = '#FC0016';
-							break;
-						case 3:
-							color = '#FD830E';
-							break;
-					}
-
-					L.circleMarker([gym['lat'], gym['lon']], {
-						radius: 10,
-						color: color,
-						fillColor: color,
-						weight: 1,
-						opacity: 0.8,
-						fillOpacity: 0.8
-					}).addTo(l_gyms)
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+gym['img']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+gym['name']+'</div><div id="gymID"></strong>'+gym['id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+gym['lat']+','+gym['lon']+'">'+gym['lat']+', '+gym['lon']+'</a></div>', { 'className': 'gympopup' })
-				});
-
-				// add layer to map
-				$this.addLayer("gyms", l_gyms, false, "gyms");
-			});
-		},
-		map_fetch_routes() {
-			var $this = this;
-			axios.get('/get_route').then(function(res) {
-				res.data.forEach(function(route) {
-					var group = L.layerGroup();
-					var coords = [];
-
-					if (route.mode == "mon_mitm") {
-						mode = "mon";
-						cradius = $this.settings.routes.coordinateRadius.mon;
-					} else if (route.mode == "pokestops") {
-						mode = "quest";
-						cradius = $this.settings.routes.coordinateRadius.quest;
-					} else if (route.mode == "raids_mitm" || route.mode == "raids_ocr") {
-						mode = "raid";
-						cradius = $this.settings.routes.coordinateRadius.raid;
-					}
-
-					route.coordinates.forEach(function(coord) {
-						circle = L.circle(coord, {
-							radius: cradius,
-							color: "#9C3744",
-							fillColor: "#F4556A",
-							fillOpacity: 1,
-							weight: 1,
-							opacity: 0.2,
-							fillOpacity: 0.1
-						});
-
-						circle.addTo(group);
-						coords.push(circle);
-					});
-
-					var geojson = {
-						"type": "LineString",
-						"coordinates": $this.convertToLonLat(route.coordinates)
-					}
-
-					// add route to layergroup
-					L.geoJSON(geojson, { style: { "color": "#FF0000", "weight": 2, "opacity": 0.5 } }).addTo(group);
-
-					$this.addLayer(route.name, group, false, "route-"+mode);
-				});
-			});
-		},
-		map_fetch_spawns() {
-			var $this = this;
-			axios.get('/get_spawns').then(function(res) {
-				var l_spawns = L.layerGroup();
-
-				res.data.forEach(function(spawn) {
-					if (spawn['endtime'] !== null) {
-						var markertext = '<strong class="text-success">Known end time</strong><br>'
-						var endsplit = spawn['endtime'].split(':');
-						var endMinute = parseInt(endsplit[0]);
-						var endSecond = parseInt(endsplit[1]);
-						var despawntime = moment();
-						var now = moment();
-
-						if (spawn['spawndef'] == 15) {
-							markertext += '<br>Type: 1h spawn<br>';
-							var timeshift = 60;
-						} else {
-							markertext += '<br>Type: 30m spawn<br>';
-							var timeshift = 30;
-						}
-
-						// setting despawn and spawn time
-						despawntime.minute(endMinute);
-						despawntime.second(endSecond);
-						var spawntime = moment(despawntime);
-						spawntime.subtract(timeshift, 'm');
-
-						if (despawntime.isBefore(now)) {
-							// already despawned. shifting hours
-							spawntime.add(1, 'h');
-							despawntime.add(1, 'h');
-						}
-
-						timeformat = 'YYYY-MM-DD HH:mm:ss';
-						if (now.isBetween(spawntime, despawntime)) {
-							markertext += "<br><strong>SPAWN ACTIVE</strong>"
-							markertext += "<br>Spawned at: " + spawntime.format(timeformat);
-							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-							overlaytext = 'Despawn ' + despawntime.fromNow();
-							var color = "green";
-						} else if (spawntime.isAfter(now)) {
-							markertext += "<br>Spawns at: " + spawntime.format(timeformat);
-							markertext += "<br>Despawns at: " + despawntime.format(timeformat);
-							overlaytext = 'Spawn ' + spawntime.fromNow();
-							var color = "blue";
-						}
-					} else {
-						var markertext = '<strong class="text-danger">Unknown end time</strong><br>';
-						var color = "red";
-					}
-
-					L.circle([spawn['lat'], spawn['lon']], {
-						radius: 2,
-						color: color,
-						fillColor: color,
-						weight: 1,
-						opacity: 0.7,
-						fillOpacity: 0.5
-					}).addTo(l_spawns)
-						.bindPopup(markertext + '<br><br><a href="https://maps.google.com/?q=' + spawn['lat'] + ',' + spawn['lon'] + '">' + spawn['lat'] + ', ' + spawn['lon'] + '</a>',{'className': 'gympopup'})
-				});
-
-				$this.addLayer("spawns", l_spawns, false, "spawns");
-			});
-		},
-		map_fetch_quests() {
-			var $this = this;
-			axios.get('/get_quests').then(function(res) {
-				var l_quests = L.layerGroup();
-
-				res.data.forEach(function(quest) {
-					L.marker([quest['latitude'], quest['longitude']], {icon: $this.build_quest_small(quest['quest_reward_type_raw'], quest['item_id'], quest['pokemon_id'])})
-						.bindPopup('<div id="gymImage" style="background: url(&quot;'+quest['url']+'&quot;) center center no-repeat;"></div><div id="gymName"><strong>'+quest['name']+'</div><div id="gymID"></strong>'+quest['pokestop_id']+'</div><div id="gymCoords"><a href="https://maps.google.com/?q='+quest['latitude']+','+quest['longitude']+'">'+quest['latitude']+', '+quest['longitude']+'</a><br>' + $this.build_quest(quest['quest_reward_type_raw'], quest['quest_type'], quest['pokemon_id'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type']) + '</div>', {'className': 'questpopup'})
-						.addTo(l_quests);
-				});
-
-				$this.addLayer("stops with quests", l_quests, false, "quets");
-			});
-		},
-		build_quest_small(quest_reward_type_raw, quest_item_id, quest_pokemon_id) {
-			switch(quest_reward_type_raw) {
-				case 2:
-					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
-					var size = [30, 30]
-					var anchor = [30, 20]
-					break;
-				case 3:
-					var image = 'static/quest/reward_stardust.png';
-					var size = [30, 30]
-					var anchor = [30, 20]
-					break;
-				case 7:
-					var form = '00';
-					if (quest_pokemon_id === '327') {
-						form = '11';
-					}
-					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
-					var size = [50, 50]
-					var anchor = [40, 30]
-					break;
-			}
-
-			// TODO replace with divIcon
-			var icon =  L.icon({
-				iconUrl: 'static/Pstop-quest.png',
-				shadowUrl: image,
-				iconSize: [30, 30],
-				shadowSize: size,
-				shadowAnchor: anchor
-			})
-
-			return icon;
-		},
-		build_quest(quest_reward_type_raw, quest_type, quest_pokemon_id, quest_item_id, quest_item_amount, quest_pokemon_name, quest_item_type) {
-			switch(quest_reward_type_raw) {
-				case 2:
-					var image = 'static/quest/reward_' + quest_item_id + '_1.png';
-					var rewardtext = quest_item_type + '<br>Pieces: ' + quest_item_amount;
-					var width = 40;
-					break;
-				case 3:
-					var image = 'static/quest/reward_stardust.png';
-					var rewardtext = quest_item_type + '<br>Amount: ' + quest_item_amount;
-					var width = 40;
-					break;
-				case 7:
-					var form = '00';
-					if (quest_pokemon_id === '327') {
-						form = '11';
-					}
-					var image = '/asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png';
-					var rewardtext = quest_pokemon_name;
-					var width = 60;
-					break;
-			}
-			var questtext = quest_type;
-
-			popuptext = '<center><b>' + questtext + '</b><br><img src=' + image + ' width=' + width + '><br>' + rewardtext + '</center>';
-			return popuptext;
-
-		},
-		getStoredSetting(name, defaultval) {
-			var val = localStorage.getItem('settings');
-			if (val == null) {
-				return defaultval;
-			}
-
-			var settings = JSON.parse(val);
-			if (settings[name] === undefined) {
-				return defaultval;
-			}
-
-			return settings[name];
-		},
-		updateStoredSetting(name, value) {
-			var settings = {};
-			var storedSettings = localStorage.getItem('settings');
-			if (storedSettings != null) {
-				settings = JSON.parse(storedSettings);
-			}
-
-			settings[name] = value;
-			localStorage.setItem('settings', JSON.stringify(settings));
-		},
-		// add a new layer
-		addLayer(name, data, show, type) {
-			if (!leaflet_data['layers'][name]) {
-				var lobj = {"show": this.getStoredSetting('layer-'+name, show), "type": type};
-				leaflet_data["layers"][name] = data;
-				this.$set(this.layers, name, lobj);
-			}
-		},
-		// event handler if the map has been dragged/moved
-		l_event_moveend() {
-			var center = map.getCenter();
-			this.updateStoredSetting('center', center.lat+','+center.lng);
-		},
-		// event handler if the map has been zoomed
-		l_event_zoomed() {
-			this.updateStoredSetting('zoomlevel', map.getZoom());
-		},
-		// convert lat/lng to lng/lat
-		convertToLonLat(coords) {
-			lonlat = []
-			coords.forEach(function(coord) {
-				lonlat.push([coord[1], coord[0]]);
-			});
-			return lonlat;
-		},
-		// set a circle marker's radius
-		setCircleRadiusForRoute(route, type) {
-			route.forEach(function(circle) {
-				circle.setRadius(this.settings.routes.coordinateRadius[type]);
-			}, this);
-		},
-		// generate the map
-		initMap() {
-			// get stored center and zoom level if they exists
-			const storedZoom = this.getStoredSetting('zoomlevel', 3);
-			const storedCenter = this.getStoredSetting('center', '52.521374,13.411201');
-			const layer = L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x}/{y}.png');
-
-			// TODO find a proper place for this
-			this.settings.routes.coordinateRadius.raid = this.getStoredSetting('settings-coordinateRadius-raid', 490);
-			this.settings.routes.coordinateRadius.quest = this.getStoredSetting('settings-coordinateRadius-quest', 40);
-			this.settings.routes.coordinateRadius.mon = this.getStoredSetting('settings-coordinateRadius-mon', 67);
-
-			map = L.map('map', {
-				layers: [layer],
-				zoomControl: false,
-				updateWhenZooming: false,
-				updateWhenIdle: true,
-				preferCanvas: true
-			}).setView(storedCenter.split(','), storedZoom);
-
-			L.control.zoom({
-				position: 'bottomright'
-			}).addTo(map);
-
-			var sidebar = L.control.sidebar({
-				autopan: false,
-				closeButton: true,
-				container: "sidebar",
-				position: "left",
-			}).addTo(map);
-
-			sidebar.open("layers");
-
-			map.on('zoomend', this.l_event_zoomed);
-			map.on('moveend', this.l_event_moveend);
-		}
-	}
-});
-</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.draw/1.0.4/leaflet.draw.js"></script>
+<script src="static/js/madmin.js"></script>
 {% endblock %}
 
 {% block content %}
 <div id="app">
-	<div id="sidebar" class="leaflet-sidebar">
-		<div class="leaflet-sidebar-tabs">
-			<ul role="tablist">
-				<li><a href="#layers" role="tab"><i class="fa fa-layer-group"></i></a></li>
-				<!--<li><a href="#filters" role="tab"><i class="fa fa-filter"></i></a></li>-->
-				<li><a href="#settings" role="tab"><i class="fa fa-cog"></i></a></li>
-			</ul>
-		</div>
+  <div id="sidebar" class="leaflet-sidebar">
+    <div class="leaflet-sidebar-tabs">
+      <ul role="tablist">
+        <li><a href="#points" role="tab"><i class="fa fa-map-marker"></i></a></li>
+        <li><a href="#routes" role="tab"><i class="fa fa-route"></i></a></li>
+        <li><a href="#prioroutes" role="tab"><i class="fas fa-sort-numeric-up"></i></a></li>
+        <li><a href="#geofences" role="tab"><i class="fa fa-draw-polygon"></i></a></li>
+        <li><a href="#settings" role="tab"><i class="fa fa-cog"></i></a></li>
+      </ul>
+    </div>
 
-		<div class="leaflet-sidebar-content">
-			<div class="leaflet-sidebar-pane" id="layers">
-				<h1 class="leaflet-sidebar-header bg-dark">Layers<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
-				<ul class="list-group list-group-flush">
-					{% raw %}
-						<li v-for="(item, index) in layers" class="list-group-item layer-item">
-							<strong>{{ index }}</strong>
-							<div class="custom-control custom-switch">
-								<input :id="index" type="checkbox" v-model="item.show" class="custom-control-input" />
-								<label :for="index" class="custom-control-label"></label>
-							</div>
-						</li>
-					{% endraw %}
-				</ul>
-			</div>
-			<div class="leaflet-sidebar-pane" id="filters">
-				<h1 class="leaflet-sidebar-header bg-dark">Filters<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
-			</div>
-			<div class="leaflet-sidebar-pane" id="settings">
-				<h1 class="leaflet-sidebar-header bg-dark">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
-				<ul class="list-group list-group-flush">
-						<li class="list-group-item layer-item">
-							<strong>Raid coordinate radius</strong>
-							<div class="custom-control custom-switch">
-								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raid" max="1100" class="form-control form-control-sm" />
-								<label for="raidcoordinateradius" class=""></label>
-							</div>
-						</li>
-						<li class="list-group-item layer-item">
-							<strong>Mon coordinate radius</strong>
-							<div class="custom-control custom-switch">
-								<input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mon" max="1100" class="form-control form-control-sm" />
-								<label for="raidcoordinateradius" class=""></label>
-							</div>
-						</li>
-						<li class="list-group-item layer-item">
-							<strong>Quest coordinate radius</strong>
-							<div class="custom-control custom-switch">
-								<input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quest" max="1100" class="form-control form-control-sm" />
-								<label for="questcoordinateradius" class=""></label>
-							</div>
-						</li>
-				</ul>
-			</div>
-		</div>
-	</div>
-	<div id="map"></div>
+    <div class="leaflet-sidebar-content">
+      <div class="leaflet-sidebar-pane" id="points">
+        <h1 class="leaflet-sidebar-header bg-dark">Points<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            {% raw %}
+            <li v-for="(item, index) in layers.stat" class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">{{ index }}</div>
+              <div class="custom-control custom-switch">
+                <input :id="'layers-stat-'+index" type="checkbox" v-model="layers.stat[index]" class="custom-control-input" />
+                <label :for="'layers-stat-'+index" class="custom-control-label"></label>
+              </div>
+            </li>
+            {% endraw %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="leaflet-sidebar-pane" id="routes">
+        <h1 class="leaflet-sidebar-header bg-dark">Routes<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            {% raw %}
+            <li v-for="(route, index) in layers.dyn.routes" class="list-group-item layer-item justify-content-between d-flex align-items-center">
+              <div class="flex-grow-1">{{ index }}</div>
+              <span class="badge badge-secondary" style="margin-right: 5px;">{{ route.mode }}</span>
+              <div class="custom-control custom-switch">
+                <input :id="'layers-dyn-routes-'+index" type="checkbox" v-model="layers.dyn.routes[index].show" class="custom-control-input" />
+                <label :for="'layers-dyn-routes-'+index" class="custom-control-label"></label>
+              </div>
+            </li>
+            {% endraw %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="leaflet-sidebar-pane" id="prioroutes">
+        <h1 class="leaflet-sidebar-header bg-dark">Priority routes<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            {% raw %}
+            <li v-for="(route, index) in layers.dyn.prioroutes" class="list-group-item layer-item justify-content-between d-flex align-items-center">
+              <div class="flex-grow-1">{{ index }}</div>
+              <span class="badge badge-secondary" style="margin-right: 5px;">{{ route.mode }}</span>
+              <div class="custom-control custom-switch">
+                <input :id="'layers-dyn-prioroutes-'+index" type="checkbox" v-model="layers.dyn.prioroutes[index].show" class="custom-control-input" />
+                <label :for="'layers-dyn-prioroutes-'+index" class="custom-control-label"></label>
+              </div>
+            </li>
+            {% endraw %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="leaflet-sidebar-pane" id="geofences">
+        <h1 class="leaflet-sidebar-header bg-dark">Geofences<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            {% raw %}
+            <li v-for="(fence, index) in layers.dyn.geofences" class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">{{ index }}</div>
+              <div class="custom-control custom-switch">
+                <input :id="'layers-dyn-geofences-'+index" type="checkbox" v-model="layers.dyn.geofences[index].show" class="custom-control-input" />
+                <label :for="'layers-dyn-geofences-'+index" class="custom-control-label"></label>
+              </div>
+            </li>
+            {% endraw %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="leaflet-sidebar-pane" id="settings">
+        <h1 class="leaflet-sidebar-header bg-dark">Settings<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">Cleanup</div>
+              <div class="custom-control custom-switch">
+                <input :id="settings-cleanup" type="checkbox" v-model="settings.cleanup" class="custom-control-input" />
+                <label :for="settings-cleanup" class="custom-control-label"></label>
+              </div>
+            </li>
+            <li class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">Raids visual radius</div>
+              <div class="custom-control custom-switch">
+                <input id="raidcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.raids" max="1100" class="form-control form-control-sm" />
+              </div>
+            </li>
+            <li class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">Mons visual radius</div>
+              <div class="custom-control custom-switch">
+                <input id="moncoordinateradius" type="number" v-model="settings.routes.coordinateRadius.mons" max="1100" class="form-control form-control-sm" />
+              </div>
+            </li>
+            <li class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">Quests visual radius</div>
+              <div class="custom-control custom-switch">
+                <input id="questcoordinateradius" type="number" v-model="settings.routes.coordinateRadius.quests" max="1100" class="form-control form-control-sm" />
+              </div>
+            </li>
+            <li class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">Map tiles</div>
+              <div class="form-group">
+                {% raw %}
+                <select class="form-control form-control-sm" v-model="settings.maptiles">
+                  <option v-for="(maptile, index) in maptiles" v-bind:value="index">{{ maptile.name }}</option>
+                </select>
+                {% endraw %}
+              </div>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="injectionModal" tabindex="-1" role="dialog" aria-labelledby="injectionModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="injectionModalLabel">Inject Location</h5>
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>
+
+        <div class="modal-body">
+          <div class="form-group">
+            <label for="injectLocation">Selected location</label>
+            <input type="text" id="injectLocation" class="form-control">
+          </div>
+
+          <div class="form-group">
+            <label for="injectWorker">Would you like to send a scanner to update this location?</label>
+            <select id="injectionWorker" class="form-control">
+              {% raw %}
+              <option v-for="worker in workers">
+                {{ worker.name }}
+              </option>
+              {% endraw %}
+            </select>
+          </div>
+
+          <div class="form-group">
+            <label for="injectionSleep">Extra sleep time (in seconds, optional):</label>
+            <input type="number" class="form-control" id="injectionSleep" value="0">
+          </div>
+          <p class="alert alert-info">Info: This is a rather experimental feature.</p>
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-dismiss="modal">No</button>
+          <button type="button" class="btn btn-primary" v-on:click="injectLocation" data-dismiss="modal">Yes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="map"></div>
 </div>
 {% endblock %}

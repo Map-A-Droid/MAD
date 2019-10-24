@@ -324,7 +324,7 @@
     ]
   },
   "26": {
-    "name": "Alolan Raichu",
+    "name": "Raichu",
     "rarity": "Ultra Rare",
     "level": 3,
     "cp": 16178,
@@ -1280,7 +1280,7 @@
     ]
   },
   "103": {
-    "name": "Alolan Exeggutor",
+    "name": "Exeggutor",
     "rarity": "Very Rare",
     "level": 2,
     "cp": 13839,
@@ -1306,7 +1306,7 @@
     ]
   },
   "105": {
-    "name": "Alolan Marowak",
+    "name": "Marowak",
     "rarity": "Very Rare",
     "level": 4,
     "cp": 20190,

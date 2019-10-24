@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'jobname', title: 'Filename / Process' },
+                { data: 'creation', title: 'Added' },
+                { data: 'type', title: 'Type' },
+                { data: '', title: '' }
+            ],
+            "columnDefs": [
+            {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+
+                        var jobtype = row.type;
+
+                        return jobtype.split(".")[1];
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                         var dellink = ""
+                        {% if origin %}
+                            var link = "<a href='install_file?jobname=" + row.jobname + "&origin={{origin}}&adb={{adb}}&type=" + row.type + "' class='confirm' title='Do you really want to start this job?'><img src='static/install.png' width='30'></a>";
+                        {% else %}
+                            var link = "<a href='pick_worker?jobname=" + row.jobname + "&type=" + row.type + "' title='Install on selected devices'><img src='static/filter.png' width='30'></a> <a href='install_file_all_devices?jobname=" + row.jobname + "&type=" + row.type + "' class='confirm' title='Do you really want to start this job on all devices?'><img src='static/install_all.png' width='30'></a>";
+                            if(row.type == "jobType.INSTALLATION") {
+                                dellink = " <a href='delete_file?filename=" + row.jobname + "' class='confirm' title='Do you really want to delete this file?'><img src='static/delete.png' width='30'></a>"
+                            }
+                        {% endif %}
+
+                        return link + ' ' + dellink;
+                    }
+                }
+            ],
+            "order": [[1, "desc"]],
+            "responsive": {{ responsive }},
+            "stateSave": true,
+            "stripeClasses": [ 'odd', 'even' ],
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_INSTALL_FILES_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_INSTALL_FILES_' + settings.sInstance ) )
+            }
+        });
+	}
+
+    $(document).ready(function () {
+        $('body').Aplus();
+        $("#navgyms").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "get_uploaded_files",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+</script>
+<style>
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>Uploaded Files / Existing Jobs</h2>
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		{% for message in messages %}
+		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+		{% endfor %}
+	  {% endif %}
+	{% endwith %}
+</p>
+<table id="show-data" class="table" style="width:100%;"></table>
+{% endblock %}

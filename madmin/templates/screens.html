@@ -36,7 +36,7 @@
         $("#navscreens").addClass("active");
         $.ajax({
             type: "GET",
-            url: "/get_screens",
+            url: "get_screens",
             success: function (result) {
                 setGrid('#show-data', result);
             }

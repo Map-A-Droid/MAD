@@ -1,26 +1,26 @@
-import logging
 import base64
-
-log = logging.getLogger(__name__)
-
+import re
+from utils.logging import logger
 
 def check_auth(authHeader, args, auths):
-    if "Basic" not in authHeader:
-        log.warning("Auth without Basic auth, aborting.")
+    valid = False
+    if auths is None:
         return False
     try:
-        base64raw = authHeader.replace("Basic", "").replace(" ", "")
-        decoded = str(base64.b64decode(base64raw))
-    except TypeError:
-        return False
-    decodedSplit = decoded.split(":")
-    # decoded.split(":")
-    if args is not None and auths is not None:
-        # check if user is present in ws_auth, if so also check pw
-        # god awful dirty replace... no idea why the b' is in there...
-        username = str(decodedSplit[0]).replace("b'", "")
-        passwordInConf = auths.get(username, None)
-        if passwordInConf is None or passwordInConf is not None and passwordInConf != decodedSplit[1].replace("'", ""):
-            log.warning("Auth attempt from %s failed" % str(authHeader))
-            return False
-    return True
+        auth_code = re.match(r'^Basic (\S+)$', authHeader)
+        decoded = base64.b64decode(auth_code.group(1)).decode('utf-8')
+        (username, password) = decoded.split(":", 1)
+        if auths[username] != password:
+            logger.warning("Auth attempt from {} failed", str(authHeader))
+        else:
+            valid = True
+    except AttributeError as err:
+        logger.warning("Auth without Basic auth, aborting.")
+    except KeyError:
+        logger.warning('Auth attempt from non-configured user {}', str(username))
+    except TypeError as err:
+        logger.warning('Unable to decode header {}', str(authHeader))
+    except ValueError as err:
+        logger.warning('Unable to determine auth parameters from {}', str(authHeader))
+    return valid
+
