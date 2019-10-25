@@ -16,7 +16,10 @@ class APIWalkerArea(apiHandler.ResourceHandler):
                     "empty": None,
                     "description": "Configured area for the walkerarea",
                     "lockonedit": False,
-                    "expected": str
+                    "expected": str,
+                    "uri": True,
+                    "data_source": "area",
+                    "uri_source": "api_area"
                 }
             },
             "walkertype": {

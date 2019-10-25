@@ -25,7 +25,10 @@ class APIWalker(apiHandler.ResourceHandler):
                     "empty": None,
                     "description": "Order of areas",
                     "lockonedit": False,
-                    "expected": list
+                    "expected": list,
+                    "uri": True,
+                    "data_source": "walkerarea",
+                    "uri_source": "api_walkerarea"
                 }
             }
         }
