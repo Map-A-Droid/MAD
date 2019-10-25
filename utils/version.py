@@ -4,8 +4,9 @@ import sys
 from utils.logging import logger
 import shutil
 from .convert_mapping import convert_mappings
+import re
 
-current_version = 14
+current_version = 15
 
 
 class MADVersion(object):
@@ -354,6 +355,12 @@ class MADVersion(object):
 
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(new_data, outfile, indent=4, sort_keys=True)
+        if self._version < 15:
+            with open(self._application_args.mappings, 'rb') as fh:
+                settings = json.load(fh)
+            self.__convert_to_id(settings)
+            with open(self._application_args.mappings, 'w') as outfile:
+                json.dump(settings, outfile, indent=4, sort_keys=True)
 
         self.set_version(current_version)
 
@@ -361,3 +368,17 @@ class MADVersion(object):
         output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)
+
+    def __convert_to_id(self, data):
+        regex = re.compile(r'/api/.*/\d+')
+        for key, val in data.items():
+            if type(val) is dict:
+                data[key] = self.__convert_to_id(val)
+            elif type(val) is list:
+                valid = []
+                for elem in val:
+                    valid.append(elem[elem.rfind('/')+1])
+                data[key] = valid
+            elif type(val) is str and regex.search(val):
+                data[key] = val[val.rfind('/')+1]
+        return data
