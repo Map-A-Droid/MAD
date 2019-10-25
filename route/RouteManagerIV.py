@@ -47,10 +47,10 @@ class RouteManagerIV(RouteManagerBase):
         # clustering is of no use for now
         pass
 
-    def __init__(self, db_wrapper, dbm, uri, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
+    def __init__(self, db_wrapper, dbm, device_id, coords, max_radius, max_coords_within_radius, path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, init=False,
                  name="unknown", settings=None, joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, uri=uri, coords=coords, max_radius=max_radius,
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, device_id=device_id, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,

@@ -263,7 +263,7 @@ class ResourceHandler(object):
         """ API call to update data """
         append = self.api_req.headers.get('X-Append')
         try:
-            self._data_manager.set_data(self.api_req.data, self.component, 'patch', identifier=identifier, append=append)
+            self._data_manager.set_data(self.component, 'patch', self.api_req.data, identifier=identifier, append=append)
         except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         else:
@@ -275,7 +275,7 @@ class ResourceHandler(object):
     def post(self, identifier, *args, **kwargs):
         mode = self.api_req.headers.get('X-Mode')
         try:
-            uri_key = self._data_manager.set_data(self.api_req.data, self.component, 'post', mode=mode)
+            uri_key = self._data_manager.set_data(self.component, 'post', self.api_req.data, mode=mode)
         except utils.data_manager.DataManagerInvalidMode as err:
             return apiResponse.APIResponse(self._logger, self.api_req)('Invalid mode specified: %s' % (err.mode,), 400)
         headers = {
@@ -288,7 +288,7 @@ class ResourceHandler(object):
     def put(self, identifier, *args, **kwargs):
         """ API call to replace an object """
         try:
-            self._data_manager.set_data(self.api_req.data, self.component, 'put', identifier=identifier,)
+            self._data_manager.set_data(self.component, 'put', self.api_req.data, identifier=identifier,)
         except KeyError:
             headers = {
                 'X-Status': 'Object does not exist to update'

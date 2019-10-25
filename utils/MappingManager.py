@@ -304,7 +304,7 @@ class MappingManager:
         thread_pool = ThreadPool(processes=4)
 
         areas_procs = {}
-        for uri, area in raw_areas.items():
+        for area_id, area in raw_areas.items():
             if area["geofence_included"] is None:
                 raise RuntimeError("Cannot work without geofence_included")
 
@@ -347,7 +347,7 @@ class MappingManager:
                 area['settings']['mon_ids_iv_raw'] = \
                     self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
 
-            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager, uri, None,
+            route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager, area_id, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
                                                                  mode_mapping.get(mode, {}).get("max_count", 99999999),
                                                                  area["geofence_included"],
@@ -376,7 +376,7 @@ class MappingManager:
                     logger.info("Initializing area {}", area["name"])
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
                                                                                      0, False))
-                    areas_procs[uri] = proc
+                    areas_procs[area_id] = proc
                 else:
                     logger.info(
                             "Init mode enabled. Going row-based for {}", str(area.get("name", "unknown")))
@@ -393,10 +393,10 @@ class MappingManager:
                     # gotta feed the route to routemanager... TODO: without recalc...
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
                                                                                      0, False))
-                    areas_procs[uri] = proc
+                    areas_procs[area_id] = proc
 
             area_dict["routemanager"] = route_manager
-            areas[uri] = area_dict
+            areas[area_id] = area_dict
 
         for area in areas_procs.keys():
             to_be_checked = areas_procs[area]
@@ -414,11 +414,12 @@ class MappingManager:
         raw_devices = self.__data_manager.get_data('device')
         raw_walkers = self.__data_manager.get_data('walker')
         raw_pools = self.__data_manager.get_data('devicesetting')
+        raw_walkerareas = self.__data_manager.get_data('walkerarea')
 
         if raw_devices is None:
             return devices
 
-        for uri, device in raw_devices.items():
+        for device_id, device in raw_devices.items():
             device_dict = {}
             device_dict.clear()
             walker = device["walker"]
@@ -433,8 +434,8 @@ class MappingManager:
 
             try:
                 workerareas = []
-                for uri in raw_walkers[walker].get('setup', []):
-                    workerareas.append(self.__data_manager.get_data(uri))
+                for walkerarea_id in raw_walkers[walker].get('setup', []):
+                    workerareas.append(raw_walkerareas[walkerarea_id])
                 device_dict["walker"] = workerareas
             except (KeyError, AttributeError):
                 device_dict["walker"] = []
@@ -479,7 +480,7 @@ class MappingManager:
             return None
 
         auths = {}
-        for uri, auth in raw_auths.items():
+        for auth_id, auth in raw_auths.items():
             auths[auth["username"]] = auth["password"]
         return auths
 
@@ -490,7 +491,7 @@ class MappingManager:
         if raw_areas is None:
             return areas
 
-        for area_uri, area in raw_areas.items():
+        for area_id, area in raw_areas.items():
             area_dict = {}
             area_dict['routecalc'] = area.get('routecalc', None)
             area_dict['mode'] = area['mode']
@@ -500,7 +501,7 @@ class MappingManager:
                 'geofence_excluded', None)
             area_dict['init'] = area.get('init', False)
             area_dict['name'] = area['name']
-            areas[area_uri] = area_dict
+            areas[area_id] = area_dict
         return areas
 
     def __get_latest_monlists(self) -> dict:
@@ -510,8 +511,8 @@ class MappingManager:
         if monivs is None:
             return monlist
 
-        for uri, elem in monivs.items():
-            monlist[uri] = elem.get('mon_ids_iv', None)
+        for moniv_id, elem in monivs.items():
+            monlist[moniv_id] = elem.get('mon_ids_iv', None)
         return monlist
 
     def update(self, full_lock=False):
@@ -599,7 +600,6 @@ class MappingManager:
     def get_all_devices(self):
         devices = []
         devices_raw = self.__data_manager.get_data('device')
-        for device_uri, device in devices_raw.items():
+        for device_id, device in devices_raw.items():
             devices.append(device['origin'])
-
         return devices
