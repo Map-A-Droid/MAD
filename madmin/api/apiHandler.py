@@ -1,3 +1,4 @@
+import collections
 import flask
 import json
 from madmin.functions import auth_required
@@ -168,6 +169,34 @@ class ResourceHandler(object):
             variables.append(field_data)
         return variables
 
+    def translate_config_for_response(self, config):
+        translation_config = config['fields']
+        if 'settings' in config:
+            translation_config['settings'] = config['settings']
+        return translation_config
+
+    def translate_data_for_response(self, data, config):
+        for key, val in config.items():
+            if key not in data:
+                continue
+            elif type(data[key]) == dict:
+                data[key] = self.translate_data_for_response(data[key], val)
+            try:
+                entity = val['settings']
+                if entity['uri'] != True:
+                    continue
+                uri = '%s/%%s' % (flask.url_for(entity['uri_source']),)
+                if type(data[key]) == list:
+                    valid = []
+                    for elem in data[key]:
+                        valid.append(uri % elem)
+                    data[key] = []
+                elif type(data[key]) == str:
+                    data[key] = uri % data[key]
+            except KeyError as err:
+                continue
+        return data
+
     # =====================================
     # ========= API Functionality =========
     # =====================================
@@ -206,19 +235,24 @@ class ResourceHandler(object):
             # Use an ordered dict so we can guarantee the order is returned per the class specification
             disp_field = self.api_req.params.get('display_field', self.default_sort)
             raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field)
+            api_response_data = collections.OrderedDict()
+            translation_config = self.translate_config_for_response(config)
+            key_translation = '%s/%%s' % (flask.url_for('api_%s' % (self.component,)))
+            for key, val in raw_data.items():
+                api_response_data[key_translation % key] = self.translate_data_for_response(val, translation_config)
             if hide_resource:
-                response_data = raw_data
+                response_data = api_response_data
             else:
                 response_data = {
                     'resource': self.get_resource_info(config),
-                    'results': raw_data
+                    'results': api_response_data
                 }
             return apiResponse.APIResponse(self._logger, self.api_req)(response_data, 200)
         else:
             if flask.request.method == 'DELETE':
                 return self.delete(identifier)
             elif flask.request.method == 'GET':
-                return self.get(identifier)
+                return self.get(identifier, config=config)
             # Validate incoming data and return any issues
             (self.api_req.data, invalid, missing) = self.format_data(self.api_req.data, config, flask.request.method)
             errors = {}
@@ -254,8 +288,12 @@ class ResourceHandler(object):
 
     def get(self, identifier, *args, **kwargs):
         """ API call to get data """
+        config = kwargs.get('config')
         try:
-            return apiResponse.APIResponse(self._logger, self.api_req)(self._data_manager.get_data(self.component, identifier=identifier), 200)
+            data = self._data_manager.get_data(self.component, identifier=identifier)
+            translation_config = self.translate_config_for_response(config)
+            self.translate_data_for_response(data, translation_config)
+            return apiResponse.APIResponse(self._logger, self.api_req)(data, 200)
         except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
 
