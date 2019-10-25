@@ -2,6 +2,7 @@ import collections
 import flask
 import json
 from madmin.functions import auth_required
+import re
 from . import apiResponse, apiRequest, apiException
 import utils.data_manager
 
@@ -45,42 +46,46 @@ class ResourceHandler(object):
 
     def format_data(self, data, config, operation):
         save_data = {}
-        invalid = []
-        missing = []
+        invalid_fields = []
+        missing_fields = []
+        invalid_uris = []
         sections = ['fields', 'settings']
         for section in sections:
             if section == 'fields':
-                (tmp_save, tmp_inv, tmp_missing) = self.format_section(data, config[section], operation)
+                (tmp_save, tmp_inv, tmp_missing, tmp_uri) = self.format_section(data, config[section], operation)
                 for key, val in tmp_save.items():
                     save_data[key] = val
             else:
                 try:
-                    (tmp_save, tmp_inv, tmp_missing) = self.format_section(data[section], config[section], operation)
+                    (tmp_save, tmp_inv, tmp_missing, tmp_uri) = self.format_section(data[section], config[section], operation)
                     save_data[section] = tmp_save
                 except KeyError:
                     continue
-            invalid += tmp_inv
-            missing += tmp_missing
-        return (save_data, invalid, missing)
+            invalid_fields += tmp_inv
+            missing_fields += tmp_missing
+            invalid_uris += tmp_uri
+        return (save_data, invalid_fields, missing_fields, invalid_uris)
 
     def format_section(self, data, config, operation):
         save_data = {}
-        invalid = []
-        missing = []
+        invalid_fields = []
+        missing_fields = []
+        invalid_uris = []
         for key, entry_def in config.items():
             try:
                 val = data[key]
             except KeyError:
                 try:
                     if entry_def['settings']['require'] == True and operation == 'POST':
-                        missing.append(key)
+                        missing_fields.append(key)
                 except:
                     pass
                 continue
             if type(val) is dict:
-                (save_data[key], rec_invalid, rec_missing) = self.format_data(val, current[key], operation)
-                invalid += rec_invalid
-                missing += rec_missing
+                (save_data[key], rec_invalid, rec_missing, rec_uri) = self.format_data(val, current[key], operation)
+                invalid_fields += rec_invalid
+                missing_fields += rec_missing
+                invalid_uris += rec_uri
             else:
                 expected = entry_def['settings'].get('expected', str)
                 none_val = entry_def['settings'].get('empty', '')
@@ -89,12 +94,39 @@ class ResourceHandler(object):
                     if (val is None or (val and 'len' in dir(val) and len(val) == 0)):
                         if operation == 'POST':
                             if entry_def['settings']['require'] == True:
-                                missing.append(key)
+                                missing_fields.append(key)
                             continue
                         else:
                             formated_val = none_val
                     else:
                         formated_val = self.format_value(val, expected, none_val)
+                    try:
+                        if entry_def['settings']['uri'] == True and formated_val != none_val:
+                            regex = re.compile(r'%s/(\d+)' % (flask.url_for(entry_def['settings']['uri_source'])))
+                            check = formated_val
+                            if type(formated_val) is str:
+                                check = [formated_val]
+                            uri_valid = []
+                            uri_invalid = []
+                            for elem in check:
+                                match = regex.match(formated_val)
+                                if not match:
+                                    uri_invalid.append(elem)
+                                else:
+                                    identifier = str(match.group(1))
+                                    try:
+                                        lookup = self._data_manager.get_data(entry_def['settings']['data_source'], identifier=identifier)
+                                        uri_valid.append(identifier)
+                                    except utils.data_manager.DataManagerInvalidModeUnknownIdentifier:
+                                        uri_invalid.append(elem)
+                                if uri_invalid:
+                                    invalid_uris.append(uri_invalid)
+                            if type(formated_val) is str and len(uri_valid) > 0:
+                                formated_val = uri_valid.pop(0)
+                            elif type(formated_val) is list:
+                                formated_val = uri_valid
+                    except KeyError:
+                        pass
                     save_data[key] = formated_val
                 except:
                     self._logger.debug4('Unable to convert key {} [{}]', key, val)
@@ -105,8 +137,8 @@ class ResourceHandler(object):
                         list: 'Comma-delimited list',
                         bool: 'True|False'
                     }
-                    invalid.append('%s:%s' % (key, user_readable_types[expected]))
-        return (save_data, invalid, missing)
+                    invalid_fields.append('%s:%s' % (key, user_readable_types[expected]))
+        return (save_data, invalid_fields, missing_fields, invalid_uris)
 
     def format_value(self, value, expected, none_val):
         if expected == bool:
@@ -197,6 +229,9 @@ class ResourceHandler(object):
                 continue
         return data
 
+    def validate_uri(self, section, identifier):
+        pass
+
     # =====================================
     # ========= API Functionality =========
     # =====================================
@@ -254,12 +289,14 @@ class ResourceHandler(object):
             elif flask.request.method == 'GET':
                 return self.get(identifier, config=config)
             # Validate incoming data and return any issues
-            (self.api_req.data, invalid, missing) = self.format_data(self.api_req.data, config, flask.request.method)
+            (self.api_req.data, invalid, missing, uris) = self.format_data(self.api_req.data, config, flask.request.method)
             errors = {}
             if missing:
                 errors['missing'] = missing
             if invalid:
                 errors['invalid'] = invalid
+            if uris:
+                errors['Invalid URIs'] = uris
             if errors:
                 return apiResponse.APIResponse(self._logger, self.api_req)(errors, 422)
             try:
@@ -294,6 +331,8 @@ class ResourceHandler(object):
             translation_config = self.translate_config_for_response(config)
             self.translate_data_for_response(data, translation_config)
             return apiResponse.APIResponse(self._logger, self.api_req)(data, 200)
+        except utils.data_manager.DataManagerInvalidModeUnknownIdentifier:
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         except KeyError:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
 

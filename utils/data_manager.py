@@ -7,17 +7,17 @@ import six
 class DataManagerException(Exception):
     pass
 
-class DataManagerDependencyError(Exception):
+class DataManagerDependencyError(DataManagerException):
     def __init__(self, dependencies):
         self.dependencies = dependencies
         super(DataManagerDependencyError, self).__init__(dependencies)
 
-class DataManagerInvalidMode(Exception):
+class DataManagerInvalidMode(DataManagerException):
     def __init__(self, mode):
         self.mode = mode
         super(DataManagerInvalidMode, self).__init__(mode)
 
-class UnknownIdentifier(DataManagerException):
+class DataManagerInvalidModeUnknownIdentifier(DataManagerException):
     pass
 
 class DataManager(object):
@@ -90,13 +90,13 @@ class DataManager(object):
             return None
         except KeyError:
             self._logger.debug('Data for {},{} not found in configuration file', location, identifier)
-            return None
+            raise DataManagerInvalidModeUnknownIdentifier()
         try:
             if identifier is not None:
                 return data[str(identifier)]
         except KeyError:
             self._logger.debug('Identifier {} not found in {}', identifier, location)
-            return None
+            raise DataManagerInvalidModeUnknownIdentifier()
         if identifier is None and kwargs.get('uri', True):
             disp_field = kwargs.get('display_field', self.get_api_attribute(location, 'default_sort'))
             try:
