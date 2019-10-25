@@ -130,7 +130,7 @@ class RouteManagerBase(ABC):
         self._check_routepools_thread.start()
 
     def join_threads(self):
-        logger.info("Join Route Threads")
+        logger.info("Shutdown Route Threads")
         if self._update_prio_queue_thread is not None:
             while self._update_prio_queue_thread.isAlive():
                 time.sleep(1)
@@ -146,12 +146,12 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
         self._stop_update_thread.clear()
-        logger.info("Done joining Route Threads")
+        logger.info("Shutdown Route Threads completed")
 
     def stop_routemanager(self, joinwithqueue=True):
         # call routetype stoppper
         if self._joinqueue is not None and joinwithqueue:
-            logger.info("Adding route {} to joinqueue".format(str(self.name)))
+            logger.info("Adding route {} to queue".format(str(self.name)))
             self._joinqueue.set_queue(self.name)
 
         self._quit_route()

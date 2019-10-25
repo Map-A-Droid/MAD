@@ -93,7 +93,7 @@ class WebsocketServer(object):
                 logger.info("Trying to join worker thread")
                 next_item.join(10)
                 if next_item.isAlive():
-                    logger.error("Error while joining worker thread - requeue it")
+                    logger.debug("Error while joining worker thread - requeue it")
                     self.__worker_shutdown_queue.put(next_item)
                 self.__worker_shutdown_queue.task_done()
                 logger.info("Done joining worker thread")
@@ -207,7 +207,7 @@ class WebsocketServer(object):
                     str(origin))
                 self.__current_users.get(origin)[1].stop_worker()
                 ## todo: do this better :D
-                logger.info("Old worker thread is still alive - waiting 20 seconds")
+                logger.debug("Old worker thread is still alive - waiting 20 seconds")
                 await asyncio.sleep(20)
                 logger.info("Reconnect ...")
                 return
