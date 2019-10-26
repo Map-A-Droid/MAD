@@ -134,7 +134,7 @@ class DataManager(object):
                     continue
                 failure = {
                     'uri': walkerarea_id,
-                    'name': walkerarea['walkertext']
+                    'name': walkerarea['walkertext'] if 'walkertext' in walkerarea else 'Non-Labeled Walker Area'
                 }
                 dependency_failures.append(failure)
             if dependency_failures:
