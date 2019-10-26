@@ -93,7 +93,7 @@ class WebsocketServer(object):
                 logger.info("Trying to join worker thread")
                 next_item.join(10)
                 if next_item.isAlive():
-                    logger.error("Error while joining worker thread - requeue it")
+                    logger.debug("Error while joining worker thread - requeue it")
                     self.__worker_shutdown_queue.put(next_item)
                 self.__worker_shutdown_queue.task_done()
                 logger.info("Done joining worker thread")
@@ -181,7 +181,8 @@ class WebsocketServer(object):
             return False
 
         if origin not in self.__mapping_manager.get_all_devicemappings().keys():
-            logger.warning("Register attempt of unknown origin: {}. Have you forgot to hit 'APPLY SETTINGS' in MADmin?".format(origin))
+            logger.warning("Register attempt of unknown origin: {}. "
+                           "Have you forgot to hit 'APPLY SETTINGS' in MADmin?".format(origin))
             return False
 
         if origin in self.__users_connecting:
@@ -206,7 +207,7 @@ class WebsocketServer(object):
                     str(origin))
                 self.__current_users.get(origin)[1].stop_worker()
                 ## todo: do this better :D
-                logger.info("Old worker thread is still alive - waiting 20 seconds")
+                logger.debug("Old worker thread is still alive - waiting 20 seconds")
                 await asyncio.sleep(20)
                 logger.info("Reconnect ...")
                 return
@@ -353,10 +354,8 @@ class WebsocketServer(object):
         except WrongAreaInWalker:
             logger.error('Unknown Area in Walker settings - check config')
             await websocket_client_connection.close()
-        except Exception as e:
-            exc_type, exc_value, exc_trace = sys.exc_info()
-            logger.error("Other unhandled exception during register: {}\n{}, {}".format(e.with_traceback(None),
-                                                                                        exc_value, str(e)))
+        except Exception:
+            logger.opt(exception=True).error("Other unhandled exception during registration of {}.", origin)
             await websocket_client_connection.close()
         finally:
             async with self.__users_mutex:

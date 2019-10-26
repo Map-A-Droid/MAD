@@ -130,7 +130,7 @@ class RouteManagerBase(ABC):
         self._check_routepools_thread.start()
 
     def join_threads(self):
-        logger.info("Join Route Threads")
+        logger.info("Shutdown Route Threads")
         if self._update_prio_queue_thread is not None:
             while self._update_prio_queue_thread.isAlive():
                 time.sleep(1)
@@ -146,14 +146,17 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
         self._stop_update_thread.clear()
-        logger.info("Done joining Route Threads")
+        logger.info("Shutdown Route Threads completed")
 
-    def stop_routemanager(self):
+    def stop_routemanager(self, joinwithqueue=True):
         # call routetype stoppper
+        if self._joinqueue is not None and joinwithqueue:
+            logger.info("Adding route {} to queue".format(str(self.name)))
+            self._joinqueue.set_queue(self.name)
+
         self._quit_route()
         self._stop_update_thread.set()
 
-        if self._joinqueue is not None: self._joinqueue.set_queue(self.name)
         logger.info("Shutdown of route {} completed".format(str(self.name)))
 
     def _init_route_queue(self):
@@ -234,8 +237,9 @@ class RouteManagerBase(ABC):
         return self._is_started
 
     def _start_priority_queue(self):
-        if (self._update_prio_queue_thread is None and (self.delay_after_timestamp_prio is not None or self.mode ==
-                                                        "iv_mitm") and not self.mode == "pokestops"):
+        logger.info("Try to activate PrioQ thread for route {}".format(str(self.name)))
+        if (self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
+            logger.info("PrioQ thread for route {} could be activate".format(str(self.name)))
             self._prio_queue = []
             if self.mode not in ["iv_mitm", "pokestops"]:
                 self.clustering_helper = ClusteringHelper(self._max_radius,
@@ -245,6 +249,8 @@ class RouteManagerBase(ABC):
                                                     target=self._update_priority_queue_loop)
             self._update_prio_queue_thread.daemon = True
             self._update_prio_queue_thread.start()
+        else:
+            logger.info("Cannot activate Prio Q - maybe wrong mode or delay_after_prio_event is null")
 
     # list_coords is a numpy array of arrays!
     def add_coords_numpy(self, list_coords: np.ndarray):

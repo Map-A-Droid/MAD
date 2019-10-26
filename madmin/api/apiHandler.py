@@ -252,6 +252,7 @@ class ResourceHandler(object):
         if mode is None:
             mode = self.api_req.params.get('mode', None)
         config = self.get_required_configuration(mode=mode)
+        resource_info = None
         if identifier is None and flask.request.method != 'POST':
             try:
                 fetch_all = int(self.api_req.params.get('fetch_all'))
@@ -263,8 +264,8 @@ class ResourceHandler(object):
                 hide_resource = 0
             if self.component == 'area':
                 if mode is None:
-                    return apiResponse.APIResponse(self._logger, self.api_req)('A mode must be specified', 400)
-                if mode not in self.configuration:
+                    resource_info = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
+                elif mode not in self.configuration:
                     msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
                     return apiResponse.APIResponse(self._logger, self.api_req)(msg, 400)
             # Use an ordered dict so we can guarantee the order is returned per the class specification
@@ -278,8 +279,10 @@ class ResourceHandler(object):
             if hide_resource:
                 response_data = api_response_data
             else:
+                if not resource_info:
+                    resource_info = self.get_resource_info(config)
                 response_data = {
-                    'resource': self.get_resource_info(config),
+                    'resource': resource_info,
                     'results': api_response_data
                 }
             return apiResponse.APIResponse(self._logger, self.api_req)(response_data, 200)
