@@ -54,7 +54,7 @@ class RouteManagerBase(ABC):
         self.init: bool = init
         self.name: str = name
         self._data_manager = dbm
-        self.device_id = uri
+        self.device_id = device_id
         self._coords_unstructured: List[Location] = coords
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
             path_to_include_geofence, path_to_exclude_geofence)
