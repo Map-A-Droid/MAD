@@ -9,7 +9,7 @@
 <script>
 $(document).ready(function () {
     $("select").change(function() {
-        var uri = '{{ base_uri }}/'+ $(this).data('identifier').substr($(this).data('identifier').lastIndexOf('/')+1);
+        var uri = '{{ base_uri }}/'+ $(this).data('identifier');
         var val = $(this).children("option:selected").attr('name');
         var patch_data = {"walker": val};
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
@@ -26,10 +26,8 @@ $(document).ready(function () {
         if(confirm('Are you sure you want to delete this resource?')) {
             var elem =  $(this);
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting a {{ subtab }}...</h2>' });
-            console.log('{{ base_uri }}');
-            console.log($(this).data('identifier'));
             $.ajax({
-                url : '{{ base_uri }}/'+ $(this).data('identifier').substr($(this).data('identifier').lastIndexOf('/')+1),
+                url : '{{ base_uri }}/'+ $(this).data('identifier'),
                 type : 'DELETE',
                 success: function(data, status, xhr) {
                     if(xhr.status == 202) {
@@ -110,7 +108,7 @@ $(document).ready(function () {
           <td class="align-middle">
             <select class="form-control form-control-sm" data-identifier="{{ dev_uri }}">
             {% for walker_uri, walker in walkers.items() %}
-             <option name="{{ walker_uri }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
+             <option name="{{ url_for('api_walker') + '/'+ walker_uri }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
             {% endfor %}
             </select>
           </td>

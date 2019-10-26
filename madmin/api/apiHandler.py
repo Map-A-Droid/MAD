@@ -109,7 +109,7 @@ class ResourceHandler(object):
                             uri_valid = []
                             uri_invalid = []
                             for elem in check:
-                                match = regex.match(formated_val)
+                                match = regex.match(elem)
                                 if not match:
                                     uri_invalid.append(elem)
                                 else:

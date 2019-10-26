@@ -106,8 +106,8 @@ $(document).ready(function () {
     <div class="form-group">
       <label for="walker">walker</label>
       <select class="form-control" name="walker">
-        {% for walker_uri, walker in walkers.items() %}
-         <option value="{{ walker_uri }}" {{ 'selected=selected' if element.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
+        {% for walker_id, walker in walkers.items() %}
+         <option value="{{ url_for('api_walker') + '/'+ walker_id }}" {{ 'selected=selected' if element.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
         {% endfor %}
       </select>
       <small class="form-text text-muted">Walker for this device</small>
@@ -118,7 +118,7 @@ $(document).ready(function () {
         <option>None</option>
         {% if pools is not none %}
         {% for poolid, pool in pools.items() %}
-         <option value="{{ poolid }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
+         <option value="{{ url_for('api_devicesetting') + '/'+ poolid }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
         {% endfor %}
         {% endif %}
       </select>

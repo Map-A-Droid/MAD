@@ -13,7 +13,7 @@ $(document).ready(function () {
             var elem =  $(this);
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting a {{ subtab }}...</h2>' });
             $.ajax({
-                url : '{{ url_for('api_auth') }}/'+ $(this).data('identifier').substr($(this).data('identifier').lastIndexOf('/')+1),
+                url : '{{ base_uri }}/'+ $(this).data('identifier'),
                 type : 'DELETE',
                 success: function(data, status, xhr) {
                     if(xhr.status == 202) {

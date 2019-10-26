@@ -97,7 +97,7 @@ class DataManager(object):
         except KeyError:
             self._logger.debug('Identifier {} not found in {}', identifier, location)
             raise DataManagerInvalidModeUnknownIdentifier()
-        if identifier is None and kwargs.get('uri', True):
+        if identifier is None:
             disp_field = kwargs.get('display_field', self.get_api_attribute(location, 'default_sort'))
             try:
                 data = self.get_sorted_data(data, disp_field, location, fetch_all)
