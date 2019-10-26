@@ -124,7 +124,7 @@ class DataManager(object):
             sorted_keys = list(data.keys())
         for key in sorted_keys:
             if fetch_all or display is None:
-                ordered_data[self.generate_uri(location, key)] = data[key]
+                ordered_data[key] = data[key]
             else:
                 ordered_data[key] = data[key][display]
         return ordered_data
