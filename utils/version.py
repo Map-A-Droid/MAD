@@ -31,6 +31,14 @@ class MADVersion(object):
             self.start_update()
 
     def start_update(self):
+        # BACKUP ALL THE THINGS! if we need to update
+        if self._version != current_version:
+            target = '%s.%s.bk' % (self._application_args.mappings, self._version)
+            try:
+                shutil.copy(self._application_args.mappings, target)
+            except IOError:
+                logger.exception('Unable to clone configuration. Exiting')
+                sys.exit(1)
 
         if self._version < 1:
             logger.info('Execute Update for Version 1')
