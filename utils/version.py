@@ -385,7 +385,10 @@ class MADVersion(object):
             elif type(val) is list:
                 valid = []
                 for elem in val:
-                    valid.append(elem[elem.rfind('/')+1])
+                    if type(elem) is str:
+                        valid.append(elem[elem.rfind('/')+1])
+                    else:
+                        valid.append(elem)
                 data[key] = valid
             elif type(val) is str and regex.search(val):
                 data[key] = val[val.rfind('/')+1]
