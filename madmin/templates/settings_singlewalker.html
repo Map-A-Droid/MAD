@@ -154,7 +154,7 @@
                             <td class='walkervalue' data-save='{{ area.walkervalue }}'>{{ area.walkervalue }}</td>
                             <td class='walkermax' data-save='{{ area.walkermax }}'>{{ area.walkermax }}</td>
                             <td>
-                                <a href="{{ url_for('settings_walker_area', id=uri, walkerarea=walkerarea_uri) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+                                <a href="{{ url_for('settings_walker_area', id=identifier, walkerarea=walkerarea_uri) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
                                 <button type="button" class="btn btn-danger btn-sm delete" data-identifier="{{ loop.index }}"><i class="fas fa-trash-alt"></i></button>
                             </td>
                         </tr>
