@@ -40,11 +40,11 @@ class RouteManagerQuests(RouteManagerBase):
 
         self._init_route_queue()
 
-    def __init__(self, db_wrapper: DbWrapperBase, dbm, device_id, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapperBase, dbm, area_id, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", joinqueue = None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, device_id=device_id, coords=coords, max_radius=max_radius,
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
