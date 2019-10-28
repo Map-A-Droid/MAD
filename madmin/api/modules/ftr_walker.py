@@ -22,7 +22,7 @@ class APIWalker(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "list",
                     "require": False,
-                    "empty": None,
+                    "empty": [],
                     "description": "Order of areas",
                     "lockonedit": False,
                     "expected": list

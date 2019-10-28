@@ -49,7 +49,7 @@ class ResourceHandler(object):
         sections = ['fields', 'settings']
         for section in sections:
             if section == 'fields':
-                (tmp_save, tmp_inv, tmp_missing) = self.format_section(data, config[section], operation)
+                (tmp_save, tmp_inv, tmp_missing) = self.format_section(data, config[section], operation, keep_empty_values=True)
                 for key, val in tmp_save.items():
                     save_data[key] = val
             else:
@@ -62,7 +62,7 @@ class ResourceHandler(object):
             missing += tmp_missing
         return (save_data, invalid, missing)
 
-    def format_section(self, data, config, operation):
+    def format_section(self, data, config, operation, keep_empty_values=False):
         save_data = {}
         invalid = []
         missing = []
@@ -84,14 +84,26 @@ class ResourceHandler(object):
                 expected = entry_def['settings'].get('expected', str)
                 none_val = entry_def['settings'].get('empty', '')
                 try:
-                    # Skip empty values on POST.  If its not a POST, we want it removed from the recursive update
-                    if (val is None or (val and 'len' in dir(val) and len(val) == 0)):
-                        if operation in ['POST', 'PUT']:
+                    # Determine if it is empty
+                    if (type(val) in [str]):
+                        if len(val) == 0:
                             if entry_def['settings']['require'] == True:
                                 missing.append(key)
-                            continue
+                                continue
+                            elif keep_empty_values:
+                                formated_val = none_val
+                            else:
+                                continue
                         else:
+                            formated_val = self.format_value(val, expected, none_val)
+                    elif val is None:
+                        if entry_def['settings']['require'] == True:
+                            missing.append(key)
+                            continue
+                        elif keep_empty_values:
                             formated_val = none_val
+                        else:
+                            continue
                     else:
                         formated_val = self.format_value(val, expected, none_val)
                     save_data[key] = formated_val
