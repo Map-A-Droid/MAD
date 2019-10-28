@@ -80,7 +80,8 @@
         float: left;
         text-align: center;
     }
-
+  
+    .dialog-on-top { z-index: 2001 !important; }
 
     @media only screen and (max-width: 600px) {
     .screen {
@@ -131,6 +132,7 @@ $("a#quit").bind("click", function(event) {
         resizable: false,
         height: "auto",
         title: origin,
+        dialogClass: "dialog-on-top",
         width: "auto",
         modal: true,
         buttons: [
