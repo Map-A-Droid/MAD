@@ -642,7 +642,7 @@ class WorkerBase(ABC):
                     break
 
                 if self._loginerrorcounter == 2:
-                    logger.error('Couldn not login again - (clearing game data + restarting device')
+                    logger.error('Could not login again - (clearing game data + restarting device')
                     self._stop_pogo()
                     self._communicator.clearAppCache("com.nianticlabs.pokemongo")
                     if self.get_devicesettings_value('clear_game_data', False):
