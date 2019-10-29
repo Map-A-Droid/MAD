@@ -166,7 +166,7 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Device scontrol", title="Device control")
+        return render_template('phonescreens.html', editform=screens_phone, header="Device control", title="Device control")
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):
@@ -307,7 +307,7 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        self._logger.info('MADmin: Restart Device ({})', str(origin))
+        self._logger.info('MADmin: Restart device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                         adb, origin,"am broadcast -a android.intent.action.BOOT_COMPLETED")):
@@ -324,7 +324,7 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        self._logger.info('MADmin: Clear game data for Device ({})', str(origin))
+        self._logger.info('MADmin: Clear game data for device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                         adb, origin, "pm clear com.nianticlabs.pokemongo")):
