@@ -305,7 +305,7 @@ class ResourceHandler(object):
             'X-Uri': uri_key,
             'X-Status': 'Successfully created the object'
         }
-        return apiResponse.APIResponse(self._logger, self.api_req)(uri_key, 201, headers=headers)
+        return apiResponse.APIResponse(self._logger, self.api_req)(self.api_req.data, 201, headers=headers)
 
     def put(self, identifier, *args, **kwargs):
         """ API call to replace an object """
