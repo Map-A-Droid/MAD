@@ -1375,3 +1375,55 @@ class RmWrapper(DbWrapperBase):
         logger.debug('Final query for shiny_stats_global_v2: {}', query)
         res = self.execute(query, data)
         return res
+
+    def get_stops_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+        stops = {}
+
+        # base query to fetch stops
+        query = (
+            "SELECT pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
+            "active_fort_modifier, last_updated, name, image, incident_start, incident_expiration, "
+            "incident_grunt_type "
+            "FROM pokestop "
+        )
+
+        query_where = (
+            " WHERE (latitude >= {} AND longitude >= {} "
+            " AND latitude <= {} AND longitude <= {}) "
+        ).format(swLat, swLon, neLat, neLon)
+
+        if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
+            oquery_where = (
+                " AND NOT (latitude >= {} AND longitude >= {} "
+                " AND latitude <= {} AND longitude <= {}) "
+            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+
+            query_where = query_where + oquery_where
+
+        elif timestamp is not None:
+            tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
+            oquery_where = " AND last_updated >= '{}' ".format(tsdt)
+            query_where = query_where + oquery_where
+
+        res = self.execute(query + query_where)
+
+        for (stop_id, enabled, latitude, longitude, last_modified, lure_expiration,
+                active_fort_modifier, last_updated, name, image, incident_start,
+                incident_expiration, incident_grunt_type) in res:
+
+            stops[stop_id] = {
+                "enabled": enabled,
+                "latitude": latitude,
+                "longitude": longitude,
+                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
+                "lure_expiration": int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()) if lure_expiration is not None else None,
+                "active_fort_modifier": active_fort_modifier,
+                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()) if last_updated is not None else None,
+                "name": name,
+                "image": image,
+                "incident_start": int(incident_start.replace(tzinfo=timezone.utc).timestamp()) if incident_start is not None else None,
+                "incident_expiration": int(incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if incident_expiration is not None else None,
+                "incident_grunt_type": incident_grunt_type
+            }
+
+        return stops

@@ -1406,3 +1406,13 @@ class DbWrapperBase(ABC):
         query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
         logger.debug(query)
         self.execute(query, commit=True)
+
+    def running_mysql_modes(self):
+        blacklisted_modes = "STRICT_TRANS_TABLES NO_ZERO_DATE NO_ZERO_IN_DATE ONLY_FULL_GROUP_BY"
+        query = "SELECT @@GLOBAL.sql_mode"
+        res = self.execute(query)[0][0]
+        detected_wrong_modes = []
+        for mode in blacklisted_modes.split():
+            if mode in res:
+                detected_wrong_modes.append(mode)
+        return detected_wrong_modes
