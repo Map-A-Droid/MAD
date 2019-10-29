@@ -444,7 +444,7 @@ class deviceUpdater(object):
                 return returning if 'KO' not in returning else False
             return False
         except Exception as e:
-            logger.error('Error while getting response from phone - Reason: {}'
+            logger.error('Error while getting response from device - Reason: {}'
                          .format(str(e)))
         return False
 

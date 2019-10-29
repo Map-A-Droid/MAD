@@ -47,7 +47,7 @@ class control(object):
 
     def add_route(self):
         routes = [
-            ("/phonecontrol", self.get_phonescreens),
+            ("/devicecontrol", self.get_phonescreens),
             ("/take_screenshot", self.take_screenshot),
             ("/click_screenshot", self.click_screenshot),
             ("/swipe_screenshot", self.swipe_screenshot),
@@ -166,7 +166,7 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
+        return render_template('phonescreens.html', editform=screens_phone, header="Device control", title="Device control")
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):
@@ -307,7 +307,7 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        self._logger.info('MADmin: Restart Phone ({})', str(origin))
+        self._logger.info('MADmin: Restart device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                         adb, origin,"am broadcast -a android.intent.action.BOOT_COMPLETED")):
@@ -324,7 +324,7 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        self._logger.info('MADmin: Clear game data for phone ({})', str(origin))
+        self._logger.info('MADmin: Clear game data for device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                         adb, origin, "pm clear com.nianticlabs.pokemongo")):

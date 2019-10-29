@@ -48,7 +48,7 @@ def uploaded_files(datetimeformat, jobs):
     for command in jobs:
         files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})
 
-    processJson = ({'jobname': 'Reboot-Phone', 'creation': '', 'type': 'jobType.REBOOT'})
+    processJson = ({'jobname': 'Reboot-Device', 'creation': '', 'type': 'jobType.REBOOT'})
     files.append(processJson)
     processJson = ({'jobname': 'Restart-Pogo', 'creation': '', 'type': 'jobType.RESTART'})
     files.append(processJson)
