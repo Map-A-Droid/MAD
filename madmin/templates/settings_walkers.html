@@ -88,6 +88,7 @@ $(document).ready(function () {
             </p>
           </td>
           <td class="text-right align-middle">
+              <a href="{{ redirect }}?id={{ walker_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
             <button data-identifier='{{ walker_uri }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
           </td>
         </tr>
