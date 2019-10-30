@@ -13,8 +13,8 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.2.1/css/bootstrap.min.css" integrity="sha384-GJzZqFGwb1QTTN6wy59ffF1BuGJpLSa9DkKMp0DgiMDm4iYMj70gZWKYbI706tWS" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" integrity="sha384-1UXhfqyOyO+W+XsGhiIFwwD3hsaHRz2XDGMle3b8bXPH5+cMsXVShDoHA3AH/y/p" crossorigin="anonymous">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.11.2/css/all.css" integrity="sha256-46qynGAkLSFpVbEBog43gvNhfrOj+BmwXdxFgVK/Kvc=" crossorigin="anonymous" />
-    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
-    <link rel="icon" href="{{ url_for('static', filename='favicon.ico').lstrip('/') }}" type="image/x-icon">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+    <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
     {% block header %}{% endblock %}
     {% if not pub %}
     <style>
@@ -32,7 +32,7 @@
     {% if not pub %}
     <nav class="navbar navbar-dark bg-dark fixed-top navbar-expand-lg">
         <div class="container">
-          <a class="navbar-brand" href="/">
+          <a class="navbar-brand" href="{{ url_for('root') }}">
               <img src="{{ url_for('static', filename='mad_banner_trans.png') }}" class="brandimg">
           </a>
           <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
@@ -41,41 +41,41 @@
           <div id="navbarNav" class="navbar-collapse collapse">
               <ul class="navbar-nav mr-auto">
                   <li class="nav-item">
-                    <a href="/map" class="nav-link">Map</a>
+                    <a href="{{ url_for('map') }}" class="nav-link">Map</a>
                   </li>
                   <li class="nav-item">
-                    <a href="/quests" class="nav-link">Quests</a>
+                    <a href="{{ url_for('quest') }}" class="nav-link">Quests</a>
                   </li>
                   <li class="nav-item">
-                    <a href="/settings/devices" class="nav-link">Settings</a>
+                    <a href="{{ url_for('settings_devices') }}" class="nav-link">Settings</a>
                   </li>
                   <li class="nav-item">
-                    <a href="/status" class="nav-link">Status</a>
+                    <a href="{{ url_for('status') }}" class="nav-link">Status</a>
                   </li>
                   <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="statistics" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Statistics
                     </a>
                       <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                      <a href="/statistics" class="dropdown-item">Global Stats</a>
-                      <a href="/statistics_mon" class="dropdown-item">Mon Stats</a>
-                      <a href="/statistics_shiny" class="dropdown-item">Shiny Stats</a>
-                      <a href="/statistics_spawns" class="dropdown-item">Spawnpoint Stats</a>
+                      <a href="{{ url_for('statistics') }}" class="dropdown-item">Global Stats</a>
+                      <a href="{{ url_for('statistics_mon') }}" class="dropdown-item">Mon Stats</a>
+                      <a href="{{ url_for('statistics_shiny') }}" class="dropdown-item">Shiny Stats</a>
+                      <a href="{{ url_for('statistics_spawns') }}" class="dropdown-item">Spawnpoint Stats</a>
                     </div>
                   </li>
                   <li class="nav-item">
-                    <a href="/devicecontrol" class="nav-link">Device Control</a>
+                    <a href="{{ url_for('get_phonescreens') }}" class="nav-link">Phonecontrol</a>
                   </li>
                   <li class="nav-item dropdown">
                       <a class="nav-link dropdown-toggle" href="uploaded_files" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                         Jobs
                     </a>
                       <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
-                      <a href="/uploaded_files" class="dropdown-item">Existing Files / Jobs</a>
-                      <a href="/upload" class="dropdown-item">Upload File</a>
-                      <a href="/install_status" class="dropdown-item">Job Status</a>
-                      <a href="/install_status?withautojobs=true" class="dropdown-item">Auto Job Status</a>
-                      <a href="/reload_jobs" class="dropdown-item">Reload existing Jobs</a>
+                      <a href="{{ url_for('uploaded_files') }}" class="dropdown-item">Existing Files / Jobs</a>
+                      <a href="{{ url_for('upload') }}" class="dropdown-item">Upload File</a>
+                      <a href="{{ url_for('install_status') }}" class="dropdown-item">Job Status</a>
+                      <a href="{{ url_for('install_status', withautojobs='true') }}" class="dropdown-item">Auto Job Status</a>
+                      <a href="{{ url_for('reload_jobs') }}" class="dropdown-item">Reload existing Jobs</a>
                     </div>
                   </li>
               </ul>
@@ -100,7 +100,7 @@
         $("#reload").click(function() {
           if (confirm('Do you really want reload and apply settings?')) {
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
-            $(location).attr('href', '/reload');
+            $(location).attr('href', '{{ url_for('reload') }}');
           }
         });
       });

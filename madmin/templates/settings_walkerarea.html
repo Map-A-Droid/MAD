@@ -42,7 +42,7 @@
         if(validate_walker() == false) {
             return;
         }
-        $.blockUI({ message: '<img src="/static/loading.gif" width="100px" /><br /><h2>Saving shared device configuration...</h2>' });
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
         save_data = {
           'settings': {}
         }
@@ -81,7 +81,7 @@
               beforeSend: function(xhr, settings) {
                 xhr.setRequestHeader('X-Append', true);
               },
-              url : '{{ walkeruri }}',
+              url : '{{ url_for('api_walker')}}/{{ walkeruri }}',
               data : JSON.stringify(walkerarea_data),
               type : 'PATCH',
               contentType : 'application/json',
@@ -142,7 +142,7 @@
       <small class="form-text text-muted">Select the Area</small>
       <select class="form-control" name="walkerarea" required="" aria-invalid="false">
         {% for uri, area in areas.items() %}
-          <option value="{{ uri }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
+          <option value="{{ url_for('api_area') +'/'+ uri }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
         {% endfor %}
       </select>
     </div>

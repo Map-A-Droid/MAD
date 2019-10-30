@@ -1,4 +1,4 @@
-from flask import (send_from_directory, render_template, request, jsonify, redirect)
+from flask import (send_from_directory, render_template, request, jsonify, redirect, url_for)
 from madmin.functions import (auth_required, get_quest_areas)
 from utils.functions import (generate_path)
 from utils.MappingManager import MappingManager
@@ -65,7 +65,7 @@ class path(object):
 
     @auth_required
     def root(self):
-        return redirect("/settings")
+        return redirect(url_for('settings'))
 
     @auth_required
     def raids(self):

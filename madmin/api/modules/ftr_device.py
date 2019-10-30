@@ -24,7 +24,10 @@ class APIDevice(apiHandler.ResourceHandler):
                     "require": True,
                     "empty": None,
                     "description": "Walker of this area",
-                    "expected": str
+                    "expected": str,
+                    "uri": True,
+                    "data_source": "walker",
+                    "uri_source": "api_walker"
                 }
         },
             "pool": {
@@ -33,7 +36,10 @@ class APIDevice(apiHandler.ResourceHandler):
                     "require": False,
                     "empty": None,
                     "description": "Configpool for this area",
-                    "expected": str
+                    "expected": str,
+                    "uri": True,
+                    "data_source": "devicesetting",
+                    "uri_source": "api_devicesetting"
                 }
             },
             "adbname": {

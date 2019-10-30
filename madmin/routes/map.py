@@ -2,12 +2,12 @@ import json
 import os
 from typing import List, Optional
 
-from flask import (jsonify, render_template, request, redirect)
+from flask import (jsonify, render_template, request, redirect, url_for)
 from flask_caching import Cache
 
 from db.dbWrapperBase import DbWrapperBase
 from madmin.functions import (auth_required, getCoordFloat, getBoundParameter,
-                              getBasePath, get_geofences, generate_coords_from_geofence, Path)
+                              get_geofences, generate_coords_from_geofence, Path)
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.gamemechanicutil import get_raid_boss_cp
@@ -403,7 +403,7 @@ class map(object):
         coords = request.args.get('coords', False)
 
         if not name and not coords:
-            return redirect(getBasePath(request) + "/map", code=302)
+            return redirect(url_for('map'), code=302)
 
         coords_split = coords.split("|")
         geofence_file_path = self._args.geofence_file_path
@@ -417,5 +417,5 @@ class map(object):
 
         file.close()
 
-        return redirect(getBasePath(request) + "/map", code=302)
+        return redirect(url_for('map'), code=302)
 

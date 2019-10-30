@@ -13,7 +13,7 @@ $(document).ready(function () {
             var elem =  $(this);
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting a {{ subtab }}...</h2>' });
             $.ajax({
-                url : $(this).data('identifier'),
+                url : '{{ base_uri }}/'+ $(this).data('identifier'),
                 type : 'DELETE',
                 success: function(data, status, xhr) {
                     if(xhr.status == 202) {
@@ -57,7 +57,7 @@ $(document).ready(function () {
   <div class="col">
     <div class="card border-secondary">
       <div class="card-body py-2">
-        <p class="card-text">Areas define zones where scanning should happen. Areas can be asigned to Walkers and Walkers must be asigned to devices. Every area requires a file containing one or more geofences. MAD will build a route based on these areas and the elements within them.</p>
+        <p class="card-text">Areas define zones where scanning should happen. Areas can be assigned to Walkers and Walkers must be assigned to Devices. Every area requires a file containing one or more geofences. MAD will build a route based on these areas and the elements within them.</p>
       </div>
     </div>
   </div>
@@ -76,11 +76,11 @@ $(document).ready(function () {
                   <i class="fas fa-plus"></i>
                 </button>
                 <div class="dropdown-menu" aria-labelledby="dropdownMenuButton">
-                  <a class="dropdown-item" href="{{ redirect }}?id=new&mode=idle">Idle <span class="badge badge-secondary">idle</span></a>
-                  <a class="dropdown-item" href="{{ redirect }}?id=new&mode=iv_mitm">Mon IV scanner <span class="badge badge-secondary">iv_mitm</span></a>
-                  <a class="dropdown-item" href="{{ redirect }}?id=new&mode=mon_mitm">General mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
-                  <a class="dropdown-item" href="{{ redirect }}?id=new&mode=pokestops">Quest scanner <span class="badge badge-secondary">pokestops</span></a>
-                  <a class="dropdown-item" href="{{ redirect }}?id=new&mode=raids_mitm">Raid scanner <span class="badge badge-secondary">raids_mitm</span></a>
+                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='idle') }}">Idle <span class="badge badge-secondary">idle</span></a>
+                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='iv_mitm') }}">Mon IV scanner <span class="badge badge-secondary">iv_mitm</span></a>
+                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='mon_mitm') }}">General mon scanner <span class="badge badge-secondary">mon_mitm</span></a>
+                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='pokestops') }}">Quest scanner <span class="badge badge-secondary">pokestops</span></a>
+                  <a class="dropdown-item" href="{{ url_for('settings_areas', id='new', mode='raids_mitm') }}">Raid scanner <span class="badge badge-secondary">raids_mitm</span></a>
                 </div>
             </div>
           </th>
@@ -93,7 +93,7 @@ $(document).ready(function () {
         {% for area_id, area in area.items() %}
         <tr>
           <td class="align-middle">
-            <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.mode }}">{{ area.name }}</a> 
+            <a href="{{ url_for('settings_areas', id=area_id, mode=area.mode) }}">{{ area.name }}</a>
           </td>
           <td><small class="badge badge-secondary">{{ area.mode }}</small></td>
           <td class="d-none d-lg-table-cell">
@@ -102,7 +102,7 @@ $(document).ready(function () {
             {% if area.settings[key] != "" %}
             {% if key == "mon_ids_iv" %}
               {% if area.settings[key] in monlist %}
-              {{ key }}: <a href="/settings/ivlists?id={{area.settings[key]}}">{{ monlist[area.settings[key]].monlist }}</a><br>
+              {{ key }}: <a href="{{ url_for('settings_ivlists', id=area.settings[key]) }}">{{ monlist[area.settings[key]].monlist }}</a><br>
               {% else %}
               {{ key }}: <b><font color="red">ERROR IN IV LIST - CHECK IT</font></b>
               {% endif %}

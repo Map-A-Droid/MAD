@@ -139,7 +139,10 @@ class APIArea(apiHandler.ResourceHandler):
                         "description": "IV List Resource",
                         "output": int,
                         "showmonsidpicker": True,
-                        "expected": str
+                        "expected": str,
+                        "uri": True,
+                        "data_source": "monivlist",
+                        "uri_source": "api_monivlist"
                     }
                 },
                 "min_time_left_seconds": {
@@ -259,7 +262,10 @@ class APIArea(apiHandler.ResourceHandler):
                         "description": "IV List Resource",
                         "output": int,
                         "showmonsidpicker": True,
-                        "expected": str
+                        "expected": str,
+                        "uri": True,
+                        "data_source": "monivlist",
+                        "uri_source": "api_monivlist"
                     }
                 },
                 "min_time_left_seconds": {
@@ -510,7 +516,10 @@ class APIArea(apiHandler.ResourceHandler):
                         "description": "IV List Resource",
                         "output": int,
                         "showmonsidpicker": True,
-                        "expected": str
+                        "expected": str,
+                        "uri": True,
+                        "data_source": "monivlist",
+                        "uri_source": "api_monivlist"
                     }
                 }
             }

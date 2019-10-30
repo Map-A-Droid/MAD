@@ -8,12 +8,12 @@
 
 {% block content %}
 <nav class="nav nav-pills nav-fill mt-3 mb-3 flex-column flex-sm-row">
-  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "device"}}" href="/settings/devices">Devices</a>
-  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "devicesetting" }}" href="/settings/shared">Shared settings</a>
-  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "area" }}" href="/settings/areas">Areas</a>
-  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "walker" }}" href="/settings/walker">Walker</a>
-  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "auth" }}" href="/settings/auth">Auth</a>
-  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "monivlist" }}" href="/settings/ivlists">IV lists</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "device"}}" href="{{ url_for('settings_devices') }}">Devices</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "devicesetting" }}" href="{{ url_for('settings_pools') }}">Shared settings</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "area" }}" href="{{ url_for('settings_areas') }}">Areas</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "walker" }}" href="{{ url_for('settings_walkers') }}">Walker</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "auth" }}" href="{{ url_for('settings_auth') }}">Auth</a>
+  <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "monivlist" }}" href="{{ url_for('settings_ivlists') }}">IV lists</a>
 </nav>
 {% endblock %}
 

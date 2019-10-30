@@ -46,7 +46,7 @@ class RoutePoolEntry:
 
 
 class RouteManagerBase(ABC):
-    def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, uri: str, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, area_id: str, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", joinqueue = None):
@@ -54,7 +54,7 @@ class RouteManagerBase(ABC):
         self.init: bool = init
         self.name: str = name
         self._data_manager = dbm
-        self._uri = uri
+        self.area_id = area_id
         self._coords_unstructured: List[Location] = coords
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
             path_to_include_geofence, path_to_exclude_geofence)
@@ -906,7 +906,7 @@ class RouteManagerBase(ABC):
         update = {
             'init': False
         }
-        self._data_manager.set_data(update, self._uri, 'patch')
+        self._data_manager.set_data('area', 'patch', update, identifier=self.area_id)
 
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route and origin in self._routepool:

@@ -5,7 +5,7 @@ import glob
 from flask import (render_template, request, redirect, url_for, Response)
 from flask_caching import Cache
 from functools import cmp_to_key
-from madmin.functions import auth_required, getBasePath
+from madmin.functions import auth_required
 from utils.language import i8ln, open_json_file
 from utils.adb import ADBConnect
 from utils.MappingManager import MappingManager
@@ -40,11 +40,11 @@ class config(object):
             ("/settings/areas", self.settings_areas),
             ("/settings/auth", self.settings_auth),
             ("/settings/devices", self.settings_devices),
-            ("/settings/ivlists", self.settings_ivlist),
+            ("/settings/ivlists", self.settings_ivlists),
             ("/settings/monsearch", self.monsearch),
-            ("/settings/shared", self.settings_shared),
+            ("/settings/shared", self.settings_pools),
             ("/settings/walker", self.settings_walkers),
-            ("/settings/walker/areaeditor", self.setting_walkers_area),
+            ("/settings/walker/areaeditor", self.settings_walker_area),
             ("/reload", self.reload)
         ]
         for route, view_func in routes:
@@ -82,36 +82,39 @@ class config(object):
         return Response(json.dumps(pokemon), mimetype='application/json')
 
     def process_element(self, **kwargs):
-        key = kwargs.get('identifier')
+        identifier = request.args.get(kwargs.get('identifier'))
         base_uri = kwargs.get('base_uri')
-        redirect = kwargs.get('redirect')
+        data_source = kwargs.get('data_source')
+        redirect = url_for(kwargs.get('redirect'))
         html_single = kwargs.get('html_single')
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
         var_parser_section = kwargs.get('var_parser_section', subtab)
-        required_uris = kwargs.get('required_uris', {})
+        required_data = kwargs.get('required_data', {})
         mode_required = kwargs.get('mode_required', False)
         passthrough = kwargs.get('passthrough', {})
-        identifier = request.args.get(key)
-        uri = identifier
-        if uri:
-            if base_uri not in uri:
-                uri = '%s/%s' % (base_uri, identifier)
-        else:
-            uri = base_uri
+        try:
+            int(identifier)
+        except ValueError:
+            if identifier != 'new':
+                return redirect(url_for(kwargs.get('redirect')), code=302)
+        except TypeError:
+            pass
         mode = request.args.get("mode", None)
         settings_vars = self.process_settings_vars(self._data_manager.get_api_attribute(subtab, 'configuration'), mode=mode)
         if request.method == 'GET':
             included_data = {
-                'advcfg': self._args.advanced_config
+                'advcfg': self._args.advanced_config,
+                'base_uri': url_for(base_uri),
+                'identifier': identifier
             }
-            for key, tmp_uri in required_uris.items():
-                included_data[key] = self._data_manager.get_data(tmp_uri)
+            for key, data_section in required_data.items():
+                included_data[key] = self._data_manager.get_data(data_section)
             for key, val in passthrough.items():
                 included_data[key] = val
             # Mode was required for this operation but was not present.  Return the base element
             if mode_required and mode is None:
-                req = self._data_manager.get_data(base_uri)
+                req = self._data_manager.get_data(data_source, identifier=identifier)
                 element = req
                 included_data[subtab] = element
                 return render_template(html_all,
@@ -120,19 +123,19 @@ class config(object):
                                        )
             if identifier and identifier == 'new':
                 return render_template(html_single,
-                                       uri=base_uri,
+                                       uri=included_data['base_uri'],
                                        redirect=redirect,
                                        element={'settings':{}},
                                        subtab=subtab,
                                        method='POST',
                                        settings_vars=settings_vars,
                                        **included_data)
-            req = self._data_manager.get_data(uri)
+            req = self._data_manager.get_data(data_source, identifier=identifier)
             element = req
             included_data[subtab] = element
-            if identifier:
+            if identifier is not None:
                 return render_template(html_single,
-                                       uri=uri,
+                                       uri='%s/%s' % (included_data['base_uri'], identifier),
                                        redirect=redirect,
                                        element=element,
                                        subtab=subtab,
@@ -161,13 +164,14 @@ class config(object):
             fences[geofence_temp] = os.path.basename(geofence_temp)
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/area',
-            'redirect': '/settings/areas',
+            'base_uri': 'api_area',
+            'data_source': 'area',
+            'redirect': 'settings_areas',
             'html_single': 'settings_singlearea.html',
             'html_all': 'settings_areas.html',
             'subtab': 'area',
-            'required_uris': {
-                'monlist': '/api/monivlist'
+            'required_data': {
+                'monlist': 'monivlist'
             },
             'passthrough': {
                 'fences': fences
@@ -181,8 +185,9 @@ class config(object):
     def settings_auth(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/auth',
-            'redirect': '/settings/auth',
+            'base_uri': 'api_auth',
+            'data_source': 'auth',
+            'redirect': 'settings_auth',
             'html_single': 'settings_singleauth.html',
             'html_all': 'settings_auth.html',
             'subtab': 'auth',
@@ -194,21 +199,22 @@ class config(object):
     def settings_devices(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/device',
-            'redirect': '/settings/devices',
+            'base_uri': 'api_device',
+            'data_source': 'device',
+            'redirect': 'settings_devices',
             'html_single': 'settings_singledevice.html',
             'html_all': 'settings_devices.html',
             'subtab': 'device',
-            'required_uris': {
-                'walkers': '/api/walker',
-                'pools': '/api/devicesetting'
+            'required_data': {
+                'walkers': 'walker',
+                'pools': 'devicesetting'
             },
         }
         return self.process_element(**required_data)
 
     @logger.catch
     @auth_required
-    def settings_ivlist(self):
+    def settings_ivlists(self):
         try:
             identifier = request.args.get('id')
             current_mons = self._data_manager.get_data(identifier)['mon_ids_iv']
@@ -225,8 +231,9 @@ class config(object):
             current_mons_list.append({"mon_name": mon_name, "mon_id": str(mon_id)})
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/monivlist',
-            'redirect': '/settings/ivlists',
+            'base_uri': 'api_monivlist',
+            'data_source': 'monivlist',
+            'redirect': 'settings_ivlists',
             'html_single': 'settings_singleivlist.html',
             'html_all': 'settings_ivlists.html',
             'subtab': 'monivlist',
@@ -238,16 +245,17 @@ class config(object):
 
     @logger.catch
     @auth_required
-    def settings_shared(self):
+    def settings_pools(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/devicesetting',
-            'redirect': '/settings/shared',
+            'base_uri': 'api_devicesetting',
+            'data_source': 'devicesetting',
+            'redirect': 'settings_pools',
             'html_single': 'settings_singlesharedsetting.html',
             'html_all': 'settings_sharedsettings.html',
             'subtab': 'devicesetting',
             'var_parser_section': 'devices',
-            'required_uris': {},
+            'required_data': {},
         }
         return self.process_element(**required_data)
 
@@ -256,46 +264,44 @@ class config(object):
     def settings_walkers(self):
         required_data = {
             'identifier': 'id',
-            'base_uri': '/api/walker',
-            'redirect': '/settings/walker',
+            'base_uri': 'api_walker',
+            'data_source': 'walker',
+            'redirect': 'settings_walkers',
             'html_single': 'settings_singlewalker.html',
             'html_all': 'settings_walkers.html',
             'subtab': 'walker',
-            'required_uris': {
-                'areas': '/api/area',
-                'walkerarea': '/api/walkerarea'
+            'required_data': {
+                'areas': 'area',
+                'walkerarea': 'walkerarea'
             },
         }
         return self.process_element(**required_data)
 
     @logger.catch
     @auth_required
-    def setting_walkers_area(self):
-        walkerarea_uri = request.args.get("walkerarea", None)
-        walkeruri = request.args.get("id", None)
-        if walkeruri is None:
-            return self.settings_walkers()
+    def settings_walker_area(self):
+        walkerarea_id = request.args.get("walkerarea", None)
+        walker_id = request.args.get("id", None)
+        if walker_id is None:
+            return redirect(url_for('settings_walkers'), code=302)
         # Only pull this if its set.  When creating a new walkerarea it will be empty
-        if walkerarea_uri is not None:
-            if '/api/walkerarea/' not in walkerarea_uri:
-                walkerarea_uri = '/api/walkerarea/%s' % (walkerarea_uri,)
-            walkerareaconfig = self._data_manager.get_data(walkerarea_uri)
+        if walkerarea_id is not None:
+            walkerarea_uri = '%s/%s' % (url_for('api_walkerarea'), walkerarea_id)
+            walkerareaconfig = self._data_manager.get_data('walkerarea', identifier=walkerarea_id)
         else:
-            walkerarea_uri = '/api/walkerarea'
+            walkerarea_uri = url_for('api_walkerarea')
             walkerareaconfig = {}
-        if '/api/walker/' not in walkeruri:
-            walkeruri = '/api/walker/%s' % (walkeruri,)
-        walkerconfig = self._data_manager.get_data(walkeruri)
-        areaconfig = self._data_manager.get_data('/api/area')
+        walkerconfig = self._data_manager.get_data('walker', identifier=walker_id)
+        areaconfig = self._data_manager.get_data('area')
         walkertypes = ['coords','countdown', 'idle', 'period', 'round', 'timer']
         mappings = {
             'uri': walkerarea_uri,
             'element': walkerareaconfig,
             'walker': walkerconfig,
-            'walkeruri': walkeruri,
+            'walkeruri': walker_id,
             'areas': areaconfig,
             'walkertypes': walkertypes,
-            'redirect': '/settings/walker'
+            'redirect': url_for('settings_walkers')
         }
         return render_template('settings_walkerarea.html',
                                subtab="walker",
@@ -305,10 +311,10 @@ class config(object):
     @logger.catch
     @auth_required
     def settings(self):
-        return redirect("/settings/devices", code=302)
+        return redirect(url_for('settings_devices'), code=302)
 
     @auth_required
     def reload(self):
         if not self._args.auto_reload_config:
             self._mapping_mananger.update()
-        return redirect("/settings", code=302)
+        return redirect(url_for('settings_devices'), code=302)
