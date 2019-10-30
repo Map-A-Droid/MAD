@@ -1,4 +1,5 @@
 import collections
+import copy
 import flask
 import json
 from madmin.functions import auth_required
@@ -185,9 +186,9 @@ class ResourceHandler(object):
 
     def get_required_configuration(self, mode=None):
         if mode and mode in self.configuration:
-            return self.configuration[mode]
+            return copy.deepcopy(self.configuration[mode])
         if type(self.configuration) is dict and ('fields' in self.configuration or 'settings' in self.configuration):
-            return self.configuration
+            return copy.deepcopy(self.configuration)
 
     def get_resource_info(self, config):
         resource = {
@@ -288,7 +289,7 @@ class ResourceHandler(object):
                 hide_resource = int(self.api_req.params.get('hide_resource', 0))
             except:
                 hide_resource = 0
-            if self.component == 'area':
+            if self.component == 'area' and flask.request.method in ['POST', 'PUT']:
                 if mode is None:
                     resource_info = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
                 elif mode not in self.configuration:
@@ -324,11 +325,16 @@ class ResourceHandler(object):
                 return self.get(identifier, config=config)
             # Validate incoming data and return any issues
             if self.component == 'area' and mode is None:
-                msg = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
-                error = {
-                    'error': msg
-                }
-                return apiResponse.APIResponse(self._logger, self.api_req)(error, 400) 
+                if flask.request.method in ['POST', 'PUT']:
+                    msg = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
+                    error = {
+                        'error': msg
+                    }
+                    return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
+                else:
+                    data = self._data_manager.get_data(self.component, identifier=identifier)
+                    mode = data['mode']
+                    config = self.get_required_configuration(mode=mode)
             (self.api_req.data, invalid, missing, uris, unknown) = self.format_data(self.api_req.data, config, flask.request.method)
             errors = {}
             if missing:
@@ -373,8 +379,9 @@ class ResourceHandler(object):
             if self.component == 'area' and config is None:
                 mode = data['mode']
                 config = self.get_required_configuration(mode=mode)
-            translation_config = self.translate_config_for_response(config)
-            self.translate_data_for_response(data, translation_config)
+            if config:
+                translation_config = self.translate_config_for_response(config)
+                self.translate_data_for_response(data, translation_config)
             return apiResponse.APIResponse(self._logger, self.api_req)(data, 200)
         except utils.data_manager.DataManagerInvalidModeUnknownIdentifier:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
