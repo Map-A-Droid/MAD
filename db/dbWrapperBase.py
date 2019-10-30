@@ -84,6 +84,9 @@ class DbWrapperBase(ABC):
             .format(field["table"], field["column"], field["ctype"])
         )
 
+        if "modify_key" in field:
+            alter_query = alter_query + ", " + field["modify_key"]
+
         self.execute(alter_query, commit=True)
 
         if self.check_column_exists(field["table"], field["column"]) == 1:
