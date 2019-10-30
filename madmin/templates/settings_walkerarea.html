@@ -72,7 +72,7 @@
         type : '{{ 'PATCH' if element else 'POST' }}',
         contentType : 'application/json',
         success: function(data, status, xhr) {
-          walkerarea_uri = '{{ url_for('api_walkerarea') }}/'+ xhr.getResponseHeader('X-Uri');
+          walkerarea_uri = xhr.getResponseHeader('X-Uri');
           walkerarea_data = {
             'setup': [walkerarea_uri]
           }

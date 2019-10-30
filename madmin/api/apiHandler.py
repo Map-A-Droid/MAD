@@ -370,6 +370,9 @@ class ResourceHandler(object):
         config = kwargs.get('config')
         try:
             data = self._data_manager.get_data(self.component, identifier=identifier)
+            if self.component == 'area' and config is None:
+                mode = data['mode']
+                config = self.get_required_configuration(mode=mode)
             translation_config = self.translate_config_for_response(config)
             self.translate_data_for_response(data, translation_config)
             return apiResponse.APIResponse(self._logger, self.api_req)(data, 200)
