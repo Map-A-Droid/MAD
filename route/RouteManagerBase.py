@@ -54,7 +54,6 @@ class RouteManagerBase(ABC):
         self.init: bool = init
         self.name: str = name
         self._data_manager = dbm
-        self._uri = uri
         self.useS2: bool = useS2
         self.S2level: int = S2level
         self.area_id = area_id
