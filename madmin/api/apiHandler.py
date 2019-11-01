@@ -57,10 +57,14 @@ class ResourceHandler(object):
                 (tmp_save, tmp_inv, tmp_missing, tmp_uri, tmp_unknown) = self.format_section(data, config[section], operation, keep_empty_values=True)
                 for key, val in tmp_save.items():
                     save_data[key] = val
+                unknown_fields = list(set(data.keys()) - set(config[section].keys()))
             else:
                 try:
                     (tmp_save, tmp_inv, tmp_missing, tmp_uri, tmp_unknown) = self.format_section(data[section], config[section], operation)
                     save_data[section] = tmp_save
+                    unknown_fields += list(set(data[section].keys()) - set(config[section].keys()))
+                    if section in unknown_fields and type(data[section]) is dict:
+                        unknown_fields.remove(section)
                 except KeyError:
                     continue
             invalid_fields += tmp_inv
@@ -128,16 +132,14 @@ class ResourceHandler(object):
                             for elem in check:
                                 match = regex.match(elem)
                                 if not match:
-                                    uri_invalid.append(elem)
+                                    invalid_uris.append(elem)
                                 else:
                                     identifier = str(match.group(1))
                                     try:
                                         lookup = self._data_manager.get_data(entry_def['settings']['data_source'], identifier=identifier)
                                         uri_valid.append(identifier)
                                     except utils.data_manager.DataManagerInvalidModeUnknownIdentifier:
-                                        uri_invalid.append(elem)
-                                if uri_invalid:
-                                    invalid_uris.append(uri_invalid)
+                                        invalid_uris.append(elem)
                             if type(formated_val) is str and len(uri_valid) > 0:
                                 formated_val = uri_valid.pop(0)
                             elif type(formated_val) is list:
@@ -145,8 +147,7 @@ class ResourceHandler(object):
                     except KeyError:
                         pass
                     except Exception as err:
-                        self.logger.warn('API Conversion issue: {}', err)
-                        traceback.print_exc()
+                        self._logger.warn('API Conversion issue: {}', err)
                     save_data[key] = formated_val
                 except Exception as err:
                     self._logger.debug4('Unable to convert key {} [{}]', key, val)
@@ -162,7 +163,8 @@ class ResourceHandler(object):
 
     def format_value(self, value, expected, none_val):
         if expected == bool:
-            value = True if value.lower() == "true" else False
+            if type(value) is str:
+                value = True if value.lower() == "true" else False
         elif expected == float:
             value = float(value)
         elif expected == int:
@@ -185,18 +187,20 @@ class ResourceHandler(object):
         return {'settings': {}} if 'settings' in config else {}
 
     def get_required_configuration(self, mode=None):
-        if mode and mode in self.configuration:
-            return copy.deepcopy(self.configuration[mode])
+        if mode:
+            if mode in self.configuration:
+                return copy.deepcopy(self.configuration[mode])
+            else:
+                raise KeyError
         if type(self.configuration) is dict and ('fields' in self.configuration or 'settings' in self.configuration):
             return copy.deepcopy(self.configuration)
 
     def get_resource_info(self, config):
         resource = {
-            'fields': [],
-            'settings': []
+            'fields': []
         }
         try:
-            resource['fields'] = self.get_resource_info_elems(config['fields'])
+            resource['fields'] = self.get_resource_info_elems(config['fields'], skip_fields=['settings'])
         except:
             pass
         try:
@@ -205,9 +209,11 @@ class ResourceHandler(object):
             pass
         return resource
 
-    def get_resource_info_elems(self, config):
+    def get_resource_info_elems(self, config, skip_fields=[]):
         variables = []
         for key, field in config.items():
+            if key in skip_fields:
+                continue
             settings = field['settings']
             field_data = {
                 'name': key,
@@ -275,12 +281,23 @@ class ResourceHandler(object):
                 'X-Status': err.reason
             }
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
-        mode = self.api_req.headers.get('X-Mode', None)
-        if mode is None:
-            mode = self.api_req.params.get('mode', None)
-        config = self.get_required_configuration(mode=mode)
+        mode = None
+        if self.component == 'area':
+            mode = self.api_req.headers.get('X-Mode', None)
+            if mode is None and self.component == 'area':
+                mode = self.api_req.params.get('mode', None)
+        try:
+            config = self.get_required_configuration(mode=mode)
+        except KeyError:
+            if self.component == 'area':
+                msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
+                error = {'errors': msg}
+                return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
+            else:
+                import traceback
+                traceback.print_exc()
         resource_info = None
-        if identifier is None and flask.request.method != 'POST':
+        if identifier is None and flask.request.method == 'GET':
             try:
                 fetch_all = int(self.api_req.params.get('fetch_all'))
             except:
@@ -292,12 +309,9 @@ class ResourceHandler(object):
             if self.component == 'area' and flask.request.method in ['POST', 'PUT']:
                 if mode is None:
                     resource_info = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
-                elif mode not in self.configuration:
-                    msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
-                    return apiResponse.APIResponse(self._logger, self.api_req)(msg, 400)
             # Use an ordered dict so we can guarantee the order is returned per the class specification
             disp_field = self.api_req.params.get('display_field', self.default_sort)
-            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field)
+            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field, mode=mode)
             api_response_data = collections.OrderedDict()
             key_translation = '%s/%%s' % (flask.url_for('api_%s' % (self.component,)))
             try:
@@ -305,7 +319,7 @@ class ResourceHandler(object):
                 for key, val in raw_data.items():
                     api_response_data[key_translation % key] = self.translate_data_for_response(val, translation_config)
             except:
-                translation_config = 'Resource is not available unless a mode is specified'
+                resource_info = 'Resource is not available unless a mode is specified'
                 for key, val in raw_data.items():
                     api_response_data[key_translation % key] = val
             if hide_resource:
@@ -324,17 +338,22 @@ class ResourceHandler(object):
             elif flask.request.method == 'GET':
                 return self.get(identifier, config=config)
             # Validate incoming data and return any issues
-            if self.component == 'area' and mode is None:
-                if flask.request.method in ['POST', 'PUT']:
-                    msg = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
-                    error = {
-                        'error': msg
-                    }
-                    return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
-                else:
-                    data = self._data_manager.get_data(self.component, identifier=identifier)
-                    mode = data['mode']
-                    config = self.get_required_configuration(mode=mode)
+            if self.component == 'area':
+                if mode is None:
+                    if flask.request.method in ['POST', 'PUT']:
+                        msg = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
+                        error = {
+                            'error': msg
+                        }
+                        return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
+                    else:
+                        if identifier is not None:
+                            data = self._data_manager.get_data(self.component, identifier=identifier)
+                            mode = data['mode']
+                            config = self.get_required_configuration(mode=mode)
+                        else:
+                            msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
+                            return apiResponse.APIResponse(self._logger, self.api_req)(msg, 400)
             (self.api_req.data, invalid, missing, uris, unknown) = self.format_data(self.api_req.data, config, flask.request.method)
             errors = {}
             if missing:
@@ -351,7 +370,7 @@ class ResourceHandler(object):
                 if flask.request.method == 'PATCH':
                     return self.patch(identifier)
                 elif flask.request.method == 'POST':
-                    return self.post(identifier)
+                    return self.post(identifier, config=config)
                 elif flask.request.method == 'PUT':
                     return self.put(identifier)
             except apiException.APIException as err:
@@ -402,6 +421,7 @@ class ResourceHandler(object):
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 204, headers=headers)
 
     def post(self, identifier, *args, **kwargs):
+        config = kwargs.get('config')
         mode = self.api_req.headers.get('X-Mode')
         try:
             identifier = self._data_manager.set_data(self.component, 'post', self.api_req.data, mode=mode)
@@ -413,7 +433,9 @@ class ResourceHandler(object):
             'X-Uri': uri,
             'X-Status': 'Successfully created the object'
         }
-        return apiResponse.APIResponse(self._logger, self.api_req)(self.api_req.data, 201, headers=headers)
+        translation_config = self.translate_config_for_response(config)
+        converted = self.translate_data_for_response(self.api_req.data, translation_config)
+        return apiResponse.APIResponse(self._logger, self.api_req)(converted, 201, headers=headers)
 
     def put(self, identifier, *args, **kwargs):
         """ API call to replace an object """

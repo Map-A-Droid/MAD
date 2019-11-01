@@ -34,7 +34,7 @@ class APIRequest(object):
     def parse_data(self):
         """ Transform the incoming data into a dataset python can utilize """
         data = self._request.get_data()
-        self._logger.debug4('Incoming data: {}', data)
+        self._logger.debug5('Incoming data: {}', data)
         if data is None or len(data) == 0:
             self.data = None
         elif self.content_type == 'application/json':
