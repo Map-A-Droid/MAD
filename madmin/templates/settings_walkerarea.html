@@ -6,6 +6,7 @@
 
 {% block scripts %}
 {{ super() }}
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
 <script>
     function validate_walker() {
         var digitsOnlyNotEmptyPattern = "^[0-9]+$";
@@ -43,86 +44,68 @@
             return;
         }
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
-        save_data = {};
-        if($(".form-control[setting]").length > 0) {
-            save_data['settings'] = {};
-        }
-      $(".form-control").each(function() {
-          var obj = $(this);
-          var name = obj.attr('name');
-          value = null;
-          if(obj.is('select')) {
-              value = obj.children("option:selected").val();
-          } else if(obj.is('input')) {
-              value = obj.val();
-          }
-          if(value.length == 0)
-              value = null;
-          if(obj.attr('setting') == 'true') {
-              save_data['settings'][name] = value;
-          } else {
-              save_data[name] = value;
-          }
-          if(save_data['pool'] == 'None') {
-              save_data['pool'] = null;
-          }
-      });
-      $.ajax({
-        url : '{{ uri }}',
-        data : JSON.stringify(save_data),
-        type : '{{ 'PATCH' if element else 'POST' }}',
-        contentType : 'application/json',
-        success: function(data, status, xhr) {
-          walkerarea_uri = xhr.getResponseHeader('X-Uri');
-          walkerarea_data = {
-            'setup': [walkerarea_uri]
-          }
-          if('{{ 'PATCH' if element else 'POST' }}' == 'POST') {
-            $.ajax({
-              beforeSend: function(xhr, settings) {
-                xhr.setRequestHeader('X-Append', true);
-              },
-              url : '{{ url_for('api_walker')}}/{{ walkeruri }}',
-              data : JSON.stringify(walkerarea_data),
-              type : 'PATCH',
-              contentType : 'application/json',
-              success: function(data, status, xhr) {
-                $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
-              },
-              error: function(data, status, xhr) {
-                console.log(data);
-                console.log(status);
-                console.log(xhr);
-                alert('Something bad happened.  Check console for output');
+        save_data = get_save_data();
+        if(isEmptyObj(save_data) != false) {
+            alert('No changes have been made');
+            window.location.replace('{{ redirect }}?id={{ walkeruri }}');
+        } else {
+          $.ajax({
+            url : '{{ uri }}',
+            data : JSON.stringify(save_data),
+            type : '{{ 'PATCH' if element else 'POST' }}',
+            contentType : 'application/json',
+            success: function(data, status, xhr) {
+              walkerarea_uri = xhr.getResponseHeader('X-Uri');
+              walkerarea_data = {
+                'setup': [walkerarea_uri]
               }
-            });
-          } else {
-            $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
-          }
-        },
-        error: function(data, status, xhr) {
-            $("label[for]").removeClass('btn-danger');
-            if(data['responseJSON'] != undefined) {
-                $.each(data['responseJSON']['missing'], function() {
-                    var elem = $("label[for="+ this +"]");
-                    elem[0].innerHTML = elem.attr('for') +' - Required Field';
-                    elem.addClass('btn-danger');
+              if('{{ 'PATCH' if element else 'POST' }}' == 'POST') {
+                $.ajax({
+                  beforeSend: function(xhr, settings) {
+                    xhr.setRequestHeader('X-Append', true);
+                  },
+                  url : '{{ url_for('api_walker')}}/{{ walkeruri }}',
+                  data : JSON.stringify(walkerarea_data),
+                  type : 'PATCH',
+                  contentType : 'application/json',
+                  success: function(data, status, xhr) {
+                    $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
+                  },
+                  error: function(data, status, xhr) {
+                    console.log(data);
+                    console.log(status);
+                    console.log(xhr);
+                    alert('Something bad happened.  Check console for output');
+                  }
                 });
-                $.each(data['responseJSON']['invalid'], function() {
-                    var field = this.split(/:(.+)/)[0];
-                    var expected = this.split(/:(.+)/)[1];
-                    var elem = $("label[for="+ field +"]");
-                    elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
-                    elem.addClass('btn-danger');
-                });
-                $.unblockUI();
-                alert('One or more fields failed validation');
-            } else {
-                $.unblockUI();
-                alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+              } else {
+                $(location).attr("href", '{{ redirect }}?id={{ walkeruri }}');
+              }
+            },
+            error: function(data, status, xhr) {
+                $("label[for]").removeClass('btn-danger');
+                if(data['responseJSON'] != undefined) {
+                    $.each(data['responseJSON']['missing'], function() {
+                        var elem = $("label[for="+ this +"]");
+                        elem[0].innerHTML = elem.attr('for') +' - Required Field';
+                        elem.addClass('btn-danger');
+                    });
+                    $.each(data['responseJSON']['invalid'], function() {
+                        var field = this.split(/:(.+)/)[0];
+                        var expected = this.split(/:(.+)/)[1];
+                        var elem = $("label[for="+ field +"]");
+                        elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
+                        elem.addClass('btn-danger');
+                    });
+                    $.unblockUI();
+                    alert('One or more fields failed validation');
+                } else {
+                    $.unblockUI();
+                    alert('Unable to save the {{ subtab }}.  An unknown error occurred');
+                }
             }
+          });
         }
-      });
     });
   });
 </script>
@@ -141,7 +124,7 @@
     <div class="form-group">
       <label for='walkerarea'>Area</label><br>
       <small class="form-text text-muted">Select the Area</small>
-      <select class="form-control" name="walkerarea" required="" aria-invalid="false">
+      <select class="form-control" name="walkerarea" required="" aria-invalid="false" data-default="{{ url_for('api_area') +'/'+ element.walkerarea }}">
         {% for uri, area in areas.items() %}
           <option value="{{ url_for('api_area') +'/'+ uri }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
         {% endfor %}
@@ -160,7 +143,7 @@
         - Kill worker after X:XX o´clock (Format: 24h)<br>
         - Kill worker if outside of a period (Format: 24h f.e. 7:00-21:00)<br>
       </small>
-      <select class="form-control" name="walkertype" required="">
+      <select class="form-control" name="walkertype" required="" data-default="{{ element.walkertype }}">
         {% for walkertype in walkertypes %}
         <option value="{{ walkertype }}" {{'selected="selected"' if walkertype == element.walkertype }}>{{ walkertype }}</option>
         {% endfor %}
@@ -169,17 +152,17 @@
     <div class="form-group">
       <label for='walkervalue'>Value for Walkermode</label><br>
       <small class="form-text text-muted"></small>
-      <input type="text" class="form-control" name="walkervalue" value="{{ element.walkervalue }}">
+      <input type="text" class="form-control" name="walkervalue" value="{{ element.walkervalue }}" data-default="{{ element.walkervalue }}">
     </div>
     <div class="form-group">
       <label for='walkermax'>Max. Walker in Area</label><br>
       <small class="form-text text-muted">Empty = infinitely</small>
-      <input type="text" class="form-control" name="walkermax" value="{{ element.walkermax }}">
+      <input type="text" class="form-control" name="walkermax" value="{{ element.walkermax }}" data-default="{{ element.walkermax }}">
     </div>
     <div class="form-group">
       <label for='walkertext'>Description</label><br>
       <small class="form-text text-muted"></small>
-      <input type="text" class= "form-control" name="walkertext" value="{{ element.walkertext }}">
+      <input type="text" class= "form-control" name="walkertext" value="{{ element.walkertext }}" data-default="{{ element.walkertext }}">
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
   </div>

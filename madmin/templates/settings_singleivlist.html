@@ -9,47 +9,18 @@
 <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
 <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.Aplus.min.js') }}"></script>
-
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
 <script>
     $(document).ready(function () {
         $("#submit").click(function() {
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
-            save_data = {
-                'mon_ids_iv': get_mon_list(),
-                'monlist': $("#monlist").val()
-            };
-            $.ajax({
-                url : "{{ uri }}",
-                data : JSON.stringify(save_data),
-                type : '{{ method }}',
-                contentType : 'application/json',
-                success: function(data, status, xhr) {
-                  if(xhr.status < 400)
-                    window.location.replace('{{ redirect }}');
-                },
-                error: function(data, status, xhr) {
-                    $("label[for]").removeClass('btn-danger');
-                    if(data['responseJSON'] != undefined) {
-                        $.each(data['responseJSON']['missing'], function() {
-                            var elem = $("label[for="+ this +"]");
-                            elem[0].innerHTML = elem.attr('for') +' - Required Field';
-                            elem.addClass('btn-danger');
-                        });
-                        $.each(data['responseJSON']['invalid'], function() {
-                            var field = this.split(/:(.+)/)[0];
-                            var expected = this.split(/:(.+)/)[1];
-                            var elem = $("label[for="+ field +"]");
-                            elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
-                            elem.addClass('btn-danger');
-                        });
-                        $.unblockUI();
-                        alert('One or more fields failed validation');
-                    } else {
-                        $.unblockUI();
-                        alert('Unable to save the {{ subtab }}.  An unknown error occurred');
-                    }
-                }
-            });
+            save_data = get_save_data();
+            if(isEmptyObj(save_data) != false) {
+                alert('No changes have been made');
+                window.location.replace('{{ redirect }}');
+            } else {
+                process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
+            }
         });
         $(document).on('click', '.delete', function() {
             $(this).parent().parent().remove();
@@ -163,12 +134,12 @@
     <div class="col-sm">
         <div class="form-group">
           <label for="monlist">monlist</label>
-          <input type="input" class="form-control" id="monlist" name="monlist" value="{{ element.monlist }}">
+          <input type="input" class="form-control" id="monlist" name="monlist" value="{{ element.monlist }}" data-default="{{ element.monlist }}">
           <small class="form-text text-muted">Name of the mon list</small>
         </div>
         <div class="form-gropup" id="add-pokemon">
           <label for="monlist-search">List of mons</label>
-          <input type="text" id="pokemon-search" placeholder="Search for mon name..." class="form-control">
+          <input type="text" id="pokemon-search" placeholder="Search for mon name..." class="form-control" data-skip="true">
           <small class="form-text text-muted result-hint" style="display: none">Click on a result to add it to the list:</small>
           <div id="pokemon-search-output" class="nav nav-pills"></div>
         </div>
@@ -194,6 +165,7 @@
             </table>
         </div>
     </div>
+    <div id='selected-pokemon' style='display:none;' class="row_position ui-sortable form-control" name='mon_ids_iv' data-callback='get_mon_list' data-default="{{ current_mons_list }}"></div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
 </div>
 {% endblock %}
