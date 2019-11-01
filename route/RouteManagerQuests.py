@@ -12,7 +12,7 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 class RouteManagerQuests(RouteManagerBase):
     def generate_stop_list(self):
         time.sleep(5)
-        stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper, False)
+        stops, _ = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper, False)
 
         logger.info('Detected stops without quests: {}', str(len(stops)))
         logger.debug('Detected stops without quests: {}', str(stops))
