@@ -12,7 +12,6 @@ class APIResponse(object):
     def __call__(self, content, status_code, **kwargs):
         headers = kwargs.get('', self.headers)
         converted_data = self.convert_to_format(content)
-        self.logger.debug4('Return Data: {}', converted_data)
         resp = flask.Response(converted_data, mimetype=self.mimetype)
         resp.status_code = status_code
         for key, val in kwargs.items():
@@ -21,8 +20,8 @@ class APIResponse(object):
                     resp.headers.add(header_key, header_val)
             else:
                 setattr(resp, key, val)
-        self.logger.debug5('Return Data: {}', converted_data)
-        self.logger.debug5('Return Headers: {}', resp.headers)
+        self.logger.debug4('Return Data: {}', converted_data)
+        self.logger.debug4('Return Headers: {}', resp.headers)
         return resp
 
     def convert_to_format(self, content):
