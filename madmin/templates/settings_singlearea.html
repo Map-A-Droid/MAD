@@ -100,7 +100,7 @@ $(document).ready(function () {
       <select class="form-control" name="{{ key }}" setting='true'>
         <option value='' {{ 'selected="selected"' if uri == element.settings[key] }}>None</option>
         {% for uri, data in monlist.items() %}
-        <option value="{{ uri }}" {{ 'selected="selected"' if uri == element.settings[key] }}>{{ data.monlist|lower }}</option>
+        <option value="{{ url_for('api_monivlist') + '/'+ uri  }}" {{ 'selected="selected"' if uri == element.settings[key] }}>{{ data.monlist|lower }}</option>
         {% endfor %}
       </select>
       {% else %}
@@ -117,7 +117,7 @@ $(document).ready(function () {
         <select class="form-control" name="mon_ids_iv" setting='true'>
           <option value='' {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>None</option>
           {% for uri, data in monlist.items() %}
-          <option value="{{ uri }}" {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>{{ data.monlist|lower }}</option>
+          <option value="{{ url_for('api_monivlist') + '/'+ uri  }}" {{ 'selected="selected"' if uri == element.settings['mon_ids_iv'] }}>{{ data.monlist|lower }}</option>
           {% endfor %}
         </select>
       </div>

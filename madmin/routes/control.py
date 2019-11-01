@@ -2,11 +2,11 @@ import datetime
 import time
 import os
 from PIL import Image
-from flask import (render_template, request, redirect, flash, jsonify)
+from flask import (render_template, request, redirect, flash, jsonify, url_for)
 from werkzeug.utils import secure_filename
 
 from db.dbWrapperBase import DbWrapperBase
-from madmin.functions import (auth_required, generate_device_screenshot_path, getBasePath, nocache, allowed_file,
+from madmin.functions import (auth_required, generate_device_screenshot_path, nocache, allowed_file,
                               uploaded_files)
 from utils.MappingManager import MappingManager
 from utils.functions import (creation_date, generate_phones, image_resize)
@@ -47,7 +47,7 @@ class control(object):
 
     def add_route(self):
         routes = [
-            ("/phonecontrol", self.get_phonescreens),
+            ("/devicecontrol", self.get_phonescreens),
             ("/take_screenshot", self.take_screenshot),
             ("/click_screenshot", self.click_screenshot),
             ("/swipe_screenshot", self.swipe_screenshot),
@@ -166,7 +166,7 @@ class control(object):
                                                 dummy=True)
                             )
 
-        return render_template('phonescreens.html', editform=screens_phone, header="Phonecontrol", title="Phonecontrol")
+        return render_template('phonescreens.html', editform=screens_phone, header="Device control", title="Device control")
 
     @auth_required
     def take_screenshot(self, origin=None, adb=False):
@@ -307,7 +307,7 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        self._logger.info('MADmin: Restart Phone ({})', str(origin))
+        self._logger.info('MADmin: Restart device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                         adb, origin,"am broadcast -a android.intent.action.BOOT_COMPLETED")):
@@ -315,7 +315,7 @@ class control(object):
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reboot()
-        return redirect(getBasePath(request) + '/phonecontrol')
+        return redirect(url_for('get_phonescreens'), code=302)
 
     @auth_required
     def clear_game_data(self):
@@ -324,7 +324,7 @@ class control(object):
         devicemappings = self._mapping_manager.get_all_devicemappings()
 
         adb = devicemappings.get(origin, {}).get('adb', False)
-        self._logger.info('MADmin: Clear game data for phone ({})', str(origin))
+        self._logger.info('MADmin: Clear game data for device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(
                         adb, origin, "pm clear com.nianticlabs.pokemongo")):
@@ -332,7 +332,7 @@ class control(object):
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.resetAppdata("com.nianticlabs.pokemongo")
-        return redirect(getBasePath(request) + '/phonecontrol')
+        return redirect(url_for('get_phonescreens'), code=302)
 
 
     @auth_required
@@ -373,7 +373,7 @@ class control(object):
             self._logger.exception(
                 'MADmin: Exception occurred while trigger research menu: {}.', e)
 
-        return redirect(getBasePath(request) + '/phonecontrol')
+        return redirect(url_for('get_phonescreens'), code=302)
 
     @auth_required
     def send_text(self):
@@ -427,19 +427,19 @@ class control(object):
             # check if the post request has the file part
             if 'file' not in request.files:
                 flash('No file part')
-                return redirect(request.url)
+                return redirect(url_for('upload'), code=302)
             file = request.files['file']
             if file.filename == '':
                 flash('No file selected for uploading')
-                return redirect(request.url)
+                return redirect(url_for('upload'), code=302)
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(self._args.upload_path, filename))
                 flash('File could be uploaded successfully')
-                return redirect(getBasePath(request) + '/uploaded_files')
+                return redirect(url_for('uploaded_files'), code=302)
             else:
                 flash('Allowed file type is apk only!')
-                return redirect(getBasePath(request) + request.url)
+                return redirect(url_for('upload'), code=302)
 
         return render_template('upload.html', header="File Upload", title="File Upload")
 
@@ -461,7 +461,7 @@ class control(object):
         if os.path.exists(os.path.join(self._args.upload_path, filename)):
             os.remove(os.path.join(self._args.upload_path, filename))
             flash('File could be deleted successfully')
-        return redirect(getBasePath(request) + '/uploaded_files')
+        return redirect(url_for('uploaded_files'), code=302)
 
     @auth_required
     @logger.catch
@@ -493,13 +493,13 @@ class control(object):
                                          type=type_)
             flash('Job successfully queued --> See Job Status')
 
-        return redirect(getBasePath(request) + '/uploaded_files?origin=' + str(origin) + '&adb=' + str(useadb))
+        return redirect(url_for('uploaded_files', origin=str(origin, adb=useadb)), code=302)
 
     @auth_required
     def reload_jobs(self):
         logger.info("Reload existing jobs")
         self._device_updater.init_jobs()
-        return redirect(getBasePath(request) + '/uploaded_files')
+        return redirect(url_for('uploaded_files'), code=302)
 
 
     @auth_required
@@ -523,7 +523,7 @@ class control(object):
             flash('Job could be deleted successfully')
         else:
             flash('Job could not be deleted successfully')
-        return redirect(getBasePath(request) + '/install_status')
+        return redirect(url_for('install_status'), code=302)
 
     @auth_required
     @logger.catch
@@ -540,7 +540,7 @@ class control(object):
         type_ = request.args.get('type', None)
         if jobname is None or type_ is None:
             flash('No File or Type selected')
-            return redirect(getBasePath(request) + '/install_status')
+            return redirect(url_for('install_status'), code=302)
 
         devices = self._mapping_manager.get_all_devices()
         for device in devices:
@@ -549,7 +549,7 @@ class control(object):
             time.sleep(1)
 
         flash('Job successfully queued')
-        return redirect(getBasePath(request) + '/install_status')
+        return redirect(url_for('install_status'), code=302)
 
     @auth_required
     @logger.catch()
@@ -558,17 +558,17 @@ class control(object):
         if id is not None:
             self._device_updater.restart_job(id)
             flash('Job requeued')
-            return redirect(getBasePath(request) + '/install_status')
+            return redirect(url_for('install_status'), code=302)
 
         flash('unknown id - restart failed')
-        return redirect(getBasePath(request) + '/install_status')
+        return redirect(url_for('install_status'), code=302)
 
     @auth_required
     @logger.catch()
     def delete_log(self):
         onlysuccess = request.args.get('only_success', False)
         self._device_updater.delete_log(onlysuccess=onlysuccess)
-        return redirect(getBasePath(request) + '/install_status')
+        return redirect(url_for('install_status'), code=302)
 
     @auth_required
     def get_all_workers(self):
@@ -590,4 +590,4 @@ class control(object):
             time.sleep(1)
 
         flash('Job successfully queued')
-        return redirect(getBasePath(request) + '/install_status')
+        return redirect(url_for('install_status'), code=302)

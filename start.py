@@ -168,6 +168,12 @@ if __name__ == "__main__":
     install_thread_excepthook()
 
     db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
+    wrong_modes = db_wrapper.running_mysql_modes()
+    if len(wrong_modes) > 0:
+        logger.error("Your MySQL/MariaDB sql_mode settings needs an adjustment.")
+        logger.error("Please drop those settings: {}.", ", ".join(wrong_modes))
+        logger.error("More info: https://mad-docs.readthedocs.io/en/latest/common-issues/faq/#sql-mode-error-mysql-strict-mode-mysql-mode")
+        sys.exit(1)
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()
     db_wrapper.create_status_database_if_not_exists()

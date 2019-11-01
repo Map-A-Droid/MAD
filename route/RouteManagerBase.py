@@ -46,7 +46,7 @@ class RoutePoolEntry:
 
 
 class RouteManagerBase(ABC):
-    def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, uri: str, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, area_id: str, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15, joinqueue = None):
@@ -57,6 +57,8 @@ class RouteManagerBase(ABC):
         self._uri = uri
         self.useS2: bool = useS2
         self.S2level: int = S2level
+        self.area_id = area_id
+
         self._coords_unstructured: List[Location] = coords
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
             path_to_include_geofence, path_to_exclude_geofence)
@@ -132,7 +134,7 @@ class RouteManagerBase(ABC):
         self._check_routepools_thread.start()
 
     def join_threads(self):
-        logger.info("Join Route Threads")
+        logger.info("Shutdown Route Threads")
         if self._update_prio_queue_thread is not None:
             while self._update_prio_queue_thread.isAlive():
                 time.sleep(1)
@@ -148,12 +150,12 @@ class RouteManagerBase(ABC):
         self._update_prio_queue_thread = None
         self._check_routepools_thread = None
         self._stop_update_thread.clear()
-        logger.info("Done joining Route Threads")
+        logger.info("Shutdown Route Threads completed")
 
     def stop_routemanager(self, joinwithqueue=True):
         # call routetype stoppper
         if self._joinqueue is not None and joinwithqueue:
-            logger.info("Adding route {} to joinqueue".format(str(self.name)))
+            logger.info("Adding route {} to queue".format(str(self.name)))
             self._joinqueue.set_queue(self.name)
 
         self._quit_route()
@@ -908,7 +910,7 @@ class RouteManagerBase(ABC):
         update = {
             'init': False
         }
-        self._data_manager.set_data(update, self._uri, 'patch')
+        self._data_manager.set_data('area', 'patch', update, identifier=self.area_id)
 
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route and origin in self._routepool:

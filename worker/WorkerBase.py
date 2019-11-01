@@ -587,7 +587,7 @@ class WorkerBase(ABC):
                                                    ScreenType.PERMISSION)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
-                    logger.warning('Pogo freeze - restart Phone')
+                    logger.warning('Gamefreezed - restarting device')
                     self._reboot()
                     break
 
@@ -626,7 +626,7 @@ class WorkerBase(ABC):
                     self._loginerrorcounter += 1
 
                 elif returncode == ScreenType.GPS:
-                    logger.warning("Detecting GPS Error 11 - reboot phone")
+                    logger.warning("Detected GPS error 11 - rebooting device")
                     self._reboot()
 
                 elif returncode == ScreenType.SN:
@@ -642,7 +642,7 @@ class WorkerBase(ABC):
                     break
 
                 if self._loginerrorcounter == 2:
-                    logger.error('Cannot login again - (clear pogo game data and) restart phone')
+                    logger.error('Could not login again - (clearing game data + restarting device')
                     self._stop_pogo()
                     self._communicator.clearAppCache("com.nianticlabs.pokemongo")
                     if self.get_devicesettings_value('clear_game_data', False):

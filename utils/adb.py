@@ -17,7 +17,11 @@ class ADBConnect(object):
                 from adb.client import Client as AdbClient
             except ImportError:
                 pass
-            self.check_adblib = 'adb.client' in sys.modules
+            try:
+                from ppadb.client import Client as AdbClient
+            except ImportError:
+                pass
+            self.check_adblib = 'adb.client' in sys.modules or 'ppadb.client' in sys.modules
             if not self.check_adblib:
                 logger.warning(
                     "Could not find pure-python-adb library - no support for ADB."

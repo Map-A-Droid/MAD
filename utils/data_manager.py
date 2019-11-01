@@ -7,17 +7,17 @@ import six
 class DataManagerException(Exception):
     pass
 
-class DataManagerDependencyError(Exception):
+class DataManagerDependencyError(DataManagerException):
     def __init__(self, dependencies):
         self.dependencies = dependencies
         super(DataManagerDependencyError, self).__init__(dependencies)
 
-class DataManagerInvalidMode(Exception):
+class DataManagerInvalidMode(DataManagerException):
     def __init__(self, mode):
         self.mode = mode
         super(DataManagerInvalidMode, self).__init__(mode)
 
-class UnknownIdentifier(DataManagerException):
+class DataManagerInvalidModeUnknownIdentifier(DataManagerException):
     pass
 
 class DataManager(object):
@@ -36,26 +36,25 @@ class DataManager(object):
             self.has_any_dependencies(location, config_section, identifier)
             # If we are removing a walker, check to see if we can remove any walkerareas
             if config_section == 'walker':
-                uri = self.generate_uri(location, identifier)
                 walker_config = self.get_data(location, identifier=identifier)
-                for walkerarea_uri in walker_config['setup']:
+                for walkerarea_id in walker_config['setup']:
                     try:
-                        self.delete_data(walkerarea_uri)
+                        self.delete_data('walkerarea', identifier=walkerarea_id)
                     except DataManagerDependencyError as err:
                         # This should fire for every occasion because its assigned to this walker.  Check to see if
                         # the walkerarea is only assigned to the walker.  If so, slate it for removal
                         # This is a for loop on the off-chance it has been added to the walker multiple times
                         valid = True
                         for failure in err.dependencies:
-                            if failure['uri'] != uri:
+                            if failure['uri'] != identifier:
                                 valid = False
                                 break
                         if valid:
-                            removal_list.append(walkerarea_uri)
+                            removal_list.append(('walkerarea', walkerarea_id))
             del self.__raw[config_section]['entries'][identifier]
             self.save_config()
-            for uri in removal_list:
-                self.delete_data(uri)
+            for section, comp_id in removal_list:
+                self.delete_data(section, identifier=comp_id)
             return None
         except AttributeError:
             self._logger.debug('Invalid URI set in location, {}', location)
@@ -98,14 +97,14 @@ class DataManager(object):
             return None
         except KeyError:
             self._logger.debug('Data for {},{} not found in configuration file', location, identifier)
-            return None
+            raise DataManagerInvalidModeUnknownIdentifier()
         try:
             if identifier is not None:
                 return data[str(identifier)]
         except KeyError:
             self._logger.debug('Identifier {} not found in {}', identifier, location)
-            return None
-        if identifier is None and kwargs.get('uri', True):
+            raise DataManagerInvalidModeUnknownIdentifier()
+        if identifier is None:
             disp_field = kwargs.get('display_field', self.get_api_attribute(location, 'default_sort'))
             try:
                 data = self.get_sorted_data(data, disp_field, location, fetch_all)
@@ -125,24 +124,24 @@ class DataManager(object):
             sorted_keys = list(data.keys())
         for key in sorted_keys:
             if fetch_all or display is None:
-                ordered_data[self.generate_uri(location, key)] = data[key]
+                ordered_data[key] = data[key]
             else:
-                ordered_data[self.generate_uri(location, key)] = data[key][display]
+                ordered_data[key] = data[key][display]
         return ordered_data
 
     def has_any_dependencies(self, location, config_section, identifier):
-        uri = self.generate_uri(location, identifier)
         if config_section == 'areas':
             # Check for any walkerareas that use the area
             dependency_failures = []
-            if self.get_data("walkerarea") is None:
+            walkerareas = self.get_data("walkerarea")
+            if walkerareas is None:
                 return
-            for walkerarea_uri, walkerarea in self.get_data('walkerarea').items():
-                if walkerarea['walkerarea'] != uri:
+            for walkerarea_id, walkerarea in walkerareas.items():
+                if walkerarea['walkerarea'] != identifier:
                     continue
                 failure = {
-                    'uri': walkerarea_uri,
-                    'name': walkerarea['walkertext']
+                    'uri': walkerarea_id,
+                    'name': walkerarea['walkertext'] if 'walkertext' in walkerarea else 'Non-Labeled Walker Area'
                 }
                 dependency_failures.append(failure)
             if dependency_failures:
@@ -156,13 +155,14 @@ class DataManager(object):
         elif config_section == 'devicesettings':
             # Check for any devices that use the devicesetting
             dependency_failures = []
-            if self.get_data("device") is None:
+            devices = self.get_data("device")
+            if devices is None:
                 return
-            for device_uri, device in self.get_data('device').items():
-                if device['pool'] != uri:
+            for device_id, device in devices.items():
+                if device['pool'] != identifier:
                     continue
                 failure = {
-                    'uri': device_uri,
+                    'uri': device_id,
                     'name': device['origin']
                 }
                 dependency_failures.append(failure)
@@ -174,14 +174,14 @@ class DataManager(object):
             areas = self.get_data("area")
             if areas is None:
                 return
-            for area_uri, area in areas.items():
+            for area_id, area in areas.items():
                 try:
-                    if area['settings']['mon_ids_iv'] != uri:
+                    if area['settings']['mon_ids_iv'] != identifier:
                         continue
                 except KeyError:
                     continue
                 failure = {
-                    'uri': area_uri,
+                    'uri': area_id,
                     'name': area['name']
                 }
                 dependency_failures.append(failure)
@@ -190,13 +190,14 @@ class DataManager(object):
         elif config_section == 'walker':
             # Check for any devices that use the walker
             dependency_failures = []
-            if self.get_data("device") is None:
+            devices = self.get_data("device")
+            if devices is None:
                 return
-            for device_uri, device in self.get_data('device').items():
-                if device['walker'] != uri:
+            for device_id, device in devices.items():
+                if device['walker'] != identifier:
                     continue
                 failure = {
-                    'uri': device_uri,
+                    'uri': device_id,
                     'name': device['origin']
                 }
                 dependency_failures.append(failure)
@@ -205,13 +206,14 @@ class DataManager(object):
         elif config_section == 'walkerarea':
             # Check for any walkers that use the walkerarea
             dependency_failures = []
-            if self.get_data("walker") is None:
+            walkers = self.get_data("walker")
+            if walkers is None:
                 return
-            for walker_uri, walker in self.get_data('walker').items():
-                if uri not in walker['setup']:
+            for walker_id, walker in walkers.items():
+                if identifier not in walker['setup']:
                     continue
                 failure = {
-                    'uri': walker_uri,
+                    'uri': walker_id,
                     'name': walker['walkername']
                 }
                 dependency_failures.append(failure)
@@ -252,7 +254,7 @@ class DataManager(object):
         with open(self.__location, 'w') as outfile:
             json.dump(self.__raw, outfile, indent=4, sort_keys=True)
 
-    def set_data(self, data, location, action, **kwargs):
+    def set_data(self, location, action, data, **kwargs):
         self.update()
         append = kwargs.get('append', True)
         identifier = kwargs.get('identifier', None)
@@ -282,16 +284,12 @@ class DataManager(object):
             else:
                 index = 0
                 self.__raw[config_section] = {"index": index}
-
-            uri_key = self.generate_uri(config_section, index)
-
             if "entries" not in self.__raw[config_section]:
                 self.__raw[config_section]['entries'] = {}
-
             self.__raw[config_section]['entries'][index] = data
             self.__raw[config_section]['index'] = int(index) + 1
             self.save_config()
-            return uri_key
+            return index
         elif action == 'put':
             if identifier not in self.__raw[config_section]['entries']:
                 raise KeyError

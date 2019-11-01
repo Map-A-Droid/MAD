@@ -24,13 +24,13 @@
             "columns": [
                 { data: 'origin', title: 'Origin',
                   "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html("<a href='/settings/devices?id="+oData.origin_id+"'>"+oData.origin+"</a>");
+                    $(nTd).html("<a href='{{ url_for('settings_devices') }}?id="+oData.origin_id+"'>"+oData.origin+"</a>");
                   }
                 },
                 { data: 'routemanager', title: 'Route', 
                   "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
                     if(oData.routemanager_id != -1) {
-                      $(nTd).html("<a href='/settings/areas?id="+oData.routemanager_id+"&mode="+oData.routemanager_mode+"'>"+oData.routemanager+"</a>");
+                      $(nTd).html("<a href='{{ url_for('settings_areas') }}?id="+oData.routemanager_id+"&mode="+oData.routemanager_mode+"'>"+oData.routemanager+"</a>");
                     } else {
                       $(nTd).html(oData.routemanager);
                     }
@@ -89,6 +89,7 @@
             "responsive": {{ responsive }},
             "autoWidth": false,
             "stateSave": true,
+            "stateDuration": 0,                                    
             "stateSaveCallback": function(settings,data) {
             localStorage.setItem( 'MAD_STATUS_' + settings.sInstance, JSON.stringify(data) )
             },

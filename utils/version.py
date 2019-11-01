@@ -4,8 +4,9 @@ import sys
 from utils.logging import logger
 import shutil
 from .convert_mapping import convert_mappings
+import re
 
-current_version = 14
+current_version = 15
 
 
 class MADVersion(object):
@@ -30,6 +31,14 @@ class MADVersion(object):
             self.start_update()
 
     def start_update(self):
+        # BACKUP ALL THE THINGS! if we need to update
+        if self._version != current_version:
+            target = '%s.%s.bk' % (self._application_args.mappings, self._version)
+            try:
+                shutil.copy(self._application_args.mappings, target)
+            except IOError:
+                logger.exception('Unable to clone configuration. Exiting')
+                sys.exit(1)
 
         if self._version < 1:
             logger.info('Execute Update for Version 1')
@@ -354,6 +363,12 @@ class MADVersion(object):
 
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(new_data, outfile, indent=4, sort_keys=True)
+        if self._version < 15:
+            with open(self._application_args.mappings, 'rb') as fh:
+                settings = json.load(fh)
+            self.__convert_to_id(settings)
+            with open(self._application_args.mappings, 'w') as outfile:
+                json.dump(settings, outfile, indent=4, sort_keys=True)
 
         self.set_version(current_version)
 
@@ -361,3 +376,20 @@ class MADVersion(object):
         output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)
+
+    def __convert_to_id(self, data):
+        regex = re.compile(r'/api/.*/\d+')
+        for key, val in data.items():
+            if type(val) is dict:
+                data[key] = self.__convert_to_id(val)
+            elif type(val) is list:
+                valid = []
+                for elem in val:
+                    if type(elem) is str:
+                        valid.append(elem[elem.rfind('/')+1:])
+                    else:
+                        valid.append(elem)
+                data[key] = valid
+            elif type(val) is str and regex.search(val):
+                data[key] = val[val.rfind('/')+1:]
+        return data
