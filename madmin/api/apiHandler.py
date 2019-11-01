@@ -22,6 +22,7 @@ class ResourceHandler(object):
     component = None
     iterable = True
     default_sort = None
+    mode = None
 
     def __init__(self, logger, args, app, base, data_manager):
         self._logger = logger
@@ -186,14 +187,9 @@ class ResourceHandler(object):
             pass
         return {'settings': {}} if 'settings' in config else {}
 
-    def get_required_configuration(self, mode=None):
-        if mode:
-            if mode in self.configuration:
-                return copy.deepcopy(self.configuration[mode])
-            else:
-                raise KeyError
-        if type(self.configuration) is dict and ('fields' in self.configuration or 'settings' in self.configuration):
-            return copy.deepcopy(self.configuration)
+    # Basic configuration does not support mode
+    def get_required_configuration(self, identifier, method):
+        return copy.deepcopy(self.configuration)
 
     def get_resource_info(self, config):
         resource = {
@@ -226,6 +222,42 @@ class ResourceHandler(object):
                 pass
             variables.append(field_data)
         return variables
+
+    def get_resource_data_root(self, config):
+        try:
+            fetch_all = int(self.api_req.params.get('fetch_all'))
+        except:
+            fetch_all = 0
+        try:
+            hide_resource = int(self.api_req.params.get('hide_resource', 0))
+        except:
+            hide_resource = 0
+        resource_info = self.get_resource_info(config)
+        # Use an ordered dict so we can guarantee the order is returned per the class specification
+        disp_field = self.api_req.params.get('display_field', self.default_sort)
+        raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field, mode=self.mode)
+        api_response_data = collections.OrderedDict()
+        key_translation = '%s/%%s' % (flask.url_for('api_%s' % (self.component,)))
+        try:
+            translation_config = self.translate_config_for_response(config)
+            for key, val in raw_data.items():
+                api_response_data[key_translation % key] = self.translate_data_for_response(val, translation_config)
+        except:
+            resource_info = 'Resource is not available unless a mode is specified'
+            for key, val in raw_data.items():
+                api_response_data[key_translation % key] = val
+        if hide_resource:
+            response_data = api_response_data
+        else:
+            response_data = {
+                'resource': resource_info,
+                'results': api_response_data
+            }
+        return apiResponse.APIResponse(self._logger, self.api_req)(response_data, 200)
+
+    # Mode does not exist for basic configuration
+    def populate_mode(self, identifier, method):
+        pass
 
     def translate_config_for_response(self, config):
         translation_config = config['fields']
@@ -262,7 +294,7 @@ class ResourceHandler(object):
     # ========= API Functionality =========
     # =====================================
     @auth_required
-    def process_request(self, endpoint=None, identifier=None):
+    def process_request(self, endpoint=None, identifier=None, config=None):
         """ Processes an API request
 
         Args:
@@ -276,84 +308,15 @@ class ResourceHandler(object):
         try:
             self.api_req = apiRequest.APIRequest(self._logger, flask.request)
             self.api_req()
-        except apiException.FormattingError as err:
-            headers = {
-                'X-Status': err.reason
-            }
-            return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
-        mode = None
-        if self.component == 'area':
-            mode = self.api_req.headers.get('X-Mode', None)
-            if mode is None and self.component == 'area':
-                mode = self.api_req.params.get('mode', None)
-        try:
-            config = self.get_required_configuration(mode=mode)
-        except KeyError:
-            if self.component == 'area':
-                msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
-                error = {'errors': msg}
-                return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
-            else:
-                import traceback
-                traceback.print_exc()
-        resource_info = None
-        if identifier is None and flask.request.method == 'GET':
-            try:
-                fetch_all = int(self.api_req.params.get('fetch_all'))
-            except:
-                fetch_all = 0
-            try:
-                hide_resource = int(self.api_req.params.get('hide_resource', 0))
-            except:
-                hide_resource = 0
-            if self.component == 'area' and flask.request.method in ['POST', 'PUT']:
-                if mode is None:
-                    resource_info = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
-            # Use an ordered dict so we can guarantee the order is returned per the class specification
-            disp_field = self.api_req.params.get('display_field', self.default_sort)
-            raw_data = self._data_manager.get_data(self.component, fetch_all=fetch_all, display_field=disp_field, mode=mode)
-            api_response_data = collections.OrderedDict()
-            key_translation = '%s/%%s' % (flask.url_for('api_%s' % (self.component,)))
-            try:
-                translation_config = self.translate_config_for_response(config)
-                for key, val in raw_data.items():
-                    api_response_data[key_translation % key] = self.translate_data_for_response(val, translation_config)
-            except:
-                resource_info = 'Resource is not available unless a mode is specified'
-                for key, val in raw_data.items():
-                    api_response_data[key_translation % key] = val
-            if hide_resource:
-                response_data = api_response_data
-            else:
-                if not resource_info:
-                    resource_info = self.get_resource_info(config)
-                response_data = {
-                    'resource': resource_info,
-                    'results': api_response_data
-                }
-            return apiResponse.APIResponse(self._logger, self.api_req)(response_data, 200)
-        else:
+            self.populate_mode(identifier, flask.request.method)
+            config = self.get_required_configuration(identifier, flask.request.method)
             if flask.request.method == 'DELETE':
                 return self.delete(identifier)
-            elif flask.request.method == 'GET':
-                return self.get(identifier, config=config)
-            # Validate incoming data and return any issues
-            if self.component == 'area':
-                if mode is None:
-                    if flask.request.method in ['POST', 'PUT']:
-                        msg = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
-                        error = {
-                            'error': msg
-                        }
-                        return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
-                    else:
-                        if identifier is not None:
-                            data = self._data_manager.get_data(self.component, identifier=identifier)
-                            mode = data['mode']
-                            config = self.get_required_configuration(mode=mode)
-                        else:
-                            msg = 'Invalid mode specified [%s].  Valid modes: %s' % (mode, ','.join(self.configuration.keys()))
-                            return apiResponse.APIResponse(self._logger, self.api_req)(msg, 400)
+            if flask.request.method == 'GET':
+                if identifier is None:
+                    return self.get_resource_data_root(config)
+                else:
+                    return self.get(identifier, config=config)
             (self.api_req.data, invalid, missing, uris, unknown) = self.format_data(self.api_req.data, config, flask.request.method)
             errors = {}
             if missing:
@@ -366,15 +329,31 @@ class ResourceHandler(object):
                 errors['unknown'] = unknown
             if errors:
                 return apiResponse.APIResponse(self._logger, self.api_req)(errors, 422)
-            try:
-                if flask.request.method == 'PATCH':
-                    return self.patch(identifier)
-                elif flask.request.method == 'POST':
-                    return self.post(identifier, config=config)
-                elif flask.request.method == 'PUT':
-                    return self.put(identifier)
-            except apiException.APIException as err:
-                return apiResponse.APIResponse(self._logger, self.api_req)(err.reason, err.status_code)
+            if flask.request.method == 'PATCH':
+                return self.patch(identifier)
+            elif flask.request.method == 'POST':
+                return self.post(identifier, config=config)
+            elif flask.request.method == 'PUT':
+                return self.put(identifier)
+        except apiException.FormattingError as err:
+            headers = {
+                'X-Status': err.reason
+            }
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
+        except apiException.NoModeSpecified:
+            msg = 'Please specify a mode for resource information.  Valid modes: %s' % (','.join(self.configuration.keys()))
+            error = {
+                'error': msg
+            }
+            return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
+        except apiException.InvalidMode:
+            msg = 'Invalid mode specified [%s].  Valid modes: %s' % (self.mode, ','.join(self.configuration.keys()))
+            error = {'errors': msg}
+            return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
+        except utils.data_manager.DataManagerInvalidModeUnknownIdentifier:
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
+        except apiException.APIException as err:
+            return apiResponse.APIResponse(self._logger, self.api_req)(err.reason, err.status_code)
 
     def delete(self, identifier, *args, **kwargs):
         """ API Call to remove data """
@@ -395,9 +374,6 @@ class ResourceHandler(object):
         config = kwargs.get('config')
         try:
             data = self._data_manager.get_data(self.component, identifier=identifier)
-            if self.component == 'area' and config is None:
-                mode = data['mode']
-                config = self.get_required_configuration(mode=mode)
             if config:
                 translation_config = self.translate_config_for_response(config)
                 self.translate_data_for_response(data, translation_config)
