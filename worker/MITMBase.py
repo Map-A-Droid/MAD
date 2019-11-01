@@ -258,7 +258,7 @@ class MITMBase(WorkerBase):
 
         dataToSave = {
             'Origin':            self._id,
-            'Routemanager':      str(self._mapping_manager.routemanager_get_name(self._routemanager_name)),
+            'Routemanager':      str(self._routemanager_name),
             'RebootCounter':     str(self._reboot_count),
             'RestartCounter':    str(self._restart_count),
             'RebootingOption':   str(self.get_devicesettings_value("reboot", False)),
