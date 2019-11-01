@@ -62,3 +62,10 @@ class APIWalker(api_base.APITestBase):
         self.delete_resource(walker_uri)
         response = self.api.get(walkerarea_uri)
         self.assertEqual(response.status_code, 404)
+
+    def test_walkerarea_response(self):
+        area_uri = super().create_valid_resource('area')
+        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
+        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
+        walker_data = self.api.get(walker_uri)
+        self.assertTrue(walkerarea_uri in walker_data.json()['setup'])
