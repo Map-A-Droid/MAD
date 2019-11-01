@@ -959,7 +959,7 @@ class DbWrapperBase(ABC):
             "ON DUPLICATE KEY UPDATE currentPos=VALUES(currentPos), "
             "lastPos=VALUES(lastPos), routePos=VALUES(routePos), "
             "routeMax=VALUES(routeMax), routemanager=VALUES(routemanager), "
-            "rebootCounter=VALUES(rebootCounter), lastProtoDateTime=VALUES(lastProtoDateTime), "
+            "rebootCounter=VALUES(rebootCounter), lastProtoDateTime=IF(LENGTH(VALUES(lastProtoDateTime))=0, lastProtoDateTime, VALUES(lastProtoDateTime)), "
             "init=VALUES(init), rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter), "
             "currentSleepTime=VALUES(currentSleepTime)"
         )
