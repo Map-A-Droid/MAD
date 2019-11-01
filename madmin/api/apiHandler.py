@@ -115,10 +115,7 @@ class ResourceHandler(object):
                         if entry_def['settings']['require'] == True:
                             missing_fields.append(key)
                             continue
-                        elif keep_empty_values:
-                            formated_val = none_val
-                        else:
-                            continue
+                        formated_val = none_val
                     else:
                         formated_val = self.format_value(val, expected, none_val)
                     try:
