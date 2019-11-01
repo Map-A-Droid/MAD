@@ -22,6 +22,8 @@ from utils.madGlobals import (
 )
 from worker.MITMBase import MITMBase, LatestReceivedType
 
+PROTO_NUMBER_FOR_GMO = 106
+
 
 class FortSearchResultTypes(Enum):
     UNDEFINED = 0
@@ -609,10 +611,10 @@ class WorkerQuests(MITMBase):
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
         latest: dict = self._mitm_mapper.request_latest(self._id)
-        if latest is None or 106 not in latest.keys():
+        if latest is None or PROTO_NUMBER_FOR_GMO not in latest.keys():
             return False, False
 
-        gmo_cells: list = latest.get(106).get("values", {}).get("payload", {}).get("cells", None)
+        gmo_cells: list = latest.get(PROTO_NUMBER_FOR_GMO).get("values", {}).get("payload", {}).get("cells", None)
         if gmo_cells is None:
             return False, False
         for cell in gmo_cells:
@@ -736,9 +738,20 @@ class WorkerQuests(MITMBase):
                     logger.warning('Cannot process this stop again')
                 self.clear_thread_task = 1
                 break
+            elif data_received == FortSearchResultTypes.LIMIT:
+                logger.error('HIT DAILY SPIN LIMIT ON ACCOUNT, '
+                             'NOT SURE WHAT TO DO NOW SO I WILL JUST SLEEP FOR 10 MINUTES!!!')
+                self.clear_thread_task = 2
+                time.sleep(600)
+                break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
                 if data_received == FortSearchResultTypes.COOLDOWN:
-                    logger.info('NOT received new Quest - previously spun the stop/cooldown')
+                    logger.info('Stop is on cooldown.. sleeping 10 seconds but probably should just move on')
+                    time.sleep(10)
+                    if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
+                        logger.info('Quest is done without us noticing. Getting new Quest...')
+                    self.clear_thread_task = 2
+                    break
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
 
@@ -827,10 +840,12 @@ class WorkerQuests(MITMBase):
                         return FortSearchResultTypes.TIME
                     elif result == 2:
                         return FortSearchResultTypes.OUT_OF_RANGE
-                    elif result == 4:
-                        return FortSearchResultTypes.INVENTORY
                     elif result == 3:
                         return FortSearchResultTypes.COOLDOWN
+                    elif result == 4:
+                        return FortSearchResultTypes.INVENTORY
+                    elif result == 5:
+                        return FortSearchResultTypes.LIMIT
                 elif proto_to_wait_for == 104:
                     fort_type: int = latest_data.get("payload").get("type", 0)
                     if fort_type == 0:
@@ -840,7 +855,7 @@ class WorkerQuests(MITMBase):
                 if proto_to_wait_for == 4 and 'inventory_delta' in latest_data['payload'] and \
                         len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return LatestReceivedType.CLEAR
-                if proto_to_wait_for == 106:
+                if proto_to_wait_for == PROTO_NUMBER_FOR_GMO:
                     return LatestReceivedType.GMO
             else:
                 logger.debug("latest timestamp of proto {} ({}) is older than {}", str(
