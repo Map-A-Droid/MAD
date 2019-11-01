@@ -217,7 +217,7 @@ class config(object):
     def settings_ivlists(self):
         try:
             identifier = request.args.get('id')
-            current_mons = self._data_manager.get_data(identifier)['mon_ids_iv']
+            current_mons = self._data_manager.get_data('monivlist', identifier)['mon_ids_iv']
         except Exception as err:
             current_mons = []
         all_pokemon = self.get_pokemon()
