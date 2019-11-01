@@ -24,6 +24,7 @@ class APITestBase(TestCase):
 
     def create_resource(self, uri, payload, **kwargs):
         response = self.api.post(uri, json=payload, **kwargs)
+        self.assertEqual(response.status_code, 201)
         created_uri = response.headers['X-Uri']
         self.add_created_resource(created_uri)
         return response
@@ -49,6 +50,7 @@ class APITestBase(TestCase):
             for key, val in kwargs.items():
                 payload[key] = val
         response = self.create_resource(resource_def['uri'], payload, **def_kwargs)
+        self.assertEqual(response.status_code, 201)
         return response.headers['X-Uri']
 
     # ===========================
