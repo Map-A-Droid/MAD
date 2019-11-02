@@ -1413,7 +1413,7 @@ class DbWrapperBase(ABC):
         self.execute(query, commit=True)
 
     def running_mysql_modes(self):
-        blacklisted_modes = "STRICT_TRANS_TABLES NO_ZERO_DATE NO_ZERO_IN_DATE ONLY_FULL_GROUP_BY"
+        blacklisted_modes = "NO_ZERO_DATE NO_ZERO_IN_DATE ONLY_FULL_GROUP_BY"
         query = "SELECT @@GLOBAL.sql_mode"
         res = self.execute(query)[0][0]
         detected_wrong_modes = []
