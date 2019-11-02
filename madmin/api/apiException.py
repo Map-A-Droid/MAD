@@ -21,3 +21,15 @@ class ContentException(APIException):
 class FormattingError(APIException):
     def __init__(self, invalid_data):
         super(FormattingError, self).__init__(422, reason=invalid_data)
+
+class InvalidIdentifier(APIException):
+    def __init__(self):
+        super(InvalidIdentifier, self).__init__(404)
+
+class InvalidMode(APIException):
+    def __init__(self):
+        super(InvalidMode, self).__init__(400)
+
+class NoModeSpecified(APIException):
+    def __init__(self):
+        super(NoModeSpecified, self).__init__(400)

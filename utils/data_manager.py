@@ -61,8 +61,7 @@ class DataManager(object):
             return None
         except KeyError:
             self._logger.debug('Data for {},{} not found in configuration file', location, identifier)
-            self._logger.debug(self.__raw)
-            return None
+            raise
         return True
 
     def generate_uri(self, location, *args):
@@ -102,7 +101,7 @@ class DataManager(object):
             if identifier is not None:
                 return data[str(identifier)]
         except KeyError:
-            self._logger.debug('Identifier {} not found in {}', identifier, location)
+            self._logger.debug('Data for {},{} not found in configuration file', location, identifier)
             raise DataManagerInvalidModeUnknownIdentifier()
         if identifier is None:
             disp_field = kwargs.get('display_field', self.get_api_attribute(location, 'default_sort'))

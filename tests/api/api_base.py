@@ -14,7 +14,7 @@ class APITestBase(TestCase):
 
     def tearDown(self):
         if self.generated_uris:
-            for uri in reversed(self.generated_uris):
+            for uri in set(reversed(self.generated_uris)):
                 self.delete_resource(uri)
         self.api.close()
 
@@ -24,13 +24,14 @@ class APITestBase(TestCase):
 
     def create_resource(self, uri, payload, **kwargs):
         response = self.api.post(uri, json=payload, **kwargs)
+        self.assertEqual(response.status_code, 201)
         created_uri = response.headers['X-Uri']
         self.add_created_resource(created_uri)
         return response
 
     def delete_resource(self, uri):
         response = self.api.delete(uri)
-        if response.status_code == 202 and uri in self.generated_uris:
+        if response.status_code in [202, 404] and uri in self.generated_uris:
             self.generated_uris.remove(uri)
         return response
 
@@ -49,6 +50,7 @@ class APITestBase(TestCase):
             for key, val in kwargs.items():
                 payload[key] = val
         response = self.create_resource(resource_def['uri'], payload, **def_kwargs)
+        self.assertEqual(response.status_code, 201)
         return response.headers['X-Uri']
 
     # ===========================
