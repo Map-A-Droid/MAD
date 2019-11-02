@@ -13,67 +13,18 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js" integrity="sha256-Z3MmjesRY6rcd+sYj8tTwb/+EV/4msqGW7EZiQc3TK8="
     crossorigin="anonymous"></script>
 <script type="text/javascript" src="{{ url_for('static', filename='js/jquery.Aplus.min.js') }}"></script>
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
 <script type="text/javascript">
     $(document).ready(function () {
         $("#submit").click(function() {
             $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
-            save_data = {};
-            if($(".form-control[setting]").length > 0) {
-                save_data['settings'] = {};
+            save_data = get_save_data();
+            if(isEmptyObj(save_data) != false) {
+                alert('No changes have been made');
+                window.location.replace('{{ redirect }}');
+            } else {
+                process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
             }
-            $(".form-control").each(function() {
-                var obj = $(this);
-                var name = obj.attr('name');
-                value = null;
-                if(obj.is('select')) {
-                    value = obj.children("option:selected").val();
-                } else if(obj.is('input')) {
-                    value = obj.val();
-                }
-                if(value.length == 0)
-                    value = null;
-                if(obj.attr('setting') == 'true') {
-                    save_data['settings'][name] = value;
-                } else {
-                    save_data[name] = value;
-                }
-                if(save_data['pool'] == 'None') {
-                    save_data['pool'] = null;
-                }
-            });
-            save_data['setup'] = generateAreas();
-            $.ajax({
-                url : "{{ uri }}",
-                data : JSON.stringify(save_data),
-                type : '{{ method }}',
-                contentType : 'application/json',
-                success: function(data, status, xhr) {
-                  if(xhr.status < 400)
-                    window.location.replace('{{ redirect }}');
-                },
-                error: function(data, status, xhr) {
-                    $("label[for]").removeClass('btn-danger');
-                    if(data['responseJSON'] != undefined) {
-                        $.each(data['responseJSON']['missing'], function() {
-                            var elem = $("label[for="+ this +"]");
-                            elem[0].innerHTML = elem.attr('for') +' - Required Field';
-                            elem.addClass('btn-danger');
-                        });
-                        $.each(data['responseJSON']['invalid'], function() {
-                            var field = this.split(/:(.+)/)[0];
-                            var expected = this.split(/:(.+)/)[1];
-                            var elem = $("label[for="+ field +"]");
-                            elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
-                            elem.addClass('btn-danger');
-                        });
-                        $.unblockUI();
-                        alert('One or more fields failed validation');
-                    } else {
-                        $.unblockUI();
-                        alert('Unable to save the {{ subtab }}.  An unknown error occurred');
-                    }
-                }
-            });
         });
 
         $(".delete").click(function() {
@@ -129,7 +80,7 @@
     <div class="col-sm">
         <div class="form-group">
             <label for="walkername">walkername</label>
-            <input type="input" class="form-control" id="walkername" name="walkername" value="{{ element.walkername }}">
+            <input type="input" class="form-control" id="walkername" name="walkername" value="{{ element.walkername }}" data-default="{{ element.walkername }}">
             <small class="form-text text-muted">walkername</small>
         </div>
         <div class="form-group">
@@ -163,6 +114,7 @@
             </table>
         </div>
     </div>
+    <div id='selected-pokemon' style='display:none;' class="row_position ui-sortable form-control" name='setup' data-callback='generateAreas' data-default="{{ element.setup }}"></div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
 </div>
 {% endblock %}

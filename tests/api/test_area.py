@@ -106,3 +106,33 @@ class APIArea(api_base.APITestBase):
         walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
         response = self.delete_resource(area_uri)
         self.assertEqual(response.status_code, 412)
+
+    def test_issue_495(self):
+        headers = {
+            'X-Mode': 'mon_mitm'
+        }
+        payload = {
+            "geofence_excluded": None,
+            "geofence_included": "geofence.txt",
+            "name": "UnitTest Area",
+            "routecalc": "unittest_area",
+            "init": False,
+            "coords_spawns_known": False,
+            "settings": {
+                "starve_route": False,
+                "delay_after_prio_event": 1
+            }
+        }
+        response = self.create_valid(payload, headers=headers)
+        uri = response.headers['X-Uri']
+        patch = {
+            'settings': {
+                'delay_after_prio_event': None
+            }
+        }
+        response = self.api.patch(uri, json=patch, headers=headers)
+        del payload['settings']['delay_after_prio_event']
+        payload['mode'] = headers['X-Mode']
+        response = self.api.get(uri)
+        self.assertDictEqual(payload, response.json())
+        response = self.delete_resource(uri)
