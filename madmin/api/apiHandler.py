@@ -277,7 +277,7 @@ class ResourceHandler(object):
                     valid = []
                     for elem in data[key]:
                         valid.append(uri % elem)
-                    data[key] = []
+                    data[key] = valid
                 elif type(data[key]) == str:
                     data[key] = uri % data[key]
             except KeyError as err:
