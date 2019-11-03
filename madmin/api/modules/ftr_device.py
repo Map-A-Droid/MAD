@@ -12,7 +12,6 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Name of device (from RGC settings)",
                     "lockonedit": True,
                     "expected": str
@@ -22,7 +21,6 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "walkerselect",
                     "require": True,
-                    "empty": None,
                     "description": "Walker of this area",
                     "expected": str,
                     "uri": True,

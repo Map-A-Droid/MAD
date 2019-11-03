@@ -12,7 +12,6 @@ class APIDeviceSetting(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Name for the global device settings",
                     "lockonedit": True,
                 "expected": str

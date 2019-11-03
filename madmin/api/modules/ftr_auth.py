@@ -13,7 +13,6 @@ class APIAuth(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Username of device",
                     "lockonedit": True,
                 "expected": str
@@ -23,7 +22,6 @@ class APIAuth(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Password of device",
                 "expected": str
                 }

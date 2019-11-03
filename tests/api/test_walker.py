@@ -69,3 +69,11 @@ class APIWalker(api_base.APITestBase):
         walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
         walker_data = self.api.get(walker_uri)
         self.assertTrue(walkerarea_uri in walker_data.json()['setup'])
+
+    def test_missing_required_variable_with_empty(self):
+        payload = {
+            'walkername': 'UnitTest Walker'
+        }
+        walker_uri = super().create_valid(payload).headers['X-Uri']
+        walker_data = self.api.get(walker_uri)
+        self.assertTrue('setup' in walker_data.json())

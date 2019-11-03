@@ -86,7 +86,10 @@ class ResourceHandler(object):
             except KeyError:
                 try:
                     if entry_def['settings']['require'] == True and operation in ['POST', 'PUT']:
-                        missing_fields.append(key)
+                        if 'empty' in entry_def['settings']:
+                            save_data[key] = entry_def['settings']['empty']
+                        else:
+                            missing_fields.append(key)
                 except:
                     pass
                 continue

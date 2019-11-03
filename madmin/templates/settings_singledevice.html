@@ -29,7 +29,7 @@ $(document).ready(function () {
 <h1 class="display-4">{{ element.origin }}</h1>
 
 {% if walkers.items()|length == 0 %}
-<div class="alert alert-warning">Couldn't find any walker configurations. Please <a href="/settings/walker?id=new">create</a> one first.</div>
+<div class="alert alert-warning">Couldn't find any walker configurations. Please <a href="{{ url_for('settings_walkers', id='new') }}">create</a> one first.</div>
 {% else %}
 <div class="row">
   <div class="col-sm">
@@ -57,7 +57,7 @@ $(document).ready(function () {
   <div class="col-sm">
     <div class="form-group">
       <label for="walker">walker</label>
-      <select class="form-control" name="walker" data-default="{{ url_for('api_walker') + '/'+ element.walker }}">
+      <select class="form-control" name="walker" data-default="{{ url_for('api_walker') + '/'+ element.walker if element.walker else '' }}">
         {% for walker_id, walker in walkers.items() %}
          <option value="{{ url_for('api_walker') + '/'+ walker_id }}" {{ 'selected=selected' if element.walker == walker_id else "" }}>{{ walker.walkername }}</option>
         {% endfor %}

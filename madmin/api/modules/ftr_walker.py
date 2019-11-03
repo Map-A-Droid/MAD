@@ -12,7 +12,6 @@ class APIWalker(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Name of walker",
                     "lockonedit": True,
                     "expected": str
@@ -21,7 +20,7 @@ class APIWalker(apiHandler.ResourceHandler):
             "setup": {
                 "settings": {
                     "type": "list",
-                    "require": False,
+                    "require": True,
                     "empty": [],
                     "description": "Order of areas",
                     "lockonedit": False,
