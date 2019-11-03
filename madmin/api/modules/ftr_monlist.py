@@ -12,7 +12,6 @@ class APIMonList(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Name of global Monlist",
                     "lockonedit": True,
                     'expected': str

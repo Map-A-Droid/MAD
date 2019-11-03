@@ -33,7 +33,6 @@ class APIArea(apiHandler.ResourceHandler):
                     "settings": {
                         "type": "geofence",
                         "require": True,
-                        "empty": None,
                         "description": "Including geofence for scanarea",
                         "expected": str
                     }
@@ -173,7 +172,6 @@ class APIArea(apiHandler.ResourceHandler):
                     "settings": {
                         "type": "geofence",
                         "require": True,
-                        "empty": None,
                         "description": "Including geofence for scanarea",
                         "expected": str
                     }
@@ -296,7 +294,6 @@ class APIArea(apiHandler.ResourceHandler):
                     "settings": {
                         "type": "geofence",
                         "require": True,
-                        "empty": None,
                         "description": "Including geofence for scanarea",
                         "expected": str
                     }
@@ -412,7 +409,6 @@ class APIArea(apiHandler.ResourceHandler):
                     "settings": {
                         "type": "geofence",
                         "require": True,
-                        "empty": None,
                         "description": "Including geofence for scanarea",
                         "expected": str
                     }
@@ -541,7 +537,6 @@ class APIArea(apiHandler.ResourceHandler):
                     "settings": {
                         "type": "geofence",
                         "require": True,
-                        "empty": None,
                         "description": "Including geofence for scanarea",
                         "expected": str
                     }

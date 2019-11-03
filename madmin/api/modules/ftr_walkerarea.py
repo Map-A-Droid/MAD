@@ -13,7 +13,6 @@ class APIWalkerArea(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Configured area for the walkerarea",
                     "lockonedit": False,
                     "expected": str,
@@ -26,7 +25,6 @@ class APIWalkerArea(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "text",
                     "require": True,
-                    "empty": None,
                     "description": "Mode for the walker",
                     "lockonedit": False,
                     "expected": str
