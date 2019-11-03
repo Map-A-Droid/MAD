@@ -29,7 +29,7 @@ $(document).ready(function () {
 <h1 class="display-4">{{ element.origin }}</h1>
 
 {% if walkers.items()|length == 0 %}
-<div class="alert alert-warning">Couldn't find any walker configurations. Please <a href="/settings/walker?id=new">create</a> one first.</div>
+<div class="alert alert-warning">Couldn't find any walker configurations. Please <a href="{{ url_for('settings_walkers', id='new') }}">create</a> one first.</div>
 {% else %}
 <div class="row">
   <div class="col-sm">
