@@ -114,6 +114,9 @@
 {% block content %}
 {{ super() }}
 
+{% if areas.items()|length == 0 %}
+<div class="alert alert-warning">Couldn't find any area configurations. Please <a href="{{ url_for('settings_areas') }}">create</a> one first.</div>
+{% else %}
 {% if element %}
   <h1 class="display-4">Edit {{ walker.walkername }} ({{ areas[element.walkerarea].name }}) </h1>
 {% else %}
@@ -167,4 +170,5 @@
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
   </div>
 </div>
+{% endif %}
 {% endblock %}
