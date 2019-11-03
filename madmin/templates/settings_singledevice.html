@@ -57,7 +57,7 @@ $(document).ready(function () {
   <div class="col-sm">
     <div class="form-group">
       <label for="walker">walker</label>
-      <select class="form-control" name="walker" data-default="{{ url_for('api_walker') + '/'+ element.walker }}">
+      <select class="form-control" name="walker" data-default="{{ url_for('api_walker') + '/'+ element.walker if element.walker else '' }}">
         {% for walker_id, walker in walkers.items() %}
          <option value="{{ url_for('api_walker') + '/'+ walker_id }}" {{ 'selected=selected' if element.walker == walker_id else "" }}>{{ walker.walkername }}</option>
         {% endfor %}
