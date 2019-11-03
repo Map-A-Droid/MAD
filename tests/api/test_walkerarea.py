@@ -32,11 +32,13 @@ class APIWalkerArea(api_base.APITestBase):
 
     def test_valid_post_missing_fields(self):
         area_uri = super().create_valid_resource('area')
-        payload = copy.copy(self.base_payload)
-        result = copy.copy(payload)
+        payload = copy.deepcopy(self.base_payload)
+        result = copy.deepcopy(payload)
+        result['walkertype'] = 'raids_mitm'
+        result['walkerarea'] = area_uri
         payload['walkerarea'] = area_uri
         del payload['walkervalue']
-        super().valid_post(payload, payload)
+        super().valid_post(payload, result)
 
     def test_invalid_put(self):
         area_uri = super().create_valid_resource('area')
