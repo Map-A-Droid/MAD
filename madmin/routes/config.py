@@ -85,7 +85,7 @@ class config(object):
         identifier = request.args.get(kwargs.get('identifier'))
         base_uri = kwargs.get('base_uri')
         data_source = kwargs.get('data_source')
-        redirect = url_for(kwargs.get('redirect'))
+        redirect_uri = url_for(kwargs.get('redirect'))
         html_single = kwargs.get('html_single')
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
@@ -114,17 +114,20 @@ class config(object):
                 included_data[key] = val
             # Mode was required for this operation but was not present.  Return the base element
             if mode_required and mode is None:
-                req = self._data_manager.get_data(data_source, identifier=identifier)
-                element = req
-                included_data[subtab] = element
-                return render_template(html_all,
-                                       subtab=subtab,
-                                       **included_data
-                                       )
+                try:
+                    req = self._data_manager.get_data(data_source, identifier=identifier)
+                    element = req
+                    included_data[subtab] = element
+                    return render_template(html_all,
+                                           subtab=subtab,
+                                           **included_data
+                                           )
+                except:
+                    return redirect(redirect_uri, code=302)
             if identifier and identifier == 'new':
                 return render_template(html_single,
                                        uri=included_data['base_uri'],
-                                       redirect=redirect,
+                                       redirect=redirect_uri,
                                        element={'settings':{}},
                                        subtab=subtab,
                                        method='POST',
@@ -136,7 +139,7 @@ class config(object):
             if identifier is not None:
                 return render_template(html_single,
                                        uri='%s/%s' % (included_data['base_uri'], identifier),
-                                       redirect=redirect,
+                                       redirect=redirect_uri,
                                        element=element,
                                        subtab=subtab,
                                        method='PATCH',
