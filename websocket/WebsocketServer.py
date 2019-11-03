@@ -137,9 +137,14 @@ class WebsocketServer(object):
         future.result()
 
     async def handler(self, websocket_client_connection, path):
+        if self.__stop_server.is_set():
+            await websocket_client_connection.close()
+            return
+
         logger.info("Waiting for connection...")
         # wait for a connection...
         continue_work = await self.__register(websocket_client_connection)
+
         if not continue_work:
             logger.error("Failed registering client, closing connection")
             await websocket_client_connection.close()
@@ -153,7 +158,7 @@ class WebsocketServer(object):
             [producer_task, consumer_task],
             return_when=asyncio.FIRST_COMPLETED,
         )
-        logger.info("consumer or producer of {} stopped, cancelling pending tasks", str(
+        logger.debug("consumer or producer of {} stopped, cancelling pending tasks", str(
             websocket_client_connection.request_headers.get_all("Origin")[0]))
         for task in pending:
             task.cancel()
@@ -167,10 +172,6 @@ class WebsocketServer(object):
     async def __register(self, websocket_client_connection):
         logger.info("Client {} registering", str(
             websocket_client_connection.request_headers.get_all("Origin")[0]))
-        if self.__stop_server.is_set():
-            logger.info(
-                "MAD is set to shut down, not accepting new connection")
-            return False
 
         try:
             origin = str(
@@ -180,7 +181,7 @@ class WebsocketServer(object):
                 websocket_client_connection.request_headers.get_all("Origin")[0]))
             return False
 
-        if origin not in self.__mapping_manager.get_all_devicemappings().keys():
+        if self.__mapping_manager is None or origin not in self.__mapping_manager.get_all_devicemappings().keys():
             logger.warning("Register attempt of unknown origin: {}. "
                            "Have you forgot to hit 'APPLY SETTINGS' in MADmin?".format(origin))
             return False
@@ -409,7 +410,7 @@ class WebsocketServer(object):
             except Exception as e:
                 await asyncio.sleep(0.02)
         if not websocket_client_connection.open:
-            logger.warning(
+            logger.debug(
                 "retrieve_next_send: connection closed, returning None")
         return found
 

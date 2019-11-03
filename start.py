@@ -55,36 +55,21 @@ def install_thread_excepthook():
             run_thread_old(*args, **kwargs)
         except (KeyboardInterrupt, SystemExit):
             raise
+        except BrokenPipeError:
+            pass
         except Exception:
-            exc_type, exc_value, exc_trace = sys.exc_info()
-            print(repr(sys.exc_info()))
-
-            # Handle Flask's broken pipe when a client prematurely ends
-            # the connection.
-            if str(exc_value) == '[Errno 32] Broken pipe':
-                pass
-            else:
-                logger.critical(
-                    'Unhandled patched exception ({}): "{}".', exc_type, exc_value)
-                sys.excepthook(exc_type, exc_value, exc_trace)
+            logger.opt(exception=True).critical("An unhandled exception occured!")
 
     def run_process(*args, **kwargs):
         try:
             run_process_old(*args, **kwargs)
         except (KeyboardInterrupt, SystemExit):
             raise
+        except BrokenPipeError:
+            pass
         except Exception:
-            exc_type, exc_value, exc_trace = sys.exc_info()
-            print(repr(sys.exc_info()))
+            logger.opt(exception=True).critical("An unhandled exception occured!")
 
-            # Handle Flask's broken pipe when a client prematurely ends
-            # the connection.
-            if str(exc_value) == '[Errno 32] Broken pipe':
-                pass
-            else:
-                logger.critical(
-                    'Unhandled patched exception ({}): "{}".', exc_type, exc_value)
-                sys.excepthook(exc_type, exc_value, exc_trace)
     Thread.run = run_thread
     Process.run = run_process
 
@@ -313,9 +298,9 @@ if __name__ == "__main__":
             logger.info("Trying to stop receiver")
             mitm_receiver_process.shutdown()
             mitm_receiver_process.terminate()
-            logger.info("Trying to join MITMReceiver")
+            logger.debug("Trying to join MITMReceiver")
             mitm_receiver_process.join()
-            logger.info("MITMReceiver joined")
+            logger.debug("MITMReceiver joined")
             # mitm_receiver.stop_receiver()
             # mitm_receiver_thread.kill()
         # if t_file_watcher is not None:
@@ -331,6 +316,6 @@ if __name__ == "__main__":
             logger.debug("Calling db_wrapper shutdown")
             db_wrapper_manager.shutdown()
             logger.debug("Done shutting down db_wrapper")
-        logger.debug("Done shutting down")
+        logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))
         sys.exit(0)
