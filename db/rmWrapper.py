@@ -261,10 +261,13 @@ class RmWrapper(DbWrapperBase):
         # ditto detector
 
         if pokemon_data.get('id') in (13, 46, 48, 163, 165, 167, 187, 223, 273, 293, 300, 316, 322, 399) and \
-                (pokemon_display.get('weather_boosted_value', None) is not None
+                ((pokemon_display.get('weather_boosted_value', None) is not None
                   and pokemon_display.get('weather_boosted_value', None) > 0) \
             and (pokemon_data.get("individual_attack") < 4 or pokemon_data.get("individual_defense") < 4 or
-                 pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3):
+                 pokemon_data.get("individual_stamina") < 4 or pokemon_data.get("cp_multiplier") < .3) or \
+                (pokemon_display.get('weather_boosted_value', None) is not None
+                  and pokemon_display.get('weather_boosted_value', None) == 0) \
+            and pokemon_data.get("cp_multiplier") > .733) :
             # mon must be a ditto :D
             mon_id = 132
             gender = 3
