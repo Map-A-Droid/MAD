@@ -494,7 +494,7 @@ class control(object):
                                          type=type_)
             flash('Job successfully queued --> See Job Status')
 
-        return redirect(url_for('uploaded_files', origin=str(origin, adb=useadb)), code=302)
+        return redirect(url_for('uploaded_files', origin=str(origin), adb=useadb), code=302)
 
     @auth_required
     def reload_jobs(self):
