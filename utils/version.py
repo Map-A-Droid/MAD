@@ -6,7 +6,7 @@ import shutil
 from .convert_mapping import convert_mappings
 import re
 
-current_version = 15
+current_version = 16
 
 
 class MADVersion(object):
@@ -370,7 +370,7 @@ class MADVersion(object):
             with open(self._application_args.mappings, 'w') as outfile:
                 json.dump(settings, outfile, indent=4, sort_keys=True)
 
-        if self._version < 15:
+        if self._version < 16:
             query = (
                 "CREATE TABLE IF NOT EXISTS `trs_visited` ("
                 "`pokestop_id` varchar(50) NOT NULL collate utf8mb4_unicode_ci,"
