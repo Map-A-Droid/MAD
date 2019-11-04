@@ -556,7 +556,7 @@ new Vue({
             map.removeLayer(leaflet_data["prioroutes"][name]);
           }
 
-          if (route.mode == "mon_mitm") {
+          if (route.mode == "mon_mitm" || route.mode == "iv_mitm") {
             mode = "mons";
             cradius = $this.settings.routes.coordinateRadius.mons;
           } else if (route.mode == "pokestops") {
