@@ -485,12 +485,13 @@ class WorkerQuests(MITMBase):
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], \
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
-        delrounds = 0
+        click_duration = int(self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
+        delrounds_remaining = int(self.get_devicesettings_value("inventory_clear_rounds", 10))
         first_round = True
         delete_allowed = False
         error_counter = 0
 
-        while int(delrounds) <= 10 and not stop_inventory_clear.is_set():
+        while delrounds_remaining > 0 and not stop_inventory_clear.is_set():
 
             trash = 0
             if not first_round and not delete_allowed:
@@ -534,7 +535,7 @@ class WorkerQuests(MITMBase):
                         time.sleep(1 + int(delayadd))
 
                         self._communicator.touchandhold(
-                            click_x1, click_y, click_x2, click_y)
+                            click_x1, click_y, click_x2, click_y, click_duration)
                         time.sleep(1)
 
                         delx, dely = self._resocalc.get_confirm_delete_item_coords(self)[0], \
@@ -547,7 +548,7 @@ class WorkerQuests(MITMBase):
 
                         if data_received != LatestReceivedType.UNDEFINED:
                             if data_received == LatestReceivedType.CLEAR:
-                                delrounds += 1
+                                delrounds_remaining -= 1
                                 stop_screen_clear.set()
                                 delete_allowed = True
                         else:
