@@ -745,6 +745,13 @@ class WorkerQuests(MITMBase):
                 time.sleep(600)
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
+                if self._level_mode:
+                    logger.info("Saving visitation info...")
+                    self._db_wrapper.submit_pokestop_visited(self._id,
+                                                             self.current_location.lat, self.current_location.lng)
+                    # This is leveling mode, it's faster to just ignore spin result and continue ?
+                    break
+
                 if data_received == FortSearchResultTypes.COOLDOWN:
                     logger.info('Stop is on cooldown.. sleeping 10 seconds but probably should just move on')
                     time.sleep(10)
@@ -755,10 +762,6 @@ class WorkerQuests(MITMBase):
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
 
-                if self._level_mode:
-                    logger.info("Saving visitation info...")
-                    self._db_wrapper.submit_pokestop_visited(self._id,
-                                                             self.current_location.lat, self.current_location.lng)
                 if not self._always_cleanup:
                     self._clear_quest_counter += 1
                     if self._clear_quest_counter == 3:
