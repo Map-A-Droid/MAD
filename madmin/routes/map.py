@@ -14,6 +14,7 @@ from utils.gamemechanicutil import get_raid_boss_cp
 from utils.questGen import generate_quest
 from utils.s2Helper import S2Helper
 from utils.logging import logger
+from utils.language import i8ln
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
@@ -325,7 +326,7 @@ class map(object):
                     mons_raw[str(id)] = mon_raw
 
                 data[i]["encounter_id"] = str(data[i]["encounter_id"])
-                data[i]["name"] = mon_raw["name"]
+                data[i]["name"] = i8ln(mon_raw["name"])
             except Exception:
                 traceback.print_exc()
 
