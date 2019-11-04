@@ -422,6 +422,12 @@ class DbWrapperBase(ABC):
             spawnret[int(row[0])] = row[1]
         return spawnret
 
+    def submit_pokestop_visited(self, origin, latitude, longitude):
+        logger.debug("Flag pokestop as visited...")
+        query = "INSERT IGNORE INTO trs_visited SELECT pokestop_id,'{}' " \
+                "FROM pokestop WHERE latitude={} AND longitude={}".format(origin, str(latitude), str(longitude))
+        self.execute(query, commit=True)
+
     def submit_spawnpoints_map_proto(self, origin, map_proto):
         logger.debug(
             "DbWrapperBase::submit_spawnpoints_map_proto called with data received by {}", str(origin))

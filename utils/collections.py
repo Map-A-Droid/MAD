@@ -1,6 +1,7 @@
 import collections
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
+LocationWithVisits = collections.namedtuple('LocationWithVisits', ['lat', 'lng', 'visited_by'])
 Relation = collections.namedtuple(
     'Relation', ['other_event', 'distance', 'timedelta'])
 Trash = collections.namedtuple('Trash', ['x', 'y'])

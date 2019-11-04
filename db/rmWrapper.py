@@ -5,7 +5,7 @@ from multiprocessing.managers import SyncManager
 from typing import List, Optional
 
 from db.dbWrapperBase import DbWrapperBase
-from utils.collections import Location
+from utils.collections import Location, LocationWithVisits
 from utils.gamemechanicutil import gen_despawn_timestamp
 from utils.logging import logger
 from utils.s2Helper import S2Helper
@@ -754,36 +754,45 @@ class RmWrapper(DbWrapperBase):
             logger.debug('Pokestop has not a quest with CURDATE()')
             return False
 
-    def stop_from_db_without_quests(self, geofence_helper, levelmode):
+    def stop_from_db_without_quests(self, geofence_helper, levelmode: bool = False):
         logger.debug("RmWrapper::stop_from_db_without_quests called")
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
 
         query = (
-            "SELECT pokestop.latitude, pokestop.longitude "
+            "SELECT pokestop.latitude, pokestop.longitude, '' as visited_by "
             "FROM pokestop "
             "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
             "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
+            "AND DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+            "OR trs_quest.GUID IS NULL"
         ).format(minLat, minLon, maxLat, maxLon)
 
-        if not levelmode:
-            query_addon = ("AND DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
-                           "OR trs_quest.GUID IS NULL")
-
-            query = query + query_addon
+        if levelmode:
+            logger.info("Leveling mode, add info about visitation")
+            query = (
+                "SELECT pokestop.latitude, pokestop.longitude, GROUP_CONCAT(trs_visited.origin) as visited_by "
+                "FROM pokestop "
+                "LEFT JOIN trs_visited ON pokestop.pokestop_id = trs_visited.pokestop_id "
+                "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
+                "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) GROUP by pokestop.pokestop_id"
+            ).format(minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)
         list_of_coords: List[Location] = []
-        for (latitude, longitude) in res:
+        visited_by_workers: List[LocationWithVisits] = []
+
+        for (latitude, longitude, visited_by) in res:
             list_of_coords.append(Location(latitude, longitude))
+            visited_by_workers.append(LocationWithVisits(latitude, longitude, visited_by))
 
         if geofence_helper is not None:
             geofenced_coords = geofence_helper.get_geofenced_coordinates(
                 list_of_coords)
-            return geofenced_coords
+            return geofenced_coords, visited_by_workers
         else:
-            return list_of_coords
+            return list_of_coords, visited_by_workers
 
     def quests_from_db(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
                        oSwLat=None, oSwLon=None, timestamp=None, fence=None):

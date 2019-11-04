@@ -21,6 +21,7 @@ class LatestReceivedType(Enum):
     STOP = 2
     MON = 3
     CLEAR = 4
+    GMO = 5
 
 
 class MITMBase(WorkerBase):

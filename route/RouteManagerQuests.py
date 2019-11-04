@@ -12,8 +12,8 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 class RouteManagerQuests(RouteManagerBase):
     def generate_stop_list(self):
         time.sleep(5)
-        stops = self.db_wrapper.stop_from_db_without_quests(
-            self.geofence_helper, self._level)
+        stops, _ = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper, False)
+
         logger.info('Detected stops without quests: {}', str(len(stops)))
         logger.debug('Detected stops without quests: {}', str(stops))
         self._stoplist: List[Location] = stops
@@ -60,9 +60,6 @@ class RouteManagerQuests(RouteManagerBase):
         self._tempinit: bool = False
 
     def _get_coords_after_finish_route(self) -> bool:
-        if self._level:
-            logger.info("Level Mode - switch to next area")
-            return False
         self._manager_mutex.acquire()
         try:
 
@@ -227,13 +224,13 @@ class RouteManagerQuests(RouteManagerBase):
         self._stops_not_processed.clear()
         self._coords_to_be_ignored.clear()
 
-    def _check_coords_before_returning(self, lat, lng):
+    def _check_coords_before_returning(self, lat, lng, origin):
         if self.init:
             logger.debug('Init Mode - coord is valid')
             return True
         stop = Location(lat, lng)
         logger.info('Checking Stop with ID {}', str(stop))
-        if stop not in self._stoplist and not self._level:
+        if stop not in self._stoplist:
             logger.info('Already got this Stop')
             return False
         logger.info('Getting new Stop')

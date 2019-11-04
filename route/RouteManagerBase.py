@@ -396,7 +396,7 @@ class RouteManagerBase(ABC):
         pass
 
     @abstractmethod
-    def _check_coords_before_returning(self, lat, lng):
+    def _check_coords_before_returning(self, lat, lng, origin):
         """
         Return list of coords to be fetched and used for routecalc
         :return:
@@ -543,84 +543,88 @@ class RouteManagerBase(ABC):
                 self._positiontyp[origin] = 1
                 logger.info("Route {} is moving to {}, {} for a priority event",
                             self.name, next_coord.lat, next_coord.lng)
-            else:
-                logger.debug("{}: Moving on with route", self.name)
-                self._positiontyp[origin] = 0
-                # TODO: this check is likely always true now.............
-                if self.check_worker_rounds() > self._roundcount:
-                    self._roundcount = self.check_worker_rounds()
-                    if self._round_started_time is not None:
-                        logger.info("All subroutes of {} reached the first spot again. It took {}",
-                                    self.name, self._get_round_finished_string())
-                    self._round_started_time = datetime.now()
-                    if len(self._route) == 0:
-                        return None
-                    logger.info("Round of route {} started at {}",
-                                self.name, self._round_started_time)
-                elif self._round_started_time is None:
-                    self._round_started_time = datetime.now()
+                if self.check_coord_and_maybe_del(next_coord, origin) is None:
+                    # Recurse
+                    return self.get_next_location(origin)
 
-                if len(self._routepool[origin].queue) == 0:
-                    # worker do the part of route
-                    self._routepool[origin].rounds += 1
+            logger.debug("{}: Moving on with route", self.name)
+            self._positiontyp[origin] = 0
+            # TODO: this check is likely always true now.............
+            if self.check_worker_rounds() > self._roundcount:
+                self._roundcount = self.check_worker_rounds()
+                if self._round_started_time is not None:
+                    logger.info("All subroutes of {} reached the first spot again. It took {}",
+                                self.name, self._get_round_finished_string())
+                self._round_started_time = datetime.now()
+                if len(self._route) == 0:
+                    return None
+                logger.info("Round of route {} started at {}",
+                            self.name, self._round_started_time)
+            elif self._round_started_time is None:
+                self._round_started_time = datetime.now()
 
-                # continue as usual
-                if self.init and self.check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
-                        len(self._routepool[origin].queue) == 0:
-                    # we are done with init, let's calculate a new route
-                    logger.warning("Init of {} done, it took {}, calculating new route...",
-                                   self.name, self._get_round_finished_string())
-                    if self._start_calc:
-                        logger.info("Another process already calculate the new route")
+            if len(self._routepool[origin].queue) == 0:
+                # worker do the part of route
+                self._routepool[origin].rounds += 1
+
+            # continue as usual
+            if self.init and self.check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
+                    len(self._routepool[origin].queue) == 0:
+                # we are done with init, let's calculate a new route
+                logger.warning("Init of {} done, it took {}, calculating new route...",
+                               self.name, self._get_round_finished_string())
+                if self._start_calc:
+                    logger.info("Another process already calculate the new route")
+                    return None
+                self._start_calc = True
+                self._clear_coords()
+                coords = self._get_coords_post_init()
+                logger.debug("Setting {} coords to as new points in route of {}",
+                             len(coords), self.name)
+                self.add_coords_list(coords)
+                logger.debug("Route of {} is being calculated", self.name)
+                self._recalc_route_workertype()
+                self.init = False
+                self.change_init_mapping(self.name)
+                self._start_calc = False
+                logger.debug("Initroute of {} is finished - restart worker", self.name)
+                return None
+
+            elif len(self._current_route_round_coords) >= 0 and len(self._routepool[origin].queue) == 0:
+                # only quest could hit this else!
+                logger.info("Worker finished his subroute, updating all subroutes if necessary")
+
+                if self.mode == 'pokestops' and not self.init:
+                    # check for coords not in other workers to get a real open coord list
+                    if not self._get_coords_after_finish_route():
+                        logger.info("No more coords available - dont update routepool")
                         return None
-                    self._start_calc = True
-                    self._clear_coords()
-                    coords = self._get_coords_post_init()
-                    logger.debug("Setting {} coords to as new points in route of {}",
-                                 len(coords), self.name)
-                    self.add_coords_list(coords)
-                    logger.debug("Route of {} is being calculated", self.name)
-                    self._recalc_route_workertype()
-                    self.init = False
-                    self.change_init_mapping(self.name)
-                    self._start_calc = False
-                    logger.debug("Initroute of {} is finished - restart worker", self.name)
+
+                if not self.__worker_changed_update_routepools():
+                    logger.info("Failed updating routepools ...")
                     return None
 
-                elif len(self._current_route_round_coords) >= 0 and len(self._routepool[origin].queue) == 0:
-                    # only quest could hit this else!
-                    logger.info("Worker finished his subroute, updating all subroutes if necessary")
-
-                    if self.mode == 'pokestops' and not self.init:
-                        # check for coords not in other workers to get a real open coord list
-                        if not self._get_coords_after_finish_route():
-                            logger.info("No more coords available - dont update routepool")
-                            return None
-
-                    if not self.__worker_changed_update_routepools():
-                        logger.info("Failed updating routepools ...")
-                        return None
-
-                    if len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) == 0:
-                        logger.info("Subroute-update won't help or queue and subroute are empty, "
-                                    "signalling worker to reconnect")
-                        self._routepool[origin].last_access = time.time()
-                        return None
-                    elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
-                        [self._routepool[origin].queue.append(i) for i in self._routepool[origin].subroute]
-                    elif len(self._routepool[origin].queue) > 0 and len(self._routepool[origin].subroute) > 0:
-                        logger.info("Getting new coords for route {}", str(self.name))
-                    else:
-                        logger.info("Not getting new coords - leaving worker")
-                        return None
-
-                if len(self._routepool[origin].queue) == 0:
-                    logger.warning("Having updated routepools and checked lengths of queue and subroute, "
-                                   "{}'s queue is still empty, signalling worker to stop whatever he is doing",
-                                   self.name)
+                if len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) == 0:
+                    logger.info("Subroute-update won't help or queue and subroute are empty, "
+                                "signalling worker to reconnect")
                     self._routepool[origin].last_access = time.time()
                     return None
+                elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
+                    [self._routepool[origin].queue.append(i) for i in self._routepool[origin].subroute]
+                elif len(self._routepool[origin].queue) > 0 and len(self._routepool[origin].subroute) > 0:
+                    logger.info("Getting new coords for route {}", str(self.name))
+                else:
+                    logger.info("Not getting new coords - leaving worker")
+                    return None
 
+            if len(self._routepool[origin].queue) == 0:
+                logger.warning("Having updated routepools and checked lengths of queue and subroute, "
+                               "{}'s queue is still empty, signalling worker to stop whatever he is doing",
+                               self.name)
+                self._routepool[origin].last_access = time.time()
+                return None
+
+            while len(self._routepool[origin].queue) > 0:
                 next_coord = self._routepool[origin].queue.popleft()
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
                         and not self.init:
@@ -630,19 +634,26 @@ class RouteManagerBase(ABC):
 
                 self._last_round_prio[origin] = False
                 self._routepool[origin].last_round_prio_event = False
-            logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
-                self.name), str(next_coord))
-            if self._check_coords_before_returning(next_coord.lat, next_coord.lng):
+                the_coord = self.check_coord_and_maybe_del(next_coord, origin)
+                if the_coord is not None:
+                    return the_coord
 
-                if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
-                        and not self.init:
-                    self._current_route_round_coords.remove(next_coord)
+            # No more coords in the queue
+            return None
 
-                self.__set_routepool_entry_location(origin, next_coord)
+    def check_coord_and_maybe_del(self, next_coord, origin):
+        logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
+            self.name), str(next_coord))
+        if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
 
-                return next_coord
-            else:
-                return self.get_next_location(origin)
+            if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
+                    and not self.init:
+                self._current_route_round_coords.remove(next_coord)
+
+            self.__set_routepool_entry_location(origin, next_coord)
+
+            return next_coord
+        return None
 
     def check_worker_rounds(self) -> int:
         temp_worker_round_list: list = []
