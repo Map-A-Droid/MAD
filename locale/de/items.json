@@ -13,7 +13,7 @@
   },
   "4": {
     "protoname": "ITEM_MASTER_BALL",
-    "name": "Masterball"
+    "name": "Meisterball"
   },
   "5": {
     "protoname": "ITEM_PREMIER_BALL",
@@ -101,15 +101,15 @@
   },
   "706": {
     "protoname": "ITEM_GOLDEN_RAZZ_BERRY",
-    "name": "Golden Razz"
+    "name": "Goldene Himmihbeere"
   },
   "707": {
     "protoname": "ITEM_GOLDEN_NANAB_BERRY",
-    "name": "Golden Pinap"
+    "name": "Goldene Nanabbeere"
   },
   "708": {
     "protoname": "ITEM_GOLDEN_PINAP_BERRY",
-    "name": "Silberne Sananabeere"
+    "name": "Goldene Sananabeere"
   },
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
