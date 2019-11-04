@@ -373,8 +373,8 @@ class MADVersion(object):
         if self._version < 15:
             query = (
                 "CREATE TABLE IF NOT EXISTS `trs_visited` ("
-                "`pokestop_id` varchar(50) NOT NULL,"
-                "`origin` varchar(50) NOT NULL,"
+                "`pokestop_id` varchar(50) NOT NULL collate utf8mb4_unicode_ci,"
+                "`origin` varchar(50) NOT NULL collate utf8mb4_unicode_ci,"
                 "PRIMARY KEY (`pokestop_id`,`origin`)"
                 ")"
             )
