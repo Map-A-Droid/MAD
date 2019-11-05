@@ -177,15 +177,6 @@ class WorkerBase(ABC):
         """
 
     @abstractmethod
-    def _start_pogo(self):
-        """
-        Routine to start pogo.
-        Return the state as a boolean do indicate a successful start
-        :return:
-        """
-        pass
-
-    @abstractmethod
     def _cleanup(self):
         """
         Cleanup any threads you started in derived classes etc
@@ -732,6 +723,41 @@ class WorkerBase(ABC):
             firstround = False
 
         return
+
+    def _start_pogo(self):
+        """
+        Routine to start pogo.
+        Return the state as a boolean do indicate a successful start
+        :return:
+        """
+        pogo_topmost = self._communicator.isPogoTopmost()
+        if pogo_topmost:
+            return True
+
+        if not self._communicator.isScreenOn():
+            self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
+            logger.warning("Turning screen on")
+            self._communicator.turnScreenOn()
+            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
+
+        cur_time = time.time()
+        start_result = False
+        self._mitm_mapper.set_injection_status(self._id, False)
+        while not pogo_topmost:
+            start_result = self._communicator.startApp(
+                "com.nianticlabs.pokemongo")
+            time.sleep(1)
+            pogo_topmost = self._communicator.isPogoTopmost()
+
+        if start_result:
+            logger.warning("startPogo: Started pogo successfully...")
+            self._last_known_state["lastPogoRestart"] = cur_time
+
+        self._wait_pogo_start_delay()
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
+
+        return start_result
 
     def _stop_pogo(self):
         attempts = 0
