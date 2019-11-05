@@ -392,38 +392,6 @@ class WorkerQuests(MITMBase):
             logger.debug("Releasing lock")
             self._work_mutex.release()
 
-    def _start_pogo(self):
-        pogo_topmost = self._communicator.isPogoTopmost()
-        if pogo_topmost:
-            return True
-
-        if not self._communicator.isScreenOn():
-            # TODO
-            self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
-            logger.warning("Turning screen on")
-            self._communicator.turnScreenOn()
-            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
-
-        cur_time = time.time()
-        self._mitm_mapper.set_injection_status(self._id, False)
-
-        start_result = False
-        while not pogo_topmost:
-            start_result = self._communicator.startApp(
-                    "com.nianticlabs.pokemongo")
-            time.sleep(1)
-            pogo_topmost = self._communicator.isPogoTopmost()
-
-        if start_result:
-            logger.warning("startPogo: Started pogo successfully...")
-            self._last_known_state["lastPogoRestart"] = cur_time
-
-        self._wait_pogo_start_delay()
-        if not self._wait_for_injection() or self._stop_worker_event.is_set():
-            raise InternalStopWorkerException
-
-        return start_result
-
     def _cleanup(self):
         if self.clear_thread is not None:
             while self.clear_thread.isAlive():

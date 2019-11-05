@@ -121,40 +121,6 @@ class WorkerMITM(MITMBase):
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
-    def _start_pogo(self):
-        pogo_topmost = self._communicator.isPogoTopmost()
-        if pogo_topmost:
-            return True
-
-        if not self._communicator.isScreenOn():
-            self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
-            logger.warning("Turning screen on")
-            self._communicator.turnScreenOn()
-            time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
-
-        cur_time = time.time()
-        start_result = False
-        self._mitm_mapper.set_injection_status(self._id, False)
-        while not pogo_topmost:
-            start_result = self._communicator.startApp(
-                "com.nianticlabs.pokemongo")
-            time.sleep(1)
-            pogo_topmost = self._communicator.isPogoTopmost()
-
-        reached_raidtab = False
-        if start_result:
-            logger.warning("startPogo: Starting pogo...")
-            self._last_known_state["lastPogoRestart"] = cur_time
-
-            # let's handle the login and stuff
-            reached_raidtab = True
-
-        self._wait_pogo_start_delay()
-        if not self._wait_for_injection() or self._stop_worker_event.is_set():
-            raise InternalStopWorkerException
-
-        return reached_raidtab
-
     def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
                  routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapperBase,
                  pogo_window_manager: PogoWindows, walker):
