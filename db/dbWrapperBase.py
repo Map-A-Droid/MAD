@@ -422,6 +422,10 @@ class DbWrapperBase(ABC):
             spawnret[int(row[0])] = row[1]
         return spawnret
 
+    def flush_levelinfo(self, origin):
+        query = "DELETE FROM trs_visited WHERE origin=%s"
+        self.execute(query, (origin,), commit=True)
+
     def submit_pokestop_visited(self, origin, latitude, longitude):
         logger.debug("Flag pokestop as visited...")
         query = "INSERT IGNORE INTO trs_visited SELECT pokestop_id,'{}' " \
