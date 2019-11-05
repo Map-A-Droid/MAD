@@ -772,6 +772,10 @@ class RouteManagerBase(ABC):
             logger.debug("Checking routepools in the following order: {}", sorted_routepools)
             compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
             for origin, time_added in sorted_routepools:
+                if origin not in self._routepool:
+                    # TODO probably should restart this job or something
+                    logger.info('{} must have unregistered when we weren\'t looking.. skip it')
+                    continue
                 entry: RoutePoolEntry = self._routepool[origin]
                 logger.debug("Checking subroute of {}", origin)
                 # let's assume a worker has already been removed or added to the dict (keys)...
