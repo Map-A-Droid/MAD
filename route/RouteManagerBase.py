@@ -538,14 +538,22 @@ class RouteManagerBase(ABC):
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
                     self._positiontyp[origin] = 1
+                    # Let's recurse and find another location
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
                 logger.info("Route {} is moving to {}, {} for a priority event",
                             self.name, next_coord.lat, next_coord.lng)
-                if self.check_coord_and_maybe_del(next_coord, origin) is None:
-                    # Recurse
+                next_coord = self.check_coord_and_maybe_del(next_coord, origin)
+                if next_coord is None:
+                    # Coord was not ok, lets recurse
                     return self.get_next_location(origin)
+
+                # Return the prioQ coordinate.
+                return next_coord
+            # End of if block for prioQ handling.
+
+            # logic for when PrioQ is disabled
 
             logger.debug("{}: Moving on with route", self.name)
             self._positiontyp[origin] = 0
@@ -567,7 +575,7 @@ class RouteManagerBase(ABC):
                 # worker do the part of route
                 self._routepool[origin].rounds += 1
 
-            # continue as usual
+            # Check if we are in init:
             if self.init and self.check_worker_rounds() >= int(self.settings.get("init_mode_rounds", 1)) and \
                     len(self._routepool[origin].queue) == 0:
                 # we are done with init, let's calculate a new route
@@ -624,6 +632,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].last_access = time.time()
                 return None
 
+            # Recurse removal for very very large queue sizes - we know we should find the next available coord now
             while len(self._routepool[origin].queue) > 0:
                 next_coord = self._routepool[origin].queue.popleft()
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
@@ -634,18 +643,16 @@ class RouteManagerBase(ABC):
 
                 self._last_round_prio[origin] = False
                 self._routepool[origin].last_round_prio_event = False
-                the_coord = self.check_coord_and_maybe_del(next_coord, origin)
-                if the_coord is not None:
-                    return the_coord
-
-            # No more coords in the queue
+                next_coord = self.check_coord_and_maybe_del(next_coord, origin)
+                if next_coord is not None:
+                    return next_coord
+            # The queue has emptied.
             return None
 
     def check_coord_and_maybe_del(self, next_coord, origin):
         logger.debug("{}: Done grabbing next coord, releasing lock and returning location: {}", str(
             self.name), str(next_coord))
         if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
-
             if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
                     and not self.init:
                 self._current_route_round_coords.remove(next_coord)
