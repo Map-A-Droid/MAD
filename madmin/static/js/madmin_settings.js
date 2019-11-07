@@ -1,4 +1,4 @@
-CONVERT_TO_NONE = ["geofence_excluded", "pool"];
+CONVERT_TO_NONE = ["geofence_excluded", "pool", "cool_down_sleep", "reboot"];
 
 function get_save_data() {
     save_data = {};
