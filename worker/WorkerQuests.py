@@ -639,7 +639,6 @@ class WorkerQuests(MITMBase):
         return False
 
     def _open_pokestop(self, timestamp: float):
-        to = 0
         data_received = LatestReceivedType.UNDEFINED
 
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
@@ -660,7 +659,9 @@ class WorkerQuests(MITMBase):
                                                                                 self.current_location.lat,
                                                                                 self.current_location.lng)
                     return None
-        while data_received != LatestReceivedType.STOP and int(to) < 3:
+        retries = 3
+        while data_received != LatestReceivedType.STOP and retries > 0:
+            retries -= 1
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time
             self._open_gym(self._delay_add)
@@ -687,7 +688,6 @@ class WorkerQuests(MITMBase):
                 if not self._checkPogoButton():
                     self._checkPogoClose(takescreen=False)
 
-            to += 1
         if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED] and self._rocket:
             logger.info('Check for Team Rocket Dialog or other open window')
             self.process_rocket()
