@@ -80,7 +80,7 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
+                    "values": [None, False, True],
                     "description": "Add extra cooldown after teleport",
                     "expected": bool
                 }
@@ -137,7 +137,7 @@ class APIDevice(apiHandler.ResourceHandler):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
+                    "values": [None, False, True],
                     "description": "Reboot device if reboot_thresh is reached (Default: false)",
                     "expected": bool
                 }
