@@ -621,12 +621,9 @@ class WorkerQuests(MITMBase):
                 else:
                     self._rocket = False
 
-                if self._level_mode and self._ignore_spinned_stops:
-                    visited: bool = fort.get("visited", False)
-                    if visited:
-                        logger.info("Levelmode: Stop already visited - skipping it")
-                        self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
-                        return False, True
+                if self._level_mode and self._check_levelmode_skip_stop(fort):
+                    self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
+                    return False, True
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
@@ -635,6 +632,12 @@ class WorkerQuests(MITMBase):
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         return False, False
 
+    def _check_levelmode_skip_stop(self, fort):
+        if self._ignore_spinned_stops and fort.get("visited", False):
+            logger.info("Levelmode: Stop already visited - skipping it")
+            return True
+        return False
+
     def _open_pokestop(self, timestamp: float):
         to = 0
         data_received = LatestReceivedType.UNDEFINED
@@ -642,22 +645,21 @@ class WorkerQuests(MITMBase):
         # let's first check the GMO for the stop we intend to visit and abort if it's disabled, a gym, whatsoever
         spinnable_stop, skip_recheck = self._current_position_has_spinnable_stop(timestamp)
         if not spinnable_stop:
-            if not skip_recheck:
-                # wait for GMO in case we moved too far away
-                data_received = self._wait_for_data(
-                        timestamp=timestamp, proto_to_wait_for=106, timeout=35)
-                if data_received != LatestReceivedType.UNDEFINED:
-                    spinnable_stop, _ = self._current_position_has_spinnable_stop(timestamp)
-                    if not spinnable_stop:
-                        logger.info("Stop {}, {} "
-                                    "considered to be ignored in the next round due to failed spinnable check",
-                                    str(self.current_location.lat), str(self.current_location.lng))
-                        self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
-                                                                                    self.current_location.lat,
-                                                                                    self.current_location.lng)
-                        return None
-            else:
+            if skip_recheck:
                 return None
+            # wait for GMO in case we moved too far away
+            data_received = self._wait_for_data(
+                    timestamp=timestamp, proto_to_wait_for=106, timeout=35)
+            if data_received != LatestReceivedType.UNDEFINED:
+                spinnable_stop, _ = self._current_position_has_spinnable_stop(timestamp)
+                if not spinnable_stop:
+                    logger.info("Stop {}, {} "
+                                "considered to be ignored in the next round due to failed spinnable check",
+                                str(self.current_location.lat), str(self.current_location.lng))
+                    self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
+                                                                                self.current_location.lat,
+                                                                                self.current_location.lng)
+                    return None
         while data_received != LatestReceivedType.STOP and int(to) < 3:
             self._stop_process_time = math.floor(time.time())
             self._waittime_without_delays = self._stop_process_time
