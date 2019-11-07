@@ -669,7 +669,7 @@ class WorkerQuests(MITMBase):
             data_received = self._wait_for_data(
                     timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
             if data_received == LatestReceivedType.GYM:
-                logger.info('Clicking GYM')
+                logger.info('Clicked gym instead of stop')
                 time.sleep(10)
                 x, y = self._resocalc.get_close_main_button_coords(
                     self)[0], self._resocalc.get_close_main_button_coords(self)[1]
@@ -679,7 +679,7 @@ class WorkerQuests(MITMBase):
                 time.sleep(1)
             elif data_received == LatestReceivedType.MON:
                 time.sleep(1)
-                logger.info('Clicking MON')
+                logger.info('Clicked mon instead of stop')
                 time.sleep(.5)
                 self._turn_map(self._delay_add)
                 time.sleep(1)
