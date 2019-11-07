@@ -773,128 +773,133 @@ class RouteManagerBase(ABC):
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
             logger.debug("Checking routepool: {}", self._routepool)
-            reduced_routepools = [(origin, self._routepool[origin].time_added) for origin in self._routepool]
-            sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
+            with self._workers_registered_mutex:
+                reduced_routepools = [(origin, self._routepool[origin].time_added) for origin in self._routepool]
+                sorted_routepools = sorted(reduced_routepools, key=itemgetter(1))
 
-            logger.debug("Checking routepools in the following order: {}", sorted_routepools)
-            compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
-            for origin, time_added in sorted_routepools:
-                entry: RoutePoolEntry = self._routepool[origin]
-                logger.debug("Checking subroute of {}", origin)
-                # let's assume a worker has already been removed or added to the dict (keys)...
+                logger.debug("Checking routepools in the following order: {}", sorted_routepools)
+                compare = lambda x, y: collections.Counter(x) == collections.Counter(y)
+                for origin, time_added in sorted_routepools:
+                    if origin not in self._routepool:
+                        # TODO probably should restart this job or something
+                        logger.info('{} must have unregistered when we weren\'t looking.. skip it')
+                        continue
+                    entry: RoutePoolEntry = self._routepool[origin]
+                    logger.debug("Checking subroute of {}", origin)
+                    # let's assume a worker has already been removed or added to the dict (keys)...
 
-                new_subroute: List[Location] = []
-                j: int = 0
-                while len(temp_total_round) > 0 and (j <= new_subroute_length or i == len(self._routepool)):
-                    j += 1
-                    new_subroute.append(temp_total_round.popleft())
+                    new_subroute: List[Location] = []
+                    j: int = 0
+                    while len(temp_total_round) > 0 and (j <= new_subroute_length or i == len(self._routepool)):
+                        j += 1
+                        new_subroute.append(temp_total_round.popleft())
 
-                i += 1
-                if len(entry.subroute) == 0:
-                    logger.debug("{}'s subroute is empty, assuming he has freshly registered and desperately needs a "
-                                 "queue", origin)
-                    # worker is freshly registering, pass him his fair share
-                    entry.subroute = new_subroute
-                    # let's clean the queue just to make sure
-                    entry.queue.clear()
-                elif len(new_subroute) == len(entry.subroute):
-                    logger.debug("{}'s subroute is as long as the old one, we will assume it hasn't changed (for now)",
-                                 origin)
-                    # apparently nothing changed
-                    if compare(new_subroute, entry.subroute):
-                        logger.info("Apparently no changes in subroutes...")
-                    else:
-                        logger.info("Subroute of {} has changed. Replacing entirely", origin)
-                        # TODO: what now?
-                        logger.debug('new_subroute: {}', new_subroute)
-                        logger.debug('entry.subroute: {}', entry.subroute)
-                        logger.debug('new_subroute == entry.subroute: {}', new_subroute == entry.subroute)
+                    i += 1
+                    if len(entry.subroute) == 0:
+                        logger.debug("{}'s subroute is empty, assuming he has freshly registered and desperately needs a "
+                                     "queue", origin)
+                        # worker is freshly registering, pass him his fair share
                         entry.subroute = new_subroute
-                elif len(new_subroute) == 0:
-                    logger.info("New subroute of {} is empty...", origin)
-                    entry.subroute = new_subroute
-                elif len(entry.subroute) > len(new_subroute) > 0:
-                    logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
-                                 "added)", origin)
-                    # we apparently have added at least a worker...
-                    #   1) reduce the start of the current queue to start of new route
-                    #   2) append the coords missing (check end of old routelength, add/remove from there on compared
-                    #      to new)
-                    old_queue: collections.deque = collections.deque(entry.queue)
-                    while len(old_queue) > 0 and len(new_subroute) > 0 and old_queue.popleft() != new_subroute[0]:
-                        pass
-
-                    if len(old_queue) == 0:
-                        logger.debug("{}'s queue is empty, we can just pass him the new subroute", origin)
-                        # just set new route...
-                        entry.queue = collections.deque()
-                        for location in new_subroute:
-                            entry.queue.append(location)
-                    else:
-                        # we now are at a point where we need to also check the end of the old queue and
-                        # append possibly missing coords to it
-                        logger.debug("Checking if the last element of the old queue is present in new subroute")
-                        last_el_old_q: Location = old_queue[len(old_queue) - 1]
-                        if last_el_old_q in new_subroute:
-                            # we have the last element in the old subroute, we can actually append stuff with the
-                            # diff to the new route
-                            logger.debug("Last element of old queue is present in new subroute, appending the rest of "
-                                         "the new subroute to the queue")
-                            new_subroute_copy = collections.deque(new_subroute)
-                            while len(new_subroute_copy) > 0 and new_subroute_copy.popleft() != last_el_old_q:
-                                pass
-                            logger.debug("Length of subroute to be extended by {}", len(new_subroute_copy))
-                            # replace queue with old_queue
-                            entry.queue.clear()
-                            entry.queue = old_queue
-                            while len(new_subroute_copy) > 0:
-                                entry.queue.append(new_subroute_copy.popleft())
+                        # let's clean the queue just to make sure
+                        entry.queue.clear()
+                    elif len(new_subroute) == len(entry.subroute):
+                        logger.debug("{}'s subroute is as long as the old one, we will assume it hasn't changed (for now)",
+                                     origin)
+                        # apparently nothing changed
+                        if compare(new_subroute, entry.subroute):
+                            logger.info("Apparently no changes in subroutes...")
                         else:
-                            # clear old route and replace with new_subroute
-                            # maybe the worker jumps a wider distance
-                            entry.queue.clear()
-                            new_subroute_copy = collections.deque(new_subroute)
-                            while len(new_subroute_copy) > 0:
-                                entry.queue.append(new_subroute_copy.popleft())
+                            logger.info("Subroute of {} has changed. Replacing entirely", origin)
+                            # TODO: what now?
+                            logger.debug('new_subroute: {}', new_subroute)
+                            logger.debug('entry.subroute: {}', entry.subroute)
+                            logger.debug('new_subroute == entry.subroute: {}', new_subroute == entry.subroute)
+                            entry.subroute = new_subroute
+                    elif len(new_subroute) == 0:
+                        logger.info("New subroute of {} is empty...", origin)
+                        entry.subroute = new_subroute
+                    elif len(entry.subroute) > len(new_subroute) > 0:
+                        logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
+                                     "added)", origin)
+                        # we apparently have added at least a worker...
+                        #   1) reduce the start of the current queue to start of new route
+                        #   2) append the coords missing (check end of old routelength, add/remove from there on compared
+                        #      to new)
+                        old_queue: collections.deque = collections.deque(entry.queue)
+                        while len(old_queue) > 0 and len(new_subroute) > 0 and old_queue.popleft() != new_subroute[0]:
+                            pass
 
-                elif len(new_subroute) > len(entry.subroute) > 0:
-                    #   old routelength < new len(route)/n:
-                    #   we have likely removed a worker and need to redistribute
-                    #   1) fetch start and end of old queue
-                    #   2) we sorta ignore start/what's been visited so far
-                    #   3) if the end is not part of the new route, check for the last coord of the current route
-                    #   still in
-                    #   the new route, remove the old rest of it (or just fetch the first coord of the next subroute and
-                    #   remove the coords of that coord onward)
-                    logger.debug("A worker has apparently been removed from the routepool")
-                    last_el_old_route: Location = entry.subroute[len(entry.subroute) - 1]
-                    old_queue_list: List[Location] = list(entry.queue)
-                    old_queue: collections.deque = collections.deque(entry.queue)
+                        if len(old_queue) == 0:
+                            logger.debug("{}'s queue is empty, we can just pass him the new subroute", origin)
+                            # just set new route...
+                            entry.queue = collections.deque()
+                            for location in new_subroute:
+                                entry.queue.append(location)
+                        else:
+                            # we now are at a point where we need to also check the end of the old queue and
+                            # append possibly missing coords to it
+                            logger.debug("Checking if the last element of the old queue is present in new subroute")
+                            last_el_old_q: Location = old_queue[len(old_queue) - 1]
+                            if last_el_old_q in new_subroute:
+                                # we have the last element in the old subroute, we can actually append stuff with the
+                                # diff to the new route
+                                logger.debug("Last element of old queue is present in new subroute, appending the rest of "
+                                             "the new subroute to the queue")
+                                new_subroute_copy = collections.deque(new_subroute)
+                                while len(new_subroute_copy) > 0 and new_subroute_copy.popleft() != last_el_old_q:
+                                    pass
+                                logger.debug("Length of subroute to be extended by {}", len(new_subroute_copy))
+                                # replace queue with old_queue
+                                entry.queue.clear()
+                                entry.queue = old_queue
+                                while len(new_subroute_copy) > 0:
+                                    entry.queue.append(new_subroute_copy.popleft())
+                            else:
+                                # clear old route and replace with new_subroute
+                                # maybe the worker jumps a wider distance
+                                entry.queue.clear()
+                                new_subroute_copy = collections.deque(new_subroute)
+                                while len(new_subroute_copy) > 0:
+                                    entry.queue.append(new_subroute_copy.popleft())
 
-                    last_el_new_route: Location = new_subroute[len(new_subroute) - 1]
-                    # check last element of new subroute:
-                    if last_el_new_route is not None and last_el_new_route in old_queue_list:
-                        # if in current queue, remove from end of new subroute to end of old queue
-                        logger.debug("Last element of new subroute is in old queue, removing everything after that "
-                                     "element")
-                        del old_queue_list[old_queue.index(last_el_new_route): len(old_queue_list) - 1]
-                    elif last_el_old_route in new_subroute:
-                        # append from end of queue (compared to new subroute) to end of new subroute
-                        logger.debug("Last element of old queue in new subroute, appending everything afterwards")
-                        missing_new_route_part: List[Location] = new_subroute.copy()
-                        del missing_new_route_part[0: new_subroute.index(last_el_old_route)]
-                        old_queue_list.extend(missing_new_route_part)
+                    elif len(new_subroute) > len(entry.subroute) > 0:
+                        #   old routelength < new len(route)/n:
+                        #   we have likely removed a worker and need to redistribute
+                        #   1) fetch start and end of old queue
+                        #   2) we sorta ignore start/what's been visited so far
+                        #   3) if the end is not part of the new route, check for the last coord of the current route
+                        #   still in
+                        #   the new route, remove the old rest of it (or just fetch the first coord of the next subroute and
+                        #   remove the coords of that coord onward)
+                        logger.debug("A worker has apparently been removed from the routepool")
+                        last_el_old_route: Location = entry.subroute[len(entry.subroute) - 1]
+                        old_queue_list: List[Location] = list(entry.queue)
+                        old_queue: collections.deque = collections.deque(entry.queue)
 
-                    entry.queue = collections.deque()
-                    [entry.queue.append(i) for i in old_queue_list]
+                        last_el_new_route: Location = new_subroute[len(new_subroute) - 1]
+                        # check last element of new subroute:
+                        if last_el_new_route is not None and last_el_new_route in old_queue_list:
+                            # if in current queue, remove from end of new subroute to end of old queue
+                            logger.debug("Last element of new subroute is in old queue, removing everything after that "
+                                         "element")
+                            del old_queue_list[old_queue.index(last_el_new_route): len(old_queue_list) - 1]
+                        elif last_el_old_route in new_subroute:
+                            # append from end of queue (compared to new subroute) to end of new subroute
+                            logger.debug("Last element of old queue in new subroute, appending everything afterwards")
+                            missing_new_route_part: List[Location] = new_subroute.copy()
+                            del missing_new_route_part[0: new_subroute.index(last_el_old_route)]
+                            old_queue_list.extend(missing_new_route_part)
 
-                if len(entry.queue) == 0:
-                    [entry.queue.append(i) for i in new_subroute]
-                # don't forget to update the subroute ;)
-                entry.subroute = new_subroute
+                        entry.queue = collections.deque()
+                        [entry.queue.append(i) for i in old_queue_list]
 
-                if less_coords:
-                    new_subroute_length = 0
+                    if len(entry.queue) == 0:
+                        [entry.queue.append(i) for i in new_subroute]
+                    # don't forget to update the subroute ;)
+                    entry.subroute = new_subroute
+
+                    if less_coords:
+                        new_subroute_length = 0
 
             logger.debug("Done updating subroutes")
             return True
