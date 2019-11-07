@@ -613,17 +613,18 @@ class WorkerQuests(MITMBase):
                     # Rocket lenghts above 1 hour are probably not grunts and should be safe to spin.
                     rocket_incident_diff_ms = fort.get('pokestop_displays')[0].get('incident_expiration_ms', 0) - \
                                               fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
-                if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
-                        (0 < rocket_incident_diff_ms <= 3600000):
-                    logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
-                                .format(str(latitude), str(longitude)))
-                    self._rocket = True
-                else:
-                    self._rocket = False
+                is_rocket: bool = fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
+                        (0 < rocket_incident_diff_ms <= 3600000)
 
-                if self._level_mode and self._check_levelmode_skip_stop(fort):
+                if self._level_mode and self._check_levelmode_skip_stop(fort, is_rocket):
                     self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
                     return False, True
+
+                if is_rocket:
+                    logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
+                                .format(str(latitude), str(longitude)))
+                self._rocket = is_rocket
+
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
@@ -632,9 +633,12 @@ class WorkerQuests(MITMBase):
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
         return False, False
 
-    def _check_levelmode_skip_stop(self, fort):
+    def _check_levelmode_skip_stop(self, fort, rocket):
         if self._ignore_spinned_stops and fort.get("visited", False):
             logger.info("Levelmode: Stop already visited - skipping it")
+            return True
+        if rocket:
+            logger.info("Levelmode: Stop is rocketized - skipping it")
             return True
         return False
 
