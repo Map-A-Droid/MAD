@@ -77,3 +77,11 @@ class APIWalker(api_base.APITestBase):
         walker_uri = super().create_valid(payload).headers['X-Uri']
         walker_data = self.api.get(walker_uri)
         self.assertTrue('setup' in walker_data.json())
+
+    def test_empty_setup(self):
+        walker_uri = super().create_valid_resource('walker')
+        payload = {
+            'setup': None
+        }
+        response = self.api.patch(walker_uri, json=payload)
+        self.assertEqual(response.status_code, 204)
