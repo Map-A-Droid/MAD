@@ -117,6 +117,22 @@ class APIDevice(apiHandler.ResourceHandler):
                     "expected": float
                 }
             },
+            "inventory_clear_rounds": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "Number of rounds to clear the inventory. (Default: 10)",
+                    "expected": int
+                }
+            },
+            "inventory_clear_item_amount_tap_duration": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "Number of seconds to tap the + button when clearing an inventory item. (Default: 3)",
+                    "expected": float
+                }
+            },
             "mitm_wait_timeout": {
                 "settings": {
                     "type": "text",
