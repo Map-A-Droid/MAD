@@ -15,6 +15,8 @@ from utils.logging import logger
 from utils.questGen import questtask
 from utils.s2Helper import S2Helper
 
+from . import madmin_conversion
+
 
 class DbWrapperBase(ABC):
     def_spawn = 240
@@ -147,6 +149,7 @@ class DbWrapperBase(ABC):
             logger.error("Unspecified exception in dbWrapper: {}", str(e))
             return None
         finally:
+            logger.debug3(cursor.statement)
             self.close(conn, cursor)
             self.connection_semaphore.release()
 
@@ -836,6 +839,11 @@ class DbWrapperBase(ABC):
 
         return True
 
+    def create_madmin_databases_if_not_exists(self):
+        logger.debug("DbWrapperBase::create_madmin_databases_if_not_exists called")
+        for table in madmin_conversion.TABLES:
+            self.execute(table, commit=True)
+
     def create_status_database_if_not_exists(self):
         logger.debug(
             "DbWrapperBase::create_status_database_if_not_exists called")
@@ -1431,3 +1439,17 @@ class DbWrapperBase(ABC):
             if mode in res:
                 detected_wrong_modes.append(mode)
         return detected_wrong_modes
+
+    def get_instance_id(self):
+        # TODO - Use prepared requests but that would require a change across all database queries
+        sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = '%s'"
+        #res = self.execute(sql, args=[(self.application_args.status_name)])
+        res = self.execute(sql % (self.application_args.status_name))
+        if res:
+            return res[0][0]
+        else:
+            sql = "INSERT INTO `madmin_instance` (`name`) VALUES ('%s')"
+            #self.execute(sql, args=[(self.application_args.status_name)], commit=True)
+            res = self.execute(sql % (self.application_args.status_name), commit=True)
+            # The cursor closes so its cleaner just to call ourself to get it
+            return self.get_instance_id()

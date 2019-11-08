@@ -164,6 +164,8 @@ if __name__ == "__main__":
     db_wrapper.create_status_database_if_not_exists()
     db_wrapper.create_usage_database_if_not_exists()
     db_wrapper.create_statistics_databases_if_not_exists()
+    db_wrapper.create_madmin_databases_if_not_exists()
+    instance_id = db_wrapper.get_instance_id()
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
