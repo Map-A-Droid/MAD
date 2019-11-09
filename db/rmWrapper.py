@@ -765,8 +765,8 @@ class RmWrapper(DbWrapperBase):
             "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
             "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
-            "AND DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
-            "OR trs_quest.GUID IS NULL"
+            "AND (DATE(from_unixtime(trs_quest.quest_timestamp,'%Y-%m-%d')) <> CURDATE() "
+            "OR trs_quest.GUID IS NULL)"
         ).format(minLat, minLon, maxLat, maxLon)
 
         if levelmode:
