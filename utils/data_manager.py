@@ -27,13 +27,17 @@ class DataManager(object):
         self.__location = args.mappings
         self.update()
 
-    def delete_data(self, location, identifier=None):
+    def delete_data(self, location, identifier=None, force=False):
         self.update()
         config_section = location
         try:
             removal_list = []
             (location, config_section, identifier) = self.__process_location(location, identifier=identifier)
-            self.has_any_dependencies(location, config_section, identifier)
+            try:
+                self.has_any_dependencies(location, config_section, identifier)
+            except DataManagerDependencyError:
+                if not force:
+                    raise
             # If we are removing a walker, check to see if we can remove any walkerareas
             if config_section == 'walker':
                 walker_config = self.get_data(location, identifier=identifier)
@@ -261,9 +265,26 @@ class DataManager(object):
         processed = False
         if identifier is None and action != 'post':
             raise UnknownIdentifier(location, identifier)
-        if action == 'patch':
+        if action in ['patch', 'put']:
             if identifier not in self.__raw[config_section]['entries']:
                 raise KeyError
+            if config_section == 'walker':
+                try:
+                    walkerareas_update = set(data['setup'])
+                    walkerareas_original = set(self.__raw[config_section]['entries'][identifier]['setup'])
+                    removed_walkerareas = set(walkerareas_original) - set(walkerareas_update)
+                    if removed_walkerareas:
+                        self._logger.debug('Change in walkerarea detected. {}', removed_walkerareas)
+                        for walkerarea in removed_walkerareas:
+                            try:
+                                self.delete_data('walkerarea', identifier=walkerarea)
+                            except DataManagerDependencyError as err:
+                                if len(err.dependencies) == 1:
+                                    self.delete_data('walkerarea', identifier=walkerarea, force=True)
+                                pass
+                except KeyError:
+                    pass
+        if action == 'patch':
             self.__raw[config_section]['entries'][identifier] = self.recursive_update(self.__raw[config_section]['entries'][identifier],
                                                                                       data,
                                                                                       append=append)
