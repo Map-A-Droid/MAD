@@ -5,26 +5,3 @@ class APIAuth(apiHandler.ResourceHandler):
     component = 'auth'
     default_sort = 'username'
     description = 'Add/Update/Delete authentication credentials'
-
-    configuration = {
-        "name": "auth",
-        "fields": {
-            "username": {
-                "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Username of device",
-                    "lockonedit": True,
-                "expected": str
-                }
-            },
-            "password": {
-                "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Password of device",
-                "expected": str
-                }
-            }
-        }
-    }
