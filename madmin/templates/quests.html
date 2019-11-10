@@ -73,7 +73,7 @@
         });
         $.ajax({
             type: "GET",
-            url: "get_quests?fence={{fence}}",
+            url: "{{ url_for('get_quests') }}?fence={{fence}}",
             success: function (result) {
                 setGrid('#show-data', result);
             },
@@ -83,7 +83,7 @@
         });
         $('#area').change(function() {
             area = $(this).find("option:selected").attr('value');
-            window.location.href = '{{request.script_root}}?fence=' + area
+            window.location.href = '{{ url_for('quest') }}?fence=' + area
         });
     });
 
