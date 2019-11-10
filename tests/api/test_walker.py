@@ -63,6 +63,21 @@ class APIWalker(api_base.APITestBase):
         response = self.api.get(walkerarea_uri)
         self.assertEqual(response.status_code, 404)
 
+    def test_walkerarea_single_removal(self):
+        area_uri = super().create_valid_resource('area')
+        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
+        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
+        walker_uri2 = super().create_valid_resource('walker', setup=[walkerarea_uri])
+        payload = {
+            'setup': []
+        }
+        self.api.patch(walker_uri, json=payload)
+        response = self.api.get(walkerarea_uri)
+        self.assertEqual(response.status_code, 200)
+        self.api.patch(walker_uri2, json=payload)
+        response = self.api.get(walkerarea_uri)
+        self.assertEqual(response.status_code, 404)
+
     def test_walkerarea_response(self):
         area_uri = super().create_valid_resource('area')
         walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
