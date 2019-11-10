@@ -5,15 +5,17 @@ from utils.logging import logger
 import shutil
 from .convert_mapping import convert_mappings
 import re
+from utils.data_manager import modules
 
-current_version = 16
+current_version = 17
 
 
 class MADVersion(object):
-    def __init__(self, args, dbwrapper):
+    def __init__(self, args, dbwrapper, instance_id):
         self._application_args = args
         self.dbwrapper = dbwrapper
         self._version = 0
+        self.instance_id = instance_id
 
     def get_version(self):
         try:
@@ -382,6 +384,78 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+
+        if self._version < 17:
+            # Goodbye mappings.json, it was nice knowing ya!
+            update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walkerarea', 'walker', 'devices']
+            with open(self._application_args.mappings, 'rb') as fh:
+                config_file = json.load(fh)
+            # A wonderful decision that I made was to start at ID 0 on the previous conversion which causes an issue
+            # with primary keys in MySQL / MariaDB.  Make the required changes to ID's and save the file in-case the
+            # conversion is re-run.  We do not want dupe data in the database
+            cache = {}
+            for section in update_order:
+                for elem_id, elem in config_file[section]['entries'].items():
+                    if section == 'areas':
+                        if 'settings' not in elem:
+                            continue
+                        if 'mon_ids_iv' not in elem['settings']:
+                            continue
+                        if 'monlist' not in cache:
+                            continue
+                        if int(elem['mon_ids_iv']) != 0:
+                            continue
+                        elem['settings']['mon_ids_iv'] = cache['monlist']
+                    elif section == 'devices':
+                        if int(elem['walker']) == 0:
+                            elem['walker'] = cache['walker']
+                        if 'pool' in elem and int(elem['pool']) == 0:
+                            elem['pool'] = cache['devicesettings']
+                    elif section == 'walkerarea':
+                        if int(elem['walkerarea']) == 0:
+                            elem['walkerarea'] = cache['areas']
+                    elif section == 'walker':
+                        setup = []
+                        for walkerarea_id in elem['setup']:
+                            if int(walkerarea_id) != 0:
+                                setup.append(walkerarea_id)
+                                continue
+                            setup.append(cache['walkerarea'])
+                        elem['setup'] = setup
+                entry = None
+                try:
+                    entry = config_file[section]['entries']["0"]
+                except KeyError:
+                    continue
+                cache[section] = str(config_file[section]['index'])
+                config_file[section]['entries'][cache[section]] = entry
+                del config_file[section]['entries']["0"]
+                config_file[section]['index'] += 1
+            if cache:
+                logger.info('One or more resources with ID 0 found.  Converting them off 0 and updating the '\
+                            'mappings.json file')
+                with open(self._application_args.mappings, 'w') as outfile:
+                    json.dump(config_file, outfile, indent=4, sort_keys=True)
+            # Load the elements into their resources and save to DB
+            for section in update_order:
+                for key, elem in config_file[section]['entries'].items():
+                    if section == 'areas':
+                        mode = elem['mode']
+                        del elem['mode']
+                        resource = modules.MAPPINGS['area'](logger, self.dbwrapper, self.instance_id, mode=mode)
+                    else:
+                        # Lets remove plural from the section
+                        if section == 'devices':
+                            section = 'device'
+                        elif section == 'devicesettings':
+                            section = 'devicepool'
+                        resource = modules.MAPPINGS[section](logger, self.dbwrapper, self.instance_id)
+                    # Settings made it into some configs where it should not be.  lets clear those out now
+                    if 'settings' in elem and 'settings' not in resource.configuration:
+                        del elem['settings']
+                    resource.identifier = key
+                    resource.update(elem)
+                    resource.save()
 
         self.set_version(current_version)
 

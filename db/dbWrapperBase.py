@@ -110,18 +110,31 @@ class DbWrapperBase(ABC):
         cursor.close()
         conn.close()
 
-    def execute(self, sql, args=None, commit=False):
+    def setup_cursor(self, conn, **kwargs):
+        conn_args = {}
+        use_dict = kwargs.get('use_dict', False)
+        prepared = kwargs.get('prepared', False)
+        if use_dict:
+            conn_args['dictionary'] = True
+        if prepared:
+            conn_args['prepared'] = True
+        return conn.cursor(**conn_args)
+
+    def execute(self, sql, args=None, commit=False, **kwargs):
         """
         Execute a sql, it could be with args and with out args. The usage is
         similar with execute() function in module pymysql.
         :param sql: sql clause
         :param args: args need by sql clause
         :param commit: whether to commit
+        :param use_dict: result should be a dict
         :return: if commit, return None, else, return result
         """
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
-        cursor = conn.cursor()
+        cursor = self.setup_cursor(conn, **kwargs)
+        get_id = kwargs.get('get_id', False)
+        get_dict = kwargs.get('get_dict', False)
 
         # TODO: consider catching OperationalError
         # try:
@@ -132,24 +145,33 @@ class DbWrapperBase(ABC):
         #     return None
         try:
             if args:
+                if type(args) != tuple:
+                    args=(args,)
                 cursor.execute(sql, args)
             else:
                 cursor.execute(sql)
+            logger.debug4(cursor.statement)
             if commit is True:
                 affected_rows = cursor.rowcount
                 conn.commit()
-                return affected_rows
+                if get_id:
+                    return cursor.lastrowid
+                else:
+                    return affected_rows
             else:
                 res = cursor.fetchall()
+                if get_dict:
+                    return self.__convert_to_dict(cursor.column_names, res)
                 return res
         except mysql.connector.Error as err:
             logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
+            logger.debug(sql)
+            logger.debug(args)
             return None
         except Exception as e:
             logger.error("Unspecified exception in dbWrapper: {}", str(e))
             return None
         finally:
-            logger.debug3(cursor.statement)
             self.close(conn, cursor)
             self.connection_semaphore.release()
 
@@ -165,7 +187,7 @@ class DbWrapperBase(ABC):
         # get connection form connection pool instead of create one.
         self.connection_semaphore.acquire()
         conn = self.pool.get_connection()
-        cursor = conn.cursor()
+        cursor = self.setup_cursor(conn, **kwargs)
 
         try:
             cursor.executemany(sql, args)
@@ -1441,15 +1463,241 @@ class DbWrapperBase(ABC):
         return detected_wrong_modes
 
     def get_instance_id(self):
-        # TODO - Use prepared requests but that would require a change across all database queries
-        sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = '%s'"
-        #res = self.execute(sql, args=[(self.application_args.status_name)])
-        res = self.execute(sql % (self.application_args.status_name))
+        sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
+        res = self.autofetch_value(sql, args=(self.application_args.status_name,))
         if res:
-            return res[0][0]
+            return res
         else:
-            sql = "INSERT INTO `madmin_instance` (`name`) VALUES ('%s')"
-            #self.execute(sql, args=[(self.application_args.status_name)], commit=True)
-            res = self.execute(sql % (self.application_args.status_name), commit=True)
-            # The cursor closes so its cleaner just to call ourself to get it
-            return self.get_instance_id()
+            instance_data = {
+                'name': self.application_args.status_name
+            }
+            res = self.autoexec_insert('madmin_instance', instance_data)
+            return res
+
+
+    # ===================================================
+    # =============== DB Helper Functions ===============
+    # ===================================================
+
+    def __convert_to_dict(self, descr, rows):
+        desc = [n for n in descr]
+        return [dict(zip(desc, row)) for row in rows]
+
+    def __create_clause(self, col_names, col_subs):
+        """ Creates a clause and handles lists
+
+        Args:
+            col_names (list): List of column names
+            col_subs (list): List of column value substitutions
+
+        Returns (list):
+            List of elements for the clause
+        """
+        clause = []
+        for ind, name in enumerate(col_names):
+            if col_subs[ind].find(",") != -1:
+                clause.append("`%s` IN (%s)" % (name, col_subs[ind]))
+            else:
+                clause.append("`%s` = %s" % (name, col_subs[ind]))
+        return clause
+
+    def __fix_table(self, table):
+        """ Encapsualtes the table in backticks
+
+        Args:
+            table (str): Table to encapsulate
+
+        Returns (str):
+            Encapsulated table
+        """
+        split_table = table.split(".")
+        table_name = ""
+        if len(split_table) > 2:
+            raise Exception("Invalid table format, %s" % table)
+        for name in split_table:
+            name = name.replace("`", "")
+            if len(table_name) != 0:
+                table_name += "."
+            table_name += "`%s`" % name
+        return table_name
+
+    def __process_literals(self, optype, keyvals, literals):
+        """ Processes literals and returns a tuple containing all data required for the query
+
+        Args:
+            keyvals (dict): Data to insert into the table
+            literals (list): Datapoints that should not be escaped
+            optype (str): Type of operation
+
+        Returns (tuple):
+            (Column names, Column Substitutions, Column Values, Literal Values, OnDuplicate)
+        """
+        column_names = []
+        column_substituion = []
+        column_values = []
+        literal_values = []
+        ondupe_out = []
+        for key, value in keyvals.items():
+            if type(value) is list and optype not in ["DELETE", "UPDATE"]:
+                raise Exception("Unable to process a list in key %s" % key)
+            column_names += [key]
+            # Determine the type of data to insert
+            sub_op = "%%s"
+            if key in literals:
+                sub_op = "%s"
+            # Number of times to repeat
+            num_times = 1
+            if type(value) is list:
+                num_times = len(value)
+            column_substituion += [",".join(sub_op for _ in range(0, num_times))]
+            # Add to the entries
+            if key in literals:
+                if type(value) is list:
+                    literal_values += value
+                else:
+                    literal_values += [value]
+            else:
+                if type(value) is list:
+                    column_values += value
+                else:
+                    column_values += [value]
+        for key, value in keyvals.items():
+            if optype == "ON DUPLICATE":
+                tmp_value = "`%s` = %%s" % key
+                if key in literals:
+                    tmp_value = tmp_value % value
+                else:
+                    column_values += [value]
+                ondupe_out += [tmp_value]
+        return (column_names, column_substituion, column_values, literal_values, ondupe_out)
+
+
+    def autofetch_all(self, sql, args=()):
+        """ Fetch all data and have it returned as a dictionary """
+        return self.execute(sql, args=args, get_dict=True)
+
+    def autofetch_value(self, sql, args=()):
+        """ Fetch the first value from the first row """
+        data = self.execute(sql, args=args)
+        if not data or len(data) == 0:
+            return data
+        return data[0][0]
+
+    def autofetch_row(self, sql, args=()):
+        """ Fetch the first row and have it return as a dictionary """
+        # TODO - Force LIMIT 1
+        data = self.execute(sql, args=args, get_dict=True)
+        if not data or len(data) == 0:
+            return data
+        return data[0]
+
+    def autofetch_column(self, sql, args=None):
+        """ get one field for 0, 1, or more rows in a query and return the result in a list
+        """
+        data = self.execute(sql, args=args)
+        returned_vals = []
+        for row in data:
+            returned_vals.append(row[0])
+        return returned_vals
+
+    def autoexec_delete(self, table, keyvals, literals=[], where_append=[]):
+        """ Performs a delete
+
+        Args:
+            table (str): Table to run the query against
+            keyvals (dict): Data to insert into the table
+            literals (list): Datapoints that should not be escaped
+            where_append (list): Additional data to append to the query
+        """
+        if type(keyvals) is not dict:
+            raise Exception("Data must be a dictionary")
+        if type(literals) is not list:
+            raise Exception("Literals must be a list")
+        table = self.__fix_table(table)
+        parsed_literals = self.__process_literals("DELETE", keyvals, literals)
+        (column_names, column_substituion, column_values, literal_values, _) = parsed_literals
+        query = "DELETE FROM %s\nWHERE "
+        where_clauses = where_append + self.__create_clause(column_names, column_substituion)
+        query += "\nAND ".join(k for k in where_clauses)
+        literal_values = [table] + literal_values
+        query = query % tuple(literal_values)
+        self.execute(query, args=tuple(column_values), commit=True)
+
+    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT"):
+        """ Auto-inserts into a table and handles all escaping
+
+        Args:
+            table (str): Table to run the query against
+            keyvals (dict): Data to insert into the table
+            literals (list): Datapoints that should not be escaped
+            optype (str): Type of operation.  Valid operations are ["INSERT", "REPLACE", "INSERT IGNORE",
+                "ON DUPLICATE"]
+            log (bool): If the query should be logged
+            logger (logging.logger): Logger that will be used if log = True
+
+        Returns (int):
+            Primary key for the row
+        """
+        optype = optype.upper()
+        if optype not in ["INSERT", "REPLACE", "INSERT IGNORE", "ON DUPLICATE"]:
+            raise ProgrammingError("MySQL operation must be 'INSERT', 'REPLACE', 'INSERT IGNORE', 'ON DUPLICATE',"\
+                                    "got '%s'" % optype)
+        if type(keyvals) is not dict:
+            raise Exception("Data must be a dictionary")
+        if type(literals) is not list:
+            raise Exception("Literals must be a list")
+        table = self.__fix_table(table)
+        parsed_literals = self.__process_literals(optype, keyvals, literals)
+        (column_names, column_substituion, column_values, literal_values, ondupe_out) = parsed_literals
+        ondupe_values = []
+        inital_type = optype
+        if optype == "ON DUPLICATE":
+            inital_type = "INSERT"
+        if inital_type in ["INSERT", "REPLACE"]:
+            inital_type += " INTO"
+        rownames = ",".join("`%s`" % k for k in column_names)
+        rowvalues = ", ".join(k for k in column_substituion)
+        query = "%s %s\n"\
+                "(%s)\n"\
+                "VALUES(%s)" % (inital_type, table, rownames, rowvalues) % tuple(literal_values)
+        if optype == "ON DUPLICATE":
+            dupe_out = ",\n".join("%s" % k for k in ondupe_out)
+            query += "\nON DUPLICATE KEY UPDATE\n"\
+                     "%s" % dupe_out
+            column_values += ondupe_values
+        return self.execute(query, args=tuple(column_values), commit=True, get_id=True)
+
+    def autoexec_update(self, table, set_keyvals, set_literals=[], where_keyvals={}, where_literals=[]):
+        """ Auto-updates into a table and handles all escaping
+
+        Args:
+            table (str): Table to run the query against
+            set_keyvals (dict): Data to set
+            set_literals (list): Datapoints that should not be escaped
+            where_keyvals (dict): Data used in the where clause
+            where_literals (list): Datapoints that should not be escaped
+        """
+        if type(set_keyvals) is not dict:
+            raise Exception("Set Keyvals must be a dictionary")
+        if type(set_literals) is not list:
+            raise Exception("Literals must be a list")
+        if type(where_keyvals) is not dict:
+            raise Exception("Where Keyvals must be a dictionary")
+        if type(where_literals) is not list:
+            raise Exception("Literals must be a list")
+        parsed_set = self.__process_literals("SET", set_keyvals, set_literals)
+        (set_col_names, set_col_sub, set_val, set_literal_val, _) = parsed_set
+        parsed_where = self.__process_literals("UPDATE", where_keyvals, where_literals)
+        (where_col_names, where_col_sub, where_val, where_literal_val, _) = parsed_where
+        first_sub = [table]
+        actual_values = set_val + where_val
+        set_clause = self.__create_clause(set_col_names, set_col_sub)
+        first_sub.append(",".join(set_clause) % tuple(set_literal_val))
+        query = "UPDATE %s\n"\
+                "SET %s"
+        if where_col_names:
+            query += "\nWHERE %s"
+            where_clause = self.__create_clause(where_col_names, where_col_sub)
+            first_sub.append(",".join(where_clause) % tuple(where_literal_val))
+        query = query % tuple(first_sub)
+        self.execute(query, args=tuple(actual_values), commit=True)
