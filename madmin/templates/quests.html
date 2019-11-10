@@ -66,23 +66,25 @@
         });
 	}
 
-    $(document).ready(function () {
+    $(document).ready(function() {
         $("#navgyms").addClass("active");
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width=100px /><br /><h2>Load..</h2>' });
+        $.blockUI({
+            message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>'
+        });
         $.ajax({
             type: "GET",
-            url: "get_quests?fence={{fence}}",
+            url: "{{ url_for('get_quests') }}?fence={{fence}}",
             success: function (result) {
                 setGrid('#show-data', result);
             },
-            complete: function(){
+            complete: function() {
                 setTimeout($.unblockUI, 500);
             }
         });
-        $('#area').change(function(){
-        area = ( $(this).find("option:selected").attr('value') );
-        window.location.href = '{{request.script_root}}?fence=' + area
-    });
+        $('#area').change(function() {
+            area = $(this).find("option:selected").attr('value');
+            window.location.href = '{{ url_for('quest') }}?fence=' + area
+        });
     });
 
     function build_name(row) {
