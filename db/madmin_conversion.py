@@ -8,6 +8,7 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_monivlist` (
         `monlist_id` int(11) NOT NULL AUTO_INCREMENT,
+        `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `monlist` varchar(128) NOT NULL,
         PRIMARY KEY (`monlist_id`),
@@ -29,6 +30,7 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_auth` (
         `auth_id` int(11) NOT NULL AUTO_INCREMENT,
+        `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `username` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
         `password` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -41,6 +43,7 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_devicepool` (
         `pool_id` int(11) NOT NULL,
+        `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `devicepool` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         `post_walk_delay` float DEFAULT NULL,
@@ -76,6 +79,7 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_area` (
         `area_id` int(11) NOT NULL AUTO_INCREMENT,
+        `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         `mode` enum('idle','iv_mitm','mon_mitm','pokestops','raids_mitm') COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -193,6 +197,7 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_walker` (
         `walker_id` int(11) NOT NULL AUTO_INCREMENT,
+        `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `walkername` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`walker_id`),
@@ -204,6 +209,7 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_walkerarea` (
         `walkerarea_id` int(11) NOT NULL AUTO_INCREMENT,
+        `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `area_id` int(11) NOT NULL,
         `walkertype` enum('countdown','timer','round','period','coords', 'idle') COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -235,6 +241,7 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_device` (
         `device_id` int(11) NOT NULL,
+        `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `origin` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         `walker_id` int(11) NOT NULL,
