@@ -108,7 +108,7 @@ $(document).ready(function () {
           <td class="align-middle">
             <select class="form-control form-control-sm" data-identifier="{{ dev_uri }}">
             {% for walker_uri, walker in walkers.items() %}
-             <option name="{{ url_for('api_walker') + '/'+ walker_uri }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
+             <option name="{{ url_for('api_walker') + '/'+ walker_uri|string }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
             {% endfor %}
             </select>
           </td>

@@ -43,3 +43,20 @@ class DataManager(object):
         for identifier in identifiers:
             data[identifier] = resource_class(self.logger, self.dbc, self.instance_id, identifier=identifier)
         return data
+
+    def get_settings(self, section, **kwargs):
+        mode = kwargs.get('mode', None)
+        if section == 'area':
+            if mode is None:
+                raise dm_exceptions.InvalidMode(mode)
+            resource_class = modules.AREA_MAPPINGS[mode]
+        else:
+            resource_class = modules.MAPPINGS[section]
+        config = resource_class.configuration
+        valid_config = {}
+        valid_config['fields'] = config['fields']
+        try:
+            valid_config['settings'] = config['settings']
+        except KeyError:
+            pass
+        return valid_config

@@ -498,10 +498,12 @@ class statistics(object):
 
         data = []
         for device in device_status:
-            device['origin_id'] = self._mapping_manager.get_device_id_of(device["origin"])
             try:
-                device['routemanager'] = areas[device['routemanager_id']]['name']
-                device['routemanager_mode'] = areas[device['routemanager_id']]['mode']
+                device['origin_id'] = int(self._mapping_manager.get_device_id_of(device["origin"]))
+                device['routemanager'] = areas[int(device['routemanager_id'])]['name']
+                device['routemanager_mode'] = areas[int(device['routemanager_id'])]['mode']
+            except (TypeError,ValueError):
+                continue
             except KeyError:
                 device['routemanager'] = 'Unknown Area %s' % (device['routemanager_id'],)
                 device['routemanager_mode'] = 'Unknown Area %s' % (device['routemanager_id'],)

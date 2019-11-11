@@ -156,20 +156,17 @@ class Resource(object):
         return []
 
     def get_resource(self, backend=False):
-        if self.identifier is not None:
-            user_data = {}
-            fields = self._data['fields']
+        user_data = {}
+        fields = self._data['fields']
+        if not backend:
+            fields = dict(fields)
+        user_data.update(fields)
+        if 'settings' in self._data:
+            settings = self._data['settings']
             if not backend:
-                fields = dict(fields)
-            user_data.update(fields)
-            if 'settings' in self._data:
-                settings = self._data['settings']
-                if not backend:
-                    settings = dict(settings)
-                user_data['settings'] = settings
-            return user_data
-        else:
-            raise dm_exceptions.IdentifierNotSpecified()
+                settings = dict(settings)
+            user_data['settings'] = settings
+        return user_data
 
     def _load(self):
         query = "SELECT * FROM `%s` WHERE `%s` = %%s AND `instance_id` = %%s" % (self.table, self.primary_key)
