@@ -4,6 +4,9 @@ from . import resource
 class MonIVList(resource.Resource):
     table = 'settings_monivlist'
     primary_key = 'monlist_id'
+    translations = {
+        'monlist': 'name'
+    }
     configuration = {
         "fields": {
             "monlist": {

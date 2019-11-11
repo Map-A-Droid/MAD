@@ -66,11 +66,12 @@ class Resource(object):
     def __init__(self, logger, dbc, instance, identifier=None):
         self._logger = logger
         self._dbc = dbc
-        self.identifier = int(identifier)
+        self.identifier = identifier
         self.instance_id = instance
         self._data = {}
         self.__load_defaults()
         if self.identifier is not None:
+            self.identifier = int(self.identifier)
             self._load()
 
     def __contains__(self, key):
@@ -154,12 +155,18 @@ class Resource(object):
     def get_dependencies(self):
         return []
 
-    def get_resource(self):
+    def get_resource(self, backend=False):
         if self.identifier is not None:
             user_data = {}
-            user_data.update(dict(self._data['fields']))
+            fields = self._data['fields']
+            if not backend:
+                fields = dict(fields)
+            user_data.update(fields)
             if 'settings' in self._data:
-                user_data['settings'] = dict(self._data['settings'])
+                settings = self._data['settings']
+                if not backend:
+                    settings = dict(settings)
+                user_data['settings'] = settings
             return user_data
         else:
             raise dm_exceptions.IdentifierNotSpecified()
@@ -197,7 +204,7 @@ class Resource(object):
                 continue
     def save(self, core_data=None):
         if core_data is None:
-            data = self.get_resource()
+            data = self.get_resource(backend=True)
         else:
             data = core_data
         if self.include_instance_id:
@@ -212,7 +219,7 @@ class Resource(object):
                 del self._data['settings'][field]
             data['settings'].removal = []
             del data['settings']
-        except:
+        except KeyError:
             pass
         data = self.translate_keys(data, 'save')
         res = self._dbc.autoexec_insert(self.table, data, optype="ON DUPLICATE")
@@ -225,10 +232,10 @@ class Resource(object):
             return data
         if operation == 'load':
             translations = dict(map(reversed, translations.items()))
+        translated = {}
         for key, val in data.items():
-            new_key = key
-            if key in translations:
-                new_key = translations[key]
-                data[new_key] = val
-                del data[key]
-        return data
+            if key not in translations:
+                translated[key] = val
+                continue
+            translated[translations[key]] = val
+        return translated

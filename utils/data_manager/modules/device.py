@@ -5,6 +5,7 @@ class Device(resource.Resource):
     table = 'settings_device'
     primary_key = 'device_id'
     translations = {
+        'origin': 'name',
         'pool': 'pool_id',
         'walker': 'walker_id'
     }

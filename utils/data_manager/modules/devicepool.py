@@ -4,6 +4,9 @@ from . import resource
 class DevicePool(resource.Resource):
     table = 'settings_devicepool'
     primary_key = 'pool_id'
+    translations = {
+        'devicepool': 'name'
+    }
     configuration = {
         "fields": {
             "devicepool": {

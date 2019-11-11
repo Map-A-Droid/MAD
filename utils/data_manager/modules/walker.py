@@ -5,6 +5,9 @@ from .walkerarea import WalkerArea
 class Walker(resource.Resource):
     table = 'settings_walker'
     primary_key = 'walker_id'
+    translations = {
+        'walkername': 'name'
+    }
     configuration = {
       "fields": {
             "walkername": {

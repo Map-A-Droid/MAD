@@ -5,7 +5,11 @@ class WalkerArea(resource.Resource):
     table = 'settings_walkerarea'
     primary_key = 'walkerarea_id'
     translations = {
-        'walkerarea': 'area_id'
+        'walkerarea': 'area_id',
+        'walkertype': 'algo_type',
+        'walkervalue': 'algo_value',
+        'walkermax': 'max_walkers',
+        'walkertext': 'name'
     }
     configuration = {
         "fields": {
@@ -76,7 +80,7 @@ class WalkerArea(resource.Resource):
     def save(self):
         try:
             if self._data['fields']['walkermax'] == '':
-                core_data = self.get_resource()
+                core_data = self.get_resource(backend=True)
                 core_data['walkermax'] = None
                 super().save(core_data=core_data)
             else:
