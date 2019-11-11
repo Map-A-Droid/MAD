@@ -268,7 +268,7 @@ class DataManager(object):
         if action in ['patch', 'put']:
             if identifier not in self.__raw[config_section]['entries']:
                 raise KeyError
-            if config_section == 'walker':
+            if config_section == 'walker' and not append:
                 try:
                     walkerareas_update = set(data['setup'])
                     walkerareas_original = set(self.__raw[config_section]['entries'][identifier]['setup'])
