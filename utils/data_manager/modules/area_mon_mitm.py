@@ -35,7 +35,6 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "geofence",
                     "require": False,
-                    "empty": None,
                     "description": "Excluding geofence for scanarea",
                     "expected": str
                 }
@@ -125,7 +124,7 @@ class AreaMonMITM(area.Area):
                     },
                     "require": False,
                     "description": "IV List Resource",
-                    "expected": str,
+                    "expected": int,
                     "uri": True,
                     "data_source": "monivlist",
                     "uri_source": "api_monivlist"

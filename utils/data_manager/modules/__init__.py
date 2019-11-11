@@ -9,16 +9,13 @@ from .walkerarea import WalkerArea
 from .. import dm_exceptions
 
 def AreaFactory(logger, dbc, instance, identifier=None, mode=None):
-    # TODO - Use different exceptions
     if identifier is None and mode is None:
-        raise dm_exceptions.InvalidMode(mode)
+        raise dm_exceptions.InvalidArea(mode)
     elif identifier:
         sql = "SELECT `mode` FROM `settings_area` WHERE `area_id` = %s and `instance_id` = %s"
         mode = dbc.autofetch_value(sql, args=(identifier, instance))
         if not mode:
-            raise dm_exceptions.InvalidMode(mode)
-    elif not mode:
-        raise dm_exceptions.InvalidMode(mode)
+            raise dm_exceptions.UnknownIdentifier(mode)
     if mode is None or mode not in AREA_MAPPINGS:
         dm_exceptions.InvalidMode(mode)
     return AREA_MAPPINGS[mode](logger, dbc, instance, identifier=identifier)

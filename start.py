@@ -58,7 +58,7 @@ def install_thread_excepthook():
         except BrokenPipeError:
             pass
         except Exception:
-            logger.opt(exception=True).critical("An unhandled exception occured!")
+            logger.opt(exception=True).critical("An unhanded exception occurred!")
 
     def run_process(*args, **kwargs):
         try:
@@ -68,7 +68,7 @@ def install_thread_excepthook():
         except BrokenPipeError:
             pass
         except Exception:
-            logger.opt(exception=True).critical("An unhandled exception occured!")
+            logger.opt(exception=True).critical("An unhanded exception occurred!")
 
     Thread.run = run_thread
     Process.run = run_process
@@ -166,7 +166,7 @@ if __name__ == "__main__":
     db_wrapper.create_statistics_databases_if_not_exists()
     db_wrapper.create_madmin_databases_if_not_exists()
     instance_id = db_wrapper.get_instance_id()
-    version = MADVersion(args, db_wrapper)
+    version = MADVersion(args, db_wrapper, instance_id)
     version.get_version()
 
     # create folders
@@ -198,7 +198,7 @@ if __name__ == "__main__":
     t_file_watcher = None
     t_whw = None
 
-    data_manager = utils.data_manager.DataManager(logger, args)
+    data_manager = utils.data_manager.DataManager(logger, db_wrapper, instance_id)
 
     if args.only_scan or args.only_routes:
         MappingManagerManager.register('MappingManager', MappingManager)

@@ -66,7 +66,7 @@ class Resource(object):
     def __init__(self, logger, dbc, instance, identifier=None):
         self._logger = logger
         self._dbc = dbc
-        self.identifier = identifier
+        self.identifier = int(identifier)
         self.instance_id = instance
         self._data = {}
         self.__load_defaults()
@@ -112,6 +112,9 @@ class Resource(object):
     def __str__(self):
         return str(self.get_resource())
 
+    def get(self, key, default):
+        return self.get_resource().get(key, default)
+
     def items(self):
         return self.get_resource().items()
 
@@ -154,9 +157,9 @@ class Resource(object):
     def get_resource(self):
         if self.identifier is not None:
             user_data = {}
-            user_data.update(self._data['fields'])
+            user_data.update(dict(self._data['fields']))
             if 'settings' in self._data:
-                user_data['settings'] = self._data['settings']
+                user_data['settings'] = dict(self._data['settings'])
             return user_data
         else:
             raise dm_exceptions.IdentifierNotSpecified()

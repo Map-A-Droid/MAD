@@ -200,7 +200,6 @@ class DevicePool(resource.Resource):
                  "settings": {
                     "type": "text",
                     "require": False,
-                    "empty": None,
                     "description": "Reboot (if enabled) device after not injecting for X times in a row (Default: 20)",
                     "expected": int
                 }

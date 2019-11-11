@@ -929,10 +929,9 @@ class RouteManagerBase(ABC):
             #   remove the coords of that coord onward)
 
     def change_init_mapping(self, name_area: str):
-        update = {
-            'init': False
-        }
-        self._data_manager.set_data('area', 'patch', update, identifier=self.area_id)
+        area = self._data_manager.get_resource('area', self.area_id)
+        area['init'] = False
+        area.save()
 
     def get_route_status(self, origin) -> Tuple[int, int]:
         if self._route and origin in self._routepool:

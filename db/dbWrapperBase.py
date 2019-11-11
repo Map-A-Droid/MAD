@@ -175,7 +175,7 @@ class DbWrapperBase(ABC):
             self.close(conn, cursor)
             self.connection_semaphore.release()
 
-    def executemany(self, sql, args, commit=False):
+    def executemany(self, sql, args, commit=False, **kwargs):
         """
         Execute with many args. Similar with executemany() function in pymysql.
         args should be a sequence.

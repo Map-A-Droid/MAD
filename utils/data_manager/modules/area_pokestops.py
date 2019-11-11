@@ -26,7 +26,6 @@ class AreaPokestops(area.Area):
                 "settings": {
                     "type": "geofence",
                     "require": False,
-                    "empty": None,
                     "description": "Excluding geofence for scanarea",
                     "expected": str
                 }

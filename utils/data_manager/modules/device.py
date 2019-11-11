@@ -23,7 +23,7 @@ class Device(resource.Resource):
                     "type": "walkerselect",
                     "require": True,
                     "description": "Walker of this area",
-                    "expected": str,
+                    "expected": int,
                     "uri": True,
                     "data_source": "walker",
                     "uri_source": "api_walker"
@@ -35,7 +35,7 @@ class Device(resource.Resource):
                     "require": False,
                     "empty": None,
                     "description": "Configpool for this area",
-                    "expected": str,
+                    "expected": int,
                     "uri": True,
                     "data_source": "devicepool",
                     "uri_source": "api_devicepool"
@@ -306,7 +306,6 @@ class Device(resource.Resource):
                  "settings": {
                     "type": "text",
                     "require": False,
-                    "empty": None,
                     "description": "Reboot (if enabled) device after not injecting for X times in a row (Default: 20)",
                     "expected": int
                 }

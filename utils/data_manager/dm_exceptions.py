@@ -9,6 +9,9 @@ class DependencyError(DataManagerException):
 class IdentifierNotSpecified(DataManagerException):
     pass
 
+class InvalidArea(DataManagerException):
+    pass
+
 class InvalidDataFormat(DataManagerException):
     def __init__(self, key, data, expected):
         super().__init__()
@@ -21,6 +24,9 @@ class InvalidMode(DataManagerException):
     def __init__(self, mode):
         self.mode = mode
         super().__init__(mode)
+
+class InvalidSection(DataManagerException):
+    pass
 
 class RequiredFieldRemoved(DataManagerException):
     pass
