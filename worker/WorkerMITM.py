@@ -2,7 +2,7 @@ import math
 import time
 from datetime import datetime
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from mitm_receiver.MitmMapper import MitmMapper
 from ocr.pogoWindows import PogoWindows
 from utils.MappingManager import MappingManager
@@ -122,7 +122,7 @@ class WorkerMITM(MITMBase):
             raise InternalStopWorkerException
 
     def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
-                 routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapperBase,
+                 routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
                  pogo_window_manager: PogoWindows, walker):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler,
                           mapping_manager=mapping_manager, routemanager_name=routemanager_name,

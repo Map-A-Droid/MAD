@@ -1,20 +1,19 @@
 import sys
 from multiprocessing.managers import SyncManager
 
-from db.dbWrapperBase import DbWrapperBase
-from db.rmWrapper import RmWrapper, RmWrapperManager
+from db.DbWrapper import DbWrapper, DbWrapperManager
 from utils.logging import logger
 
 
 class DbFactory:
     @staticmethod
-    def get_wrapper(args) -> (DbWrapperBase, SyncManager):
+    def get_wrapper(args) -> (DbWrapper, SyncManager):
         if args.db_method == "rm":
-            RmWrapperManager.register('RmWrapper', RmWrapper)
-            rm_wrapper_manager = RmWrapperManager()
-            rm_wrapper_manager.start()
-            rm_wrapper = rm_wrapper_manager.RmWrapper(args)
-            return rm_wrapper, rm_wrapper_manager
+            DbWrapperManager.register('DbWrapper', DbWrapper)
+            db_wrapper_manager = DbWrapperManager()
+            db_wrapper_manager.start()
+            db_wrapper = db_wrapper_manager.DbWrapper(args)
+            return db_wrapper, db_wrapper_manager
         elif args.db_method == "monocle":
             logger.error(
                 "MAD has dropped Monocle support. Please consider checking out the "

@@ -1,7 +1,7 @@
 from multiprocessing import Queue, Process
 from datetime import datetime
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from mitm_receiver.MitmMapper import MitmMapper
 from utils.logging import logger
 
@@ -10,7 +10,7 @@ class MitmDataProcessor(Process):
     def __init__(self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper, db_wrapper, name=None):
         Process.__init__(self, name=name)
         self.__queue: Queue = multi_proc_queue
-        self.__db_wrapper: DbWrapperBase = db_wrapper
+        self.__db_wrapper: DbWrapper = db_wrapper
         self.__application_args = application_args
         self.__mitm_mapper: MitmMapper = mitm_mapper
 

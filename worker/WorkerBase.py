@@ -8,7 +8,7 @@ from abc import ABC, abstractmethod
 from threading import Event, Lock, Thread, current_thread
 from typing import Optional
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from mitm_receiver.MitmMapper import MitmMapper
 from ocr.pogoWindows import PogoWindows
 from utils.MappingManager import MappingManager
@@ -29,7 +29,7 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 class WorkerBase(ABC):
     def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
-                 routemanager_name: str, db_wrapper: DbWrapperBase, pogoWindowManager: PogoWindows, NoOcr: bool = True,
+                 routemanager_name: str, db_wrapper: DbWrapper, pogoWindowManager: PogoWindows, NoOcr: bool = True,
                  walker=None):
         # self.thread_pool = ThreadPool(processes=2)
         self._mapping_manager: MappingManager = mapping_manager

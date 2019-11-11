@@ -5,7 +5,7 @@ from multiprocessing.managers import SyncManager
 from threading import Thread, Event
 from typing import Dict
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.logging import logger
@@ -29,7 +29,7 @@ class MitmMapper(object):
         self.__last_cellsid = {}
         self.__last_possibly_moved = {}
         self.__application_args = args
-        self.__db_wrapper: DbWrapperBase = db_wrapper
+        self.__db_wrapper: DbWrapper = db_wrapper
         self.__playerstats_db_update_stop: Event = Event()
         self.__playerstats_db_update_queue: Queue = Queue()
         self.__playerstats_db_update_mutex: Lock = Lock()
