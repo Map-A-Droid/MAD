@@ -554,8 +554,8 @@ class RmWrapper(DbWrapperBase):
                     else:
                         pokemon_id = None
                         cp = 0
-                        move_1 = 1
-                        move_2 = 2
+                        move_1 = 0
+                        move_2 = 0
                         form = None
                         gender = None
 
