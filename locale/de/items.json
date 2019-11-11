@@ -45,7 +45,7 @@
   },
   "301": {
     "protoname": "ITEM_LUCKY_EGG",
-    "name": "Glücksei"
+    "name": "Glücks-Ei"
   },
   "401": {
     "protoname": "ITEM_INCENSE_ORDINARY",
@@ -109,11 +109,11 @@
   },
   "708": {
     "protoname": "ITEM_GOLDEN_PINAP_BERRY",
-    "name": "Goldene Sananabeere"
+    "name": "Silberne Sananabeere"
   },
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
-    "name": "Camera"
+    "name": "Kamera"
   },
   "901": {
     "protoname": "ITEM_INCUBATOR_BASIC_UNLIMITED",
@@ -153,7 +153,7 @@
   },
   "1105": {
     "protoname": "ITEM_UP_GRADE",
-    "name": "Item Upgrade"
+    "name": "Up-Grade"
   },
   "1106": {
     "protoname": "ITEM_GEN4_EVOLUTION_STONE",
