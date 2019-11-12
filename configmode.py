@@ -44,7 +44,7 @@ if __name__ == "__main__":
     create_folder(args.file_path)
     create_folder(args.upload_path)
 
-    db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
+    db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
     db_wrapper.check_and_create_spawn_tables()
     db_wrapper.create_quest_database_if_not_exists()

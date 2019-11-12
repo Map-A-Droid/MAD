@@ -1,241 +1,41 @@
 import json
 import sys
 import time
-from abc import ABC, abstractmethod
 from datetime import datetime, timedelta, timezone
-from multiprocessing import Lock, Semaphore
-from multiprocessing.managers import SyncManager
 from typing import List, Optional
 from functools import reduce
 
 import mysql
 from bitstring import BitArray
-from mysql.connector.pooling import MySQLConnectionPool
 
 from utils.collections import Location, LocationWithVisits
 from utils.gamemechanicutil import gen_despawn_timestamp
 from utils.logging import logger
 from utils.questGen import questtask
 from utils.s2Helper import S2Helper
+from db.DbSchemaUpdater import DbSchemaUpdater
 
-class DbWrapperManager(SyncManager):
-    pass
 
-class DbWrapper(ABC):
+class DbWrapper:
     def_spawn = 240
 
-    def __init__(self, args):
+    def __init__(self, db_exec, args):
+        self._db_exec = db_exec
         self.application_args = args
-        self.host = args.dbip
-        self.port = args.dbport
-        self.user = args.dbusername
-        self.password = args.dbpassword
-        self.database = args.dbname
-        self.dbconfig = {
-            "host": self.host,
-            "port": self.port,
-            "user": self.user,
-            "password": self.password,
-            "database": self.database
-        }
-        self.pool = None
-        self.pool_mutex = Lock()
-        self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
-        self._init_pool()
 
-        self.__ensure_columns_exist()
+        self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
+        self.schema_updater.ensure_unversioned_columns_exist()
 
-    def _init_pool(self):
-        logger.info("Connecting to DB")
-        self.pool_mutex.acquire()
-        self.pool = MySQLConnectionPool(pool_name="db_wrapper_pool",
-                                        pool_size=self.application_args.db_poolsize,
-                                        **self.dbconfig)
-        self.pool_mutex.release()
-
-    def __ensure_columns_exist(self):
-        fields = [
-            {
-                "table": "raid",
-                "column": "is_exclusive",
-                "ctype": "tinyint(1) NULL"
-            },
-            {
-                "table": "raid",
-                "column": "gender",
-                "ctype": "tinyint(1) NULL"
-            },
-            {
-                "table": "gym",
-                "column": "is_ex_raid_eligible",
-                "ctype": "tinyint(1) NOT NULL DEFAULT '0'"
-            },
-            {
-                "table": "pokestop",
-                "column": "incident_start",
-                "ctype": "datetime NULL"
-            },
-            {
-                "table": "pokestop",
-                "column": "incident_expiration",
-                "ctype": "datetime NULL"
-            },
-            {
-                "table": "pokestop",
-                "column": "incident_grunt_type",
-                "ctype": "smallint(1) NULL"
-            },
-            {
-                "table": "trs_status",
-                "column": "instance",
-                "ctype": "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL FIRST",
-                "modify_key": "DROP PRIMARY KEY, ADD PRIMARY KEY (`instance`, `origin`)"
-            }
-        ]
-
-        for field in fields:
-            self._check_create_column(field)
-
-    def check_index_exists(self, table, index):
-        query = (
-            "SELECT count(*) "
-            "FROM information_schema.statistics "
-            "WHERE table_name = %s "
-            "AND index_name = %s "
-            "AND table_schema = %s"
-        )
-        vals = (
-            table,
-            index,
-            self.database,
-        )
-
-        return int(self.execute(query, vals)[0][0])
-
-    def check_column_exists(self, table, column):
-        query = (
-            "SELECT count(*) "
-            "FROM information_schema.columns "
-            "WHERE table_name = %s "
-            "AND column_name = %s "
-            "AND table_schema = %s"
-        )
-        vals = (
-            table,
-            column,
-            self.database,
-        )
-
-        return int(self.execute(query, vals)[0][0])
-
-    def _check_create_column(self, field):
-        if self.check_column_exists(field["table"], field["column"]) == 1:
-            return
-
-        alter_query = (
-            "ALTER TABLE {} "
-            "ADD COLUMN {} {}"
-            .format(field["table"], field["column"], field["ctype"])
-        )
-
-        if "modify_key" in field:
-            alter_query = alter_query + ", " + field["modify_key"]
-
-        self.execute(alter_query, commit=True)
-
-        if self.check_column_exists(field["table"], field["column"]) == 1:
-            logger.info("Successfully added '{}.{}' column",
-                        field["table"], field["column"])
-            return
-        else:
-            logger.error("Couldn't create required column {}.{}'",
-                         field["table"], field["column"])
-            sys.exit(1)
 
     def close(self, conn, cursor):
-        """
-        A method used to close connection of mysql.
-        :param conn:
-        :param cursor:
-        :return:
-        """
-        cursor.close()
-        conn.close()
+        return self._db_exec.close(conn, cursor)
 
     def execute(self, sql, args=None, commit=False):
-        """
-        Execute a sql, it could be with args and with out args. The usage is
-        similar with execute() function in module pymysql.
-        :param sql: sql clause
-        :param args: args need by sql clause
-        :param commit: whether to commit
-        :return: if commit, return None, else, return result
-        """
-        self.connection_semaphore.acquire()
-        conn = self.pool.get_connection()
-        cursor = conn.cursor()
-
-        # TODO: consider catching OperationalError
-        # try:
-        #     cursor = conn.cursor()
-        # except OperationalError as e:
-        #     logger.error("OperationalError trying to acquire a DB cursor: {}", str(e))
-        #     conn.rollback()
-        #     return None
-        try:
-            if args:
-                cursor.execute(sql, args)
-            else:
-                cursor.execute(sql)
-            if commit is True:
-                affected_rows = cursor.rowcount
-                conn.commit()
-                return affected_rows
-            else:
-                res = cursor.fetchall()
-                return res
-        except mysql.connector.Error as err:
-            logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
-            return None
-        except Exception as e:
-            logger.error("Unspecified exception in dbWrapper: {}", str(e))
-            return None
-        finally:
-            self.close(conn, cursor)
-            self.connection_semaphore.release()
+        return self._db_exec.execute(sql, args, commit)
 
     def executemany(self, sql, args, commit=False):
-        """
-        Execute with many args. Similar with executemany() function in pymysql.
-        args should be a sequence.
-        :param sql: sql clause
-        :param args: args
-        :param commit: commit or not.
-        :return: if commit, return None, else, return result
-        """
-        # get connection form connection pool instead of create one.
-        self.connection_semaphore.acquire()
-        conn = self.pool.get_connection()
-        cursor = conn.cursor()
+        return self._db_exec.executemany(sql, args, commit)
 
-        try:
-            cursor.executemany(sql, args)
-
-            if commit is True:
-                conn.commit()
-                return None
-            else:
-                res = cursor.fetchall()
-                return res
-        except mysql.connector.Error as err:
-            logger.error("Failed executing query: {}", str(err))
-            return None
-        except Exception as e:
-            logger.error("Unspecified exception in dbWrapper: {}", str(e))
-            return None
-        finally:
-            self.close(conn, cursor)
-            self.connection_semaphore.release()
 
     def __db_timestring_to_unix_timestamp(self, timestring):
         try:
