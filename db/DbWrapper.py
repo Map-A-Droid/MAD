@@ -31,12 +31,16 @@ class DbWrapper(ABC):
         self.user = args.dbusername
         self.password = args.dbpassword
         self.database = args.dbname
+        self.dbconfig = {
+            "host": self.host,
+            "port": self.port,
+            "user": self.user,
+            "password": self.password,
+            "database": self.database
+        }
         self.pool = None
         self.pool_mutex = Lock()
-        self.connection_semaphore = Semaphore(
-            self.application_args.db_poolsize)
-        self.dbconfig = {"database": self.database, "user": self.user, "host": self.host, "password": self.password,
-                         "port": self.port}
+        self.connection_semaphore = Semaphore(self.application_args.db_poolsize)
         self._init_pool()
 
         self.__ensure_columns_exist()
