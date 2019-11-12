@@ -46,7 +46,7 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_devicepool` (
-        `pool_id` int(11) NOT NULL,
+        `pool_id` int(11) NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -249,7 +249,7 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_device` (
-        `device_id` int(11) NOT NULL,
+        `device_id` int(11) NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
         `instance_id` int(11) NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,

@@ -53,10 +53,9 @@ if __name__ == "__main__":
     db_wrapper.create_statistics_databases_if_not_exists()
     db_wrapper.create_madmin_databases_if_not_exists()
     instance_id = db_wrapper.get_instance_id()
-    version = MADVersion(args, db_wrapper, instance_id)
-    version.get_version()
-
     data_manager = utils.data_manager.DataManager(logger, db_wrapper, instance_id)
+    version = MADVersion(args, data_manager)
+    version.get_version()
 
     MappingManagerManager.register('MappingManager', MappingManager)
     mapping_manager_manager = MappingManagerManager()

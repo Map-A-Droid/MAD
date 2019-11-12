@@ -3,7 +3,9 @@ from . import resource
 
 class WalkerArea(resource.Resource):
     table = 'settings_walkerarea'
+    name_field = 'walkertext'
     primary_key = 'walkerarea_id'
+    search_field = 'name'
     translations = {
         'walkerarea': 'area_id',
         'walkertype': 'algo_type',

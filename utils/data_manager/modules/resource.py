@@ -2,30 +2,68 @@ from .. import dm_exceptions
 from collections import UserDict
 import copy
 
-class ResourceTracker(UserDict):
-    def __init__(self, config, initialdata={}):
-        self.__config = config
-        super().__init__(initialdata)
+USER_READABLE_ERRORS = {
+    str: 'string (MapADroid)',
+    int: 'Integer (1,2,3)',
+    float: 'Decimal (1.0, 1.5)',
+    list: 'Comma-delimited list',
+    bool: 'True|False'
+}
 
-    removal = []
+class ResourceTracker(UserDict):
+    def __init__(self, config, data_manager, initialdata={}):
+        self.__config = config
+        self._data_manager = data_manager
+        self.issues = {
+            'invalid': [],
+            'missing': [],
+            'invalid_uri': [],
+            'unknown': []
+        }
+        self.removal = []
+        super().__init__(initialdata)
+        for key, entry in self.__config.items():
+            try:
+                if entry['settings']['require'] == False:
+                    continue
+                if key not in initialdata:
+                    self.issues['missing'].append(key)
+            except KeyError:
+                continue
+    
     def __delitem__(self, key):
+        """ Removes the key from the dict.  Tracks it in the removal state so it can be correctly set to null """
         try:
             if self.__config[key]['settings']['require'] == True:
                 if 'empty' in self.__config[key]['settings']:
                     super().__setitem__(key, self.__config[key]['settings']['empty'])
                 else:
-                    raise dm_exceptions.RequiredFieldRemoved()
+                    self.issues['missing'].append(key)
         except KeyError:
             pass
         super().__delitem__(key)
         self.removal.append(key)
+        keys = ['invalid', 'invalid_uri', 'unknown']
+        for update_key in keys:
+            try:
+                self.issues[update_key].remove(key)
+            except:
+                pass
 
     def __setitem__(self, key, val):
-        # TODO - Validate incoming IDs
+        """ Just set the value right? :) Perform all validation against the key / value prior to setting
+            Validates the format (or converts it).  Raises an exception if it cannot convert the value
+            If the field is a resource field, validate all resources are valid
+        """
+        this_iteration = {
+            'invalid': False,
+            'invalid_uri': False
+        }
         if key not in self.__config:
             raise KeyError
         expected = self.__config[key]['settings'].get('expected', str)
         required = self.__config[key]['settings'].get('require', False)
+        resource = self.__config[key]['settings'].get('data_source', None)
         try:
             empty = self.__config[key]['settings']['empty']
             has_empty = True
@@ -39,17 +77,40 @@ class ResourceTracker(UserDict):
                     try:
                         val = expected(val)
                     except:
-                        if has_empty and val == empty:
-                            pass
+                        if has_empty and (val == empty or val is None):
+                            if val != empty and val is None:
+                                val = empty
                         else:
-                            raise dm_exceptions.InvalidDataFormat(key, val, expected)
+                            this_iteration['invalid'] = True
+                            self.issues['invalid'].append((key, USER_READABLE_ERRORS[expected]))
             except KeyError:
                 pass
+        if resource:
+            tmp = val
+            if type(val) != list:
+                tmp = [val]
+            invalid = []
+            for identifier in tmp:
+                try:
+                    self._data_manager.get_resource(resource, identifier=identifier)
+                except dm_exceptions.UnknownIdentifier:
+                    invalid.append((key, resource, identifier))
+            if invalid:
+                this_iteration['invalud_uri'] = True
+                self.issues['invalid_uri'] = invalid
         super().__setitem__(key, val)
         try:
             self.removal.remove(key)
         except:
             pass
+        keys = ['invalid', 'invalid_uri', 'missing']
+        for update_key in keys:
+            if update_key in this_iteration and this_iteration[update_key]:
+                continue
+            try:
+                self.issues[update_key].remove(key)
+            except:
+                pass
 
 class Resource(object):
     # Name of the table within the database
@@ -62,18 +123,24 @@ class Resource(object):
     translations = {}
     # Configuration for converting from table to class
     configuration = None
+    # Default name field
+    name_field = 'TBD'
+    search_field = 'name'
 
-    def __init__(self, logger, dbc, instance, identifier=None):
+    def __init__(self, logger, data_manager, identifier=None):
         self._logger = logger
-        self._dbc = dbc
         self.identifier = identifier
-        self.instance_id = instance
+        self._data_manager = data_manager
+        self.instance_id = self._data_manager.instance_id
+        self._dbc = self._data_manager.dbc
         self._data = {}
         self.__load_defaults()
         if self.identifier is not None:
             self.identifier = int(self.identifier)
             self._load()
 
+    # All of these are implemented because this is not truely a dict structure but we overload the datasource
+    # to act like it is
     def __contains__(self, key):
         return key in self.get_resource()
 
@@ -84,6 +151,9 @@ class Resource(object):
             pass
         else:
             raise KeyError
+
+    def __dict__(self):
+        return self.get_resource()
 
     def __getitem__(self, key):
         if key in self.configuration['fields']:
@@ -123,12 +193,26 @@ class Resource(object):
         return self.get_resource().keys()
 
     def update(self, *args, **kwargs):
+        """ When performing an update we want to grab all the issues and raise them at the end.  This will give a
+            a complete issue list
+        """
+        try:
+            append = kwargs.get('append', False)
+            del kwargs['append']
+        except:
+            append = False
+        invalid_fields = []
+        invalid_uris = []
+        unknown_fields = []
         for d in list(args) + [kwargs]:
             for k,v in d.items():
                 if type(v) is dict:
-                    self[k] = self[k].update(v)
+                    self[k].update(v)
                 else:
-                    self[k]=v
+                    if type(v) is list and append:
+                        self[k] += v
+                    else:
+                        self[k]=v
 
     def _cleanup_load(self):
         try:
@@ -194,12 +278,31 @@ class Resource(object):
                         defaults[field] = val['settings']['empty']
                     except:
                         continue
-                self._data[section] = ResourceTracker(self.configuration[section], defaults)
+                self._data[section] = ResourceTracker(self.configuration[section], self._data_manager, defaults)
             except KeyError:
                 continue
             except TypeError:
                 continue
+
+    def presave_validation(self):
+        # Validate required data has been set
+        issues = {}
+        top_levels = ['fields', 'settings']
+        for top_level in top_levels:
+            try:
+                for key, val in self._data[top_level].issues.items():
+                    if not val:
+                        continue
+                    if key not in issues:
+                        issues[key] = []
+                    issues[key] += val
+            except KeyError:
+                continue
+        if issues:
+            raise dm_exceptions.UpdateIssue(**issues)
+
     def save(self, core_data=None):
+        self.presave_validation()
         if core_data is None:
             data = self.get_resource(backend=True)
         else:
@@ -220,7 +323,16 @@ class Resource(object):
             pass
         data = self.translate_keys(data, 'save')
         res = self._dbc.autoexec_insert(self.table, data, optype="ON DUPLICATE")
+        if not self.identifier:
+            self.identifier = res
         return res
+
+    @classmethod
+    def search(cls, dbc, res_obj, *args, **kwargs):
+        sql = "SELECT `%s`\n"\
+              "FROM `%s`\n"\
+              "ORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, res_obj.search_field)
+        return dbc.autofetch_column(sql)
 
     def translate_keys(self, data, operation, translations=None):
         if translations is None:

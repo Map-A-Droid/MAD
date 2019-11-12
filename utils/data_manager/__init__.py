@@ -1,5 +1,6 @@
 from . import modules
-from . import dm_exceptions
+from .dm_exceptions import *
+import collections
 
 # This is still known as the data manager but its more of a Resource Factory.  Its sole purpose is to produce a
 # single resource or a list of resources
@@ -9,19 +10,32 @@ class DataManager(object):
         self.dbc = dbc
         self.instance_id = instance_id
 
-    def get_resource(self, section, identifier, **kwargs):
+    def get_resource(self, section, identifier=None, **kwargs):
         if section == 'area':
-            return modules.AreaFactory(self.logger, self.dbc, self.instance_id, identifier=identifier)
+            return modules.AreaFactory(self.logger, self, identifier=identifier)
         try:
-            return modules.MAPPINGS[section](self.logger, self.dbc, self.instance_id, identifier=identifier)
+            return modules.MAPPINGS[section](self.logger, self, identifier=identifier)
         except KeyError:
             raise dm_exceptions.InvalidSection()
 
+    def get_resource_def(self, section, **kwargs):
+        mode = kwargs.get('mode', None)
+        if section == 'area':
+            if mode is None:
+                raise dm_exceptions.ModeNotSpecified(mode)
+            try:
+                resource_class = modules.AREA_MAPPINGS[mode]
+            except KeyError:
+                raise dm_exceptions.ModeUnknown(mode)
+        else:
+            resource_class = modules.MAPPINGS[section]
+        return resource_class
+
     def get_root_resource(self, section, **kwargs):
-        # TODO - Display Field
         fetch_all = kwargs.get('fetch_all', 1)
         mode = kwargs.get('mode', None)
         default_sort = kwargs.get('default_sort', None)
+        backend = kwargs.get('backend', False)
         resource_class = None
         table = None
         primary_key = None
@@ -39,19 +53,16 @@ class DataManager(object):
             sql += ' ORDER BY `%s`'
             args.append(default_sort)
         identifiers = self.dbc.autofetch_column(sql % tuple(args), args=(self.instance_id,))
-        data = {}
+        data = collections.OrderedDict()
         for identifier in identifiers:
-            data[identifier] = resource_class(self.logger, self.dbc, self.instance_id, identifier=identifier)
+            elem = resource_class(self.logger, self, identifier=identifier)
+            if backend:
+                elem = elem.get_resource()
+            data[identifier] = elem
         return data
 
     def get_settings(self, section, **kwargs):
-        mode = kwargs.get('mode', None)
-        if section == 'area':
-            if mode is None:
-                raise dm_exceptions.InvalidMode(mode)
-            resource_class = modules.AREA_MAPPINGS[mode]
-        else:
-            resource_class = modules.MAPPINGS[section]
+        resource_class = self.get_resource_def(section, **kwargs)
         config = resource_class.configuration
         valid_config = {}
         valid_config['fields'] = config['fields']
@@ -60,3 +71,25 @@ class DataManager(object):
         except KeyError:
             pass
         return valid_config
+
+    def search(self, section, **kwargs):
+        resource_def = kwargs.get('resource_def', None)
+        resource_info = kwargs.get('resource_info', None)
+        mode = kwargs.get('mode', None)
+        if resource_def is None:
+            try:
+                resource_def = self.get_resource_def(section, mode=self.mode)
+            except utils.data_manager.dm_exceptions.DataManagerException:
+                resource_def = copy.deepcopy(utils.data_manager.modules.MAPPINGS['area_nomode'])
+        resources = resource_def.search(self.dbc, resource_def)
+        results = collections.OrderedDict()
+        for identifier in resources:
+            resource = self.get_resource(section, identifier=identifier)
+            results[identifier] = resource
+        return results
+
+    def get_valid_modes(self, section):
+        valid_modes = []
+        if section == 'area':
+            valid_modes = modules.AREA_MAPPINGS.keys()
+        return valid_modes

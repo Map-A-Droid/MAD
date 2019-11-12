@@ -3,7 +3,9 @@ from . import resource
 
 class Device(resource.Resource):
     table = 'settings_device'
+    name_field = 'origin'
     primary_key = 'device_id'
+    search_field = 'name'
     translations = {
         'origin': 'name',
         'pool': 'pool_id',

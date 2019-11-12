@@ -4,7 +4,9 @@ from .walkerarea import WalkerArea
 
 class Walker(resource.Resource):
     table = 'settings_walker'
+    name_field = 'walkername'
     primary_key = 'walker_id'
+    search_field = 'name'
     translations = {
         'walkername': 'name'
     }
@@ -34,7 +36,7 @@ class Walker(resource.Resource):
     }
 
     def get_dependencies(self):
-        sql = 'SELECT `device_id` FROM `settings_devices` WHERE `walker_id` = %s'
+        sql = 'SELECT `device_id` FROM `settings_device` WHERE `walker_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, walkerarea_id in enumerate(dependencies[:]):
             dependencies[ind] = ('device', walkerarea_id)
@@ -64,14 +66,25 @@ class Walker(resource.Resource):
             'walkername': self._data['fields']['walkername']
         }
         super().save(core_data)
+        # Get all current walkerareas
+        sql = "SELECT `walkerarea_id` FROM `settings_walker_to_walkerarea` WHERE `walker_id` = %s"
+        walkerareas = self._dbc.autofetch_column(sql, args=(self.identifier,))
+        removed_walkerareas = set(walkerareas) - set(self._data['fields']['setup'])
+        # Remove old walkerareas from the table
         del_data = {
             'walker_id': self.identifier
         }
         self._dbc.autoexec_delete('settings_walker_to_walkerarea', del_data)
         for walkerarea_id in self._data['fields']['setup']:
-            mon_data = {
+            walkerarea_data = {
                 'walker_id': self.identifier,
                 'walkerarea_id': walkerarea_id
             }
-            self._dbc.autoexec_insert('settings_walker_to_walkerarea', mon_data)
+            self._dbc.autoexec_insert('settings_walker_to_walkerarea', walkerarea_data)
+        for removed in removed_walkerareas:
+            try:
+                resource = self._data_manager.get_resource('walkerarea', identifier=removed)
+                resource.delete()
+            except:
+                pass
         return self.identifier

@@ -20,16 +20,30 @@ class InvalidDataFormat(DataManagerException):
         self.expected = expected
         self.received = type(data)
 
-class InvalidMode(DataManagerException):
+class InvalidSection(DataManagerException):
+    pass
+
+class ModeNotSpecified(DataManagerException):
     def __init__(self, mode):
         self.mode = mode
         super().__init__(mode)
 
-class InvalidSection(DataManagerException):
-    pass
-
-class RequiredFieldRemoved(DataManagerException):
-    pass
+class ModeUnknown(DataManagerException):
+    def __init__(self, mode):
+        self.mode = mode
+        super().__init__(mode)
 
 class UnknownIdentifier(DataManagerException):
-    pass
+    def __init__(self, identifiers=None):
+        super().__init__()
+        if identifiers:
+            self.invalid = identifiers
+
+class UpdateIssue(DataManagerException):
+    def __init__(self, **kwargs):
+        super().__init__()
+        self.issues = {}
+        for key, issue in kwargs.items():
+            if not issue:
+                continue
+            self.issues[key] = issue

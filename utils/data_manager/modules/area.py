@@ -1,16 +1,17 @@
 from .. import dm_exceptions
 from . import resource
-import copy
 
 class Area(resource.Resource):
     table = 'settings_area'
+    name_field = 'name'
     primary_key = 'area_id'
+    search_field = 'name'
     translations = {
         'mon_ids_iv': 'monlist_id'
     }
 
     def get_dependencies(self):
-        sql = 'SELECT `walkerarea_id` FROM `settings_walkerarea` WHERE `walkerarea` = %s'
+        sql = 'SELECT `walkerarea_id` FROM `settings_walkerarea` WHERE `area_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, walkerarea_id in enumerate(dependencies[:]):
             dependencies[ind] = ('walkerarea', walkerarea_id)
@@ -38,7 +39,7 @@ class Area(resource.Resource):
         try:
             save_data = {}
             if self._data['settings']:
-                save_data.update(dict(copy.deepcopy(self._data['settings'])))
+                save_data.update(dict(self._data['settings']))
         except KeyError as err:
             pass
         for field in self.configuration['fields']:

@@ -3,7 +3,9 @@ from . import resource
 
 class Auth(resource.Resource):
     table = 'settings_auth'
+    name_field = 'username'
     primary_key = 'auth_id'
+    search_field = 'username'
     configuration = {
         "fields": {
             "username": {

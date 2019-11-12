@@ -11,11 +11,12 @@ current_version = 17
 
 
 class MADVersion(object):
-    def __init__(self, args, dbwrapper, instance_id):
+    def __init__(self, args, data_manager):
         self._application_args = args
-        self.dbwrapper = dbwrapper
+        self.data_manager = data_manager
+        self.dbwrapper = self.data_manager.dbc
         self._version = 0
-        self.instance_id = instance_id
+        self.instance_id = data_manager.instance_id
 
     def get_version(self):
         try:
@@ -442,14 +443,14 @@ class MADVersion(object):
                     if section == 'areas':
                         mode = elem['mode']
                         del elem['mode']
-                        resource = modules.MAPPINGS['area'](logger, self.dbwrapper, self.instance_id, mode=mode)
+                        resource = modules.MAPPINGS['area'](logger, self.data_manager, mode=mode)
                     else:
                         # Lets remove plural from the section
                         if section == 'devices':
                             section = 'device'
                         elif section == 'devicesettings':
                             section = 'devicepool'
-                        resource = modules.MAPPINGS[section](logger, self.dbwrapper, self.instance_id)
+                        resource = modules.MAPPINGS[section](logger, self.data_manager)
                     # Settings made it into some configs where it should not be.  lets clear those out now
                     if 'settings' in elem and 'settings' not in resource.configuration:
                         del elem['settings']

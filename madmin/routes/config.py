@@ -113,7 +113,7 @@ class config(object):
                     pass
         try:
             settings_vars = self._data_manager.get_settings(subtab, mode=mode)
-        except utils.data_manager.dm_exceptions.InvalidMode:
+        except (utils.data_manager.dm_exceptions.ModeNotSpecified, utils.data_manager.dm_exceptions.ModeUnknown):
             if identifier:
                 raise
             else:

@@ -64,8 +64,8 @@ function process_api_request(uri, method, redirect) {
                     elem.addClass('btn-danger');
                 });
                 $.each(data['responseJSON']['invalid'], function() {
-                    var field = this.split(/:(.+)/)[0];
-                    var expected = this.split(/:(.+)/)[1];
+                    var field = this[0];
+                    var expected = this[1];
                     var elem = $("label[for="+ field +"]");
                     elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
                     elem.addClass('btn-danger');

@@ -3,7 +3,9 @@ from . import resource
 
 class MonIVList(resource.Resource):
     table = 'settings_monivlist'
+    name_field = 'monlist'
     primary_key = 'monlist_id'
+    search_field = 'name'
     translations = {
         'monlist': 'name'
     }
