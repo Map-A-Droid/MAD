@@ -38,8 +38,8 @@ class Walker(resource.Resource):
     def get_dependencies(self):
         sql = 'SELECT `device_id` FROM `settings_device` WHERE `walker_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
-        for ind, walkerarea_id in enumerate(dependencies[:]):
-            dependencies[ind] = ('device', walkerarea_id)
+        for ind, device_id in enumerate(dependencies[:]):
+            dependencies[ind] = ('device', device_id)
         return dependencies
 
     def delete(self):
@@ -52,7 +52,7 @@ class Walker(resource.Resource):
         for walkerarea_id in walkerareas:
             in_use = self._dbc.autofetch_value(sql, args=(walkerarea_id,))
             if not in_use:
-                walkerarea = WalkerArea(self._logger, self._dbc, self.instance_id, identifier=walkerarea_id)
+                walkerarea = WalkerArea(self._logger, self._data_manager, identifier=walkerarea_id)
                 walkerarea.delete()
 
     def _load(self):
@@ -62,10 +62,11 @@ class Walker(resource.Resource):
         self._data['fields']['setup'] = mons
 
     def save(self):
+        self.presave_validation()
         core_data = {
             'walkername': self._data['fields']['walkername']
         }
-        super().save(core_data)
+        super().save(core_data=core_data)
         # Get all current walkerareas
         sql = "SELECT `walkerarea_id` FROM `settings_walker_to_walkerarea` WHERE `walker_id` = %s"
         walkerareas = self._dbc.autofetch_column(sql, args=(self.identifier,))

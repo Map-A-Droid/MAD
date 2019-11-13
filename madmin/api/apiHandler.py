@@ -50,10 +50,12 @@ class ResourceHandler(object):
     def get_resource_data_root(self, resource_def, resource_info):
         try:
             fetch_all = int(self.api_req.params.get('fetch_all'))
+            del self.api_req.params['fetch_all']
         except:
             fetch_all = 0
         try:
             hide_resource = int(self.api_req.params.get('hide_resource', 0))
+            del self.api_req.params['hide_resource']
         except:
             hide_resource = 0
         link_disp_field = self.api_req.params.get('link_disp_field', self.default_sort)
@@ -61,7 +63,7 @@ class ResourceHandler(object):
         if fetch_all:
             raw_data = self._data_manager.get_root_resource(self.component)
         else:
-            raw_data = self._data_manager.search(self.component, resource_def=resource_def, resource_info=resource_info)
+            raw_data = self._data_manager.search(self.component, resource_def=resource_def, resource_info=resource_info, params=self.api_req.params)
         api_response_data = collections.OrderedDict()
         key_translation = '%s/%%s' % (flask.url_for('api_%s' % (self.component,)))
         if resource_def.configuration:
@@ -133,29 +135,33 @@ class ResourceHandler(object):
             if key == 'settings':
                 valid_data[key] = self.translate_data_for_datamanager(val, config, section='settings')
                 continue
-            entity = working_conf[key]['settings']
-            if 'uri' in entity:
-                if entity['uri'] != True:
-                    valid_data[key] = val
-                elif val:
-                    regex = re.compile(r'%s/(\d+)' % (flask.url_for(entity['uri_source'])))
-                    check = val
-                    if type(val) is str:
-                        check = [val]
-                    uri = []
-                    for elem in check:
-                        match = regex.match(elem)
-                        if not match:
-                            continue
-                        identifier = str(match.group(1))
-                        uri.append(identifier)
-                    if type(val) is str and len(uri) > 0:
-                        val = uri.pop(0)
-                    elif type(val) is list:
-                        val = uri
-                    valid_data[key] = val
-                else:
-                    valid_data[key] = val
+            try:
+                entity = working_conf[key]['settings']
+                if 'uri' in entity:
+                    if entity['uri'] != True:
+                        valid_data[key] = val
+                    elif val:
+                        regex = re.compile(r'%s/(\d+)' % (flask.url_for(entity['uri_source'])))
+                        check = val
+                        if type(val) is str:
+                            check = [val]
+                        uri = []
+                        for elem in check:
+                            match = regex.match(elem)
+                            if not match:
+                                continue
+                            identifier = str(match.group(1))
+                            uri.append(identifier)
+                        if type(val) is str and len(uri) > 0:
+                            val = uri.pop(0)
+                        elif type(val) is list:
+                            val = uri
+                        valid_data[key] = val
+                    else:
+                        valid_data[key] = val
+            except KeyError:
+                # Ruh-roh, that key doesnt exist!  Let the data_manager handle it
+                valid_data[key] = val
             else:
                 valid_data[key] = val
         return valid_data
@@ -168,22 +174,37 @@ class ResourceHandler(object):
         for key, val in data.items():
             if key == 'settings':
                 valid_data[key] = self.translate_data_for_response(val, config=data.configuration['settings'])
-            else:
+                continue
+            try:
+                entity = config[key]['settings']
+            except KeyError:
+                # Probably a 'fake' field.  Add it and continue
+                valid_data[key] = val
+                continue
+            if val is not None:
                 try:
-                    entity = config[key]['settings']
                     if entity['uri'] != True:
                         valid_data[key] = val
                         continue
                     uri = '%s/%%s' % (flask.url_for(entity['uri_source']),)
                     if type(val) == list:
                         valid = []
-                        for elem in valid_data[key]:
+                        for elem in val:
                             valid.append(uri % elem)
                         valid_data[key] = valid
                     else:
                         valid_data[key] = uri % str(val)
                 except KeyError:
                     valid_data[key] = val
+            else:
+                # TODO - Determine this
+                # Honestly I am not sure if we should just skip or return the empty value
+                try:
+                    empty = entity['empty']
+                    if empty is not None:
+                        valid_data[key] = empty
+                except:
+                    continue
         return valid_data
 
     # =====================================
@@ -210,7 +231,7 @@ class ResourceHandler(object):
             try:
                 resource_def = self._data_manager.get_resource_def(self.component, mode=self.mode)
                 resource_info = self.get_resource_info(resource_def)
-            except utils.data_manager.DataManagerException:
+            except utils.data_manager.dm_exceptions.ModeNotSpecified:
                 resource_def = copy.deepcopy(utils.data_manager.modules.MAPPINGS['area_nomode'])
                 resource_info = 'Please specify a mode for resource information Valid modes: %s'
                 resource_info %= (','.join(self._data_manager.get_valid_modes(self.component)),)
@@ -231,7 +252,13 @@ class ResourceHandler(object):
                 'X-Status': err.reason
             }
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
-        except (utils.data_manager.ModeUnknown, utils.data_manager.ModeNotSpecified):
+        except utils.data_manager.ModeUnknown as err:
+            msg = 'Invalid mode specified [%s].  Valid modes: %s'
+            error = {
+                'error': msg % (err.mode, ','.join(self._data_manager.get_valid_modes(self.component)),)
+            }
+            return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
+        except (utils.data_manager.ModeNotSpecified, apiException.NoModeSpecified):
             msg = 'Please specify a mode for resource information.  Valid modes: %s'
             error = {
                 'error': msg % (','.join(self._data_manager.get_valid_modes(self.component)),)
@@ -239,7 +266,10 @@ class ResourceHandler(object):
             return apiResponse.APIResponse(self._logger, self.api_req)(error, 400)
         except utils.data_manager.UpdateIssue as err:
             return apiResponse.APIResponse(self._logger, self.api_req)(err.issues, 422)
+        except utils.data_manager.UnknownIdentifier:
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         except Exception:
+            import traceback
             traceback.print_exc()
             return apiResponse.APIResponse(self._logger, self.api_req)('', 500)
 
@@ -259,8 +289,6 @@ class ResourceHandler(object):
                     'uri': '%s/%s' % (flask.url_for('api_%s' % (section,)), identifier,)
                 })
             return apiResponse.APIResponse(self._logger, self.api_req)(errors, 412)
-        except utils.data_manager.UnknownIdentifier:
-            return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         else:
             headers = {
                 'X-Status': 'Successfully deleted the object'
@@ -295,10 +323,14 @@ class ResourceHandler(object):
     def post(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to create data """
         mode = self.api_req.headers.get('X-Mode')
-        resource = resource_def(self._logger, self._data_manager)
-        resource.update(data)
-        resource.save()
-        identifier = resource.identifier
+        try:
+            resource = resource_def(self._logger, self._data_manager)
+            resource.update(data)
+            resource.save()
+            identifier = resource.identifier
+        except utils.data_manager.SaveIssue as err:
+            # TODO - lets handle with a real exception.  Most likely a dupe key that should be presented to the user
+            return apiResponse.APIResponse(self._logger, self.api_req)(str(err.args[0]), 400)
         uri = '%s/%s' % (flask.url_for('api_%s' % (self.component,)), identifier)
         headers = {
             'Location': resource.identifier,

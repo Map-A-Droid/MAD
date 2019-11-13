@@ -135,6 +135,7 @@ class DbWrapperBase(ABC):
         cursor = self.setup_cursor(conn, **kwargs)
         get_id = kwargs.get('get_id', False)
         get_dict = kwargs.get('get_dict', False)
+        raise_exc = kwargs.get('raise_exc', False)
 
         # TODO: consider catching OperationalError
         # try:
@@ -167,6 +168,8 @@ class DbWrapperBase(ABC):
             logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
             logger.debug(sql)
             logger.debug(args)
+            if raise_exc:
+                raise
             return None
         except Exception as e:
             logger.error("Unspecified exception in dbWrapper: {}", str(e))
@@ -1574,19 +1577,19 @@ class DbWrapperBase(ABC):
 
     def autofetch_all(self, sql, args=()):
         """ Fetch all data and have it returned as a dictionary """
-        return self.execute(sql, args=args, get_dict=True)
+        return self.execute(sql, args=args, get_dict=True, raise_exc=True)
 
     def autofetch_value(self, sql, args=()):
         """ Fetch the first value from the first row """
-        data = self.execute(sql, args=args)
+        data = self.execute(sql, args=args, raise_exc=True)
         if not data or len(data) == 0:
-            return data
+            return None
         return data[0][0]
 
     def autofetch_row(self, sql, args=()):
         """ Fetch the first row and have it return as a dictionary """
         # TODO - Force LIMIT 1
-        data = self.execute(sql, args=args, get_dict=True)
+        data = self.execute(sql, args=args, get_dict=True, raise_exc=True)
         if not data or len(data) == 0:
             return data
         return data[0]
@@ -1594,7 +1597,7 @@ class DbWrapperBase(ABC):
     def autofetch_column(self, sql, args=None):
         """ get one field for 0, 1, or more rows in a query and return the result in a list
         """
-        data = self.execute(sql, args=args)
+        data = self.execute(sql, args=args, raise_exc=True)
         returned_vals = []
         for row in data:
             returned_vals.append(row[0])
@@ -1621,7 +1624,7 @@ class DbWrapperBase(ABC):
         query += "\nAND ".join(k for k in where_clauses)
         literal_values = [table] + literal_values
         query = query % tuple(literal_values)
-        self.execute(query, args=tuple(column_values), commit=True)
+        self.execute(query, args=tuple(column_values), commit=True, raise_exc=True)
 
     def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT"):
         """ Auto-inserts into a table and handles all escaping
@@ -1665,7 +1668,7 @@ class DbWrapperBase(ABC):
             query += "\nON DUPLICATE KEY UPDATE\n"\
                      "%s" % dupe_out
             column_values += ondupe_values
-        return self.execute(query, args=tuple(column_values), commit=True, get_id=True)
+        return self.execute(query, args=tuple(column_values), commit=True, get_id=True, raise_exc=True)
 
     def autoexec_update(self, table, set_keyvals, set_literals=[], where_keyvals={}, where_literals=[]):
         """ Auto-updates into a table and handles all escaping
@@ -1700,4 +1703,4 @@ class DbWrapperBase(ABC):
             where_clause = self.__create_clause(where_col_names, where_col_sub)
             first_sub.append(",".join(where_clause) % tuple(where_literal_val))
         query = query % tuple(first_sub)
-        self.execute(query, args=tuple(actual_values), commit=True)
+        self.execute(query, args=tuple(actual_values), commit=True, raise_exc=True)

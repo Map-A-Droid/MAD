@@ -65,7 +65,7 @@ class WalkerArea(resource.Resource):
     }
 
     def get_dependencies(self):
-        sql = 'SELECT `walker_id` FROM `settings_walker_to_walkerarea` WHERE `walker_id` = %s'
+        sql = 'SELECT `walker_id` FROM `settings_walker_to_walkerarea` WHERE `walkerarea_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, walkerarea_id in enumerate(dependencies[:]):
             dependencies[ind] = ('walker', walkerarea_id)

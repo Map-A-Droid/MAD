@@ -17,6 +17,11 @@ class Area(resource.Resource):
             dependencies[ind] = ('walkerarea', walkerarea_id)
         return dependencies
 
+    def get_resource(self, backend=False):
+        resource = super().get_resource(backend=backend)
+        resource['mode'] = self.area_type
+        return resource
+
     def _load(self):
         super()._load()
         mode_query = "SELECT * FROM `%s` WHERE `area_id` = %%s" % (self.area_table,)
@@ -53,3 +58,17 @@ class Area(resource.Resource):
             save_data = self.translate_keys(save_data, 'save')
             res = self._dbc.autoexec_insert(self.area_table, save_data, optype="ON DUPLICATE")
         return self.identifier
+
+    @classmethod
+    def search(cls, dbc, res_obj, *args, **kwargs):
+        where = ""
+        sql_args = ()
+        mode = kwargs.get('mode', None)
+        if mode:
+            where = "WHERE `mode` = %s\n"
+            sql_args = (mode,)
+        sql = "SELECT `%s`\n"\
+              "FROM `%s`\n"\
+              "%s"\
+              "ORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, where, res_obj.search_field)
+        return dbc.autofetch_column(sql, args=sql_args)

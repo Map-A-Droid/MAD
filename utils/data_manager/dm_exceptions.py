@@ -33,6 +33,11 @@ class ModeUnknown(DataManagerException):
         self.mode = mode
         super().__init__(mode)
 
+class SaveIssue(DataManagerException):
+    def __init__(self, issue):
+        self.issue = issue
+        super().__init__(issue)
+
 class UnknownIdentifier(DataManagerException):
     def __init__(self, identifiers=None):
         super().__init__()
