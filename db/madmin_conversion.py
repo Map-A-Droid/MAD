@@ -12,7 +12,7 @@ TABLES = [
         `instance_id` int(11) NOT NULL,
         `name` varchar(128) NOT NULL,
         PRIMARY KEY (`monlist_id`),
-        UNIQUE KEY (`name`, `instance_id`),
+        -- UNIQUE KEY (`name`, `instance_id`),
         CONSTRAINT `fk_mil_instance`
             FOREIGN KEY (`instance_id`) 
             REFERENCES `madmin_instance` (`instance_id`)
@@ -22,6 +22,7 @@ TABLES = [
     """CREATE TABLE IF NOT EXISTS `settings_monivlist_to_mon` (
         `monlist_id` int(11) NOT NULL,
         `mon_id` int(11) NOT NULL,
+        `mon_order` int(11) NOT NULL,
         PRIMARY KEY (`monlist_id`,`mon_id`),
         INDEX (`monlist_id`),
         INDEX (`mon_id`),
@@ -38,7 +39,7 @@ TABLES = [
         `username` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
         `password` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`auth_id`),
-        UNIQUE (`instance_id`, `username`, `password`),
+        -- UNIQUE (`instance_id`, `username`, `password`),
         CONSTRAINT `fk_sauth_instance`
             FOREIGN KEY (`instance_id`) 
             REFERENCES `madmin_instance` (`instance_id`)
@@ -74,7 +75,7 @@ TABLES = [
         `startcoords_of_walker` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `injection_thresh_reboot` int(11) DEFAULT NULL,
         PRIMARY KEY (`pool_id`),
-        UNIQUE KEY (`instance_id`, `name`),
+        -- UNIQUE KEY (`instance_id`, `name`),
         CONSTRAINT `fk_sds_instance`
             FOREIGN KEY (`instance_id`) 
             REFERENCES `madmin_instance` (`instance_id`)
@@ -89,7 +90,7 @@ TABLES = [
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         `mode` enum('idle','iv_mitm','mon_mitm','pokestops','raids_mitm') COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`area_id`),
-        UNIQUE KEY (`instance_id`, `name`),
+        -- UNIQUE KEY (`instance_id`, `name`),
         CONSTRAINT `fk_sa_instance`
             FOREIGN KEY (`instance_id`) 
             REFERENCES `madmin_instance` (`instance_id`)
@@ -207,7 +208,7 @@ TABLES = [
         `instance_id` int(11) NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`walker_id`),
-        UNIQUE KEY `origin` (`name`, `instance_id`),
+        -- UNIQUE KEY `origin` (`name`, `instance_id`),
         CONSTRAINT `fk_w_instance`
             FOREIGN KEY (`instance_id`) 
             REFERENCES `madmin_instance` (`instance_id`)
@@ -236,6 +237,7 @@ TABLES = [
     """CREATE TABLE IF NOT EXISTS `settings_walker_to_walkerarea` (
         `walker_id` int(11) NOT NULL,
         `walkerarea_id` int(11) NOT NULL,
+        `area_order` int(11) NOT NULL,
         PRIMARY KEY (`walker_id`,`walkerarea_id`),
         INDEX (`walker_id`),
         INDEX (`walkerarea_id`),
@@ -288,8 +290,8 @@ TABLES = [
         `rotate_on_lvl_30` tinyint(1) DEFAULT NULL,
         `injection_thresh_reboot` int(11) DEFAULT NULL,
         PRIMARY KEY (`device_id`),
-        UNIQUE KEY (`name`, `instance_id`),
-        UNIQUE KEY (`adbname`, `instance_id`),
+        -- UNIQUE KEY (`name`, `instance_id`),
+        -- UNIQUE KEY (`adbname`, `instance_id`),
         CONSTRAINT `settings_device_ibfk_1`
             FOREIGN KEY (`walker_id`)
             REFERENCES `settings_walker` (`walker_id`),
