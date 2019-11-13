@@ -15,14 +15,18 @@ class APIDevice(api_base.APITestBase):
 
     def test_invalid_post(self):
         payload = copy.copy(self.base_payload)
-        errors = {"missing": ["walker"]}
+        errors = {
+            "missing": ["walker"]
+        }
         super().invalid_post(self.base_payload, errors)
+        self.remove_resources()
 
     def test_valid_post(self):
         walker_uri = super().create_valid_resource('walker')
         payload = copy.copy(self.base_payload)
         payload['walker'] = walker_uri
         super().valid_post(payload, payload)
+        self.remove_resources()
 
     def test_invalid_put(self):
         walker_uri = super().create_valid_resource('walker')
@@ -34,6 +38,7 @@ class APIDevice(api_base.APITestBase):
         response = self.api.put(device_uri, json=payload)
         self.assertEqual(response.status_code, 422)
         self.assertDictEqual(response.json(), errors)
+        self.remove_resources()
 
     def test_valid_put(self):
         walker_uri = super().create_valid_resource('walker')
@@ -42,6 +47,7 @@ class APIDevice(api_base.APITestBase):
         device_uri = super().create_valid_resource('device', walker=walker_uri)
         response = self.api.put(device_uri, json=payload)
         self.assertEqual(response.status_code, 204)
+        self.remove_resources()
 
     def test_invalid_patch(self):
         walker_uri = super().create_valid_resource('walker')
@@ -50,6 +56,7 @@ class APIDevice(api_base.APITestBase):
         device_uri = super().create_valid_resource('device', walker=walker_uri)
         response = self.api.patch(device_uri, json=payload)
         self.assertEqual(response.status_code, 422)
+        self.remove_resources()
 
     def test_valid_patch(self):
         walker_uri = super().create_valid_resource('walker')
@@ -59,3 +66,4 @@ class APIDevice(api_base.APITestBase):
         device_uri = super().create_valid_resource('device', walker=walker_uri)
         response = self.api.patch(device_uri, json=payload)
         self.assertEqual(response.status_code, 204)
+        self.remove_resources()

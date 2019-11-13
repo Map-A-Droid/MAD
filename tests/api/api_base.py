@@ -13,10 +13,13 @@ class APITestBase(TestCase):
         self.api = local_api.LocalAPI(None, args)
 
     def tearDown(self):
+        self.remove_resources()
+        self.api.close()
+
+    def remove_resources(self):
         if self.generated_uris:
             for uri in set(reversed(self.generated_uris)):
                 self.delete_resource(uri)
-        self.api.close()
 
     def add_created_resource(self, uri):
         if uri not in self.generated_uris:

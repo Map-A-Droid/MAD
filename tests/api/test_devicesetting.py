@@ -18,18 +18,22 @@ class APIDevicePool(api_base.APITestBase):
         del payload['devicepool']
         errors = {"missing": ["devicepool"]}
         super().invalid_post(payload, errors)
+        self.remove_resources()
 
     def test_valid_post(self):
         super().valid_post(self.base_payload, self.base_payload)
+        self.remove_resources()
 
     def test_invalid_put(self):
         payload = copy.copy(self.base_payload)
         del payload['devicepool']
         errors = {"missing": ["devicepool"]}
         super().invalid_put(payload, errors)
+        self.remove_resources()
 
     def test_valid_put(self):
         super().valid_put(self.base_payload, self.base_payload)
+        self.remove_resources()
 
     def test_invalid_patch(self):
         base_payload = {
@@ -37,6 +41,7 @@ class APIDevicePool(api_base.APITestBase):
         }
         errors = {"missing": ["devicepool"]}
         super().invalid_patch(base_payload, errors)
+        self.remove_resources()
 
     def test_valid_patch(self):
         payload = {
@@ -47,6 +52,7 @@ class APIDevicePool(api_base.APITestBase):
         result = copy.copy(self.base_payload)
         result.update(payload)
         self.valid_patch(payload, result)
+        self.remove_resources()
 
     def test_pool_dependecy(self):
         walker_uri = super().create_valid_resource('walker')
@@ -54,3 +60,4 @@ class APIDevicePool(api_base.APITestBase):
         device_uri = super().create_valid_resource('device', walker=walker_uri, pool=pool_uri)
         response = self.delete_resource(pool_uri)
         self.assertEqual(response.status_code, 412)
+        self.remove_resources()

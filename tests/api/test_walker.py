@@ -18,6 +18,7 @@ class APIWalker(api_base.APITestBase):
         del payload['walkername']
         errors = {"missing": ["walkername"]}
         super().invalid_post(payload, errors)
+        self.remove_resources()
 
     def test_valid_post(self):
         super().valid_post(self.base_payload, self.base_payload)
@@ -27,17 +28,23 @@ class APIWalker(api_base.APITestBase):
         del payload['walkername']
         errors = {"missing": ["walkername"]}
         super().invalid_put(payload, errors)
+        self.remove_resources()
 
     def test_valid_put(self):
         payload = copy.copy(self.base_payload)
         super().valid_put(payload, payload)
+        self.remove_resources()
 
     def test_invalid_patch(self):
         payload = {
             'setup': 'String'
         }
-        errors = {'Invalid URIs': ['String']}
+        errors = {
+            'invalid': [['setup', 'Comma-delimited list']],
+            'invalid_uri': [['setup', 'walkerarea', 'String']]
+        }
         super().invalid_patch(payload, errors)
+        self.remove_resources()
 
     def test_valid_patch(self):
         super().valid_patch(self.base_payload, self.base_payload)
@@ -47,13 +54,15 @@ class APIWalker(api_base.APITestBase):
         device_uri = super().create_valid_resource('device', walker=walker_uri)
         response = self.api.delete(walker_uri)
         self.assertEqual(response.status_code, 412)
+        self.remove_resources()
 
-    def test_walker_dependency(self):
+    def test_walkerarea_dependency(self):
         area_uri = super().create_valid_resource('area')
         walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
         walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
         response = self.api.delete(walkerarea_uri)
         self.assertEqual(response.status_code, 412)
+        self.remove_resources()
 
     def test_walkerarea_cleanup(self):
         area_uri = super().create_valid_resource('area')
@@ -62,6 +71,7 @@ class APIWalker(api_base.APITestBase):
         self.delete_resource(walker_uri)
         response = self.api.get(walkerarea_uri)
         self.assertEqual(response.status_code, 404)
+        self.remove_resources()
 
     def test_walkerarea_response(self):
         area_uri = super().create_valid_resource('area')
@@ -69,6 +79,7 @@ class APIWalker(api_base.APITestBase):
         walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
         walker_data = self.api.get(walker_uri)
         self.assertTrue(walkerarea_uri in walker_data.json()['setup'])
+        self.remove_resources()
 
     def test_missing_required_variable_with_empty(self):
         payload = {
@@ -77,6 +88,7 @@ class APIWalker(api_base.APITestBase):
         walker_uri = super().create_valid(payload).headers['X-Uri']
         walker_data = self.api.get(walker_uri)
         self.assertTrue('setup' in walker_data.json())
+        self.remove_resources()
 
     def test_empty_setup(self):
         walker_uri = super().create_valid_resource('walker')
@@ -85,3 +97,4 @@ class APIWalker(api_base.APITestBase):
         }
         response = self.api.patch(walker_uri, json=payload)
         self.assertEqual(response.status_code, 204)
+        self.remove_resources()
