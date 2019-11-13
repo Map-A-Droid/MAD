@@ -57,16 +57,18 @@ class Walker(resource.Resource):
 
     def _load(self):
         super()._load()
-        mon_query = "SELECT `walkerarea_id` FROM `settings_walker_to_walkerarea` WHERE `walker_id` = %s"
+        mon_query = "SELECT `walkerarea_id`\n"\
+                    "FROM `settings_walker_to_walkerarea`\n"\
+                    "WHERE `walker_id` = %s ORDER BY `area_order` ASC"
         mons = self._dbc.autofetch_column(mon_query, args=(self.identifier))
         self._data['fields']['setup'] = mons
 
-    def save(self):
+    def save(self, force_insert=False):
         self.presave_validation()
         core_data = {
             'walkername': self._data['fields']['walkername']
         }
-        super().save(core_data=core_data)
+        super().save(core_data=core_data, force_insert=force_insert)
         # Get all current walkerareas
         sql = "SELECT `walkerarea_id` FROM `settings_walker_to_walkerarea` WHERE `walker_id` = %s"
         walkerareas = self._dbc.autofetch_column(sql, args=(self.identifier,))
@@ -76,10 +78,11 @@ class Walker(resource.Resource):
             'walker_id': self.identifier
         }
         self._dbc.autoexec_delete('settings_walker_to_walkerarea', del_data)
-        for walkerarea_id in self._data['fields']['setup']:
+        for ind, walkerarea_id in enumerate(self._data['fields']['setup']):
             walkerarea_data = {
                 'walker_id': self.identifier,
-                'walkerarea_id': walkerarea_id
+                'walkerarea_id': walkerarea_id,
+                'area_order': ind
             }
             self._dbc.autoexec_insert('settings_walker_to_walkerarea', walkerarea_data)
         for removed in removed_walkerareas:

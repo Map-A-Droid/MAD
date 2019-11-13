@@ -35,12 +35,12 @@ class Area(resource.Resource):
             else:
                 continue
 
-    def save(self):
+    def save(self, force_insert=False):
         core_data = {
             'name': self._data['fields']['name'],
             'mode': self.area_type
         }
-        super().save(core_data)
+        super().save(core_data, force_insert=force_insert)
         try:
             save_data = {}
             if self._data['settings']:

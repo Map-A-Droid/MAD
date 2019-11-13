@@ -12,7 +12,8 @@ USER_READABLE_ERRORS = {
 }
 
 class ResourceTracker(UserDict):
-    def __init__(self, config, data_manager, initialdata={}):
+    def __init__(self, logger, config, data_manager, initialdata={}):
+        self._logger = logger
         self.__config = config
         self._data_manager = data_manager
         self.issues = {
@@ -59,10 +60,14 @@ class ResourceTracker(UserDict):
         this_iteration = {
             'invalid': False,
             'invalid_uri': False,
-            'missing': False
+            'missing': False,
+            'unknown': False
         }
         if key not in self.__config:
-            raise KeyError
+            this_iteration['unknown'] = True
+            if key not in self.issues['unknown']:
+                self.issues['unknown'].append(key)
+            return
         expected = self.__config[key]['settings'].get('expected', str)
         required = self.__config[key]['settings'].get('require', False)
         resource = self.__config[key]['settings'].get('data_source', None)
@@ -300,7 +305,7 @@ class Resource(object):
                         defaults[field] = val['settings']['empty']
                     except:
                         continue
-                self._data[section] = ResourceTracker(self.configuration[section], self._data_manager,
+                self._data[section] = ResourceTracker(self._logger, self.configuration[section], self._data_manager,
                                                       initialdata=defaults)
             except KeyError:
                 continue
@@ -324,7 +329,7 @@ class Resource(object):
         if issues:
             raise dm_exceptions.UpdateIssue(**issues)
 
-    def save(self, core_data=None):
+    def save(self, core_data=None, force_insert=False):
         self.presave_validation()
         if core_data is None:
             data = self.get_resource(backend=True)
@@ -343,8 +348,12 @@ class Resource(object):
         except KeyError:
             pass
         data = self.translate_keys(data, 'save')
+        if self.identifier:
+            data[self.primary_key] = self.identifier
         try:
-            if not self.identifier:
+            if force_insert:
+                self._dbc.autoexec_insert(self.table, data, optype="ON DUPLICATE")
+            elif not self.identifier:
                 res = self._dbc.autoexec_insert(self.table, data)
                 self.identifier = res
             else:

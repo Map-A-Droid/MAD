@@ -79,13 +79,13 @@ class WalkerArea(resource.Resource):
         except KeyError:
             self._data['fields']['walkermax'] = ''
 
-    def save(self):
+    def save(self, force_insert=False):
         try:
             if self._data['fields']['walkermax'] == '':
                 core_data = self.get_resource(backend=True)
                 core_data['walkermax'] = None
-                super().save(core_data=core_data)
+                super().save(core_data=core_data, force_insert=force_insert)
             else:
-                super().save()
+                super().save(force_insert=force_insert)
         except KeyError:
             super().save()

@@ -43,23 +43,27 @@ class MonIVList(resource.Resource):
 
     def _load(self):
         super()._load()
-        mon_query = "SELECT `mon_id` FROM `settings_monivlist_to_mon` WHERE `monlist_id` = %s"
+        mon_query = "SELECT `mon_id` FROM `settings_monivlist_to_mon` WHERE `monlist_id` = %s ORDER BY `mon_order` ASC"
         mons = self._dbc.autofetch_column(mon_query, args=(self.identifier))
         self._data['fields']['mon_ids_iv'] = mons
 
-    def save(self):
+    def save(self, force_insert=False):
         core_data = {
             'monlist': self._data['fields']['monlist']
         }
-        super().save(core_data)
+        super().save(core_data, force_insert=force_insert)
         del_data = {
             'monlist_id': self.identifier
         }
         self._dbc.autoexec_delete('settings_monivlist_to_mon', del_data)
-        for mon in self._data['fields']['mon_ids_iv']:
+        for ind, mon in enumerate(self._data['fields']['mon_ids_iv']):
             mon_data = {
                 'monlist_id': self.identifier,
-                'mon_id': mon
+                'mon_id': mon,
+                'mon_order': ind
             }
-            self._dbc.autoexec_insert('settings_monivlist_to_mon', mon_data)
+            try:
+                self._dbc.autoexec_insert('settings_monivlist_to_mon', mon_data)
+            except:
+                self._logger.info('Duplicate pokemon %s detected in list %s' % (mon, self.identifier,))
         return self.identifier

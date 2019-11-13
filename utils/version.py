@@ -5,7 +5,7 @@ from utils.logging import logger
 import shutil
 from .convert_mapping import convert_mappings
 import re
-from utils.data_manager import modules
+import utils.data_manager
 
 current_version = 17
 
@@ -398,19 +398,15 @@ class MADVersion(object):
             for section in update_order:
                 for elem_id, elem in config_file[section]['entries'].items():
                     if section == 'areas':
-                        if 'settings' not in elem:
-                            continue
-                        if 'mon_ids_iv' not in elem['settings']:
-                            continue
-                        if 'monlist' not in cache:
-                            continue
-                        if int(elem['mon_ids_iv']) != 0:
-                            continue
-                        elem['settings']['mon_ids_iv'] = cache['monlist']
+                        try:
+                            if int(elem['settings']['mon_ids_iv']) == 0:
+                                elem['settings']['mon_ids_iv'] = cache['monivlist']
+                        except KeyError:
+                            pass
                     elif section == 'devices':
                         if int(elem['walker']) == 0:
                             elem['walker'] = cache['walker']
-                        if 'pool' in elem and int(elem['pool']) == 0:
+                        if 'pool' in elem and elem['pool'] is not None and int(elem['pool']) == 0:
                             elem['pool'] = cache['devicesettings']
                     elif section == 'walkerarea':
                         if int(elem['walkerarea']) == 0:
@@ -434,29 +430,40 @@ class MADVersion(object):
                 config_file[section]['index'] += 1
             if cache:
                 logger.info('One or more resources with ID 0 found.  Converting them off 0 and updating the '\
-                            'mappings.json file')
+                            'mappings.json file.  {}', cache)
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(config_file, outfile, indent=4, sort_keys=True)
             # Load the elements into their resources and save to DB
+            conversion_issues = []
             for section in update_order:
                 for key, elem in config_file[section]['entries'].items():
+                    logger.debug('Converting {} {}', section, key)
                     if section == 'areas':
                         mode = elem['mode']
                         del elem['mode']
-                        resource = modules.MAPPINGS['area'](logger, self.data_manager, mode=mode)
+                        resource = utils.data_manager.modules.MAPPINGS['area'](logger, self.data_manager, mode=mode)
                     else:
                         # Lets remove plural from the section
                         if section == 'devices':
                             section = 'device'
                         elif section == 'devicesettings':
                             section = 'devicepool'
-                        resource = modules.MAPPINGS[section](logger, self.data_manager)
+                        resource = utils.data_manager.modules.MAPPINGS[section](logger, self.data_manager)
                     # Settings made it into some configs where it should not be.  lets clear those out now
                     if 'settings' in elem and 'settings' not in resource.configuration:
                         del elem['settings']
                     resource.identifier = key
                     resource.update(elem)
-                    resource.save()
+                    try:
+                        resource.save(force_insert=True)
+                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
+                        # logger.error('Unable to create {} / {}: {}', section, key, err.issues)
+                        conversion_issues.append((section, key, err.issues))
+            if conversion_issues:
+                logger.error('The configuration was not partially moved to the database.  The following resources '\
+                             'were not converted.')
+                for (section, identifier, issue) in conversion_issues:
+                    logger.error('{} {}: {}', section, identifier, issue)
 
         self.set_version(current_version)
 
