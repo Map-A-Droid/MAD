@@ -15,7 +15,7 @@ from utils.s2Helper import S2Helper
 
 class WebhookWorker:
     __IV_MON: List[int] = List[int]
-    __geofence_helpers: List[GeofenceHelper] = List[GeofenceHelper]
+    __excluded_areas = {}
 
     def __init__(self, args, db_wrapper, mapping_manager: MappingManager, rarity):
         self.__worker_interval_sec = 10
@@ -25,14 +25,14 @@ class WebhookWorker:
         self.__last_check = int(time.time())
 
         self.__build_ivmon_list(mapping_manager)
-        self.__build_geofence_helpers(mapping_manager)
+        self.__build_excluded_areas(mapping_manager)
 
         if self.__args.webhook_start_time != 0:
             self.__last_check = int(self.__args.webhook_start_time)
 
     def update_settings(self, mapping_manager: MappingManager):
         self.__build_ivmon_list(mapping_manager)
-        self.__build_geofence_helpers(mapping_manager)
+        self.__build_excluded_areas(mapping_manager)
 
     def __payload_type_count(self, payload):
         count = {}
@@ -49,7 +49,7 @@ class WebhookWorker:
         return [payload[x: x + size] for x in range(0, len(payload), size)]
 
     def __is_in_excluded_area(self, coordinate):
-        for gfh in self.__geofence_helpers:
+        for gfh in self.__excluded_areas:
             if gfh.is_coord_inside_include_geofence(coordinate):
                 return True
 
@@ -315,12 +315,16 @@ class WebhookWorker:
                 "pokemon_id": raid["pokemon_id"],
                 "team_id": raid["team_id"],
                 "cp": raid["cp"],
-                "move_1": raid["move_1"],
-                "move_2": raid["move_2"],
                 "start": raid["start"],
                 "end": raid["end"],
                 "name": raid["name"],
             }
+
+            if raid["move_1"] is not None:
+                raid_payload["move_1"] = raid["move_1"]
+
+            if raid["move_2"] is not None:
+                raid_payload["move_2"] = raid["move_2"]
 
             if raid["cp"] is None:
                 raid_payload["cp"] = get_raid_boss_cp(raid["pokemon_id"])
@@ -516,31 +520,28 @@ class WebhookWorker:
                 # TODO check if area/routemanager is actually active before adding the IDs
                 self.__IV_MON = self.__IV_MON + list(set(ids_iv_list) - set(self.__IV_MON))
 
-    def __build_geofence_helpers(self, mapping_manager: MappingManager):
-        self.__geofence_helpers: List[GeofenceHelper] = []
+    def __build_excluded_areas(self, mapping_manager: MappingManager):
+        self.__excluded_areas: List[GeofenceHelper] = []
 
         if self.__args.webhook_excluded_areas == "":
             pass
 
+        tmp_excluded_areas = {}
+        for rm in mapping_manager.get_all_routemanager_names():
+            name = mapping_manager.routemanager_get_name(rm)
+            gfh = mapping_manager.routemanager_get_geofence_helper(rm)
+            tmp_excluded_areas[name] = gfh
+
         area_names = self.__args.webhook_excluded_areas.split(",")
-
         for area_name in area_names:
-            if area_name.endswith("*"):
-                routemanager_names = mapping_manager.get_all_routemanager_names()
-                for name in routemanager_names:
-                    if not name.startswith(area_name[:-1]):
-                        continue
-                    geofence_helper_of_area: Optional[GeofenceHelper] = \
-                        mapping_manager.routemanager_get_geofence_helper(name)
-                    if geofence_helper_of_area is not None:
-                        self.__geofence_helpers.append(geofence_helper_of_area)
-            else:
-                geofence_helper_of_area = mapping_manager.routemanager_get_geofence_helper(area_name)
+            for name, gf in tmp_excluded_areas.items():
+                if (area_name.endswith("*") and name.startswith(area_name[:-1])) or area_name == name:
+                    self.__excluded_areas.append(gf)
 
-                if geofence_helper_of_area is None:
-                    continue
+        tmp_excluded_areas = None
 
-                self.__geofence_helpers.append(geofence_helper_of_area)
+        if len(self.__excluded_areas) > 0:
+            logger.info("Excluding {} areas from webhooks", len(self.__excluded_areas))
 
     def __create_payload(self):
         logger.debug("Fetching data changed since {}", self.__last_check)

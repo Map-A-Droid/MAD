@@ -60,12 +60,12 @@ class WorkerMITM(MITMBase):
             delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
             # Test for cooldown / teleported distance TODO: check this block...
             if self.get_devicesettings_value('cool_down_sleep', False):
-                if distance > 2500:
-                    delay_used = 8
+                if distance > 10000:
+                    delay_used = 15
                 elif distance > 5000:
                     delay_used = 10
-                elif distance > 10000:
-                    delay_used = 15
+                elif distance > 2500:
+                    delay_used = 8
                 logger.debug(
                     "Need more sleep after Teleport: {} seconds!", str(delay_used))
                 # curTime = math.floor(time.time())  # the time we will take as a starting point to wait for data...
