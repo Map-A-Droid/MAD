@@ -13,27 +13,25 @@ class APIMonIVList(api_base.APITestBase):
     def test_invalid_uri(self):
         super().invalid_uri()
 
-    # # This test really isnt valid because you can send an empty monlist
-    # def test_invalid_post(self):
-    #     payload = {
-    #         'monlist': 'Test',
-    #     }
-    #     errors = {"missing": ['mon_ids_iv']}
-    #     super().invalid_post(payload, errors)
-    #     self.remove_resources()
+    def test_invalid_post(self):
+        payload = {
+            'mon_ids_iv': [],
+        }
+        errors = {"missing": ['monlist']}
+        super().invalid_post(payload, errors)
+        self.remove_resources()
 
     def test_valid_post(self):
         super().valid_post(self.base_payload, self.base_payload)
         self.remove_resources()
 
-    # # This test really isnt valid because you can send an empty monlist
-    # def test_invalid_put(self):
-    #     payload = {
-    #         'monlist': 'Test',
-    #     }
-    #     errors = {"missing": ["mon_ids_iv"]}
-    #     super().invalid_put(payload, errors)
-    #     self.remove_resources()
+    def test_invalid_put(self):
+        payload = {
+            'mon_ids_iv': [],
+        }
+        errors = {"missing": ['monlist']}
+        super().invalid_put(payload, errors)
+        self.remove_resources()
 
     def test_valid_put(self):
         payload = {

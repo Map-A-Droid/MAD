@@ -80,6 +80,7 @@ class WalkerArea(resource.Resource):
             self._data['fields']['walkermax'] = ''
 
     def save(self, force_insert=False):
+        self.presave_validation()
         try:
             if self._data['fields']['walkermax'] == '':
                 core_data = self.get_resource(backend=True)

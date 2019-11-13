@@ -48,6 +48,7 @@ class MonIVList(resource.Resource):
         self._data['fields']['mon_ids_iv'] = mons
 
     def save(self, force_insert=False):
+        self.presave_validation()
         core_data = {
             'monlist': self._data['fields']['monlist']
         }

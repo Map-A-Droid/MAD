@@ -36,6 +36,7 @@ class Area(resource.Resource):
                 continue
 
     def save(self, force_insert=False):
+        self.presave_validation()
         core_data = {
             'name': self._data['fields']['name'],
             'mode': self.area_type
