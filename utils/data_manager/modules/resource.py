@@ -23,6 +23,7 @@ class ResourceTracker(UserDict):
             'unknown': []
         }
         self.removal = []
+        self.completed = False
         super().__init__(initialdata)
         for key, entry in self.__config.items():
             try:
@@ -104,7 +105,8 @@ class ResourceTracker(UserDict):
                         self.issues['missing'].append(key)
         except:
             pass
-        if resource:
+        # We only want to check sub-resources if we have finished the load from the DB
+        if resource and self.completed:
             tmp = val
             if type(val) != list:
                 tmp = [val]
@@ -163,6 +165,7 @@ class Resource(object):
             except ValueError:
                 raise dm_exceptions.UnknownIdentifier()
             self._load()
+        self._cleanup_load()
 
     # All of these are implemented because this is not truely a dict structure but we overload the datasource
     # to act like it is
@@ -250,6 +253,12 @@ class Resource(object):
             del self._data['instance_id']
         except:
             pass
+        fields = ['fields', 'settings']
+        for field in fields:
+            try:
+                self._data[field].completed = True
+            except Exception:
+                pass
 
     def delete(self):
         if self.identifier is None:
@@ -292,7 +301,6 @@ class Resource(object):
                 self._data['settings'][field] = val
             elif field in self.configuration['fields']:
                 self._data['fields'][field] = val
-        self._cleanup_load()
 
     def _load_defaults(self):
         sections = ['fields', 'settings']

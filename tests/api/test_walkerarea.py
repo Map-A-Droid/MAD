@@ -92,13 +92,13 @@ class APIWalkerArea(api_base.APITestBase):
         self.assertEqual(response.status_code, 204)
         self.remove_resources()
 
-    # def test_walker_dependency(self):
-    #     area_uri = super().create_valid_resource('area')
-    #     walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-    #     walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
-    #     response = self.api.delete(walkerarea_uri)
-    #     self.assertEqual(response.status_code, 412)
-    #     self.remove_resources()
+    def test_walker_dependency(self):
+        area_uri = super().create_valid_resource('area')
+        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
+        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
+        response = self.api.delete(walkerarea_uri)
+        self.assertEqual(response.status_code, 412)
+        self.remove_resources()
 
     def test_walkerarea_cleanup(self):
         area_uri = super().create_valid_resource('area')
