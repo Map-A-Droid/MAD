@@ -13,6 +13,7 @@ from utils.gamemechanicutil import gen_despawn_timestamp
 from utils.logging import logger
 from utils.questGen import questtask
 from utils.s2Helper import S2Helper
+from db.DbSanityCheck import DbSanityCheck
 from db.DbSchemaUpdater import DbSchemaUpdater
 
 
@@ -22,6 +23,9 @@ class DbWrapper:
     def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
+
+        self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
+        self.sanity_check.ensure_correct_sql_mode()
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
         self.schema_updater.ensure_unversioned_columns_exist()
@@ -2537,13 +2541,3 @@ class DbWrapper:
         query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
         logger.debug(query)
         self.execute(query, commit=True)
-
-    def running_mysql_modes(self):
-        blacklisted_modes = "NO_ZERO_DATE NO_ZERO_IN_DATE ONLY_FULL_GROUP_BY"
-        query = "SELECT @@GLOBAL.sql_mode"
-        res = self.execute(query)[0][0]
-        detected_wrong_modes = []
-        for mode in blacklisted_modes.split():
-            if mode in res:
-                detected_wrong_modes.append(mode)
-        return detected_wrong_modes
