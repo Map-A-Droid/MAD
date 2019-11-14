@@ -184,5 +184,35 @@
       "wLs_gIAOo": "0x9D0D8C",
       "wLs_gIWEo": "0x9D0D94",
       "wGgCf_Co": "0x9D04F4"
-  }
+  },
+  "0.161.0_64": {
+    "gRo": "0x1AF8BB4",
+    "gSo": "0x1AE8740",
+    "gSao": "0x21D9D20",
+    "gMCo": "0x1F01A60",
+    "rF_gIo": "0x267C4AC",
+    "cMcP_gWPo": "0x1E966C4",
+    "wPp_gEIo": "0x180E37C",
+    "wPp_gPo": "0x180E150",
+    "pP_gPIo": "0x19FC8D8",
+    "pIs_sSRo": "0x15189BC",
+    "pIs_Io": "0x15185F8",
+    "wAp_gSo": "0x19A1E18",
+    "wDcT_gSo": "0x180B520",
+    "uIwR_gSo": "0x2349DF0",
+    "wAp_gWWo": "0x19A1E28",
+    "uIwR_gAAo": "0x2349DDC",
+    "sS_gScSo": "0x1521244",
+    "wMp_uDo": "0x126DEA0",
+    "mP_oTo": "0x11DD25C",
+    "wMp_gPIo": "0x126DCEC",
+    "wMp_gEIo": "0x126DC64",
+    "sS_sDWo": "0x152164C",
+    "sS_sDW1o": "0x15216FC",
+    "wRg_Io": "0x1480080",
+    "wMp_sERo": "0x126E200",
+    "iEoP_gRo": "0x229258C",
+    "wLs_gIAOo": "0x1481690",
+    "wLs_gIWEo": "0x1481698"
+	}
 }
