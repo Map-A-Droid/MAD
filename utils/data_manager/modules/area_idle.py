@@ -19,7 +19,10 @@ class AreaIdle(area.Area):
                     "type": "geofence",
                     "require": True,
                     "description": "Including geofence for scanarea",
-                    "expected": str
+                    "expected": str,
+                    "uri": True,
+                    "data_source": "geofence",
+                    "uri_source": "api_geofence"
                 }
             },
             "routecalc": {

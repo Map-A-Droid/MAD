@@ -9,6 +9,7 @@ valid_modules = {
     'auth': ftr_auth.APIAuth,
     'device': ftr_device.APIDevice,
     'devicesetting': ftr_devicesetting.APIDeviceSetting,
+    'geofence': ftr_geofence.APIGeofence,
     'monivlist': ftr_monlist.APIMonList,
     'walker': ftr_walker.APIWalker,
     'walkerarea': ftr_walkerarea.APIWalkerArea

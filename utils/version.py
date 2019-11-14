@@ -6,6 +6,7 @@ import shutil
 from .convert_mapping import convert_mappings
 import re
 import utils.data_manager
+from pathlib import Path
 
 current_version = 17
 
@@ -391,6 +392,7 @@ class MADVersion(object):
             update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walkerarea', 'walker', 'devices']
             with open(self._application_args.mappings, 'rb') as fh:
                 config_file = json.load(fh)
+            geofences = {}
             # A wonderful decision that I made was to start at ID 0 on the previous conversion which causes an issue
             # with primary keys in MySQL / MariaDB.  Make the required changes to ID's and save the file in-case the
             # conversion is re-run.  We do not want dupe data in the database
@@ -403,6 +405,21 @@ class MADVersion(object):
                                 elem['settings']['mon_ids_iv'] = cache['monivlist']
                         except KeyError:
                             pass
+                        geofence_sections = ['geofence_included', 'geofence_excluded']
+                        for geofence_section in geofence_sections:
+                            try:
+                                geofence = elem[geofence_section]
+                                if geofence and geofence not in geofences:
+                                    try:
+                                        geo_id = self.__convert_geofence(geofence)
+                                        geofences[geofence] = geo_id
+                                        elem[geofence_section] = geofences[geofence]
+                                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
+                                        conversion_issues.append((section, key, err.issues))
+                                else:
+                                    elem[geofence_section] = geofences[geofence]
+                            except KeyError:
+                                pass
                     elif section == 'devices':
                         if int(elem['walker']) == 0:
                             elem['walker'] = cache['walker']
@@ -457,7 +474,6 @@ class MADVersion(object):
                     try:
                         resource.save(force_insert=True)
                     except utils.data_manager.dm_exceptions.UpdateIssue as err:
-                        # logger.error('Unable to create {} / {}: {}', section, key, err.issues)
                         conversion_issues.append((section, key, err.issues))
             if conversion_issues:
                 logger.error('The configuration was not partially moved to the database.  The following resources '\
@@ -471,6 +487,26 @@ class MADVersion(object):
         output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)
+
+    def __convert_geofence(self, path):
+        stripped_data = []
+        full_path = Path(path)
+        with open(full_path) as f:
+            for line in f:
+                stripped_data.append(line.strip())
+        resource = self.data_manager.get_resource('geofence')
+        name = path
+        # Enforce 128 character limit
+        if len(name) > 128:
+            name = name[len(name)-128:]
+        update_data = {
+            'name': path,
+            'fence_type': 'polygon',
+            'fence_data': stripped_data
+        }
+        resource.update(update_data)
+        resource.save()
+        return resource.identifier
 
     def __convert_to_id(self, data):
         regex = re.compile(r'/api/.*/\d+')

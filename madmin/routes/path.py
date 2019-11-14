@@ -6,7 +6,7 @@ from utils.logging import logger
 
 
 class path(object):
-    def __init__(self, db, args, app, mapping_manager: MappingManager, jobstatus):
+    def __init__(self, db, args, app, mapping_manager: MappingManager, jobstatus, data_manager):
         self._db = db
         self._args = args
         self._app = app
@@ -16,6 +16,7 @@ class path(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self._mapping_manager = mapping_manager
+        self._data_manager = data_manager
         self.add_route()
 
     def add_route(self):
@@ -88,7 +89,7 @@ class path(object):
     @logger.catch()
     def quest(self):
         fence = request.args.get("fence", None)
-        stop_fences = get_quest_areas(self._mapping_manager)
+        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
         return render_template('quests.html', pub=False,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)
@@ -96,7 +97,7 @@ class path(object):
     @auth_required
     def quest_pub(self):
         fence = request.args.get("fence", None)
-        stop_fences = get_quest_areas(self._mapping_manager)
+        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
         return render_template('quests.html', pub=True,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show daily Quests", fence=fence, stop_fences=stop_fences)

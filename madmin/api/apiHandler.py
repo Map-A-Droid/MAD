@@ -19,7 +19,6 @@ class ResourceHandler(object):
         base (str): Base URI of the API
         data_manager (data_manager): Manager for interacting with the datasource
     """
-    config_section = None
     component = None
     iterable = True
     default_sort = None

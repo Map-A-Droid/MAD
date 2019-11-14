@@ -3,6 +3,7 @@ from . import area_idle, area_iv_mitm, area_mon_mitm, area_pokestops, area_raids
 from .auth import Auth
 from .device import Device
 from .devicepool import DevicePool
+from .geofence import GeoFence
 from .monivlist import MonIVList
 from .walker import Walker
 from .walkerarea import WalkerArea
@@ -29,6 +30,7 @@ MAPPINGS = {
     'auth': Auth,
     'device': Device,
     'devicepool': DevicePool,
+    'geofence': GeoFence,
     'monivlist': MonIVList,
     'walker': Walker,
     'walkerarea': WalkerArea

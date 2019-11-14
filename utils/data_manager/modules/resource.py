@@ -77,7 +77,7 @@ class ResourceTracker(UserDict):
             has_empty = True
         except:
             has_empty = False
-        if not isinstance(val, expected):
+        if not type(val) != type(expected):
             try:
                 if val is None and required == False:
                     pass

@@ -20,7 +20,7 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class map(object):
-    def __init__(self, db: DbWrapperBase, args, mapping_manager: MappingManager, app):
+    def __init__(self, db: DbWrapperBase, args, mapping_manager: MappingManager, app, data_manager):
         self._db: DbWrapperBase = db
         self._args = args
         self._app = app
@@ -30,6 +30,7 @@ class map(object):
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
 
         self._mapping_manager: MappingManager = mapping_manager
+        self._data_manager = data_manager
 
         cache.init_app(self._app)
         self.add_route()
@@ -78,61 +79,16 @@ class map(object):
 
     @auth_required
     def get_geofence(self):
-        geofences = {}
         areas = self._mapping_manager.get_areas()
-        for uri, area in areas.items():
-            aname = area['name']
-            geofence_include = {}
-            geofence_exclude = {}
-            geofence_name = 'Unknown'
-            geofence_included = Path(area["geofence_included"])
-            if not geofence_included.is_file():
-                continue
-            with geofence_included.open() as gf:
-                for line in gf:
-                    line = line.strip()
-                    if not line:  # Empty line.
-                        continue
-                    elif line.startswith("["):  # Name line.
-                        geofence_name = line.replace("[", "").replace("]", "")
-                        geofence_include[geofence_name] = []
-                    else:  # Coordinate line.
-                        lat, lon = line.split(",")
-                        geofence_include[geofence_name].append([
-                            getCoordFloat(lat),
-                            getCoordFloat(lon)
-                        ])
-
-            if area['geofence_excluded']:
-                geofence_name = 'Unknown'
-                geofence_excluded = Path(area["geofence_excluded"])
-                if not geofence_excluded.is_file():
-                    continue
-                with geofence_excluded.open() as gf:
-                    for line in gf:
-                        line = line.strip()
-                        if not line:  # Empty line.
-                            continue
-                        elif line.startswith("["):  # Name line.
-                            geofence_name = line.replace("[", "").replace("]", "")
-                            geofence_exclude[geofence_name] = []
-                        else:  # Coordinate line.
-                            lat, lon = line.split(",")
-                            geofence_exclude[geofence_name].append([
-                                getCoordFloat(lat),
-                                getCoordFloat(lon)
-                            ])
-
-            geofences[aname] = {'include': geofence_include,
-                                'exclude': geofence_exclude}
-        geofences = get_geofences(self._mapping_manager)
+        areas_sorted = sorted(areas, key=lambda x: areas[x]['name'])
+        geofences = get_geofences(self._mapping_manager, self._data_manager)
         geofencexport = []
-        for name, fences in geofences.items():
+        for area_id in areas_sorted:
+            fences = geofences[area_id]
             coordinates = []
             for fname, coords in fences.get('include').items():
                 coordinates.append([coords, fences.get('exclude').get(fname, [])])
-            geofencexport.append({'name': areas[name]['name'], 'coordinates': coordinates})
-
+            geofencexport.append({'name': areas[area_id]['name'], 'coordinates': coordinates})
         return jsonify(geofencexport)
 
     @auth_required
@@ -269,7 +225,7 @@ class map(object):
 
         fence = request.args.get("fence", None)
         if fence not in (None, 'None', 'All'):
-            fence = generate_coords_from_geofence(self._mapping_manager, fence)
+            fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, fence)
         else:
             fence = None
 
@@ -400,23 +356,26 @@ class map(object):
     @logger.catch()
     @auth_required
     def savefence(self):
+        # TODO - Modify madmin.js to use the API
         name = request.args.get('name', False)
         coords = request.args.get('coords', False)
-
         if not name and not coords:
             return redirect(url_for('map'), code=302)
 
-        coords_split = coords.split("|")
-        geofence_file_path = self._args.geofence_file_path
-
-        file = open(os.path.join(geofence_file_path, (str(name) + ".txt")), "a")
-        file.write("[" + str(name) + "]\n")
-        for i in range(len(coords_split)):
-            if coords_split[i] != '':
-                latlon_split = coords_split[i].split(",")
-                file.write("{0},{1}\n".format(str(float(latlon_split[0])), str(float(latlon_split[1]))))
-
-        file.close()
-
+        resource = self._data_manager.get_resource('geofence')
+        # Enforce 128 character limit
+        if len(name) > 128:
+            name = name[len(name)-128:]
+        update_data = {
+            'name': name,
+            'fence_type': 'polygon',
+            'fence_data': coords.split("|")
+        }
+        resource.update(update_data)
+        try:
+            resource.save()
+        except:
+            # TODO - present the user with an issue.  probably fence-name already exists
+            pass
         return redirect(url_for('map'), code=302)
 

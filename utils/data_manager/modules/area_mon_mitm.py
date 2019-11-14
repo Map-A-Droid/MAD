@@ -28,7 +28,10 @@ class AreaMonMITM(area.Area):
                     "type": "geofence",
                     "require": True,
                     "description": "Including geofence for scanarea",
-                    "expected": str
+                    "expected": str,
+                    "uri": True,
+                    "data_source": "geofence",
+                    "uri_source": "api_geofence"
                 }
             },
             "geofence_excluded": {
@@ -36,7 +39,10 @@ class AreaMonMITM(area.Area):
                     "type": "geofence",
                     "require": False,
                     "description": "Excluding geofence for scanarea",
-                    "expected": str
+                    "expected": str,
+                    "uri": True,
+                    "data_source": "geofence",
+                    "uri_source": "api_geofence"
                 }
             },
             "routecalc": {

@@ -12,11 +12,12 @@ from utils.logging import logger
 
 
 class statistics(object):
-    def __init__(self, db, args, app, mapping_manager):
+    def __init__(self, db, args, app, mapping_manager, data_manager):
         self._db = db
         self._args = args
         self._app = app
         self._mapping_manager = mapping_manager
+        self._data_manager = data_manager
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
@@ -521,14 +522,14 @@ class statistics(object):
         unknown = []
         processed_fences = []
 
-        possible_fences = get_geofences(self._mapping_manager, 'mon_mitm')
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type='mon_mitm')
         for possible_fence in possible_fences:
 
             for subfence in possible_fences[possible_fence]['include']:
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = generate_coords_from_geofence(self._mapping_manager, subfence)
+                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
                 known.clear()
                 unknown.clear()
 

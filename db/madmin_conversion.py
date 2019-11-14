@@ -82,6 +82,16 @@ TABLES = [
             ON DELETE CASCADE
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
+    """CREATE TABLE IF NOT EXISTS `settings_geofence` (
+        `geofence_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
+        `guid` varchar(32) NULL,
+        `instance_id` int UNSIGNED NOT NULL,
+        `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
+        `fence_type` enum('polygon','geojson') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'polygon',
+        `fence_data` TEXT NOT NULL,
+        PRIMARY KEY (`geofence_id`),
+        UNIQUE KEY (`name`, `instance_id`)
+    ) ENGINE = InnoDB;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area` (
         `area_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
@@ -99,18 +109,21 @@ TABLES = [
 
     """CREATE TABLE IF NOT EXISTS `settings_area_idle` (
         `area_id` int UNSIGNED NOT NULL,
-        `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
+        `geofence_included` int UNSIGNED NOT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_idle`
             FOREIGN KEY (`area_id`) 
             REFERENCES `settings_area` (`area_id`)
-            ON DELETE CASCADE
+            ON DELETE CASCADE,
+        CONSTRAINT `fk_area_idle_geofence`
+            FOREIGN KEY (`geofence_included`)
+            REFERENCES `settings_geofence` (`geofence_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area_iv_mitm` (
         `area_id` int UNSIGNED NOT NULL,
-        `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
+        `geofence_included` int UNSIGNED NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `speed` float DEFAULT NULL,
@@ -128,14 +141,17 @@ TABLES = [
             ON DELETE CASCADE,
         CONSTRAINT `fk_ai_monid`
             FOREIGN KEY (`monlist_id`) 
-            REFERENCES `settings_monivlist` (`monlist_id`)
+            REFERENCES `settings_monivlist` (`monlist_id`),
+        CONSTRAINT `fk_area_iv_mitm_geofence`
+            FOREIGN KEY (`geofence_included`)
+            REFERENCES `settings_geofence` (`geofence_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
 
     """CREATE TABLE IF NOT EXISTS `settings_area_mon_mitm` (
         `area_id` int UNSIGNED NOT NULL,
         `init` boolean NOT NULL,
-        `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
+        `geofence_included` int UNSIGNED NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `coords_spawns_known` boolean NOT NULL,
@@ -155,12 +171,15 @@ TABLES = [
             ON DELETE CASCADE,
         CONSTRAINT `fk_am_monid`
             FOREIGN KEY (`monlist_id`) 
-            REFERENCES `settings_monivlist` (`monlist_id`)
+            REFERENCES `settings_monivlist` (`monlist_id`),
+        CONSTRAINT `fk_area_mon_mitm_geofence`
+            FOREIGN KEY (`geofence_included`)
+            REFERENCES `settings_geofence` (`geofence_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area_pokestops` (
         `area_id` int UNSIGNED NOT NULL,
-        `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
+        `geofence_included` int UNSIGNED NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `init` boolean NOT NULL,
@@ -174,13 +193,16 @@ TABLES = [
         CONSTRAINT `fk_area_pokestops`
             FOREIGN KEY (`area_id`) 
             REFERENCES `settings_area` (`area_id`)
-            ON DELETE CASCADE
+            ON DELETE CASCADE,
+        CONSTRAINT `fk_area_pokestops_geofence`
+            FOREIGN KEY (`geofence_included`)
+            REFERENCES `settings_geofence` (`geofence_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area_raids_mitm` (
         `area_id` int UNSIGNED NOT NULL,
         `init` boolean NOT NULL,
-        `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
+        `geofence_included` int UNSIGNED NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `including_stops` boolean NOT NULL,
@@ -199,7 +221,10 @@ TABLES = [
             ON DELETE CASCADE,
         CONSTRAINT `fk_ar_monid`
             FOREIGN KEY (`monlist_id`) 
-            REFERENCES `settings_monivlist` (`monlist_id`)
+            REFERENCES `settings_monivlist` (`monlist_id`),
+        CONSTRAINT `fk_area_raids_mitm_geofence`
+            FOREIGN KEY (`geofence_included`)
+            REFERENCES `settings_geofence` (`geofence_id`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_walker` (
@@ -302,5 +327,5 @@ TABLES = [
             FOREIGN KEY (`instance_id`) 
             REFERENCES `madmin_instance` (`instance_id`)
             ON DELETE CASCADE
-    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"""
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 ]

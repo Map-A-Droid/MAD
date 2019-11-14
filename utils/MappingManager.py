@@ -310,27 +310,33 @@ class MappingManager:
             if area["geofence_included"] is None:
                 raise RuntimeError("Cannot work without geofence_included")
 
-            geofence_included = Path(area["geofence_included"])
-            if not geofence_included.is_file():
+            try:
+                geofence_included = self.__data_manager.get_resource('geofence', identifier=area["geofence_included"])
+            except:
+                import traceback
+                traceback.print_exc()
                 raise RuntimeError(
-                    "geofence_included for area '{}' is specified but file does not exist ('{}').".format(
-                        area["name"], geofence_included.resolve()
+                    "geofence_included for area '{}' is specified but does not exist ('{}').".format(
+                        area["name"], geofence_included
                     )
                 )
 
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
-            if geofence_excluded_raw_path is not None:
-                geofence_excluded = Path(geofence_excluded_raw_path)
-                if not geofence_excluded.is_file():
-                    raise RuntimeError(
-                        "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
-                            area["name"], geofence_excluded.resolve()
-                        )
+            try:
+                if geofence_excluded_raw_path is not None:
+                    geofence_excluded = self.__data_managerdbm.get_resource('geofence', identifier=geofence_excluded_raw_path)
+                else:
+                    geofence_excluded = None
+            except:
+                raise RuntimeError(
+                    "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
+                        area["name"], geofence_excluded.resolve()
                     )
+                )
 
             area_dict = {"mode":              area_true.area_type,
-                         "geofence_included": area["geofence_included"],
-                         "geofence_excluded": area.get("geofence_excluded", None),
+                         "geofence_included": geofence_included,
+                         "geofence_excluded": geofence_excluded,
                          "routecalc":         area["routecalc"],
                          "name":              area['name']}
             # also build a routemanager for each area...
@@ -339,7 +345,7 @@ class MappingManager:
             # first check if init is false, if so, grab the coords from DB
             # coords = np.loadtxt(area["coords"], delimiter=',')
             geofence_helper = GeofenceHelper(
-                area["geofence_included"], area.get("geofence_excluded", None))
+                geofence_included, geofence_excluded)
             mode = area_true.area_type
             # build routemanagers
 
@@ -352,8 +358,8 @@ class MappingManager:
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager, area_id, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
                                                                  mode_mapping.get(mode, {}).get("max_count", 99999999),
-                                                                 area["geofence_included"],
-                                                                 path_to_exclude_geofence=area.get("geofence_excluded", None),
+                                                                 geofence_included,
+                                                                 path_to_exclude_geofence=geofence_excluded,
                                                                  mode=mode,
                                                                  settings=area.get("settings", None),
                                                                  init=area.get("init", False),

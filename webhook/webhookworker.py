@@ -17,10 +17,11 @@ class WebhookWorker:
     __IV_MON: List[int] = List[int]
     __excluded_areas = {}
 
-    def __init__(self, args, db_wrapper, mapping_manager: MappingManager, rarity):
+    def __init__(self, args, data_manager, mapping_manager: MappingManager, rarity):
         self.__worker_interval_sec = 10
         self.__args = args
-        self.__db_wrapper = db_wrapper
+        self.__data_manager = data_manager
+        self.__db_wrapper = self.__data_manager._dbc
         self.__rarity = rarity
         self.__last_check = int(time.time())
 

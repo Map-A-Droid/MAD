@@ -124,7 +124,7 @@ $(document).ready(function () {
         <option value='None' {{ 'selected="selected"' if uri == element.settings[key] }}>None</option>
         {% endif %}
         {% for uri, data in fences.items() %}
-        <option value="{{ uri }}" {{ 'selected="selected"' if uri == element[key] }}>{{ data|lower }}</option>
+        <option value="{{ url_for('api_geofence') + '/'+ uri|string }}" {{ 'selected="selected"' if uri|string == element[key]|string }}>{{ data|lower }}</option>
         {% endfor %}
       </select>
       {% else %}
