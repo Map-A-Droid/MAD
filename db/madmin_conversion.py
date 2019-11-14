@@ -1,15 +1,15 @@
 TABLES = [
     """CREATE TABLE IF NOT EXISTS `madmin_instance` (
-        `instance_id` INT NOT NULL AUTO_INCREMENT,
+        `instance_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
         `name` VARCHAR(128) NOT NULL,
         PRIMARY KEY (`instance_id`),
-        UNIQUE KEY (`name`, `instance_id`)
+        UNIQUE KEY (`name`)
     ) ENGINE = InnoDB;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_monivlist` (
-        `monlist_id` int(11) NOT NULL AUTO_INCREMENT,
+        `monlist_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
-        `instance_id` int(11) NOT NULL,
+        `instance_id` int UNSIGNED NOT NULL,
         `name` varchar(128) NOT NULL,
         PRIMARY KEY (`monlist_id`),
         -- UNIQUE KEY (`name`, `instance_id`),
@@ -20,7 +20,7 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_monivlist_to_mon` (
-        `monlist_id` int(11) NOT NULL,
+        `monlist_id` int UNSIGNED NOT NULL,
         `mon_id` int(11) NOT NULL,
         `mon_order` int(11) NOT NULL,
         PRIMARY KEY (`monlist_id`,`mon_id`),
@@ -33,9 +33,9 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_auth` (
-        `auth_id` int(11) NOT NULL AUTO_INCREMENT,
+        `auth_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
-        `instance_id` int(11) NOT NULL,
+        `instance_id` int UNSIGNED NOT NULL,
         `username` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
         `password` varchar(32) COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`auth_id`),
@@ -47,9 +47,9 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_devicepool` (
-        `pool_id` int(11) NOT NULL AUTO_INCREMENT,
+        `pool_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
-        `instance_id` int(11) NOT NULL,
+        `instance_id` int UNSIGNED NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         `post_walk_delay` float DEFAULT NULL,
         `post_teleport_delay` float DEFAULT NULL,
@@ -84,9 +84,9 @@ TABLES = [
 
 
     """CREATE TABLE IF NOT EXISTS `settings_area` (
-        `area_id` int(11) NOT NULL AUTO_INCREMENT,
+        `area_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
-        `instance_id` int(11) NOT NULL,
+        `instance_id` int UNSIGNED NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         `mode` enum('idle','iv_mitm','mon_mitm','pokestops','raids_mitm') COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`area_id`),
@@ -98,7 +98,7 @@ TABLES = [
     ) ENGINE=InnoDB;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area_idle` (
-        `area_id` int(11) NOT NULL,
+        `area_id` int UNSIGNED NOT NULL,
         `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`area_id`),
@@ -109,7 +109,7 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area_iv_mitm` (
-        `area_id` int(11) NOT NULL,
+        `area_id` int UNSIGNED NOT NULL,
         `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -119,7 +119,7 @@ TABLES = [
         `priority_queue_clustering_timedelta` float DEFAULT NULL,
         `remove_from_queue_backlog` boolean DEFAULT NULL,
         `starve_route` boolean DEFAULT NULL,
-        `monlist_id` int(11) DEFAULT NULL,
+        `monlist_id` int UNSIGNED DEFAULT NULL,
         `min_time_left_seconds` int(11) DEFAULT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_iv_mitm`
@@ -133,7 +133,7 @@ TABLES = [
 
 
     """CREATE TABLE IF NOT EXISTS `settings_area_mon_mitm` (
-        `area_id` int(11) NOT NULL,
+        `area_id` int UNSIGNED NOT NULL,
         `init` boolean NOT NULL,
         `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -141,13 +141,13 @@ TABLES = [
         `coords_spawns_known` boolean NOT NULL,
         `speed` float DEFAULT NULL,
         `max_distance` float DEFAULT NULL,
-        `delay_after_prio_event` int(11) DEFAULT NULL,
+        `delay_after_prio_event` int DEFAULT NULL,
         `priority_queue_clustering_timedelta` float DEFAULT NULL,
         `remove_from_queue_backlog` float DEFAULT NULL,
         `starve_route` boolean DEFAULT NULL,
-        `init_mode_rounds` int(11) DEFAULT NULL,
-        `monlist_id` int(11) DEFAULT NULL,
-        `min_time_left_seconds` int(11) DEFAULT NULL,
+        `init_mode_rounds` int DEFAULT NULL,
+        `monlist_id` int UNSIGNED DEFAULT NULL,
+        `min_time_left_seconds` int DEFAULT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_mon_mitm`
             FOREIGN KEY (`area_id`) 
@@ -159,7 +159,7 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area_pokestops` (
-        `area_id` int(11) NOT NULL,
+        `area_id` int UNSIGNED NOT NULL,
         `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `routecalc` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
@@ -178,7 +178,7 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_area_raids_mitm` (
-        `area_id` int(11) NOT NULL,
+        `area_id` int UNSIGNED NOT NULL,
         `init` boolean NOT NULL,
         `geofence_included` varchar(256) COLLATE utf8mb4_unicode_ci NOT NULL,
         `geofence_excluded` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
@@ -186,12 +186,12 @@ TABLES = [
         `including_stops` boolean NOT NULL,
         `speed` float DEFAULT NULL,
         `max_distance` float DEFAULT NULL,
-        `delay_after_prio_event` int(11) DEFAULT NULL,     
+        `delay_after_prio_event` int  DEFAULT NULL,
         `priority_queue_clustering_timedelta` float DEFAULT NULL,
         `remove_from_queue_backlog` float DEFAULT NULL,
         `starve_route` boolean DEFAULT NULL,
-        `init_mode_rounds` int(11) DEFAULT NULL,
-        `monlist_id` int(11) DEFAULT NULL,
+        `init_mode_rounds` int  DEFAULT NULL,
+        `monlist_id` int UNSIGNED DEFAULT NULL,
         PRIMARY KEY (`area_id`),
         CONSTRAINT `fk_area_raids_mitm`
             FOREIGN KEY (`area_id`) 
@@ -203,9 +203,9 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_walker` (
-        `walker_id` int(11) NOT NULL AUTO_INCREMENT,
+        `walker_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
-        `instance_id` int(11) NOT NULL,
+        `instance_id` int UNSIGNED NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         PRIMARY KEY (`walker_id`),
         -- UNIQUE KEY `origin` (`name`, `instance_id`),
@@ -216,14 +216,14 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_walkerarea` (
-        `walkerarea_id` int(11) NOT NULL AUTO_INCREMENT,
+        `walkerarea_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
-        `instance_id` int(11) NOT NULL,
-        `area_id` int(11) NOT NULL,
+        `instance_id` int UNSIGNED NOT NULL,
+        `name` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        `area_id` int UNSIGNED NOT NULL,
         `algo_type` enum('countdown','timer','round','period','coords', 'idle') COLLATE utf8mb4_unicode_ci NOT NULL,
         `algo_value` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
-        `max_walkers` int(11) DEFAULT NULL,
-        `name` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        `max_walkers` int  DEFAULT NULL,
         PRIMARY KEY (`walkerarea_id`),
         CONSTRAINT `fk_wa_instance`
             FOREIGN KEY (`instance_id`) 
@@ -235,9 +235,9 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_walker_to_walkerarea` (
-        `walker_id` int(11) NOT NULL,
-        `walkerarea_id` int(11) NOT NULL,
-        `area_order` int(11) NOT NULL,
+        `walker_id` int UNSIGNED NOT NULL,
+        `walkerarea_id` int UNSIGNED NOT NULL,
+        `area_order` int NOT NULL,
         PRIMARY KEY (`walker_id`,`walkerarea_id`),
         INDEX (`walker_id`),
         INDEX (`walkerarea_id`),
@@ -251,12 +251,12 @@ TABLES = [
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;""",
 
     """CREATE TABLE IF NOT EXISTS `settings_device` (
-        `device_id` int(11) NOT NULL AUTO_INCREMENT,
+        `device_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
-        `instance_id` int(11) NOT NULL,
+        `instance_id` int UNSIGNED NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
-        `walker_id` int(11) NOT NULL,
-        `pool_id` int(11) DEFAULT NULL,
+        `walker_id` int UNSIGNED NOT NULL,
+        `pool_id` int UNSIGNED DEFAULT NULL,
         `adbname` varchar(128) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `post_walk_delay` float DEFAULT NULL,
         `post_teleport_delay` float DEFAULT NULL,
@@ -264,20 +264,20 @@ TABLES = [
         `cool_down_sleep` tinyint(1) DEFAULT NULL,
         `post_turn_screen_on_delay` float DEFAULT NULL,
         `post_pogo_start_delay` float DEFAULT NULL,
-        `restart_pogo` int(11) DEFAULT NULL,
+        `restart_pogo` int DEFAULT NULL,
         `delay_after_hatch` float DEFAULT NULL,
-        `inventory_clear_rounds` int(11) DEFAULT NULL,
-        `inventory_clear_item_amount_tap_duration` int(11) DEFAULT NULL,
+        `inventory_clear_rounds` int  DEFAULT NULL,
+        `inventory_clear_item_amount_tap_duration` int DEFAULT NULL,
         `mitm_wait_timeout` float DEFAULT NULL,
         `vps_delay` float DEFAULT NULL,
         `reboot` tinyint(1) DEFAULT NULL,
-        `reboot_thresh` int(11) DEFAULT NULL,
-        `restart_thresh` int(11) DEFAULT NULL,
+        `reboot_thresh` int DEFAULT NULL,
+        `restart_thresh` int DEFAULT NULL,
         `post_screenshot_delay` float DEFAULT NULL,
-        `screenshot_x_offset` int(11) DEFAULT NULL,
-        `screenshot_y_offset` int(11) DEFAULT NULL,
+        `screenshot_x_offset` int DEFAULT NULL,
+        `screenshot_y_offset` int DEFAULT NULL,
         `screenshot_type` enum('jpeg','png') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'jpeg',
-        `screenshot_quality` int(11) DEFAULT NULL,
+        `screenshot_quality` int DEFAULT NULL,
         `route_calc_algorithm` enum('optimized','quick') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `startcoords_of_walker` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `screendetection` tinyint(1) DEFAULT NULL,
@@ -288,7 +288,7 @@ TABLES = [
         `account_rotation` tinyint(1) DEFAULT NULL,
         `rotation_waittime` float DEFAULT NULL,
         `rotate_on_lvl_30` tinyint(1) DEFAULT NULL,
-        `injection_thresh_reboot` int(11) DEFAULT NULL,
+        `injection_thresh_reboot` int DEFAULT NULL,
         PRIMARY KEY (`device_id`),
         -- UNIQUE KEY (`name`, `instance_id`),
         -- UNIQUE KEY (`adbname`, `instance_id`),
