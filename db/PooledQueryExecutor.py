@@ -1,5 +1,6 @@
 from multiprocessing import Lock, Semaphore
 from multiprocessing.managers import SyncManager
+import mysql
 from mysql.connector.pooling import MySQLConnectionPool
 from utils.logging import logger
 

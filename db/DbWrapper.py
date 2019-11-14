@@ -28,6 +28,7 @@ class DbWrapper:
         self.sanity_check.ensure_correct_sql_mode()
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
+        self.schema_updater.ensure_unversioned_tables_exist()
         self.schema_updater.ensure_unversioned_columns_exist()
 
 
@@ -1498,31 +1499,6 @@ class DbWrapper:
         self.execute(query, del_vars, commit=True)
 
 
-    def create_quest_database_if_not_exists(self):
-        """
-        In order to store 'hashes' of crops/images, we require a table to store those hashes
-        """
-        logger.debug(
-            "DbWrapper::create_quest_database_if_not_exists called")
-        logger.debug('Creating hash db in database')
-
-        query = (' Create table if not exists trs_quest ( ' +
-                 ' GUID varchar(50) COLLATE utf8mb4_unicode_ci NOT NULL,' +
-                 ' quest_type tinyint(3) NOT NULL, ' +
-                 ' quest_timestamp int(11) NOT NULL,' +
-                 ' quest_stardust smallint(4) NOT NULL,' +
-                 ' quest_pokemon_id smallint(4) NOT NULL,' +
-                 ' quest_reward_type smallint(3) NOT NULL,' +
-                 ' quest_item_id smallint(3) NOT NULL,' +
-                 ' quest_item_amount tinyint(2) NOT NULL,' +
-                 ' quest_target tinyint(3) NOT NULL,' +
-                 ' quest_condition varchar(500), ' +
-                 ' PRIMARY KEY (GUID), ' +
-                 ' KEY quest_type (quest_type))')
-        self.execute(query, commit=True)
-
-        return True
-
     def getspawndef(self, spawn_id):
         if not spawn_id:
             return False
@@ -1757,38 +1733,6 @@ class DbWrapper:
             b[7] = 1
         return b.uint
 
-    def check_and_create_spawn_tables(self):
-        logger.debug("DbWrapper::check_and_create_spawn_tables called")
-
-        query_trs_spawn = ('CREATE TABLE IF NOT EXISTS `trs_spawn` ('
-                           '`spawnpoint` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL, '
-                           '`latitude` double NOT NULL, '
-                           '`longitude` double NOT NULL, '
-                           '`spawndef` int(11) NOT NULL DEFAULT "240", '
-                           '`earliest_unseen` int(6) NOT NULL, '
-                           '`last_scanned` datetime DEFAULT NULL, '
-                           '`first_detection` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, '
-                           '`last_non_scanned` datetime DEFAULT NULL, '
-                           '`calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL, '
-                           'UNIQUE KEY `spawnpoint_2` (`spawnpoint`), '
-                           'KEY `spawnpoint` (`spawnpoint`) '
-                           ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;'
-                           )
-
-        query_trs_spawnsightings = ('CREATE TABLE IF NOT EXISTS `trs_spawnsightings` ('
-                                    '`id` int(11) NOT NULL AUTO_INCREMENT, '
-                                    '`encounter_id` bigint(20) UNSIGNED NOT NULL, '
-                                    '`spawnpoint_id` bigint(20) UNSIGNED NOT NULL, '
-                                    '`scan_time` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, '
-                                    '`tth_secs` int(11) DEFAULT NULL, '
-                                    'PRIMARY KEY (`id`), '
-                                    'KEY `trs_spawnpointdd_spawnpoint_id` (`spawnpoint_id`) '
-                                    ') ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;'
-                                    )
-
-        self.execute(query_trs_spawn, commit=True)
-        self.execute(query_trs_spawnsightings, commit=True)
-
     def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
                         oSwLat=None, oSwLon=None, timestamp=None, fence=None):
         logger.debug("dbWrapper::download_spawns")
@@ -1956,116 +1900,6 @@ class DbWrapper:
 
         return True
 
-    def create_status_database_if_not_exists(self):
-        logger.debug(
-            "DbWrapper::create_status_database_if_not_exists called")
-
-        query = (' Create table if not exists trs_status (  '
-                 'origin VARCHAR(50) NOT NULL , '
-                 ' currentPos VARCHAR(50) NULL DEFAULT NULL, '
-                 ' lastPos VARCHAR(50) NULL DEFAULT NULL, '
-                 ' routePos INT(11) NULL DEFAULT NULL, '
-                 ' routeMax INT(11) NULL DEFAULT NULL, '
-                 ' routemanager VARCHAR(255) NULL DEFAULT NULL, '
-                 ' rebootCounter INT(11) NULL DEFAULT NULL, '
-                 ' lastProtoDateTime VARCHAR(50) NULL DEFAULT NULL, '
-                 ' lastPogoRestart VARCHAR(50) NULL DEFAULT NULL, '
-                 ' init TEXT NOT NULL, '
-                 ' rebootingOption TEXT NOT NULL, '
-                 ' restartCounter TEXT NOT NULL, '
-                 ' globalrestartcount INT(11) NULL DEFAULT 0, '
-                 ' lastPogoReboot VARCHAR(50) NULL DEFAULT NULL , '
-                 ' globalrebootcount INT(11) NULL DEFAULT 0, '
-                 ' currentSleepTime INT(11) NOT NULL DEFAULT 0, '
-                 ' PRIMARY KEY (origin))')
-
-        self.execute(query, commit=True)
-
-        return True
-
-    def create_statistics_databases_if_not_exists(self):
-        logger.debug(
-            "DbWrapper::create_statistics_databases_if_not_exists called")
-
-        query = ('CREATE TABLE if not exists trs_stats_location_raw ( '
-                 ' id int(11) AUTO_INCREMENT,'
-                 ' worker varchar(100) NOT NULL,'
-                 ' lat double NOT NULL,'
-                 ' lng double NOT NULL,'
-                 ' fix_ts int(11) NOT NULL,'
-                 ' data_ts int(11) NOT NULL,'
-                 ' type tinyint(1) NOT NULL,'
-                 ' walker varchar(255) NOT NULL,'
-                 ' success tinyint(1) NOT NULL,'
-                 ' period int(11) NOT NULL, '
-                 ' count int(11) NOT NULL, '
-                 ' transporttype tinyint(1) NOT NULL, '
-                 ' PRIMARY KEY (id),'
-                 ' KEY latlng (lat, lng),'
-                 ' UNIQUE count_same_events (worker, lat, lng, type, period))'
-                 )
-
-        self.execute(query, commit=True)
-
-        query = ('CREATE TABLE if not exists trs_stats_location ('
-                 ' id int(11) AUTO_INCREMENT,'
-                 ' worker varchar(100) NOT NULL,'
-                 ' timestamp_scan int(11) NOT NULL,'
-                 ' location_count int(11) NOT NULL,'
-                 ' location_ok int(11) NOT NULL,'
-                 ' location_nok int(11) NOT NULL, '
-                 ' PRIMARY KEY (id),'
-                 ' KEY worker (worker))'
-                 )
-
-        self.execute(query, commit=True)
-
-        query = ('CREATE TABLE if not exists trs_stats_detect_raw ('
-                 ' id int(11) AUTO_INCREMENT,'
-                 ' worker varchar(100) NOT NULL,'
-                 ' type_id varchar(100) NOT NULL,'
-                 ' type varchar(10) NOT NULL,'
-                 ' count int(11) NOT NULL,'
-                 ' timestamp_scan int(11) NOT NULL,'
-                 ' PRIMARY KEY (id),'
-                 ' KEY worker (worker))'
-                 )
-
-        self.execute(query, commit=True)
-
-        query = ('CREATE TABLE if not exists trs_stats_detect ('
-                 ' id  int(100) AUTO_INCREMENT,'
-                 ' worker  varchar(100) NOT NULL,'
-                 ' timestamp_scan  int(11) NOT NULL,'
-                 ' mon  int(255) DEFAULT NULL,'
-                 ' raid  int(255) DEFAULT NULL,'
-                 ' mon_iv  int(11) DEFAULT NULL,'
-                 ' quest  int(100) DEFAULT NULL,'
-                 ' PRIMARY KEY (id), '
-                 ' KEY worker (worker))'
-                 )
-
-        self.execute(query, commit=True)
-
-        return True
-
-    def create_usage_database_if_not_exists(self):
-        logger.debug(
-            "DbWrapper::create_usage_database_if_not_exists called")
-
-        query = ('CREATE TABLE if not exists trs_usage ( '
-                 'usage_id INT(10) AUTO_INCREMENT , '
-                 'instance varchar(100) NULL DEFAULT NULL, '
-                 'cpu FLOAT NULL DEFAULT NULL , '
-                 'memory FLOAT NULL DEFAULT NULL , '
-                 'garbage INT(5) NULL DEFAULT NULL , '
-                 'timestamp INT(11) NULL DEFAULT NULL, '
-                 'PRIMARY KEY (usage_id))'
-                 )
-
-        self.execute(query, commit=True)
-
-        return True
 
     def insert_usage(self, instance, cpu, mem, garbage, timestamp):
         logger.debug("dbWrapper::insert_usage")
