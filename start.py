@@ -214,7 +214,7 @@ if __name__ == "__main__":
             MitmMapperManager.register('MitmMapper', MitmMapper)
             mitm_mapper_manager = MitmMapperManager()
             mitm_mapper_manager.start()
-            mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
+            mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper.stats_submit)
 
             from ocr.pogoWindows import PogoWindows
             pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)

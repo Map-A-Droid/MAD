@@ -14,6 +14,7 @@ from utils.s2Helper import S2Helper
 from db.DbSanityCheck import DbSanityCheck
 from db.DbSchemaUpdater import DbSchemaUpdater
 from db.DbPogoProtoSubmit import DbPogoProtoSubmit
+from db.DbStatsSubmit import DbStatsSubmit
 
 
 class DbWrapper:
@@ -31,6 +32,7 @@ class DbWrapper:
         self.schema_updater.ensure_unversioned_columns_exist()
 
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration)
+        self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
 
 
     def close(self, conn, cursor):
@@ -1313,38 +1315,6 @@ class DbWrapper:
 
         return res
 
-    def submit_stats_complete(self, data):
-        query_status = (
-            "INSERT INTO trs_stats_detect (worker, timestamp_scan, raid, mon, mon_iv, quest) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
-        )
-        self.executemany(query_status, data, commit=True)
-        return True
-
-    def submit_stats_locations(self, data):
-        query_status = (
-            "INSERT IGNORE INTO trs_stats_location (worker, timestamp_scan, location_count, location_ok, location_nok) "
-            "VALUES (%s, %s, %s, %s, %s) "
-        )
-        self.executemany(query_status, data, commit=True)
-        return True
-
-    def submit_stats_locations_raw(self, data):
-        query_status = (
-            "INSERT IGNORE INTO trs_stats_location_raw (worker, fix_ts, lat, lng, data_ts, type, walker, "
-            "success, period, transporttype) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE count=(count+1)"
-        )
-        self.executemany(query_status, data, commit=True)
-        return True
-
-    def submit_stats_detections_raw(self, data):
-        query_status = (
-            "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
-        )
-        self.executemany(query_status, data, commit=True)
-        return True
 
     def statistics_get_detection_count(self, minutes=False, grouped=True, worker=False):
         logger.debug('Fetching group detection count from db')
@@ -1528,29 +1498,6 @@ class DbWrapper:
 
         res = self.execute(query)
         return res
-
-    def cleanup_statistics(self):
-        logger.debug("Cleanup statistics tables")
-        query = (
-            "delete from trs_stats_detect where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
-        )
-        self.execute(query, commit=True)
-
-        # stop deleting shiny entries. For science, please (-:
-        query = (
-            "delete from trs_stats_detect_raw where timestamp_scan < (UNIX_TIMESTAMP() - 604800) AND is_shiny = 0"
-        )
-        self.execute(query, commit=True)
-
-        query = (
-            "delete from trs_stats_location where timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
-        )
-        self.execute(query, commit=True)
-
-        query = (
-            "delete from trs_stats_location_raw where period < (UNIX_TIMESTAMP() - 604800)"
-        )
-        self.execute(query, commit=True)
 
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,

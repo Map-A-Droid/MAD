@@ -13,7 +13,7 @@ from utils.logging import logger
 
 
 class PlayerStats(object):
-    def __init__(self, id, application_args, db_wrapper: DbWrapper, mitm_mapper_parent: MitmMapper):
+    def __init__(self, id, application_args, mitm_mapper_parent: MitmMapper):
         self._id = id
         self.__application_args = application_args
         self._level = 0
@@ -22,7 +22,6 @@ class PlayerStats(object):
         self.__stats_collected: dict = {}
         self._stats_collector_start = True
         self._last_processed_timestamp = 0
-        self._db_wrapper: DbWrapper = db_wrapper
         self._stats_period = 0
         self._generate_stats = application_args.game_stats
         self.__mapping_mutex = Lock()
