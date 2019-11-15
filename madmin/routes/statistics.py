@@ -371,13 +371,13 @@ class statistics(object):
         utc = datetime.datetime.utcnow()
         now = datetime.datetime.now()
         offset = time.mktime(now.timetuple()) - time.mktime(utc.timetuple())
-        return ts + offset
+        return float(ts) + offset
 
     def local2utc(self, ts):
         utc = datetime.datetime.utcnow()
         now = datetime.datetime.now()
         offset = time.mktime(now.timetuple()) - time.mktime(utc.timetuple())
-        return ts - offset
+        return float(ts) - offset
 
     @auth_required
     def statistics_detection_worker_data(self):
