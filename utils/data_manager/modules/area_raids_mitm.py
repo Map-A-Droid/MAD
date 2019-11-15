@@ -28,7 +28,7 @@ class AreaRaidsMITM(area.Area):
                     "type": "geofence",
                     "require": True,
                     "description": "Including geofence for scanarea",
-                    "expected": str,
+                    "expected": int,
                     "uri": True,
                     "data_source": "geofence",
                     "uri_source": "api_geofence"
@@ -39,7 +39,7 @@ class AreaRaidsMITM(area.Area):
                     "type": "geofence",
                     "require": False,
                     "description": "Excluding geofence for scanarea",
-                    "expected": str,
+                    "expected": int,
                     "uri": True,
                     "data_source": "geofence",
                     "uri_source": "api_geofence"

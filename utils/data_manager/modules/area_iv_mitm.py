@@ -19,7 +19,7 @@ class AreaIVMITM(area.Area):
                     "type": "geofence",
                     "require": True,
                     "description": "Including geofence for scanarea",
-                    "expected": str,
+                    "expected": int,
                     "uri": True,
                     "data_source": "geofence",
                     "uri_source": "api_geofence"
@@ -30,7 +30,7 @@ class AreaIVMITM(area.Area):
                     "type": "geofence",
                     "require": False,
                     "description": "Excluding geofence for scanarea",
-                    "expected": str,
+                    "expected": int,
                     "uri": True,
                     "data_source": "geofence",
                     "uri_source": "api_geofence"

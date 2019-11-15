@@ -313,8 +313,6 @@ class MappingManager:
             try:
                 geofence_included = self.__data_manager.get_resource('geofence', identifier=area["geofence_included"])
             except:
-                import traceback
-                traceback.print_exc()
                 raise RuntimeError(
                     "geofence_included for area '{}' is specified but does not exist ('{}').".format(
                         area["name"], geofence_included

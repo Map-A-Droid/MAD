@@ -53,7 +53,7 @@ class ResourceTracker(UserDict):
             except:
                 pass
 
-    def __setitem__(self, key, val):
+    def __setitem__(self, key, value):
         """ Just set the value right? :) Perform all validation against the key / value prior to setting
             Validates the format (or converts it).  Raises an exception if it cannot convert the value
             If the field is a resource field, validate all resources are valid
@@ -77,28 +77,28 @@ class ResourceTracker(UserDict):
             has_empty = True
         except:
             has_empty = False
-        if not type(val) != type(expected):
+        if not isinstance(value, expected):
             try:
-                if val is None and required == False:
+                if value is None and required == False:
                     pass
                 else:
                     try:
                         if expected is list:
                             raise ValueError
-                        val = expected(val)
+                        value = self.format_value(value, expected)
                     except:
-                        if has_empty and (val == empty or val is None):
-                            if val != empty and val is None:
-                                val = empty
+                        if has_empty and (value == empty or value is None):
+                            if value != empty and value is None:
+                                value = empty
                         else:
                             this_iteration['invalid'] = True
                             self.issues['invalid'].append((key, USER_READABLE_ERRORS[expected]))
             except KeyError:
                 pass
         try:
-            if len(val) == 0 and required:
+            if len(value) == 0 and required:
                 if has_empty:
-                    val = empty
+                    value = empty
                 else:
                     this_iteration['missing'] = True
                     if key not in self.issues['missing']:
@@ -107,9 +107,9 @@ class ResourceTracker(UserDict):
             pass
         # We only want to check sub-resources if we have finished the load from the DB
         if resource and self.completed:
-            tmp = val
-            if type(val) != list:
-                tmp = [val]
+            tmp = value
+            if type(value) != list:
+                tmp = [value]
             invalid = []
             for identifier in tmp:
                 try:
@@ -118,11 +118,11 @@ class ResourceTracker(UserDict):
                     invalid.append((key, resource, identifier))
             if invalid:
                 this_iteration['invalud_uri'] = True
-                if type(val) != list:
+                if type(value) != list:
                    self.issues['invalid_uri'].append(invalid[0])
                 else: 
                     self.issues['invalid_uri'].append(invalid)
-        super().__setitem__(key, val)
+        super().__setitem__(key, value)
         try:
             self.removal.remove(key)
         except:
@@ -135,6 +135,18 @@ class ResourceTracker(UserDict):
                 self.issues[update_key].remove(key)
             except:
                 pass
+
+    def format_value(self, value, expected):
+        if expected == bool:
+            if type(value) is str:
+                value = True if value.lower() == "true" else False
+        elif expected == float:
+            value = float(value)
+        elif expected == int:
+            value = int(value)
+        elif expected == str:
+            value = value.strip()
+        return value
 
 class Resource(object):
     # Name of the table within the database
@@ -223,9 +235,6 @@ class Resource(object):
         return self.get_resource().keys()
 
     def update(self, *args, **kwargs):
-        """ When performing an update we want to grab all the issues and raise them at the end.  This will give a
-            a complete issue list
-        """
         try:
             append = kwargs.get('append', False)
             del kwargs['append']
@@ -341,20 +350,20 @@ class Resource(object):
         self.presave_validation()
         if core_data is None:
             data = self.get_resource(backend=True)
+            try:
+                for field, val in data['settings'].items():
+                    data[field] = val
+                for field in data['settings'].removal:
+                    data[field] = None
+                    del self._data['settings'][field]
+                data['settings'].removal = []
+                del data['settings']
+            except KeyError:
+                pass
         else:
             data = core_data
         if self.include_instance_id:
             data['instance_id'] = self.instance_id
-        try:
-            for field, val in data['settings'].items():
-                data[field] = val
-            for field in data['settings'].removal:
-                data[field] = None
-                del self._data['settings'][field]
-            data['settings'].removal = []
-            del data['settings']
-        except KeyError:
-            pass
         data = self.translate_keys(data, 'save')
         if self.identifier:
             data[self.primary_key] = self.identifier

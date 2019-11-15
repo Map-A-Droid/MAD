@@ -36,9 +36,6 @@ class GeoFence(resource.Resource):
         }
     }
 
-    def __setitem__(self, key, value):
-        super().__setitem__(key, value)
-
     def get_dependencies(self):
         tables = ['settings_area_idle',
                   'settings_area_iv_mitm',
@@ -63,9 +60,14 @@ class GeoFence(resource.Resource):
         return dependencies
 
     def _load(self):
-        super()._load()
-        self._data['fields']['fence_data'] = json.loads(self._data['fields']['fence_data'])
-
+        query = "SELECT * FROM `%s` WHERE `%s` = %%s AND `instance_id` = %%s" % (self.table, self.primary_key)
+        data = self._dbc.autofetch_row(query, args=(self.identifier, self.instance_id))
+        if not data:
+            raise dm_exceptions.UnknownIdentifier()
+        data = self.translate_keys(data, 'load')
+        self._data['fields']['name'] = data['name']
+        self._data['fields']['fence_type'] = data['fence_type']
+        self._data['fields']['fence_data'] = json.loads(data['fence_data'])
 
     def save(self, force_insert=False):
         self.presave_validation()
