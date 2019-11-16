@@ -43,12 +43,15 @@ class DataManager(object):
             resource_class = modules.AreaFactory
             table = modules.Area.table
             primary_key = modules.Area.primary_key
+            default_sort = 'name'
         else:
             resource_class = modules.MAPPINGS[section]
             table = resource_class.table
             primary_key = resource_class.primary_key
         sql = 'SELECT `%s` FROM `%s` WHERE `instance_id` = %%s'
         args = [primary_key, table]
+        if default_sort is None and hasattr(resource_class, 'search_field'):
+            default_sort = resource_class.search_field
         if default_sort:
             sql += ' ORDER BY `%s`'
             args.append(default_sort)
