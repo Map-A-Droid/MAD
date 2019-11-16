@@ -1,4 +1,5 @@
 from .. import apiHandler, apiResponse, apiRequest, apiException
+import threading
 
 class APIRouteCalc(apiHandler.ResourceHandler):
     component = 'routecalc'
@@ -12,7 +13,8 @@ class APIRouteCalc(apiHandler.ResourceHandler):
                 call = self.api_req.data['call']
                 args = self.api_req.data.get('args', {})
                 if call == 'recalculate':
-                    self._mapping_manager.routemanager_recalcualte(args['area_id'])
+                    t = threading.Thread(target=self._mapping_manager.routemanager_recalcualte,args=(args['area_id'],))
+                    t.start()
                     return apiResponse.APIResponse(self._logger, self.api_req)(None, 204)
                 else:
                     return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
