@@ -1,4 +1,5 @@
 from . import resource
+from .. import dm_exceptions
 import json
 
 class GeoFence(resource.Resource):
@@ -29,6 +30,7 @@ class GeoFence(resource.Resource):
                 "settings": {
                     "type": "textarea",
                     "require": True,
+                    "empty": [],
                     "description": "Data for the geofence",
                     "expected": list
                 }

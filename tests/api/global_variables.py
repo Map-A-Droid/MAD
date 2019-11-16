@@ -42,6 +42,14 @@ DEFAULT_OBJECTS = {
             }
         }
     },
+    'geofence': {
+        'uri': '/api/geofence',
+        'payload': {
+            'name': 'UnitTest Geofence',
+            'fence_type': 'polygon',
+            'fence_data': []
+        }
+    },
     'monivlist': {
         'uri': '/api/monivlist',
         'payload': {
