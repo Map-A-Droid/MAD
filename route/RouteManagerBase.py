@@ -286,7 +286,7 @@ class RouteManagerBase(ABC):
         return len(self._current_route_round_coords) > 0
 
     def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                     delete_old_route: bool = False, nofile: bool = False):
+                     delete_old_route: bool = False):
 
         current_coords = self._coords_unstructured
         new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
@@ -297,6 +297,11 @@ class RouteManagerBase(ABC):
                 self._route.append(Location(coord["lat"], coord["lng"]))
             self._current_route_round_coords = self._route.copy()
             self._current_index_of_route = 0
+
+    def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1):
+        self.recalc_route(max_radius, max_coords_within_radius, num_procs, True)
+        for worker in self._workers_registered:
+            self.unregister_worker(worker)
 
     def _update_priority_queue_loop(self):
         if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:

@@ -23,12 +23,13 @@ class ResourceHandler(object):
     iterable = True
     default_sort = None
     mode = None
-    implemented_methods = []
+    has_rpc_calls = False
 
-    def __init__(self, logger, app, base, data_manager):
+    def __init__(self, logger, app, base, data_manager, mapping_manager):
         self._logger = logger
         self._app = app
         self._data_manager = data_manager
+        self._mapping_manager = mapping_manager
         self._base = base
         self._instance = self._data_manager.instance_id
         self.api_req = None
@@ -46,7 +47,7 @@ class ResourceHandler(object):
             if self.iterable:
                 route = '%s/<string:identifier>' % (self.uri_base,)
                 methods = ['DELETE', 'GET', 'PATCH', 'PUT']
-                if self.implemented_methods:
+                if self.has_rpc_calls:
                     methods.append('POST')
                 self._app.route(route, methods=methods, endpoint='api_%s' % (self.component,))(self.process_request)
 
@@ -327,14 +328,7 @@ class ResourceHandler(object):
         """ API call to create data """
         mode = self.api_req.headers.get('X-Mode')
         resource = resource_def(self._logger, self._data_manager)
-        if self.api_req.content_type == 'application/json-rpc':
-            try:
-                method = self.api_req.data['call']
-                self.implemented_methods[method](resource)
-                return apiResponse.APIResponse(self._logger, self.api_req)(None, 204)
-            except KeyError:
-                raise apiResponse.APIResponse(self._logger, self.api_req)(method, 501)
-        elif identifier is None:
+        if identifier is None:
             try:
                 resource.update(data)
                 resource.save()

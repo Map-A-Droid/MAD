@@ -285,6 +285,16 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
+    def routemanager_recalcualte(self, routemanager_name: str) -> Optional[str]:
+        global mode_mapping
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        max_radius = routemanager._max_radius
+        max_count_in_radius = routemanager._max_coords_within_radius
+        thread_pool = ThreadPool(processes=1)
+        thread_pool.apply_async(routemanager.recalc_route_adhoc, args=(max_radius, max_count_in_radius, 0))
+        thread_pool.close()
+        thread_pool.join()
+
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
         for set in poolsettings:
