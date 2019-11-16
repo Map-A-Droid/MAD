@@ -15,23 +15,26 @@ import gc
 
 class ScreenType(Enum):
     UNDEFINED = -1
+    BIRTHDATE = 1
     RETURNING = 2
     LOGINSELECT = 3
     PTC = 4
-    WRONG = 7
-    BIRTHDATE = 1
     FAILURE = 5
     RETRY = 6
+    WRONG = 7  
     GAMEDATA = 8
-    POGO = 99
     GGL = 10
     PERMISSION = 11
     MARKETING = 12
     CONSENT = 13
     SN = 14
     UPDATE = 15
+    STRIKE = 16
+    SUSPENDED = 17
+    TERMINATED = 18
     QUEST = 20
     GPS = 21
+    POGO = 99
     ERROR = 100
     BLACK = 110
     CLOSE = 500
@@ -201,7 +204,7 @@ class WordToScreenMatching(object):
                 username = ggl_login.username
 
             if self.parse_ggl(self._communicator.uiautomator(), username):
-                logger.info("Sleeping 50 seconds - please wait!!!!")
+                logger.info("Sleeping 50 seconds - please wait!")
                 time.sleep(50)
 
                 return ScreenType.GGL
@@ -251,7 +254,7 @@ class WordToScreenMatching(object):
             return ScreenType.MARKETING
 
         elif ScreenType(returntype) == ScreenType.BIRTHDATE:
-            self._nextscreen = ScreenType.UNDEFINED
+            self._nextscreen = ScreenType.RETURNING
             click_x = (self._width / 2) + (self._width / 4)
             click_y = (self._height / 1.69) + self._screenshot_y_offset
             logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
@@ -267,7 +270,7 @@ class WordToScreenMatching(object):
             return ScreenType.BIRTHDATE
 
         elif ScreenType(returntype) == ScreenType.RETURNING:
-            self._nextscreen = ScreenType.UNDEFINED
+            self._nextscreen = ScreenType.LOGINSELECT
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator, upper=True)
             time.sleep(2)
             return ScreenType.RETURNING
@@ -276,6 +279,32 @@ class WordToScreenMatching(object):
             self._nextscreen = ScreenType.UNDEFINED
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator, upper=True)
             time.sleep(2)
+            return ScreenType.ERROR
+
+        elif ScreenType(returntype) == ScreenType.STRIKE:
+            self._nextscreen = ScreenType.UNDEFINED
+            logger.warning('Got a black strike warning!')
+            click_text = 'GOT IT,ALLES KLAR'
+            n_boxes = len(globaldict['level'])
+            for i in range(n_boxes):
+                if any(elem.lower() in (globaldict['text'][i].lower()) for elem in click_text.split(",")):
+                    (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
+                                    globaldict['width'][i], globaldict['height'][i])
+                    click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                    self._communicator.click(click_x, click_y)
+                    time.sleep(2)
+
+            return ScreenType.STRIKE
+
+        elif ScreenType(returntype) == ScreenType.SUSPENDED:
+            self._nextscreen = ScreenType.UNDEFINED
+            logger.warning('Account temporarily banned!')
+            return ScreenType.ERROR
+
+        elif ScreenType(returntype) == ScreenType.TERMINATED:
+            self._nextscreen = ScreenType.UNDEFINED
+            logger.error('Account permabanned!')
             return ScreenType.ERROR
 
         elif ScreenType(returntype) == ScreenType.LOGINSELECT:
@@ -372,7 +401,7 @@ class WordToScreenMatching(object):
 
             # button
             self._communicator.click(self._width / 2, button_y)
-            logger.info("Sleeping 50 seconds - please wait!!!!")
+            logger.info("Sleeping 50 seconds - please wait!")
             time.sleep(50)
             return ScreenType.PTC
 
@@ -406,6 +435,12 @@ class WordToScreenMatching(object):
                     backgroundcolor[2] == 0):
                 # Background is black - Loading ...
                 return ScreenType.BLACK
+            elif backgroundcolor is not None and (
+                    backgroundcolor[0] == 16 and
+                    backgroundcolor[1] == 24 and
+                    backgroundcolor[2] == 33):
+                # Got a strike warning
+                return ScreenType.STRIKE
 
             return ScreenType.POGO
 
