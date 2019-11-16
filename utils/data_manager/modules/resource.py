@@ -387,9 +387,10 @@ class Resource(object):
 
         sql = "SELECT `%s`\n"\
               "FROM `%s`"
+        args = (res_obj.primary_key, res_obj.table,)
         if res_obj.search_field is not None:
-            sql += "\nORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, res_obj.search_field)
-        return dbc.autofetch_column(sql)
+            sql += "\nORDER BY `%s` ASC" % (res_obj.search_field)
+        return dbc.autofetch_column(sql % args)
 
     def translate_keys(self, data, operation, translations=None):
         if translations is None:
