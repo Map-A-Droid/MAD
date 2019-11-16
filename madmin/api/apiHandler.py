@@ -48,7 +48,6 @@ class ResourceHandler(object):
                 methods = ['DELETE', 'GET', 'PATCH', 'PUT']
                 if self.implemented_methods:
                     methods.append('POST')
-                print('%s;%s' % (self.component, methods))
                 self._app.route(route, methods=methods, endpoint='api_%s' % (self.component,))(self.process_request)
 
     def get_resource_data_root(self, resource_def, resource_info):
