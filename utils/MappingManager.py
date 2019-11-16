@@ -286,7 +286,6 @@ class MappingManager:
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
     def routemanager_recalcualte(self, routemanager_name: str) -> Optional[str]:
-        global mode_mapping
         routemanager = self.__fetch_routemanager(routemanager_name)
         max_radius = routemanager._max_radius
         max_count_in_radius = routemanager._max_coords_within_radius
