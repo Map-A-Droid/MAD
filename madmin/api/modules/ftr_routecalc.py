@@ -15,8 +15,8 @@ class APIRouteCalc(apiHandler.ResourceHandler):
                     self._mapping_manager.routemanager_recalcualte(args['area_id'])
                     return apiResponse.APIResponse(self._logger, self.api_req)(None, 204)
                 else:
-                    raise apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
+                    return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
             except KeyError:
-                raise apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
+                return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
         else:
             super().post(identifier, data, resource_def, resource_info, *args, **kwargs)
