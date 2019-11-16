@@ -434,8 +434,31 @@ class WorkerQuests(MITMBase):
         stop_inventory_clear = Event()
         stop_screen_clear = Event()
         logger.info('Cleanup Box')
-        not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
-                     'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
+        always_allow = ('Poké Ball', 'Pokéball', 'Great Ball', 'Superball', 'Ultra Ball', 'Hyperball', 'Hyper Ball',
+                    'Potion', 'Trank', 'Super Potion', 'Supertrank', 'Hyper Potion', 'Hypertrank',
+                    'Razz Berry', 'Himmihbeere', 'Baie Framby',
+                    'Nanab Berry', 'Nanabbeere', 'Baie Nanab',
+                    'Pinap Berry','Sananabeere', 'Baie Nanana')
+        not_allow = ('Lucky Egg', 'Glücks-Ei', 'Glucks-Ei', 'Gliicks-Ei', 'CEuf Chance', 'Œuf Chance',
+                    'Camera', 'Kamera', 'Appareil photo',
+                    'Mystery Box', 'Wunderbox', 'Boîte Mystère',
+                    'Mysterious Component', 'Mysteriöses Teil', 'Mysteridses Teil',
+                    'Lure Module', 'Lockmodul', 'Module Leurre',
+                    'Glacial Lure Module', 'Gletscher-Lockmodul', 'Module Leurre Glacial',
+                    'Mossy Lure Module', 'Moos-Lockmodul', 'Module Leurre Moussu',
+                    'Magnetic Lure Module', 'Magnet-Lockmodul', 'Module Leurre Magnétique',
+                    'Raid Pass', 'Pass de Raid', 'Premium Raid Pass',
+                    'Star Piece', 'Sternenstück', 'Morceau d\'Étoile',
+                    'Rare Candy', 'Sonderbonbon', 'Super Bonbon',
+                    'Fast TM', 'Sofort-TM', 'CT Attaque Immédiate',
+                    'Charged TM', 'Lade-TM', 'CT Attaque Chargée',
+                    'Sun Stone', 'Sonnenstein', 'Pierre Soleil',
+                    'King\'s Rock', 'King-Stein', 'Roche Royale',
+                    'Metal Coat', 'Peau Métal', 'Metallmantel',
+                    'Dragon Scale', 'Drachenhaut', 'Écaille Draco',
+                    'Up-Grade', 'Améliorator', 
+                    'Sinnoh Stone', 'Sinnoh-Stein', 'Pierre Sinnoh',
+                    'Unova Stone', 'Unova-Stein', 'Pierre Unys')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
@@ -494,6 +517,9 @@ class WorkerQuests(MITMBase):
                     for text in not_allow:
                         if self.similar(text, item_text) > 0.5:
                             match_one_item = True
+                    for text in always_allow:
+                        if self.similar(text, item_text) > 0.9:
+                            match_one_item = False
                     if match_one_item:
                         logger.info('Could not delete this item - check next one')
                         trash += 1
