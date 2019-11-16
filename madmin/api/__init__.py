@@ -11,6 +11,7 @@ valid_modules = {
     'devicesetting': ftr_devicesetting.APIDeviceSetting,
     'geofence': ftr_geofence.APIGeofence,
     'monivlist': ftr_monlist.APIMonList,
+    'routecalc': ftr_routecalc.APIRouteCalc,
     'walker': ftr_walker.APIWalker,
     'walkerarea': ftr_walkerarea.APIWalkerArea
 }

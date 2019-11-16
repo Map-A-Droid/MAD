@@ -38,12 +38,12 @@ class AreaIVMITM(area.Area):
             },
             "routecalc": {
                 "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Name of routefile. MAD will automatically append '.calc' to this name.",
-                    "expected": str
+                    "type": "hidden",
+                    "require": False,
+                    "description": "ID of routefile",
+                    "expected": int
                 }
-            }
+            },
         },
         "settings": {
             "speed": {

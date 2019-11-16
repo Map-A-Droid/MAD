@@ -23,6 +23,7 @@ class ResourceHandler(object):
     iterable = True
     default_sort = None
     mode = None
+    implemented_methods = []
 
     def __init__(self, logger, app, base, data_manager):
         self._logger = logger
@@ -44,7 +45,11 @@ class ResourceHandler(object):
             self._app.route(route, methods=['GET', 'POST'], endpoint='api_%s' % (self.component,))(self.process_request)
             if self.iterable:
                 route = '%s/<string:identifier>' % (self.uri_base,)
-                self._app.route(route, methods=['DELETE', 'GET', 'PATCH', 'PUT'], endpoint='api_%s' % (self.component,))(self.process_request)
+                methods = ['DELETE', 'GET', 'PATCH', 'PUT']
+                if self.implemented_methods:
+                    methods.append('POST')
+                print('%s;%s' % (self.component, methods))
+                self._app.route(route, methods=methods, endpoint='api_%s' % (self.component,))(self.process_request)
 
     def get_resource_data_root(self, resource_def, resource_info):
         try:
@@ -322,22 +327,32 @@ class ResourceHandler(object):
     def post(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to create data """
         mode = self.api_req.headers.get('X-Mode')
-        try:
-            resource = resource_def(self._logger, self._data_manager)
-            resource.update(data)
-            resource.save()
-            identifier = resource.identifier
-        except utils.data_manager.SaveIssue as err:
-            # TODO - lets handle with a real exception.  Most likely a dupe key that should be presented to the user
-            return apiResponse.APIResponse(self._logger, self.api_req)(str(err.args[0]), 400)
-        uri = '%s/%s' % (flask.url_for('api_%s' % (self.component,)), identifier)
-        headers = {
-            'Location': resource.identifier,
-            'X-Uri': uri,
-            'X-Status': 'Successfully created the object'
-        }
-        converted = self.translate_data_for_response(resource)
-        return apiResponse.APIResponse(self._logger, self.api_req)(converted, 201, headers=headers)
+        resource = resource_def(self._logger, self._data_manager)
+        if self.api_req.content_type == 'application/json-rpc':
+            try:
+                method = self.api_req.data['call']
+                self.implemented_methods[method](resource)
+                return apiResponse.APIResponse(self._logger, self.api_req)(None, 204)
+            except KeyError:
+                raise apiResponse.APIResponse(self._logger, self.api_req)(method, 501)
+        elif identifier is None:
+            try:
+                resource.update(data)
+                resource.save()
+                identifier = resource.identifier
+            except utils.data_manager.SaveIssue as err:
+                # TODO - lets handle with a real exception.  Most likely a dupe key that should be presented to the user
+                return apiResponse.APIResponse(self._logger, self.api_req)(str(err.args[0]), 400)
+            uri = '%s/%s' % (flask.url_for('api_%s' % (self.component,)), identifier)
+            headers = {
+                'Location': resource.identifier,
+                'X-Uri': uri,
+                'X-Status': 'Successfully created the object'
+            }
+            converted = self.translate_data_for_response(resource)
+            return apiResponse.APIResponse(self._logger, self.api_req)(converted, 201, headers=headers)
+        else:
+            raise apiResponse.APIResponse(self._logger, self.api_req)(method, 405)
 
     def put(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to replace an object """

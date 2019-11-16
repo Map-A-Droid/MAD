@@ -36,29 +36,44 @@ class Area(resource.Resource):
                 continue
 
     def save(self, force_insert=False):
+        has_identifier = True if self.identifier else False
         self.presave_validation()
         core_data = {
             'name': self._data['fields']['name'],
             'mode': self.area_type
         }
-        super().save(core_data, force_insert=force_insert)
         try:
-            save_data = {}
-            if self._data['settings']:
-                save_data.update(dict(self._data['settings']))
-        except KeyError as err:
-            pass
-        for field in self.configuration['fields']:
-            if field in core_data:
-                continue
-            if field not in self._data['fields']:
-                continue
-            save_data[field] = self._data['fields'][field]
-        if save_data:
-            save_data['area_id'] = self.identifier
-            save_data = self.translate_keys(save_data, 'save')
-            res = self._dbc.autoexec_insert(self.area_table, save_data, optype="ON DUPLICATE")
-        return self.identifier
+            super().save(core_data, force_insert=force_insert)
+            try:
+                save_data = {}
+                if self._data['settings']:
+                    save_data.update(dict(self._data['settings']))
+            except KeyError as err:
+                pass
+            for field in self.configuration['fields']:
+                if field in core_data:
+                    continue
+                if field not in self._data['fields']:
+                    continue
+                save_data[field] = self._data['fields'][field]
+            if save_data:
+                save_data['area_id'] = self.identifier
+                if 'routecalc' not in save_data or len(str(save_data['routecalc'])) == 0:
+                    routecalc = self._data_manager.get_resource('routecalc')
+                    routecalc['routefile'] = []
+                    routecalc.save()
+                    save_data['routecalc'] = routecalc.identifier
+                save_data = self.translate_keys(save_data, 'save')
+                res = self._dbc.autoexec_insert(self.area_table, save_data, optype="ON DUPLICATE")
+            return self.identifier
+        except Exception as err:
+            if not has_identifier and self.identifier:
+                del_data = {
+                    self.primary_key: self.identifier,
+                    'instance_id': self.instance_id
+                }
+                self._dbc.autoexec_delete(self.table, del_data)
+            raise err
 
     @classmethod
     def search(cls, dbc, res_obj, *args, **kwargs):

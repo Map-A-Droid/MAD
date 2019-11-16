@@ -38,10 +38,10 @@ class AreaPokestops(area.Area):
             },
             "routecalc": {
                 "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Name of routefile",
-                    "expected": str
+                    "type": "hidden",
+                    "require": False,
+                    "description": "ID of routefile",
+                    "expected": int
                 }
             },
             "init": {

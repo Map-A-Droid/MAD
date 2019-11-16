@@ -352,6 +352,7 @@ class MappingManager:
                 # replace list name
                 area['settings']['mon_ids_iv_raw'] = \
                     self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
+            route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
 
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager, area_id, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
@@ -364,7 +365,7 @@ class MappingManager:
                                                                  name=area.get("name", "unknown"),
                                                                  level=area.get("level", False),
                                                                  coords_spawns_known=area.get("coords_spawns_known", False),
-                                                                 routefile=area["routecalc"],
+                                                                 routefile=route_resource,
                                                                  calctype=area.get("route_calc_algorithm", "optimized"),
                                                                  joinqueue=self.join_routes_queue,
                                                                  S2level=mode_mapping.get(mode, {}).get("s2_cell_level", 30)
@@ -388,15 +389,13 @@ class MappingManager:
                     logger.info(
                             "Init mode enabled. Going row-based for {}", str(area.get("name", "unknown")))
                     # we are in init, let's write the init route to file to make it visible in madmin
+                    calc_coords = []
                     if area["routecalc"] is not None:
-                        routefile = os.path.join(
-                                self.__args.file_path, area["routecalc"])
-                        if os.path.isfile(routefile + '.calc'):
-                            os.remove(routefile + '.calc')
-                        with open(routefile + '.calc', 'a') as f:
-                            for loc in coords:
-                                f.write(str(loc.lat) + ', ' +
-                                        str(loc.lng) + '\n')
+                        for loc in coords:
+                            calc_coord = '%s,%s' % (str(loc.lat), str(loc.lng))
+                            calc_coords.append(calc_coord)
+                        route_resource['routefile'] = calc_coords
+                        route_resource.save()
                     # gotta feed the route to routemanager... TODO: without recalc...
                     proc = thread_pool.apply_async(route_manager.recalc_route, args=(1, 99999999,
                                                                                      0, False))

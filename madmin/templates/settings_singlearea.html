@@ -110,6 +110,7 @@ $(document).ready(function () {
   {% if settings_vars.fields is defined %}
   <div class="col-sm">
     {% for key, field in settings_vars.fields|dictsort %}
+    {% if field.settings.type != 'hidden' %}
     <div class="form-group">
       <label for="{{ key }}">{{ key }}</label>
       {% if field.settings.type == "option" %}
@@ -132,6 +133,7 @@ $(document).ready(function () {
       {% endif %}
       <small class="form-text text-muted">{{ field.settings.description }}</small>
     </div>
+    {% endif %}
     {% endfor %}
   </div>
   {% endif %}

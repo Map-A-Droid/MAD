@@ -7,6 +7,8 @@ from .convert_mapping import convert_mappings
 import re
 import utils.data_manager
 from pathlib import Path
+import os
+import copy
 
 current_version = 17
 
@@ -393,12 +395,14 @@ class MADVersion(object):
             with open(self._application_args.mappings, 'rb') as fh:
                 config_file = json.load(fh)
             geofences = {}
+            routecalcs = {}
+            conversion_issues = []
             # A wonderful decision that I made was to start at ID 0 on the previous conversion which causes an issue
             # with primary keys in MySQL / MariaDB.  Make the required changes to ID's and save the file in-case the
             # conversion is re-run.  We do not want dupe data in the database
             cache = {}
             for section in update_order:
-                for elem_id, elem in config_file[section]['entries'].items():
+                for elem_id, elem in copy.copy(config_file[section]['entries']).items():
                     if section == 'areas':
                         try:
                             if int(elem['settings']['mon_ids_iv']) == 0:
@@ -409,17 +413,39 @@ class MADVersion(object):
                         for geofence_section in geofence_sections:
                             try:
                                 geofence = elem[geofence_section]
+                                if type(geofence) is int:
+                                    continue
                                 if geofence and geofence not in geofences:
                                     try:
                                         geo_id = self.__convert_geofence(geofence)
                                         geofences[geofence] = geo_id
                                         elem[geofence_section] = geofences[geofence]
                                     except utils.data_manager.dm_exceptions.UpdateIssue as err:
-                                        conversion_issues.append((section, key, err.issues))
+                                        conversion_issues.append((section, elem_id, err.issues))
                                 else:
                                     elem[geofence_section] = geofences[geofence]
                             except KeyError:
                                 pass
+                        route = '%s.calc' % (elem['routecalc'],)
+                        if route not in routecalcs and type(route) is str:
+                            route_path = os.path.join(self._application_args.file_path, route)
+                            resource = self.data_manager.get_resource('routecalc')
+                            try:
+                                stripped_data = []
+                                with open(route_path, 'rb') as fh:
+                                    for line in fh:
+                                        stripped = line.strip()
+                                        if type(stripped) != str:
+                                            stripped = stripped.decode('utf-8')
+                                        stripped_data.append(stripped)
+                                resource['routefile'] = stripped_data
+                                resource.save(force_insert=True)
+                                routecalcs[route] = resource.identifier
+                            except Exception as err:
+                                conversion_issues.append((section, elem_id, err))
+                                del config_file[section]['entries'][elem_id]
+                        if route in routecalcs:
+                            elem['routecalc'] = routecalcs[route]
                     elif section == 'devices':
                         if int(elem['walker']) == 0:
                             elem['walker'] = cache['walker']
@@ -451,7 +477,6 @@ class MADVersion(object):
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(config_file, outfile, indent=4, sort_keys=True)
             # Load the elements into their resources and save to DB
-            conversion_issues = []
             for section in update_order:
                 for key, elem in config_file[section]['entries'].items():
                     logger.debug('Converting {} {}', section, key)
@@ -475,6 +500,8 @@ class MADVersion(object):
                         resource.save(force_insert=True)
                     except utils.data_manager.dm_exceptions.UpdateIssue as err:
                         conversion_issues.append((section, key, err.issues))
+                    except Exception as err:
+                        conversion_issues.append((section, key, err))
             if conversion_issues:
                 logger.error('The configuration was not partially moved to the database.  The following resources '\
                              'were not converted.')
@@ -493,7 +520,10 @@ class MADVersion(object):
         full_path = Path(path)
         with open(full_path) as f:
             for line in f:
-                stripped_data.append(line.strip())
+                stripped = line.strip()
+                if type(stripped) != str:
+                    stripped = stripped.decode('utf-8')
+                stripped_data.append(stripped)
         resource = self.data_manager.get_resource('geofence')
         name = path
         # Enforce 128 character limit
@@ -505,7 +535,7 @@ class MADVersion(object):
             'fence_data': stripped_data
         }
         resource.update(update_data)
-        resource.save()
+        resource.save(force_insert=True)
         return resource.identifier
 
     def __convert_to_id(self, data):

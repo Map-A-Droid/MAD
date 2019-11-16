@@ -384,9 +384,11 @@ class Resource(object):
 
     @classmethod
     def search(cls, dbc, res_obj, *args, **kwargs):
+
         sql = "SELECT `%s`\n"\
-              "FROM `%s`\n"\
-              "ORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, res_obj.search_field)
+              "FROM `%s`"
+        if res_obj.search_field is not None:
+            sql += "\nORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, res_obj.search_field)
         return dbc.autofetch_column(sql)
 
     def translate_keys(self, data, operation, translations=None):

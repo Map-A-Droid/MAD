@@ -5,6 +5,7 @@ from .device import Device
 from .devicepool import DevicePool
 from .geofence import GeoFence
 from .monivlist import MonIVList
+from .routecalc import RouteCalc
 from .walker import Walker
 from .walkerarea import WalkerArea
 from .. import dm_exceptions
@@ -32,6 +33,7 @@ MAPPINGS = {
     'devicepool': DevicePool,
     'geofence': GeoFence,
     'monivlist': MonIVList,
+    'routecalc': RouteCalc,
     'walker': Walker,
     'walkerarea': WalkerArea
 }

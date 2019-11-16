@@ -17,9 +17,9 @@ import numpy as np
 from db.dbWrapperBase import DbWrapperBase
 from utils.data_manager import DataManager
 from utils.data_manager.modules.geofence import GeoFence
+from utils.data_manager.modules.routecalc import RouteCalc
 from geofence.geofenceHelper import GeofenceHelper
 from route.routecalc.ClusteringHelper import ClusteringHelper
-from route.routecalc.calculate_route import getJsonRoute
 from utils.collections import Location
 from utils.logging import logger
 from utils.walkerArgs import parseArgs
@@ -49,7 +49,7 @@ class RoutePoolEntry:
 class RouteManagerBase(ABC):
     def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, area_id: str, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: GeoFence, path_to_exclude_geofence: GeoFence,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+                 routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15, joinqueue = None):
         self.db_wrapper: DbWrapperBase = db_wrapper
         self.init: bool = init
@@ -62,7 +62,7 @@ class RouteManagerBase(ABC):
         self._coords_unstructured: List[Location] = coords
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
             path_to_include_geofence, path_to_exclude_geofence)
-        self._routefile = os.path.join(args.file_path, routefile)
+        self._route_resource = routefile
         self._max_radius: float = max_radius
         self._max_coords_within_radius: int = max_coords_within_radius
         self.settings: dict = settings
@@ -99,9 +99,8 @@ class RouteManagerBase(ABC):
             else:
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
-            new_coords = getJsonRoute(
-                fenced_coords, max_radius, max_coords_within_radius, routefile,
-                algorithm=calctype)
+            new_coords = self._route_resource.getJsonRoute(fenced_coords, max_radius, max_coords_within_radius,
+                                                           algorithm=calctype)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
@@ -274,18 +273,11 @@ class RouteManagerBase(ABC):
             to_be_appended[i][1] = float(list_coords[i].lng)
         self.add_coords_numpy(to_be_appended)
 
-    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, routefile, delete_old_route,
-                            num_procs=0):
-        if self._overwrite_calculation:
-            calctype = 'quick'
-        else:
-            calctype = self._calctype
-
-        if delete_old_route and os.path.exists(str(routefile) + ".calc"):
-            logger.debug("Deleting routefile...")
-            os.remove(str(routefile) + ".calc")
-        new_route = getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
-                                 routefile=routefile, algorithm=calctype, useS2=self.useS2, S2level=self.S2level)
+    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0):
+        new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
+                                                            delete_old_route, self._calctype, self.useS2, self.S2level,
+                                                            num_procs=0,
+                                                            overwrite_calculation=self._overwrite_calculation)
         if self._overwrite_calculation:
             self._overwrite_calculation = False
         return new_route
@@ -295,13 +287,10 @@ class RouteManagerBase(ABC):
 
     def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                      delete_old_route: bool = False, nofile: bool = False):
+
         current_coords = self._coords_unstructured
-        if nofile:
-            routefile = None
-        else:
-            routefile = self._routefile
         new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                             routefile, delete_old_route, num_procs)
+                                             delete_old_route, num_procs)
         with self._manager_mutex:
             self._route.clear()
             for coord in new_route:

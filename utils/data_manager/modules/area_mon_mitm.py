@@ -47,10 +47,10 @@ class AreaMonMITM(area.Area):
             },
             "routecalc": {
                 "settings": {
-                    "type": "text",
-                    "require": True,
-                    "description": "Name of routefile",
-                    "expected": str
+                    "type": "hidden",
+                    "require": False,
+                    "description": "ID of routefile",
+                    "expected": int
                 }
             },
             "coords_spawns_known": {
