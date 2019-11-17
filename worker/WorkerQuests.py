@@ -440,6 +440,7 @@ class WorkerQuests(MITMBase):
                     'Nanab Berry', 'Nanabbeere', 'Baie Nanab',
                     'Pinap Berry','Sananabeere', 'Baie Nanana')
         not_allow = ('Lucky Egg', 'Glücks-Ei', 'Glucks-Ei', 'Gliicks-Ei', 'CEuf Chance', 'Œuf Chance',
+                    'Gift', 'Geschenk', 'Cadeau',
                     'Camera', 'Kamera', 'Appareil photo',
                     'Mystery Box', 'Wunderbox', 'Boîte Mystère',
                     'Mysterious Component', 'Mysteriöses Teil', 'Mysteridses Teil',
@@ -476,7 +477,7 @@ class WorkerQuests(MITMBase):
         click_x1, click_x2, click_y = self._resocalc.get_swipe_item_amount(self)[0], \
                                       self._resocalc.get_swipe_item_amount(self)[1], \
                                       self._resocalc.get_swipe_item_amount(self)[2]
-        click_duration = int(self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000
+        click_duration = int(self.get_devicesettings_value("inventory_clear_item_amount_tap_duration", 3)) * 1000 * 2
         delrounds_remaining = int(self.get_devicesettings_value("inventory_clear_rounds", 10))
         first_round = True
         delete_allowed = False
