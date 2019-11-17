@@ -22,6 +22,26 @@ class RouteCalc(resource.Resource):
         }
     }
 
+    def get_dependencies(self):
+        tables = ['settings_area_idle',
+                  'settings_area_iv_mitm',
+                  'settings_area_mon_mitm',
+                  'settings_area_pokestops',
+                  'settings_area_raids_mitm'
+        ]
+        columns = ['geofence_included', 'geofence_excluded']
+        sql = 'SELECT `area_id` FROM `%s` WHERE `routecalc` = %%s'
+        dependencies = []
+        for table in tables:
+            table_sql = sql % (table, column,)
+            try:
+                area_dependencies = self._dbc.autofetch_column(table_sql, args=(self.identifier))
+                for ind, area_id in enumerate(area_dependencies[:]):
+                    dependencies.append(('area', area_id))
+            except:
+                pass
+        return dependencies
+
     def _load(self):
         query = "SELECT * FROM `%s` WHERE `%s` = %%s AND `instance_id` = %%s" % (self.table, self.primary_key)
         data = self._dbc.autofetch_row(query, args=(self.identifier, self.instance_id))

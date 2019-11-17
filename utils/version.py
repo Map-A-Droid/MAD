@@ -430,20 +430,20 @@ class MADVersion(object):
                         if route not in routecalcs and type(route) is str:
                             route_path = os.path.join(self._application_args.file_path, route)
                             resource = self.data_manager.get_resource('routecalc')
+                            stripped_data = []
                             try:
-                                stripped_data = []
                                 with open(route_path, 'rb') as fh:
                                     for line in fh:
                                         stripped = line.strip()
                                         if type(stripped) != str:
                                             stripped = stripped.decode('utf-8')
                                         stripped_data.append(stripped)
-                                resource['routefile'] = stripped_data
-                                resource.save(force_insert=True)
-                                routecalcs[route] = resource.identifier
-                            except Exception as err:
+                            except IOError as err:
                                 conversion_issues.append((section, elem_id, err))
-                                del config_file[section]['entries'][elem_id]
+                                logger.warning('Unable to open %s.  Using empty route' % (route))
+                            resource['routefile'] = stripped_data
+                            resource.save(force_insert=True)
+                            routecalcs[route] = resource.identifier
                         if route in routecalcs:
                             elem['routecalc'] = routecalcs[route]
                     elif section == 'devices':

@@ -369,7 +369,9 @@ class Resource(object):
             data[self.primary_key] = self.identifier
         try:
             if force_insert:
-                self._dbc.autoexec_insert(self.table, data, optype="ON DUPLICATE")
+                res = self._dbc.autoexec_insert(self.table, data, optype="ON DUPLICATE")
+                if not self.identifier:
+                    self.identifier = res
             elif not self.identifier:
                 res = self._dbc.autoexec_insert(self.table, data)
                 self.identifier = res

@@ -21,7 +21,7 @@ class WebhookWorker:
         self.__worker_interval_sec = 10
         self.__args = args
         self.__data_manager = data_manager
-        self.__db_wrapper = self.__data_manager._dbc
+        self.__db_wrapper = self.__data_manager.dbc
         self.__rarity = rarity
         self.__last_check = int(time.time())
 
