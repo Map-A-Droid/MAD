@@ -286,7 +286,7 @@ TABLES = [
         `walker_id` int UNSIGNED NOT NULL,
         `walkerarea_id` int UNSIGNED NOT NULL,
         `area_order` int NOT NULL,
-        PRIMARY KEY (`walker_id`,`walkerarea_id`),
+        PRIMARY KEY (`walker_id`,`walkerarea_id`, `area_order`),
         INDEX (`walker_id`),
         INDEX (`walkerarea_id`),
         CONSTRAINT `settings_walker_to_walkerarea_ibfk_1`

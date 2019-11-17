@@ -6,6 +6,7 @@ import global_variables
 
 class APITestBase(TestCase):
     generated_uris = []
+    index = 0
 
     def setUp(self):
         madmin_args = namedtuple('madmin_args', 'madmin_ip madmin_port madmin_user madmin_password')
@@ -18,8 +19,8 @@ class APITestBase(TestCase):
 
     def remove_resources(self):
         if self.generated_uris:
-            for uri in set(reversed(self.generated_uris)):
-                self.delete_resource(uri)
+            for uri in reversed(self.generated_uris):
+                res = self.delete_resource(uri)
 
     def add_created_resource(self, uri):
         if uri not in self.generated_uris:
@@ -30,6 +31,7 @@ class APITestBase(TestCase):
         self.assertEqual(response.status_code, 201)
         created_uri = response.headers['X-Uri']
         self.add_created_resource(created_uri)
+        self.index += 1
         return response
 
     def delete_resource(self, uri):
@@ -46,16 +48,70 @@ class APITestBase(TestCase):
     # ===== Basic Resources =====
     # ===========================
     def create_valid_resource(self, resource, **kwargs):
-        resource_def = global_variables.DEFAULT_OBJECTS[resource]
-        payload = copy.copy(resource_def['payload'])
-        def_kwargs = resource_def.get('kwargs', {})
-        if kwargs:
-            for key, val in kwargs.items():
-                payload[key] = val
-        response = self.create_resource(resource_def['uri'], payload, **def_kwargs)
+        uri, payload, headers, elem = self.get_valid_resource(resource, **kwargs)
+        response = self.create_resource(uri, payload, headers=headers)
         self.assertEqual(response.status_code, 201)
-        return response.headers['X-Uri']
+        elem['uri'] = response.headers['X-Uri']
+        return elem
 
+    def get_valid_resource(self, resource, **kwargs):
+        resource_def = global_variables.DEFAULT_OBJECTS[resource]
+        try:
+            payload = kwargs['payload']
+            del kwargs['payload']
+        except:
+            payload = kwargs.get('payload', copy.copy(resource_def['payload']))
+        headers = kwargs.get('headers', {})
+        elem = {
+            'uri': None,
+            'resources': {}
+        }
+        name_elem = None
+        if resource == 'area':
+            elem['resources']['geofence_included'] = self.create_valid_resource('geofence')
+            elem['resources']['routecalc'] = self.create_valid_resource('routecalc')
+            payload['geofence_included'] = elem['resources']['geofence_included']['uri']
+            payload['routecalc'] = elem['resources']['routecalc']['uri']
+            payload['name'] %= self.index
+            try:
+                headers['X-Mode']
+            except:
+                headers['X-Mode'] = 'raids_mitm'
+        elif resource == 'auth':
+            name_elem = 'username'
+        elif resource == 'device':
+            elem['resources']['walker'] = self.create_valid_resource('walker')
+            elem['resources']['pool'] = self.create_valid_resource('devicesetting')
+            payload['walker'] = elem['resources']['walker']['uri']
+            payload['pool'] = elem['resources']['pool']['uri']
+            payload['origin'] %= self.index
+        elif resource == 'devicesetting':
+            name_elem = 'devicepool'
+        elif resource == 'geofence':
+            name_elem = 'name'
+        elif resource == 'monivlist':
+            name_elem = 'monlist'
+        elif resource == 'walker':
+            elem['resources']['walkerarea'] = self.create_valid_resource('walkerarea')
+            payload['setup'] = [elem['resources']['walkerarea']['uri']]
+            name_elem = 'walkername'
+        elif resource == 'walkerarea':
+            elem['resources']['area'] = self.create_valid_resource('area')
+            payload['walkerarea'] = elem['resources']['area']['uri']
+        payload = self.recursive_update(payload, kwargs)
+        if name_elem and '%s' in payload[name_elem]:
+            payload[name_elem] %= self.index
+        return (resource_def['uri'], payload, headers, elem)
+
+    def recursive_update(self, payload, elems):
+        for key, val in elems.items():
+            if key == 'headers':
+                continue
+            elif type(val) == dict:
+                payload[key] = self.recursive_update(payload, val)
+            else:
+                payload[key] = val
+        return payload
     # ===========================
     # ========== Tests ==========
     # ===========================

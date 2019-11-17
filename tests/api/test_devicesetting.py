@@ -55,9 +55,7 @@ class APIDevicePool(api_base.APITestBase):
         self.remove_resources()
 
     def test_pool_dependecy(self):
-        walker_uri = super().create_valid_resource('walker')
-        pool_uri = super().create_valid_resource('devicesetting')
-        device_uri = super().create_valid_resource('device', walker=walker_uri, pool=pool_uri)
-        response = self.delete_resource(pool_uri)
+        device_obj = super().create_valid_resource('device')
+        response = self.delete_resource(device_obj['resources']['pool']['uri'])
         self.assertEqual(response.status_code, 412)
         self.remove_resources()

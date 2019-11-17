@@ -174,7 +174,7 @@ class Resource(object):
         if self.identifier is not None:
             try:
                 self.identifier = int(self.identifier)
-            except ValueError:
+            except:
                 raise dm_exceptions.UnknownIdentifier()
             self._load()
         self._cleanup_load()

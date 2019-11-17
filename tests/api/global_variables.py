@@ -5,7 +5,7 @@ DEFAULT_OBJECTS = {
             "geofence_included": "test_geofence.txt",
             "including_stops": True,
             "init": False,
-            "name": "UnitTest Area",
+            "name": "UnitTest Area - %s",
             "routecalc": "test_routecalc",
             "settings": {
                 "starve_route": False
@@ -20,14 +20,14 @@ DEFAULT_OBJECTS = {
     'auth': {
         'uri': '/api/auth',
         'payload': {
-            'username': 'user',
+            'username': 'user - %s',
             'password': 'pass'
         }
     },
     'device': {
         'uri': '/api/device',
         'payload': {
-            'origin': 'UnitTest Device',
+            'origin': 'UnitTest Device - %s',
             'settings': {
                 'screenshot_type': 'jpeg'
             }
@@ -36,7 +36,7 @@ DEFAULT_OBJECTS = {
     'devicesetting': {
         'uri': '/api/devicepool',
         'payload': {
-            'devicepool': 'UnitTest Pool',
+            'devicepool': 'UnitTest Pool - %s',
             'settings': {
                 'screenshot_type': 'jpeg'
             }
@@ -45,7 +45,7 @@ DEFAULT_OBJECTS = {
     'geofence': {
         'uri': '/api/geofence',
         'payload': {
-            'name': 'UnitTest Geofence',
+            'name': 'UnitTest Geofence - %s',
             'fence_type': 'polygon',
             'fence_data': []
         }
@@ -53,7 +53,7 @@ DEFAULT_OBJECTS = {
     'monivlist': {
         'uri': '/api/monivlist',
         'payload': {
-            'monlist': 'Test MonIV List',
+            'monlist': 'UnitTest MonIVList - %s',
             'mon_ids_iv': []
         }
     },
@@ -68,7 +68,7 @@ DEFAULT_OBJECTS = {
     'walker': {
         'uri': '/api/walker',
         'payload': {
-            'walkername': 'UnitTest Walker',
+            'walkername': 'UnitTest Walker - %s',
             'setup': [],
         }
     },

@@ -22,48 +22,36 @@ class APIDevice(api_base.APITestBase):
         self.remove_resources()
 
     def test_valid_post(self):
-        walker_uri = super().create_valid_resource('walker')
-        payload = copy.copy(self.base_payload)
-        payload['walker'] = walker_uri
-        super().valid_post(payload, payload)
+        super().create_valid_resource('device')
         self.remove_resources()
 
     def test_invalid_put(self):
-        walker_uri = super().create_valid_resource('walker')
-        payload = copy.copy(self.base_payload)
-        payload['walker'] = walker_uri
-        device_uri = super().create_valid_resource('device', walker=walker_uri)
-        del payload['origin']
+        device_obj = super().create_valid_resource('device')
+        dev_data = self.api.get(device_obj['uri']).json()
+        del dev_data['origin']
         errors = {"missing": ["origin"]}
-        response = self.api.put(device_uri, json=payload)
+        response = self.api.put(device_obj['uri'], json=dev_data)
         self.assertEqual(response.status_code, 422)
         self.assertDictEqual(response.json(), errors)
         self.remove_resources()
 
     def test_valid_put(self):
-        walker_uri = super().create_valid_resource('walker')
-        payload = copy.copy(self.base_payload)
-        payload['walker'] = walker_uri
-        device_uri = super().create_valid_resource('device', walker=walker_uri)
-        response = self.api.put(device_uri, json=payload)
+        device_obj = super().create_valid_resource('device')
+        dev_data = self.api.get(device_obj['uri']).json()
+        response = self.api.put(device_obj['uri'], json=dev_data)
         self.assertEqual(response.status_code, 204)
         self.remove_resources()
 
     def test_invalid_patch(self):
-        walker_uri = super().create_valid_resource('walker')
-        payload = copy.copy(self.base_payload)
-        payload['origin'] = ''
-        device_uri = super().create_valid_resource('device', walker=walker_uri)
-        response = self.api.patch(device_uri, json=payload)
+        device_obj = super().create_valid_resource('device')
+        payload = {'origin': ''}
+        response = self.api.patch(device_obj['uri'], json=payload)
         self.assertEqual(response.status_code, 422)
         self.remove_resources()
 
     def test_valid_patch(self):
-        walker_uri = super().create_valid_resource('walker')
-        payload = {
-            'origin': 'Updated UnitTest'
-        }
-        device_uri = super().create_valid_resource('device', walker=walker_uri)
-        response = self.api.patch(device_uri, json=payload)
+        device_obj = super().create_valid_resource('device')
+        payload = {'origin': 'updated'}
+        response = self.api.patch(device_obj['uri'], json=payload)
         self.assertEqual(response.status_code, 204)
         self.remove_resources()

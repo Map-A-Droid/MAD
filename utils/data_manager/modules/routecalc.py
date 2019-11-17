@@ -33,7 +33,7 @@ class RouteCalc(resource.Resource):
         sql = 'SELECT `area_id` FROM `%s` WHERE `routecalc` = %%s'
         dependencies = []
         for table in tables:
-            table_sql = sql % (table, column,)
+            table_sql = sql % (table,)
             try:
                 area_dependencies = self._dbc.autofetch_column(table_sql, args=(self.identifier))
                 for ind, area_id in enumerate(area_dependencies[:]):

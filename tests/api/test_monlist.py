@@ -77,22 +77,14 @@ class APIMonIVList(api_base.APITestBase):
         self.remove_resources()
 
     def test_area_dependency(self):
-        monivlist_uri = super().create_valid_resource('monivlist')
-        payload = {
-            "coords_spawns_known": True,
-            "geofence_included": "unit_test.txt",
-            "init": False,
-            "name": "Unit Test Area",
-            "routecalc": "unit_test",
-            "settings": {
-                "starve_route": False,
-                'mon_ids_iv': monivlist_uri
+        monivlist_obj = super().create_valid_resource('monivlist')
+        area_obj = super().create_valid_resource('area')
+        update = {
+            'settings': {
+                'mon_ids_iv': monivlist_obj['uri']
             }
         }
-        headers = {
-            'X-Mode': 'mon_mitm'
-        }
-        self.create_resource('/api/area', payload, headers=headers)
-        response = super().delete_resource(monivlist_uri)
+        self.api.patch(area_obj['uri'], json=update)
+        response = super().delete_resource(monivlist_obj['uri'])
         self.assertEqual(response.status_code, 412)
         self.remove_resources()

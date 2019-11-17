@@ -41,7 +41,10 @@ class AreaIVMITM(area.Area):
                     "type": "hidden",
                     "require": False,
                     "description": "ID of routefile",
-                    "expected": int
+                    "expected": int,
+                    "uri": True,
+                    "data_source": "routecalc",
+                    "uri_source": "api_routecalc"
                 }
             },
         },

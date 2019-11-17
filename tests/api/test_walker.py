@@ -50,50 +50,46 @@ class APIWalker(api_base.APITestBase):
         super().valid_patch(self.base_payload, self.base_payload)
 
     def test_device_dependency(self):
-        walker_uri = super().create_valid_resource('walker')
-        device_uri = super().create_valid_resource('device', walker=walker_uri)
-        response = self.api.delete(walker_uri)
+        device_obj = super().create_valid_resource('device')
+        response = self.api.delete(device_obj['resources']['walker']['uri'])
         self.assertEqual(response.status_code, 412)
         self.remove_resources()
 
     def test_walkerarea_dependency(self):
-        area_uri = super().create_valid_resource('area')
-        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
-        response = self.api.delete(walkerarea_uri)
+        device_obj = super().create_valid_resource('device')
+        response = self.api.delete(device_obj['resources']['walker']['resources']['walkerarea']['uri'])
         self.assertEqual(response.status_code, 412)
         self.remove_resources()
 
     def test_walkerarea_cleanup(self):
-        area_uri = super().create_valid_resource('area')
-        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
-        self.delete_resource(walker_uri)
-        response = self.api.get(walkerarea_uri)
+        walker_obj = super().create_valid_resource('walker')
+        self.delete_resource(walker_obj['uri'])
+        response = self.api.get(walker_obj['resources']['walkerarea']['uri'])
         self.assertEqual(response.status_code, 404)
         self.remove_resources()
 
     def test_walkerarea_single_removal(self):
-        area_uri = super().create_valid_resource('area')
-        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
-        walker_uri2 = super().create_valid_resource('walker', setup=[walkerarea_uri])
+        walker_obj1 = super().create_valid_resource('walker')
+        walker_obj2 = super().create_valid_resource('walker')
+        payload = {
+            'setup': [walker_obj1['resources']['walkerarea']['uri']]
+        }
+        self.api.patch(walker_obj2['uri'], json=payload)
         payload = {
             'setup': []
         }
-        self.api.patch(walker_uri, json=payload)
-        response = self.api.get(walkerarea_uri)
+        self.api.patch(walker_obj1['uri'], json=payload)
+        response = self.api.get(walker_obj1['resources']['walkerarea']['uri'])
         self.assertEqual(response.status_code, 200)
-        self.api.patch(walker_uri2, json=payload)
-        response = self.api.get(walkerarea_uri)
+        self.api.patch(walker_obj2['uri'], json=payload)
+        response = self.api.get(walker_obj1['resources']['walkerarea']['uri'])
         self.assertEqual(response.status_code, 404)
+        self.remove_resources()
 
     def test_walkerarea_response(self):
-        area_uri = super().create_valid_resource('area')
-        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
-        walker_data = self.api.get(walker_uri)
-        self.assertTrue(walkerarea_uri in walker_data.json()['setup'])
+        walker_obj = super().create_valid_resource('walker')
+        walker_data = self.api.get(walker_obj['uri'])
+        self.assertTrue(walker_obj['resources']['walkerarea']['uri'] in walker_data.json()['setup'])
         self.remove_resources()
 
     def test_missing_required_variable_with_empty(self):
@@ -106,24 +102,24 @@ class APIWalker(api_base.APITestBase):
         self.remove_resources()
 
     def test_empty_setup(self):
-        walker_uri = super().create_valid_resource('walker')
+        walker_obj = super().create_valid_resource('walker')
         payload = {
             'setup': None
         }
-        response = self.api.patch(walker_uri, json=payload)
+        response = self.api.patch(walker_obj['uri'], json=payload)
         self.assertEqual(response.status_code, 204)
+        walker_data = self.api.get(walker_obj['uri'])
+        self.assertTrue('setup' in walker_data.json())
 
     def test_walkerarea_append(self):
-        area_uri = super().create_valid_resource('area')
-        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-        walkerarea_uri2 = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-        walker_uri = super().create_valid_resource('walker', setup=[walkerarea_uri])
+        walker_obj = super().create_valid_resource('walker')
         payload = {
-            'setup': [walkerarea_uri2]
+            'setup': [walker_obj['resources']['walkerarea']['uri']]
         }
         headers = {
             'X-Append': '1'
         }
-        self.api.patch(walker_uri, json=payload, headers=headers)
-        response = self.api.get(walkerarea_uri)
-        self.assertEqual(response.status_code, 200)
+        self.api.patch(walker_obj['uri'], json=payload, headers=headers)
+        response = self.api.get(walker_obj['uri'])
+        expected_setup = [walker_obj['resources']['walkerarea']['uri'], walker_obj['resources']['walkerarea']['uri']]
+        self.assertEqual(response.json()['setup'], expected_setup)
