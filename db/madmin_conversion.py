@@ -88,7 +88,7 @@ TABLES = [
         `instance_id` int UNSIGNED NOT NULL,
         `name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,
         `fence_type` enum('polygon','geojson') COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'polygon',
-        `fence_data` TEXT NOT NULL,
+        `fence_data` MEDIUMTEXT NOT NULL,
         PRIMARY KEY (`geofence_id`),
         UNIQUE KEY (`name`, `instance_id`)
     ) ENGINE = InnoDB;""",
@@ -97,7 +97,7 @@ TABLES = [
         `routecalc_id` int UNSIGNED NOT NULL AUTO_INCREMENT,
         `guid` varchar(32) NULL,
         `instance_id` int UNSIGNED NOT NULL,
-        `routefile` TEXT NULL,
+        `routefile` MEDIUMTEXT NULL,
         PRIMARY KEY (`routecalc_id`)
     ) ENGINE = InnoDB;""",
 
