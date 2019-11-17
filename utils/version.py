@@ -402,50 +402,13 @@ class MADVersion(object):
             # conversion is re-run.  We do not want dupe data in the database
             cache = {}
             for section in update_order:
-                for elem_id, elem in copy.copy(config_file[section]['entries']).items():
+                for elem_id, elem in config_file[section]['entries'].items():
                     if section == 'areas':
                         try:
                             if int(elem['settings']['mon_ids_iv']) == 0:
                                 elem['settings']['mon_ids_iv'] = cache['monivlist']
                         except KeyError:
                             pass
-                        geofence_sections = ['geofence_included', 'geofence_excluded']
-                        for geofence_section in geofence_sections:
-                            try:
-                                geofence = elem[geofence_section]
-                                if type(geofence) is int:
-                                    continue
-                                if geofence and geofence not in geofences:
-                                    try:
-                                        geo_id = self.__convert_geofence(geofence)
-                                        geofences[geofence] = geo_id
-                                        elem[geofence_section] = geofences[geofence]
-                                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
-                                        conversion_issues.append((section, elem_id, err.issues))
-                                else:
-                                    elem[geofence_section] = geofences[geofence]
-                            except KeyError:
-                                pass
-                        route = '%s.calc' % (elem['routecalc'],)
-                        if route not in routecalcs and type(route) is str:
-                            route_path = os.path.join(self._application_args.file_path, route)
-                            resource = self.data_manager.get_resource('routecalc')
-                            stripped_data = []
-                            try:
-                                with open(route_path, 'rb') as fh:
-                                    for line in fh:
-                                        stripped = line.strip()
-                                        if type(stripped) != str:
-                                            stripped = stripped.decode('utf-8')
-                                        stripped_data.append(stripped)
-                            except IOError as err:
-                                conversion_issues.append((section, elem_id, err))
-                                logger.warning('Unable to open %s.  Using empty route' % (route))
-                            resource['routefile'] = stripped_data
-                            resource.save(force_insert=True)
-                            routecalcs[route] = resource.identifier
-                        if route in routecalcs:
-                            elem['routecalc'] = routecalcs[route]
                     elif section == 'devices':
                         if int(elem['walker']) == 0:
                             elem['walker'] = cache['walker']
@@ -484,6 +447,44 @@ class MADVersion(object):
                         mode = elem['mode']
                         del elem['mode']
                         resource = utils.data_manager.modules.MAPPINGS['area'](logger, self.data_manager, mode=mode)
+                        geofence_sections = ['geofence_included', 'geofence_excluded']
+                        for geofence_section in geofence_sections:
+                            try:
+                                geofence = elem[geofence_section]
+                                if type(geofence) is int:
+                                    continue
+                                if geofence and geofence not in geofences:
+                                    try:
+                                        geo_id = self.__convert_geofence(geofence)
+                                        geofences[geofence] = geo_id
+                                        elem[geofence_section] = geofences[geofence]
+                                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
+                                        conversion_issues.append((section, elem_id, err.issues))
+                                else:
+                                    elem[geofence_section] = geofences[geofence]
+                            except KeyError:
+                                pass
+                        route = '%s.calc' % (elem['routecalc'],)
+                        if type(elem['routecalc']) is str:
+                            if route not in routecalcs:
+                                route_path = os.path.join(self._application_args.file_path, route)
+                                route_resource = self.data_manager.get_resource('routecalc')
+                                stripped_data = []
+                                try:
+                                    with open(route_path, 'rb') as fh:
+                                        for line in fh:
+                                            stripped = line.strip()
+                                            if type(stripped) != str:
+                                                stripped = stripped.decode('utf-8')
+                                            stripped_data.append(stripped)
+                                except IOError as err:
+                                    conversion_issues.append((section, elem_id, err))
+                                    logger.warning('Unable to open %s.  Using empty route' % (route))
+                                route_resource['routefile'] = stripped_data
+                                route_resource.save(force_insert=True)
+                                routecalcs[route] = route_resource.identifier
+                            if route in routecalcs:
+                                elem['routecalc'] = routecalcs[route]
                     else:
                         # Lets remove plural from the section
                         if section == 'devices':
