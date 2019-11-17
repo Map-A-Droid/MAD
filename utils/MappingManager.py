@@ -326,7 +326,7 @@ class MappingManager:
             geofence_excluded_raw_path = area.get("geofence_excluded", None)
             try:
                 if geofence_excluded_raw_path is not None:
-                    geofence_excluded = self.__data_managerdbm.get_resource('geofence', identifier=geofence_excluded_raw_path)
+                    geofence_excluded = self.__data_manager.get_resource('geofence', identifier=geofence_excluded_raw_path)
                 else:
                     geofence_excluded = None
             except:
