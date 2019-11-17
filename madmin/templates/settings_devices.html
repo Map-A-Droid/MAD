@@ -141,10 +141,8 @@ $(document).ready(function () {
         </tr>
       {% endfor %}
       <tr>
-        <td></td>
-        <td></td>
         <td>Bulk Update</td>
-        <td>
+        <td colspan=3 class='align-right'>
           <select class='bulk_update'>
             <option value="None">None</option>
             {% for walker_id, walker in walkers.items() %}
