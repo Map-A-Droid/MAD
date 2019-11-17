@@ -332,7 +332,7 @@ class MappingManager:
             except:
                 raise RuntimeError(
                     "geofence_excluded for area '{}' is specified but file does not exist ('{}').".format(
-                        area["name"], geofence_excluded_raw_path.resolve()
+                        area["name"], geofence_excluded_raw_path
                     )
                 )
 
