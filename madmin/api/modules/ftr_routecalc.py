@@ -21,4 +21,4 @@ class APIRouteCalc(apiHandler.ResourceHandler):
             except KeyError:
                 return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
         else:
-            super().post(identifier, data, resource_def, resource_info, *args, **kwargs)
+            return super().post(identifier, data, resource_def, resource_info, *args, **kwargs)

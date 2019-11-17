@@ -57,6 +57,14 @@ DEFAULT_OBJECTS = {
             'mon_ids_iv': []
         }
     },
+    'routecalc': {
+        'uri': '/api/routecalc',
+        'payload': {
+            'routefile': [
+                '0,0'
+            ]
+        }
+    },
     'walker': {
         'uri': '/api/walker',
         'payload': {

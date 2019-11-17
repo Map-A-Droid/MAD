@@ -161,7 +161,7 @@ class Resource(object):
     configuration = None
     # Default name field
     name_field = 'TBD'
-    search_field = 'name'
+    search_field = None
 
     def __init__(self, logger, data_manager, identifier=None):
         self._logger = logger

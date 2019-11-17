@@ -1,4 +1,5 @@
 from . import resource
+from .. import dm_exceptions
 import json
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
@@ -12,7 +13,7 @@ class RouteCalc(resource.Resource):
             "routefile": {
                 "settings": {
                     "type": "textarea",
-                    "require": False,
+                    "require": True,
                     "empty": [],
                     "description": "Route to walk / teleport",
                     "expected": list
