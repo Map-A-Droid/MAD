@@ -22,6 +22,7 @@ $(document).ready(function () {
         var patch_data = {"walker": walker_uri};
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
         bulk_update(uri, patch_data);
+        $.unblockUI();
     });
     $(".bulk_update").change(function() {
       var selected_uri = $(this).children("option:selected").val();
@@ -38,6 +39,7 @@ $(document).ready(function () {
           uri = '{{ url_for('api_device') }}/' + $(this).data('identifier');
           bulk_update(uri, patch_data);
         });
+        $.unblockUI();
         location.reload();
       } else {
         $('.bulk_update').prop('selectedIndex', 0);
@@ -127,7 +129,7 @@ $(document).ready(function () {
             </p>
           </td>
           <td class="align-middle">
-            <select class="form-control form-control-sm walker_sel_single" data-identifier="{{ dev_id }}">
+            <select class="form-control form-control-sm walker_sel_single" data-identifier="{{ dev_uri }}">
               {% for walker_uri, walker in walkers.items() %}
                <option name="{{ url_for('api_walker') + '/'+ walker_uri|string }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
               {% endfor %}
