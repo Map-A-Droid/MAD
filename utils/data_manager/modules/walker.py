@@ -63,12 +63,12 @@ class Walker(resource.Resource):
         mons = self._dbc.autofetch_column(mon_query, args=(self.identifier))
         self._data['fields']['setup'] = mons
 
-    def save(self, force_insert=False):
-        self.presave_validation()
+    def save(self, force_insert=False, ignore_issues=[]):
+        self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
             'walkername': self._data['fields']['walkername']
         }
-        super().save(core_data=core_data, force_insert=force_insert)
+        super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
         # Get all current walkerareas
         sql = "SELECT `walkerarea_id` FROM `settings_walker_to_walkerarea` WHERE `walker_id` = %s"
         walkerareas = self._dbc.autofetch_column(sql, args=(self.identifier,))

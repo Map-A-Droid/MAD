@@ -35,15 +35,15 @@ class Area(resource.Resource):
             else:
                 continue
 
-    def save(self, force_insert=False):
+    def save(self, force_insert=False, ignore_issues=[]):
         has_identifier = True if self.identifier else False
-        self.presave_validation()
+        self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
             'name': self._data['fields']['name'],
             'mode': self.area_type
         }
         try:
-            super().save(core_data, force_insert=force_insert)
+            super().save(core_data, force_insert=force_insert, ignore_issues=ignore_issues)
             try:
                 save_data = {}
                 if self._data['settings']:

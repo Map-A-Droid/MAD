@@ -50,11 +50,11 @@ class RouteCalc(resource.Resource):
         data = self.translate_keys(data, 'load')
         self._data['fields']['routefile'] = json.loads(data['routefile'])
 
-    def save(self, force_insert=False):
-        self.presave_validation()
+    def save(self, force_insert=False, ignore_issues=[]):
+        self.presave_validation(ignore_issues=ignore_issues)
         core_data = self.get_resource()
         core_data['routefile'] = json.dumps(self._data['fields']['routefile'])
-        super().save(core_data=core_data, force_insert=force_insert)
+        super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
 
     # =====================================================
     # ============ Resource-Specific Functions ============

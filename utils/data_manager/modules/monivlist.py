@@ -47,12 +47,12 @@ class MonIVList(resource.Resource):
         mons = self._dbc.autofetch_column(mon_query, args=(self.identifier))
         self._data['fields']['mon_ids_iv'] = mons
 
-    def save(self, force_insert=False):
-        self.presave_validation()
+    def save(self, force_insert=False, ignore_issues=[]):
+        self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
             'monlist': self._data['fields']['monlist']
         }
-        super().save(core_data, force_insert=force_insert)
+        super().save(core_data, force_insert=force_insert, ignore_issues=ignore_issues)
         del_data = {
             'monlist_id': self.identifier
         }

@@ -498,7 +498,7 @@ class MADVersion(object):
                     resource.identifier = key
                     resource.update(elem)
                     try:
-                        resource.save(force_insert=True)
+                        resource.save(force_insert=True, ignore_issues=['unknown'])
                     except utils.data_manager.dm_exceptions.UpdateIssue as err:
                         conversion_issues.append((section, key, err.issues))
                     except Exception as err:

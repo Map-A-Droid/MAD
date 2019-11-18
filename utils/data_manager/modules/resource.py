@@ -331,13 +331,15 @@ class Resource(object):
             except TypeError:
                 continue
 
-    def presave_validation(self):
+    def presave_validation(self, ignore_issues=[]):
         # Validate required data has been set
         issues = {}
         top_levels = ['fields', 'settings']
         for top_level in top_levels:
             try:
                 for key, val in self._data[top_level].issues.items():
+                    if key in ignore_issues:
+                        continue
                     if not val:
                         continue
                     if key not in issues:
@@ -348,8 +350,8 @@ class Resource(object):
         if issues:
             raise dm_exceptions.UpdateIssue(**issues)
 
-    def save(self, core_data=None, force_insert=False):
-        self.presave_validation()
+    def save(self, core_data=None, force_insert=False, ignore_issues=[]):
+        self.presave_validation(ignore_issues=ignore_issues)
         if core_data is None:
             data = self.get_resource(backend=True)
             try:

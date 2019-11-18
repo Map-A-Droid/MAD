@@ -71,8 +71,8 @@ class GeoFence(resource.Resource):
         self._data['fields']['fence_type'] = data['fence_type']
         self._data['fields']['fence_data'] = json.loads(data['fence_data'])
 
-    def save(self, force_insert=False):
-        self.presave_validation()
+    def save(self, force_insert=False, ignore_issues=[]):
+        self.presave_validation(ignore_issues=ignore_issues)
         core_data = self.get_resource()
         core_data['fence_data'] = json.dumps(self._data['fields']['fence_data'])
-        super().save(core_data=core_data, force_insert=force_insert)
+        super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
