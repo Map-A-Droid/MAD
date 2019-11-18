@@ -48,7 +48,7 @@ class WalkerArea(resource.Resource):
                     "type": "text",
                     "require": False,
                     "empty": "",
-                    "description": "Number of walkers than can be in the area",
+                    "description": "Number of walkers than can be in the area.  Empty = 1 worker (Default: Empty)",
                     "expected": int
                 }
             },

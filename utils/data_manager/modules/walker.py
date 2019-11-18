@@ -25,7 +25,7 @@ class Walker(resource.Resource):
                     "type": "list",
                     "require": True,
                     "empty": [],
-                    "description": "Order of areas",
+                    "description": "Order of areas  (Default: Empty List)",
                     "expected": list,
                     "uri": True,
                     "data_source": "walkerarea",

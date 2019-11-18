@@ -1,4 +1,4 @@
-CONVERT_TO_NONE = ["geofence_excluded", "pool", "cool_down_sleep", "reboot"];
+// CONVERT_TO_NONE = ["geofence_excluded", "pool", "cool_down_sleep", "reboot"];
 
 function get_save_data() {
     save_data = {};
@@ -13,17 +13,20 @@ function get_save_data() {
             value = eval(obj.data('callback') + '()');
         } else if(obj.is('select')) {
             value = obj.children("option:selected").val();
+            if(value == 'None') {
+                value = null;
+            }
         } else if(obj.is('input')) {
             value = obj.val();
         }
         if(value == obj.data('default')) {
             return;
         }
-        if(value.length == 0)
+        if(value != null && value.length == 0)
             value = null;
-        if(CONVERT_TO_NONE.indexOf(name) != -1 && value == 'None') {
-            value = null;
-        }
+        // if(CONVERT_TO_NONE.indexOf(name) != -1 && value == 'None') {
+        //     value = null;
+        // }
         if(obj.attr('setting') == 'true') {
             if(!save_data.hasOwnProperty('settings')) {
                 save_data['settings'] = {};

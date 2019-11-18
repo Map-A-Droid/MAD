@@ -25,7 +25,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after reaching destination with the speed given. (Default: 2.0)",
+                    "description": "Delay in seconds after reaching destination with the speed given (Default: 7.0)",
                     "expected": float
                 }
             },
@@ -33,7 +33,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after a teleport. (Default: 4.0)",
+                    "description": "Delay in seconds after a teleport. (Default: 7.0)",
                     "expected": float
                 }
             },
@@ -41,7 +41,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Walk n seconds after teleport for getting data",
+                    "description": "Walk in meters to walk after teleport. Might help loading data (Default: 0)",
                     "expected": float
                 }
             },
@@ -49,8 +49,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
-                    "description": "More cooldown after teleport",
+                    "values": [None, False, True],
+                    "description": "Add extra cooldown after teleport (Default: False)",
                     "expected": bool
                 }
             },
@@ -58,7 +58,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)",
+                    "description": "Delay in seconds after a screenshot has been taken and about to be saved (Default: 2.0 / 7.0 - Task Dependent)",
                     "expected": float
                 }
             },
@@ -66,7 +66,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)",
+                    "description": "Delay in seconds to wait after starting pogo (Default: 60.0)",
                     "expected": float
                 }
             },
@@ -74,7 +74,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)",
+                    "description": "Restart Pogo every N location-changes (Default: 0.  0 for never)",
                     "expected": int
                 }
             },
@@ -91,7 +91,7 @@ class DevicePool(resource.Resource):
                     "type": "text",
                     "require": False,
                     "description": "Number of rounds to clear the inventory. (Default: 10)",
-                        "expected": int
+                    "expected": int
                 }
             },
             "inventory_clear_item_amount_tap_duration": {
@@ -106,7 +106,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Timeout for waiting for data after setting/reaching a location. (Default: 45)",
+                    "description": "Timeout in seconds while waiting for data after setting/reaching a location. (Default: 45)",
                     "expected": float
                 }
             },
@@ -122,8 +122,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
-                    "description": "Reboot device if reboot_thresh is reached (Default: false)",
+                    "values": [None, False, True],
+                    "description": "Reboot device if reboot_thresh is reached.  This value is doubled when init is active (Default: False)",
                     "expected": bool
                 }
             },
@@ -131,7 +131,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart device after restart Pogo N times. (Default: 3)",
+                    "description": "Restart device after restart Pogo N times. This value is doubled when init is active (Default: 3))",
                     "expected": int
                 }
             },
@@ -139,7 +139,7 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)",
+                    "description": "Restart Pogo after reaching MITM Timeout N times.  This value is doubled when init is active (Default: 5)",
                     "expected": int
                 }
             },
@@ -170,8 +170,8 @@ class DevicePool(resource.Resource):
             "screenshot_type": {
                 "settings": {
                     "type": "option",
-                    "require": True,
-                    "values": ["jpeg", "png"],
+                    "require": False,
+                    "values": [None, "jpeg", "png"],
                     "description": "Type of screenshot (Default: jpeg)",
                     "expected": str
                 }
@@ -187,9 +187,9 @@ class DevicePool(resource.Resource):
             "route_calc_algorithm": {
                 "settings": {
                     "type": "option",
-                    "values": ["optimized","quick"],
+                    "values": [None, "optimized","quick"],
                     "require": False,
-                    "description": "Method of calculation for routes. (Default optimized)",
+                    "description": "Method of calculation for routes. (Default: optimized)",
                     "expected": str
                 }
             },

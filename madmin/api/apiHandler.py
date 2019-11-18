@@ -187,10 +187,6 @@ class ResourceHandler(object):
                 continue
             if val is not None:
                 try:
-                    val = entity['expected'](val)
-                except:
-                    pass
-                try:
                     if entity['uri'] != True:
                         valid_data[key] = val
                         continue

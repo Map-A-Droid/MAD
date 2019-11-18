@@ -140,6 +140,8 @@ class ResourceTracker(UserDict):
         if expected == bool:
             if type(value) is str:
                 value = True if value.lower() == "true" else False
+            else:
+               value = bool(value)
         elif expected == float:
             value = float(value)
         elif expected == int:

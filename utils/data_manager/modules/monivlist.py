@@ -24,7 +24,7 @@ class MonIVList(resource.Resource):
                     "type": "text",
                     "require": True,
                     "empty": [],
-                    "description": "Encounter these mon ids while walking",
+                    "description": "Encounter these mon ids while walking (Default: Empty List)",
                     "expected": list
                 }
             }

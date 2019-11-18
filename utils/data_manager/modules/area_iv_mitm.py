@@ -69,7 +69,7 @@ class AreaIVMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
+                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = Disable PrioQ (Default: empty)",
                     "expected": int
                 }
             },
@@ -93,8 +93,8 @@ class AreaIVMITM(area.Area):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
-                    "description": "Disable round-robin of route vs. priority queue events. If True,    your route may not be completed in time and e.g. only spawns will be scanned",
+                    "values": [None, False, True],
+                    "description": "Disable round-robin of route vs. priority queue events. If True, your route may not be completed in time and e.g. only spawns will be scanned (Default: False)",
                     "expected": bool
                 }
             },
@@ -117,7 +117,7 @@ class AreaIVMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Ignore mons with less spawn time in seconds",
+                    "description": "Ignore mons with less spawn time in seconds (Default: None)",
                     "expected": int
                 }
             }

@@ -59,9 +59,9 @@ class AreaRaidsMITM(area.Area):
             "including_stops": {
                 "settings": {
                     "type": "option",
-                    "require": True,
+                    "require": False,
                     "values": [False, True],
-                    "description": "Calculate route including stops to catch invasions.",
+                    "description": "Calculate route including stops to catch invasions (Default: False)",
                     "expected": bool
                 }
             }
@@ -71,7 +71,7 @@ class AreaRaidsMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Speed of player in kmh",
+                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to determine if the worker should walk or teleport (Default: 0)",
                     "expected": float
                 }
             },
@@ -79,7 +79,7 @@ class AreaRaidsMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Max. distance of walking - otherwise teleport to new location",
+                    "description": "Max. distance of walking - If the distance between points is greater than this value the worker will teleport (Default: 0)",
                     "expected": float
                 }
             },
@@ -87,7 +87,7 @@ class AreaRaidsMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60 (Default: empty)<br>Empty = Disable PrioQ",
+                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = Disable PrioQ (Default: empty)",
                     "expected": int
                 }
             },
@@ -95,7 +95,7 @@ class AreaRaidsMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 0)",
+                    "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 600)",
                     "expected": float
                 }
             },
@@ -111,8 +111,8 @@ class AreaRaidsMITM(area.Area):
                 "settings": {
                     "type": "option",
                     "require": False,
-                    "values": [False, True],
-                    "description": "Disable round-robin of route vs. priority queue events. If True,    your route may not be completed in time and e.g. only spawns will be scanned",
+                    "values": [None, False, True],
+                    "description": "Disable round-robin of route vs. priority queue events. If True, your route may not be completed in time and e.g. only spawns will be scanned (Default: False)",
                     "expected": bool
                 }
             },

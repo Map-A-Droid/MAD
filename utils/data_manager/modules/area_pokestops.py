@@ -59,9 +59,9 @@ class AreaPokestops(area.Area):
             "level": {
                 "settings": {
                     "type": "option",
-                    "require": True,
+                    "require": False,
                     "values": [False, True],
-                    "description": "Level up an account mode",
+                    "description": "Level up an account mode.  (Default: False)",
                     "expected": bool
                 }
             },
@@ -80,7 +80,7 @@ class AreaPokestops(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Speed of player in kmh",
+                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to determine if the worker should walk or teleport (Default: 0)",
                     "expected": float
                 }
             },
@@ -88,25 +88,25 @@ class AreaPokestops(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Max. distance of walking - otherwise teleport to new location",
+                    "description": "Max. distance of walking - If the distance between points is greater than this value the worker will teleport (Default: 0)",
                     "expected": float
                 }
             },
             "ignore_spinned_stops": {
                 "settings": {
                     "type": "option",
-                    "values": [True, False],
+                    "values": [None, True, False],
                     "require": False,
-                    "description": "Do not spinn stops already made in the past (for levelmode)",
+                    "description": "Do not spinn stops already made in the past (for levelmode) (Default: True)",
                     "expected": bool
                 }
             },
             "cleanup_every_spin": {
                 "settings": {
                     "type": "option",
-                    "values": [False, True],
+                    "values": [None, False, True],
                     "require": False,
-                    "description": "Cleanup quest inventory every spinned stop",
+                    "description": "Cleanup quest inventory every spinned stop (Default: False)",
                     "expected": bool
                 }
             }

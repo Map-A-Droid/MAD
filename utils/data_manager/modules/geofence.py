@@ -31,7 +31,7 @@ class GeoFence(resource.Resource):
                     "type": "textarea",
                     "require": True,
                     "empty": [],
-                    "description": "Data for the geofence",
+                    "description": "Data for the geofence (Default: Empty List)",
                     "expected": list
                 }
             }

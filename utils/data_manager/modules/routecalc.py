@@ -15,7 +15,7 @@ class RouteCalc(resource.Resource):
                     "type": "textarea",
                     "require": True,
                     "empty": [],
-                    "description": "Route to walk / teleport",
+                    "description": "Route to walk / teleport  (Default: Empty List)",
                     "expected": list
                 }
             }

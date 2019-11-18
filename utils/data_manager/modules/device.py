@@ -60,7 +60,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after reaching destination. (Default: 2.0)",
+                    "description": "Delay in seconds after reaching destination with the speed given (Default: 7.0)",
                     "expected": float
                 }
             },
@@ -68,7 +68,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after teleport. (Default: 4.0)",
+                    "description": "Delay in seconds after teleport (Default: 7.0)",
                     "expected": float
                 }
             },
@@ -76,7 +76,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Walk in meters to walk after teleport. Might help loading data (Default: None)",
+                    "description": "Walk in meters to walk after teleport. Might help loading data (Default: 0)",
                     "expected": float
                 }
             },
@@ -85,7 +85,7 @@ class Device(resource.Resource):
                     "type": "option",
                     "require": False,
                     "values": [None, False, True],
-                    "description": "Add extra cooldown after teleport",
+                    "description": "Add extra cooldown after teleport (Default: False)",
                     "expected": bool
                 }
             },
@@ -93,7 +93,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after a screenshot has been taken and about to be saved. (Default: 0.2)",
+                    "description": "Delay in seconds after a screenshot has been taken and about to be saved (Default: 2.0 / 7.0 - Task Dependent)",
                     "expected": float
                 }
             },
@@ -101,7 +101,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds to wait after starting pogo. (Default: 60.0)",
+                    "description": "Delay in seconds to wait after starting pogo (Default: 60.0)",
                     "expected": float
                 }
             },
@@ -109,7 +109,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart Pogo every N location-changes. (Default: 80. - 0 for never)",
+                    "description": "Restart Pogo every N location-changes (Default: 0.  0 for never)",
                     "expected": int
                 }
             },
@@ -158,7 +158,7 @@ class Device(resource.Resource):
                     "type": "option",
                     "require": False,
                     "values": [None, False, True],
-                    "description": "Reboot device if reboot_thresh is reached (Default: false)",
+                    "description": "Reboot device if reboot_thresh is reached (Default: False)",
                     "expected": bool
                 }
             },
@@ -166,7 +166,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart device after restart Pogo N times. (Default: 3)",
+                    "description": "Restart device after restart Pogo N times. This value is doubled when init is active (Default: 3)",
                     "expected": int
                 }
             },
@@ -174,7 +174,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart Pogo after reaching MITM Timeout N times. (Default: 5)",
+                    "description": "Restart Pogo after reaching MITM Timeout N times. This value is doubled when init is active (Default: 5)",
                     "expected": int
                 }
             },
@@ -205,8 +205,8 @@ class Device(resource.Resource):
             "screenshot_type": {
                 "settings": {
                     "type": "option",
-                    "require": True,
-                    "values": ["jpeg", "png"],
+                    "require": False,
+                    "values": [None, "jpeg", "png"],
                     "description": "Type of screenshot (Default: jpeg)",
                     "expected": str
                 }
@@ -222,7 +222,7 @@ class Device(resource.Resource):
             "route_calc_algorithm": {
                 "settings": {
                     "type": "option",
-                    "values": ["optimized","quick"],
+                    "values": [None, "optimized","quick"],
                     "require": False,
                     "description": "Method of calculation for routes. (Default: optimized)",
                     "expected": str
@@ -239,18 +239,18 @@ class Device(resource.Resource):
             "screendetection": {
                 "settings": {
                     "type": "option",
-                    "values": [False, True],
+                    "values": [None, False, True],
                     "require": False,
-                    "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts",
+                    "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts  (Default: False)",
                     "expected": bool
                 }
             },
             "logintype": {
                 "settings": {
                     "type": "option",
-                    "values": ["google", "ptc"],
+                    "values": [None, "google", "ptc"],
                     "require": False,
-                    "description": "Select login type for automatic login. If using Google make sure that account already exists on device.",
+                    "description": "Select login type for automatic login. If using Google make sure that account already exists on device (Default: google)",
                     "expected": str
                 }
             },
@@ -258,7 +258,7 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Declare a login address or domain from device (Empty = first @gmail.com entry)<br>Use | to set more the one account (address|address)",
+                    "description": "Declare a login address or domain from device (Empty = first @gmail.com entry).  Use | to set more the one account (address|address)",
                     "expected": str
                 }
             },
@@ -266,25 +266,25 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "PTC User/Password (Format username,password)<br>Use | to set more the one account (username,password|username,password)",
+                    "description": "PTC User/Password (Format username,password).  Use | to set more the one account (username,password|username,password)",
                     "expected": str
                 }
             },
             "clear_game_data": {
                 "settings": {
                     "type": "option",
-                    "values": [False, True],
+                    "values": [None, False, True],
                     "require": False,
-                    "description": "Clear game data if logins fail multiple times",
+                    "description": "Clear game data if logins fail multiple times (Default: False)",
                     "expected": bool
                 }
             },
             "account_rotation": {
                 "settings": {
                     "type": "option",
-                    "values": [False, True],
+                    "values": [None, False, True],
                     "require": False,
-                    "description": "Rotate accounts (f.e. to prevent long cool downs) - Only for PTC",
+                    "description": "Rotate accounts (f.e. to prevent long cool downs) - Only for PTC (Default: False)",
                     "expected": bool
                 }
             },
@@ -292,16 +292,16 @@ class Device(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Rotate accounts if wait time is longer than x seconds after teleport (Default: 300 - requires account_rotation to be enabled)",
+                    "description": "Rotate accounts if wait time is longer than x seconds after teleport.  Requires account_rotation to be enabled (Default: 300)",
                     "expected": float
                 }
             },
             "rotate_on_lvl_30": {
                 "settings": {
                     "type": "option",
-                    "values": [False, True],
+                    "values": [None, False, True],
                     "require": False,
-                    "description": "Rotate accounts if player level >= 30 (for leveling mode)",
+                    "description": "Rotate accounts if player level >= 30 (for leveling mode)  (Default: False)",
                     "expected": bool
                 }
             },
