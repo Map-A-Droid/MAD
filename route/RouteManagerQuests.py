@@ -32,11 +32,9 @@ class RouteManagerQuests(RouteManagerBase):
 
     def _recalc_route_workertype(self):
         if self.init:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
-                              nofile=False)
+            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True)
         else:
-            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False,
-                              nofile=True)
+            self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=False)
 
         self._init_route_queue()
 
