@@ -243,6 +243,8 @@ class RouteManagerBase(ABC):
         logger.info("Try to activate PrioQ thread for route {}".format(str(self.name)))
         if (self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
             logger.info("PrioQ thread for route {} could be activate".format(str(self.name)))
+            if self._stop_update_thread.is_set():
+                self._stop_update_thread.clear()
             self._prio_queue = []
             if self.mode not in ["iv_mitm", "pokestops"]:
                 self.clustering_helper = ClusteringHelper(self._max_radius,
