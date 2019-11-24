@@ -240,7 +240,7 @@ if __name__ == "__main__":
                 rarity.start_dynamic_rarity()
 
                 webhook_worker = WebhookWorker(
-                    args, db_wrapper, mapping_manager, rarity)
+                    args, db_wrapper.webhook_reader, mapping_manager, rarity)
                 t_whw = Thread(name="webhook_worker",
                                target=webhook_worker.run_worker)
                 t_whw.daemon = True
