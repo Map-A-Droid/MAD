@@ -140,7 +140,7 @@ def get_geofences(mapping_manager, data_manager, fence_type=None):
                     getCoordFloat(fence['lon'])
                 ])
         for fences in area_geofences.excluded_areas:
-            exclude[fences['name']]
+            exclude[fences['name']]= []
             for fence in fences['polygon']:
                 exclude[fences['name']].append([
                     getCoordFloat(fence['lat']),
