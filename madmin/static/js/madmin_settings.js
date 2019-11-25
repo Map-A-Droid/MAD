@@ -19,14 +19,15 @@ function get_save_data() {
         } else if(obj.is('input')) {
             value = obj.val();
         }
+        if(value != null && value.length == 0)
+            value = null;
+        default_val = obj.data('default');
+        if((default_val == 'None' || default_val.length == 0) && value == null) {
+            return;
+        }
         if(value == obj.data('default')) {
             return;
         }
-        if(value != null && value.length == 0)
-            value = null;
-        // if(CONVERT_TO_NONE.indexOf(name) != -1 && value == 'None') {
-        //     value = null;
-        // }
         if(obj.attr('setting') == 'true') {
             if(!save_data.hasOwnProperty('settings')) {
                 save_data['settings'] = {};
