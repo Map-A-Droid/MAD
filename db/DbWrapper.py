@@ -20,7 +20,6 @@ from db.DbWebhookReader import DbWebhookReader
 
 
 class DbWrapper:
-    def_spawn = 240
 
     def __init__(self, db_exec, args):
         self._db_exec = db_exec
