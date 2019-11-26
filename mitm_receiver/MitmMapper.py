@@ -176,6 +176,12 @@ class MitmMapper(object):
         else:
             return -1
 
+    def get_poke_stop_visits(self, origin: str):
+        if self.__playerstats.get(origin, None) is not None:
+            return self.__playerstats.get(origin).get_poke_stop_visits()
+        else:
+            return -1
+
     def collect_raid_stats(self, origin: str, gym_id: str):
         if self.__playerstats.get(origin, None) is not None:
             self.__playerstats.get(origin).stats_collect_raid(gym_id)

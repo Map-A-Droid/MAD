@@ -16,19 +16,24 @@ def route_calc_impl(coords, route_name, num_processes=1):
 
 
 def tsp(data):
+    logger.info("building the graph for a route of {}", len(data))
     # build a graph
     graph_data = build_graph(data)
 
     # build a minimum spanning tree
+    logger.info("Building a min span tree..")
     min_span_tree = minimum_spanning_tree(graph_data)
 
     # find odd vertexes
+    logger.info("Finidng odd vertexes...")
     odd_vertexes = find_odd_vertexes(min_span_tree)
 
     # add minimum weight matching edges to MST
+    logger.info("Adding minimum weight mathcing edges to MST...")
     minimum_weight_matching(min_span_tree, graph_data, odd_vertexes)
 
     # find an eulerian tour
+    logger.info("Finding and Eulerian tour...")
     eulerian_tour = find_eulerian_tour(min_span_tree)
 
     current = eulerian_tour[0]
@@ -38,6 +43,7 @@ def tsp(data):
 
     length = 0
 
+    logger.info("Visiting each node in our eulerian tour and making a route")
     for v in eulerian_tour[1:]:
         if not visited[v]:
             path.append(v)
@@ -46,6 +52,7 @@ def tsp(data):
             length += graph_data[current][v]
             current = v
 
+    logger.info("Done making a route!")
     return length, path
 
 

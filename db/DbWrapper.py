@@ -8,6 +8,7 @@ from functools import reduce
 import mysql
 from bitstring import BitArray
 
+from geofence.geofenceHelper import GeofenceHelper
 from utils.collections import Location, LocationWithVisits
 from utils.logging import logger
 from utils.s2Helper import S2Helper
@@ -413,32 +414,64 @@ class DbWrapper:
             "OR trs_quest.GUID IS NULL)"
         ).format(minLat, minLon, maxLat, maxLon)
 
-        if levelmode:
-            logger.info("Leveling mode, add info about visitation")
-            query = (
-                "SELECT pokestop.latitude, pokestop.longitude, GROUP_CONCAT(trs_visited.origin) as visited_by "
-                "FROM pokestop "
-                "LEFT JOIN trs_visited ON pokestop.pokestop_id = trs_visited.pokestop_id "
-                "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
-                "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) GROUP by pokestop.pokestop_id"
-            ).format(minLat, minLon, maxLat, maxLon)
-
         res = self.execute(query)
         list_of_coords: List[Location] = []
-        visited_by_workers: List[LocationWithVisits] = []
 
         for (latitude, longitude, visited_by) in res:
             list_of_coords.append(Location(latitude, longitude))
-            visited_by_workers.append(LocationWithVisits(latitude, longitude, visited_by))
 
         if geofence_helper is not None:
-            geofenced_coords = geofence_helper.get_geofenced_coordinates(
-                list_of_coords)
-            return geofenced_coords, visited_by_workers
+            geofenced_coords = geofence_helper.get_geofenced_coordinates(list_of_coords)
+            return geofenced_coords
         else:
-            return list_of_coords, visited_by_workers
+            return list_of_coords
 
+    def any_stops_unvisited(self, geofence_helper: GeofenceHelper, origin: str):
+        logger.debug("DbWrapper::any_stops_unvisited called")
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        query = (
+            "SELECT pokestop.latitude, pokestop.longitude,GROUP_CONCAT(trs_visited.origin) AS vis "
+            "FROM pokestop "
+            "LEFT JOIN trs_visited ON pokestop.pokestop_id = trs_visited.pokestop_id "
+            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
+            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
+            "GROUP by pokestop.pokestop_id HAVING INSTR(vis,'{}') < 1 LIMIT 1 "
+        ).format(minLat, minLon, maxLat, maxLon, origin)
 
+        res = self.execute(query)
+        unvisited: List[Location] = []
+        if geofence_helper is not None:
+            for (latitude, longitude, vis) in res:
+                unvisited.append(Location(latitude, longitude))
+
+            geofenced_coords = geofence_helper.get_geofenced_coordinates(unvisited)
+            return len(geofenced_coords) > 0
+        else:
+            return len(res) > 0
+
+    def stops_from_db_unvisited(self, geofence_helper: GeofenceHelper, origin: str):
+        logger.debug("DbWrapper::stops_from_db_unvisited called")
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        query = (
+            "SELECT pokestop.latitude, pokestop.longitude,GROUP_CONCAT(trs_visited.origin) AS vis "
+            "FROM pokestop "
+            "LEFT JOIN trs_visited ON pokestop.pokestop_id = trs_visited.pokestop_id "
+            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
+            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
+            "GROUP by pokestop.pokestop_id HAVING INSTR(vis,'{}') < 1"
+        ).format(minLat, minLon, maxLat, maxLon, origin)
+
+        res = self.execute(query)
+        unvisited: List[Location] = []
+
+        for (latitude, longitude, vis) in res:
+            unvisited.append(Location(latitude, longitude))
+
+        if geofence_helper is not None:
+            geofenced_coords = geofence_helper.get_geofenced_coordinates(unvisited)
+            return geofenced_coords
+        else:
+            return unvisited
 
     def get_gyms_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
         """
