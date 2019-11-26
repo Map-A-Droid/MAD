@@ -17,6 +17,7 @@ class DbPogoProtoSubmit:
     TODO: Most of the code is actually unrelated to database stuff and should be
     moved outside the db package.
     """
+    def_spawn = 240
 
     def __init__(self, db_exec: PooledQueryExecutor, lure_duration: int):
         self._db_exec: PooledQueryExecutor = db_exec
