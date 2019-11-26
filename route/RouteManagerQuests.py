@@ -12,7 +12,7 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 class RouteManagerQuests(RouteManagerBase):
     def generate_stop_list(self):
         time.sleep(5)
-        stops, _ = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper, False)
+        stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
 
         logger.info('Detected stops without quests: {}', str(len(stops)))
         logger.debug('Detected stops without quests: {}', str(stops))
@@ -41,7 +41,7 @@ class RouteManagerQuests(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "optimized", joinqueue = None):
+                 level: bool = False, calctype: str = "quick", joinqueue = None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords, max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,

@@ -620,12 +620,15 @@ class WorkerQuests(MITMBase):
                 else:
                     self._rocket = False
 
-                if self._level_mode and self._ignore_spinned_stops:
-                    visited: bool = fort.get("visited", False)
-                    if visited:
-                        logger.info("Levelmode: Stop already visited - skipping it")
-                        self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
-                        return False, True
+                visited: bool = fort.get("visited", False)
+                if self._level_mode and self._ignore_spinned_stops and visited:
+                    logger.info("Levelmode: Stop already visited - skipping it")
+                    self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
+                    return False, True
+                elif self._level_mode and self._rocket:
+                    logger.info("Levelmode: Stop is rocketized, ignore it until later")
+                    return False, True
+
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
@@ -712,12 +715,6 @@ class WorkerQuests(MITMBase):
                     logger.warning('Cannot process this stop again')
                 self.clear_thread_task = 1
                 break
-            elif data_received == FortSearchResultTypes.LIMIT:
-                logger.error('HIT DAILY SPIN LIMIT ON ACCOUNT, '
-                             'NOT SURE WHAT TO DO NOW SO I WILL JUST SLEEP FOR 10 MINUTES!!!')
-                self.clear_thread_task = 2
-                time.sleep(600)
-                break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
                 if self._level_mode:
                     logger.info("Saving visitation info...")
@@ -764,11 +761,14 @@ class WorkerQuests(MITMBase):
                 if self._open_pokestop(timestamp) is None:
                     return
             else:
-                logger.info("Likely already spun this stop or brief softban, trying again")
+                logger.info("Brief speed lock or we already spun it, trying again")
                 if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
                     self.clear_thread_task = 2
                     break
+                elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(self._id) > 6800:
+                    logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
+                                   self._mitm_mapper.get_poke_stop_visits(self._id))
 
                 # self._close_gym(self._delay_add)
 
@@ -809,7 +809,7 @@ class WorkerQuests(MITMBase):
                     payload: dict = latest_data.get("payload", None)
                     if payload is None:
                         return None
-                    result: int = latest_data.get("payload", {}).get("result", 0)
+                    result: int = payload.get("result", 0)
                     if result == 1 and len(payload.get('items_awarded', [])) > 0:
                         return FortSearchResultTypes.QUEST
                     elif (result == 1

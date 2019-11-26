@@ -26,6 +26,7 @@ class PlayerStats(object):
         self._generate_stats = application_args.game_stats
         self.__mapping_mutex = Lock()
         self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent
+        self._poke_stop_visits = 0
 
     def set_level(self, level):
         logger.debug('[{}] - set level {}', str(self._id), str(level))
@@ -35,6 +36,14 @@ class PlayerStats(object):
     def get_level(self):
         return self._level
 
+    def set_poke_stop_visits(self,visits):
+        logger.debug('[{}] - set pokestops visited {}', str(self._id), str(visits))
+        self._poke_stop_visits = visits
+        return True
+
+    def get_poke_stop_visits(self):
+        return self._poke_stop_visits
+
     def gen_player_stats(self, data: dict):
         if 'inventory_delta' not in data:
             logger.debug('gen_player_stats cannot generate new stats')
@@ -42,19 +51,19 @@ class PlayerStats(object):
         stats = data['inventory_delta'].get("inventory_items", None)
         if len(stats) > 0:
             for data_inventory in stats:
-                player_level = data_inventory['inventory_item_data']['player_stats']['level']
+                player_stats = data_inventory['inventory_item_data']['player_stats']
+                player_level = player_stats['level']
                 if int(player_level) > 0:
                     logger.debug('{{gen_player_stats}} saving new playerstats')
                     self.set_level(int(player_level))
 
-                    data = {}
-                    data[self._id] = []
+                    data = {self._id: []}
                     data[self._id].append({
-                        'level': str(data_inventory['inventory_item_data']['player_stats']['level']),
-                        'experience': str(data_inventory['inventory_item_data']['player_stats']['experience']),
-                        'km_walked': str(data_inventory['inventory_item_data']['player_stats']['km_walked']),
-                        'pokemons_encountered': str(data_inventory['inventory_item_data']['player_stats']['pokemons_encountered']),
-                        'poke_stop_visits': str(data_inventory['inventory_item_data']['player_stats']['poke_stop_visits'])
+                        'level': str(player_stats['level']),
+                        'experience': str(player_stats['experience']),
+                        'km_walked': str(player_stats['km_walked']),
+                        'pokemons_encountered': str(player_stats['pokemons_encountered']),
+                        'poke_stop_visits': str(player_stats['poke_stop_visits'])
                     })
                     with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats'), 'w') as outfile:
                         json.dump(data, outfile, indent=4, sort_keys=True)
@@ -66,6 +75,7 @@ class PlayerStats(object):
             with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats')) as f:
                 data = json.load(f)
                 self.set_level(data[self._id][0]['level'])
+                self.set_poke_stop_visits(data[self._id][0]['poke_stop_visits'])
         except IOError:
             logger.error('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
