@@ -83,7 +83,11 @@
         });
         $('#area').change(function() {
             area = $(this).find("option:selected").attr('value');
-            window.location.href = '{{ url_for('quest') }}?fence=' + area
+            {% if pub %}
+                window.location.href = '{{ url_for('quest_pub') }}?fence=' + area
+            {% else %}
+                window.location.href = '{{ url_for('quest') }}?fence=' + area
+            {% endif %}
         });
     });
 

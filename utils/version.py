@@ -9,15 +9,18 @@ import utils.data_manager
 from pathlib import Path
 import os
 import copy
+from db.DbWrapper import DbWrapper
+from db.DbSchemaUpdater import DbSchemaUpdater
 
 current_version = 17
 
-
 class MADVersion(object):
+
     def __init__(self, args, data_manager):
         self._application_args = args
         self.data_manager = data_manager
         self.dbwrapper = self.data_manager.dbc
+        self._schema_updater: DbSchemaUpdater = self.dbwrapper.schema_updater
         self._version = 0
         self.instance_id = data_manager.instance_id
 
@@ -26,8 +29,8 @@ class MADVersion(object):
             # checking mappings.json
             convert_mappings()
             with open('version.json') as f:
-                versio = json.load(f)
-            self._version = int(versio['version'])
+                version = json.load(f)
+            self._version = int(version['version'])
             if int(self._version) < int(current_version):
                 logger.success('Performing update now')
                 self.start_update()
@@ -49,7 +52,7 @@ class MADVersion(object):
         if self._version < 1:
             logger.info('Execute Update for Version 1')
             # Adding quest_reward for PMSF ALT
-            if self.dbwrapper.check_column_exists('trs_quest', 'quest_reward') == 0:
+            if not self._schema_updater.check_column_exists('trs_quest', 'quest_reward'):
                 alter_query = (
                     "ALTER TABLE trs_quest "
                     "ADD quest_reward VARCHAR(500) NULL AFTER quest_condition"
@@ -60,7 +63,7 @@ class MADVersion(object):
                     logger.info("Unexpected error: {}", e)
 
             # Adding quest_task = ingame quest conditions
-            if self.dbwrapper.check_column_exists('trs_quest', 'quest_task') == 0:
+            if not self._schema_updater.check_column_exists('trs_quest', 'quest_task'):
                 alter_query = (
                     "ALTER TABLE trs_quest "
                     "ADD quest_task VARCHAR(150) NULL AFTER quest_reward"
@@ -76,13 +79,13 @@ class MADVersion(object):
                     "ALTER TABLE raid "
                     "ADD form smallint(6) DEFAULT NULL"
                 )
-                column_exist = self.dbwrapper.check_column_exists(
+                column_exist = self._schema_updater.check_column_exists(
                     'raid', 'form')
             else:
                 logger.error("Invalid db_method in config. Exiting")
                 sys.exit(1)
 
-            if column_exist == 0:
+            if not column_exist:
                 try:
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
@@ -103,9 +106,9 @@ class MADVersion(object):
                 "ALTER TABLE trs_status "
                 "ADD lastPogoReboot varchar(50) NULL DEFAULT NULL"
             )
-            column_exist = self.dbwrapper.check_column_exists(
+            column_exist = self._schema_updater.check_column_exists(
                 'trs_status', 'lastPogoReboot')
-            if column_exist == 0:
+            if not column_exist:
                 try:
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
@@ -115,9 +118,9 @@ class MADVersion(object):
                 "ALTER TABLE trs_status "
                 "ADD globalrebootcount int(11) NULL DEFAULT '0'"
             )
-            column_exist = self.dbwrapper.check_column_exists(
+            column_exist = self._schema_updater.check_column_exists(
                 'trs_status', 'globalrebootcount')
-            if column_exist == 0:
+            if not column_exist:
                 try:
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
@@ -127,9 +130,9 @@ class MADVersion(object):
                 "ALTER TABLE trs_status "
                 "ADD globalrestartcount int(11) NULL DEFAULT '0'"
             )
-            column_exist = self.dbwrapper.check_column_exists(
+            column_exist = self._schema_updater.check_column_exists(
                 'trs_status', 'globalrestartcount')
-            if column_exist == 0:
+            if not column_exist:
                 try:
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
@@ -169,9 +172,9 @@ class MADVersion(object):
                 "ADD quest_template VARCHAR(100) NULL DEFAULT NULL "
                 "AFTER quest_reward"
             )
-            column_exist = self.dbwrapper.check_column_exists(
+            column_exist = self._schema_updater.check_column_exists(
                 'trs_quest', 'quest_template')
-            if column_exist == 0:
+            if not column_exist:
                 try:
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
@@ -209,41 +212,41 @@ class MADVersion(object):
                 "ADD is_shiny TINYINT(1) NOT NULL DEFAULT '0' "
                 "AFTER count"
             )
-            column_exist = self.dbwrapper.check_column_exists(
+            column_exist = self._schema_updater.check_column_exists(
                 'trs_stats_detect_raw', 'is_shiny')
-            if column_exist == 0:
+            if not column_exist:
                 try:
                     self.dbwrapper.execute(query, commit=True)
                 except Exception as e:
                     logger.exception("Unexpected error: {}", e)
 
         if self._version < 12:
-            query = (
-                "ALTER TABLE trs_stats_detect_raw "
-                "ADD INDEX typeworker (worker, type_id)"
-            )
-            index_exist = self.dbwrapper.check_index_exists(
-                'trs_stats_detect_raw', 'typeworker')
-
-            if index_exist >= 1:
+            if self._schema_updater.check_index_exists('trs_stats_detect_raw', 'typeworker'):
                 query = (
-                    "ALTER TABLE trs_stats_detect_raw DROP INDEX typeworker, ADD INDEX typeworker (worker, type_id)"
+                    "ALTER TABLE trs_stats_detect_raw "
+                    "DROP INDEX typeworker, "
+                    "ADD INDEX typeworker (worker, type_id)"
+                )
+            else:
+                query = (
+                    "ALTER TABLE trs_stats_detect_raw "
+                    "ADD INDEX typeworker (worker, type_id)"
                 )
             try:
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
 
-            query = (
-                "ALTER TABLE trs_stats_detect_raw "
-                "ADD INDEX shiny (is_shiny)"
-            )
-            index_exist = self.dbwrapper.check_index_exists(
-                'trs_stats_detect_raw', 'shiny')
-
-            if index_exist >= 1:
+            if self._schema_updater.check_index_exists('trs_stats_detect_raw', 'shiny'):
                 query = (
-                    "ALTER TABLE trs_stats_detect_raw DROP INDEX shiny, ADD INDEX shiny (is_shiny)"
+                    "ALTER TABLE trs_stats_detect_raw "
+                    "DROP INDEX shiny, "
+                    "ADD INDEX shiny (is_shiny)"
+                )
+            else:
+                query = (
+                    "ALTER TABLE trs_stats_detect_raw "
+                    "ADD INDEX shiny (is_shiny)"
                 )
             try:
                 self.dbwrapper.execute(query, commit=True)
@@ -252,7 +255,7 @@ class MADVersion(object):
 
         if self._version < 13:
             # Adding current_sleep for worker status
-            if self.dbwrapper.check_column_exists('trs_status', 'currentSleepTime') == 0:
+            if not self._schema_updater.check_column_exists('trs_status', 'currentSleepTime'):
                 query = (
                     "ALTER TABLE trs_status "
                     "ADD currentSleepTime INT(11) NOT NULL DEFAULT 0"

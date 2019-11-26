@@ -34,7 +34,8 @@ class path(object):
             ("/quests", self.quest),
             ("/quests_pub", self.quest_pub),
             ("/pick_worker", self.pickworker),
-            ("/jobstatus", self.jobstatus)
+            ("/jobstatus", self.jobstatus),
+            ('/robots.txt', self.send_static_file)
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -113,3 +114,5 @@ class path(object):
     def jobstatus(self):
         return jsonify(self._jobstatus)
 
+    def send_static_file(self):
+        return send_from_directory(self._app.static_folder, request.path[1:])

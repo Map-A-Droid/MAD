@@ -5,7 +5,7 @@ from flask import Flask
 from flask.logging import default_handler
 from werkzeug.utils import secure_filename
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from utils.MappingManager import MappingManager
 from utils.logging import InterceptHandler, logger
 # routes
@@ -27,7 +27,7 @@ app.secret_key = "8bc96865945be733f3973ba21d3c5949"
 log = logger
 
 
-def madmin_start(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
+def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
     # load routes
     if args.madmin_base_path:
         app.wsgi_app = ReverseProxied(app.wsgi_app, script_name=args.madmin_base_path)

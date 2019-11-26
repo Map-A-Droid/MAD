@@ -5,7 +5,7 @@ from PIL import Image
 from flask import (render_template, request, redirect, flash, jsonify, url_for)
 from werkzeug.utils import secure_filename
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from madmin.functions import (auth_required, generate_device_screenshot_path, nocache, allowed_file,
                               uploaded_files)
 from utils.MappingManager import MappingManager
@@ -20,9 +20,9 @@ from queue import Empty
 from utils.updater import jobType
 
 class control(object):
-    def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app,
+    def __init__(self, db_wrapper: DbWrapper, args, mapping_manager: MappingManager, websocket, logger, app,
                  deviceUpdater):
-        self._db: DbWrapperBase = db_wrapper
+        self._db: DbWrapper = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
@@ -436,7 +436,7 @@ class control(object):
             if file and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(self._args.upload_path, filename))
-                flash('File could be uploaded successfully')
+                flash('File uploaded successfully')
                 return redirect(url_for('uploaded_files'), code=302)
             else:
                 flash('Allowed file type is apk only!')
@@ -461,7 +461,7 @@ class control(object):
         filename = request.args.get('filename')
         if os.path.exists(os.path.join(self._args.upload_path, filename)):
             os.remove(os.path.join(self._args.upload_path, filename))
-            flash('File could be deleted successfully')
+            flash('File deleted successfully')
         return redirect(url_for('uploaded_files'), code=302)
 
     @auth_required
@@ -481,7 +481,7 @@ class control(object):
                 if self._adb_connect.push_file(adb, origin, os.path.join(self._args.upload_path, jobname)) and  \
                     self._adb_connect.send_shell_command(
                         adb, origin, "pm install -r /sdcard/Download/" + str(jobname)):
-                    flash('File could be installed successfully')
+                    flash('File installed successfully')
                 else:
                     flash('File could not be installed successfully :(')
             else:
@@ -521,7 +521,7 @@ class control(object):
     def delete_log_entry(self):
         id_ = request.args.get('id')
         if self._device_updater.delete_log_id(id_):
-            flash('Job could be deleted successfully')
+            flash('Job deleted successfully')
         else:
             flash('Job could not be deleted successfully')
         return redirect(url_for('install_status'), code=302)

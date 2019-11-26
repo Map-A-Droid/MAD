@@ -5,7 +5,7 @@ from multiprocessing.managers import SyncManager
 from threading import Thread, Event
 from typing import Dict
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbStatsSubmit import DbStatsSubmit
 from utils.MappingManager import MappingManager
 from utils.collections import Location
 from utils.logging import logger
@@ -20,7 +20,7 @@ class MitmMapperManager(SyncManager):
 
 
 class MitmMapper(object):
-    def __init__(self, mapping_manager: MappingManager, db_wrapper):
+    def __init__(self, mapping_manager: MappingManager, db_stats_submit: DbStatsSubmit):
         self.__mapping = {}
         self.__playerstats: Dict[str, PlayerStats] = {}
         self.__mapping_mutex = Lock()
@@ -29,7 +29,7 @@ class MitmMapper(object):
         self.__last_cellsid = {}
         self.__last_possibly_moved = {}
         self.__application_args = args
-        self.__db_wrapper: DbWrapperBase = db_wrapper
+        self._db_stats_submit: DbStatsSubmit = db_stats_submit
         self.__playerstats_db_update_stop: Event = Event()
         self.__playerstats_db_update_queue: Queue = Queue()
         self.__playerstats_db_update_mutex: Lock = Lock()
@@ -38,7 +38,7 @@ class MitmMapper(object):
         if self.__mapping_manager is not None:
             for origin in self.__mapping_manager.get_all_devicemappings().keys():
                 self.__mapping[origin] = {}
-                self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self.__db_wrapper, self)
+                self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
                 self.__playerstats[origin].open_player_stats()
         self.__playerstats_db_update_consumer.daemon = True
         self.__playerstats_db_update_consumer.start()
@@ -76,18 +76,18 @@ class MitmMapper(object):
         data_send_stats.append(PlayerStats.stats_complete_parser(client_id, stats, last_processed_timestamp))
         data_send_location.append(PlayerStats.stats_location_parser(client_id, stats, last_processed_timestamp))
 
-        self.__db_wrapper.submit_stats_complete(data_send_stats)
-        self.__db_wrapper.submit_stats_locations(data_send_location)
+        self._db_stats_submit.submit_stats_complete(data_send_stats)
+        self._db_stats_submit.submit_stats_locations(data_send_location)
         if self.__application_args.game_stats_raw:
             data_send_location_raw = PlayerStats.stats_location_raw_parser(client_id, stats, last_processed_timestamp)
             data_send_detection_raw = PlayerStats.stats_detection_raw_parser(client_id, stats, last_processed_timestamp)
-            self.__db_wrapper.submit_stats_locations_raw(data_send_location_raw)
-            self.__db_wrapper.submit_stats_detections_raw(data_send_detection_raw)
+            self._db_stats_submit.submit_stats_locations_raw(data_send_location_raw)
+            self._db_stats_submit.submit_stats_detections_raw(data_send_detection_raw)
 
         data_send_stats.clear()
         data_send_location.clear()
 
-        self.__db_wrapper.cleanup_statistics()
+        self._db_stats_submit.cleanup_statistics()
 
     def shutdown(self):
         self.__playerstats_db_update_stop.set()

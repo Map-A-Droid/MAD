@@ -8,14 +8,14 @@ from websocket.communicator import Communicator
 from utils.routeutil import check_walker_value_type
 from utils.MappingManager import MappingManager
 from mitm_receiver.MitmMapper import MitmMapper
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from utils.madGlobals import (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
                               InternalStopWorkerException)
 
 
 class WorkerConfigmode(object):
     def __init__(self, args, id, websocket_handler, walker, mapping_manager,
-                 mitm_mapper: MitmMapper, db_wrapper: DbWrapperBase, routemanager_name: str):
+                 mitm_mapper: MitmMapper, db_wrapper: DbWrapper, routemanager_name: str):
         self._args = args
         self._communicator = Communicator(
             websocket_handler, id, self, args.websocket_command_timeout)

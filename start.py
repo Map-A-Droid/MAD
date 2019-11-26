@@ -1,6 +1,6 @@
 import sys
 py_version = sys.version_info
-if py_version.major < 3 or (py_version.major < 3 and py_version.minor < 6):
+if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
     print("MAD requires at least python 3.6! Your version: {}.{}"
           .format(py_version.major, py_version.minor))
     sys.exit(1)
@@ -152,19 +152,7 @@ if __name__ == "__main__":
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
 
-    db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
-    wrong_modes = db_wrapper.running_mysql_modes()
-    if len(wrong_modes) > 0:
-        logger.error("Your MySQL/MariaDB sql_mode settings needs an adjustment.")
-        logger.error("Please drop those settings: {}.", ", ".join(wrong_modes))
-        logger.error("More info: https://mad-docs.readthedocs.io/en/latest/common-issues/faq/#sql-mode-error-mysql-strict-mode-mysql-mode")
-        sys.exit(1)
-    db_wrapper.check_and_create_spawn_tables()
-    db_wrapper.create_quest_database_if_not_exists()
-    db_wrapper.create_status_database_if_not_exists()
-    db_wrapper.create_usage_database_if_not_exists()
-    db_wrapper.create_statistics_databases_if_not_exists()
-    db_wrapper.create_madmin_databases_if_not_exists()
+    db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
     instance_id = db_wrapper.get_instance_id()
     data_manager = utils.data_manager.DataManager(logger, db_wrapper, instance_id)
     version = MADVersion(args, data_manager)
@@ -226,7 +214,7 @@ if __name__ == "__main__":
             MitmMapperManager.register('MitmMapper', MitmMapper)
             mitm_mapper_manager = MitmMapperManager()
             mitm_mapper_manager.start()
-            mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper)
+            mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper.stats_submit)
 
             from ocr.pogoWindows import PogoWindows
             pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
@@ -252,7 +240,7 @@ if __name__ == "__main__":
                 rarity.start_dynamic_rarity()
 
                 webhook_worker = WebhookWorker(
-                    args, data_manager, mapping_manager, rarity)
+                    args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
                 t_whw = Thread(name="webhook_worker",
                                target=webhook_worker.run_worker)
                 t_whw.daemon = True
@@ -313,10 +301,10 @@ if __name__ == "__main__":
             # mitm_mapper.shutdown()
             logger.debug("Calling mitm_mapper shutdown")
             mitm_mapper_manager.shutdown()
-        if db_wrapper_manager is not None:
-            logger.debug("Calling db_wrapper shutdown")
-            db_wrapper_manager.shutdown()
-            logger.debug("Done shutting down db_wrapper")
+        if db_pool_manager is not None:
+            logger.debug("Calling db_pool_manager shutdown")
+            db_pool_manager.shutdown()
+            logger.debug("Done shutting down db_pool_manager")
         logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))
         sys.exit(0)

@@ -5,7 +5,7 @@ from threading import Event, Thread
 from typing import List
 from datetime import datetime, timedelta
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from mitm_receiver.MitmMapper import MitmMapper
 from ocr.pogoWindows import PogoWindows
 from utils.MappingManager import MappingManager
@@ -45,7 +45,7 @@ class WorkerQuests(MITMBase):
         return ["pokestops"]
 
     def __init__(self, args, id, last_known_state, websocket_handler,  mapping_manager: MappingManager,
-                 routemanager_name: str, db_wrapper: DbWrapperBase, pogo_window_manager: PogoWindows, walker,
+                 routemanager_name: str, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker,
                  mitm_mapper: MitmMapper):
         MITMBase.__init__(self, args, id, last_known_state, websocket_handler,
                           mapping_manager=mapping_manager, routemanager_name=routemanager_name,
@@ -608,7 +608,13 @@ class WorkerQuests(MITMBase):
                     self._db_wrapper.delete_stop(latitude, longitude)
                     return False, True
 
-                if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0:
+                rocket_incident_diff_ms = 0
+                if len(fort.get('pokestop_displays', [])) > 0:
+                    # Rocket lenghts above 1 hour are probably not grunts and should be safe to spin.
+                    rocket_incident_diff_ms = fort.get('pokestop_displays')[0].get('incident_expiration_ms', 0) - \
+                                              fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
+                if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
+                        (0 < rocket_incident_diff_ms <= 3600000):
                     logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
                                 .format(str(latitude), str(longitude)))
                     self._rocket = True

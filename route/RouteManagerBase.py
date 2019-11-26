@@ -14,7 +14,7 @@ from queue import Queue, Empty
 
 import numpy as np
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from utils.data_manager import DataManager
 from utils.data_manager.modules.geofence import GeoFence
 from utils.data_manager.modules.routecalc import RouteCalc
@@ -47,11 +47,11 @@ class RoutePoolEntry:
 
 
 class RouteManagerBase(ABC):
-    def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, area_id: str, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapper, dbm: DataManager, area_id: str, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: GeoFence, path_to_exclude_geofence: GeoFence,
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15, joinqueue = None):
-        self.db_wrapper: DbWrapperBase = db_wrapper
+        self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
         self.name: str = name
         self._data_manager = dbm
@@ -243,6 +243,8 @@ class RouteManagerBase(ABC):
         logger.info("Try to activate PrioQ thread for route {}".format(str(self.name)))
         if (self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
             logger.info("PrioQ thread for route {} could be activate".format(str(self.name)))
+            if self._stop_update_thread.is_set():
+                self._stop_update_thread.clear()
             self._prio_queue = []
             if self.mode not in ["iv_mitm", "pokestops"]:
                 self.clustering_helper = ClusteringHelper(self._max_radius,
@@ -634,7 +636,7 @@ class RouteManagerBase(ABC):
                         and not self.init:
                     self._current_route_round_coords.remove(next_coord)
                 logger.info("{}: Moving on with location {} [{} coords left (Workerpool)]",
-                            str(self.name), str(next_coord), str(len(self._routepool[origin].queue)))
+                            str(self.name), str(next_coord), str(len(self._routepool[origin].queue)+1))
 
                 self._last_round_prio[origin] = False
                 self._routepool[origin].last_round_prio_event = False
