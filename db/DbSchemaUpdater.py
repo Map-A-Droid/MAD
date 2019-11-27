@@ -297,7 +297,6 @@ class DbSchemaUpdater:
         for table in madmin_conversion.TABLES:
             self._db_exec.execute(table, commit=True)
 
-
 class SchemaUpdateError(Exception):
 
     def __init__(self, schema_mod):

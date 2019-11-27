@@ -20,8 +20,6 @@ from db.DbWebhookReader import DbWebhookReader
 
 
 class DbWrapper:
-    def_spawn = 240
-
     def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
@@ -33,7 +31,6 @@ class DbWrapper:
         self.schema_updater.ensure_unversioned_tables_exist()
         self.schema_updater.ensure_unversioned_columns_exist()
         self.schema_updater.create_madmin_databases_if_not_exists()
-
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
@@ -48,7 +45,6 @@ class DbWrapper:
 
     def executemany(self, sql, args, commit=False):
         return self._db_exec.executemany(sql, args, commit)
-
 
     def autofetch_all(self, sql, args=()):
         """ Fetch all data and have it returned as a dictionary """

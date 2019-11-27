@@ -17,7 +17,7 @@ class DbPogoProtoSubmit:
     TODO: Most of the code is actually unrelated to database stuff and should be
     moved outside the db package.
     """
-    def_spawn = 240
+    default_spawndef = 240
 
     def __init__(self, db_exec: PooledQueryExecutor, lure_duration: int):
         self._db_exec: PooledQueryExecutor = db_exec
@@ -250,7 +250,7 @@ class DbPogoProtoSubmit:
                 if spawndef_:
                     newspawndef = self._set_spawn_see_minutesgroup(spawndef_, minpos)
                 else:
-                    newspawndef = self._set_spawn_see_minutesgroup(self.def_spawn, minpos)
+                    newspawndef = self._set_spawn_see_minutesgroup(self.default_spawndef, minpos)
 
                 last_scanned = None
                 last_non_scanned = None
