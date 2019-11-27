@@ -1,26 +1,30 @@
 import sys
 from multiprocessing.managers import SyncManager
 
-from db.dbWrapperBase import DbWrapperBase
-from db.rmWrapper import RmWrapper, RmWrapperManager
+from db.PooledQueryExecutor import PooledQueryExecutor, PooledQuerySyncManager
+from db.DbWrapper import DbWrapper
 from utils.logging import logger
 
 
 class DbFactory:
     @staticmethod
-    def get_wrapper(args) -> (DbWrapperBase, SyncManager):
-        if args.db_method == "rm":
-            RmWrapperManager.register('RmWrapper', RmWrapper)
-            rm_wrapper_manager = RmWrapperManager()
-            rm_wrapper_manager.start()
-            rm_wrapper = rm_wrapper_manager.RmWrapper(args)
-            return rm_wrapper, rm_wrapper_manager
-        elif args.db_method == "monocle":
+    def get_wrapper(args) -> (DbWrapper, SyncManager):
+        if args.db_method == "monocle":
             logger.error(
                 "MAD has dropped Monocle support. Please consider checking out the "
                 "'migrate_to_rocketmap.sh' script in the scripts folder."
             )
             sys.exit(1)
-        else:
+        elif args.db_method != "rm":
             logger.error("Invalid db_method in config. Exiting")
             sys.exit(1)
+
+        PooledQuerySyncManager.register("PooledQueryExecutor", PooledQueryExecutor)
+        db_pool_manager = PooledQuerySyncManager()
+        db_pool_manager.start()
+        db_exec = db_pool_manager.PooledQueryExecutor(host=args.dbip, port=args.dbport,
+                                                      username=args.dbusername, password=args.dbpassword,
+                                                      database=args.dbname, poolsize=args.db_poolsize)
+        db_wrapper = DbWrapper(db_exec=db_exec, args=args)
+
+        return db_wrapper, db_pool_manager

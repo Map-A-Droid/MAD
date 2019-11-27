@@ -1,16 +1,18 @@
 from multiprocessing import Queue, Process
 from datetime import datetime
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
+from db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mitm_receiver.MitmMapper import MitmMapper
 from utils.logging import logger
 
 
 class MitmDataProcessor(Process):
-    def __init__(self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper, db_wrapper, name=None):
+    def __init__(self, multi_proc_queue: Queue, application_args, mitm_mapper: MitmMapper,
+                 db_wrapper: DbWrapper, name=None):
         Process.__init__(self, name=name)
         self.__queue: Queue = multi_proc_queue
-        self.__db_wrapper: DbWrapperBase = db_wrapper
+        self.__db_submit: DbPogoProtoSubmit = db_wrapper.proto_submit
         self.__application_args = application_args
         self.__mitm_mapper: MitmMapper = mitm_mapper
 
@@ -69,42 +71,33 @@ class MitmDataProcessor(Process):
                     origin), str(datetime.fromtimestamp(received_timestamp)))
 
                 if self.__application_args.weather:
-                    self.__db_wrapper.submit_weather_map_proto(
-                        origin, data["payload"], received_timestamp)
+                    self.__db_submit.weather(origin, data["payload"], received_timestamp)
 
-                self.__db_wrapper.submit_pokestops_map_proto(
-                    origin, data["payload"])
-                self.__db_wrapper.submit_gyms_map_proto(origin, data["payload"])
-                self.__db_wrapper.submit_raids_map_proto(
-                    origin, data["payload"], self.__mitm_mapper)
+                self.__db_submit.stops(origin, data["payload"])
+                self.__db_submit.gyms(origin, data["payload"])
+                self.__db_submit.raids(origin, data["payload"], self.__mitm_mapper)
 
-                self.__db_wrapper.submit_spawnpoints_map_proto(
-                    origin, data["payload"])
+                self.__db_submit.spawnpoints(origin, data["payload"])
                 mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
-                self.__db_wrapper.submit_mons_map_proto(
-                    origin, data["payload"], mon_ids_iv, self.__mitm_mapper)
-                self.__db_wrapper.submit_cells(origin, data["payload"])
+                self.__db_submit.mons(origin, data["payload"], mon_ids_iv, self.__mitm_mapper)
+                self.__db_submit.cells(origin, data["payload"])
                 self.__mitm_mapper.submit_gmo_for_location(origin, data["payload"])
                 logger.debug2("Done processing GMO of {}".format(origin))
             elif type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
-                    logger.info("Processing Encounter received from {} at {}", str(
-                        origin), str(received_timestamp))
-                    self.__db_wrapper.submit_mon_iv(
-                        origin, received_timestamp, data["payload"], self.__mitm_mapper)
+                    logger.info("Processing Encounter received from {} at {}", str(origin), str(received_timestamp))
+                    self.__db_submit.mon_iv(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     logger.debug2("Done processing encounter of {}".format(origin))
                 else:
-                    logger.debug(
-                        'Playerlevel lower than 30 - not processing encounter Data')
+                    logger.debug('Playerlevel lower than 30 - not processing encounter Data')
             elif type == 101:
                 logger.debug2("Processing proto 101 of {}".format(origin))
-                self.__db_wrapper.submit_quest_proto(origin, data["payload"], self.__mitm_mapper)
+                self.__db_submit.quest(origin, data["payload"], self.__mitm_mapper)
                 logger.debug2("Done processing proto 101 of {}".format(origin))
             elif type == 104:
                 logger.debug2("Processing proto 104 of {}".format(origin))
-                self.__db_wrapper.submit_pokestops_details_map_proto(
-                    data["payload"])
+                self.__db_submit.stop_details(data["payload"])
                 logger.debug2("Done processing proto 104 of {}".format(origin))
             elif type == 4:
                 logger.debug2("Processing proto 4 of {}".format(origin))
@@ -112,5 +105,5 @@ class MitmDataProcessor(Process):
                 logger.debug2("Done processing proto 4 of {}".format(origin))
             elif type == 156:
                 logger.debug2("Processing proto 156 of {}".format(origin))
-                self.__db_wrapper.submit_gym_proto(origin, data["payload"])
+                self.__db_submit.gym(origin, data["payload"])
                 logger.debug2("Done processing proto 156 of {}".format(origin))

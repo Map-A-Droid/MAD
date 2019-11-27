@@ -1,7 +1,7 @@
 import collections
 import time
 from typing import List
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from route.RouteManagerBase import RouteManagerBase
 
 from utils.logging import logger
@@ -40,7 +40,7 @@ class RouteManagerQuests(RouteManagerBase):
 
         self._init_route_queue()
 
-    def __init__(self, db_wrapper: DbWrapperBase, dbm, area_id, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", joinqueue = None):

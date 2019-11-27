@@ -8,7 +8,7 @@ from pathlib import Path
 from threading import Thread
 from typing import Optional, List, Dict, Tuple
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from geofence.geofenceHelper import GeofenceHelper
 from route import RouteManagerBase, RouteManagerIV
 from route.RouteManagerFactory import RouteManagerFactory
@@ -78,8 +78,8 @@ class MappingManagerManager(SyncManager):
 
 
 class MappingManager:
-    def __init__(self, db_wrapper: DbWrapperBase, args, data_manager, configmode: bool = False):
-        self.__db_wrapper: DbWrapperBase = db_wrapper
+    def __init__(self, db_wrapper: DbWrapper, args, data_manager, configmode: bool = False):
+        self.__db_wrapper: DbWrapper = db_wrapper
         self.__args = args
         self.__configmode: bool = configmode
         self.__data_manager = data_manager

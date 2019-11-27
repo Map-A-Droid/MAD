@@ -5,7 +5,7 @@ from PIL import Image
 from flask import (render_template, request, redirect, flash, jsonify, url_for)
 from werkzeug.utils import secure_filename
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from madmin.functions import (auth_required, generate_device_screenshot_path, nocache, allowed_file,
                               uploaded_files)
 from utils.MappingManager import MappingManager
@@ -20,9 +20,9 @@ from queue import Empty
 from utils.updater import jobType
 
 class control(object):
-    def __init__(self, db_wrapper: DbWrapperBase, args, mapping_manager: MappingManager, websocket, logger, app,
+    def __init__(self, db_wrapper: DbWrapper, args, mapping_manager: MappingManager, websocket, logger, app,
                  deviceUpdater):
-        self._db: DbWrapperBase = db_wrapper
+        self._db: DbWrapper = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'

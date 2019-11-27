@@ -5,7 +5,7 @@ from typing import List, Optional
 from flask import (jsonify, render_template, request, redirect, url_for)
 from flask_caching import Cache
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from madmin.functions import (auth_required, getCoordFloat, getBoundParameter,
                               get_geofences, generate_coords_from_geofence, Path)
 from utils.MappingManager import MappingManager
@@ -20,8 +20,8 @@ cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 
 class map(object):
-    def __init__(self, db: DbWrapperBase, args, mapping_manager: MappingManager, app):
-        self._db: DbWrapperBase = db
+    def __init__(self, db: DbWrapper, args, mapping_manager: MappingManager, app):
+        self._db: DbWrapper = db
         self._args = args
         self._app = app
         if self._args.madmin_time == "12":

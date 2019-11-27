@@ -14,7 +14,7 @@ from queue import Queue, Empty
 
 import numpy as np
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from utils.data_manager import DataManager
 from geofence.geofenceHelper import GeofenceHelper
 from route.routecalc.ClusteringHelper import ClusteringHelper
@@ -46,11 +46,11 @@ class RoutePoolEntry:
 
 
 class RouteManagerBase(ABC):
-    def __init__(self, db_wrapper: DbWrapperBase, dbm: DataManager, area_id: str, coords: List[Location], max_radius: float,
+    def __init__(self, db_wrapper: DbWrapper, dbm: DataManager, area_id: str, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
                  level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15, joinqueue = None):
-        self.db_wrapper: DbWrapperBase = db_wrapper
+        self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
         self.name: str = name
         self._data_manager = dbm

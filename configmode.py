@@ -2,7 +2,7 @@ import os
 import sys
 from threading import Thread
 
-from db.dbWrapperBase import DbWrapperBase
+from db.DbWrapper import DbWrapper
 from db.DbFactory import DbFactory
 from utils.MappingManager import MappingManagerManager, MappingManager
 from utils.logging import initLogging, logger
@@ -24,7 +24,7 @@ def create_folder(folder):
         os.makedirs(folder)
 
 
-def start_madmin(args, db_wrapper: DbWrapperBase, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
+def start_madmin(args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
     from madmin.madmin import madmin_start
     madmin_start(args, db_wrapper, ws_server, mapping_manager, data_manager, deviceUpdater, jobstatus)
 
@@ -44,13 +44,8 @@ if __name__ == "__main__":
     create_folder(args.file_path)
     create_folder(args.upload_path)
 
-    db_wrapper, db_wrapper_manager = DbFactory.get_wrapper(args)
+    db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
-    db_wrapper.check_and_create_spawn_tables()
-    db_wrapper.create_quest_database_if_not_exists()
-    db_wrapper.create_status_database_if_not_exists()
-    db_wrapper.create_usage_database_if_not_exists()
-    db_wrapper.create_statistics_databases_if_not_exists()
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
