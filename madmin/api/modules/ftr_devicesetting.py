@@ -182,15 +182,6 @@ class APIDeviceSetting(apiHandler.ResourceHandler):
                 "expected": int
                 }
             },
-            "route_calc_algorithm": {
-                "settings": {
-                    "type": "option",
-                    "values": ["optimized","quick"],
-                    "require": False,
-                    "description": "Method of calculation for routes. (Default optimized)",
-                "expected": str
-                }
-            },
             "startcoords_of_walker": {
                 "settings": {
                     "type": "text",
