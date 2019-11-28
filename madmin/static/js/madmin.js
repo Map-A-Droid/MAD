@@ -1198,9 +1198,9 @@ new Vue({
       var last_non_scanned = moment(spawn["lastnonscan"])
 
       if (last_scanned.isBefore(last_non_scanned)) {
-        var last_mon = last_scanned
-      } else {
         var last_mon = last_non_scanned
+      } else {
+        var last_mon = last_scanned
       }
 
       return `
