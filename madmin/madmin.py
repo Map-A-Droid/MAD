@@ -4,6 +4,7 @@ import logging
 from flask import Flask
 from flask.logging import default_handler
 from werkzeug.utils import secure_filename
+from werkzeug.middleware.proxy_fix import ProxyFix
 
 from db.DbWrapper import DbWrapper
 from utils.MappingManager import MappingManager
@@ -21,6 +22,7 @@ from madmin.reverseproxy import ReverseProxied
 sys.path.append("..")  # Adds higher directory to python modules path.
 
 app = Flask(__name__)
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1) 
 app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.secret_key = "8bc96865945be733f3973ba21d3c5949"
