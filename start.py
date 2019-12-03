@@ -185,7 +185,7 @@ if __name__ == "__main__":
     t_file_watcher = None
     t_whw = None
 
-    data_manager = utils.data_manager.DataManager(logger, args)
+    data_manager = utils.data_manager.DataManager(args)
 
     if args.only_scan or args.only_routes:
         MappingManagerManager.register('MappingManager', MappingManager)

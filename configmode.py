@@ -49,7 +49,7 @@ if __name__ == "__main__":
     version = MADVersion(args, db_wrapper)
     version.get_version()
 
-    data_manager = utils.data_manager.DataManager(logger, args)
+    data_manager = utils.data_manager.DataManager(args)
 
     MappingManagerManager.register('MappingManager', MappingManager)
     mapping_manager_manager = MappingManagerManager()
