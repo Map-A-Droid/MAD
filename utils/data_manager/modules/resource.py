@@ -2,6 +2,7 @@ from .. import dm_exceptions
 from collections import UserDict
 import copy
 import mysql
+from utils.logging import logger
 
 USER_READABLE_ERRORS = {
     str: 'string (MapADroid)',
@@ -12,8 +13,7 @@ USER_READABLE_ERRORS = {
 }
 
 class ResourceTracker(UserDict):
-    def __init__(self, logger, config, data_manager, initialdata={}):
-        self._logger = logger
+    def __init__(self, config, data_manager, initialdata={}):
         self.__config = config
         self._data_manager = data_manager
         self.issues = {
@@ -165,8 +165,7 @@ class Resource(object):
     name_field = 'TBD'
     search_field = None
 
-    def __init__(self, logger, data_manager, identifier=None):
-        self._logger = logger
+    def __init__(self, data_manager, identifier=None):
         self.identifier = identifier
         self._data_manager = data_manager
         self.instance_id = self._data_manager.instance_id
@@ -324,7 +323,7 @@ class Resource(object):
                         defaults[field] = val['settings']['empty']
                     except:
                         continue
-                self._data[section] = ResourceTracker(self._logger, self.configuration[section], self._data_manager,
+                self._data[section] = ResourceTracker(self.configuration[section], self._data_manager,
                                                       initialdata=defaults)
             except KeyError:
                 continue

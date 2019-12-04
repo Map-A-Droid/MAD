@@ -4,6 +4,7 @@ import json
 from route.routecalc.ClusteringHelper import ClusteringHelper
 from utils.collections import Location
 from route.routecalc.util import *
+from utils.logging import logger
 
 class RouteCalc(resource.Resource):
     table = 'settings_routecalc'
@@ -65,7 +66,7 @@ class RouteCalc(resource.Resource):
         if overwrite_calculation:
             calc_type = 'quick'
         if delete_old_route:
-            self._logger.debug("Deleting routefile...")
+            logger.debug("Deleting routefile...")
             self._data['fields']['routefile'] = []
             self.save()
         new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
@@ -74,9 +75,9 @@ class RouteCalc(resource.Resource):
 
     def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, num_processes=1, algorithm='optimized', useS2: bool = False, S2level: int=15):
         export_data = []
-        if useS2: self._logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
+        if useS2: logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
         if self._data['fields']['routefile'] is not None and len(self._data['fields']['routefile']) > 0:
-            self._logger.debug('Using routefile from DB')
+            logger.debug('Using routefile from DB')
             for line in self._data['fields']['routefile']:
                 # skip empty lines
                 if not line.strip():
@@ -88,23 +89,23 @@ class RouteCalc(resource.Resource):
 
         lessCoordinates = coords
         if len(coords) > 1 and maxRadius and maxCoordsInRadius:
-            self._logger.info("Calculating...")
+            logger.info("Calculating...")
             newCoords = self.getLessCoords(coords, maxRadius, maxCoordsInRadius, useS2, S2level)
             lessCoordinates = np.zeros(shape=(len(newCoords), 2))
             for i in range(len(lessCoordinates)):
                 lessCoordinates[i][0] = newCoords[i][0]
                 lessCoordinates[i][1] = newCoords[i][1]
-            self._logger.debug("Coords summed up: {}, that's just {} coords",
+            logger.debug("Coords summed up: {}, that's just {} coords",
                          str(lessCoordinates), str(len(lessCoordinates)))
-        self._logger.debug("Got {} coordinates", len(lessCoordinates))
+        logger.debug("Got {} coordinates", len(lessCoordinates))
         if len(lessCoordinates) < 3:
-            self._logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
+            logger.debug("less than 3 coordinates... not gonna take a shortest route on that")
             export_data = []
             for i in range(len(lessCoordinates)):
                 export_data.append({'lat': lessCoordinates[i][0].item(),
                                     'lng': lessCoordinates[i][1].item()})
             return export_data
-        self._logger.info("Calculating a short route through all those coords. Might take a while")
+        logger.info("Calculating a short route through all those coords. Might take a while")
         from timeit import default_timer as timer
         start = timer()
         if algorithm == 'quick':
@@ -113,7 +114,7 @@ class RouteCalc(resource.Resource):
             from route.routecalc.calculate_route_optimized import route_calc_impl
         sol_best = route_calc_impl(lessCoordinates, num_processes)
         end = timer()
-        self._logger.info("Calculated route in {} minutes", str((end - start) / 60))
+        logger.info("Calculated route in {} minutes", str((end - start) / 60))
         calc_coords = []
         for i in range(len(sol_best)):
             calc_coord = '%s,%s' % (str(lessCoordinates[int(sol_best[i])][0].item()),

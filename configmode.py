@@ -47,7 +47,7 @@ if __name__ == "__main__":
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
     instance_id = db_wrapper.get_instance_id()
-    data_manager = utils.data_manager.DataManager(logger, db_wrapper, instance_id)
+    data_manager = utils.data_manager.DataManager(db_wrapper, instance_id)
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
     version = MADVersion(args, data_manager)
     version.get_version()

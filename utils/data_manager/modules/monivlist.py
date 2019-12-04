@@ -1,5 +1,6 @@
 from .. import dm_exceptions
 from . import resource
+from utils.logging import logger
 
 class MonIVList(resource.Resource):
     table = 'settings_monivlist'
@@ -66,5 +67,5 @@ class MonIVList(resource.Resource):
             try:
                 self._dbc.autoexec_insert('settings_monivlist_to_mon', mon_data)
             except:
-                self._logger.info('Duplicate pokemon %s detected in list %s' % (mon, self.identifier,))
+                logger.info('Duplicate pokemon %s detected in list %s' % (mon, self.identifier,))
         return self.identifier

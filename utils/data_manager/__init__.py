@@ -1,20 +1,20 @@
 from . import modules
 from .dm_exceptions import *
 import collections
+from utils.logging import logger
 
 # This is still known as the data manager but its more of a Resource Factory.  Its sole purpose is to produce a
 # single resource or a list of resources
 class DataManager(object):
-    def __init__(self, logger, dbc, instance_id):
-        self.logger = logger
+    def __init__(self, dbc, instance_id):
         self.dbc = dbc
         self.instance_id = instance_id
 
     def get_resource(self, section, identifier=None, **kwargs):
         if section == 'area':
-            return modules.AreaFactory(self.logger, self, identifier=identifier)
+            return modules.AreaFactory(self, identifier=identifier)
         try:
-            return modules.MAPPINGS[section](self.logger, self, identifier=identifier)
+            return modules.MAPPINGS[section](self, identifier=identifier)
         except KeyError:
             raise dm_exceptions.InvalidSection()
 
@@ -58,7 +58,7 @@ class DataManager(object):
         identifiers = self.dbc.autofetch_column(sql % tuple(args), args=(self.instance_id,))
         data = collections.OrderedDict()
         for identifier in identifiers:
-            elem = resource_class(self.logger, self, identifier=identifier)
+            elem = resource_class(self, identifier=identifier)
             if backend:
                 elem = elem.get_resource()
             data[identifier] = elem

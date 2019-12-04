@@ -10,14 +10,14 @@ from .walker import Walker
 from .walkerarea import WalkerArea
 from .. import dm_exceptions
 
-def AreaFactory(logger, data_manager, identifier=None, mode=None):
+def AreaFactory(data_manager, identifier=None, mode=None):
     if identifier is None and mode is None:
         raise dm_exceptions.InvalidArea(mode)
     elif identifier is not None:
         sql = "SELECT `mode` FROM `settings_area` WHERE `area_id` = %s and `instance_id` = %s"
         mode = data_manager.dbc.autofetch_value(sql, args=(identifier, data_manager.instance_id))
     try:
-        return AREA_MAPPINGS[mode](logger, data_manager, identifier=identifier)
+        return AREA_MAPPINGS[mode](data_manager, identifier=identifier)
     except KeyError:
         if identifier is not None:
             raise dm_exceptions.UnknownIdentifier()

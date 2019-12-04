@@ -52,7 +52,7 @@ class Walker(resource.Resource):
         for walkerarea_id in walkerareas:
             in_use = self._dbc.autofetch_value(sql, args=(walkerarea_id,))
             if not in_use:
-                walkerarea = WalkerArea(self._logger, self._data_manager, identifier=walkerarea_id)
+                walkerarea = WalkerArea(self._data_manager, identifier=walkerarea_id)
                 walkerarea.delete()
 
     def _load(self):
