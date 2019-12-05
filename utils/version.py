@@ -278,8 +278,7 @@ class MADVersion(object):
                 sys.exit(1)
             with open(self._application_args.mappings, 'rb') as fh:
                 old_data = json.load(fh)
-
-            if "migrated" in old_data and old_data["migrated"] is True:
+            if ("migrated" in old_data and old_data["migrated"] is True):
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(old_data, outfile, indent=4, sort_keys=True)
             else:
@@ -304,6 +303,7 @@ class MADVersion(object):
 
                     for entry in entries:
                         if key == 'monivlist':
+                            print(entry)
                             cache[key][entry['monlist']] = index
                         if key == 'devicesettings':
                             cache[key][entry['devicepool']] = index
@@ -449,7 +449,7 @@ class MADVersion(object):
                     if section == 'areas':
                         mode = elem['mode']
                         del elem['mode']
-                        resource = utils.data_manager.modules.MAPPINGS['area'](logger, self.data_manager, mode=mode)
+                        resource = utils.data_manager.modules.MAPPINGS['area'](self.data_manager, mode=mode)
                         geofence_sections = ['geofence_included', 'geofence_excluded']
                         for geofence_section in geofence_sections:
                             try:
@@ -494,7 +494,7 @@ class MADVersion(object):
                             section = 'device'
                         elif section == 'devicesettings':
                             section = 'devicepool'
-                        resource = utils.data_manager.modules.MAPPINGS[section](logger, self.data_manager)
+                        resource = utils.data_manager.modules.MAPPINGS[section](self.data_manager)
                     # Settings made it into some configs where it should not be.  lets clear those out now
                     if 'settings' in elem and 'settings' not in resource.configuration:
                         del elem['settings']
