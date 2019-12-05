@@ -313,7 +313,7 @@ class ResourceHandler(object):
         """ API call to update data """
         append = self.api_req.headers.get('X-Append', False)
         try:
-            resource = resource_def(self._logger, self._data_manager, identifier=identifier)
+            resource = resource_def(self._data_manager, identifier=identifier)
             resource.update(data, append=append)
             resource.save()
         except utils.data_manager.UnknownIdentifier:
@@ -327,7 +327,7 @@ class ResourceHandler(object):
     def post(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to create data """
         mode = self.api_req.headers.get('X-Mode')
-        resource = resource_def(self._logger, self._data_manager)
+        resource = resource_def(self._data_manager)
         if identifier is None:
             try:
                 resource.update(data)
@@ -351,9 +351,9 @@ class ResourceHandler(object):
         """ API call to replace an object """
         try:
             # Validate the resource exists before performing the replace
-            resource = resource_def(self._logger, self._data_manager, identifier=identifier)
+            resource = resource_def(self._data_manager, identifier=identifier)
             # Create an empty resource and pre-load the identifier prior to saving
-            resource = resource_def(self._logger, self._data_manager)
+            resource = resource_def(self._data_manager)
             resource.update(data)
             resource.identifier = identifier
             resource.save()

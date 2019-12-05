@@ -7,7 +7,7 @@ class APIRouteCalc(apiHandler.ResourceHandler):
     has_rpc_calls = True
 
     def post(self, identifier, data, resource_def, resource_info, *args, **kwargs):
-        resource = resource_def(self._logger, self._data_manager)
+        resource = resource_def(self._data_manager)
         if self.api_req.content_type == 'application/json-rpc':
             try:
                 call = self.api_req.data['call']
