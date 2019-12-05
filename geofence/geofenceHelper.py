@@ -19,7 +19,6 @@ class GeofenceHelper:
         self.geofenced_areas = []
         self.excluded_areas = []
         self.use_matplotlib = 'matplotlib' in sys.modules
-
         if include_geofence or exclude_geofence:
             self.geofenced_areas = self.parse_geofences_file(
                 include_geofence, excluded=False)
@@ -117,7 +116,7 @@ class GeofenceHelper:
                             'polygon': []
                         })
                         logger.debug('Found geofence with no name')
-
+                        first_line = False
                     lat, lon = line.split(",")
                     LatLon = {'lat': float(lat), 'lon': float(lon)}
                     geofences[-1]['polygon'].append(LatLon)
