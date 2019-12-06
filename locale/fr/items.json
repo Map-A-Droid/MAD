@@ -159,6 +159,10 @@
     "protoname": "ITEM_GEN4_EVOLUTION_STONE",
     "name": "Pierre Sinnoh"
   },
+  "1107": {
+    "protoname": "ITEM_GEN5_EVOLUTION_STONE",
+    "name": "Pierre Unys"
+  },
   "1201": {
     "protoname": "ITEM_MOVE_REROLL_FAST_ATTACK",
     "name": "CT Attaque Immédiate"
