@@ -67,6 +67,18 @@
     "protoname": "ITEM_TROY_DISK",
     "name": "Lure Module"
   },
+  "502": {
+    "protoname": "ITEM_TROY_DISK_GLACIAL",
+    "name": "Glacial Lure Module"
+  },
+  "503": {
+    "protoname": "ITEM_TROY_DISK_MOSSY",
+    "name": "Mossy Lure Module"
+  },
+  "504": {
+    "protoname": "ITEM_TROY_DISK_MAGNETIC",
+    "name": "Magnetic Lure Module"
+  },
   "602": {
     "protoname": "ITEM_X_ATTACK",
     "name": "X Attack"
