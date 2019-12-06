@@ -365,7 +365,9 @@ class RouteManagerBase(ABC):
     def _merge_priority_queue(self, new_queue):
         if new_queue is not None:
             with self._manager_mutex:
-                merged = list(new_queue)
+                logger.info("Merging existing Q of {} events with {} new events", len(self._prio_queue), len(new_queue))
+                merged = set(new_queue + self._prio_queue)
+                merged = list(merged)
                 logger.info("New raw priority queue with {} entries", len(merged))
                 merged = self._filter_priority_queue_internal(merged)
                 heapq.heapify(merged)
@@ -499,9 +501,13 @@ class RouteManagerBase(ABC):
             delete_before = time.time() - delete_seconds_passed
         else:
             delete_before = 0
+        len_before = len(latest)
         latest = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
+        len_after = len(latest)
+        logger.warning("Dropped from {} to {} because of remove_from_queue_backlog. "
+                       "Make sure you have enough workers for your size of the area or "
+                       "adjust the size of the area itself.", len_before, len_after)
         # TODO: sort latest by modified flag of event
-        # merged = self._merge_queue(latest, self._max_radius, 2, timedelta_seconds)
         merged = self.clustering_helper.get_clustered(latest)
         return merged
 
@@ -571,7 +577,8 @@ class RouteManagerBase(ABC):
                                                                   or self.starve_route)
                                                                  and self._prio_queue and len(self._prio_queue) > 0
                                                                  and self._prio_queue[0][0] < time.time())):
-                logger.debug("{}: Priority event", self.name)
+                logger.info("The upcoming event of route {} is due at {}", self.name,
+                            datetime.fromtimestamp(self._prio_queue[0][0]).strftime('%Y-%m-%d %H:%M:%S'))
                 next_coord = heapq.heappop(self._prio_queue)[1]
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
