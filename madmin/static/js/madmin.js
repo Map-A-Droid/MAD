@@ -984,11 +984,7 @@ new Vue({
           var anchor = [30, 30]
           break;
         case 7:
-          var form = '00';
-          if (quest_pokemon_id === 327) {
-            form = '11';
-          }
-          var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${form}.png`;
+          var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_00.png`;
           var size = [30, 30]
           var anchor = [30, 30]
           break;
@@ -1018,11 +1014,7 @@ new Vue({
           var rewardtext = `${quest_item_amount} ${quest_item_type}`;
           break;
         case 7:
-          var form = '00';
-          if (quest_pokemon_id === 327) {
-            form = '11';
-          }
-          var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_${form}.png`;
+          var image = `${iconBasePath}/pokemon_icon_${String.prototype.padStart.call(quest_pokemon_id, 3, 0)}_00.png`;
           var rewardtext = quest_pokemon_name;
           var size = "150%";
           break;

@@ -116,6 +116,12 @@ function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_
     return rewardtext;
 }
 
+// Map pokemon_id to a pokemon_form in case the given pokemon_form is 0
+var replace_zero_forms = {
+    '327': 11, // Spinda
+    '412': 11  // Burmy
+};
+
 function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id) {
     switch (quest_reward_type) {
         case 2:
@@ -125,10 +131,7 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id) {
             var image = '<center><img src="static/quest/reward_stardust.png" width="50"></center>';
             break;
         case 7:
-            var form = '00';
-            if (quest_pokemon_id === '327') {
-                form = '11';
-            }
+            var form = replace_zero_forms[quest_pokemon_id] || '00';
             var image = '<center><img src="asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png" width="100"></center>';
             break;
     }
