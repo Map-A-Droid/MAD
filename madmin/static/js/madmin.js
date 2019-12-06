@@ -1186,6 +1186,8 @@ new Vue({
         var spawntiming = ""
       }
 
+      const lastMon = spawn["lastscan"] > spawn["lastnonscan"] ? spawn["lastscan"] : spawn["lastnonscan"]
+
       return `
         <div class="content">
           <div  class="id"><i class="fa fa-fingerprint"></i> <span>${spawn["id"]}</span></div>
@@ -1196,7 +1198,7 @@ new Vue({
          <br>
           <div cla ss="spawnContent">
             <div class="spawnFirstDetection"><i class="fas fa-baby"></i> First seen: <strong>${spawn["first_detection"]}</strong></div>
-            <div class="timestamp"><i class="fas fa-eye"></i> <abbr title="This is the time a mon has been seen on this spawnpoint.">Last mon seen</abbr>: <strong>${spawn["lastnonscan"]}</strong></div>
+            <div class="timestamp"><i class="fas fa-eye"></i> <abbr title="This is the time a mon has been seen on this spawnpoint.">Last mon seen</abbr>: <strong>${lastMon}</strong></div>
             <div class="timestamp"><i class="fa fa-clock"></i> <abbr title="The timestamp of the last time this spawnpoint's despawn time has been confirmed.">Last confirmation</abbr>: <strong>${spawn["lastscan"]}</strong></div>
             <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown despawn time"}</strong></div>
             <div class="spawnTiming">${spawntiming}</div>
