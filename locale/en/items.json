@@ -67,6 +67,18 @@
     "protoname": "ITEM_TROY_DISK",
     "name": "Lure Module"
   },
+  "502": {
+    "protoname": "ITEM_TROY_DISK_GLACIAL",
+    "name": "Glacial Lure Module"
+  },
+  "503": {
+    "protoname": "ITEM_TROY_DISK_MOSSY",
+    "name": "Mossy Lure Module"
+  },
+  "504": {
+    "protoname": "ITEM_TROY_DISK_MAGNETIC",
+    "name": "Magnetic Lure Module"
+  },
   "602": {
     "protoname": "ITEM_X_ATTACK",
     "name": "X Attack"
@@ -158,6 +170,10 @@
   "1106": {
     "protoname": "ITEM_GEN4_EVOLUTION_STONE",
     "name": "Sinnoh Stone"
+  },
+  "1107": {
+    "protoname": "ITEM_GEN5_EVOLUTION_STONE",
+    "name": "Unova Stone"
   },
   "1201": {
     "protoname": "ITEM_MOVE_REROLL_FAST_ATTACK",
