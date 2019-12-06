@@ -67,6 +67,18 @@
     "protoname": "ITEM_TROY_DISK",
     "name": "Module Leurre"
   },
+  "502": {
+    "protoname": "ITEM_TROY_DISK_GLACIAL",
+    "name": "Leurre Glacial"
+  },
+  "503": {
+    "protoname": "ITEM_TROY_DISK_MOSSY",
+    "name": "Leurre Moussu"
+  },
+  "504": {
+    "protoname": "ITEM_TROY_DISK_MAGNETIC",
+    "name": "Leurre Magnétique"
+  },
   "602": {
     "protoname": "ITEM_X_ATTACK",
     "name": "Attaque +"
