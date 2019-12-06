@@ -740,6 +740,11 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
+        # Disable vibration
+        # This only needs to be done once per boot
+        # So, we'll just do it when pogo actually needs starting
+        self._communicator.passthrough("su -c chmod 444 /sys/devices/virtual/timed_output/vibrator/enable")
+
         cur_time = time.time()
         start_result = False
         self._mitm_mapper.set_injection_status(self._id, False)
