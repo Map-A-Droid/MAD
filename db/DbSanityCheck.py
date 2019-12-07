@@ -22,7 +22,7 @@ class DbSanityCheck:
                 detected_wrong_modes.append(mode)
         if len(detected_wrong_modes) > 0:
             logger.error("Your MySQL/MariaDB sql_mode settings needs an adjustment.")
-            logger.error("Please drop those settings: {}.", ", ".join(wrong_modes))
+            logger.error("Please drop those settings: {}.", ", ".join(detected_wrong_modes))
             logger.error(
                 "More info: https://mad-docs.readthedocs.io/en/latest/common-issues/faq/#sql-mode-error-mysql-strict-mode-mysql-mode")
             sys.exit(1)
