@@ -32,6 +32,7 @@ class PogoWindows:
 
         self._ScreenType: dict = {}
 
+        self._ScreenType[1]: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
         self._ScreenType[2]: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
         self._ScreenType[3]: list = ['KIDS', 'Google', 'Facebook']
         self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
@@ -40,14 +41,17 @@ class PogoWindows:
         self._ScreenType[6]: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
                                            'Authentification', 'Essaye']
         self._ScreenType[7]: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
-        self._ScreenType[1]: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
+        self._ScreenType[8]: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
         self._ScreenType[12]: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
                                   'notifications', 'évenements,', 'evenements,', 'offres']
-        self._ScreenType[8]: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
         self._ScreenType[14]: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
                            'logiciel']
         self._ScreenType[15]: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
                                     'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer']
+        self._ScreenType[16]: list = ['modified', 'client', 'Strike', 'suspension', 'third-party',
+                                    'modifizierte', 'Verstoß', 'Sperrung', 'Drittpartei']
+        self._ScreenType[17]: list = ['Suspension', 'suspended', 'violating', 'days',]
+        self._ScreenType[18]: list = ['Termination', 'terminated', 'permanently']
         self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                                       'found.', 'gefunden.', 'Signal']
 
