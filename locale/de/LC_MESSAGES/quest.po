@@ -6,15 +6,15 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "POT-Creation-Date: 2019-09-06 20:18+0200\n"
-"PO-Revision-Date: 2019-09-27 11:34+0200\n"
-"Last-Translator: cec\n"
+"PO-Revision-Date: 2019-12-08 01:28+0100\n"
+"Last-Translator: Isdor\n"
 "Language-Team: discord\n"
 "Language: de_DE\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 2.2.3\n"
+"X-Generator: Poedit 2.2.4\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: questGen.py:29 questGen.py:85
@@ -91,7 +91,7 @@ msgstr "Gewinne {0} Arenakämpfe"
 
 #: questGen.py:167
 msgid "Use a supereffective Charged Attack in {0} Gym battles"
-msgstr "Benutze eine super effektive Ladeattacke in {0} Arenakämpfen"
+msgstr "Verwende eine sehr effektive Ladeattacke in {0} Arenakämpfen"
 
 #: questGen.py:169
 msgid "Battle in a Gym {0} times"
@@ -103,11 +103,11 @@ msgstr "Gewinne {0} Raids"
 
 #: questGen.py:174
 msgid "Win a level 3 or higher raid"
-msgstr "Gewinne einen Level 3 oder höheren Raid"
+msgstr "Gewinne einen Level 3 Raid oder höher"
 
 #: questGen.py:176
 msgid "Win a level 2 or higher raid"
-msgstr "Gewinne einen Level 2 oder höheren Raid"
+msgstr "Gewinne einen Level 2 Raid oder höher"
 
 #: questGen.py:178
 msgid "Battle in {0} Raids"
@@ -123,7 +123,7 @@ msgstr "Favourite {0} Pokemon"
 
 #: questGen.py:184
 msgid "Use {0} {type}Berries to help catch Pokemon"
-msgstr "Benutze {0} {type} Beeren um ein Pokemon zu fangen"
+msgstr "Verwende {0} {type} Beeren um ein Pokemon zu fangen"
 
 #: questGen.py:189
 msgid " Berry"
@@ -139,11 +139,11 @@ msgstr "Entwickle {0} Pokemon"
 
 #: questGen.py:195
 msgid "Use an item to evolve a Pokemon"
-msgstr "Benutze einen Item um ein Pokemon zu entwickeln"
+msgstr "Verwende ein Item um ein Pokemon zu entwickeln"
 
 #: questGen.py:197
 msgid "Evolve {0} {type}Pokemon"
-msgstr "Entwickle {0} {type}Pokemon"
+msgstr "Entwickle {0} Pokemon vom Typ {type}"
 
 #: questGen.py:232
 msgid "Evolve {0} {poke}"
@@ -155,7 +155,7 @@ msgstr " hintereinander"
 
 #: questGen.py:240
 msgid "Curveball "
-msgstr "Curvebälle"
+msgstr "Curveball"
 
 #: questGen.py:244
 msgid "Make {0} {type}{curve}Throws{inrow}"
@@ -170,8 +170,8 @@ msgid "Make a new friend"
 msgstr "Schließe eine neue Freundschaft"
 
 #: questGen.py:251
-msgid "Schließe {0} neue Freundschafte"
-msgstr ""
+msgid "Make {0} new friends"
+msgstr "Schließe {0} neue Freundschaften"
 
 #: questGen.py:253
 msgid "Trade {0} Pokemon"
@@ -191,11 +191,11 @@ msgstr "Sende {0} Geschenke an Freunde"
 
 #: questGen.py:266
 msgid "Battle a Team Leader {0} times"
-msgstr "Bekämpfe einen Teamleiter {0} mal"
+msgstr "Kämpfe {0} mal gegen einen Teamleiter"
 
 #: questGen.py:268
 msgid "Battle another Trainer {0} times"
-msgstr "Bekämpfe einen anderen Spieler {0} mal"
+msgstr "Kämpfe {0} mal gegen einen anderen Trainer"
 
 #: questGen.py:287
 msgid "Take {0} snapshots of {poke}"
@@ -223,11 +223,11 @@ msgstr " Raids"
 
 #: questGen.py:310
 msgid " Battle"
-msgstr "kampf"
+msgstr " Kampf"
 
 #: questGen.py:310
 msgid " Battles"
-msgstr "kämpfe"
+msgstr " Kämpfe"
 
 #: questGen.py:311
 msgid " candies"
@@ -278,4 +278,4 @@ msgstr " {0} mal"
 
 #: questGen.py:317
 msgid "a"
-msgstr "1"
+msgstr "ein"
