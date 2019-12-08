@@ -179,7 +179,7 @@ def questtask(typeid, condition, target):
     elif typeid == 10:
         text = _("Transfer {0} Pokemon")
     elif typeid == 11:
-        test = _("Favourite {0} Pokemon")
+        text = _("Favourite {0} Pokemon")
     elif typeid == 13:
         text = _('Use {0} {type}Berries to help catch Pokemon')
         arr['type'] = ""
