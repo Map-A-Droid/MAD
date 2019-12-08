@@ -336,10 +336,6 @@ class map(object):
 
         for stopid in data:
             stop = data[str(stopid)]
-            try:
-                stop['image'] = stop['image'].replace("http://","https://")
-            except AttributeError:
-                pass
             coords.append({
                 "id": stopid,
                 "name": stop["name"],

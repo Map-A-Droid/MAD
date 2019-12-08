@@ -44,11 +44,6 @@ def generate_quest(quest):
     else:
         quest_task = quest['task']
 
-    try:
-        quest['image'] = quest['image'].replace("http://","https://")
-    except AttributeError:
-        pass
-
     quest_raw = ({
         'pokestop_id': quest['pokestop_id'],
         'name': quest['name'],
