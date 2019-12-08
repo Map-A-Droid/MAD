@@ -306,3 +306,9 @@ class Device(resource.Resource):
             }
         }
     }
+
+    def _load(self):
+        super()._load()
+        self.state = 0
+        if self._data_manager.is_device_active(self['origin']):
+            self.state = 1

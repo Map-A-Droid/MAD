@@ -940,10 +940,10 @@ class RouteManagerBase(ABC):
     def get_rounds(self, origin: str) -> int:
         return self.check_worker_rounds()
 
-    def get_registered_workers(self) -> int:
+    def get_registered_workers(self) -> List[str]:
         self._workers_registered_mutex.acquire()
         try:
-            return len(self._workers_registered)
+            return self._workers_registered
         finally:
             self._workers_registered_mutex.release()
 

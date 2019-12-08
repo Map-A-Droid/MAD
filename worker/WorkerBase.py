@@ -127,7 +127,7 @@ class WorkerBase(ABC):
         if walkermax is False or (type(walkermax) is str and len(walkermax) == 0):
             return True
         reg_workers = self._mapping_manager.routemanager_get_registered_workers(self._routemanager_name)
-        if int(reg_workers) > int(walkermax):
+        if len(reg_workers) > int(walkermax):
             return False
         return True
 

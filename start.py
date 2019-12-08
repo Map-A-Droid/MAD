@@ -191,7 +191,7 @@ if __name__ == "__main__":
         MappingManagerManager.register('MappingManager', MappingManager)
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
-        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, False)
+        mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, ws_server, False)
         filename = args.mappings
         if not os.path.exists(filename):
             logger.error(
@@ -224,7 +224,7 @@ if __name__ == "__main__":
             mitm_receiver_process.start()
 
             logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
-            ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager)
+            ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager, data_manager)
             t_ws = Thread(name='scanner', target=ws_server.start_server)
             t_ws.daemon = False
             t_ws.start()

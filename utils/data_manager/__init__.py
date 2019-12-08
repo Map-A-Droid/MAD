@@ -9,6 +9,7 @@ class DataManager(object):
     def __init__(self, dbc, instance_id):
         self.dbc = dbc
         self.instance_id = instance_id
+        self.__paused_devices = []
 
     def get_resource(self, section, identifier=None, **kwargs):
         if section == 'area':
@@ -96,3 +97,16 @@ class DataManager(object):
         if section == 'area':
             valid_modes = sorted(modules.AREA_MAPPINGS.keys())
         return valid_modes
+
+    def set_device_state(self, dev_name, active):
+        if active == 1:
+            try:
+                self.__paused_devices.remove(dev_name)
+            except ValueError:
+                pass
+        else:
+            if dev_name not in self.__paused_devices:
+                self.__paused_devices.append(dev_name)
+
+    def is_device_active(self, dev_name):
+        return dev_name not in self.__paused_devices
