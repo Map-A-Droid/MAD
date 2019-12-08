@@ -25,11 +25,12 @@ class ResourceHandler(object):
     mode = None
     has_rpc_calls = False
 
-    def __init__(self, logger, app, base, data_manager, mapping_manager):
+    def __init__(self, logger, app, base, data_manager, mapping_manager, ws_server):
         self._logger = logger
         self._app = app
         self._data_manager = data_manager
         self._mapping_manager = mapping_manager
+        self._ws_server = ws_server
         self._base = base
         self._instance = self._data_manager.instance_id
         self.api_req = None
@@ -275,8 +276,6 @@ class ResourceHandler(object):
         except utils.data_manager.UnknownIdentifier:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
         except Exception:
-            import traceback
-            traceback.print_exc()
             return apiResponse.APIResponse(self._logger, self.api_req)('', 500)
 
     def delete(self, identifier, *args, **kwargs):

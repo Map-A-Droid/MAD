@@ -23,6 +23,7 @@ from utils.routeutil import pre_check_value
 from worker.WorkerConfigmode import WorkerConfigmode
 from worker.WorkerMITM import WorkerMITM
 from worker.WorkerQuests import WorkerQuests
+from utils import data_manager
 
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -35,7 +36,7 @@ logging.getLogger('websockets.protocol').addHandler(InterceptHandler())
 
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager,
-                 configmode=False):
+                 data_manager, configmode=False):
         self.__current_users = {}
         self.__users_connecting = []
 
@@ -58,6 +59,7 @@ class WebsocketServer(object):
         self.__mapping_manager: MappingManager = mapping_manager
         self.__pogoWindowManager = pogoWindowManager
         self.__mitm_mapper = mitm_mapper
+        self.__data_manager = data_manager
 
         self.__next_id = 0
         self._configmode = configmode
@@ -143,11 +145,19 @@ class WebsocketServer(object):
 
         logger.info("Waiting for connection...")
         # wait for a connection...
-        continue_work = await self.__register(websocket_client_connection)
-
-        if not continue_work:
-            logger.error("Failed registering client, closing connection")
-            await websocket_client_connection.close()
+        try:
+            continue_work = await self.__register(websocket_client_connection)
+            reason = None
+            if type(continue_work) is tuple:
+                (continue_work, reason) = continue_work
+            if not continue_work:
+                if not reason:
+                    logger.error("Failed registering client, closing connection")
+                else:
+                    logger.info(reason)
+                await websocket_client_connection.close()
+                return
+        except data_manager.dm_exceptions.DataManagerException:
             return
 
         consumer_task = asyncio.ensure_future(
@@ -170,9 +180,6 @@ class WebsocketServer(object):
 
     @logger.catch()
     async def __register(self, websocket_client_connection):
-        logger.info("Client {} registering", str(
-            websocket_client_connection.request_headers.get_all("Origin")[0]))
-
         try:
             origin = str(
                 websocket_client_connection.request_headers.get_all("Origin")[0])
@@ -180,7 +187,9 @@ class WebsocketServer(object):
             logger.warning("Client from {} tried to connect without Origin header", str(
                 websocket_client_connection.request_headers.get_all("Origin")[0]))
             return False
-
+        if not self.__data_manager.is_device_active(origin):
+            return (False, 'Origin %s is currently paused.  Unpause through MADmin to begin working' % origin)
+        logger.info("Client {} registering", str(origin))
         if self.__mapping_manager is None or origin not in self.__mapping_manager.get_all_devicemappings().keys():
             logger.warning("Register attempt of unknown origin: {}. "
                            "Have you forgot to hit 'APPLY SETTINGS' in MADmin?".format(origin))
@@ -375,6 +384,11 @@ class WebsocketServer(object):
         logger.info("Worker {} unregistered", str(worker_id))
         self.__worker_shutdown_queue.put(worker[0])
         # TODO ? worker_thread.join()
+
+    def force_disconnect(self, origin):
+        worker = self.__current_users.get(origin, None)
+        if worker is not None:
+            worker[1]._internal_cleanup()
 
     async def __producer_handler(self, websocket_client_connection):
         while websocket_client_connection.open:

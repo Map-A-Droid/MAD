@@ -78,11 +78,12 @@ class MappingManagerManager(SyncManager):
 
 
 class MappingManager:
-    def __init__(self, db_wrapper: DbWrapper, args, data_manager, configmode: bool = False):
+    def __init__(self, db_wrapper: DbWrapper, args, data_manager, ws_server, configmode: bool = False):
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__args = args
         self.__configmode: bool = configmode
         self.__data_manager = data_manager
+        self.__ws_server = ws_server
 
         self._devicemappings: Optional[dict] = None
         self._areas: Optional[dict] = None
@@ -200,6 +201,24 @@ class MappingManager:
         if routemanager is not None:
             routemanager.stop_routemanager()
 
+    def get_routemanager_name_from_device(self, device_name: str) -> str:
+        routemanagers = self.get_all_routemanager_names()
+        for routemanager in routemanagers:
+            workers = self.routemanager_get_registered_workers(routemanager)
+            if device_name in workers:
+                return routemanager
+        return None
+
+    def device_set_disabled(self, device_name: str, routemanager: str = None) -> bool:
+        if routemanager is None:
+            routemanager = self.get_routemanager_name_from_device(device_name)
+            if routemanager is None:
+                logger.info('Device {} is not registered so it cannot be paused', device_name)
+                return False
+        if routemanager is None:
+            return False
+        return True
+
     def register_worker_to_routemanager(self, routemanager_name: str, worker_name: str) -> bool:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.register_worker(worker_name) if routemanager is not None else False
@@ -225,7 +244,7 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
 
-    def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[int]:
+    def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[List[str]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_registered_workers() if routemanager is not None else None
 

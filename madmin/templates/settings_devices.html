@@ -74,6 +74,34 @@ $(document).ready(function () {
             $.unblockUI();
         }
     });
+    $(".dev_state").click(function() {
+        if(confirm('Are you sure you want to toggle state of this device?')) {
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Toggling device state...</h2>' });
+            rpc_call = {
+              'call': 'device_state',
+              'args': {
+                'active': parseInt($(this).data('state'))
+              }
+            };
+            $.ajax({
+                url : '{{ url_for('api_device') }}/'+ $(this).data('identifier'),
+                contentType : 'application/json-rpc',
+                data: JSON.stringify(rpc_call),
+                type : 'POST',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 200) {
+                      alert('Successfully toggled device state');
+                      location.reload();
+                    }
+                },
+                error: function(data, status, xhr) {
+                    alert('Unable to toggle device state.  Please look at server logs');
+                }
+            });
+            $.unblockUI();
+        }
+    });
+
     // Toggle on boot
     toggleConfiguredElement();
   });
@@ -137,6 +165,11 @@ $(document).ready(function () {
           </td>
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ dev_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+            {% if device.state == 1 %}
+              <button data-identifier='{{ dev_uri }}' type="button" data-state="0" class="dev_state btn btn-info btn-sm"><i class="fas fa-pause"></i></button>
+            {% else %}
+              <button data-identifier='{{ dev_uri }}' type="button" data-state="1" class="dev_state btn btn-info btn-sm"><i class="fas fa-play"></i></button>
+            {% endif %}
             <button data-identifier='{{ dev_uri }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
             <input type="checkbox" class="bulk_sel" data-identifier="{{ dev_uri }}">
           </td>
