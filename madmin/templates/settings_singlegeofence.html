@@ -1,0 +1,59 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script>
+$(document).ready(function () {
+    $("#submit").click(function() {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        save_data = get_save_data();
+        if(isEmptyObj(save_data) != false) {
+            alert('No changes have been made');
+            window.location.replace('{{ redirect }}');
+        } else {
+            process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
+        }
+    });
+});
+
+function get_geofence_definition() {
+  return $("#fence_data").val().trim().split("\n");
+}
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<h1 class="display-4">{{ element.name }}</h1>
+<div class="row">
+  <div class="col-sm">
+    <div class="form-group">
+      <label for="name">Geofence Name</label>
+      <input type="input" class="form-control" id="name" name="name" value="{{ element.name }}" data-default="{{ element.name }}">
+      <small class="form-text text-muted">Name of the Geofence to be displayed during fence selection</small>
+    </div>
+    <div class="form-group">
+      <label for="fence_type">fence_type</label>
+      <select class="form-control" name="fence_type" data-default="{{ element[fence_type] }}">
+        {% for option in settings_vars.fields.fence_type.settings["values"] %}
+        <option value="{{ option }}"{{ 'selected="selected"' if option == element['fence_type'] }}>{{ option|lower }}</option>
+        {% endfor %}
+      </select>
+      <small class="form-text text-muted">Fence Type</small>
+    </div>
+    <div class="form-group">
+      <label for="fence_data">fence_data</label>
+      <textarea data-callback='get_geofence_definition' rows=20 class="form-control" id="fence_data" name="fence_data" value="{{ element.fence_data }}" data-default="{{ element.fence_data }}">{{ element.fence_data|join('\n') }}</textarea>
+      <small class="form-text text-muted">Fence Information</small>
+    </div>
+    <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+</div>
+{% endblock %}
+

@@ -14,12 +14,13 @@ from utils.logging import logger
 
 
 class statistics(object):
-    def __init__(self, db: DbWrapper, args, app, mapping_manager):
+    def __init__(self, db: DbWrapper, args, app, mapping_manager, data_manager):
         self._db: DbWrapper = db
         self._db_stats_reader: DbStatsReader = db.stats_reader
         self._args = args
         self._app = app
         self._mapping_manager = mapping_manager
+        self._data_manager = data_manager
         if self._args.madmin_time == "12":
             self._datetimeformat = '%Y-%m-%d %I:%M:%S %p'
         else:
@@ -503,10 +504,12 @@ class statistics(object):
 
         data = []
         for device in device_status:
-            device['origin_id'] = self._mapping_manager.get_device_id_of(device["origin"])
             try:
-                device['routemanager'] = areas[device['routemanager_id']]['name']
-                device['routemanager_mode'] = areas[device['routemanager_id']]['mode']
+                device['origin_id'] = int(self._mapping_manager.get_device_id_of(device["origin"]))
+                device['routemanager'] = areas[int(device['routemanager_id'])]['name']
+                device['routemanager_mode'] = areas[int(device['routemanager_id'])]['mode']
+            except (TypeError,ValueError):
+                continue
             except KeyError:
                 device['routemanager'] = 'Unknown Area %s' % (device['routemanager_id'],)
                 device['routemanager_mode'] = 'Unknown Area %s' % (device['routemanager_id'],)
@@ -524,14 +527,14 @@ class statistics(object):
         unknown = []
         processed_fences = []
 
-        possible_fences = get_geofences(self._mapping_manager, 'mon_mitm')
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type='mon_mitm')
         for possible_fence in possible_fences:
 
             for subfence in possible_fences[possible_fence]['include']:
                 if subfence in processed_fences:
                     continue
                 processed_fences.append(subfence)
-                fence = generate_coords_from_geofence(self._mapping_manager, subfence)
+                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
                 known.clear()
                 unknown.clear()
 

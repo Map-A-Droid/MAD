@@ -33,6 +33,7 @@ function setGrid(tableGridHtmlId, gridData) {
             {
                 "targets": [0],
                 "render": function (data, type, row) {
+                    data = data.replace('http://', 'https://');
                     return "<img class='lazy pokestopimg' data-original='" + data + "' width=100>";
                 }
             },

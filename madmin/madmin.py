@@ -34,12 +34,12 @@ def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: Mappin
     if args.madmin_base_path:
         app.wsgi_app = ReverseProxied(app.wsgi_app, script_name=args.madmin_base_path)
 
-    statistics(db_wrapper, args, app, mapping_manager)
+    statistics(db_wrapper, args, app, mapping_manager, data_manager)
     control(db_wrapper, args, mapping_manager, ws_server, logger, app, deviceUpdater)
-    map(db_wrapper, args, mapping_manager, app)
-    APIHandler(logger, args, app, data_manager)
+    map(db_wrapper, args, mapping_manager, app, data_manager)
+    APIHandler(logger, app, data_manager, mapping_manager)
     config(db_wrapper, args, logger, app, mapping_manager, data_manager)
-    path(db_wrapper, args, app, mapping_manager, jobstatus)
+    path(db_wrapper, args, app, mapping_manager, jobstatus, data_manager)
 
     app.logger.removeHandler(default_handler)
     logging.basicConfig(handlers=[InterceptHandler()], level=0)

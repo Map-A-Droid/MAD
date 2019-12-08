@@ -58,7 +58,7 @@ def install_thread_excepthook():
         except BrokenPipeError:
             pass
         except Exception:
-            logger.opt(exception=True).critical("An unhandled exception occured!")
+            logger.opt(exception=True).critical("An unhanded exception occurred!")
 
     def run_process(*args, **kwargs):
         try:
@@ -68,7 +68,7 @@ def install_thread_excepthook():
         except BrokenPipeError:
             pass
         except Exception:
-            logger.opt(exception=True).critical("An unhandled exception occured!")
+            logger.opt(exception=True).critical("An unhanded exception occurred!")
 
     Thread.run = run_thread
     Process.run = run_process
@@ -153,7 +153,9 @@ if __name__ == "__main__":
     install_thread_excepthook()
 
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
-    version = MADVersion(args, db_wrapper)
+    instance_id = db_wrapper.get_instance_id()
+    data_manager = utils.data_manager.DataManager(db_wrapper, instance_id)
+    version = MADVersion(args, data_manager)
     version.get_version()
 
     # create folders
@@ -184,8 +186,6 @@ if __name__ == "__main__":
     t_ws = None
     t_file_watcher = None
     t_whw = None
-
-    data_manager = utils.data_manager.DataManager(args)
 
     if args.only_scan or args.only_routes:
         MappingManagerManager.register('MappingManager', MappingManager)
@@ -240,7 +240,7 @@ if __name__ == "__main__":
                 rarity.start_dynamic_rarity()
 
                 webhook_worker = WebhookWorker(
-                    args, db_wrapper.webhook_reader, mapping_manager, rarity)
+                    args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
                 t_whw = Thread(name="webhook_worker",
                                target=webhook_worker.run_worker)
                 t_whw.daemon = True

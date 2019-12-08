@@ -5,28 +5,32 @@ from utils.logging import logger
 import shutil
 from .convert_mapping import convert_mappings
 import re
-
+import utils.data_manager
+from pathlib import Path
+import os
+import copy
 from db.DbWrapper import DbWrapper
 from db.DbSchemaUpdater import DbSchemaUpdater
 
-current_version = 16
-
+current_version = 17
 
 class MADVersion(object):
 
-    def __init__(self, args, dbwrapper: DbWrapper):
+    def __init__(self, args, data_manager):
         self._application_args = args
-        self.dbwrapper: DbWrapper = dbwrapper
-        self._schema_updater: DbSchemaUpdater = dbwrapper.schema_updater
+        self.data_manager = data_manager
+        self.dbwrapper = self.data_manager.dbc
+        self._schema_updater: DbSchemaUpdater = self.dbwrapper.schema_updater
         self._version = 0
+        self.instance_id = data_manager.instance_id
 
     def get_version(self):
         try:
             # checking mappings.json
             convert_mappings()
             with open('version.json') as f:
-                versio = json.load(f)
-            self._version = int(versio['version'])
+                version = json.load(f)
+            self._version = int(version['version'])
             if int(self._version) < int(current_version):
                 logger.success('Performing update now')
                 self.start_update()
@@ -274,8 +278,7 @@ class MADVersion(object):
                 sys.exit(1)
             with open(self._application_args.mappings, 'rb') as fh:
                 old_data = json.load(fh)
-
-            if "migrated" in old_data and old_data["migrated"] is True:
+            if ("migrated" in old_data and old_data["migrated"] is True):
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(old_data, outfile, indent=4, sort_keys=True)
             else:
@@ -300,6 +303,7 @@ class MADVersion(object):
 
                     for entry in entries:
                         if key == 'monivlist':
+                            print(entry)
                             cache[key][entry['monlist']] = index
                         if key == 'devicesettings':
                             cache[key][entry['devicepool']] = index
@@ -388,12 +392,155 @@ class MADVersion(object):
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
 
+        if self._version < 17:
+            # Goodbye mappings.json, it was nice knowing ya!
+            update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walkerarea', 'walker', 'devices']
+            with open(self._application_args.mappings, 'rb') as fh:
+                config_file = json.load(fh)
+            geofences = {}
+            routecalcs = {}
+            conversion_issues = []
+            # A wonderful decision that I made was to start at ID 0 on the previous conversion which causes an issue
+            # with primary keys in MySQL / MariaDB.  Make the required changes to ID's and save the file in-case the
+            # conversion is re-run.  We do not want dupe data in the database
+            cache = {}
+            for section in update_order:
+                for elem_id, elem in config_file[section]['entries'].items():
+                    if section == 'areas':
+                        try:
+                            if int(elem['settings']['mon_ids_iv']) == 0:
+                                elem['settings']['mon_ids_iv'] = cache['monivlist']
+                        except KeyError:
+                            pass
+                    elif section == 'devices':
+                        if int(elem['walker']) == 0:
+                            elem['walker'] = cache['walker']
+                        if 'pool' in elem and elem['pool'] is not None and int(elem['pool']) == 0:
+                            elem['pool'] = cache['devicesettings']
+                    elif section == 'walkerarea':
+                        if int(elem['walkerarea']) == 0:
+                            elem['walkerarea'] = cache['areas']
+                    elif section == 'walker':
+                        setup = []
+                        for walkerarea_id in elem['setup']:
+                            if int(walkerarea_id) != 0:
+                                setup.append(walkerarea_id)
+                                continue
+                            setup.append(cache['walkerarea'])
+                        elem['setup'] = setup
+                entry = None
+                try:
+                    entry = config_file[section]['entries']["0"]
+                except KeyError:
+                    continue
+                cache[section] = str(config_file[section]['index'])
+                config_file[section]['entries'][cache[section]] = entry
+                del config_file[section]['entries']["0"]
+                config_file[section]['index'] += 1
+            if cache:
+                logger.info('One or more resources with ID 0 found.  Converting them off 0 and updating the '\
+                            'mappings.json file.  {}', cache)
+                with open(self._application_args.mappings, 'w') as outfile:
+                    json.dump(config_file, outfile, indent=4, sort_keys=True)
+            # Load the elements into their resources and save to DB
+            for section in update_order:
+                for key, elem in config_file[section]['entries'].items():
+                    logger.debug('Converting {} {}', section, key)
+                    if section == 'areas':
+                        mode = elem['mode']
+                        del elem['mode']
+                        resource = utils.data_manager.modules.MAPPINGS['area'](self.data_manager, mode=mode)
+                        geofence_sections = ['geofence_included', 'geofence_excluded']
+                        for geofence_section in geofence_sections:
+                            try:
+                                geofence = elem[geofence_section]
+                                if type(geofence) is int:
+                                    continue
+                                if geofence and geofence not in geofences:
+                                    try:
+                                        geo_id = self.__convert_geofence(geofence)
+                                        geofences[geofence] = geo_id
+                                        elem[geofence_section] = geofences[geofence]
+                                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
+                                        conversion_issues.append((section, elem_id, err.issues))
+                                else:
+                                    elem[geofence_section] = geofences[geofence]
+                            except KeyError:
+                                pass
+                        route = '%s.calc' % (elem['routecalc'],)
+                        if type(elem['routecalc']) is str:
+                            if route not in routecalcs:
+                                route_path = os.path.join(self._application_args.file_path, route)
+                                route_resource = self.data_manager.get_resource('routecalc')
+                                stripped_data = []
+                                try:
+                                    with open(route_path, 'rb') as fh:
+                                        for line in fh:
+                                            stripped = line.strip()
+                                            if type(stripped) != str:
+                                                stripped = stripped.decode('utf-8')
+                                            stripped_data.append(stripped)
+                                except IOError as err:
+                                    conversion_issues.append((section, elem_id, err))
+                                    logger.warning('Unable to open %s.  Using empty route' % (route))
+                                route_resource['routefile'] = stripped_data
+                                route_resource.save(force_insert=True)
+                                routecalcs[route] = route_resource.identifier
+                            if route in routecalcs:
+                                elem['routecalc'] = routecalcs[route]
+                    else:
+                        # Lets remove plural from the section
+                        if section == 'devices':
+                            section = 'device'
+                        elif section == 'devicesettings':
+                            section = 'devicepool'
+                        resource = utils.data_manager.modules.MAPPINGS[section](self.data_manager)
+                    # Settings made it into some configs where it should not be.  lets clear those out now
+                    if 'settings' in elem and 'settings' not in resource.configuration:
+                        del elem['settings']
+                    resource.identifier = key
+                    resource.update(elem)
+                    try:
+                        resource.save(force_insert=True, ignore_issues=['unknown'])
+                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
+                        conversion_issues.append((section, key, err.issues))
+                    except Exception as err:
+                        conversion_issues.append((section, key, err))
+            if conversion_issues:
+                logger.error('The configuration was not partially moved to the database.  The following resources '\
+                             'were not converted.')
+                for (section, identifier, issue) in conversion_issues:
+                    logger.error('{} {}: {}', section, identifier, issue)
+
         self.set_version(current_version)
 
     def set_version(self, version):
         output = {'version': version}
         with open('version.json', 'w') as outfile:
             json.dump(output, outfile)
+
+    def __convert_geofence(self, path):
+        stripped_data = []
+        full_path = Path(path)
+        with open(full_path) as f:
+            for line in f:
+                stripped = line.strip()
+                if type(stripped) != str:
+                    stripped = stripped.decode('utf-8')
+                stripped_data.append(stripped)
+        resource = self.data_manager.get_resource('geofence')
+        name = path
+        # Enforce 128 character limit
+        if len(name) > 128:
+            name = name[len(name)-128:]
+        update_data = {
+            'name': path,
+            'fence_type': 'polygon',
+            'fence_data': stripped_data
+        }
+        resource.update(update_data)
+        resource.save(force_insert=True)
+        return resource.identifier
 
     def __convert_to_id(self, data):
         regex = re.compile(r'/api/.*/\d+')

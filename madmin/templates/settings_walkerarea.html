@@ -91,8 +91,8 @@
                         elem.addClass('btn-danger');
                     });
                     $.each(data['responseJSON']['invalid'], function() {
-                        var field = this.split(/:(.+)/)[0];
-                        var expected = this.split(/:(.+)/)[1];
+                        var field = this[0];
+                        var expected = this[1];
                         var elem = $("label[for="+ field +"]");
                         elem[0].innerHTML = elem.attr('for') +' - Expected '+ expected;
                         elem.addClass('btn-danger');
@@ -127,9 +127,9 @@
     <div class="form-group">
       <label for='walkerarea'>Area</label><br>
       <small class="form-text text-muted">Select the Area</small>
-      <select class="form-control" name="walkerarea" required="" aria-invalid="false" data-default="{{ url_for('api_area') +'/'+ element.walkerarea if element.walkerarea else '' }}">
+      <select class="form-control" name="walkerarea" required="" aria-invalid="false" data-default="{{ url_for('api_area') +'/'+ element.walkerarea|string if element.walkerarea else '' }}">
         {% for uri, area in areas.items() %}
-          <option value="{{ url_for('api_area') +'/'+ uri }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
+          <option value="{{ url_for('api_area') +'/'+ uri|string }}" {{'selected="selected"' if uri == element.walkerarea }}>{{ area.name }}</option>
         {% endfor %}
       </select>
     </div>

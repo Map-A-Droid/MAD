@@ -77,20 +77,20 @@ $(document).ready(function () {
   <div class="col-sm">
     <div class="form-group">
       <label for="walker">walker</label>
-      <select class="form-control" name="walker" data-default="{{ url_for('api_walker') + '/'+ element.walker if element.walker else '' }}">
+      <select class="form-control" name="walker" data-default="{{ url_for('api_walker') + '/'+ element.walker|string if element.walker else '' }}">
         {% for walker_id, walker in walkers.items() %}
-         <option value="{{ url_for('api_walker') + '/'+ walker_id }}" {{ 'selected=selected' if element.walker == walker_id else "" }}>{{ walker.walkername }}</option>
+         <option value="{{ url_for('api_walker') + '/'+ walker_id|string }}" {{ 'selected=selected' if element.walker == walker_id else "" }}>{{ walker.walkername }}</option>
         {% endfor %}
       </select>
       <small class="form-text text-muted">Walker for this device</small>
     </div>
     <div class="form-group">
       <label for="pool">pool</label>
-      <select class="form-control" name="pool" data-default="{{ url_for('api_devicesetting') + '/'+ element.pool if element.pool else 'None' }}">
+      <select class="form-control" name="pool" data-default="{{ url_for('api_devicepool') + '/'+ element.pool|string if element.pool else 'None' }}">
         <option value='None'>None</option>
         {% if pools is not none %}
         {% for poolid, pool in pools.items() %}
-         <option value="{{ url_for('api_devicesetting') + '/'+ poolid }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
+         <option value="{{ url_for('api_devicepool') + '/'+ poolid|string }}" {{ 'selected=selected' if element.pool == poolid else "" }}>{{ pool.devicepool }}</option>
         {% endfor %}
         {% endif %}
       </select>
@@ -98,7 +98,7 @@ $(document).ready(function () {
     </div>
     <div class="form-group">
       <label for="adbname">adbname</label>
-      <input type="input" class="form-control" id="adbname" name="adbname" value="{{ element.adbname }}" data-default="{{ element.adbname }}">
+      <input type="input" class="form-control" id="adbname" name="adbname" value="{{ element.adbname if element.adbname else '' }}" data-default="{{ element.adbname }}">
       <small class="form-text text-muted">ADB device name</small>
     </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>

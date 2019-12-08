@@ -1040,6 +1040,7 @@ new Vue({
     },
     build_quest_popup(marker) {
       var quest = this.quests[marker.options.id]
+      quest["url"] = quest["url"].replace('http://', 'https://');
       var base_popup = this.build_stop_base_popup(quest["pokestop_id"], quest["url"], quest["name"], quest["latitude"], quest["longitude"])
 
       return `

@@ -100,7 +100,7 @@
                         {% set area = walkerarea[walkerarea_uri] %}
                         <tr id='{{ url_for('api_walkerarea') }}/{{ walkerarea_uri }}'>
                             <td><i class="fa fa-fw fa-sort handle ui-sortable-handle"></i></td>
-                            <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><a href="{{ url_for('settings_areas', id=area['walkerarea'], mode=areas[area['walkerarea']].mode) }}">{{ areas[area['walkerarea']].name }}</a><br>{{ area.walkertext }}</td>
+                            <td class='walkerarea' data-save='{{ area.walkerarea }}' data-walkertext='{{ area.walkertext }}'><a href="{{ url_for('settings_areas', id=area['walkerarea'], mode=areas[area['walkerarea']].area_type) }}">{{ areas[area['walkerarea']].name }}</a><br>{{ area.walkertext }}</td>
                             <td class='walkertype' data-save='{{ area.walkertype }}'>{{ area.walkertype }}</td>
                             <td class='walkervalue' data-save='{{ area.walkervalue }}'>{{ area.walkervalue }}</td>
                             <td class='walkermax' data-save='{{ area.walkermax }}'>{{ area.walkermax }}</td>

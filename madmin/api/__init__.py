@@ -9,7 +9,9 @@ valid_modules = {
     'auth': ftr_auth.APIAuth,
     'device': ftr_device.APIDevice,
     'devicesetting': ftr_devicesetting.APIDeviceSetting,
+    'geofence': ftr_geofence.APIGeofence,
     'monivlist': ftr_monlist.APIMonList,
+    'routecalc': ftr_routecalc.APIRouteCalc,
     'walker': ftr_walker.APIWalker,
     'walkerarea': ftr_walkerarea.APIWalkerArea
 }
@@ -26,14 +28,13 @@ class APIHandler(object):
         _logger: logger (loguru.logger): MADmin debug logger
         _modules (dict): Dictionary of APIHandlers for referring to the other API sections
     """
-    def __init__(self, logger, args, app, data_manager):
+    def __init__(self, logger, app, data_manager, mapping_manager):
         self._logger = logger
-        self._args = args
         self._app = app
         self._modules = {}
         self._app.route(BASE_URI, methods=['GET'])(self.process_request)
         for mod_name, module in valid_modules.items():
-            tmp = module(logger, args, app, BASE_URI, data_manager)
+            tmp = module(logger, app, BASE_URI, data_manager, mapping_manager)
             self._modules[tmp.uri_base] = tmp.description
 
     def create_routes(self):

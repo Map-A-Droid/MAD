@@ -15,20 +15,23 @@ class APIMonIVList(api_base.APITestBase):
 
     def test_invalid_post(self):
         payload = {
-            'monlist': 'Test',
+            'mon_ids_iv': [],
         }
-        errors = {"missing": ['mon_ids_iv']}
+        errors = {"missing": ['monlist']}
         super().invalid_post(payload, errors)
+        self.remove_resources()
 
     def test_valid_post(self):
         super().valid_post(self.base_payload, self.base_payload)
+        self.remove_resources()
 
     def test_invalid_put(self):
         payload = {
-            'monlist': 'Test',
+            'mon_ids_iv': [],
         }
-        errors = {"missing": ["mon_ids_iv"]}
+        errors = {"missing": ['monlist']}
         super().invalid_put(payload, errors)
+        self.remove_resources()
 
     def test_valid_put(self):
         payload = {
@@ -36,6 +39,7 @@ class APIMonIVList(api_base.APITestBase):
             'mon_ids_iv': [1,2,3]
         }
         super().valid_put(payload, payload)
+        self.remove_resources()
 
     def test_invalid_patch(self):
         payload = {
@@ -43,6 +47,7 @@ class APIMonIVList(api_base.APITestBase):
         }
         errors = {"unknown": ["usernamez"]}
         super().invalid_patch(payload, errors)
+        self.remove_resources()
 
     def test_valid_patch(self, **kwargs):
         payload = {
@@ -50,8 +55,8 @@ class APIMonIVList(api_base.APITestBase):
         }
         result = copy.copy(self.base_payload)
         result.update(payload)
-        resp = self.create_valid(self.base_payload)
         self.valid_patch(payload, result)
+        self.remove_resources()
 
     def test_append(self, **kwargs):
         original = {
@@ -69,23 +74,17 @@ class APIMonIVList(api_base.APITestBase):
             'X-Append': '1'
         }
         self.valid_patch(payload, result, original=original, headers=headers)
+        self.remove_resources()
 
     def test_area_dependency(self):
-        monivlist_uri = super().create_valid_resource('monivlist')
-        payload = {
-            "coords_spawns_known": True,
-            "geofence_included": "unit_test.txt",
-            "init": False,
-            "name": "Unit Test Area",
-            "routecalc": "unit_test",
-            "settings": {
-                "starve_route": False,
-                'mon_ids_iv': monivlist_uri
+        monivlist_obj = super().create_valid_resource('monivlist')
+        area_obj = super().create_valid_resource('area')
+        update = {
+            'settings': {
+                'mon_ids_iv': monivlist_obj['uri']
             }
         }
-        headers = {
-            'X-Mode': 'mon_mitm'
-        }
-        self.create_resource('/api/area', payload, headers=headers)
-        response = super().delete_resource(monivlist_uri)
+        self.api.patch(area_obj['uri'], json=update)
+        response = super().delete_resource(monivlist_obj['uri'])
         self.assertEqual(response.status_code, 412)
+        self.remove_resources()

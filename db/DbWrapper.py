@@ -20,7 +20,6 @@ from db.DbWebhookReader import DbWebhookReader
 
 
 class DbWrapper:
-
     def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
@@ -31,7 +30,7 @@ class DbWrapper:
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
         self.schema_updater.ensure_unversioned_tables_exist()
         self.schema_updater.ensure_unversioned_columns_exist()
-
+        self.schema_updater.create_madmin_databases_if_not_exists()
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
@@ -46,6 +45,33 @@ class DbWrapper:
 
     def executemany(self, sql, args, commit=False):
         return self._db_exec.executemany(sql, args, commit)
+
+    def autofetch_all(self, sql, args=()):
+        """ Fetch all data and have it returned as a dictionary """
+        return self._db_exec.autofetch_all(sql, args=args)
+
+    def autofetch_value(self, sql, args=()):
+        """ Fetch the first value from the first row """
+        return self._db_exec.autofetch_value(sql, args=args)
+
+    def autofetch_row(self, sql, args=()):
+        """ Fetch the first row and have it return as a dictionary """
+        return self._db_exec.autofetch_row(sql, args=args)
+
+    def autofetch_column(self, sql, args=None):
+        """ get one field for 0, 1, or more rows in a query and return the result in a list
+        """
+        return self._db_exec.autofetch_column(sql, args=args)
+
+    def autoexec_delete(self, table, keyvals, literals=[], where_append=[]):
+        return self._db_exec.autoexec_delete(table, keyvals, literals=literals, where_append=where_append)
+
+    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT"):
+        return self._db_exec.autoexec_insert(table, keyvals, literals=literals, optype=optype)
+
+    def autoexec_update(self, table, set_keyvals, set_literals=[], where_keyvals={}, where_literals=[]):
+        return self._db_exec.autoexec_update(table, set_keyvals, set_literals=set_literals,
+                                             where_keyvals=where_keyvals, where_literals=where_literals)
 
 
     def __db_timestring_to_unix_timestamp(self, timestring):
@@ -977,3 +1003,15 @@ class DbWrapper:
         query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
         logger.debug(query)
         self.execute(query, commit=True)
+
+    def get_instance_id(self):
+        sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
+        res = self._db_exec.autofetch_value(sql, args=(self.application_args.status_name,))
+        if res:
+            return res
+        else:
+            instance_data = {
+                'name': self.application_args.status_name
+            }
+            res = self._db_exec.autoexec_insert('madmin_instance', instance_data)
+            return res

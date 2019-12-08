@@ -8,7 +8,7 @@ class LocalAPI(requests.Session):
         self.__hostname = args.madmin_ip
         self.__port = args.madmin_port
         self.__retries = kwargs.get('retries', 1)
-        self.__timeout = kwargs.get('timeout', 1)
+        self.__timeout = kwargs.get('timeout', 3)
         self.__protocol = 'http' # madmin only runs on http unless behind a proxy so we can force http
         self.auth = (args.madmin_user, args.madmin_password)
 

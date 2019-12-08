@@ -7,21 +7,44 @@
 {% block scripts %}
 {{ super() }}
 <script>
+function bulk_update(uri, patch_data) {
+  $.ajax({
+      url : uri,
+      data : JSON.stringify(patch_data),
+      type : 'PATCH',
+      contentType : 'application/json'
+  });
+}
 $(document).ready(function () {
-    $("select").change(function() {
+    $(".walker_sel_single").change(function() {
         var uri = '{{ base_uri }}/'+ $(this).data('identifier');
-        var val = $(this).children("option:selected").attr('name');
-        var patch_data = {"walker": val};
+        var walker_uri = $(this).children("option:selected").attr('name');
+        var patch_data = {"walker": walker_uri};
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
-        $.ajax({
-            url : uri,
-            data : JSON.stringify(patch_data),
-            type : 'PATCH',
-            contentType : 'application/json',
-            success: $.unblockUI()
-        });
+        bulk_update(uri, patch_data);
+        $.unblockUI();
     });
-
+    $(".bulk_update").change(function() {
+      var selected_uri = $(this).children("option:selected").val();
+      var devices = $('.bulk_sel:checkbox:checked');
+      if(devices.length > 0 && confirm('Are you sure you want to bulk update walkers?')) {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk setting walkers</h2>' });
+        var patch_data;
+        if(selected_uri.indexOf('walker') > 0) {
+          patch_data = {"walker": selected_uri};
+        } else {
+          patch_data = {"pool": selected_uri};
+        }
+        $.each($('.bulk_sel:checkbox:checked'), function() {
+          uri = '{{ url_for('api_device') }}/' + $(this).data('identifier');
+          bulk_update(uri, patch_data);
+        });
+        $.unblockUI();
+        location.reload();
+      } else {
+        $('.bulk_update').prop('selectedIndex', 0);
+      }
+    });
     $(".delete").click(function() {
         if(confirm('Are you sure you want to delete this resource?')) {
             var elem =  $(this);
@@ -106,18 +129,33 @@ $(document).ready(function () {
             </p>
           </td>
           <td class="align-middle">
-            <select class="form-control form-control-sm" data-identifier="{{ dev_uri }}">
-            {% for walker_uri, walker in walkers.items() %}
-             <option name="{{ url_for('api_walker') + '/'+ walker_uri }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
-            {% endfor %}
+            <select class="form-control form-control-sm walker_sel_single" data-identifier="{{ dev_uri }}">
+              {% for walker_uri, walker in walkers.items() %}
+               <option name="{{ url_for('api_walker') + '/'+ walker_uri|string }}" {{ 'selected=selected' if device.walker == walker_uri else "" }}>{{ walker.walkername }}</option>
+              {% endfor %}
             </select>
           </td>
           <td class="text-right align-middle">
             <a href="{{ redirect }}?id={{ dev_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
-            <button data-identifier='{{ dev_uri }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+            <button data-identifier='{{ dev_uri }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
+            <input type="checkbox" class="bulk_sel" data-identifier="{{ dev_uri }}">
           </td>
         </tr>
       {% endfor %}
+      <tr>
+        <td>Bulk Update</td>
+        <td colspan=3 class='text-right'>
+          <select class='bulk_update'>
+            <option value="None">None</option>
+            {% for walker_id, walker in walkers.items() %}
+             <option value="{{ url_for('api_walker') + '/'+ walker_id|string }}">Set walker to {{ walker.walkername }}</option>
+            {% endfor %}
+            {% for pool_id, pool in pools.items() %}
+             <option value="{{ url_for('api_devicepool') + '/'+ pool_id|string }}">Set devicepool to {{ pool.devicepool }}</option>
+            {% endfor %}
+          </select>
+        </td>
+      </tr>
       </tbody>
       {% endif %}
     </table>

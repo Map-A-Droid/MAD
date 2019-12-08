@@ -42,6 +42,12 @@ class APIRequest(object):
                 self.data = json.loads(data)
             except ValueError:
                 raise apiException.FormattingError('Invalid JSON.  Please validate the information')
+        elif self.content_type == 'application/json-rpc':
+            try:
+                self.data = json.loads(data)
+                self.data['call']
+            except (ValueError, KeyError):
+                raise apiException.FormattingError('Invalid RPC definition')
 
     def process_request(self):
         # Determine the content-type of the request and convert accordingly

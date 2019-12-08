@@ -72,20 +72,20 @@ $(document).ready(function () {
           <th style="width: 20%" class= "text-right align-middle"><a href='{{ url_for('settings_pools', id='new') }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
         </tr>
       </thead>
-        {% if devicesetting is none %}
+        {% if devicepool is none %}
           <div id='no-configured-elements' class="alert alert-info">No shared device settings added yet</div>
         {% else %}
         <tbody>
-        {% for pool_id, devicesetting in devicesetting.items() %}
+        {% for pool_id, devicepool in devicepool.items() %}
         <tr>
           <td class="align-middle">
-            <a href="{{ url_for('settings_pools', id=pool_id) }}">{{ devicesetting.devicepool }}</a>
+            <a href="{{ url_for('settings_pools', id=pool_id) }}">{{ devicepool.devicepool }}</a>
           </td>
           <td>
             <p style="font-size: 65%; min-height: 40px; display: inline-box">
-            {% for key in devicesetting.settings|sort %}
-            {%if devicesetting.settings[key] != "" %}
-            {{ key }}: {{ devicesetting.settings[key] }}<br>
+            {% for key in devicepool.settings|sort %}
+            {%if devicepool.settings[key] != "" %}
+            {{ key }}: {{ devicepool.settings[key] }}<br>
             {% endif %}
             {% endfor %}
             </p>

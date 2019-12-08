@@ -22,9 +22,11 @@ class APIArea(api_base.APITestBase):
         self.assertTrue(len(json_data['resource']['fields']) > 0)
         if 'settings' in json_data['resource']:
             self.assertTrue(len(json_data['resource']['settings']) > 0)
+        self.remove_resources()
 
     def test_invalid_uri(self):
         super().invalid_uri()
+        self.remove_resources()
 
     def test_get_modes(self):
         # Create an idle area
@@ -32,17 +34,15 @@ class APIArea(api_base.APITestBase):
         # perform a get against /api/area?mode=raids_mitm and verify it does not come back
         # perform a get against /api/area/<created_elem> and validate the mode is returned
         payload = {
-            "name": "Idle Area",
-            "geofence_included": "idle.txt",
-            "routecalc": "test_idle"
+            "name": "Idle Area - %s",
         }
         headers = {
             'X-Mode': 'idle'
         }
-        area = self.create_valid(payload, headers=headers)
-        area_uri = area.headers['X-Uri']
+        area = self.create_valid_resource('area', payload=payload, headers=headers)
+        area_uri = area['uri']
         res = self.api.get(self.uri)
-        resource_resp = 'Resource is not available unless a mode is specified'
+        resource_resp = 'Please specify a mode for resource information Valid modes: idle,iv_mitm,mon_mitm,pokestops,raids_mitm'
         self.assertEqual(res.json()['resource'], resource_resp)
         self.assertTrue(area_uri in res.json()['results'])
         params = {
@@ -55,16 +55,18 @@ class APIArea(api_base.APITestBase):
         }
         res = self.api.get(self.uri, params=params)
         self.assertFalse(area_uri in res.json()['results'])
+        self.remove_resources()
 
     def test_invalid_post_mode(self):
         payload = {}
-        errors = {'error': 'Please specify a mode for resource information.  Valid modes: mon_mitm,iv_mitm,pokestops,raids_mitm,idle'}
+        errors = {'error': 'Please specify a mode for resource information.  Valid modes: idle,iv_mitm,mon_mitm,pokestops,raids_mitm'}
         super().invalid_post(payload, errors, error_code=400)
         headers = {
             'X-Mode': 'fake-mode'
         }
-        errors = {'errors': 'Invalid mode specified [fake-mode].  Valid modes: mon_mitm,iv_mitm,pokestops,raids_mitm,idle'}
+        errors = {'error': 'Invalid mode specified [fake-mode].  Valid modes: idle,iv_mitm,mon_mitm,pokestops,raids_mitm'}
         super().invalid_post(payload, errors, error_code=400, headers=headers)
+        self.remove_resources()
 
     def test_invalid_post(self):
         payload = {
@@ -81,48 +83,38 @@ class APIArea(api_base.APITestBase):
         headers = {
             'X-Mode': 'raids_mitm'
         }
-        errors = {'unknown': ['username']}
+        errors = {
+            'unknown': ['username'],
+            'invalid': [
+                ['geofence_included', 'Integer (1,2,3)'],
+                ['routecalc', 'Integer (1,2,3)']
+            ],
+            'invalid_uri': [
+                ['geofence_included', 'geofence', 'test_geofence.txt'],
+                ['routecalc', 'routecalc', 'test_calc']
+            ]
+        }
         super().invalid_post(payload, errors, headers=headers)
+        self.remove_resources()
 
     def test_valid_post(self):
-        headers = {
-            'X-Mode': 'raids_mitm'
-        }
-        results = {
-            "name": "UnitTest Area",
-            "init": False,
-            "geofence_included": "test_geofence.txt",
-            "routecalc": "test_routecalc",
-            "including_stops": True,
-            "settings": {
-                "starve_route": False
-            },
-            "mode": "raids_mitm"
-        }
-        super().valid_post(self.base_payload, results, headers=headers)
+        super().create_valid_resource('area')
+        self.remove_resources()
 
     def test_walkerarea_dependency(self):
-        area_uri = super().create_valid_resource('area')
-        walkerarea_uri = super().create_valid_resource('walkerarea', walkerarea=area_uri)
-        response = self.delete_resource(area_uri)
+        walkerarea_obj = super().create_valid_resource('walkerarea')
+        response = self.delete_resource(walkerarea_obj['resources']['area']['uri'])
         self.assertEqual(response.status_code, 412)
+        self.remove_resources()
 
     def test_issue_495(self):
         headers = {
             'X-Mode': 'mon_mitm'
         }
-        payload = {
-            "geofence_excluded": None,
-            "geofence_included": "geofence.txt",
-            "name": "UnitTest Area",
-            "routecalc": "unittest_area",
-            "init": False,
-            "coords_spawns_known": False,
-            "settings": {
-                "starve_route": False,
-                "delay_after_prio_event": 1
-            }
-        }
+        _, payload, headers, elem = super().get_valid_resource('area', headers=headers)
+        payload['settings']['delay_after_prio_event'] = 1
+        payload['coords_spawns_known'] = False
+        del payload['including_stops']
         response = self.create_valid(payload, headers=headers)
         uri = response.headers['X-Uri']
         patch = {
@@ -134,5 +126,5 @@ class APIArea(api_base.APITestBase):
         del payload['settings']['delay_after_prio_event']
         payload['mode'] = headers['X-Mode']
         response = self.api.get(uri)
+        self.remove_resources()
         self.assertDictEqual(payload, response.json())
-        response = self.delete_resource(uri)
