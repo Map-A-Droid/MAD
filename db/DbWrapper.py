@@ -921,43 +921,22 @@ class DbWrapper:
         workerstatus = []
 
         query = (
-            "SELECT origin, currentPos, lastPos, routePos, routeMax, "
-            "routemanager, rebootCounter, lastProtoDateTime, lastPogoRestart, "
-            "init, rebootingOption, restartCounter, globalrebootcount, globalrestartcount, lastPogoReboot, "
-            "currentSleepTime "
-            "FROM trs_status "
-            "WHERE instance = '{}'"
-        ).format(instance)
-
-        result = self.execute(query)
-        for (origin, currentPos, lastPos, routePos, routeMax, routemanager_id,
-                rebootCounter, lastProtoDateTime, lastPogoRestart, init, rebootingOption, restartCounter,
-                globalrebootcount, globalrestartcount, lastPogoReboot, currentSleepTime) in result:
-            status = {
-                "origin": origin,
-                "currentPos": currentPos,
-                "lastPos": lastPos,
-                "routePos": routePos,
-                "routeMax": routeMax,
-                "routemanager_id": routemanager_id,
-                "rebootCounter": rebootCounter,
-                "lastProtoDateTime": str(lastProtoDateTime) if lastProtoDateTime is not None else None,
-                "lastPogoRestart": str(lastPogoRestart) if lastPogoRestart is not None else None,
-                "init": init,
-                "rebootingOption": rebootingOption,
-                "restartCounter": restartCounter,
-                "lastPogoReboot": lastPogoReboot,
-                "globalrebootcount": globalrebootcount,
-                "globalrestartcount": globalrestartcount,
-                "currentSleepTime": currentSleepTime
-
-            }
-
-            workerstatus.append(status)
-
+            "SELECT trs.`origin`, trs.`currentPos`, trs.`lastPos`, trs.`routePos`, trs.`routeMax`,"
+            "trs.`routemanager` AS 'routemanager_id', trs.`rebootCounter`, trs.`lastProtoDateTime`,"
+            "trs.`lastPogoRestart`, trs.`init`, trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`,"
+            "trs.`globalrestartcount`, trs.`lastPogoReboot`, trs.`currentSleepTime`, sd.`device_id` AS 'origin_id'\n"
+            "FROM trs_status trs\n"
+            "INNER JOIN madmin_instance mi ON mi.`name` = trs.`instance`\n"
+            "INNER JOIN settings_device sd ON sd.`name` = trs.`origin` AND sd.`instance_id` = mi.`instance_id`\n"
+            "WHERE trs.`instance` = %s"
+        )
+        result = self.autofetch_all(query, args=(instance))
+        for row in result:
+            dt_fields = ['lastProtoDateTime', 'lastPogoRestart']
+            for field in dt_fields:
+                row[field] = str(row[field]) if row[field] is not None else None
+            workerstatus.append(row)
         return workerstatus
-
-
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
                                oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
