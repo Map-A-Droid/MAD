@@ -270,7 +270,7 @@ class WordToScreenMatching(object):
             return ScreenType.BIRTHDATE
 
         elif ScreenType(returntype) == ScreenType.RETURNING:
-            self._nextscreen = ScreenType.LOGINSELECT
+            self._nextscreen = ScreenType.UNDEFINED
             self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator, upper=True)
             time.sleep(2)
             return ScreenType.RETURNING
