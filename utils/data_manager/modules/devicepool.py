@@ -192,6 +192,15 @@ class DevicePool(resource.Resource):
                     "expected": str
                 }
             },
+            "screendetection": {
+                "settings": {
+                    "type": "option",
+                    "values": [None, False, True],
+                    "require": False,
+                    "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts  (Default: False)",
+                    "expected": bool
+                }
+            },
             "injection_thresh_reboot": {
                  "settings": {
                     "type": "text",

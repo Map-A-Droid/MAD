@@ -189,7 +189,12 @@ class DbSchemaUpdater:
             "column": "instance",
             "ctype": "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_general_ci NOT NULL FIRST",
             "modify_key": "DROP PRIMARY KEY, ADD PRIMARY KEY (`instance`, `origin`)"
-        }
+        },
+        {
+            "table": "settings_devicepool",
+            "column": "screendetection",
+            "ctype": "tinyint(1) DEFAULT NULL"
+        },
     ]
 
 
