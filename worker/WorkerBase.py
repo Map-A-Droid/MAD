@@ -124,7 +124,7 @@ class WorkerBase(ABC):
 
     def check_max_walkers_reached(self):
         walkermax = self._walker.get('walkermax', False)
-        if not walkermax:
+        if walkermax is False or (type(walkermax) is str and len(walkermax) == 0):
             return True
         reg_workers = self._mapping_manager.routemanager_get_registered_workers(self._routemanager_name)
         if int(reg_workers) > int(walkermax):
