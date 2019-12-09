@@ -12,7 +12,7 @@ import copy
 from db.DbWrapper import DbWrapper
 from db.DbSchemaUpdater import DbSchemaUpdater
 
-current_version = 17
+current_version = 18
 
 class MADVersion(object):
 
@@ -511,6 +511,15 @@ class MADVersion(object):
                              'were not converted.')
                 for (section, identifier, issue) in conversion_issues:
                     logger.error('{} {}: {}', section, identifier, issue)
+        if self._version < 18:
+            query = (
+                "ALTER TABLE `trs_status` CHANGE `instance` `instance` VARCHAR(50) CHARACTER "
+                "SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL;"
+            )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
 
         self.set_version(current_version)
 
