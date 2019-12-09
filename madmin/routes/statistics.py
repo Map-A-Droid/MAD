@@ -505,7 +505,6 @@ class statistics(object):
         data = []
         for device in device_status:
             try:
-                device['origin_id'] = int(self._mapping_manager.get_device_id_of(device["origin"]))
                 device['routemanager'] = areas[int(device['routemanager_id'])]['name']
                 device['routemanager_mode'] = areas[int(device['routemanager_id'])]['mode']
             except (TypeError,ValueError):
