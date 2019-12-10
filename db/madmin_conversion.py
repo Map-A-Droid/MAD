@@ -1,3 +1,10 @@
+COLUMNS = [
+    {
+        "table": "settings_devicepool",
+        "column": "screendetection",
+        "ctype": "tinyint(1) DEFAULT NULL"
+    },
+]
 TABLES = [
     """CREATE TABLE IF NOT EXISTS `madmin_instance` (
         `instance_id` INT UNSIGNED NOT NULL AUTO_INCREMENT,

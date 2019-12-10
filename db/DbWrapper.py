@@ -31,6 +31,7 @@ class DbWrapper:
         self.schema_updater.ensure_unversioned_tables_exist()
         self.schema_updater.ensure_unversioned_columns_exist()
         self.schema_updater.create_madmin_databases_if_not_exists()
+        self.schema_updater.ensure_unversioned_madmin_columns_exist()
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
