@@ -36,6 +36,7 @@ class DbWrapper:
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
+        self.instance_id = self.get_instance_id()
 
 
     def close(self, conn, cursor):
@@ -857,11 +858,11 @@ class DbWrapper:
 
         return
 
-    def save_status(self, instance, data):
+    def save_status(self, data):
         logger.debug("dbWrapper::save_status")
 
         query = (
-            "INSERT into trs_status (instance, origin, currentPos, lastPos, routePos, routeMax, "
+            "INSERT into trs_status (instance_id, origin, currentPos, lastPos, routePos, routeMax, "
             "routemanager, rebootCounter, lastProtoDateTime, "
             "init, rebootingOption, restartCounter, currentSleepTime) values "
             "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
@@ -873,7 +874,7 @@ class DbWrapper:
             "currentSleepTime=VALUES(currentSleepTime)"
         )
         vals = (
-            instance,
+            self.instance_id,
             data["Origin"], str(data["CurrentPos"]), str(
                 data["LastPos"]), data["RoutePos"], data["RouteMax"],
             data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"],
@@ -882,42 +883,42 @@ class DbWrapper:
         self.execute(query, vals, commit=True)
         return
 
-    def save_last_reboot(self, instance, origin):
+    def save_last_reboot(self, origin):
         logger.debug("dbWrapper::save_last_reboot")
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         query = (
-            "insert into trs_status(instance, origin, lastPogoReboot, globalrebootcount) "
+            "insert into trs_status(instance_id, origin, lastPogoReboot, globalrebootcount) "
             "values (%s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE lastPogoReboot=VALUES(lastPogoReboot), globalrebootcount=(globalrebootcount+1)"
 
         )
 
         vals = (
-            instance, origin, now, 1
+            self.instance_id, origin, now, 1
         )
 
         self.execute(query, vals, commit=True)
         return
 
-    def save_last_restart(self, instance, origin):
+    def save_last_restart(self, origin):
         logger.debug("dbWrapper::save_last_restart")
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         query = (
 
-            "insert into trs_status(instance, origin, lastPogoRestart, globalrestartcount) "
+            "insert into trs_status(instance_id, origin, lastPogoRestart, globalrestartcount) "
             "values (%s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE lastPogoRestart=VALUES(lastPogoRestart), globalrestartcount=(globalrestartcount+1)"
 
         )
 
         vals = (
-            instance, origin, now, 1
+            self.instance_id, origin, now, 1
         )
 
         self.execute(query, vals, commit=True)
         return
 
-    def download_status(self, instance):
+    def download_status(self):
         logger.debug("dbWrapper::download_status")
         workerstatus = []
 
@@ -927,11 +928,10 @@ class DbWrapper:
             "trs.`lastPogoRestart`, trs.`init`, trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`,"
             "trs.`globalrestartcount`, trs.`lastPogoReboot`, trs.`currentSleepTime`, sd.`device_id` AS 'origin_id'\n"
             "FROM trs_status trs\n"
-            "INNER JOIN madmin_instance mi ON mi.`name` = trs.`instance`\n"
-            "INNER JOIN settings_device sd ON sd.`name` = trs.`origin` AND sd.`instance_id` = mi.`instance_id`\n"
-            "WHERE trs.`instance` = %s"
+            "INNER JOIN settings_device sd ON sd.`name` = trs.`origin` AND sd.`instance_id` = trs.`instance_id`\n"
+            "WHERE trs.`instance_id` = %s"
         )
-        result = self.autofetch_all(query, args=(instance))
+        result = self.autofetch_all(query, args=(self.instance_id))
         for row in result:
             dt_fields = ['lastProtoDateTime', 'lastPogoRestart']
             for field in dt_fields:
@@ -979,19 +979,21 @@ class DbWrapper:
 
         return cells
 
-    def update_trs_status_to_idle(self, instance, origin):
+    def update_trs_status_to_idle(self, origin):
         query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
         logger.debug(query)
         self.execute(query, commit=True)
 
-    def get_instance_id(self):
+    def get_instance_id(self, instance_name=None):
+        if instance_name is None:
+            instance_name = self.application_args.status_name
         sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
-        res = self._db_exec.autofetch_value(sql, args=(self.application_args.status_name,))
+        res = self._db_exec.autofetch_value(sql, args=(instance_name,))
         if res:
             return res
         else:
             instance_data = {
-                'name': self.application_args.status_name
+                'name': instance_name
             }
             res = self._db_exec.autoexec_insert('madmin_instance', instance_data)
             return res

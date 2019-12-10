@@ -271,4 +271,4 @@ class MITMBase(WorkerBase):
             'CurrentSleepTime': str(self._current_sleep_time)
         }
 
-        self._db_wrapper.save_status(self._applicationArgs.status_name, dataToSave)
+        self._db_wrapper.save_status(dataToSave)

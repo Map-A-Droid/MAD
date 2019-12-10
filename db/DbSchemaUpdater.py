@@ -186,9 +186,9 @@ class DbSchemaUpdater:
         },
         {
             "table": "trs_status",
-            "column": "instance",
-            "ctype": "VARCHAR(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL FIRST",
-            "modify_key": "DROP PRIMARY KEY, ADD PRIMARY KEY (`instance`, `origin`)"
+            "column": "instance_id",
+            "ctype": "int UNSIGNED NOT NULL FIRST",
+            "modify_key": "DROP PRIMARY KEY, ADD PRIMARY KEY (`instance_id`, `origin`)"
         }
     ]
 
