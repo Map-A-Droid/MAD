@@ -928,7 +928,7 @@ class DbWrapper:
             "trs.`lastPogoRestart`, trs.`init`, trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`,"
             "trs.`globalrestartcount`, trs.`lastPogoReboot`, trs.`currentSleepTime`, sd.`device_id` AS 'origin_id'\n"
             "FROM trs_status trs\n"
-            "INNER JOIN settings_device sd ON sd.`name` = trs.`origin` AND sd.`instance_id` = trs.`instance_id`\n"
+            "INNER JOIN settings_device sd ON sd.name = (trs.origin COLLATE utf8mb4_unicode_ci) AND sd.`instance_id` = trs.`instance_id`\n"
             "WHERE trs.`instance_id` = %s"
         )
         result = self.autofetch_all(query, args=(self.instance_id))
