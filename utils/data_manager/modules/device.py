@@ -297,7 +297,7 @@ class Device(resource.Resource):
                 }
             },
             "injection_thresh_reboot": {
-                 "settings": {
+                "settings": {
                     "type": "text",
                     "require": False,
                     "description": "Reboot (if enabled) device after not injecting for X times in a row (Default: 20)",

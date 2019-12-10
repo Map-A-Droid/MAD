@@ -98,7 +98,7 @@ class AreaPokestops(area.Area):
                     "type": "option",
                     "values": [None, True, False],
                     "require": False,
-                    "description": "Do not spinn stops already made in the past (for levelmode) (Default: True)",
+                    "description": "Do not spin stops already made in the past (for levelmode) (Default: True)",
                     "expected": bool
                 }
             },
@@ -107,7 +107,7 @@ class AreaPokestops(area.Area):
                     "type": "option",
                     "values": [None, False, True],
                     "require": False,
-                    "description": "Cleanup quest inventory every spinned stop (Default: False)",
+                    "description": "Cleanup quest inventory after every stop (Default: False)",
                     "expected": bool
                 }
             }

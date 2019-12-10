@@ -244,6 +244,8 @@ class ResourceHandler(object):
                     return self.get_resource_data_root(resource_def, resource_info)
                 else:
                     return self.get(identifier, resource_def, resource_info)
+            if flask.request.method == 'POST' and self.api_req.content_type == 'application/json-rpc':
+                return self.post(identifier, self.api_req.data, resource_def, resource_info)
             translated_data = self.translate_data_for_datamanager(self.api_req.data, resource_def)
             if flask.request.method == 'PATCH':
                 return self.patch(identifier, translated_data, resource_def, resource_info)
