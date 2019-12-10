@@ -356,6 +356,6 @@ class PooledQueryExecutor:
         if where_col_names:
             query += "\nWHERE %s"
             where_clause = self.__create_clause(where_col_names, where_col_sub)
-            first_sub.append(",".join(where_clause) % tuple(where_literal_val))
+            first_sub.append("\nAND".join(where_clause) % tuple(where_literal_val))
         query = query % tuple(first_sub)
         self.execute(query, args=tuple(actual_values), commit=True, raise_exc=True)

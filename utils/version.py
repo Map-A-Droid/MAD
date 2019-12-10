@@ -12,7 +12,7 @@ import copy
 from db.DbWrapper import DbWrapper
 from db.DbSchemaUpdater import DbSchemaUpdater
 
-current_version = 18
+current_version = 19
 
 class MADVersion(object):
 
@@ -520,6 +520,35 @@ class MADVersion(object):
                 self.dbwrapper.execute(query, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+        if self._version < 19:
+            sql = "SELECT `DATA_TYPE`\n"\
+                  "FROM `INFORMATION_SCHEMA`.`COLUMNS`\n"\
+                  "WHERE `TABLE_NAME` = 'trs_status' AND `COLUMN_NAME` = 'instance'"
+            res = self.dbwrapper.autofetch_value(sql)
+            if res:
+                instances = {
+                    self._application_args.status_name: self.instance_id
+                }
+                # We dont want to mess with collations so just pull in and compare
+                sql = "SELECT `instance`, `origin` FROM `trs_status`"
+                devs = self.dbwrapper.autofetch_all(sql)
+                for dev in devs:
+                    if dev['instance'] not in instances:
+                        tmp_instance = self.dbwrapper.get_instance_id(instance_name=dev['instance'])
+                        instances[dev['instance']] = tmp_instance
+                    update_data = {
+                        'instance_id': instances[dev['instance']]
+                    }
+                    self.dbwrapper.autoexec_update('trs_status', update_data, where_keyvals=dev)
+                # Drop the old column
+                alter_query = (
+                    "ALTER TABLE trs_status "
+                    "DROP instance"
+                )
+                try:
+                    self.dbwrapper.execute(alter_query, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
 
         self.set_version(current_version)
 

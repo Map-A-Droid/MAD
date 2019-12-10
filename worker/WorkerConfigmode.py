@@ -44,7 +44,7 @@ class WorkerConfigmode(object):
         logger.info("Worker {} started in configmode", str(self._id))
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._id)
         logger.debug("Setting device to idle for routemanager")
-        self._db_wrapper.update_trs_status_to_idle(self._args.status_name, self._id)
+        self._db_wrapper.update_trs_status_to_idle(self._id)
         logger.debug("Device set to idle for routemanager {}", str(self._id))
         while self.check_walker() and not self._stop_worker_event.is_set():
             position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
@@ -130,7 +130,7 @@ class WorkerConfigmode(object):
                 self._stop_pogo()
                 killpogo = True
                 logger.debug("Setting device to idle for routemanager")
-                self._db_wrapper.update_trs_status_to_idle(self._args.status_name, self._id)
+                self._db_wrapper.update_trs_status_to_idle(self._id)
                 logger.debug("Device set to idle for routemanager {}", str(self._id))
             while check_walker_value_type(sleeptime) and not self._stop_worker_event.isSet():
                 time.sleep(1)
@@ -215,7 +215,7 @@ class WorkerConfigmode(object):
                 "Could not reboot due to client already having disconnected")
             start_result = False
         time.sleep(5)
-        self._db_wrapper.save_last_reboot(self._args.status_name, self._id)
+        self._db_wrapper.save_last_reboot(self._id)
         self.stop_worker()
         return start_result
 
