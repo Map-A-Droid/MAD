@@ -275,11 +275,12 @@ class RouteManagerBase(ABC):
             to_be_appended[i][1] = float(list_coords[i].lng)
         self.add_coords_numpy(to_be_appended)
 
-    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0):
+    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0, in_memory=False):
         new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
                                                             delete_old_route, self._calctype, self.useS2, self.S2level,
                                                             num_procs=0,
-                                                            overwrite_calculation=self._overwrite_calculation)
+                                                            overwrite_calculation=self._overwrite_calculation,
+                                                            in_memory=in_memory)
         if self._overwrite_calculation:
             self._overwrite_calculation = False
         return new_route
@@ -288,11 +289,11 @@ class RouteManagerBase(ABC):
         return len(self._current_route_round_coords) > 0
 
     def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                     delete_old_route: bool = False):
+                     delete_old_route: bool = False, in_memory: bool = False):
 
         current_coords = self._coords_unstructured
         new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                             delete_old_route, num_procs)
+                                             delete_old_route, num_procs, in_memory=in_memory)
         with self._manager_mutex:
             self._route.clear()
             for coord in new_route:

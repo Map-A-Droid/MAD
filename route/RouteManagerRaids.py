@@ -11,7 +11,7 @@ class RouteManagerRaids(RouteManagerBase):
         return True
 
     def _recalc_route_workertype(self):
-        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True)
+        self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True, in_memory=False)
         self._init_route_queue()
 
     def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius, path_to_include_geofence,

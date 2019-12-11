@@ -62,21 +62,23 @@ class RouteCalc(resource.Resource):
     # =====================================================
 
     def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, calc_type,
-                            useS2, S2level, num_procs=0, overwrite_calculation=False):
+                            useS2, S2level, num_procs=0, overwrite_calculation=False, in_memory=False):
         if overwrite_calculation:
             calc_type = 'quick'
-        if delete_old_route:
+        if delete_old_route and in_memory is False:
             logger.debug("Deleting routefile...")
             self._data['fields']['routefile'] = []
             self.save()
-        new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, num_processes=num_procs,
+        new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, in_memory, num_processes=num_procs,
                                       algorithm=calc_type, useS2=useS2, S2level=S2level)
         return new_route
 
-    def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, num_processes=1, algorithm='optimized', useS2: bool = False, S2level: int=15):
+    def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, in_memory, num_processes=1, algorithm='optimized',
+                     useS2: bool = False, S2level: int=15):
         export_data = []
         if useS2: logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
-        if self._data['fields']['routefile'] is not None and len(self._data['fields']['routefile']) > 0:
+        if not in_memory and \
+           (self._data['fields']['routefile'] is not None and len(self._data['fields']['routefile']) > 0):
             logger.debug('Using routefile from DB')
             for line in self._data['fields']['routefile']:
                 # skip empty lines
