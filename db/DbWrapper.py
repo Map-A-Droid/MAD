@@ -802,9 +802,6 @@ class DbWrapper:
             "FROM trs_spawn "
             "WHERE calc_endminsec IS NOT NULL "
             "AND (latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
-            "AND DATE_FORMAT(STR_TO_DATE(calc_endminsec,'%i:%s'),'%i:%s') BETWEEN DATE_FORMAT(DATE_ADD(NOW(), "
-            " INTERVAL if(spawndef=15,60,30) MINUTE),'%i:%s') "
-            "AND DATE_FORMAT(DATE_ADD(NOW(), INTERVAL if(spawndef=15,70,40) MINUTE),'%i:%s')"
         ).format(minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)

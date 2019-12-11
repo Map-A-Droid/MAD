@@ -365,14 +365,16 @@ class RouteManagerBase(ABC):
     def _merge_priority_queue(self, new_queue):
         if new_queue is not None:
             with self._manager_mutex:
-                logger.info("Merging existing Q of {} events with {} new events", len(self._prio_queue), len(new_queue))
+                logger.info("Got {} new events", len(new_queue))
+                new_queue = self._filter_priority_queue_internal(new_queue, cluster=True)
+                logger.info("Merging existing Q of {} events with {} clustered new events", len(self._prio_queue), len(new_queue))
                 merged = set(new_queue + self._prio_queue)
                 merged = list(merged)
-                logger.info("New raw priority queue with {} entries", len(merged))
-                merged = self._filter_priority_queue_internal(merged)
+                logger.info("Merging resulted in queue with {} entries", len(merged))
+                merged = self._filter_priority_queue_internal(merged, cluster=False)
                 heapq.heapify(merged)
                 self._prio_queue = merged
-            logger.info("New clustered priority queue with {} entries", len(merged))
+            logger.info("New filtered priority queue with {} entries", len(merged))
             logger.debug("Priority queue entries: {}", str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):
@@ -481,7 +483,7 @@ class RouteManagerBase(ABC):
         :return:
         """
 
-    def _filter_priority_queue_internal(self, latest):
+    def _filter_priority_queue_internal(self, latest, cluster=False):
         """
         Filter through the internal priority queue and cluster events within the timedelta and distance returned by
         _cluster_priority_queue_criteria
@@ -504,12 +506,16 @@ class RouteManagerBase(ABC):
         len_before = len(latest)
         latest = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
         len_after = len(latest)
-        logger.warning("Dropped from {} to {} because of remove_from_queue_backlog. "
-                       "Make sure you have enough workers for your size of the area or "
-                       "adjust the size of the area itself.", len_before, len_after)
+        if len_after < len_before:
+            logger.warning("Dropped from {} to {} because of remove_from_queue_backlog. "
+                           "Make sure you have enough workers for your size of the area or "
+                           "adjust the size of the area itself.", len_before, len_after)
         # TODO: sort latest by modified flag of event
-        merged = self.clustering_helper.get_clustered(latest)
-        return merged
+        if cluster:
+            merged = self.clustering_helper.get_clustered(latest)
+            return merged
+        else:
+            return latest
 
     def __set_routepool_entry_location(self, origin: str, pos: Location):
         with self._manager_mutex:
@@ -577,18 +583,34 @@ class RouteManagerBase(ABC):
                                                                   or self.starve_route)
                                                                  and self._prio_queue and len(self._prio_queue) > 0
                                                                  and self._prio_queue[0][0] < time.time())):
-                logger.info("The upcoming event of route {} is due at {}", self.name,
-                            datetime.fromtimestamp(self._prio_queue[0][0]).strftime('%Y-%m-%d %H:%M:%S'))
-                next_coord = heapq.heappop(self._prio_queue)[1]
+                next_prio = heapq.heappop(self._prio_queue)
+                next_timestamp = next_prio[0]
+                next_coord = next_prio[1]
+                next_readableTime = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
+                if self.settings is not None:
+                    delete_seconds_passed = self.settings.get(
+                            "remove_from_queue_backlog", 0)
+                    if delete_seconds_passed is not None:
+                        delete_before = time.time() - delete_seconds_passed
+                    else:
+                        delete_before = 0
+                if next_timestamp < delete_before:
+                    logger.warning("Prio event for route {} surpassed the "
+                                   "maximum backlog time and will be skipped "
+                                   "(was scheduled for {})",
+                                   self.name, next_readableTime)
+                    return self.get_next_location(origin)
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
                     self._positiontyp[origin] = 1
+                    logger.info("Prio event of route {} scheduled for {} passed to a closer worker.",
+                            self.name, next_readableTime)
                     # Let's recurse and find another location
                     return self.get_next_location(origin)
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
-                logger.info("Route {} is moving to {}, {} for a priority event",
-                            self.name, next_coord.lat, next_coord.lng)
+                logger.info("Route {} is moving to {}, {} for a priority event scheduled for {}",
+                        self.name, next_coord.lat, next_coord.lng, next_readableTime)
                 next_coord = self.check_coord_and_maybe_del(next_coord, origin)
                 if next_coord is None:
                     # Coord was not ok, lets recurse
