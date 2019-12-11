@@ -521,6 +521,17 @@ class MADVersion(object):
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
         if self._version < 19:
+            # Non-instanced devices in trs_status will cause the upgrade to fail.  Since these entries are prior
+            # to bfbadcd we can remove them
+            sql = "SELECT `origin` FROM `trs_status` WHERE `instance` = ''"
+            bad_devs = self.dbwrapper.autofetch_column(sql)
+            if bad_devs:
+                logger.warning('Found devices that have no instance.  These will be removed from the table. '\
+                               '{}', bad_devs)
+                del_data = {
+                    'instance': ''
+                }
+                self.dbwrapper.autoexec_delete('trs_status', del_data)
             sql = "SELECT `DATA_TYPE`\n"\
                   "FROM `INFORMATION_SCHEMA`.`COLUMNS`\n"\
                   "WHERE `TABLE_NAME` = 'trs_status' AND `COLUMN_NAME` = 'instance'"
