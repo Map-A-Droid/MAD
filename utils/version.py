@@ -542,7 +542,12 @@ class MADVersion(object):
                 }
                 # We dont want to mess with collations so just pull in and compare
                 sql = "SELECT `instance`, `origin` FROM `trs_status`"
-                devs = self.dbwrapper.autofetch_all(sql)
+                try:
+                    devs = self.dbwrapper.autofetch_all(sql)
+                    if devs is None:
+                        devs = []
+                except:
+                    devs = []
                 for dev in devs:
                     if dev['instance'] not in instances:
                         tmp_instance = self.dbwrapper.get_instance_id(instance_name=dev['instance'])
