@@ -53,12 +53,13 @@ $(document).ready(function () {
                     if(xhr.status == 204) {
                       alert('Recalculation successfully started');
                     }
+                    $.unblockUI();
                 },
                 error: function(data, status, xhr) {
                     alert('Unable to recalculate the area.  Please look at server logs');
+                    $.unblockUI();
                 }
             });
-            $.unblockUI();
         }
     });
     // Toggle on boot
