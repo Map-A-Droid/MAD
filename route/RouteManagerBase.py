@@ -365,16 +365,22 @@ class RouteManagerBase(ABC):
     def _merge_priority_queue(self, new_queue):
         if new_queue is not None:
             with self._manager_mutex:
+                new_queue = list(new_queue)
                 logger.info("Got {} new events", len(new_queue))
-                new_queue = self._filter_priority_queue_internal(new_queue, cluster=True)
-                logger.info("Merging existing Q of {} events with {} clustered new events", len(self._prio_queue), len(new_queue))
-                merged = set(new_queue + self._prio_queue)
-                merged = list(merged)
-                logger.info("Merging resulted in queue with {} entries", len(merged))
-                merged = self._filter_priority_queue_internal(merged, cluster=False)
+                # TODO: verify if this procedure is good for other modes, too
+                if self.mode == "mon_mitm":
+                    new_queue = self._filter_priority_queue_internal(new_queue)
+                    logger.info("Merging existing Q of {} events with {} "
+                        "clustered new events", len(self._prio_queue), len(new_queue))
+                    merged = set(new_queue + self._prio_queue)
+                    merged = list(merged)
+                    logger.info("Merging resulted in queue with {} entries", len(merged))
+                    merged = self._filter_priority_queue_internal(merged, cluster=False)
+                else:
+                    merged = self._filter_priority_queue_internal(new_queue)
                 heapq.heapify(merged)
                 self._prio_queue = merged
-            logger.info("New filtered priority queue with {} entries", len(merged))
+            logger.info("Finalized new priority queue with {} entries", len(merged))
             logger.debug("Priority queue entries: {}", str(merged))
 
     def date_diff_in_seconds(self, dt2, dt1):
@@ -483,7 +489,7 @@ class RouteManagerBase(ABC):
         :return:
         """
 
-    def _filter_priority_queue_internal(self, latest, cluster=False):
+    def _filter_priority_queue_internal(self, latest, cluster=True):
         """
         Filter through the internal priority queue and cluster events within the timedelta and distance returned by
         _cluster_priority_queue_criteria
