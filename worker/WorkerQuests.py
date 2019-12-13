@@ -247,7 +247,8 @@ class WorkerQuests(MITMBase):
             logger.debug(
                     "Need more sleep after Teleport: {} seconds!", str(int(delay_used)))
         else:
-            logger.info("main: Walking...")
+            delay_used = distance / speed
+            logger.info("main: Walking {} m, this will take {} seconds", distance, delay_used)
             self._transporttype = 1
             self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
                                           self.current_location.lat,
