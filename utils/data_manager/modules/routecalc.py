@@ -124,8 +124,10 @@ class RouteCalc(resource.Resource):
             calc_coords.append(calc_coord)
             export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),
                                 'lng': lessCoordinates[int(sol_best[i])][1].item()})
-        self._data['fields']['routefile'] = calc_coords
-        self.save()
+        if not in_memory:
+            # Only save if we aren't calculating in memory
+            self._data['fields']['routefile'] = calc_coords
+            self.save()
         return export_data
 
     def getLessCoords(self, npCoordinates, maxRadius, maxCountPerCircle, useS2: bool=False, S2level: int=15):
