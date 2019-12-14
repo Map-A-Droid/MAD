@@ -23,6 +23,10 @@ class RouteCalc(resource.Resource):
         }
     }
 
+    def _default_load(self):
+        self.recalc_status = False
+        self.new_calc = False
+
     def get_dependencies(self):
         tables = ['settings_area_idle',
                   'settings_area_iv_mitm',
@@ -50,12 +54,21 @@ class RouteCalc(resource.Resource):
             raise dm_exceptions.UnknownIdentifier()
         data = self.translate_keys(data, 'load')
         self._data['fields']['routefile'] = json.loads(data['routefile'])
+        self.recalc_status = data['recalc_status']
+        self.new_calc = False
 
     def save(self, force_insert=False, ignore_issues=[]):
         self.presave_validation(ignore_issues=ignore_issues)
+        literals = []
         core_data = self.get_resource()
         core_data['routefile'] = json.dumps(self._data['fields']['routefile'])
-        super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
+        core_data['recalc_status'] = self.recalc_status
+        if self.new_calc:
+            core_data['last_updated'] = 'NOW()'
+            literals.append('last_updated')
+        super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues,
+                     literals=literals)
+        self.new_calc = False
 
     def validate_custom(self):
         issues = {}
@@ -85,12 +98,18 @@ class RouteCalc(resource.Resource):
                             route_name: str = 'Unknown'):
         if overwrite_calculation:
             calc_type = 'quick'
-        if delete_old_route and in_memory is False:
-            logger.debug("Deleting routefile for {}", route_name)
-            self._data['fields']['routefile'] = []
+        if in_memory is False:
+            self.recalc_status = 1
+            if delete_old_route:
+                self.new_calc = True
+                logger.debug("Deleting routefile...")
+                self._data['fields']['routefile'] = []
             self.save()
         new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, in_memory, num_processes=num_procs,
                                       algorithm=calc_type, useS2=useS2, S2level=S2level, route_name=route_name)
+        if in_memory is False:
+            self.recalc_status = 0
+            self.save()
         return new_route
 
     def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, in_memory, num_processes=1, algorithm='optimized',
@@ -107,6 +126,7 @@ class RouteCalc(resource.Resource):
                 lineSplit = line.split(',')
                 export_data.append({'lat': float(lineSplit[0].strip()),
                                     'lng': float(lineSplit[1].strip())})
+            self.new_calc = False
             return export_data
 
         lessCoordinates = coords

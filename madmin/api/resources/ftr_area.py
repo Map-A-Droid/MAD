@@ -21,11 +21,14 @@ class APIArea(ResourceHandler):
                 args = self.api_req.data.get('args', {})
                 if call == 'recalculate':
                     resource = self._data_manager.get_resource('area', identifier=identifier)
-                    status = self._mapping_manager.routemanager_recalcualte(resource.identifier)
-                    if status:
-                        return (None, 204)
+                    if resource.recalc_status == 0:
+                        status = self._mapping_manager.routemanager_recalcualte(resource.identifier)
+                        if status:
+                            return (None, 204)
+                        else:
+                            return (None, 409)
                     else:
-                        return (None, 409)
+                        return ('Recalc is already running on this Area', 422)
                 else:
                     return (call, 501)
             except KeyError:

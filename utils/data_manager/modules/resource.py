@@ -178,6 +178,8 @@ class Resource(object):
             except:
                 raise dm_exceptions.UnknownIdentifier()
             self._load()
+        else:
+            self._default_load()
         self._cleanup_load()
 
     # All of these are implemented because this is not truely a dict structure but we overload the datasource
@@ -270,6 +272,9 @@ class Resource(object):
             except Exception:
                 pass
 
+    def _default_load(self):
+        pass
+
     def delete(self):
         if self.identifier is None:
             raise dm_exceptions.UnknownIdentifier()
@@ -358,7 +363,7 @@ class Resource(object):
         if issues:
             raise dm_exceptions.UpdateIssue(**issues)
 
-    def save(self, core_data=None, force_insert=False, ignore_issues=[]):
+    def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
         self.presave_validation(ignore_issues=ignore_issues)
         if core_data is None:
             data = self.get_resource(backend=True)
@@ -381,17 +386,17 @@ class Resource(object):
             data[self.primary_key] = self.identifier
         try:
             if force_insert:
-                res = self._dbc.autoexec_insert(self.table, data, optype="ON DUPLICATE")
+                res = self._dbc.autoexec_insert(self.table, data, optype="ON DUPLICATE", **kwargs)
                 if not self.identifier:
                     self.identifier = res
             elif not self.identifier:
-                res = self._dbc.autoexec_insert(self.table, data)
+                res = self._dbc.autoexec_insert(self.table, data, **kwargs)
                 self.identifier = res
             else:
                 where = {
                     self.primary_key: self.identifier
                 }
-                self._dbc.autoexec_update(self.table, data, where_keyvals=where)
+                self._dbc.autoexec_update(self.table, data, where_keyvals=where, **kwargs)
         except mysql.connector.Error as err:
             raise dm_exceptions.SaveIssue(err)
         return self.identifier

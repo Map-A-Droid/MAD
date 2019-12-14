@@ -20,6 +20,7 @@ $(document).ready(function () {
                         elem.parent().parent().remove();
                         toggleConfiguredElement();
                     }
+                    $.unblockUI();
                 },
                 error: function(data, status, xhr) {
                     if(data.status == 412) {
@@ -32,31 +33,6 @@ $(document).ready(function () {
                     } else {
                         alert('Unable to save the {{ subtab }}.  An unknown error occurred');
                     }
-                }
-            });
-            $.unblockUI();
-        }
-    });
-    $(".recalculate").click(function() {
-        if(confirm('Are you sure you want to recalculate this route?')) {
-            var elem =  $(this);
-            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Recalculating routefile...</h2>' });
-            rpc_call = {
-              'call': 'recalculate'
-            }
-            $.ajax({
-                url : '{{ url_for('api_area') }}/'+ $(this).data('area'),
-                contentType : 'application/json-rpc',
-                data: JSON.stringify(rpc_call),
-                type : 'POST',
-                success: function(data, status, xhr) {
-                    if(xhr.status == 204) {
-                      alert('Recalculation successfully started');
-                    }
-                    $.unblockUI();
-                },
-                error: function(data, status, xhr) {
-                    alert('Unable to recalculate the area.  Please look at server logs');
                     $.unblockUI();
                 }
             });
@@ -64,7 +40,84 @@ $(document).ready(function () {
     });
     // Toggle on boot
     toggleConfiguredElement();
+    check_recalc_status();
+    setInterval(check_recalc_status, 5000);
   });
+
+  function recalculate_route() {
+    if(confirm('Are you sure you want to recalculate this route?')) {
+        var elem = $(this);
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Recalculating routefile...</h2>' });
+        rpc_call = {
+          'call': 'recalculate'
+        }
+        $.ajax({
+            url : '{{ url_for('api_area') }}/'+ $(this).data('area'),
+            contentType : 'application/json-rpc',
+            data: JSON.stringify(rpc_call),
+            type : 'POST',
+            success: function(data, status, xhr) {
+                if(xhr.status == 204) {
+                  alert('Recalculation successfully started');
+                }
+                $.unblockUI();
+                check_recalc_status();
+            },
+            error: function(data, status, xhr) {
+                alert('Unable to recalculate the area.  Please look at server logs');
+                $.unblockUI();
+                check_recalc_status();
+            }
+        });
+    }
+  }
+
+  function check_recalc_status() {
+    $.ajax({
+        url : '{{ url_for('recalc_status') }}',
+        type : 'GET',
+        success: function(data, status, xhr) {
+            if(xhr.status == 200) {
+              var in_recalc = xhr.responseJSON;
+              $.each($(".area_container"), function () {
+                var area_id = $(this).data('area');
+                var recalc_div = $(this).find(".recalc_div");
+                var recalc_elem = $(this).find(".recalc_disp");
+                var recalc_status = $(recalc_elem).data('recalc');
+                var elem;
+                if(in_recalc.includes(area_id)) {
+                  if(recalc_status == 0 || recalc_status == undefined) {
+                    elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'recalc_disp',
+                      'data-recalc': 1,
+                      'width': '32px',
+                      'heigth': '30px'
+                    });
+                  }
+                } else {
+                  if(recalc_status == '1' || recalc_status == undefined) {
+                    var fa_img = $(document.createElement("i")).attr({
+                      'class': "fa fa-sync"
+                    });
+                    elem = $(document.createElement("button")).attr({
+                      'class': 'recalc_disp btn btn-info btn-sm',
+                      'data-area': area_id,
+                      'data-recalc': 0,
+                    }).bind('click', recalculate_route).append(fa_img);
+                  }
+                }
+                if(elem) {
+                  recalc_div.empty().append(elem);
+                }
+              });
+            }
+        },
+        error: function(data, status, xhr) {
+            alert('Unable to get recalc status.  Can you reach the server?');
+        }
+    });
+  }
 
   function toggleConfiguredElement() {
     if($(".delete").length == 0) {
@@ -72,7 +125,7 @@ $(document).ready(function () {
     } else {
         $('#no-configured-elements').hide();
     }
-}
+  }
 </script>
 {% endblock %}
 
@@ -141,7 +194,7 @@ $(document).ready(function () {
       {% else %}
       <tbody>
         {% for area_id, area in area.items() %}
-        <tr>
+        <tr class="area_container" data-area='{{area_id}}'>
           <td class="align-middle">
             <a href="{{ url_for('settings_areas', id=area_id, mode=area.area_type) }}">{{ area.name }}</a>
           </td>
@@ -166,7 +219,7 @@ $(document).ready(function () {
           <td class="text-right align-middle">
             <a href="{{ url_for('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit"><i class="fas fa-route"></i></button></a>
             {% if config_mode == False %}
-              <button data-area='{{ area_id }}' type="button" class="recalculate btn btn-info btn-sm"><i class="fa fa-sync"></i></button>
+              <div class='recalc_div' style='display:inline;'></div>
             {% endif %}
             <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.area_type }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
             <button data-identifier='{{ area_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>

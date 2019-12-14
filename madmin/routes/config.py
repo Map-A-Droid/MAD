@@ -48,6 +48,7 @@ class config(object):
             ("/settings/routecalc", self.settings_routecalc),
             ("/settings/walker", self.settings_walkers),
             ("/settings/walker/areaeditor", self.settings_walker_area),
+            ("/recalc_status", self.recalc_status),
             ("/reload", self.reload)
         ]
         for route, view_func in routes:
@@ -164,6 +165,15 @@ class config(object):
             return config[mode]
         except KeyError:
             return config
+    @logger.catch
+    @auth_required
+    def recalc_status(self):
+        recalc = []
+        areas = self._data_manager.get_root_resource('area')
+        for area_id, area in areas.items():
+            if area.recalc_status:
+                recalc.append(area_id)
+        return Response(json.dumps(recalc), mimetype='application/json')
 
     @logger.catch
     @auth_required

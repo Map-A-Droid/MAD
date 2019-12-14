@@ -34,6 +34,9 @@ class Area(resource.Resource):
                 self._data['settings'][field] = val
             else:
                 continue
+        # get route-calc status
+        routecalc = self._data_manager.get_resource('routecalc', self._data['fields']['routecalc'])
+        self.recalc_status = routecalc.recalc_status
 
     def save(self, force_insert=False, ignore_issues=[]):
         has_identifier = True if self.identifier else False
