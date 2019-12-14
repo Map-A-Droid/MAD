@@ -37,10 +37,6 @@ if __name__ == "__main__":
             'config.ini file not found. Check configs folder and copy example config')
         sys.exit(1)
 
-    filename = args.mappings
-    if not os.path.exists(filename):
-        generate_mappingjson(args.mappings)
-
     create_folder(args.file_path)
     create_folder(args.upload_path)
 
