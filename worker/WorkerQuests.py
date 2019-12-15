@@ -102,6 +102,8 @@ class WorkerQuests(MITMBase):
                 if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
+            # quick check for dr. blabla
+            self._check_quest()
 
         if self._level_mode:
             logger.info("Starting Level Mode")
