@@ -337,6 +337,8 @@ def parseArgs():
                          help='Show debug messages',
                          type=int, dest='verbose')
     parser.set_defaults(DEBUG=False)
+    parser.add_argument('-ut', '--unit_tests', action='store_true', default=False,
+                        help='Run unit tests then quit', dest='unit_tests')
 
     args = parser.parse_args()
 

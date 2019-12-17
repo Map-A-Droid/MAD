@@ -249,9 +249,22 @@ if __name__ == "__main__":
         t_madmin.start()
 
     logger.info("Running.....")
+    exit_code = 0
     try:
-        while True:
-            time.sleep(10)
+        if args.unit_tests:
+            import unittest
+            import time
+            loader = unittest.TestLoader()
+            start_dir = 'tests/'
+            time.sleep(5)
+            suite = loader.discover(start_dir)
+            runner = unittest.TextTestRunner()
+            result = runner.run(suite)
+            exit_code = 0 if result.wasSuccessful() else 1
+            raise KeyboardInterrupt
+        else:
+            while True:
+                time.sleep(10)
     except KeyboardInterrupt or Exception:
         logger.info("Shutdown signal received")
     finally:
@@ -292,4 +305,4 @@ if __name__ == "__main__":
             logger.debug("Done shutting down db_pool_manager")
         logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))
-        sys.exit(0)
+        sys.exit(exit_code)
