@@ -37,11 +37,15 @@ class MitmMapper(object):
             name="playerstats_update_consumer", target=self.__internal_playerstats_db_update_consumer)
         if self.__mapping_manager is not None:
             for origin in self.__mapping_manager.get_all_devicemappings().keys():
-                self.__mapping[origin] = {}
-                self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
-                self.__playerstats[origin].open_player_stats()
+                self.__add_new_device(origin)
         self.__playerstats_db_update_consumer.daemon = True
         self.__playerstats_db_update_consumer.start()
+
+    def __add_new_device(self, origin):
+        self.__mapping[origin] = {}
+        self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
+        self.__playerstats[origin].open_player_stats()
+
 
     def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
         if self.__application_args.game_stats:
@@ -130,6 +134,9 @@ class MitmMapper(object):
         updated = False
         logger.debug3("Trying to acquire lock and update proto {} received by {}".format(origin, key))
         with self.__mapping_mutex:
+            if origin not in self.__mapping.keys() and origin in self.__mapping_manager.get_all_devicemappings().keys():
+                logger.info("New device detected, {}.  Setting up the device configuration", origin)
+                self.__add_new_device(origin)
             if origin in self.__mapping.keys():
                 logger.debug("Updating timestamp of {} with method {} to {}", str(
                     origin), str(key), str(timestamp_received_raw))
