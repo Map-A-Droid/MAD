@@ -284,7 +284,7 @@ class map(object):
                 data[i]["encounter_id"] = str(data[i]["encounter_id"])
                 data[i]["name"] = i8ln(mon_raw["name"])
             except Exception:
-                traceback.print_exc()
+                pass
 
         return jsonify(data)
 

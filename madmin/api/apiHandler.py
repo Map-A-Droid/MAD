@@ -275,8 +275,6 @@ class ResourceHandler(object):
             return apiResponse.APIResponse(self._logger, self.api_req)(err.issues, 422)
         except utils.data_manager.UnknownIdentifier:
             return apiResponse.APIResponse(self._logger, self.api_req)(None, 404)
-        except Exception:
-            return apiResponse.APIResponse(self._logger, self.api_req)('', 500)
 
     def delete(self, identifier, *args, **kwargs):
         """ API Call to remove data """
