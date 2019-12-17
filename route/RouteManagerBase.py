@@ -305,7 +305,10 @@ class RouteManagerBase(ABC):
 
     def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1):
         new_route = self.recalc_route(max_radius, max_coords_within_radius, num_procs, in_memory=True)
-        self._route_resource['routefile'] = new_route
+        calc_coords = []
+        for coord in new_route:
+            calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
+        self._route_resource['routefile'] = calc_coords
         self._route_resource.save()
         for worker in self._workers_registered:
             self.unregister_worker(worker)
