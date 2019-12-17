@@ -5,7 +5,7 @@ import secrets
 from utils.logging import logger
 from .util import *
 
-def route_calc_impl(lessCoordinates, num_processes):
+def route_calc_impl(lessCoordinates, route_name, num_processes):
     init_temp = 100
     halt = 120
     markov_coefficient = 10
@@ -44,10 +44,28 @@ def route_calc_impl(lessCoordinates, num_processes):
         num_cores = 1
         thread_pool = None
     # Simulated Annealing
+    output_percs = []
+    if markov_step > 500:
+        output_levels = 0.01
+    elif markov_step > 250:
+        output_levels = 0.025
+    elif markov_step > 100:
+        output_levels = 0.05
+    else:
+        output_levels = 0.1
+    logger.info("There are {} markov steps.  Updating status every {}%", markov_step, round(output_levels * 100, 1))
     while T > T_MIN and cost_best_counter < halt:
-        logger.info("Still calculating... cost_best_counter: {}",
+        logger.debug("Still calculating... cost_best_counter: {}",
                     str(cost_best_counter))
-
+        perc_comp = float(cost_best_counter/halt)
+        try:
+            last_comp = output_percs[-1]
+        except:
+            last_comp = 0
+        rounded_perc = round(output_levels * float(math.floor(float(perc_comp)/output_levels)),2)
+        if rounded_perc > last_comp:
+            output_percs.append(rounded_perc)
+            logger.info("Route calculation is {}% complete for {}", round(rounded_perc*100, 1), route_name)
         if num_cores and num_cores != 1 and thread_pool and cost_best_counter > 0:
             running_calculations = []
             full = secrets.randbelow(2)
@@ -94,7 +112,7 @@ def route_calc_impl(lessCoordinates, num_processes):
 
             # now check the better solutions if we can merge them ;)
             if len(costs_temps) == 0:
-                logger.warning("No better solution...")
+                logger.debug("No better solution...")
             elif len(costs_temps) == 1:
                 cost_best = costs_temps[0]
                 sol_best = solutions_temp[0].copy()

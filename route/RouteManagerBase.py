@@ -100,7 +100,7 @@ class RouteManagerBase(ABC):
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
             new_coords = self._route_resource.getJsonRoute(fenced_coords, max_radius, max_coords_within_radius,
-                                                           algorithm=calctype)
+                                                           algorithm=calctype, route_name=self.name)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
@@ -280,7 +280,8 @@ class RouteManagerBase(ABC):
                                                             delete_old_route, self._calctype, self.useS2, self.S2level,
                                                             num_procs=0,
                                                             overwrite_calculation=self._overwrite_calculation,
-                                                            in_memory=in_memory)
+                                                            in_memory=in_memory,
+                                                            route_name=self.name)
         if self._overwrite_calculation:
             self._overwrite_calculation = False
         return new_route

@@ -62,19 +62,20 @@ class RouteCalc(resource.Resource):
     # =====================================================
 
     def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, calc_type,
-                            useS2, S2level, num_procs=0, overwrite_calculation=False, in_memory=False):
+                            useS2, S2level, num_procs=0, overwrite_calculation=False, in_memory=False,
+                            route_name: str = 'Unknown'):
         if overwrite_calculation:
             calc_type = 'quick'
         if delete_old_route and in_memory is False:
-            logger.debug("Deleting routefile...")
+            logger.debug("Deleting routefile for {}", route_name)
             self._data['fields']['routefile'] = []
             self.save()
         new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, in_memory, num_processes=num_procs,
-                                      algorithm=calc_type, useS2=useS2, S2level=S2level)
+                                      algorithm=calc_type, useS2=useS2, S2level=S2level, route_name=route_name)
         return new_route
 
     def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, in_memory, num_processes=1, algorithm='optimized',
-                     useS2: bool = False, S2level: int=15):
+                     useS2: bool = False, S2level: int=15, route_name: str = 'Unknown'):
         export_data = []
         if useS2: logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
         if not in_memory and \
@@ -91,7 +92,7 @@ class RouteCalc(resource.Resource):
 
         lessCoordinates = coords
         if len(coords) > 1 and maxRadius and maxCoordsInRadius:
-            logger.info("Calculating...")
+            logger.info("Calculating route for {}", route_name)
             newCoords = self.getLessCoords(coords, maxRadius, maxCoordsInRadius, useS2, S2level)
             lessCoordinates = np.zeros(shape=(len(newCoords), 2))
             for i in range(len(lessCoordinates)):
@@ -114,7 +115,7 @@ class RouteCalc(resource.Resource):
             from route.routecalc.calculate_route_quick import route_calc_impl
         else:
             from route.routecalc.calculate_route_optimized import route_calc_impl
-        sol_best = route_calc_impl(lessCoordinates, num_processes)
+        sol_best = route_calc_impl(lessCoordinates, route_name, num_processes)
         end = timer()
         logger.info("Calculated route in {} minutes", str((end - start) / 60))
         calc_coords = []
