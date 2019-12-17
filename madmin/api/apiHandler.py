@@ -25,7 +25,7 @@ class ResourceHandler(object):
     mode = None
     has_rpc_calls = False
 
-    def __init__(self, logger, app, base, data_manager, mapping_manager, ws_server):
+    def __init__(self, logger, app, base, data_manager, mapping_manager, ws_server, config_mode):
         self._logger = logger
         self._app = app
         self._data_manager = data_manager
@@ -33,6 +33,7 @@ class ResourceHandler(object):
         self._ws_server = ws_server
         self._base = base
         self._instance = self._data_manager.instance_id
+        self._config_mode = config_mode
         self.api_req = None
         if self.component:
             self.uri_base = '%s/%s' % (self._base, self.component)
