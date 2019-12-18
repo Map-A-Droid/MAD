@@ -182,6 +182,11 @@ class WordToScreenMatching(object):
             returntype, globaldict, self._width, self._height, diff = \
                 self._pogoWindowManager.screendetection_get_type(screenpath, self._id)
 
+            if not globaldict:
+                self._nextscreen = ScreenType.UNDEFINED
+                logger.warning('Get not any text on screen - start next round...')
+                return ScreenType.ERROR
+
             self._ratio = self._height / self._width
 
             logger.debug("Screenratio of origin {}: {}".format(str(self._id), str(self._ratio)))
@@ -259,7 +264,7 @@ class WordToScreenMatching(object):
             click_y = (self._height / 1.69) + self._screenshot_y_offset
             logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
             self._communicator.click(click_x, click_y)
-            self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
+            self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 500)
             time.sleep(1)
             self._communicator.click(click_x, click_y)
             time.sleep(1)
@@ -451,6 +456,9 @@ class WordToScreenMatching(object):
 
             globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
             click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
+            if not globaldict:
+                # dict is empty
+                return ScreenType.UNDEFINED
             n_boxes = len(globaldict['level'])
             for i in range(n_boxes):
                 if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
