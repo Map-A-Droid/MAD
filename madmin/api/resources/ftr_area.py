@@ -21,6 +21,9 @@ class APIArea(ResourceHandler):
                 args = self.api_req.data.get('args', {})
                 if call == 'recalculate':
                     resource = self._data_manager.get_resource('area', identifier=identifier)
+                    mode = resource['mode']
+                    if mode in ['iv_mitm', 'idle']:
+                        return apiResponse.APIResponse(self._logger, self.api_req)('Unable to recalc mode %s' % (mode,), 422)
                     if resource.recalc_status == 0:
                         status = self._mapping_manager.routemanager_recalcualte(resource.identifier)
                         if status:

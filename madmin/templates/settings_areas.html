@@ -219,7 +219,9 @@ $(document).ready(function () {
           <td class="text-right align-middle">
             <a href="{{ url_for('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit"><i class="fas fa-route"></i></button></a>
             {% if config_mode == False %}
-              <div class='recalc_div' style='display:inline;'></div>
+              {% if area.area_type not in ['idle', 'iv_mitm'] %}
+                <div class='recalc_div' style='display:inline;'></div>
+              {% endif %}
             {% endif %}
             <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.area_type }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
             <button data-identifier='{{ area_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
