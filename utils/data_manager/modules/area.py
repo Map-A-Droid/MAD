@@ -76,15 +76,16 @@ class Area(resource.Resource):
             raise err
 
     @classmethod
-    def search(cls, dbc, res_obj, *args, **kwargs):
+    def search(cls, dbc, res_obj, instance_id, *args, **kwargs):
         where = ""
-        sql_args = ()
         mode = kwargs.get('mode', None)
+        where = "WHERE `instance_id` = %s"
+        sql_args = [instance_id]
         if mode:
-            where = "WHERE `mode` = %s\n"
-            sql_args = (mode,)
+            where += " AND `mode` = %s\n"
+            sql_args.append(mode)
         sql = "SELECT `%s`\n"\
               "FROM `%s`\n"\
-              "%s"\
+              "%s\n"\
               "ORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, where, res_obj.search_field)
-        return dbc.autofetch_column(sql, args=sql_args)
+        return dbc.autofetch_column(sql, args=tuple(sql_args))

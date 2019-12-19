@@ -85,7 +85,7 @@ class DataManager(object):
                 resource_def = self.get_resource_def(section, mode=mode)
             except utils.data_manager.dm_exceptions.DataManagerException:
                 resource_def = copy.deepcopy(utils.data_manager.modules.MAPPINGS['area_nomode'])
-        resources = resource_def.search(self.dbc, resource_def, **params)
+        resources = resource_def.search(self.dbc, resource_def, self.instance_id, **params)
         results = collections.OrderedDict()
         for identifier in resources:
             resource = self.get_resource(section, identifier=identifier)
