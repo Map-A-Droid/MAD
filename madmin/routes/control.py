@@ -316,6 +316,7 @@ class control(object):
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reboot()
+        self._ws_server.force_disconnect(origin)
         return redirect(url_for('get_phonescreens'), code=302)
 
     @auth_required
