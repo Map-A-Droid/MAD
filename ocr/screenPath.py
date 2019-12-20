@@ -412,8 +412,20 @@ class WordToScreenMatching(object):
 
         elif ScreenType(returntype) == ScreenType.FAILURE:
             self._nextscreen = ScreenType.UNDEFINED
-            self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
-            time.sleep(2)
+            if self.get_devicesettings_value('logintype', 'google') == 'ptc':
+                click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
+                n_boxes = len(globaldict['level'])
+                for i in range(n_boxes):
+                    if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
+                        (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
+                                        globaldict['width'][i], globaldict['height'][i])
+                        click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
+                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                        self._communicator.click(click_x, click_y)
+                        time.sleep(2)
+            else:
+                self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
+                time.sleep(2)
             return ScreenType.ERROR
 
         elif ScreenType(returntype) == ScreenType.RETRY:
