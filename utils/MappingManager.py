@@ -300,8 +300,29 @@ class MappingManager:
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
     def routemanager_recalcualte(self, routemanager_name):
-        routemanager = self.__fetch_routemanager(routemanager_name)
-        routemanager.recalc_route_adhoc(routemanager._max_radius, routemanager._max_coords_within_radius, 0)
+        successful = False
+        try:
+            routemanager = self.__fetch_routemanager(routemanager_name)
+            active = False
+            if routemanager._check_routepools_thread:
+                active = True
+                successful = True
+            else:
+                routemanager._start_routemanager()
+                active = False
+            args=(routemanager._max_radius, routemanager._max_coords_within_radius)
+            kwargs = {
+                'num_procs':0,
+                'active': active
+            }
+            t = Thread(target=routemanager.recalc_route_adhoc, args=args, kwargs=kwargs)
+            t.start()
+            if len(routemanager._workers_registered) == 0:
+                routemanager.stop_routemanager()
+        except Exception as e:
+            import traceback
+            traceback.print_exc()
+        return successful
 
     def __inherit_device_settings(self, devicesettings, poolsettings):
         inheritsettings = {}
