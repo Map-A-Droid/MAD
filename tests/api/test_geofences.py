@@ -61,3 +61,20 @@ class APIGeoFence(api_base.APITestBase):
         result.update(payload)
         self.valid_patch(payload, result)
         self.remove_resources()
+
+    def test_invalid_post_fencedata(self):
+        payload = {
+            'fence_type': 'polygon',
+            'fence_data': ['1.00,1.00', '1.00,a']
+        }
+        errors = {"missing": ["name"], "invalid": [['fence_data', 'Must be one coord set per line (float,float)']]}
+        super().invalid_post(payload, errors)
+
+    def test_invalid_patch_fencedata(self):
+        payload = {
+            'fence_type': 'polygon',
+            'fence_data': ['1.00,1.00', '1.00,a']
+        }
+        errors = {"invalid": [['fence_data', 'Must be one coord set per line (float,float)']]}
+        super().invalid_patch(payload, errors)
+        self.remove_resources()

@@ -330,9 +330,8 @@ class Resource(object):
             except TypeError:
                 continue
 
-    def presave_validation(self, ignore_issues=[]):
+    def presave_validation(self, ignore_issues=[], issues={}):
         # Validate required data has been set
-        issues = {}
         top_levels = ['fields', 'settings']
         for top_level in top_levels:
             try:
@@ -411,3 +410,6 @@ class Resource(object):
                 continue
             translated[translations[key]] = val
         return translated
+
+    def validate_data(self):
+        pass
