@@ -26,6 +26,8 @@ class APIRequest(object):
         self.data = None
         self.params = dict(request.args)
         self.headers = dict(request.headers)
+
+    def __call__(self):
         self.process_request()
         self.parse_data()
 

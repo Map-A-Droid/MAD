@@ -1,6 +1,6 @@
 import flask
 from madmin.functions import auth_required
-from . import apiResponse, apiRequest, apiException
+from . import apiResponse, apiRequest, apiException, global_variables
 import utils.data_manager
 import traceback
 
@@ -59,8 +59,9 @@ class APIHandler(object):
             Flask.Response
         """
         # Begin processing the request
+        self.api_req = apiRequest.APIRequest(self._logger, flask.request)
         try:
-            self.api_req = apiRequest.APIRequest(self._logger, flask.request)
+            self.api_req()
             processed_data = self.process_request(*args, **kwargs)
             response_data = processed_data[0]
             status_code = processed_data[1]
@@ -69,6 +70,11 @@ class APIHandler(object):
             except:
                 resp_args = {}
             return apiResponse.APIResponse(self._logger, self.api_req)(response_data, status_code, **resp_args)
+        except apiException.ContentException:
+            headers = {
+                'X-Status': 'Support Content-Types: %s' % (sorted(global_variables.SUPPORTED_FORMATS))
+            }
+            return apiResponse.APIResponse(self._logger, self.api_req)(None, 422, headers=headers)
         except apiException.FormattingError as err:
             headers = {
                 'X-Status': err.reason
