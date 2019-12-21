@@ -78,6 +78,7 @@
 #job_dt_wh_url:               # Discord Webhook URL for job messages
 #job_dt_send_type:            # Kind of Job Messages to send - separated by pipe | (Default: SUCCESS|FAILURE|NOCONNECT|TERMINATED)
 #job_restart_notconnect:      # Restart job if device is not connected (in minutes). Default: 0 (Off)
+#job_thread_count:            # Amount of threads to work off the device jobs. Default: 2.
 
 # ADB
 ######################

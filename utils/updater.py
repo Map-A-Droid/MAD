@@ -36,7 +36,8 @@ class deviceUpdater(object):
         self._args = args
         self._commands: dict = {}
         self._globaljoblog: dict = {}
-        self._current_job_id: int = None
+        self._current_job_id = []
+        self._current_job_device = []
         self._returning = returning
         if os.path.exists('update_log.json'):
             with open('update_log.json') as logfile:
@@ -46,10 +47,12 @@ class deviceUpdater(object):
         self.kill_old_jobs()
         self.load_automatic_jobs()
 
-        self.t_updater = None
-        self.t_updater = Thread(name='apk_updater', target=self.process_update_queue)
-        self.t_updater.daemon = True
-        self.t_updater.start()
+        self.t_updater = []
+        for i in range(self._args.job_thread_count):
+            t = Thread(name='apk_updater-{}'.format(str(i)), target=self.process_update_queue, args=(i,))
+            t.daemon = True
+            self.t_updater.append(t)
+            t.start()
 
     def init_jobs(self):
         self._commands = {}
@@ -123,8 +126,8 @@ class deviceUpdater(object):
                 self.write_status_log(str(job), delete=True)
 
     @logger.catch()
-    def process_update_queue(self):
-        logger.info("Starting Device Job processor")
+    def process_update_queue(self, threadnumber):
+        logger.info("Starting Device Job processor thread No {}".format(str(threadnumber)))
         time.sleep(10)
         while True:
             try:
@@ -140,6 +143,17 @@ class deviceUpdater(object):
 
                 id_ = item
                 origin = self._log[str(id_)]['origin']
+
+                self._update_mutex.acquire()
+                try:
+                    if origin in self._current_job_device:
+                        self._update_queue.put(str(id_))
+                        continue
+
+                    self._current_job_device.append(origin)
+                finally:
+                    self._update_mutex.release()
+
                 file_ = self._log[str(id_)]['file']
                 counter = self._log[str(id_)]['counter']
                 jobtype = self._log[str(id_)]['jobtype']
@@ -217,7 +231,7 @@ class deviceUpdater(object):
                     continue
 
                 if id_ in self._log:
-                    self._current_job_id = id_
+                    self._current_job_id.append(id_)
 
                     if 'processingdate' in self._log[id_]:
                         self.write_status_log(str(id_), field='processingdate', delete=True)
@@ -318,17 +332,16 @@ class deviceUpdater(object):
 
                     self.send_webhook(id_=id_, status=jobstatus)
 
-                    self._current_job_id = 0
+                    self._current_job_id.remove(id_)
+                    self._current_job_device.remove(origin)
                     errorcount = 0
                     time.sleep(10)
 
             except KeyboardInterrupt as e:
-                logger.info("process_update_queue received keyboard interrupt, stopping")
-                if self.t_updater is not None:
-                    self.t_updater.join()
+                logger.info("process_update_queue-{} received keyboard interrupt, stopping".format((str(threadnumber))))
                 break
 
-            time.sleep(5)
+            time.sleep(2)
 
     @logger.catch()
     def preadd_job(self, origin, job, id_, type, globalid=None):
@@ -408,7 +421,7 @@ class deviceUpdater(object):
 
     @logger.catch()
     def delete_log_id(self, id_: str):
-        if id_ != self._current_job_id:
+        if id_ not in self._current_job_id:
             self.write_status_log(str(id_), delete=True)
             return True
         return False

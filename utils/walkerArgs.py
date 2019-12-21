@@ -250,6 +250,9 @@ def parseArgs():
                         help='Defines directory to save created madmin map geofence files',
                         default='configs/geofences')
 
+    parser.add_argument('-jtc', '--job_thread_count', type=int, default=2,
+                        help='Amount of threads to work off the device jobs. Default: 2.')
+
     # etc
 
     parser.add_argument('-rdt', '--raid_time', default='45', type=int,
