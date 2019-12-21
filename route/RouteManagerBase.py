@@ -100,7 +100,7 @@ class RouteManagerBase(ABC):
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
             new_coords = self._route_resource.getJsonRoute(fenced_coords, max_radius, max_coords_within_radius,
-                                                           algorithm=calctype)
+                                                           algorithm=calctype, route_name=self.name)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
@@ -276,21 +276,23 @@ class RouteManagerBase(ABC):
         self.add_coords_numpy(to_be_appended)
 
     def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0, in_memory=False):
-        new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
-                                                            delete_old_route, self._calctype, self.useS2, self.S2level,
-                                                            num_procs=0,
-                                                            overwrite_calculation=self._overwrite_calculation,
-                                                            in_memory=in_memory)
-        if self._overwrite_calculation:
-            self._overwrite_calculation = False
-        return new_route
+        if coords:
+            new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
+                                                                delete_old_route, self._calctype, self.useS2, self.S2level,
+                                                                num_procs=0,
+                                                                overwrite_calculation=self._overwrite_calculation,
+                                                                in_memory=in_memory,
+                                                                route_name=self.name)
+            if self._overwrite_calculation:
+                self._overwrite_calculation = False
+            return new_route
+        return []
 
     def empty_routequeue(self):
         return len(self._current_route_round_coords) > 0
 
     def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                      delete_old_route: bool = False, in_memory: bool = False):
-
         current_coords = self._coords_unstructured
         new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
                                              delete_old_route, num_procs, in_memory=in_memory)
@@ -300,11 +302,22 @@ class RouteManagerBase(ABC):
                 self._route.append(Location(coord["lat"], coord["lng"]))
             self._current_route_round_coords = self._route.copy()
             self._current_index_of_route = 0
+        return new_route
 
-    def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1):
-        self.recalc_route(max_radius, max_coords_within_radius, num_procs, True)
-        for worker in self._workers_registered:
-            self.unregister_worker(worker)
+    def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
+        active: bool = False):
+        new_route = self.recalc_route(max_radius, max_coords_within_radius, num_procs, in_memory=True)
+        calc_coords = []
+        for coord in new_route:
+            calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
+        self._route_resource['routefile'] = calc_coords
+        self._route_resource.save()
+        connected_worker_count = len(self._workers_registered)
+        if connected_worker_count > 0:
+            for worker in self._workers_registered:
+                self.unregister_worker(worker)
+        else:
+            self.stop_routemanager()
 
     def _update_priority_queue_loop(self):
         if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:

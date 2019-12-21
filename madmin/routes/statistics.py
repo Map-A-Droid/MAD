@@ -507,11 +507,13 @@ class statistics(object):
             try:
                 device['routemanager'] = areas[int(device['routemanager_id'])]['name']
                 device['routemanager_mode'] = areas[int(device['routemanager_id'])]['mode']
-            except (TypeError,ValueError):
-                continue
-            except KeyError:
-                device['routemanager'] = 'Unknown Area %s' % (device['routemanager_id'],)
-                device['routemanager_mode'] = 'Unknown Area %s' % (device['routemanager_id'],)
+            except (TypeError, ValueError, KeyError):
+                if device['routemanager_id'] == 'idle':
+                    device['routemanager'] = 'Idle'
+                    device['routemanager_mode'] = 'idle'
+                else:
+                    device['routemanager'] = 'Unknown Area %s' % (device['routemanager_id'],)
+                    device['routemanager_mode'] = 'Unknown Area %s' % (device['routemanager_id'],)
                 device['routemanager_id'] = -1
             data.append(device)
 

@@ -129,7 +129,7 @@ class control(object):
                 self._ws_connected_phones.append(adb)
 
             filename = generate_device_screenshot_path(phonename, devicemappings, self._args)
-            if os.path.isfile(filename):
+            try:
                 screenshot_ending: str = ".jpg"
                 image_resize(filename, os.path.join(
                     self._args.temp_path, "madmin"), width=250)
@@ -138,10 +138,15 @@ class control(object):
                     generate_phones(phonename, add_text, adb_option,
                                     screen, filename, self._datetimeformat, dummy=False)
                 )
-            else:
+            except IOError:
                 screen = "static/dummy.png"
                 screens_phone.append(generate_phones(
                     phonename, add_text, adb_option, screen, filename, self._datetimeformat, dummy=True))
+                try:
+                    os.remove(filename)
+                    self._logger.info("Screenshot {} was corrupted and has been deleted", filename)
+                except:
+                    pass
 
         for phonename in self._adb_connect.return_adb_devices():
             if phonename.serial not in self._ws_connected_phones:
@@ -316,6 +321,7 @@ class control(object):
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             temp_comm.reboot()
+        self._ws_server.force_disconnect(origin)
         return redirect(url_for('get_phonescreens'), code=302)
 
     @auth_required

@@ -62,19 +62,20 @@ class RouteCalc(resource.Resource):
     # =====================================================
 
     def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, calc_type,
-                            useS2, S2level, num_procs=0, overwrite_calculation=False, in_memory=False):
+                            useS2, S2level, num_procs=0, overwrite_calculation=False, in_memory=False,
+                            route_name: str = 'Unknown'):
         if overwrite_calculation:
             calc_type = 'quick'
         if delete_old_route and in_memory is False:
-            logger.debug("Deleting routefile...")
+            logger.debug("Deleting routefile for {}", route_name)
             self._data['fields']['routefile'] = []
             self.save()
         new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, in_memory, num_processes=num_procs,
-                                      algorithm=calc_type, useS2=useS2, S2level=S2level)
+                                      algorithm=calc_type, useS2=useS2, S2level=S2level, route_name=route_name)
         return new_route
 
     def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, in_memory, num_processes=1, algorithm='optimized',
-                     useS2: bool = False, S2level: int=15):
+                     useS2: bool = False, S2level: int=15, route_name: str = 'Unknown'):
         export_data = []
         if useS2: logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
         if not in_memory and \
@@ -90,8 +91,8 @@ class RouteCalc(resource.Resource):
             return export_data
 
         lessCoordinates = coords
-        if len(coords) > 1 and maxRadius and maxCoordsInRadius:
-            logger.info("Calculating...")
+        if len(coords) > 0 and maxRadius and maxCoordsInRadius:
+            logger.info("Calculating route for {}", route_name)
             newCoords = self.getLessCoords(coords, maxRadius, maxCoordsInRadius, useS2, S2level)
             lessCoordinates = np.zeros(shape=(len(newCoords), 2))
             for i in range(len(lessCoordinates)):
@@ -106,25 +107,25 @@ class RouteCalc(resource.Resource):
             for i in range(len(lessCoordinates)):
                 export_data.append({'lat': lessCoordinates[i][0].item(),
                                     'lng': lessCoordinates[i][1].item()})
-            return export_data
-        logger.info("Calculating a short route through all those coords. Might take a while")
-        from timeit import default_timer as timer
-        start = timer()
-        if algorithm == 'quick':
-            from route.routecalc.calculate_route_quick import route_calc_impl
         else:
-            from route.routecalc.calculate_route_optimized import route_calc_impl
-        sol_best = route_calc_impl(lessCoordinates, num_processes)
-        end = timer()
-        logger.info("Calculated route in {} minutes", str((end - start) / 60))
-        calc_coords = []
-        for i in range(len(sol_best)):
-            calc_coord = '%s,%s' % (str(lessCoordinates[int(sol_best[i])][0].item()),
-                                    str(lessCoordinates[int(sol_best[i])][1].item()))
-            calc_coords.append(calc_coord)
-            export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),
-                                'lng': lessCoordinates[int(sol_best[i])][1].item()})
+            logger.info("Calculating a short route through all those coords. Might take a while")
+            from timeit import default_timer as timer
+            start = timer()
+            if algorithm == 'quick':
+                from route.routecalc.calculate_route_quick import route_calc_impl
+            else:
+                from route.routecalc.calculate_route_optimized import route_calc_impl
+            sol_best = route_calc_impl(lessCoordinates, route_name, num_processes)
+            end = timer()
+            logger.info("Calculated route in {} minutes", str((end - start) / 60))
+            for i in range(len(sol_best)):
+                export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),
+                                    'lng': lessCoordinates[int(sol_best[i])][1].item()})
         if not in_memory:
+            calc_coords = []
+            for coord in export_data:
+                calc_coord = '%s,%s' % (coord['lat'], coord['lng'])
+                calc_coords.append(calc_coord)
             # Only save if we aren't calculating in memory
             self._data['fields']['routefile'] = calc_coords
             self.save()

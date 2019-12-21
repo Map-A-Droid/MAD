@@ -62,15 +62,19 @@ class PlayerStats(object):
     def open_player_stats(self):
         statsfile = Path(os.path.join(
             self.__application_args.file_path, str(self._id) + '.stats'))
-        if not statsfile.is_file():
+        try:
+            with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats')) as f:
+                data = json.load(f)
+                self.set_level(data[self._id][0]['level'])
+        except IOError:
             logger.error('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
             return False
-
-        with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats')) as f:
-            data = json.load(f)
-
-        self.set_level(data[self._id][0]['level'])
+        except json.decoder.JSONDecodeError:
+            logger.error('[{}] - Corrupted JSON file found.  Clearing out the file', str(self._id))
+            os.remove(statsfile)
+            self.set_level(0)
+            return False
 
     def compare_hour(selfs, timestamp):
         if datetime.datetime.fromtimestamp(int(time.time())).strftime('%H') != \

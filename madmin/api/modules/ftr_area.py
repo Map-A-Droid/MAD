@@ -1,5 +1,4 @@
 from .. import apiHandler, apiResponse, apiException
-import threading
 
 class APIArea(apiHandler.ResourceHandler):
     component = 'area'
@@ -20,10 +19,11 @@ class APIArea(apiHandler.ResourceHandler):
                 args = self.api_req.data.get('args', {})
                 if call == 'recalculate':
                     resource = self._data_manager.get_resource('area', identifier=identifier)
-                    print(resource)
-                    t = threading.Thread(target=self._mapping_manager.routemanager_recalcualte,args=(resource.identifier,))
-                    t.start()
-                    return apiResponse.APIResponse(self._logger, self.api_req)(None, 204)
+                    status = self._mapping_manager.routemanager_recalcualte(resource.identifier)
+                    if status:
+                        return apiResponse.APIResponse(self._logger, self.api_req)(None, 204)
+                    else:
+                        return apiResponse.APIResponse(self._logger, self.api_req)(None, 409)
                 else:
                     return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
             except KeyError:

@@ -303,7 +303,6 @@ class MADVersion(object):
 
                     for entry in entries:
                         if key == 'monivlist':
-                            print(entry)
                             cache[key][entry['monlist']] = index
                         if key == 'devicesettings':
                             cache[key][entry['devicepool']] = index

@@ -28,13 +28,13 @@ class APIHandler(object):
         _logger: logger (loguru.logger): MADmin debug logger
         _modules (dict): Dictionary of APIHandlers for referring to the other API sections
     """
-    def __init__(self, logger, app, data_manager, mapping_manager, ws_server):
+    def __init__(self, logger, app, data_manager, mapping_manager, ws_server, config_mode):
         self._logger = logger
         self._app = app
         self._modules = {}
         self._app.route(BASE_URI, methods=['GET'])(self.process_request)
         for mod_name, module in valid_modules.items():
-            tmp = module(logger, app, BASE_URI, data_manager, mapping_manager, ws_server)
+            tmp = module(logger, app, BASE_URI, data_manager, mapping_manager, ws_server, config_mode)
             self._modules[tmp.uri_base] = tmp.description
 
     def create_routes(self):

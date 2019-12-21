@@ -139,7 +139,9 @@ $(document).ready(function () {
             </p>
           </td>
           <td class="text-right align-middle">
-            <button data-area='{{ area_id }}' type="button" class="recalculate btn btn-info btn-sm"><i class="fa fa-sync"></i></button>
+            {% if config_mode == False %}
+              <button data-area='{{ area_id }}' type="button" class="recalculate btn btn-info btn-sm"><i class="fa fa-sync"></i></button>
+            {% endif %}
             <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.area_type }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
             <button data-identifier='{{ area_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
           </td>
