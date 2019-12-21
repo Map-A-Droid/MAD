@@ -1,6 +1,6 @@
-from .. import apiHandler
+from .resourceHandler import ResourceHandler
 
-class APIAuth(apiHandler.ResourceHandler):
+class APIAuth(ResourceHandler):
     component = 'auth'
     default_sort = 'username'
     description = 'Add/Update/Delete authentication credentials'
