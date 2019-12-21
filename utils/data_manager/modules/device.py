@@ -312,3 +312,11 @@ class Device(resource.Resource):
         self.state = 0
         if self._data_manager.is_device_active(self['origin']):
             self.state = 1
+
+    def delete(self):
+        super().delete()
+        del_data = {
+            'instance_id': self.instance_id,
+            'origin': self['origin']
+        }
+        self._dbc.autoexec_delete('trs_status', del_data)
