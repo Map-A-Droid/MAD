@@ -310,6 +310,7 @@ class MappingManager:
             else:
                 routemanager._start_routemanager()
                 active = False
+                successful = True
             args=(routemanager._max_radius, routemanager._max_coords_within_radius)
             kwargs = {
                 'num_procs':0,
@@ -317,8 +318,6 @@ class MappingManager:
             }
             t = Thread(target=routemanager.recalc_route_adhoc, args=args, kwargs=kwargs)
             t.start()
-            if len(routemanager._workers_registered) == 0:
-                routemanager.stop_routemanager()
         except Exception as e:
             import traceback
             traceback.print_exc()

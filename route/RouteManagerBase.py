@@ -312,8 +312,12 @@ class RouteManagerBase(ABC):
             calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
         self._route_resource['routefile'] = calc_coords
         self._route_resource.save()
-        for worker in self._workers_registered:
-            self.unregister_worker(worker)
+        connected_worker_count = len(self._workers_registered)
+        if connected_worker_count > 0:
+            for worker in self._workers_registered:
+                self.unregister_worker(worker)
+        else:
+            self.stop_routemanager()
 
     def _update_priority_queue_loop(self):
         if self._priority_queue_update_interval() is None or self._priority_queue_update_interval() == 0:
