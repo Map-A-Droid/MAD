@@ -343,7 +343,7 @@ def parseArgs():
     args.log_filename = args.log_filename.replace('<SN>', args.status_name)
 
     args.config_mode = True
-    if sys.argv[0] == 'start.py':
+    if sys.argv[0].split('/')[-1] == 'start.py':
         args.config_mode = False
 
     return args
