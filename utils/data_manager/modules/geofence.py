@@ -78,7 +78,7 @@ class GeoFence(resource.Resource):
         core_data['fence_data'] = json.dumps(self._data['fields']['fence_data'])
         super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
 
-    def presave_validation(self, ignore_issues=[]):
+    def validate_custom(self):
         issues = {}
         try:
             geofence_helper = GeofenceHelper(self, None)
@@ -86,4 +86,4 @@ class GeoFence(resource.Resource):
             issues = {
                 'invalid': [('fence_data', 'Must be one coord set per line (float,float)')]
             }
-        super().presave_validation(ignore_issues=ignore_issues, issues=issues)
+        return issues

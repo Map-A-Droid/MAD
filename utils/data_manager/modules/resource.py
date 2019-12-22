@@ -330,9 +330,10 @@ class Resource(object):
             except TypeError:
                 continue
 
-    def presave_validation(self, ignore_issues=[], issues={}):
+    def presave_validation(self, ignore_issues=[]):
         # Validate required data has been set
         top_levels = ['fields', 'settings']
+        issues = {}
         for top_level in top_levels:
             try:
                 for key, val in self._data[top_level].issues.items():
@@ -345,6 +346,15 @@ class Resource(object):
                     issues[key] += val
             except KeyError:
                 continue
+        custom_issues = self.validate_custom()
+        if custom_issues:
+            for key, set_issues in custom_issues.items():
+                if key not in issues:
+                    issues[key] = set_issues
+                elif type(set_issues) is list:
+                    issues[key] += set_issues
+                elif type(set_issues) is dict:
+                    issues[key].update(set_issues)
         if issues:
             raise dm_exceptions.UpdateIssue(**issues)
 
@@ -411,5 +421,5 @@ class Resource(object):
             translated[translations[key]] = val
         return translated
 
-    def validate_data(self):
+    def validate_custom(self):
         pass
