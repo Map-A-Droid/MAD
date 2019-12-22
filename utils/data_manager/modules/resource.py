@@ -403,7 +403,6 @@ class Resource(object):
 
     @classmethod
     def search(cls, dbc, res_obj, instance_id, *args, **kwargs):
-
         sql = "SELECT `%s`\n"\
               "FROM `%s`\n"\
               "WHERE `instance_id` = %%s"
