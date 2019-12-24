@@ -550,7 +550,7 @@ class MADVersion(object):
                                 walker_id = elem['walker']
                                 elem['walker'] = generate_new_ids['walker'][walker_id]
                                 save_elem['walker'] = str(generate_new_ids['walker'][walker_id])
-                                logger.info('Updating device walker from {} to {}', pool_id, elem['walker'])
+                                logger.info('Updating device walker from {} to {}', walker_id, elem['walker'])
                             except KeyError:
                                 pass
                         elif dm_section == 'walker':
