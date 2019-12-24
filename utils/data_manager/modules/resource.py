@@ -397,14 +397,15 @@ class Resource(object):
         return self.identifier
 
     @classmethod
-    def search(cls, dbc, res_obj, *args, **kwargs):
+    def search(cls, dbc, res_obj, instance_id, *args, **kwargs):
 
         sql = "SELECT `%s`\n"\
-              "FROM `%s`"
+              "FROM `%s`\n"\
+              "WHERE `instance_id` = %%s"
         args = (res_obj.primary_key, res_obj.table,)
         if res_obj.search_field is not None:
             sql += "\nORDER BY `%s` ASC" % (res_obj.search_field)
-        return dbc.autofetch_column(sql % args)
+        return dbc.autofetch_column(sql % args, args=(instance_id))
 
     def translate_keys(self, data, operation, translations=None):
         if translations is None:
