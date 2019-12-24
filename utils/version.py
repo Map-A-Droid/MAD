@@ -335,7 +335,6 @@ class MADVersion(object):
                                             walkerarea_ind += 1
                                     entry['setup'] = valid_areas
                                     new_data[walkerarea]['index'] = walkerarea_ind
->>>>>>> New instance startup fixes
                                 else:
                                     entry['setup'] = []
                             elif key == 'devices':
