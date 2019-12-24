@@ -210,6 +210,7 @@ class WorkerMITM(MITMBase):
 
             mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
             latest_timestamp = latest_proto.get("timestamp", 0)
+            logger.debug("Latest timestamp: {} vs. timestamp waited for: {}", datetime.fromtimestamp(latest_timestamp), datetime.fromtimestamp(timestamp))
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
@@ -224,7 +225,7 @@ class WorkerMITM(MITMBase):
                             if WP['spawnpoint_id']:
                                 data_requested = latest_data
                                 break
-                    if data_requested is None:
+                    if data_requested is None or data_requested == LatestReceivedType.UNDEFINED:
                         logger.debug("No spawnpoints in data requested")
                         time.sleep(1)
                 elif mode in ["raids_mitm"]:

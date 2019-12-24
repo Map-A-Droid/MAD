@@ -53,6 +53,11 @@ class MITMBase(WorkerBase):
         if timeout is None:
             timeout = self.get_devicesettings_value("mitm_wait_timeout", 45)
 
+        # since the GMOs may only contain mons if we are not "too fast" (which is the case when teleporting) after
+        # waiting a certain period of time (usually the 2nd GMO), we will multiply the timeout by 2 for mon-modes
+        mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+        if mode in ["mon_mitm", "iv_mitm"] or self._mapping_manager.routemanager_get_init(self._routemanager_name):
+            timeout *= 2
         # let's fetch the latest data to add the offset to timeout (in case device and server times are off...)
         latest = self._mitm_mapper.request_latest(self._id)
         timestamp_last_data = latest.get("timestamp_last_data", 0)
@@ -72,7 +77,6 @@ class MITMBase(WorkerBase):
             latest = self._mitm_mapper.request_latest(self._id)
             data_requested = self._wait_data_worker(
                 latest, proto_to_wait_for, timestamp)
-
             if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                     or self._stop_worker_event.is_set():
                 logger.error("Worker {} get killed while sleeping", str(self._id))
