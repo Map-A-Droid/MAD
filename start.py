@@ -145,10 +145,6 @@ def check_dependencies():
 if __name__ == "__main__":
     check_dependencies()
 
-    if not os.path.exists(args.mappings):
-        logger.error("Couldn't find configuration file. Please run 'configmode.py' instead, if this is the first time starting MAD.")
-        sys.exit(1)
-
     # TODO: globally destroy all threads upon sys.exit() for example
     install_thread_excepthook()
 
@@ -193,58 +189,47 @@ if __name__ == "__main__":
         mapping_manager_manager.start()
         mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, ws_server, False)
         filename = args.mappings
-        if not os.path.exists(filename):
-            logger.error(
-                "No mappings.json found - start madmin with with_madmin in config or copy example")
-            sys.exit(1)
+        if args.only_routes:
+            logger.info("Done calculating routes!")
+            # TODO: shutdown managers properly...
+            sys.exit(0)
 
-            logger.error(
-                "No mappings.json found - starting setup mode with madmin.")
-            logger.error("Open Madmin (ServerIP with Port " +
-                         str(args.madmin_port) + ") - 'Mapping Editor' and restart.")
-            generate_mappingjson()
-        else:
-            if args.only_routes:
-                logger.info("Done calculating routes!")
-                # TODO: shutdown managers properly...
-                sys.exit(0)
+        pogoWindowManager = None
+        jobstatus: dict = {}
+        MitmMapperManager.register('MitmMapper', MitmMapper)
+        mitm_mapper_manager = MitmMapperManager()
+        mitm_mapper_manager.start()
+        mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper.stats_submit)
 
-            pogoWindowManager = None
-            jobstatus: dict = {}
-            MitmMapperManager.register('MitmMapper', MitmMapper)
-            mitm_mapper_manager = MitmMapperManager()
-            mitm_mapper_manager.start()
-            mitm_mapper: MitmMapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper.stats_submit)
+        from ocr.pogoWindows import PogoWindows
+        pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
 
-            from ocr.pogoWindows import PogoWindows
-            pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
+        mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
+                                             mitm_mapper, args, mapping_manager, db_wrapper)
+        mitm_receiver_process.start()
 
-            mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                                 mitm_mapper, args, mapping_manager, db_wrapper)
-            mitm_receiver_process.start()
+        logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
+        ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager, data_manager)
+        t_ws = Thread(name='scanner', target=ws_server.start_server)
+        t_ws.daemon = False
+        t_ws.start()
 
-            logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
-            ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager, data_manager)
-            t_ws = Thread(name='scanner', target=ws_server.start_server)
-            t_ws.daemon = False
-            t_ws.start()
+        # init jobprocessor
+        device_Updater = deviceUpdater(ws_server, args, jobstatus)
 
-            # init jobprocessor
-            device_Updater = deviceUpdater(ws_server, args, jobstatus)
+        webhook_worker = None
+        if args.webhook:
+            from webhook.webhookworker import WebhookWorker
 
-            webhook_worker = None
-            if args.webhook:
-                from webhook.webhookworker import WebhookWorker
+            rarity = Rarity(args, db_wrapper)
+            rarity.start_dynamic_rarity()
 
-                rarity = Rarity(args, db_wrapper)
-                rarity.start_dynamic_rarity()
-
-                webhook_worker = WebhookWorker(
-                    args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
-                t_whw = Thread(name="webhook_worker",
-                               target=webhook_worker.run_worker)
-                t_whw.daemon = True
-                t_whw.start()
+            webhook_worker = WebhookWorker(
+                args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
+            t_whw = Thread(name="webhook_worker",
+                           target=webhook_worker.run_worker)
+            t_whw.daemon = True
+            t_whw.start()
 
     if args.statistic:
         if args.only_scan:

@@ -257,6 +257,8 @@ class PooledQueryExecutor:
         """ get one field for 0, 1, or more rows in a query and return the result in a list
         """
         data = self.execute(sql, args=args, raise_exc=True)
+        if data is None:
+            data = []
         returned_vals = []
         for row in data:
             returned_vals.append(row[0])

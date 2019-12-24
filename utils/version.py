@@ -40,15 +40,6 @@ class MADVersion(object):
             self.start_update()
 
     def start_update(self):
-        # BACKUP ALL THE THINGS! if we need to update
-        if self._version != current_version:
-            target = '%s.%s.bk' % (self._application_args.mappings, self._version)
-            try:
-                shutil.copy(self._application_args.mappings, target)
-            except IOError:
-                logger.exception('Unable to clone configuration. Exiting')
-                sys.exit(1)
-
         if self._version < 1:
             logger.info('Execute Update for Version 1')
             # Adding quest_reward for PMSF ALT
@@ -270,114 +261,120 @@ class MADVersion(object):
             old_data = {}
             new_data = {}
             cache = {}
-            target = '%s.bk' % (self._application_args.mappings,)
             try:
+                target = '%s.bk' % (self._application_args.mappings,)
                 shutil.copy(self._application_args.mappings, target)
-            except IOError:
-                logger.exception('Unable to clone configuration. Exiting')
-                sys.exit(1)
-            with open(self._application_args.mappings, 'rb') as fh:
-                old_data = json.load(fh)
-            if ("migrated" in old_data and old_data["migrated"] is True):
-                with open(self._application_args.mappings, 'w') as outfile:
-                    json.dump(old_data, outfile, indent=4, sort_keys=True)
-            else:
-                walkerarea = 'walkerarea'
-                walkerarea_ind = 0
-                for key in update_order:
-                    try:
-                        entries = old_data[key]
-                    except Exception:
-                        entries = []
-                    cache[key] = {}
-                    index = 0
-                    new_data[key] = {
-                        'index': index,
-                        'entries': {}
-                    }
-                    if key == 'walker':
-                        new_data[walkerarea] = {
+                with open(self._application_args.mappings, 'rb') as fh:
+                    old_data = json.load(fh)
+                if ("migrated" in old_data and old_data["migrated"] is True):
+                    with open(self._application_args.mappings, 'w') as outfile:
+                        json.dump(old_data, outfile, indent=4, sort_keys=True)
+                else:
+                    walkerarea = 'walkerarea'
+                    walkerarea_ind = 0
+                    for key in update_order:
+                        try:
+                            entries = old_data[key]
+                        except Exception:
+                            entries = []
+                        cache[key] = {}
+                        index = 0
+                        new_data[key] = {
                             'index': index,
                             'entries': {}
                         }
-
-                    for entry in entries:
-                        if key == 'monivlist':
-                            cache[key][entry['monlist']] = index
-                        if key == 'devicesettings':
-                            cache[key][entry['devicepool']] = index
-                        elif key == 'areas':
-                            cache[key][entry['name']] = index
-                            try:
-                                mon_list = entry['settings']['mon_ids_iv']
-                                if type(mon_list) is list:
-                                    monlist_ind = new_data['monivlist']['index']
-                                    new_data['monivlist']['entries'][index] = {
-                                        'monlist': 'Update List',
-                                        'mon_ids_iv': mon_list
-                                    }
-                                    entry['settings']['mon_ids_iv'] = '/api/monivlist/%s' % (monlist_ind)
-                                    new_data['monivlist']['index'] += 1
-                                else:
-                                    try:
-                                        name = mon_list
-                                        uri = '/api/monivlist/%s' % (cache['monivlist'][name])
-                                        entry['settings']['mon_ids_iv'] = uri
-                                    except Exception:
-                                        # No name match.  Maybe an old record so lets toss it
-                                        del entry['settings']['mon_ids_iv']
-                            except KeyError:
-                                # Monlist is not defined for the area
-                                pass
-                            except Exception:
-                                # No monlist specified
-                                pass
-                        elif key == 'walker':
-                            cache[key][entry['walkername']] = index
-                            valid_areas = []
-                            if 'setup' in entry:
-                                for ind, area in enumerate(entry['setup']):
-                                    try:
-                                        area['walkerarea'] = '/api/area/%s' % (cache['areas'][area['walkerarea']],)
-                                    except KeyError:
-                                        # The area no longer exists.  Remove from the path
-                                        pass
-                                    else:
-                                        new_data[walkerarea]['entries'][walkerarea_ind] = area
-                                        valid_areas.append('/api/walkerarea/%s' % walkerarea_ind)
-                                        walkerarea_ind += 1
-                                entry['setup'] = valid_areas
-                                new_data[walkerarea]['index'] = walkerarea_ind
-                            else:
-                                entry['setup'] = []
-                        elif key == 'devices':
-                            if 'pool' in entry:
+                        if key == 'walker':
+                            new_data[walkerarea] = {
+                                'index': index,
+                                'entries': {}
+                            }
+                        for entry in entries:
+                            if key == 'monivlist':
+                                cache[key][entry['monlist']] = index
+                            if key == 'devicesettings':
+                                cache[key][entry['devicepool']] = index
+                            elif key == 'areas':
+                                cache[key][entry['name']] = index
                                 try:
-                                    entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
+                                    mon_list = entry['settings']['mon_ids_iv']
+                                    if type(mon_list) is list:
+                                        monlist_ind = new_data['monivlist']['index']
+                                        new_data['monivlist']['entries'][index] = {
+                                            'monlist': 'Update List',
+                                            'mon_ids_iv': mon_list
+                                        }
+                                        entry['settings']['mon_ids_iv'] = '/api/monivlist/%s' % (monlist_ind)
+                                        new_data['monivlist']['index'] += 1
+                                    else:
+                                        try:
+                                            name = mon_list
+                                            uri = '/api/monivlist/%s' % (cache['monivlist'][name])
+                                            entry['settings']['mon_ids_iv'] = uri
+                                        except Exception:
+                                            # No name match.  Maybe an old record so lets toss it
+                                            del entry['settings']['mon_ids_iv']
+                                except KeyError:
+                                    # Monlist is not defined for the area
+                                    pass
                                 except Exception:
-                                    if entry['pool'] is not None:
-                                        logger.error('DeviceSettings {} is not valid', entry['pool'])
-                                    del entry['pool']
-                            try:
-                                entry['walker'] = '/api/walker/%s' % (cache['walker'][entry['walker']],)
-                            except Exception:
-                                # The walker no longer exists.  Skip the device
-                                continue
-                        new_data[key]['entries'][index] = entry
-                        index += 1
-                    new_data[key]['index'] = index
+                                    # No monlist specified
+                                    pass
+                            elif key == 'walker':
+                                cache[key][entry['walkername']] = index
+                                valid_areas = []
+                                if 'setup' in entry:
+                                    for ind, area in enumerate(entry['setup']):
+                                        try:
+                                            area['walkerarea'] = '/api/area/%s' % (cache['areas'][area['walkerarea']],)
+                                        except KeyError:
+                                            # The area no longer exists.  Remove from the path
+                                            pass
+                                        else:
+                                            new_data[walkerarea]['entries'][walkerarea_ind] = area
+                                            valid_areas.append('/api/walkerarea/%s' % walkerarea_ind)
+                                            walkerarea_ind += 1
+                                    entry['setup'] = valid_areas
+                                    new_data[walkerarea]['index'] = walkerarea_ind
+                                else:
+                                    entry['setup'] = []
+                            elif key == 'devices':
+                                if 'pool' in entry:
+                                    try:
+                                        entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
+                                    except Exception:
+                                        if entry['pool'] is not None:
+                                            logger.error('DeviceSettings {} is not valid', entry['pool'])
+                                        del entry['pool']
+                                try:
+                                    entry['walker'] = '/api/walker/%s' % (cache['walker'][entry['walker']],)
+                                except Exception:
+                                    # The walker no longer exists.  Skip the device
+                                    continue
+                            new_data[key]['entries'][index] = entry
+                            index += 1
+                        new_data[key]['index'] = index
 
-                new_data['migrated'] = True
+                    new_data['migrated'] = True
 
-                with open(self._application_args.mappings, 'w') as outfile:
-                    json.dump(new_data, outfile, indent=4, sort_keys=True)
+                    with open(self._application_args.mappings, 'w') as outfile:
+                        json.dump(new_data, outfile, indent=4, sort_keys=True)
+            except IOError:
+                pass
+            except Exception as err:
+                logger.exception('Unknown issue during migration. Exiting')
+                sys.exit(1)
         if self._version < 15:
-            with open(self._application_args.mappings, 'rb') as fh:
-                settings = json.load(fh)
-            self.__convert_to_id(settings)
-            with open(self._application_args.mappings, 'w') as outfile:
-                json.dump(settings, outfile, indent=4, sort_keys=True)
-
+            try:
+                with open(self._application_args.mappings, 'rb') as fh:
+                    settings = json.load(fh)
+                self.__convert_to_id(settings)
+                with open(self._application_args.mappings, 'w') as outfile:
+                    json.dump(settings, outfile, indent=4, sort_keys=True)
+            except IOError:
+                pass
+            except Exception as err:
+                logger.exception('Unknown issue during migration. Exiting')
+                sys.exit(1)
         if self._version < 16:
             query = (
                 "CREATE TABLE IF NOT EXISTS `trs_visited` ("
@@ -392,124 +389,221 @@ class MADVersion(object):
                 logger.exception("Unexpected error: {}", e)
 
         if self._version < 17:
-            # Goodbye mappings.json, it was nice knowing ya!
-            update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walkerarea', 'walker', 'devices']
-            with open(self._application_args.mappings, 'rb') as fh:
-                config_file = json.load(fh)
-            geofences = {}
-            routecalcs = {}
-            conversion_issues = []
-            # A wonderful decision that I made was to start at ID 0 on the previous conversion which causes an issue
-            # with primary keys in MySQL / MariaDB.  Make the required changes to ID's and save the file in-case the
-            # conversion is re-run.  We do not want dupe data in the database
-            cache = {}
-            for section in update_order:
-                for elem_id, elem in config_file[section]['entries'].items():
-                    if section == 'areas':
-                        try:
-                            if int(elem['settings']['mon_ids_iv']) == 0:
-                                elem['settings']['mon_ids_iv'] = cache['monivlist']
-                        except KeyError:
-                            pass
-                    elif section == 'devices':
-                        if int(elem['walker']) == 0:
-                            elem['walker'] = cache['walker']
-                        if 'pool' in elem and elem['pool'] is not None and int(elem['pool']) == 0:
-                            elem['pool'] = cache['devicesettings']
-                    elif section == 'walkerarea':
-                        if int(elem['walkerarea']) == 0:
-                            elem['walkerarea'] = cache['areas']
-                    elif section == 'walker':
-                        setup = []
-                        for walkerarea_id in elem['setup']:
-                            if int(walkerarea_id) != 0:
-                                setup.append(walkerarea_id)
-                                continue
-                            setup.append(cache['walkerarea'])
-                        elem['setup'] = setup
-                entry = None
-                try:
-                    entry = config_file[section]['entries']["0"]
-                except KeyError:
-                    continue
-                cache[section] = str(config_file[section]['index'])
-                config_file[section]['entries'][cache[section]] = entry
-                del config_file[section]['entries']["0"]
-                config_file[section]['index'] += 1
-            if cache:
-                logger.info('One or more resources with ID 0 found.  Converting them off 0 and updating the '\
-                            'mappings.json file.  {}', cache)
-                with open(self._application_args.mappings, 'w') as outfile:
-                    json.dump(config_file, outfile, indent=4, sort_keys=True)
-            # Load the elements into their resources and save to DB
-            for section in update_order:
-                for key, elem in config_file[section]['entries'].items():
-                    logger.debug('Converting {} {}', section, key)
-                    if section == 'areas':
-                        mode = elem['mode']
-                        del elem['mode']
-                        resource = utils.data_manager.modules.MAPPINGS['area'](self.data_manager, mode=mode)
-                        geofence_sections = ['geofence_included', 'geofence_excluded']
-                        for geofence_section in geofence_sections:
+            try:
+                # Goodbye mappings.json, it was nice knowing ya!
+                update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walkerarea', 'walker', 'devices']
+                with open(self._application_args.mappings, 'rb') as fh:
+                    config_file = json.load(fh)
+                geofences = {}
+                routecalcs = {}
+                conversion_issues = []
+                # A wonderful decision that I made was to start at ID 0 on the previous conversion which causes an issue
+                # with primary keys in MySQL / MariaDB.  Make the required changes to ID's and save the file in-case the
+                # conversion is re-run.  We do not want dupe data in the database
+                cache = {}
+                for section in update_order:
+                    for elem_id, elem in config_file[section]['entries'].items():
+                        if section == 'areas':
                             try:
-                                geofence = elem[geofence_section]
-                                if type(geofence) is int:
-                                    continue
-                                if geofence and geofence not in geofences:
-                                    try:
-                                        geo_id = self.__convert_geofence(geofence)
-                                        geofences[geofence] = geo_id
-                                        elem[geofence_section] = geofences[geofence]
-                                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
-                                        conversion_issues.append((section, elem_id, err.issues))
-                                else:
-                                    elem[geofence_section] = geofences[geofence]
+                                if int(elem['settings']['mon_ids_iv']) == 0:
+                                    elem['settings']['mon_ids_iv'] = cache['monivlist']
                             except KeyError:
                                 pass
-                        route = '%s.calc' % (elem['routecalc'],)
-                        if type(elem['routecalc']) is str:
-                            if route not in routecalcs:
-                                route_path = os.path.join(self._application_args.file_path, route)
-                                route_resource = self.data_manager.get_resource('routecalc')
-                                stripped_data = []
-                                try:
-                                    with open(route_path, 'rb') as fh:
-                                        for line in fh:
-                                            stripped = line.strip()
-                                            if type(stripped) != str:
-                                                stripped = stripped.decode('utf-8')
-                                            stripped_data.append(stripped)
-                                except IOError as err:
-                                    conversion_issues.append((section, elem_id, err))
-                                    logger.warning('Unable to open %s.  Using empty route' % (route))
-                                route_resource['routefile'] = stripped_data
-                                route_resource.save(force_insert=True)
-                                routecalcs[route] = route_resource.identifier
-                            if route in routecalcs:
-                                elem['routecalc'] = routecalcs[route]
-                    else:
-                        # Lets remove plural from the section
-                        if section == 'devices':
-                            section = 'device'
-                        elif section == 'devicesettings':
-                            section = 'devicepool'
-                        resource = utils.data_manager.modules.MAPPINGS[section](self.data_manager)
-                    # Settings made it into some configs where it should not be.  lets clear those out now
-                    if 'settings' in elem and 'settings' not in resource.configuration:
-                        del elem['settings']
-                    resource.identifier = key
-                    resource.update(elem)
+                        elif section == 'devices':
+                            if int(elem['walker']) == 0:
+                                elem['walker'] = cache['walker']
+                            if 'pool' in elem and elem['pool'] is not None and int(elem['pool']) == 0:
+                                elem['pool'] = cache['devicesettings']
+                        elif section == 'walkerarea':
+                            if int(elem['walkerarea']) == 0:
+                                elem['walkerarea'] = cache['areas']
+                        elif section == 'walker':
+                            setup = []
+                            for walkerarea_id in elem['setup']:
+                                if int(walkerarea_id) != 0:
+                                    setup.append(walkerarea_id)
+                                    continue
+                                setup.append(cache['walkerarea'])
+                            elem['setup'] = setup
+                    entry = None
                     try:
-                        resource.save(force_insert=True, ignore_issues=['unknown'])
-                    except utils.data_manager.dm_exceptions.UpdateIssue as err:
-                        conversion_issues.append((section, key, err.issues))
-                    except Exception as err:
-                        conversion_issues.append((section, key, err))
-            if conversion_issues:
-                logger.error('The configuration was not partially moved to the database.  The following resources '\
-                             'were not converted.')
-                for (section, identifier, issue) in conversion_issues:
-                    logger.error('{} {}: {}', section, identifier, issue)
+                        entry = config_file[section]['entries']["0"]
+                    except KeyError:
+                        continue
+                    cache[section] = str(config_file[section]['index'])
+                    config_file[section]['entries'][cache[section]] = entry
+                    del config_file[section]['entries']["0"]
+                    config_file[section]['index'] += 1
+                if cache:
+                    logger.info('One or more resources with ID 0 found.  Converting them off 0 and updating the '\
+                                'mappings.json file.  {}', cache)
+                    with open(self._application_args.mappings, 'w') as outfile:
+                        json.dump(config_file, outfile, indent=4, sort_keys=True)
+                # For multi-instance we do not want to re-use IDs.  If and ID is reused we need to adjust it and all
+                # foreign keys
+                generate_new_ids = {}
+                for section in update_order:
+                    dm_section = section
+                    if section == 'areas':
+                        dm_section = 'area'
+                    elif section == 'devices':
+                        dm_section = 'device'
+                    elif section == 'devicesettings':
+                        dm_section = 'devicepool'
+                    for elem_id, elem in config_file[section]['entries'].items():
+                        try:
+                            mode = elem['mode']
+                        except:
+                            mode = None
+                        resource_def = self.data_manager.get_resource_def(dm_section, mode=mode)
+                        sql = "SELECT `%s` FROM `%s` WHERE `%s` = %%s AND `instance_id` != %%s"
+                        sql_args = (resource_def.primary_key, resource_def.table, resource_def.primary_key)
+                        sql_format_args = (elem_id, self.data_manager.instance_id)
+                        exists = self.dbwrapper.autofetch_value(sql % sql_args, args=sql_format_args)
+                        if not exists:
+                            continue
+                        logger.info('{} {} already exists and a new ID will be generated', dm_section, elem_id)
+                        if dm_section not in generate_new_ids:
+                            generate_new_ids[dm_section] = {}
+                        generate_new_ids[dm_section][elem_id] = None
+                # Load the elements into their resources and save to DB
+                for section in update_order:
+                    dm_section = section
+                    if section == 'areas':
+                        dm_section = 'area'
+                    elif section == 'devices':
+                        dm_section = 'device'
+                    elif section == 'devicesettings':
+                        dm_section = 'devicepool'
+                    for key, elem in copy.deepcopy(config_file[section]['entries']).items():
+                        save_elem = copy.deepcopy(elem)
+                        logger.debug('Converting {} {}', section, key)
+                        tmp_mode = None
+                        if section == 'areas':
+                            mode = elem['mode']
+                            tmp_mode = mode
+                            del elem['mode']
+                            resource = utils.data_manager.modules.MAPPINGS['area'](self.data_manager, mode=mode)
+                            geofence_sections = ['geofence_included', 'geofence_excluded']
+                            for geofence_section in geofence_sections:
+                                try:
+                                    geofence = elem[geofence_section]
+                                    if type(geofence) is int:
+                                        continue
+                                    if geofence and geofence not in geofences:
+                                        try:
+                                            geo_id = self.__convert_geofence(geofence)
+                                            geofences[geofence] = geo_id
+                                            elem[geofence_section] = geofences[geofence]
+                                        except utils.data_manager.dm_exceptions.UpdateIssue as err:
+                                            conversion_issues.append((section, elem_id, err.issues))
+                                    else:
+                                        elem[geofence_section] = geofences[geofence]
+                                except KeyError:
+                                    pass
+                            route = '%s.calc' % (elem['routecalc'],)
+                            if type(elem['routecalc']) is str:
+                                if route not in routecalcs:
+                                    route_path = os.path.join(self._application_args.file_path, route)
+                                    route_resource = self.data_manager.get_resource('routecalc')
+                                    stripped_data = []
+                                    try:
+                                        with open(route_path, 'rb') as fh:
+                                            for line in fh:
+                                                stripped = line.strip()
+                                                if type(stripped) != str:
+                                                    stripped = stripped.decode('utf-8')
+                                                stripped_data.append(stripped)
+                                    except IOError as err:
+                                        conversion_issues.append((section, elem_id, err))
+                                        logger.warning('Unable to open %s.  Using empty route' % (route))
+                                    route_resource['routefile'] = stripped_data
+                                    route_resource.save(force_insert=True)
+                                    routecalcs[route] = route_resource.identifier
+                                if route in routecalcs:
+                                    elem['routecalc'] = routecalcs[route]
+                        else:
+                            resource = utils.data_manager.modules.MAPPINGS[dm_section](self.data_manager)
+                        # Settings made it into some configs where it should not be.  lets clear those out now
+                        if 'settings' in elem and 'settings' not in resource.configuration:
+                            del elem['settings']
+                        # Update any IDs that have been converted.  There are no required updates for monivlist, auth,
+                        # or devicesettings as they are not dependent on other resources
+                        # ['monivlist', 'auth', 'devicesettings', 'areas', 'walkerarea', 'walker', 'devices']
+                        if dm_section == 'area':
+                            try:
+                                monlist = elem['settings']['mon_ids_iv']
+                                elem['settings']['mon_ids_iv'] = generate_new_ids['monivlist'][monlist]
+                                save_elem['settings']['mon_ids_iv'] = str(generate_new_ids['monivlist'][monlist])
+                                logger.info('Updating monivlist to area {} to {}', key, elem['settings']['mon_ids_iv'])
+                            except KeyError:
+                                pass
+                        elif dm_section == 'device':
+                            try:
+                                pool_id = elem['pool']
+                                elem['pool'] = generate_new_ids['devicepool'][pool_id]
+                                save_elem['pool'] = str(generate_new_ids['devicepool'][pool_id])
+                                logger.info('Updating device pool from {} to {}', pool_id, elem['pool'])
+                            except KeyError:
+                                pass
+                            try:
+                                walker_id = elem['walker']
+                                elem['walker'] = generate_new_ids['walker'][walker_id]
+                                save_elem['walker'] = str(generate_new_ids['walker'][walker_id])
+                                logger.info('Updating device walker from {} to {}', pool_id, elem['walker'])
+                            except KeyError:
+                                pass
+                        elif dm_section == 'walker':
+                            new_list = []
+                            for walkerarea_id in elem['setup']:
+                                try:
+                                    new_list.append(str(generate_new_ids['walkerarea'][walkerarea_id]))
+                                    logger.info('Updating walker-walkerarea {} to {}', walkerarea_id, new_list[-1])
+                                except KeyError:
+                                    new_list.append(walkerarea_id)
+                            elem['setup'] = new_list
+                            save_elem['setup'] = new_list
+                        elif dm_section == 'walkerarea':
+                            try:
+                                area_id = elem['walkerarea']
+                                elem['walkerarea'] = generate_new_ids['area'][area_id]
+                                save_elem['walkerarea'] = str(generate_new_ids['area'][area_id])
+                                logger.info('Updating walkerarea from {} to {}', area_id, elem['walkerarea'])
+                            except KeyError:
+                                pass
+                        save_new_id = False
+                        try:
+                            generate_new_ids[dm_section][key]
+                            save_new_id = True
+                        except:
+                            resource.identifier = key
+                        resource.update(elem)
+                        try:
+                            resource.save(force_insert=True, ignore_issues=['unknown'])
+                        except utils.data_manager.dm_exceptions.UpdateIssue as err:
+                            conversion_issues.append((section, key, err.issues))
+                        except Exception as err:
+                            conversion_issues.append((section, key, err))
+                        else:
+                            if save_new_id:
+                                generate_new_ids[dm_section][key] = resource.identifier
+                                config_file[section]['entries'][str(resource.identifier)] = save_elem
+                                del config_file[section]['entries'][key]
+                                if resource.identifier >= int(config_file[section]['index']):
+                                    config_file[section]['index'] = resource.identifier + 1
+                if conversion_issues:
+                    logger.error('The configuration was not partially moved to the database.  The following resources '\
+                                 'were not converted.')
+                    for (section, identifier, issue) in conversion_issues:
+                        logger.error('{} {}: {}', section, identifier, issue)
+                if generate_new_ids:
+                    with open(self._application_args.mappings, 'w') as outfile:
+                        json.dump(config_file, outfile, indent=4, sort_keys=True)
+            except IOError:
+                pass
+            except Exception as err:
+                logger.exception('Unknown issue during migration. Exiting')
+                sys.exit(1)
         if self._version < 18:
             query = (
                 "ALTER TABLE `trs_status` CHANGE `instance` `instance` VARCHAR(50) CHARACTER "
