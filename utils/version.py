@@ -535,7 +535,7 @@ class MADVersion(object):
                                 monlist = elem['settings']['mon_ids_iv']
                                 elem['settings']['mon_ids_iv'] = generate_new_ids['monivlist'][monlist]
                                 save_elem['settings']['mon_ids_iv'] = str(generate_new_ids['monivlist'][monlist])
-                                logger.info('Updating monivlist to area {} to {}', key, elem['settings']['mon_ids_iv'])
+                                logger.info('Updating monivlist from {} to {}', key, elem['settings']['mon_ids_iv'])
                             except KeyError:
                                 pass
                         elif dm_section == 'device':
@@ -558,7 +558,7 @@ class MADVersion(object):
                             for walkerarea_id in elem['setup']:
                                 try:
                                     new_list.append(str(generate_new_ids['walkerarea'][walkerarea_id]))
-                                    logger.info('Updating walker-walkerarea {} to {}', walkerarea_id, new_list[-1])
+                                    logger.info('Updating walker-walkerarea from {} to {}', walkerarea_id, new_list[-1])
                                 except KeyError:
                                     new_list.append(walkerarea_id)
                             elem['setup'] = new_list
