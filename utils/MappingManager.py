@@ -420,7 +420,7 @@ class MappingManager:
                 max_count_in_radius = mode_mapping[area_true.area_type]["max_count"]
                 if not area.get("init", False):
                     logger.info("Initializing area {}", area["name"])
-                    proc = thread_pool.apply_async(route_manager.recalc_route, args=(max_radius, max_count_in_radius,
+                    proc = thread_pool.apply_async(route_manager.initial_calculation, args=(max_radius, max_count_in_radius,
                                                                                      0, False))
                     areas_procs[area_id] = proc
                 else:

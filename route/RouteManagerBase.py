@@ -275,10 +275,13 @@ class RouteManagerBase(ABC):
             to_be_appended[i][1] = float(list_coords[i].lng)
         self.add_coords_numpy(to_be_appended)
 
-    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0, in_memory=False):
+    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, num_procs=0, in_memory=False,
+                            calctype=None):
+        if calctype is None:
+            calctype = self._calctype
         if coords:
             new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
-                                                                delete_old_route, self._calctype, self.useS2, self.S2level,
+                                                                delete_old_route, calctype, self.useS2, self.S2level,
                                                                 num_procs=0,
                                                                 overwrite_calculation=self._overwrite_calculation,
                                                                 in_memory=in_memory,
@@ -291,11 +294,27 @@ class RouteManagerBase(ABC):
     def empty_routequeue(self):
         return len(self._current_route_round_coords) > 0
 
-    def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
+    def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                      delete_old_route: bool = False, in_memory: bool = False):
+        self.recalc_route(max_radius, max_coords_within_radius, num_procs,
+                          delete_old_route=delete_old_route,
+                          in_memory=in_memory,
+                          calctype='quick')
+        if self._calctype != 'quick':
+            args=(self._max_radius, self._max_coords_within_radius)
+            kwargs = {
+                'num_procs':0
+            }
+            t = Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs)
+            t.start()
+
+    def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
+                     delete_old_route: bool = False, in_memory: bool = False, calctype: bool = None):
         current_coords = self._coords_unstructured
         new_route = self.calculate_new_route(current_coords, max_radius, max_coords_within_radius,
-                                             delete_old_route, num_procs, in_memory=in_memory)
+                                             delete_old_route, num_procs,
+                                             in_memory=in_memory,
+                                             calctype=calctype)
         with self._manager_mutex:
             self._route.clear()
             for coord in new_route:
@@ -305,11 +324,13 @@ class RouteManagerBase(ABC):
         return new_route
 
     def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                           active: bool = False):
+                           active: bool = False, calctype: bool = None):
         self._clear_coords()
         coords = self._get_coords_post_init()
         self.add_coords_list(coords)
-        new_route = self.recalc_route(max_radius, max_coords_within_radius, num_procs, in_memory=True)
+        new_route = self.recalc_route(max_radius, max_coords_within_radius, num_procs,
+                                      in_memory=True,
+                                      calctype=calctype)
         calc_coords = []
         for coord in new_route:
             calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
