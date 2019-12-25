@@ -295,18 +295,19 @@ class RouteManagerBase(ABC):
         return len(self._current_route_round_coords) > 0
 
     def initial_calculation(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                     delete_old_route: bool = False, in_memory: bool = False):
-        self.recalc_route(max_radius, max_coords_within_radius, num_procs,
-                          delete_old_route=delete_old_route,
-                          in_memory=in_memory,
-                          calctype='quick')
-        if self._calctype != 'quick':
-            args=(self._max_radius, self._max_coords_within_radius)
-            kwargs = {
-                'num_procs':0
-            }
-            t = Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs)
-            t.start()
+                     delete_old_route: bool = False):
+        if not self._route_resource['routefile']:
+            self.recalc_route(max_radius, max_coords_within_radius, num_procs,
+                              delete_old_route=delete_old_route,
+                              in_memory=True,
+                              calctype='quick')
+            if self._calctype != 'quick':
+                args=(self._max_radius, self._max_coords_within_radius)
+                kwargs = {
+                    'num_procs':0
+                }
+                t = Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs)
+                t.start()
 
     def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                      delete_old_route: bool = False, in_memory: bool = False, calctype: bool = None):
