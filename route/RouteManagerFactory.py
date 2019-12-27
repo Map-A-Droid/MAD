@@ -22,7 +22,8 @@ class RouteManagerFactory:
         elif mode == "mon_mitm":
             route_manager = RouteManagerMon(db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
                                             path_to_include_geofence, path_to_exclude_geofence, routefile,
-                                            mode=mode, settings=settings, init=init, name=name, joinqueue=joinqueue
+                                            mode=mode, settings=settings, init=init, name=name, joinqueue=joinqueue,
+                                            coords_spawns_known=coords_spawns_known
                                             )
         elif mode == "iv_mitm":
             route_manager = RouteManagerIV(db_wrapper, dbm, area_id, coords, 0, 99999999,
