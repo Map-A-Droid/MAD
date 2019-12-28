@@ -128,3 +128,16 @@ class APIArea(api_base.APITestBase):
         response = self.api.get(uri)
         self.remove_resources()
         self.assertDictEqual(payload, response.json())
+
+    def test_recalc(self):
+        area_obj = super().create_valid_resource('area')
+        self.api.get('/reload')
+        recalc_payload = {
+            'call': 'recalculate'
+        }
+        headers = {
+            'Content-Type': 'application/json-rpc'
+        }
+        response = self.api.post(area_obj['uri'], json=recalc_payload, headers=headers)
+        self.assertEqual(response.status_code, 204)
+        self.remove_resources()
