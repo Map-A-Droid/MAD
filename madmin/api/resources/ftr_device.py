@@ -1,6 +1,7 @@
-from .. import apiHandler, apiResponse
+from . import resource_exceptions
+from .resourceHandler import ResourceHandler
 
-class APIDevice(apiHandler.ResourceHandler):
+class APIDevice(ResourceHandler):
     component = 'device'
     default_sort = 'origin'
     description = 'Add/Update/Delete device (Origin) settings'
@@ -19,10 +20,10 @@ class APIDevice(apiHandler.ResourceHandler):
                     if active == 0:
                         self._mapping_manager.device_set_disabled(origin)
                         self._ws_server.force_disconnect(origin)
-                    return apiResponse.APIResponse(self._logger, self.api_req)(None, 200)
+                    return (None, 200)
                 else:
-                    return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
+                    return (call, 501)
             except KeyError:
-                return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
+                return (call, 501)
         else:
             return super().post(identifier, data, resource_def, resource_info, *args, **kwargs)

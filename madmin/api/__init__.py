@@ -1,10 +1,10 @@
-from .modules import *
+from .resources import *
 from .import apiRequest, apiResponse
 import collections
 import flask
 
 BASE_URI = '/api'
-valid_modules = {
+valid_resources = {
     'area': ftr_area.APIArea,
     'auth': ftr_auth.APIAuth,
     'device': ftr_device.APIDevice,
@@ -16,7 +16,7 @@ valid_modules = {
     'walkerarea': ftr_walkerarea.APIWalkerArea
 }
 
-class APIHandler(object):
+class APIEntry(object):
     """ Manager for the MADmin API
 
     Args:
@@ -26,16 +26,16 @@ class APIHandler(object):
     Attributes:
         _app (flask.app): Flask web-app used for MADmin
         _logger: logger (loguru.logger): MADmin debug logger
-        _modules (dict): Dictionary of APIHandlers for referring to the other API sections
+        _resources (dict): Dictionary of APIHandlers for referring to the other API sections
     """
     def __init__(self, logger, app, data_manager, mapping_manager, ws_server, config_mode):
         self._logger = logger
         self._app = app
-        self._modules = {}
+        self._resources = {}
         self._app.route(BASE_URI, methods=['GET'])(self.process_request)
-        for mod_name, module in valid_modules.items():
+        for mod_name, module in valid_resources.items():
             tmp = module(logger, app, BASE_URI, data_manager, mapping_manager, ws_server, config_mode)
-            self._modules[tmp.uri_base] = tmp.description
+            self._resources[tmp.uri_base] = tmp.description
 
     def create_routes(self):
         self._app.route(self.uri_base, methods=['GET'], endpoint='api_%s' % (self.component,))(self.process_request)
@@ -44,6 +44,6 @@ class APIHandler(object):
         """ API call to get data """
         api_req = apiRequest.APIRequest(self._logger, flask.request)
         data = collections.OrderedDict()
-        for uri, elem in self._modules.items():
+        for uri, elem in self._resources.items():
             data[uri] = elem
         return apiResponse.APIResponse(self._logger, api_req)(data, 200)

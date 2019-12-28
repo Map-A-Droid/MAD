@@ -1,6 +1,8 @@
-from .. import apiHandler, apiResponse, apiException
+from . import resource_exceptions
+from .resourceHandler import ResourceHandler
+from .. import apiHandler
 
-class APIArea(apiHandler.ResourceHandler):
+class APIArea(ResourceHandler):
     component = 'area'
     default_sort = 'name'
     description = 'Add/Update/Delete Areas used for Walkers'
@@ -21,13 +23,13 @@ class APIArea(apiHandler.ResourceHandler):
                     resource = self._data_manager.get_resource('area', identifier=identifier)
                     status = self._mapping_manager.routemanager_recalcualte(resource.identifier)
                     if status:
-                        return apiResponse.APIResponse(self._logger, self.api_req)(None, 204)
+                        return (None, 204)
                     else:
-                        return apiResponse.APIResponse(self._logger, self.api_req)(None, 409)
+                        return (None, 409)
                 else:
-                    return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
+                    return (call, 501)
             except KeyError:
-                return apiResponse.APIResponse(self._logger, self.api_req)(call, 501)
+                return (call, 501)
         else:
             return super().post(identifier, data, resource_def, resource_info, *args, **kwargs)
 
@@ -44,6 +46,6 @@ class APIArea(apiHandler.ResourceHandler):
                     self.mode = data.area_type
         elif method == 'POST':
             if self.api_req.content_type != 'application/json-rpc':
-                raise apiException.NoModeSpecified()
+                raise resource_exceptions.NoModeSpecified()
         elif method == 'PUT':
-            raise apiException.NoModeSpecified()
+            raise resource_exceptions.NoModeSpecified()
