@@ -85,6 +85,31 @@ $(document).ready(function () {
         <p class="card-text">Areas define zones where scanning should happen. Areas can be assigned to Walkers and Walkers must be assigned to Devices. Every area requires a file containing one or more geofences. MAD will build a route based on these areas and the elements within them.</p>
       </div>
     </div>
+    <div class="legend">
+      <h4>Legend</h4>
+      <table>
+        <tbody>
+          <tr>
+            <td><button type="button" class="btn btn-success btn-sm"><i class="fas fa-route"></i></button></td>
+            <td>Edit Route calc</td>
+          </tr>
+          {% if config_mode == False %}
+          <tr>
+            <td><button type="button" class="btn btn-info btn-sm"><i class="fa fa-sync"></i></button></td>
+            <td>Recalculate route</td>
+          </tr>
+          {% endif %}
+          <tr>
+            <td><button type="button" class="btn btn-success btn-sm"><i class="far fa-edit"></i></button></td>
+            <td>Edit area</td>
+          </tr>
+          <tr>
+            <td><button type="button" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></i></td>
+            <td>Delete area</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 <div class="row mt-3">
