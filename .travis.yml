@@ -1,7 +1,7 @@
 language: python
 python:
   - "3.6"
-  # - "3.8"
+  - "3.8"
 addons:
   mariadb: '10.2'
 before_install:
