@@ -45,6 +45,7 @@ class config(object):
             ("/settings/ivlists", self.settings_ivlists),
             ("/settings/monsearch", self.monsearch),
             ("/settings/shared", self.settings_pools),
+            ("/settings/routecalc", self.settings_routecalc),
             ("/settings/walker", self.settings_walkers),
             ("/settings/walker/areaeditor", self.settings_walker_area),
             ("/reload", self.reload)
@@ -91,7 +92,8 @@ class config(object):
         html_single = kwargs.get('html_single')
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
-        var_parser_section = kwargs.get('var_parser_section', subtab)
+        section = kwargs.get('section', subtab)
+        var_parser_section = kwargs.get('var_parser_section', section)
         required_data = kwargs.get('required_data', {})
         mode_required = kwargs.get('mode_required', False)
         passthrough = kwargs.get('passthrough', {})
@@ -113,7 +115,7 @@ class config(object):
                 else:
                     pass
         try:
-            settings_vars = self._data_manager.get_settings(subtab, mode=mode)
+            settings_vars = self._data_manager.get_settings(section, mode=mode)
         except (utils.data_manager.dm_exceptions.ModeNotSpecified, utils.data_manager.dm_exceptions.ModeUnknown):
             if identifier:
                 raise
@@ -141,7 +143,7 @@ class config(object):
             if identifier is not None:
                 req = self._data_manager.get_resource(data_source, identifier=identifier)
                 element = req
-                included_data[subtab] = element
+                included_data[section] = element
                 return render_template(html_single,
                                        uri='%s/%s' % (included_data['base_uri'], identifier),
                                        redirect=redirect_uri,
@@ -151,7 +153,7 @@ class config(object):
                                        settings_vars=settings_vars,
                                        **included_data)
             else:
-                included_data[subtab] = self._data_manager.get_root_resource(data_source)
+                included_data[section] = self._data_manager.get_root_resource(data_source)
                 return render_template(html_all,
                                        subtab=subtab,
                                        **included_data
@@ -284,6 +286,31 @@ class config(object):
             'subtab': 'devicepool',
             'var_parser_section': 'devices',
             'required_data': {},
+        }
+        return self.process_element(**required_data)
+
+    @logger.catch
+    @auth_required
+    def settings_routecalc(self):
+        try:
+            area_id = request.args.get('area_id')
+            area = self._data_manager.get_resource('area', identifier=area_id)
+            if area['routecalc'] != int(request.args.get('id')):
+                return redirect(url_for('settings_areas'), code=302)
+        except:
+            return redirect(url_for('settings_areas'), code=302)
+        required_data = {
+            'identifier': 'id',
+            'base_uri': 'api_routecalc',
+            'data_source': 'routecalc',
+            'redirect': 'settings_areas',
+            'html_single': 'settings_singleroutecalc.html',
+            'html_all': 'settings_singleroutecalc.html',
+            'subtab': 'area',
+            'section': 'routecalc',
+            'passthrough': {
+                'areaname': area['name']
+            }
         }
         return self.process_element(**required_data)
 
