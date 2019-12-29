@@ -92,7 +92,8 @@ class config(object):
         html_single = kwargs.get('html_single')
         html_all = kwargs.get('html_all')
         subtab = kwargs.get('subtab')
-        var_parser_section = kwargs.get('var_parser_section', subtab)
+        section = kwargs.get('section', subtab)
+        var_parser_section = kwargs.get('var_parser_section', section)
         required_data = kwargs.get('required_data', {})
         mode_required = kwargs.get('mode_required', False)
         passthrough = kwargs.get('passthrough', {})
@@ -114,7 +115,7 @@ class config(object):
                 else:
                     pass
         try:
-            settings_vars = self._data_manager.get_settings(subtab, mode=mode)
+            settings_vars = self._data_manager.get_settings(section, mode=mode)
         except (utils.data_manager.dm_exceptions.ModeNotSpecified, utils.data_manager.dm_exceptions.ModeUnknown):
             if identifier:
                 raise
@@ -142,7 +143,7 @@ class config(object):
             if identifier is not None:
                 req = self._data_manager.get_resource(data_source, identifier=identifier)
                 element = req
-                included_data[subtab] = element
+                included_data[section] = element
                 return render_template(html_single,
                                        uri='%s/%s' % (included_data['base_uri'], identifier),
                                        redirect=redirect_uri,
@@ -152,7 +153,7 @@ class config(object):
                                        settings_vars=settings_vars,
                                        **included_data)
             else:
-                included_data[subtab] = self._data_manager.get_root_resource(data_source)
+                included_data[section] = self._data_manager.get_root_resource(data_source)
                 return render_template(html_all,
                                        subtab=subtab,
                                        **included_data
@@ -305,7 +306,8 @@ class config(object):
             'redirect': 'settings_areas',
             'html_single': 'settings_singleroutecalc.html',
             'html_all': 'settings_singleroutecalc.html',
-            'subtab': 'routecalc',
+            'subtab': 'area',
+            'section': 'routecalc',
             'passthrough': {
                 'areaname': area['name']
             }
