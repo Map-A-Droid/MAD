@@ -57,6 +57,25 @@ class RouteCalc(resource.Resource):
         core_data['routefile'] = json.dumps(self._data['fields']['routefile'])
         super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
 
+    def validate_custom(self):
+        issues = {}
+        for row in self['routefile']:
+            row_split = row.split(',')
+            if len(row_split) != 2:
+                issues = {
+                    'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
+                }
+                break
+            try:
+                float(row_split[0])
+                float(row_split[1])
+            except:
+                issues = {
+                    'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
+                }
+                break
+        return issues
+
     # =====================================================
     # ============ Resource-Specific Functions ============
     # =====================================================

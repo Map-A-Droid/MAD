@@ -19,7 +19,10 @@ class APIRouteCalc(api_base.APITestBase):
         payload = {
             'routefile': 'not a list',
         }
-        errors = {'invalid': [['routefile', 'Comma-delimited list']]}
+        errors = {'invalid': [
+            ['routefile', 'Comma-delimited list'],
+            ['routefile', 'Must be one coord set per line (float,float)']
+        ]}
         super().invalid_post(payload, errors)
         self.remove_resources()
 
@@ -31,7 +34,10 @@ class APIRouteCalc(api_base.APITestBase):
         payload = {
             'routefile': 'not a list',
         }
-        errors = {'invalid': [['routefile', 'Comma-delimited list']]}
+        errors = {'invalid': [
+            ['routefile', 'Comma-delimited list'],
+            ['routefile', 'Must be one coord set per line (float,float)']
+        ]}
         super().invalid_put(payload, errors)
         self.remove_resources()
 

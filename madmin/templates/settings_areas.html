@@ -139,6 +139,7 @@ $(document).ready(function () {
             </p>
           </td>
           <td class="text-right align-middle">
+            <a href="{{ url_for('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit"><i class="fas fa-route"></i></button></a>
             {% if config_mode == False %}
               <button data-area='{{ area_id }}' type="button" class="recalculate btn btn-info btn-sm"><i class="fa fa-sync"></i></button>
             {% endif %}

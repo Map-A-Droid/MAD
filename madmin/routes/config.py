@@ -45,6 +45,7 @@ class config(object):
             ("/settings/ivlists", self.settings_ivlists),
             ("/settings/monsearch", self.monsearch),
             ("/settings/shared", self.settings_pools),
+            ("/settings/routecalc", self.settings_routecalc),
             ("/settings/walker", self.settings_walkers),
             ("/settings/walker/areaeditor", self.settings_walker_area),
             ("/reload", self.reload)
@@ -284,6 +285,30 @@ class config(object):
             'subtab': 'devicepool',
             'var_parser_section': 'devices',
             'required_data': {},
+        }
+        return self.process_element(**required_data)
+
+    @logger.catch
+    @auth_required
+    def settings_routecalc(self):
+        try:
+            area_id = request.args.get('area_id')
+            area = self._data_manager.get_resource('area', identifier=area_id)
+            if area['routecalc'] != int(request.args.get('id')):
+                return redirect(url_for('settings_areas'), code=302)
+        except:
+            return redirect(url_for('settings_areas'), code=302)
+        required_data = {
+            'identifier': 'id',
+            'base_uri': 'api_routecalc',
+            'data_source': 'routecalc',
+            'redirect': 'settings_areas',
+            'html_single': 'settings_singleroutecalc.html',
+            'html_all': 'settings_singleroutecalc.html',
+            'subtab': 'routecalc',
+            'passthrough': {
+                'areaname': area['name']
+            }
         }
         return self.process_element(**required_data)
 
