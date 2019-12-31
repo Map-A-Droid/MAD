@@ -93,10 +93,16 @@ class WebsocketServer(object):
                 continue
             if next_item is not None:
                 logger.info("Trying to join worker thread")
-                next_item.join(10)
-                if next_item.isAlive():
+                try:
+                    next_item.join(10)
+                except RuntimeError as e:
+                    logger.warning("Caught runtime error trying to join thread, the thread likely did not start "
+                                   "at all. Exact message: {}", e)
+                if next_item.is_alive():
                     logger.debug("Error while joining worker thread - requeue it")
                     self.__worker_shutdown_queue.put(next_item)
+                else:
+                    logger.debug("Done with worker thread, moving on")
                 self.__worker_shutdown_queue.task_done()
                 logger.info("Done joining worker thread")
 
