@@ -102,8 +102,6 @@ class WorkerQuests(MITMBase):
                 if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
-            # quick check for dr. blabla
-            self._check_quest()
 
         if self._level_mode:
             logger.info("Starting Level Mode")
@@ -358,7 +356,6 @@ class WorkerQuests(MITMBase):
                 if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                     # TODO: put in loop, count up for a reboot ;)
                     raise InternalStopWorkerException
-            self._check_quest()
 
     def _post_move_location_routine(self, timestamp: float):
         if self._stop_worker_event.is_set():
