@@ -264,7 +264,7 @@ class WordToScreenMatching(object):
             click_y = (self._height / 1.69) + self._screenshot_y_offset
             logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
             self._communicator.click(click_x, click_y)
-            self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 500)
+            self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
             time.sleep(1)
             self._communicator.click(click_x, click_y)
             time.sleep(1)
