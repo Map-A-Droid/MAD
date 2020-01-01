@@ -4,6 +4,16 @@ COLUMNS = [
         "column": "screendetection",
         "ctype": "tinyint(1) DEFAULT NULL"
     },
+    {
+        "table": "settings_routecalc",
+        "column": "recalc_status",
+        "ctype": "tinyint(1) DEFAULT 0 AFTER `instance_id`"
+    },
+    {
+        "table": "settings_routecalc",
+        "column": "last_updated",
+        "ctype": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `recalc_status`;"
+    },
 ]
 TABLES = [
     """CREATE TABLE IF NOT EXISTS `madmin_instance` (

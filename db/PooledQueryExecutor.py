@@ -328,7 +328,7 @@ class PooledQueryExecutor:
             column_values += ondupe_values
         return self.execute(query, args=tuple(column_values), commit=True, get_id=True, raise_exc=True)
 
-    def autoexec_update(self, table, set_keyvals, set_literals=[], where_keyvals={}, where_literals=[]):
+    def autoexec_update(self, table, set_keyvals, literals=[], where_keyvals={}, where_literals=[]):
         """ Auto-updates into a table and handles all escaping
         Args:
             table (str): Table to run the query against
@@ -339,13 +339,13 @@ class PooledQueryExecutor:
         """
         if type(set_keyvals) is not dict:
             raise Exception("Set Keyvals must be a dictionary")
-        if type(set_literals) is not list:
+        if type(literals) is not list:
             raise Exception("Literals must be a list")
         if type(where_keyvals) is not dict:
             raise Exception("Where Keyvals must be a dictionary")
         if type(where_literals) is not list:
             raise Exception("Literals must be a list")
-        parsed_set = self.__process_literals("SET", set_keyvals, set_literals)
+        parsed_set = self.__process_literals("SET", set_keyvals, literals)
         (set_col_names, set_col_sub, set_val, set_literal_val, _) = parsed_set
         parsed_where = self.__process_literals("UPDATE", where_keyvals, where_literals)
         (where_col_names, where_col_sub, where_val, where_literal_val, _) = parsed_where

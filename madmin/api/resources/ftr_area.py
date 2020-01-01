@@ -21,12 +21,25 @@ class APIArea(ResourceHandler):
                 args = self.api_req.data.get('args', {})
                 if call == 'recalculate':
                     resource = self._data_manager.get_resource('area', identifier=identifier)
-                    status = self._mapping_manager.routemanager_recalcualte(resource.identifier)
-                    if status:
-                        return (None, 204)
+                    mode = resource.area_type
+                    # iv_mitm is PrioQ driven and idle does not have a route.  This are not recalcable and the returned
+                    # status should be representative of that
+                    if mode in ['iv_mitm', 'idle']:
+                        return ('Unable to recalc mode %s' % (mode,), 422)
+                    if resource.recalc_status == 0:
+                        # Start the recalculation.  This can take a little bit if the routemanager needs to be started
+                        status = self._mapping_manager.routemanager_recalcualte(resource.identifier)
+                        if status:
+                            return (None, 204)
+                        else:
+                            # Unable to turn on the routemanager.  Probably should use another error code
+                            return (None, 409)
                     else:
-                        return (None, 409)
+                        # Do not allow another recalculation if one is already running.  This value is reset on startup
+                        # so it will not be stuck in this state
+                        return ('Recalc is already running on this Area', 422)
                 else:
+                    # RPC not implemented
                     return (call, 501)
             except KeyError:
                 return (call, 501)

@@ -11,6 +11,15 @@ class DataManager(object):
         self.instance_id = instance_id
         self.__paused_devices = []
 
+    def clear_on_boot(self):
+        # This function should handle any on-boot clearing.  It is not initiated by __init__ on the off-chance that
+        # a third-party integration has triggered the data_manager
+        # Clear any route calcs because that thread is not active
+        clear_recalcs = {
+            'recalc_status': 0
+        }
+        self.dbc.autoexec_update('settings_routecalc', clear_recalcs)
+
     def get_resource(self, section, identifier=None, **kwargs):
         if section == 'area':
             return modules.AreaFactory(self, identifier=identifier)

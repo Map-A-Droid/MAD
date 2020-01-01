@@ -71,9 +71,8 @@ class DbWrapper:
     def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT"):
         return self._db_exec.autoexec_insert(table, keyvals, literals=literals, optype=optype)
 
-    def autoexec_update(self, table, set_keyvals, set_literals=[], where_keyvals={}, where_literals=[]):
-        return self._db_exec.autoexec_update(table, set_keyvals, set_literals=set_literals,
-                                             where_keyvals=where_keyvals, where_literals=where_literals)
+    def autoexec_update(self, table, set_keyvals, **kwargs):
+        return self._db_exec.autoexec_update(table, set_keyvals, **kwargs)
 
 
     def __db_timestring_to_unix_timestamp(self, timestring):
