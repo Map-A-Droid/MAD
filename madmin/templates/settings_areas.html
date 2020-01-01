@@ -151,6 +151,10 @@ $(document).ready(function () {
             <td><button type="button" class="btn btn-info btn-sm"><i class="fa fa-sync"></i></button></td>
             <td>Recalculate route</td>
           </tr>
+          <tr>
+            <td><img src="{{ url_for('static', filename='loading.gif') }}" width="32px" height="32px"/></td>
+            <td>Route recalculation in progress</td>
+          </tr>
           {% endif %}
           <tr>
             <td><button type="button" class="btn btn-success btn-sm"><i class="far fa-edit"></i></button></td>
