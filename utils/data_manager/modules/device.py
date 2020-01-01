@@ -1,5 +1,6 @@
 from .. import dm_exceptions
 from . import resource
+from utils.logging import logger
 
 class Device(resource.Resource):
     table = 'settings_device'
@@ -306,6 +307,10 @@ class Device(resource.Resource):
             }
         }
     }
+
+    def flush_level(self):
+        logger.info('Removing visitation status for {}...', self['origin'])
+        self._dbc.flush_levelinfo(self['origin'])
 
     def _load(self):
         super()._load()

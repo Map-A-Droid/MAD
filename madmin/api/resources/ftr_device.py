@@ -21,6 +21,9 @@ class APIDevice(ResourceHandler):
                         self._mapping_manager.device_set_disabled(origin)
                         self._ws_server.force_disconnect(origin)
                     return (None, 200)
+                elif call == 'flush_level':
+                    resource.flush_level()
+                    return (None, 204)
                 else:
                     return (call, 501)
             except KeyError:

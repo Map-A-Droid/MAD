@@ -14,10 +14,14 @@ $(document).ready(function () {
           return;
         }
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Clearing ...</h2>' });
+        rpc_call = {
+          'call': 'flush_level'
+        }
         $.ajax({
-            url : "/flushlevel?origin={{ element.origin }}",
-            type : 'GET',
-            contentType : 'application/json',
+            url : "{{ uri }}",
+            contentType : 'application/json-rpc',
+            data: JSON.stringify(rpc_call),
+            type : 'POST',
             success: function(data, status, xhr) {
               $.unblockUI();
               if(xhr.status < 400)
