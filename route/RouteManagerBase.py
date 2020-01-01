@@ -308,6 +308,8 @@ class RouteManagerBase(ABC):
                 }
                 t = Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs)
                 t.start()
+        else:
+            self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
 
     def recalc_route(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
                      delete_old_route: bool = False, in_memory: bool = False, calctype: bool = None):
