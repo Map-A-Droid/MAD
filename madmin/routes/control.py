@@ -71,8 +71,7 @@ class control(object):
             ("/get_all_workers", self.get_all_workers),
             ("/job_for_worker", self.job_for_worker),
             ("/reload_jobs", self.reload_jobs),
-            ("/trigger_research_menu", self.trigger_research_menu),
-            ("/flushlevel", self.flush)
+            ("/trigger_research_menu", self.trigger_research_menu)
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
@@ -557,14 +556,6 @@ class control(object):
 
         flash('Job successfully queued')
         return redirect(url_for('install_status'), code=302)
-
-    @logger.catch
-    @auth_required
-    def flush(self):
-        origin = request.args.get("origin")
-        logger.info('Removing visitation status for {}...', origin)
-        self._db.flush_levelinfo(origin)
-        return redirect(url_for('settings_devices'), code=302)
 
     @auth_required
     @logger.catch()

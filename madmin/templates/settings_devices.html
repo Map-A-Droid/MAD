@@ -7,12 +7,23 @@
 {% block scripts %}
 {{ super() }}
 <script>
-function bulk_update(uri, patch_data) {
+function bulk_patch(uri, patch_data) {
   $.ajax({
       url : uri,
       data : JSON.stringify(patch_data),
       type : 'PATCH',
       contentType : 'application/json'
+  });
+}
+function flush_level(uri, data) {
+  rpc_call = {
+    'call': 'flush_level'
+  }
+  $.ajax({
+      url : uri,
+      contentType : 'application/json-rpc',
+      data: JSON.stringify(rpc_call),
+      type : 'POST'
   });
 }
 $(document).ready(function () {
@@ -21,23 +32,26 @@ $(document).ready(function () {
         var walker_uri = $(this).children("option:selected").attr('name');
         var patch_data = {"walker": walker_uri};
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
-        bulk_update(uri, patch_data);
+        bulk_patch(uri, patch_data);
         $.unblockUI();
     });
     $(".bulk_update").change(function() {
       var selected_uri = $(this).children("option:selected").val();
       var devices = $('.bulk_sel:checkbox:checked');
-      if(devices.length > 0 && confirm('Are you sure you want to bulk update walkers?')) {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk setting walkers</h2>' });
-        var patch_data;
+      if(devices.length > 0 && confirm('Are you sure you want to bulk update?')) {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk Updating</h2>' });
+        var data = {};
+        var operation = bulk_patch;
         if(selected_uri.indexOf('walker') > 0) {
-          patch_data = {"walker": selected_uri};
+          data = {"walker": selected_uri};
+        } else if(selected_uri.indexOf('pool') > 0) {
+          data = {"pool": selected_uri};
         } else {
-          patch_data = {"pool": selected_uri};
+          operation = flush_level;
         }
         $.each($('.bulk_sel:checkbox:checked'), function() {
           uri = '{{ url_for('api_device') }}/' + $(this).data('identifier');
-          bulk_update(uri, patch_data);
+          operation(uri, data);
         });
         $.unblockUI();
         location.reload();
@@ -186,6 +200,7 @@ $(document).ready(function () {
             {% for pool_id, pool in pools.items() %}
              <option value="{{ url_for('api_devicepool') + '/'+ pool_id|string }}">Set devicepool to {{ pool.devicepool }}</option>
             {% endfor %}
+            <option value='flush_level'>Clear levelup data</option>
           </select>
         </td>
       </tr>
