@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-09 19:57+0100\n"
-"PO-Revision-Date: 2019-12-09 20:01+0100\n"
+"POT-Creation-Date: 2020-01-02 21:30+0100\n"
+"PO-Revision-Date: 2020-01-02 21:40+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -232,96 +232,112 @@ msgstr "Prendre {0} instantanés de {poke}"
 msgid "Take {0} snapshots of {type} Pokemon"
 msgstr "Prends {0} photos de Pokémon de type {type}"
 
-#: questGen.py:310
+#: questGen.py:307
+#, python-brace-format
+msgid "Take {0} snapshots of your Buddy"
+msgstr "Prendre {0} instantanés avec ton copain"
+
+#: questGen.py:312
 #, python-brace-format
 msgid "Battle {0} times against the Team GO Rocket Leaders"
 msgstr "Combattez {0} fois contre les Rocket Leaders de Team GO"
 
 #: questGen.py:314
-#, fuzzy
+msgid "Battle against a Team Rocket Grunt"
+msgstr "Combattez contre Rocket Grunt"
+
+#: questGen.py:318
 msgid "Battle"
-msgstr " Combat"
+msgstr "Combat"
 
-#: questGen.py:314
-#, python-brace-format
-msgid "Win {0} times against the Team GO Rocket Leaders"
-msgstr "Gagner {0} fois contre les Rocket Leaders de Team GO"
+#: questGen.py:318
+msgid "Win"
+msgstr "Gagner"
 
-#: questGen.py:317
+#: questGen.py:321
 msgid " Eggs"
 msgstr " Œufs"
 
-#: questGen.py:317
+#: questGen.py:321
 msgid "n Egg"
 msgstr "Œufs"
 
-#: questGen.py:318
+#: questGen.py:322
 msgid " Raids"
 msgstr " Raids"
 
-#: questGen.py:318
+#: questGen.py:322
 msgid " Raid"
 msgstr " Raid"
 
-#: questGen.py:319
+#: questGen.py:323
 msgid " Battles"
 msgstr " Combats"
 
-#: questGen.py:319
+#: questGen.py:323
 msgid " Battle"
 msgstr " Combat"
 
-#: questGen.py:320
+#: questGen.py:324
 msgid " candies"
 msgstr " bonbons"
 
-#: questGen.py:320
+#: questGen.py:324
 msgid " candy"
 msgstr " bonbon"
 
-#: questGen.py:321
+#: questGen.py:325
 msgid " gifts"
 msgstr " cadeaux"
 
-#: questGen.py:321
+#: questGen.py:325
 msgid " gift"
 msgstr " cadeau"
 
-#: questGen.py:322
+#: questGen.py:326
 msgid " Pokestops"
 msgstr " PokéStops"
 
-#: questGen.py:322
+#: questGen.py:326
 msgid " Pokestop"
 msgstr " PokéStop"
 
-#: questGen.py:323
-#, fuzzy, python-brace-format
+#: questGen.py:327
+#, python-brace-format
 msgid " {0} snapshots"
-msgstr "Prendre {0} instantanés de {poke}"
+msgstr "{0} instantanés"
 
-#: questGen.py:323
+#: questGen.py:327
 msgid " a snapshot"
 msgstr " un instantané"
 
-#: questGen.py:324
+#: questGen.py:328
 #, fuzzy, python-brace-format
 msgid "Make {0} {type}{curve}Throws"
 msgstr "Fais {0} {type} lancers {curve}{inrow}"
 
-#: questGen.py:324
+#: questGen.py:328
 #, fuzzy, python-brace-format
 msgid "Make a {type}{curve}Throw"
 msgstr "Fais {type} lancers {curve}{inrow}"
 
-#: questGen.py:325
+#: questGen.py:329
 #, python-brace-format
 msgid " {0} times"
 msgstr " {0} fois"
 
-#: questGen.py:326
+#: questGen.py:330
+#, python-brace-format
+msgid "{0} hearts"
+msgstr "{0} cœurs"
+
+#: questGen.py:330
+msgid "a heart"
+msgstr "un cœur"
+
+#: questGen.py:331
 msgid "a"
 msgstr "1"
 
-#~ msgid "Win"
-#~ msgstr "Gagner"
+#~ msgid "Win {0} times against the Team GO Rocket Leaders"
+#~ msgstr "Gagner {0} fois contre les Rocket Leaders de Team GO"

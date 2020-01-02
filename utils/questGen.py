@@ -303,11 +303,15 @@ def questtask(typeid, condition, target):
                         arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
                             _('-type ') if last == cur else '-, ')
                         cur += 1
+        elif re.search(r'""type": 28', condition) is not None:
+            text =_("Take {0} snapshots of your Buddy")
     elif typeid == 29:
         # QUEST_BATTLE_TEAM_ROCKET Team Go rucket grunt batles.
         # Condition type 27 means against a grunt leader WITH_INVASION_CHARACTER
         if re.search(r'"type": 27', condition) is not None:
             text = _('Battle {0} times against the Team GO Rocket Leaders')
+        elif int(target) == int(1):
+            text = _('Battle against a Team Rocket Grunt')
 
         # Condition type 18 means win a battle
         if re.search(r'"type": 18', condition) is not None:
@@ -323,6 +327,7 @@ def questtask(typeid, condition, target):
         text = text.replace(_(' {0} snapshots'), _(' a snapshot'))
         text = text.replace(_('Make {0} {type}{curve}Throws'), _('Make a {type}{curve}Throw'))
         text = text.replace(_(' {0} times'), '')
+        text = text.replace(_('{0} hearts'), _('a heart'))
         arr['0'] = _("a")
 
     for key, val in arr.items():
