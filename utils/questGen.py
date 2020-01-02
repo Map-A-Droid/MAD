@@ -311,7 +311,7 @@ def questtask(typeid, condition, target):
 
         # Condition type 18 means win a battle
         if re.search(r'"type": 18', condition) is not None:
-            text = text.replace(_('Battle'), _('Win {0} times against the Team GO Rocket Leaders'))
+            text = text.replace(_('Battle'), _('Win'))
 
     if int(target) == int(1):
         text = text.replace(_(' Eggs'), _('n Egg'))
