@@ -35,7 +35,13 @@ class RouteManagerRaids(RouteManagerBase):
         return False
 
     def _get_coords_post_init(self):
-        return self.db_wrapper.gyms_from_db(self.geofence_helper)
+        coords = self.db_wrapper.gyms_from_db(self.geofence_helper)
+        including_stops = self._data_manager.get_resource('area', self.area_id).get('including_stops', False)
+        if including_stops:
+            logger.info("Include stops in coords list too!")
+            coords.extend(self.db_wrapper.stops_from_db(self.geofence_helper))
+
+        return coords
 
     def _cluster_priority_queue_criteria(self):
         if self.settings is not None:
