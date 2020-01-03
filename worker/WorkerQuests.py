@@ -435,6 +435,11 @@ class WorkerQuests(MITMBase):
         logger.info('Cleanup Box')
         not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
+        reached_main_menu = self._check_pogo_main_screen(10, True)
+                if not reached_main_menu:
+                    if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                        # TODO: put in loop, count up for a reboot ;)
+                        raise InternalStopWorkerException
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
