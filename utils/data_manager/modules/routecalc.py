@@ -72,21 +72,29 @@ class RouteCalc(resource.Resource):
 
     def validate_custom(self):
         issues = {}
-        for row in self['routefile']:
+        invalid_data = []
+        for line, row in enumerate(self['routefile']):
             row_split = row.split(',')
+            if len(row) == 0:
+                continue
             if len(row_split) != 2:
-                issues = {
-                    'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
-                }
-                break
-            try:
-                float(row_split[0])
-                float(row_split[1])
-            except:
-                issues = {
-                    'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
-                }
-                break
+                if not invalid_data:
+                    issues = {
+                        'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
+                    }
+                invalid_data.append('Line %s does not contain two values' % (line,))
+                continue
+            for val in row_split:
+                try:
+                    float(val)
+                except:
+                    if not invalid_data:
+                        issues = {
+                            'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
+                        }
+                    invalid_data.append('Line %s [%s] is not a float / decimal' % (line, val,))
+        if invalid_data:
+            logger.error("Invalid routecalc detected for {}: {}", self.identifier, invalid_data)
         return issues
 
     # =====================================================

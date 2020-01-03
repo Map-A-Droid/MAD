@@ -361,6 +361,7 @@ class Resource(object):
                 elif type(set_issues) is dict:
                     issues[key].update(set_issues)
         if issues:
+            logger.debug('Unable to save the resource {} / {}: {}', self.__class__.__name__, self.identifier, issues)
             raise dm_exceptions.UpdateIssue(**issues)
 
     def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
