@@ -303,7 +303,7 @@ def questtask(typeid, condition, target):
                         arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
                             _('-type ') if last == cur else '-, ')
                         cur += 1
-        elif re.search(r'""type": 28', condition) is not None:
+        elif re.search(r'"type": 28', condition) is not None:
             text =_("Take {0} snapshots of your Buddy")
     elif typeid == 29:
         # QUEST_BATTLE_TEAM_ROCKET Team Go rucket grunt batles.
