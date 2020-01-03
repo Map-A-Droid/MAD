@@ -139,6 +139,7 @@ def check_dependencies():
             pkg_resources.require(deps)
         except pkg_resources.VersionConflict as version_error:
             logger.error("Some dependencies aren't met. Required: {} (Installed: {})", version_error.req, version_error.dist)
+            logger.error("Most of the times you can fix it by running: pip3 install -r requirements.txt --upgrade")
             sys.exit(1)
 
 
