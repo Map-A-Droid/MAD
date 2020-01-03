@@ -14,6 +14,11 @@ COLUMNS = [
         "column": "last_updated",
         "ctype": "DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP AFTER `recalc_status`;"
     },
+       {
+        "table": "settings_area_mon_mitm",
+        "column": "max_clustering",
+        "ctype": "int DEFAULT NULL"
+    },
 ]
 TABLES = [
     """CREATE TABLE IF NOT EXISTS `madmin_instance` (

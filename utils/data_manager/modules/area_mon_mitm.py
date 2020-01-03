@@ -100,11 +100,19 @@ class AreaMonMITM(area.Area):
                     "expected": float
                 }
             },
+            "max_clustering": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "Maximum number of prioQ events to cluster (default: unlimited, 0 or empty to set unlimited)",
+                    "expected": int
+                }
+            },
             "remove_from_queue_backlog": {
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+                    "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 900)",
                     "expected": float
                 }
             },
@@ -138,14 +146,6 @@ class AreaMonMITM(area.Area):
                     "uri": True,
                     "data_source": "monivlist",
                     "uri_source": "api_monivlist"
-                }
-            },
-            "min_time_left_seconds": {
-                "settings": {
-                    "type": "text",
-                    "require": False,
-                    "description": "Ignore mons with less spawntime in seconds",
-                    "expected": int
                 }
             }
         }

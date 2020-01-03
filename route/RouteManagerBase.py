@@ -247,8 +247,15 @@ class RouteManagerBase(ABC):
                 self._stop_update_thread.clear()
             self._prio_queue = []
             if self.mode not in ["iv_mitm", "pokestops"]:
+                if self.mode == "mon_mitm" and self.settings is not None:
+                    max_clustering = self.settings.get(
+                        "max_clustering", self._max_coords_within_radius)
+                    if max_clustering == 0:
+                        max_clustering = self._max_coords_within_radius
+                else:
+                    max_clustering = self._max_coords_within_radius
                 self.clustering_helper = ClusteringHelper(self._max_radius,
-                                                          self._max_coords_within_radius,
+                                                          max_clustering,
                                                           self._cluster_priority_queue_criteria())
             self._update_prio_queue_thread = Thread(name="prio_queue_update_" + self.name,
                                                     target=self._update_priority_queue_loop)
@@ -503,7 +510,7 @@ class RouteManagerBase(ABC):
         delete_seconds_passed = 0
         if self.settings is not None:
             delete_seconds_passed = self.settings.get(
-                "remove_from_queue_backlog", 0)
+                "remove_from_queue_backlog", 900)
 
         if delete_seconds_passed is not None:
             delete_before = time.time() - delete_seconds_passed
@@ -595,7 +602,7 @@ class RouteManagerBase(ABC):
                 next_readableTime = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
                 if self.settings is not None:
                     delete_seconds_passed = self.settings.get(
-                            "remove_from_queue_backlog", 0)
+                            "remove_from_queue_backlog", 900)
                     if delete_seconds_passed is not None:
                         delete_before = time.time() - delete_seconds_passed
                     else:
