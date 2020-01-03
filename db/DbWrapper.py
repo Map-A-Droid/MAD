@@ -1028,3 +1028,21 @@ class DbWrapper:
             }
             res = self._db_exec.autoexec_insert('madmin_instance', instance_data)
             return res
+
+    def set_mad_version(self, version):
+        query = "INSERT INTO versions (versions.key, val) VALUES('mad_version', {})".format(int(version))
+        res = self.execute(query, commit=True)
+        return res
+
+    def get_mad_version(self):
+        query = "SELECT val FROM versions where versions.key = 'mad_version'"
+        res = self.execute(query)
+        if res:
+            return int(res[0][0])
+        else:
+            return None
+
+    def update_mad_version(self, version):
+        query = "UPDATE versions SET val = '{}' WHERE versions.key = 'mad_version'".format(int(version))
+        res = self.execute(query, commit=True)
+        return res
