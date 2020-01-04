@@ -12,6 +12,7 @@ import pytesseract
 from pytesseract import Output
 from PIL import Image
 
+from ocr.screen_type import ScreenType
 from utils.logging import logger
 from ocr.matching_trash import trash_image_matching
 
@@ -29,9 +30,7 @@ class PogoWindows:
         self.__thread_pool = ThreadPool(processes=thread_count)
 
         # screendetection
-
         self._ScreenType: dict = {}
-
         self._ScreenType[1]: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
         self._ScreenType[2]: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
         self._ScreenType[3]: list = ['KIDS', 'Google', 'Facebook']
@@ -808,15 +807,13 @@ class PogoWindows:
 
         return most_frequent_pixel[1]
 
-
-    def screendetection_get_type(self, image, identifier):
-
+    def screendetection_get_type_by_screen_analysis(self, image, identifier):
         return self.__thread_pool.apply_async(self.__screendetection_get_type_internal,
                                               (image, identifier)).get()
 
-    def __screendetection_get_type_internal(self, image, identifier):
-        returntype = -1
-        globaldict = {}
+    def __screendetection_get_type_internal(self, image, identifier) -> (ScreenType, dict, int, int, int):
+        returntype: ScreenType = ScreenType.UNDEFINED
+        globaldict: dict = {}
         diff: int = 1
         logger.debug(
             "__screendetection_get_type_internal: Detecting screen type - identifier {}", identifier)
@@ -841,13 +838,14 @@ class PogoWindows:
                     continue
                 n_boxes = len(globaldict['level'])
                 for i in range(n_boxes):
-                    if returntype != -1: break
+                    if returntype != ScreenType.UNDEFINED:
+                        break
                     if len(globaldict['text'][i]) > 3:
                         for z in self._ScreenType:
-                            if globaldict['top'][i] > height / 4 and \
-                                    globaldict['text'][i] in self._ScreenType[z]:
-                                returntype = z
-                if returntype != -1: break
+                            if globaldict['top'][i] > height / 4 and globaldict['text'][i] in self._ScreenType[z]:
+                                returntype = ScreenType(z)
+                if returntype != ScreenType.UNDEFINED:
+                    break
 
             frame.close()
             del textes

@@ -3,6 +3,8 @@ import time
 import re
 
 import xml.etree.ElementTree as ET
+
+from ocr.screen_type import ScreenType
 from utils.logging import logger
 from utils.MappingManager import MappingManager
 from typing import Optional, List
@@ -11,34 +13,6 @@ from enum import Enum
 import numpy as np
 from utils.madGlobals import ScreenshotType
 from PIL import Image
-import gc
-
-class ScreenType(Enum):
-    UNDEFINED = -1
-    BIRTHDATE = 1
-    RETURNING = 2
-    LOGINSELECT = 3
-    PTC = 4
-    FAILURE = 5
-    RETRY = 6
-    WRONG = 7  
-    GAMEDATA = 8
-    GGL = 10
-    PERMISSION = 11
-    MARKETING = 12
-    CONSENT = 13
-    SN = 14
-    UPDATE = 15
-    STRIKE = 16
-    SUSPENDED = 17
-    TERMINATED = 18
-    QUEST = 20
-    GPS = 21
-    POGO = 99
-    ERROR = 100
-    BLACK = 110
-    CLOSE = 500
-    DISABLED = 999
 
 class LoginType(Enum):
     UNKNOWN = -1
@@ -53,7 +27,7 @@ class WordToScreenMatching(object):
         self._mapping_manager = mapping_mananger
         self._ratio: float = 0.0
 
-        self._logintype: LoginType = -1
+        self._logintype: LoginType = LoginType.UNKNOWN
         self._PTC_accounts: List[Login_PTC] = []
         self._GGL_accounts: List[Login_GGL] = []
         self._accountcount: int = 0
@@ -150,304 +124,303 @@ class WordToScreenMatching(object):
 
         return np.asarray(sort_lines, dtype=np.int32)
 
-    def matchScreen(self):
-        globaldict: dict = {}
-        pogoTopmost = self._communicator.isPogoTopmost()
-        screenpath = self.get_screenshot_path()
-        topmostapp = self._communicator.topmostApp()
-        if not topmostapp:
-            return ScreenType.ERROR
-
-        returntype: ScreenType = -1
-
-        if "AccountPickerActivity" in topmostapp or 'SignInActivity' in topmostapp:
-            returntype = 10
-        elif "GrantPermissionsActivity" in topmostapp:
-            returntype = 11
-        elif "ConsentActivity" in topmostapp:
-            returntype = 13
-        elif not pogoTopmost:
+    def __evaluate_topmost_app(self, topmost_app: str) -> (ScreenType, dict):
+        returntype: ScreenType = ScreenType.UNDEFINED
+        global_dict: dict = {}
+        if "AccountPickerActivity" in topmost_app or 'SignInActivity' in topmost_app:
+            return ScreenType.GGL
+        elif "GrantPermissionsActivity" in topmost_app:
+            return ScreenType.PERMISSION
+        elif "ConsentActivity" in topmost_app:
+            return ScreenType.CONSENT
+        elif "com.nianticlabs.pokemongo" not in topmost_app:
             return ScreenType.CLOSE
         elif self._nextscreen != ScreenType.UNDEFINED:
-            returntype = ScreenType(self._nextscreen)
+            # TODO: how can the nextscreen be known in the current? o.O
+            return self._nextscreen
         elif not self.get_devicesettings_value('screendetection', False):
             logger.info('No more screen detection - disabled ...')
             return ScreenType.DISABLED
         else:
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
-                                                delayAfter=2):
+                                        delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR
 
-            returntype, globaldict, self._width, self._height, diff = \
-                self._pogoWindowManager.screendetection_get_type(screenpath, self._id)
+            screenpath = self.get_screenshot_path()
 
-            if not globaldict:
+            returntype, global_dict, self._width, self._height, diff = \
+                self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self._id)
+
+            if not global_dict:
                 self._nextscreen = ScreenType.UNDEFINED
-                logger.warning('Get not any text on screen - start next round...')
+                logger.warning('Could not understand any text on screen - starting next round...')
                 return ScreenType.ERROR
 
             self._ratio = self._height / self._width
 
             logger.debug("Screenratio of origin {}: {}".format(str(self._id), str(self._ratio)))
 
-            if 'text' not in globaldict:
+            if 'text' not in global_dict:
                 logger.error('Error while text detection')
                 return ScreenType.ERROR
 
-        if ScreenType(returntype) != ScreenType.UNDEFINED:
-            logger.info("Processing Screen: {}", str(ScreenType(returntype)))
+        return returntype, global_dict
 
-        if ScreenType(returntype) == ScreenType.GGL:
-            self._nextscreen = ScreenType.UNDEFINED
+    def __handle_login_screen(self, global_dict: dict, diff: int):
+        temp_dict: dict = {}
+        n_boxes = len(global_dict['level'])
+        for i in range(n_boxes):
+            if 'Facebook' in (global_dict['text'][i]):
+                temp_dict['Facebook'] = global_dict['top'][i] / diff
+            if 'CLUB' in (global_dict['text'][i]):
+                temp_dict['CLUB'] = global_dict['top'][i] / diff
+            # french ...
+            if 'DRESSEURS' in (global_dict['text'][i]):
+                temp_dict['CLUB'] = global_dict['top'][i] / diff
 
-            if self._logintype == LoginType.ptc:
-                logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
-                username = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+            if self.get_devicesettings_value('logintype', 'google') == 'ptc':
+                self._nextscreen = ScreenType.PTC
+                if 'CLUB' in (global_dict['text'][i]):
+                    self._click_center_button(diff, global_dict, i)
+                    time.sleep(5)
+
             else:
-                ggl_login = self.get_next_account()
-                username = ggl_login.username
+                self._nextscreen = ScreenType.UNDEFINED
+                if 'Google' in (global_dict['text'][i]):
+                    self._click_center_button(diff, global_dict, i)
+                    time.sleep(5)
 
-            if self.parse_ggl(self._communicator.uiautomator(), username):
-                logger.info("Sleeping 50 seconds - please wait!")
-                time.sleep(50)
-
-                return ScreenType.GGL
-            return ScreenType.ERROR
-
-        elif ScreenType(returntype) == ScreenType.PERMISSION:
-            self._nextscreen = ScreenType.UNDEFINED
-            if self.parse_permission(self._communicator.uiautomator()):
-                time.sleep(2)
-                return ScreenType.PERMISSION
-            time.sleep(2)
-            return ScreenType.ERROR
-
-        elif ScreenType(returntype) == ScreenType.CONSENT:
-            self._nextscreen = ScreenType.UNDEFINED
-            return ScreenType.CONSENT
-
-        elif ScreenType(returntype) == ScreenType.UPDATE:
-            self._nextscreen = ScreenType.UNDEFINED
-            return ScreenType.UPDATE
-
-        elif ScreenType(returntype) == ScreenType.SN:
-            self._nextscreen = ScreenType.UNDEFINED
-            return ScreenType.SN
-
-        elif ScreenType(returntype) == ScreenType.GAMEDATA:
-            self._nextscreen = ScreenType.UNDEFINED
-            return ScreenType.GAMEDATA
-
-        elif ScreenType(returntype) == ScreenType.GPS:
-            self._nextscreen = ScreenType.UNDEFINED
-            return ScreenType.GPS
-
-        elif ScreenType(returntype) == ScreenType.MARKETING:
-            self._nextscreen = ScreenType.POGO
-            click_text = 'ERLAUBEN,ALLOW,AUTORISER'
-            n_boxes = len(globaldict['level'])
-            for i in range(n_boxes):
-                if any(elem.lower() in (globaldict['text'][i].lower()) for elem in click_text.split(",")):
-                    (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
-                                    globaldict['width'][i], globaldict['height'][i])
-                    click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
+                # alternative select
+                if 'Facebook' in temp_dict and 'TRAINER' in temp_dict:
+                    click_x = self._width / 2
+                    click_y = (temp_dict['Facebook'] + ((temp_dict['TRAINER'] - temp_dict['Facebook']) / 2))
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
-                    time.sleep(2)
+                    time.sleep(5)
 
-            return ScreenType.MARKETING
-
-        elif ScreenType(returntype) == ScreenType.BIRTHDATE:
-            self._nextscreen = ScreenType.RETURNING
-            click_x = (self._width / 2) + (self._width / 4)
-            click_y = (self._height / 1.69) + self._screenshot_y_offset
-            logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-            self._communicator.click(click_x, click_y)
-            self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
-            time.sleep(1)
-            self._communicator.click(click_x, click_y)
-            time.sleep(1)
-            click_x = self._width / 2
-            click_y = click_y + (self._height / 8.53)
-            self._communicator.click(click_x, click_y)
-            time.sleep(1)
-            return ScreenType.BIRTHDATE
-
-        elif ScreenType(returntype) == ScreenType.RETURNING:
-            self._nextscreen = ScreenType.UNDEFINED
-            self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator, upper=True)
-            time.sleep(2)
-            return ScreenType.RETURNING
-
-        elif ScreenType(returntype) == ScreenType.WRONG:
-            self._nextscreen = ScreenType.UNDEFINED
-            self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator, upper=True)
-            time.sleep(2)
-            return ScreenType.ERROR
-
-        elif ScreenType(returntype) == ScreenType.STRIKE:
-            self._nextscreen = ScreenType.UNDEFINED
-            logger.warning('Got a black strike warning!')
-            click_text = 'GOT IT,ALLES KLAR'
-            n_boxes = len(globaldict['level'])
-            for i in range(n_boxes):
-                if any(elem.lower() in (globaldict['text'][i].lower()) for elem in click_text.split(",")):
-                    (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
-                                    globaldict['width'][i], globaldict['height'][i])
-                    click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
+                # alternative select
+                if 'Facebook' in temp_dict:
+                    click_x = self._width / 2
+                    click_y = (temp_dict['Facebook'] + self._height / 10.11)
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
-                    time.sleep(2)
+                    time.sleep(5)
 
-            return ScreenType.STRIKE
+                # alternative select
+                if 'CLUB' in temp_dict:
+                    click_x = self._width / 2
+                    click_y = (temp_dict['CLUB'] - self._height / 10.11)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                    self._communicator.click(click_x, click_y)
+                    time.sleep(5)
 
-        elif ScreenType(returntype) == ScreenType.SUSPENDED:
+    def _click_center_button(self, diff, global_dict, i):
+        (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
+                        global_dict['width'][i], global_dict['height'][i])
+        click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
+        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+        self._communicator.click(click_x, click_y)
+
+    def __handle_screentype(self, screentype: ScreenType, global_dict: Optional[dict] = None, diff: int = -1):
+        if screentype == ScreenType.UNDEFINED:
+            logger.warning("Undefined screentype, abandon ship...")
+        elif screentype == ScreenType.BIRTHDATE:
+            self.__handle_birthday_screen()
+        elif screentype == ScreenType.RETURNING:
+            self.__handle_returning_player_or_wrong_credentials()
+        elif screentype == ScreenType.LOGINSELECT:
+            self.__handle_login_screen(global_dict, diff)
+        elif screentype == ScreenType.PTC:
+            return self.__handle_ptc_login()
+        elif screentype == ScreenType.FAILURE:
+            self.__handle_returning_player_or_wrong_credentials()
+            screentype = ScreenType.ERROR
+        elif screentype == ScreenType.RETRY:
+            self.__handle_retry_screen(diff, global_dict)
+        elif screentype == ScreenType.WRONG:
+            self.__handle_returning_player_or_wrong_credentials()
+            screentype = ScreenType.ERROR
+        elif screentype == ScreenType.GAMEDATA:
+            self._nextscreen = ScreenType.UNDEFINED
+        elif screentype == ScreenType.GGL:
+            screentype = self.__handle_google_login(screentype)
+        elif screentype == ScreenType.PERMISSION:
+            screentype = self.__handle_permissions_screen(screentype)
+        elif screentype == ScreenType.MARKETING:
+            self.__handle_marketing_screen(diff, global_dict)
+        elif screentype == ScreenType.CONSENT:
+            self._nextscreen = ScreenType.UNDEFINED
+        elif screentype == ScreenType.SN:
+            self._nextscreen = ScreenType.UNDEFINED
+        elif screentype == ScreenType.UPDATE:
+            self._nextscreen = ScreenType.UNDEFINED
+        elif screentype == ScreenType.STRIKE:
+            self.__handle_strike_screen(diff, global_dict)
+        elif screentype == ScreenType.SUSPENDED:
             self._nextscreen = ScreenType.UNDEFINED
             logger.warning('Account temporarily banned!')
-            return ScreenType.ERROR
-
-        elif ScreenType(returntype) == ScreenType.TERMINATED:
+            screentype = ScreenType.ERROR
+        elif screentype == ScreenType.TERMINATED:
             self._nextscreen = ScreenType.UNDEFINED
             logger.error('Account permabanned!')
-            return ScreenType.ERROR
-
-        elif ScreenType(returntype) == ScreenType.LOGINSELECT:
-            temp_dict: dict = {}
-            n_boxes = len(globaldict['level'])
-            for i in range(n_boxes):
-                if 'Facebook' in (globaldict['text'][i]): temp_dict['Facebook'] = globaldict['top'][i] / diff
-                if 'CLUB' in (globaldict['text'][i]): temp_dict['CLUB'] = globaldict['top'][i] / diff
-                # french ...
-                if 'DRESSEURS' in (globaldict['text'][i]): temp_dict['CLUB'] = globaldict['top'][i] / diff
-
-                if self.get_devicesettings_value('logintype', 'google') == 'ptc':
-                    self._nextscreen = ScreenType.PTC
-                    if 'CLUB' in (globaldict['text'][i]):
-                        (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
-                                        globaldict['width'][i], globaldict['height'][i])
-                        click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
-                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                        self._communicator.click(click_x, click_y)
-                        time.sleep(5)
-                        return ScreenType.LOGINSELECT
-
-                else:
-                    self._nextscreen = ScreenType.UNDEFINED
-                    if 'Google' in (globaldict['text'][i]):
-                        (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
-                                        globaldict['width'][i], globaldict['height'][i])
-                        click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
-                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                        self._communicator.click(click_x, click_y)
-                        time.sleep(5)
-                        return ScreenType.LOGINSELECT
-
-                    # alternative select
-                    if 'Facebook' in temp_dict and 'TRAINER' in temp_dict:
-                        click_x = self._width / 2
-                        click_y = (temp_dict['Facebook'] + ((temp_dict['TRAINER'] - temp_dict['Facebook']) / 2))
-                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                        self._communicator.click(click_x, click_y)
-                        time.sleep(5)
-                        return ScreenType.LOGINSELECT
-
-                    # alternative select
-                    if 'Facebook' in temp_dict:
-                        click_x = self._width / 2
-                        click_y = (temp_dict['Facebook'] + self._height / 10.11)
-                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                        self._communicator.click(click_x, click_y)
-                        time.sleep(5)
-                        return ScreenType.LOGINSELECT
-
-                    # alternative select
-                    if 'CLUB' in temp_dict:
-                        click_x = self._width / 2
-                        click_y = (temp_dict['CLUB'] - self._height / 10.11)
-                        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                        self._communicator.click(click_x, click_y)
-                        time.sleep(5)
-                        return ScreenType.LOGINSELECT
-
-        elif ScreenType(returntype) == ScreenType.PTC:
+            screentype = ScreenType.ERROR
+        elif screentype == ScreenType.POGO:
+            screentype = self.__check_pogo_screen_ban_or_loading(screentype)
+        elif screentype in ScreenType.QUEST:
+            logger.warning("Already on quest screen")
+            # TODO: consider closing quest window?
             self._nextscreen = ScreenType.UNDEFINED
-            ptc = self.get_next_account()
-            if not ptc:
-                logger.error('No PTC Username and Password is set')
-                return ScreenType.ERROR
+        elif screentype == ScreenType.GPS:
+            self._nextscreen = ScreenType.UNDEFINED
+            logger.warning("Ingame error detected")
+        elif screentype == ScreenType.BLACK:
+            logger.warning("Screen is black, sleeping a couple seconds for another check...")
+        elif screentype == ScreenType.CLOSE:
+            logger.warning("Detected pogo not open")
+        elif screentype == ScreenType.DISABLED:
+            logger.warning("Screendetection disabled")
+        elif screentype == ScreenType.ERROR:
+            logger.error("Error during screentype detection")
 
-            if float(self._ratio) >= 2:
-                username_y = self._height / 2.5 + self._screenshot_y_offset
-                password_y = self._height / 2.105 + self._screenshot_y_offset
-                button_y = self._height / 1.7777 + self._screenshot_y_offset
-            elif float(self._ratio) >= 1.7:
-                username_y = self._height / 2.224797219003476 + self._screenshot_y_offset
-                password_y = self._height / 1.875 + self._screenshot_y_offset
-                button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
-            elif float(self._ratio) < 1.7:
-                username_y = self._height / 2.224797219003476 + self._screenshot_y_offset
-                password_y = self._height / 1.875 + self._screenshot_y_offset
-                button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
+        return screentype
 
-            # username
-            self._communicator.click(self._width / 2, username_y)
-            time.sleep(.5)
-            self._communicator.sendText(ptc.username)
-            self._communicator.click(100, 100)
-            time.sleep(2)
+    def __check_pogo_screen_ban_or_loading(self, screentype):
+        backgroundcolor = self._pogoWindowManager.most_frequent_colour(self.get_screenshot_path(), self._id)
+        if backgroundcolor is not None and (
+                backgroundcolor[0] == 0 and
+                backgroundcolor[1] == 0 and
+                backgroundcolor[2] == 0):
+            # Background is black - Loading ...
+            screentype = ScreenType.BLACK
+        elif backgroundcolor is not None and (
+                backgroundcolor[0] == 16 and
+                backgroundcolor[1] == 24 and
+                backgroundcolor[2] == 33):
+            # Got a strike warning
+            screentype = ScreenType.STRIKE
+        return screentype
 
-            # password
-            self._communicator.click(self._width / 2, password_y)
-            time.sleep(.5)
-            self._communicator.sendText(ptc.password)
-            self._communicator.click(100, 100)
-            time.sleep(2)
+    def __handle_strike_screen(self, diff, global_dict):
+        self._nextscreen = ScreenType.UNDEFINED
+        logger.warning('Got a black strike warning!')
+        click_text = 'GOT IT,ALLES KLAR'
+        n_boxes = len(global_dict['level'])
+        for i in range(n_boxes):
+            if any(elem.lower() in (global_dict['text'][i].lower()) for elem in click_text.split(",")):
+                self._click_center_button(diff, global_dict, i)
+                time.sleep(2)
 
-            # button
-            self._communicator.click(self._width / 2, button_y)
+    def __handle_marketing_screen(self, diff, global_dict):
+        self._nextscreen = ScreenType.POGO
+        click_text = 'ERLAUBEN,ALLOW,AUTORISER'
+        n_boxes = len(global_dict['level'])
+        for i in range(n_boxes):
+            if any(elem.lower() in (global_dict['text'][i].lower()) for elem in click_text.split(",")):
+                self._click_center_button(diff, global_dict, i)
+                time.sleep(2)
+
+    def __handle_permissions_screen(self, screentype):
+        self._nextscreen = ScreenType.UNDEFINED
+        if not self.parse_permission(self._communicator.uiautomator()):
+            screentype = ScreenType.ERROR
+        time.sleep(2)
+        return screentype
+
+    def __handle_google_login(self, screentype):
+        self._nextscreen = ScreenType.UNDEFINED
+        if self._logintype == LoginType.ptc:
+            logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
+            username = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
+        else:
+            ggl_login = self.get_next_account()
+            username = ggl_login.username
+        if self.parse_ggl(self._communicator.uiautomator(), username):
             logger.info("Sleeping 50 seconds - please wait!")
             time.sleep(50)
-            return ScreenType.PTC
+        else:
+            screentype = ScreenType.ERROR
+        return screentype
 
-        elif ScreenType(returntype) == ScreenType.FAILURE:
-            self._nextscreen = ScreenType.UNDEFINED
-            self._pogoWindowManager.look_for_button(screenpath, 2.20, 3.01, self._communicator)
-            time.sleep(2)
+    def __handle_retry_screen(self, diff, global_dict):
+        self._nextscreen = ScreenType.UNDEFINED
+        click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
+        n_boxes = len(global_dict['level'])
+        for i in range(n_boxes):
+            if any(elem in (global_dict['text'][i]) for elem in click_text.split(",")):
+                self._click_center_button(diff, global_dict, i)
+                time.sleep(2)
+
+    def __handle_ptc_login(self):
+        self._nextscreen = ScreenType.UNDEFINED
+        ptc = self.get_next_account()
+        if not ptc:
+            logger.error('No PTC Username and Password is set')
+            return ScreenType.ERROR
+        if float(self._ratio) >= 2:
+            username_y = self._height / 2.5 + self._screenshot_y_offset
+            password_y = self._height / 2.105 + self._screenshot_y_offset
+            button_y = self._height / 1.7777 + self._screenshot_y_offset
+        elif float(self._ratio) >= 1.7:
+            username_y = self._height / 2.224797219003476 + self._screenshot_y_offset
+            password_y = self._height / 1.875 + self._screenshot_y_offset
+            button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
+        elif float(self._ratio) < 1.7:
+            username_y = self._height / 2.224797219003476 + self._screenshot_y_offset
+            password_y = self._height / 1.875 + self._screenshot_y_offset
+            button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
+        else:
+            logger.error("Unhandled ratio, unlikely to be the case. Do open a github issue ;)")
+            return ScreenType.ERROR
+        # username
+        self._communicator.click(self._width / 2, username_y)
+        time.sleep(.5)
+        self._communicator.sendText(ptc.username)
+        self._communicator.click(100, 100)
+        time.sleep(2)
+        # password
+        self._communicator.click(self._width / 2, password_y)
+        time.sleep(.5)
+        self._communicator.sendText(ptc.password)
+        self._communicator.click(100, 100)
+        time.sleep(2)
+        # button
+        self._communicator.click(self._width / 2, button_y)
+        logger.info("Sleeping 50 seconds - please wait!")
+        time.sleep(50)
+        return ScreenType.PTC
+
+    def __handle_returning_player_or_wrong_credentials(self):
+        self._nextscreen = ScreenType.UNDEFINED
+        self._pogoWindowManager.look_for_button(self.get_screenshot_path(), 2.20, 3.01,
+                                                self._communicator, upper=True)
+        time.sleep(2)
+
+    def __handle_birthday_screen(self):
+        self._nextscreen = ScreenType.RETURNING
+        click_x = (self._width / 2) + (self._width / 4)
+        click_y = (self._height / 1.69) + self._screenshot_y_offset
+        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+        self._communicator.click(click_x, click_y)
+        self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
+        time.sleep(1)
+        self._communicator.click(click_x, click_y)
+        time.sleep(1)
+        click_x = self._width / 2
+        click_y = click_y + (self._height / 8.53)
+        self._communicator.click(click_x, click_y)
+        time.sleep(1)
+
+    def detect_screentype(self) -> ScreenType:
+        topmostapp = self._communicator.topmostApp()
+        if not topmostapp:
             return ScreenType.ERROR
 
-        elif ScreenType(returntype) == ScreenType.RETRY:
-            self._nextscreen = ScreenType.UNDEFINED
-            click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
-            n_boxes = len(globaldict['level'])
-            for i in range(n_boxes):
-                if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
-                    (x, y, w, h) = (globaldict['left'][i], globaldict['top'][i],
-                                    globaldict['width'][i], globaldict['height'][i])
-                    click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
-                    self._communicator.click(click_x, click_y)
-                    time.sleep(2)
-            return ScreenType.RETRY
-
-        else:
-
-            backgroundcolor = self._pogoWindowManager.most_frequent_colour(screenpath, self._id)
-
-            if backgroundcolor is not None and (
-                    backgroundcolor[0] == 0 and
-                    backgroundcolor[1] == 0 and
-                    backgroundcolor[2] == 0):
-                # Background is black - Loading ...
-                return ScreenType.BLACK
-            elif backgroundcolor is not None and (
-                    backgroundcolor[0] == 16 and
-                    backgroundcolor[1] == 24 and
-                    backgroundcolor[2] == 33):
-                # Got a strike warning
-                return ScreenType.STRIKE
-
-            return ScreenType.POGO
+        globaldict: dict = {}
+        diff: int = -1
+        returntype: ScreenType = self.__evaluate_topmost_app(topmost_app=topmostapp)
+        logger.info("Processing Screen: {}", str(ScreenType(returntype)))
+        return self.__handle_screentype(screentype=returntype, global_dict=globaldict, diff=diff)
 
     def checkQuest(self, screenpath):
 

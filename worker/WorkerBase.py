@@ -218,7 +218,7 @@ class WorkerBase(ABC):
         while not self._stop_worker_event.isSet():
             time.sleep(1)
 
-        while t_main_work.isAlive():
+        while t_main_work.is_alive():
             time.sleep(1)
             t_main_work.join()
         logger.info("Worker {} stopped gracefully", str(self._id))
@@ -564,26 +564,26 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
-    def _check_windows(self):
+    def _ensure_pogo_topmost(self):
         logger.info('Checking pogo screen...')
 
         returncode: ScreenType = ScreenType.UNDEFINED
 
-        while not returncode == ScreenType.POGO and not self._stop_worker_event.is_set():
-            returncode = self._WordToScreenMatching.matchScreen()
+        while returncode not in [ScreenType.POGO, ScreenType.QUEST] and not self._stop_worker_event.is_set():
+            returncode = self._WordToScreenMatching.detect_screentype()
 
             if returncode != ScreenType.POGO:
 
                 if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
-                                                   ScreenType.PERMISSION)) \
+                                                   ScreenType.PERMISSION, ScreenType.BLACK)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count == 3:
-                    logger.warning('Gamefreezed - restarting device')
+                    logger.warning('Game froze - restarting device')
                     self._reboot()
                     break
 
                 if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
-                                                   ScreenType.PERMISSION)) \
+                                                   ScreenType.PERMISSION, ScreenType.BLACK)) \
                         and self._last_screen_type == returncode \
                         and self._same_screen_count < 3:
                     self._same_screen_count += 1
@@ -607,10 +607,9 @@ class WorkerBase(ABC):
                     break
 
                 elif returncode == ScreenType.UPDATE:
-                    logger.error('Found update pogo screen - wait for update action')
+                    logger.error('Found update pogo screen - sleeping 5 minutes for another check of the screen')
                     # update pogo - later with new rgc version
-                    while not self._stop_worker_event.is_set():
-                        time.sleep(10)
+                    time.sleep(300)
 
                 elif returncode == ScreenType.ERROR or returncode == ScreenType.FAILURE:
                     logger.warning('Something wrong with screendetection or pogo failure screen')
@@ -653,7 +652,7 @@ class WorkerBase(ABC):
         time.sleep(5)
         self._communicator.resetAppdata("com.nianticlabs.pokemongo")
         self._turn_screen_on_and_start_pogo()
-        if not self._check_windows():
+        if not self._ensure_pogo_topmost():
             logger.error('Kill Worker...')
             self._stop_worker_event.set()
             return False
@@ -718,13 +717,12 @@ class WorkerBase(ABC):
             if questloop > 5:
                 logger.warning("Give up - maybe research screen is there...")
                 return ScreenType.POGO
-                break
             questloop += 1
             firstround = False
 
         return
 
-    def _start_pogo(self):
+    def _start_pogo(self) -> bool:
         """
         Routine to start pogo.
         Return the state as a boolean do indicate a successful start
@@ -747,7 +745,6 @@ class WorkerBase(ABC):
 
         cur_time = time.time()
         start_result = False
-        self._mitm_mapper.set_injection_status(self._id, False)
         while not pogo_topmost:
             start_result = self._communicator.startApp(
                 "com.nianticlabs.pokemongo")
@@ -759,9 +756,6 @@ class WorkerBase(ABC):
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()
-        if not self._wait_for_injection() or self._stop_worker_event.is_set():
-            raise InternalStopWorkerException
-
         return start_result
 
     def _stop_pogo(self):

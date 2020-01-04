@@ -133,6 +133,14 @@ class MITMBase(WorkerBase):
         self.worker_stats()
         return data_requested
 
+    def _start_pogo(self) -> bool:
+        self._mitm_mapper.set_injection_status(self._id, False)
+        started_pogo: bool = WorkerBase._start_pogo(self)
+        if not self._wait_for_injection() or self._stop_worker_event.is_set():
+            raise InternalStopWorkerException
+        else:
+            return started_pogo
+
     def _wait_for_injection(self):
         self._not_injected_count = 0
         injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
@@ -149,7 +157,7 @@ class MITMBase(WorkerBase):
             if self._not_injected_count in [3, 6, 9, 15, 18] and not self._stop_worker_event.is_set():
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                             str(self._id), str(self._not_injected_count))
-                self._check_windows()
+                self._ensure_pogo_topmost()
             self._not_injected_count += 1
             wait_time = 0
             while wait_time < 20:
