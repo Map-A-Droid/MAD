@@ -416,11 +416,10 @@ class WordToScreenMatching(object):
         if not topmostapp:
             return ScreenType.ERROR
 
-        globaldict: dict = {}
         diff: int = -1
-        returntype: ScreenType = self.__evaluate_topmost_app(topmost_app=topmostapp)
-        logger.info("Processing Screen: {}", str(ScreenType(returntype)))
-        return self.__handle_screentype(screentype=returntype, global_dict=globaldict, diff=diff)
+        screentype, global_dict = self.__evaluate_topmost_app(topmost_app=topmostapp)
+        logger.info("Processing Screen: {}", str(ScreenType(screentype)))
+        return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
     def checkQuest(self, screenpath):
 
