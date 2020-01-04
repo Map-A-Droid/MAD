@@ -165,6 +165,11 @@ class DbSchemaUpdater:
             "ctype": "tinyint(1) NULL"
         },
         {
+            "table": "raid",
+            "column": "costume",
+            "ctype": "tinyint(1) NULL"
+        },
+        {
             "table": "gym",
             "column": "is_ex_raid_eligible",
             "ctype": "tinyint(1) NOT NULL DEFAULT 0"
