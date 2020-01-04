@@ -164,6 +164,8 @@ class WordToScreenMatching(object):
             if 'text' not in global_dict:
                 logger.error('Error while text detection')
                 return ScreenType.ERROR
+            elif returntype == ScreenType.UNDEFINED and "com.nianticlabs.pokemongo" in topmost_app:
+                return ScreenType.POGO, global_dict
 
         return returntype, global_dict
 
