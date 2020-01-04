@@ -2,6 +2,7 @@ from . import resource
 from .. import dm_exceptions
 import json
 from geofence.geofenceHelper import GeofenceHelper
+from utils.logging import logger
 
 class GeoFence(resource.Resource):
     table = 'settings_geofence'
@@ -86,4 +87,5 @@ class GeoFence(resource.Resource):
             issues = {
                 'invalid': [('fence_data', 'Must be one coord set per line (float,float)')]
             }
+            logger.error("Invalid geofence detected for {}: {}", self.identifier, err)
         return issues
