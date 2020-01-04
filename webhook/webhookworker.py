@@ -356,6 +356,9 @@ class WebhookWorker:
             if raid["gender"] is not None:
                 raid_payload["gender"] = raid["gender"]
 
+            if raid["costume"] is not None:
+                raid_payload["costume"] = raid["costume"]
+
             # create final message
             entire_payload = {"type": "raid", "message": raid_payload}
 

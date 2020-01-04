@@ -506,12 +506,12 @@ class DbPogoProtoSubmit:
         now = datetime.utcfromtimestamp(time.time()).strftime("%Y-%m-%d %H:%M:%S")
 
         query_raid = (
-            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive, gender) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+            "INSERT INTO raid (gym_id, level, spawn, start, end, pokemon_id, cp, move_1, move_2, last_scanned, form, is_exclusive, gender, costume) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE level=VALUES(level), spawn=VALUES(spawn), start=VALUES(start), "
             "end=VALUES(end), pokemon_id=VALUES(pokemon_id), cp=VALUES(cp), move_1=VALUES(move_1), "
             "move_2=VALUES(move_2), last_scanned=VALUES(last_scanned), is_exclusive=VALUES(is_exclusive), "
-            "form=VALUES(form), gender=VALUES(gender)"
+            "form=VALUES(form), gender=VALUES(gender), costume=VALUES(costume)"
         )
 
         for cell in cells:
@@ -525,6 +525,7 @@ class DbPogoProtoSubmit:
                         move_2 = gym["gym_details"]["raid_info"]["raid_pokemon"]["move_2"]
                         form = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["form_value"]
                         gender = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["gender_value"]
+                        costume = gym["gym_details"]["raid_info"]["raid_pokemon"]["display"]["costume_value"]
                     else:
                         pokemon_id = None
                         cp = 0
@@ -532,6 +533,7 @@ class DbPogoProtoSubmit:
                         move_2 = 2
                         form = None
                         gender = None
+                        costume = None
 
                     raidendSec = int(gym["gym_details"]["raid_info"]["raid_end"] / 1000)
                     raidspawnSec = int(gym["gym_details"]["raid_info"]["raid_spawn"] / 1000)
@@ -563,7 +565,8 @@ class DbPogoProtoSubmit:
                             pokemon_id, cp, move_1, move_2, now,
                             form,
                             is_exclusive,
-                            gender
+                            gender,
+                            costume
                         )
                     )
         self._db_exec.executemany(query_raid, raid_args, commit=True)
