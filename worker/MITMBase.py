@@ -134,6 +134,9 @@ class MITMBase(WorkerBase):
         return data_requested
 
     def _start_pogo(self) -> bool:
+        pogo_topmost = self._communicator.isPogoTopmost()
+        if pogo_topmost:
+            return True
         self._mitm_mapper.set_injection_status(self._id, False)
         started_pogo: bool = WorkerBase._start_pogo(self)
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
