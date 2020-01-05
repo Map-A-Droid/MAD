@@ -125,28 +125,29 @@ class WordToScreenMatching(object):
 
         return np.asarray(sort_lines, dtype=np.int32)
 
-    def __evaluate_topmost_app(self, topmost_app: str) -> (ScreenType, dict):
+    def __evaluate_topmost_app(self, topmost_app: str) -> (ScreenType, dict, int):
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}
+        diff = 1
         if "AccountPickerActivity" in topmost_app or 'SignInActivity' in topmost_app:
-            return ScreenType.GGL, global_dict
+            return ScreenType.GGL, global_dict, diff
         elif "GrantPermissionsActivity" in topmost_app:
-            return ScreenType.PERMISSION, global_dict
+            return ScreenType.PERMISSION, global_dict, diff
         elif "ConsentActivity" in topmost_app:
-            return ScreenType.CONSENT, global_dict
+            return ScreenType.CONSENT, global_dict, diff
         elif "com.nianticlabs.pokemongo" not in topmost_app:
-            return ScreenType.CLOSE, global_dict
+            return ScreenType.CLOSE, global_dict, diff
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
-            return self._nextscreen, global_dict
+            return self._nextscreen, global_dict, diff
         elif not self.get_devicesettings_value('screendetection', False):
             logger.info('No more screen detection - disabled ...')
-            return ScreenType.DISABLED, global_dict
+            return ScreenType.DISABLED, global_dict, diff
         else:
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                         delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
-                return ScreenType.ERROR, global_dict
+                return ScreenType.ERROR, global_dict, diff
 
             screenpath = self.get_screenshot_path()
 
@@ -156,7 +157,7 @@ class WordToScreenMatching(object):
             if not global_dict:
                 self._nextscreen = ScreenType.UNDEFINED
                 logger.warning('Could not understand any text on screen - starting next round...')
-                return ScreenType.ERROR, global_dict
+                return ScreenType.ERROR, global_dict, diff
 
             self._ratio = self._height / self._width
 
@@ -164,11 +165,11 @@ class WordToScreenMatching(object):
 
             if 'text' not in global_dict:
                 logger.error('Error while text detection')
-                return ScreenType.ERROR, global_dict
+                return ScreenType.ERROR, global_dict, diff
             elif returntype == ScreenType.UNDEFINED and "com.nianticlabs.pokemongo" in topmost_app:
-                return ScreenType.POGO, global_dict
+                return ScreenType.POGO, global_dict, diff
 
-        return returntype, global_dict
+        return returntype, global_dict, diff
 
     def __handle_login_screen(self, global_dict: dict, diff: int):
         temp_dict: dict = {}
@@ -189,8 +190,6 @@ class WordToScreenMatching(object):
                 if 'CLUB' in (global_dict['text'][i]):
                     self._click_center_button(diff, global_dict, i)
                     time.sleep(5)
-                else:
-                    logger.error("Unhandled login!")
             else:
                 self._nextscreen = ScreenType.UNDEFINED
                 if 'Google' in (global_dict['text'][i]):
@@ -224,6 +223,7 @@ class WordToScreenMatching(object):
     def _click_center_button(self, diff, global_dict, i):
         (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
                         global_dict['width'][i], global_dict['height'][i])
+        logger.debug("Diff: {}", diff)
         click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
         self._communicator.click(click_x, click_y)
@@ -422,8 +422,7 @@ class WordToScreenMatching(object):
         if not topmostapp:
             return ScreenType.ERROR
 
-        diff: int = -1
-        screentype, global_dict = self.__evaluate_topmost_app(topmost_app=topmostapp)
+        screentype, global_dict, diff = self.__evaluate_topmost_app(topmost_app=topmostapp)
         logger.info("Processing Screen: {}", str(ScreenType(screentype)))
         return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
