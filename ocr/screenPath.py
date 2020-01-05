@@ -269,7 +269,7 @@ class WordToScreenMatching(object):
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.POGO:
             screentype = self.__check_pogo_screen_ban_or_loading(screentype)
-        elif screentype in ScreenType.QUEST:
+        elif screentype == ScreenType.QUEST:
             logger.warning("Already on quest screen")
             # TODO: consider closing quest window?
             self._nextscreen = ScreenType.UNDEFINED
