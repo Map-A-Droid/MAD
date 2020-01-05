@@ -207,6 +207,7 @@ class WebsocketServer(object):
             return False
 
         auths = self.__mapping_manager.get_auths()
+        authBase64 = None
         if auths:
             try:
                 authBase64 = str(

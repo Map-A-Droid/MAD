@@ -7,7 +7,7 @@ import xml.etree.ElementTree as ET
 from ocr.screen_type import ScreenType
 from utils.logging import logger
 from utils.MappingManager import MappingManager
-from typing import Optional, List
+from typing import Optional, List, Tuple
 from utils.collections import Login_PTC, Login_GGL
 from enum import Enum
 import numpy as np
@@ -125,7 +125,7 @@ class WordToScreenMatching(object):
 
         return np.asarray(sort_lines, dtype=np.int32)
 
-    def __evaluate_topmost_app(self, topmost_app: str) -> (ScreenType, dict, int):
+    def __evaluate_topmost_app(self, topmost_app: str) -> Tuple[ScreenType, dict, int]:
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}
         diff = 1
@@ -171,7 +171,7 @@ class WordToScreenMatching(object):
 
         return returntype, global_dict, diff
 
-    def __handle_login_screen(self, global_dict: dict, diff: int):
+    def __handle_login_screen(self, global_dict: dict, diff: int) -> None:
         temp_dict: dict = {}
         n_boxes = len(global_dict['level'])
         logger.debug("Selecting login with: {}", global_dict)
@@ -219,7 +219,7 @@ class WordToScreenMatching(object):
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
 
-    def _click_center_button(self, diff, global_dict, i):
+    def _click_center_button(self, diff, global_dict, i) -> None:
         (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
                         global_dict['width'][i], global_dict['height'][i])
         logger.debug("Diff: {}", diff)
@@ -227,7 +227,8 @@ class WordToScreenMatching(object):
         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
         self._communicator.click(click_x, click_y)
 
-    def __handle_screentype(self, screentype: ScreenType, global_dict: Optional[dict] = None, diff: int = -1):
+    def __handle_screentype(self, screentype: ScreenType,
+                            global_dict: Optional[dict] = None, diff: int = -1) -> ScreenType:
         if screentype == ScreenType.UNDEFINED:
             logger.warning("Undefined screentype, abandon ship...")
         elif screentype == ScreenType.BIRTHDATE:
@@ -290,7 +291,7 @@ class WordToScreenMatching(object):
 
         return screentype
 
-    def __check_pogo_screen_ban_or_loading(self, screentype):
+    def __check_pogo_screen_ban_or_loading(self, screentype) -> ScreenType:
         backgroundcolor = self._pogoWindowManager.most_frequent_colour(self.get_screenshot_path(), self._id)
         if backgroundcolor is not None and (
                 backgroundcolor[0] == 0 and
@@ -306,7 +307,7 @@ class WordToScreenMatching(object):
             screentype = ScreenType.STRIKE
         return screentype
 
-    def __handle_strike_screen(self, diff, global_dict):
+    def __handle_strike_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         logger.warning('Got a black strike warning!')
         click_text = 'GOT IT,ALLES KLAR'
@@ -316,7 +317,7 @@ class WordToScreenMatching(object):
                 self._click_center_button(diff, global_dict, i)
                 time.sleep(2)
 
-    def __handle_marketing_screen(self, diff, global_dict):
+    def __handle_marketing_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.POGO
         click_text = 'ERLAUBEN,ALLOW,AUTORISER'
         n_boxes = len(global_dict['level'])
@@ -325,14 +326,14 @@ class WordToScreenMatching(object):
                 self._click_center_button(diff, global_dict, i)
                 time.sleep(2)
 
-    def __handle_permissions_screen(self, screentype):
+    def __handle_permissions_screen(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
         if not self.parse_permission(self._communicator.uiautomator()):
             screentype = ScreenType.ERROR
         time.sleep(2)
         return screentype
 
-    def __handle_google_login(self, screentype):
+    def __handle_google_login(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
         if self._logintype == LoginType.ptc:
             logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
@@ -347,7 +348,7 @@ class WordToScreenMatching(object):
             screentype = ScreenType.ERROR
         return screentype
 
-    def __handle_retry_screen(self, diff, global_dict):
+    def __handle_retry_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT'
         n_boxes = len(global_dict['level'])
@@ -356,7 +357,7 @@ class WordToScreenMatching(object):
                 self._click_center_button(diff, global_dict, i)
                 time.sleep(2)
 
-    def __handle_ptc_login(self):
+    def __handle_ptc_login(self) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
         ptc = self.get_next_account()
         if not ptc:
@@ -395,13 +396,13 @@ class WordToScreenMatching(object):
         time.sleep(50)
         return ScreenType.PTC
 
-    def __handle_returning_player_or_wrong_credentials(self):
+    def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
         self._pogoWindowManager.look_for_button(self.get_screenshot_path(), 2.20, 3.01,
                                                 self._communicator, upper=True)
         time.sleep(2)
 
-    def __handle_birthday_screen(self):
+    def __handle_birthday_screen(self) -> None:
         self._nextscreen = ScreenType.RETURNING
         click_x = (self._width / 2) + (self._width / 4)
         click_y = (self._height / 1.69) + self._screenshot_y_offset
@@ -425,7 +426,7 @@ class WordToScreenMatching(object):
         logger.info("Processing Screen: {}", str(ScreenType(screentype)))
         return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
-    def checkQuest(self, screenpath):
+    def checkQuest(self, screenpath) -> ScreenType:
 
         with Image.open(screenpath) as frame:
             frame = frame.convert('LA')
@@ -448,7 +449,7 @@ class WordToScreenMatching(object):
             time.sleep(3)
             return ScreenType.UNDEFINED
 
-    def parse_permission(self, xml):
+    def parse_permission(self, xml) -> bool:
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
@@ -479,7 +480,7 @@ class WordToScreenMatching(object):
         logger.warning('Dont find any button...')
         return False
 
-    def parse_ggl(self, xml, mail: str):
+    def parse_ggl(self, xml, mail: str) -> bool:
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
@@ -506,7 +507,7 @@ class WordToScreenMatching(object):
         logger.warning('Dont find any mailaddress...')
         return False
 
-    def set_devicesettings_value(self, key: str, value):
+    def set_devicesettings_value(self, key: str, value) -> None:
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
 
     def get_devicesettings_value(self, key: str, default_value: object = None):
