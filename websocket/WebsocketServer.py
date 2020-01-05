@@ -211,6 +211,7 @@ class WebsocketServer(object):
                     websocket_client_connection.request_headers.get_all("Origin")[0]))
                 return False
 
+        worker_already_connected: bool = False
         async with self.__users_mutex:
             logger.debug("Checking if {} is already present", str(origin))
             if origin in self.__current_users:
@@ -218,13 +219,16 @@ class WebsocketServer(object):
                     "Worker with origin {} is already running, killing the running one and have client reconnect",
                     str(origin))
                 self.__current_users.get(origin)[1].stop_worker()
-                ## todo: do this better :D
-                logger.debug("Old worker thread is still alive - waiting 20 seconds")
-                await asyncio.sleep(20)
-                logger.info("Reconnect ...")
-                return False
+                worker_already_connected = True
+            else:
+                self.__users_connecting.append(origin)
 
-            self.__users_connecting.append(origin)
+        if worker_already_connected:
+            ## todo: do this better :D
+            logger.debug("Old worker thread is still alive - waiting 20 seconds")
+            await asyncio.sleep(20)
+            logger.info("Reconnect ...")
+            return False
 
         # reset pref. error counter if exist
         await self.__reset_fail_counter(origin)
@@ -372,6 +376,7 @@ class WebsocketServer(object):
             async with self.__users_mutex:
                 self.__users_connecting.remove(origin)
             await asyncio.sleep(5)
+            logger.info("Done handling register of origin ", origin)
         return True
 
     async def __unregister(self, websocket_client_connection):
