@@ -152,12 +152,14 @@ class WebsocketServer(object):
         logger.info("Waiting for connection...")
         # wait for a connection...
         try:
-            continue_work = await self.__register(websocket_client_connection)
+            continue_work: bool = await self.__register(websocket_client_connection)
             if not continue_work:
                 logger.error("Failed registering client, closing connection")
                 await websocket_client_connection.close()
                 return
         except data_manager.dm_exceptions.DataManagerException:
+            if websocket_client_connection.open:
+                await websocket_client_connection.close()
             return
 
         consumer_task = asyncio.ensure_future(
