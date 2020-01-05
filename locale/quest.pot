@@ -6,7 +6,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2019-12-09 19:57+0100\n"
+"POT-Creation-Date: 2020-01-02 21:30+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -230,92 +230,109 @@ msgstr ""
 msgid "Take {0} snapshots of {type} Pokemon"
 msgstr ""
 
-#: questGen.py:310
+#: questGen.py:307
+#, python-brace-format
+msgid "Take {0} snapshots of your Buddy"
+msgstr ""
+
+#: questGen.py:312
 #, python-brace-format
 msgid "Battle {0} times against the Team GO Rocket Leaders"
 msgstr ""
 
 #: questGen.py:314
+msgid "Battle against a Team Rocket Grunt"
+msgstr ""
+
+#: questGen.py:318
 msgid "Battle"
 msgstr ""
 
-#: questGen.py:314
-#, python-brace-format
-msgid "Win {0} times against the Team GO Rocket Leaders"
+#: questGen.py:318
+msgid "Win"
 msgstr ""
 
-#: questGen.py:317
+#: questGen.py:321
 msgid " Eggs"
 msgstr ""
 
-#: questGen.py:317
+#: questGen.py:321
 msgid "n Egg"
 msgstr ""
 
-#: questGen.py:318
+#: questGen.py:322
 msgid " Raids"
 msgstr ""
 
-#: questGen.py:318
+#: questGen.py:322
 msgid " Raid"
 msgstr ""
 
-#: questGen.py:319
+#: questGen.py:323
 msgid " Battles"
 msgstr ""
 
-#: questGen.py:319
+#: questGen.py:323
 msgid " Battle"
 msgstr ""
 
-#: questGen.py:320
+#: questGen.py:324
 msgid " candies"
 msgstr ""
 
-#: questGen.py:320
+#: questGen.py:324
 msgid " candy"
 msgstr ""
 
-#: questGen.py:321
+#: questGen.py:325
 msgid " gifts"
 msgstr ""
 
-#: questGen.py:321
+#: questGen.py:325
 msgid " gift"
 msgstr ""
 
-#: questGen.py:322
+#: questGen.py:326
 msgid " Pokestops"
 msgstr ""
 
-#: questGen.py:322
+#: questGen.py:326
 msgid " Pokestop"
 msgstr ""
 
-#: questGen.py:323
+#: questGen.py:327
 #, python-brace-format
 msgid " {0} snapshots"
 msgstr ""
 
-#: questGen.py:323
+#: questGen.py:327
 msgid " a snapshot"
 msgstr ""
 
-#: questGen.py:324
+#: questGen.py:328
 #, python-brace-format
 msgid "Make {0} {type}{curve}Throws"
 msgstr ""
 
-#: questGen.py:324
+#: questGen.py:328
 #, python-brace-format
 msgid "Make a {type}{curve}Throw"
 msgstr ""
 
-#: questGen.py:325
+#: questGen.py:329
 #, python-brace-format
 msgid " {0} times"
 msgstr ""
 
-#: questGen.py:326
+#: questGen.py:330
+#, python-brace-format
+msgid "{0} hearts"
+msgstr ""
+
+#: questGen.py:330
+msgid "a heart"
+msgstr ""
+
+#: questGen.py:331
 msgid "a"
 msgstr ""
