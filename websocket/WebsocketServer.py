@@ -185,7 +185,7 @@ class WebsocketServer(object):
             websocket_client_connection.request_headers.get_all("Origin")[0]))
 
     @logger.catch()
-    async def __register(self, websocket_client_connection):
+    async def __register(self, websocket_client_connection) -> bool:
         try:
             origin = str(
                 websocket_client_connection.request_headers.get_all("Origin")[0])
@@ -194,7 +194,8 @@ class WebsocketServer(object):
                 websocket_client_connection.request_headers.get_all("Origin")[0]))
             return False
         if not self.__data_manager.is_device_active(origin):
-            return (False, 'Origin %s is currently paused.  Unpause through MADmin to begin working' % origin)
+            logger.warning('Origin %s is currently paused.  Unpause through MADmin to begin working', origin)
+            return False
         logger.info("Client {} registering", str(origin))
         if self.__mapping_manager is None or origin not in self.__mapping_manager.get_all_devicemappings().keys():
             logger.warning("Register attempt of unknown origin: {}. "
@@ -226,7 +227,7 @@ class WebsocketServer(object):
                 logger.debug("Old worker thread is still alive - waiting 20 seconds")
                 await asyncio.sleep(20)
                 logger.info("Reconnect ...")
-                return
+                return False
 
             self.__users_connecting.append(origin)
 
@@ -291,7 +292,7 @@ class WebsocketServer(object):
                         self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index)
                         walker_settings = walker_area_array[walker_index]
                         await websocket_client_connection.close()
-                        return
+                        return False
                     walker_index += 1
                     self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index', walker_index)
                     walker_settings = walker_area_array[walker_index]
@@ -364,14 +365,13 @@ class WebsocketServer(object):
 
                 new_worker_thread.daemon = True
                 async with self.__users_mutex:
-                    self.__current_users[origin] = [new_worker_thread,
-                                                worker, websocket_client_connection, 0]
+                    self.__current_users[origin] = [new_worker_thread, worker, websocket_client_connection, 0]
                 new_worker_thread.start()
         except WrongAreaInWalker:
             logger.error('Unknown Area in Walker settings - check config')
             await websocket_client_connection.close()
-        except Exception:
-            logger.opt(exception=True).error("Other unhandled exception during registration of {}.", origin)
+        except Exception as e:
+            logger.opt(exception=True).error("Other unhandled exception during registration of {}: .", origin, e)
             await websocket_client_connection.close()
         finally:
             async with self.__users_mutex:
