@@ -567,59 +567,50 @@ class WorkerBase(ABC):
     def _ensure_pogo_topmost(self):
         logger.info('Checking pogo screen...')
 
-        returncode: ScreenType = ScreenType.UNDEFINED
-
-        while returncode not in [ScreenType.POGO, ScreenType.QUEST] and not self._stop_worker_event.is_set():
-            returncode = self._WordToScreenMatching.detect_screentype()
-
-            if returncode != ScreenType.POGO:
-
-                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
-                                                   ScreenType.PERMISSION, ScreenType.BLACK)) \
-                        and self._last_screen_type == returncode \
-                        and self._same_screen_count == 3:
+        while not self._stop_worker_event.is_set():
+            screen_type: ScreenType = self._WordToScreenMatching.detect_screentype()
+            if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
+                self._last_screen_type = screen_type
+                logger.debug2("Found pogo or questlog to be open")
+                break
+            elif screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
+                logger.info("Found screen multiple times in a row")
+                if self._same_screen_count < 3:
+                    self._same_screen_count += 1
+                else:
                     logger.warning('Game froze - restarting device')
                     self._reboot()
                     break
 
-                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
-                                                   ScreenType.PERMISSION, ScreenType.BLACK)) \
-                        and self._last_screen_type == returncode \
-                        and self._same_screen_count < 3:
-                    self._same_screen_count += 1
-                    logger.warning('Getting same screen again - maybe Pogo freeze?')
+            # now handle all screens that may not have been handled by detect_screentype since that only clicks around
+            # so any clearing data whatsoever happens here (for now)
+            if screen_type == ScreenType.UNDEFINED:
+                logger.error("Undefined screentype!")
+            if screen_type == ScreenType.BLACK:
+                logger.info("Found Black Loading Screen - waiting ...")
+                time.sleep(20)
 
-                if returncode == ScreenType.BLACK:
-                    logger.info("Found Black Loading Screen - waiting ...")
-                    time.sleep(20)
-
-                if returncode == ScreenType.GAMEDATA or returncode == ScreenType.CONSENT:
-                    logger.warning('Error getting Gamedata or strange ggl message appears')
-                    self._loginerrorcounter += 1
-                    self._restart_pogo(True)
-
-                elif returncode == ScreenType.CLOSE:
-                    logger.warning('Pogo not in foreground...')
-                    self._restart_pogo(True)
-
-                elif returncode == ScreenType.DISABLED:
-                    # Screendetection is disabled
-                    break
-
-                elif returncode == ScreenType.UPDATE:
-                    logger.error('Found update pogo screen - sleeping 5 minutes for another check of the screen')
-                    # update pogo - later with new rgc version
-                    time.sleep(300)
-
-                elif returncode == ScreenType.ERROR or returncode == ScreenType.FAILURE:
+            if screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT]:
+                logger.warning('Error getting Gamedata or strange ggl message appears')
+                self._loginerrorcounter += 1
+                self._restart_pogo(True)
+            elif screen_type == ScreenType.CLOSE:
+                logger.warning('Pogo not in foreground...')
+                self._restart_pogo(True)
+            elif screen_type == ScreenType.DISABLED:
+                # Screendetection is disabled
+                break
+            elif screen_type == ScreenType.UPDATE:
+                logger.warning('Found update pogo screen - sleeping 5 minutes for another check of the screen')
+                # update pogo - later with new rgc version
+                time.sleep(300)
+            elif screen_type in [ScreenType.ERROR, ScreenType.FAILURE]:
                     logger.warning('Something wrong with screendetection or pogo failure screen')
                     self._loginerrorcounter += 1
-
-                elif returncode == ScreenType.GPS:
+            elif screen_type == ScreenType.GPS:
                     logger.warning("Detected GPS error 11 - rebooting device")
                     self._reboot()
-
-                elif returncode == ScreenType.SN:
+            elif screen_type == ScreenType.SN:
                     logger.warning('Getting SN Screen - reset Magisk Settings')
                     time.sleep(3)
                     self._stop_pogo()
@@ -631,7 +622,7 @@ class WorkerBase(ABC):
                     self._reboot()
                     break
 
-                if self._loginerrorcounter == 2:
+            if self._loginerrorcounter == 2:
                     logger.error('Could not login again - (clearing game data + restarting device')
                     self._stop_pogo()
                     self._communicator.clearAppCache("com.nianticlabs.pokemongo")
@@ -641,8 +632,7 @@ class WorkerBase(ABC):
                     self._reboot()
                     break
 
-                self._last_screen_type = returncode
-
+            self._last_screen_type = screen_type
         logger.info('Checking pogo screen is finished')
         return True
 
