@@ -153,14 +153,8 @@ class WebsocketServer(object):
         # wait for a connection...
         try:
             continue_work = await self.__register(websocket_client_connection)
-            reason = None
-            if type(continue_work) is tuple:
-                (continue_work, reason) = continue_work
             if not continue_work:
-                if not reason:
-                    logger.error("Failed registering client, closing connection")
-                else:
-                    logger.info(reason)
+                logger.error("Failed registering client, closing connection")
                 await websocket_client_connection.close()
                 return
         except data_manager.dm_exceptions.DataManagerException:
@@ -372,7 +366,7 @@ class WebsocketServer(object):
             logger.error('Unknown Area in Walker settings - check config')
             await websocket_client_connection.close()
         except Exception as e:
-            logger.opt(exception=True).error("Other unhandled exception during registration of {}: .", origin, e)
+            logger.opt(exception=True).error("Other unhandled exception during registration of {}: {}", origin, e)
             await websocket_client_connection.close()
         finally:
             async with self.__users_mutex:
