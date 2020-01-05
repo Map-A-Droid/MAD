@@ -13,6 +13,21 @@ from pathlib import Path
 
 mapping_args = parseArgs()
 
+def auth_madmin():
+        username = getattr(mapping_args, 'madmin_user', '')
+        password = getattr(mapping_args, 'madmin_password', '')
+        quests_pub_enabled = getattr(mapping_args, 'quests_public', False)
+
+        if not username:
+            return True
+        if quests_pub_enabled and func.__name__ in ['get_quests', 'quest_pub', 'pushAssets']:
+            return True
+        if request.authorization:
+            if (request.authorization.username == username) and (
+                    request.authorization.password == password):
+                return True
+        return False
+
 def auth_required(func):
     @wraps(func)
     def decorated(*args, **kwargs):
@@ -20,15 +35,10 @@ def auth_required(func):
         password = getattr(mapping_args, 'madmin_password', '')
         quests_pub_enabled = getattr(mapping_args, 'quests_public', False)
 
-        if not username:
+        if auth_madmin():
             return func(*args, **kwargs)
-        if quests_pub_enabled and func.__name__ in ['get_quests', 'quest_pub', 'pushAssets']:
-            return func(*args, **kwargs)
-        if request.authorization:
-            if (request.authorization.username == username) and (
-                    request.authorization.password == password):
-                return func(*args, **kwargs)
-        return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        else:
+            return make_response('Could not verify!', 401, {'WWW-Authenticate': 'Basic realm="Login Required"'})
 
     return decorated
 

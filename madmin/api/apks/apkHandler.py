@@ -1,6 +1,5 @@
 import flask
 from .. import apiHandler
-from madmin.functions import auth_required
 
 class APKHandler(apiHandler.APIHandler):
     component = None
@@ -30,7 +29,6 @@ class APKHandler(apiHandler.APIHandler):
     # =====================================
     # ========= API Functionality =========
     # =====================================
-    @auth_required
     def process_request(self, *args, **kwargs):
         """ Processes an API request
         Args:

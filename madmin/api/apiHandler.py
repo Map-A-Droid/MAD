@@ -36,6 +36,7 @@ class APIHandler(object):
         """
         pass
 
+    @auth_required
     def process_request(self, *args, **kwargs):
         """
         Define how to process the API request.  args and kwargs will be populated based off the route requirements
@@ -47,7 +48,6 @@ class APIHandler(object):
         """
         return (None, 501)
 
-    @auth_required
     def entrypoint(self, *args, **kwargs):
         """ Processes an API request
 

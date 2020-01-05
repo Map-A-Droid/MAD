@@ -6,6 +6,8 @@ from utils import global_variables
 import tempfile
 import apkutils
 from utils.logging import logger
+from madmin.functions import auth_required
+from utils.authHelper import check_auth
 
 class APIMadAPK(APKHandler):
     component = 'mad_apk'
@@ -52,6 +54,13 @@ class APIMadAPK(APKHandler):
         apks = self.get_apk_list(apk_type, apk_arch)
         if flask.request.url.split('/')[-1] == 'download':
             try:
+                auths = self._mapping_manager.get_auths()
+                authBase64 = self.api_req.headers['Authorization']
+                if auths and authBase64 and not check_auth(authBase64, None, auths):
+                    return flask.make_response('Please login with a valid origin and auth', 401)
+            except KeyError:
+                return flask.make_response('Please login with a valid origin and auth', 401)
+            try:
                 if(apks[1]) == 200:
                     mad_apk = apks[0]
                     return flask.Response(
@@ -71,9 +80,11 @@ class APIMadAPK(APKHandler):
         else:
             return apks
 
+    @auth_required
     def post(self, apk_type, apk_arch):
         return (None, 500)
 
+    @auth_required
     def delete(self, apk_type, apk_arch):
         if apk_type is None:
             return (None, 404)
