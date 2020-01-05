@@ -1,6 +1,7 @@
 import sys
 from utils.logging import logger
 from db.PooledQueryExecutor import PooledQueryExecutor
+from utils import global_variables
 
 class DbSanityCheck:
     blacklisted_modes = "NO_ZERO_DATE NO_ZERO_IN_DATE ONLY_FULL_GROUP_BY"
@@ -37,10 +38,9 @@ class DbSanityCheck:
     def validate_max_allowed_packet(self):
         query = "SELECT @@global.max_allowed_packet"
         res = self._db_exec.autofetch_value(query)
-        # Not sure what a good number is.  Based on the current size 150MB seems reasonable for APK size
-        if res < 1024*1024*150:
+        if res < global_variables.CHUNK_MAX_SIZE:
             logger.error("max_allowed_packet may need to be adjusted to use the MAD APK feature")
-            logger.error("MAD will function without this being set but you will be unable to upload and server MAD APK files")
+            logger.error("MAD will function without this being set but you will be unable to upload and serve MAD APK files")
             logger.error("More info can be found @ https://dev.mysql.com/doc/refman/8.0/en/program-variables.html")
         else:
             self.supports_apks = True

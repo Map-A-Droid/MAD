@@ -677,11 +677,12 @@ class MADVersion(object):
                     logger.exception("Unexpected error: {}", e)
         if self._version < 20:
             query = (
-                "CREATE TABLE IF NOT EXISTS `filestore` ( "
-                "`id` INT NOT NULL AUTO_INCREMENT, "
+                "CREATE TABLE IF NOT EXISTS `filestore_meta` ( "
+                "`filestore_id` INT NOT NULL AUTO_INCREMENT, "
                 "`filename` VARCHAR(256) NOT NULL, "
-                "`data` LONGBLOB NOT NULL, "
-                "PRIMARY KEY (`id`), "
+                "`size` INT NOT NULL, "
+                "`mimetype` VARCHAR(256) NOT NULL, "
+                "PRIMARY KEY (`filestore_id`), "
                 "UNIQUE (`filename`))"
             )
             try:
@@ -690,15 +691,32 @@ class MADVersion(object):
                 logger.exception("Unexpected error: {}", e)
                 sys.exit(1)
             sql = """CREATE TABLE IF NOT EXISTS `mad_apks` (
-                `id` INT NOT NULL AUTO_INCREMENT,
+                `filestore_id` INT NOT NULL AUTO_INCREMENT,
                 `usage` INT NOT NULL,
                 `arch` INT NOT NULL,
                 `version` VARCHAR(32) NOT NULL,
-                PRIMARY KEY (`id`),
+                PRIMARY KEY (`filestore_id`),
                 UNIQUE (`usage`, `arch`),
                 CONSTRAINT `fk_fs_apks`
-                    FOREIGN KEY (`id`)
-                    REFERENCES `filestore` (`id`)
+                    FOREIGN KEY (`filestore_id`)
+                    REFERENCES `filestore_meta` (`filestore_id`)
+                    ON DELETE CASCADE
+                )"""
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+                sys.exit(1)
+            sql = """CREATE TABLE IF NOT EXISTS `filestore_chunks` (
+                `chunk_id` INT NOT NULL AUTO_INCREMENT,
+                `filestore_id` INT NOT NULL,
+                `size` INT NOT NULL,
+                `data` LONGBLOB,
+                PRIMARY KEY (`chunk_id`),
+                UNIQUE (`chunk_id`, `filestore_id`),
+                CONSTRAINT `fk_fs_chunks`
+                    FOREIGN KEY (`filestore_id`)
+                    REFERENCES `filestore_meta` (`filestore_id`)
                     ON DELETE CASCADE
                 )"""
             try:

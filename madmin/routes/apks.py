@@ -8,7 +8,6 @@ from werkzeug.utils import secure_filename
 from utils import global_variables
 import apkutils
 import os
-import tempfile
 
 class apk_manager(object):
     def __init__(self, db, args, app, mapping_manager: MappingManager, deviceUpdater):
@@ -56,50 +55,54 @@ class apk_manager(object):
                     return redirect(url_for('mad_apks'))
                 if apk_upload and self.allowed_file(apk_upload.filename):
                     filename = secure_filename(apk_upload.filename)
-                    filepath = os.path.join(tempfile.gettempdir(), filename)
                     apk_type = global_variables.MAD_APK_USAGE[request.form['apk_type']]
                     apk_arch = global_variables.MAD_APK_ARCH[request.form['apk_arch']]
                     # Temporarily save the file so we can do our version processing
                     try:
-                        apk_upload.save(filepath)
-                        apk = apkutils.APK(filepath)
+                        apk = apkutils.APK(apk_upload)
                         version = apk.get_manifest()['@android:versionName']
                         apk_upload.seek(0,0)
-                        data = apk_upload.read()
                         logger.info('New APK uploaded for {} {} [{}]', request.form['apk_type'],
                                                                        request.form['apk_arch'],
                                                                        version)
-                        apk_upload.seek(0,0)
                         # Determine if we already have this file-type uploaded.  If so, remove it once the new one is
                         # completed and update the id
-                        filestore_id_sql = "SELECT `id` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
+                        filestore_id_sql = "SELECT `filestore_id` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
                         filestore_id = self._db.autofetch_value(filestore_id_sql, args=(apk_type, apk_arch,))
                         if filestore_id:
                             delete_data = {
-                                'id': filestore_id
+                                'filestore_id': filestore_id
                             }
-                            self._db.autoexec_delete('filestore', delete_data)
+                            self._db.autoexec_delete('filestore_meta', delete_data)
+                        apk_upload.seek(0, os.SEEK_END)
+                        file_length = apk_upload.tell()
                         insert_data = {
                             'filename': filename,
-                            'data': apk_upload.read()
+                            'size': file_length,
+                            'mimetype': apk_upload.content_type,
                         }
-                        new_id = self._db.autoexec_insert('filestore', insert_data)
+                        new_id = self._db.autoexec_insert('filestore_meta', insert_data)
                         insert_data = {
-                            'id': new_id,
+                            'filestore_id': new_id,
                             'usage': apk_type,
                             'arch': apk_arch,
                             'version': version,
                         }
                         self._db.autoexec_insert('mad_apks', insert_data)
+                        apk_upload.seek(0,0)
+                        while True:
+                            chunked_data = apk_upload.read(global_variables.CHUNK_MAX_SIZE)
+                            if not chunked_data:
+                                break
+                            insert_data = {
+                                'filestore_id': new_id,
+                                'size': len(chunked_data),
+                                'data': chunked_data
+                            }
+                            self._db.autoexec_insert('filestore_chunks', insert_data)
                     except Exception as err:
                         logger.exception('Unable to save the apk', exc_info=True)
-                    finally:
-                        try:
-                            os.unlink(filepath)
-                        except:
-                            pass
                     return redirect(url_for('mad_apks'))
             except:
-                import traceback
-                traceback.print_exc()
+                logger.exception('Unhandled exception occurred with the MAD APK', exc_info=True)
         return redirect(url_for('mad_apks'))

@@ -2,7 +2,6 @@
 from .apkHandler import APKHandler
 import utils.apk_util
 import flask
-import io
 from utils import global_variables
 import tempfile
 import apkutils
@@ -42,20 +41,31 @@ class APIMadAPK(APKHandler):
             else:
                 return (apks, 200)
 
+    def chunk_generator(self, filestore_id):
+        sql = "SELECT `chunk_id` FROM `filestore_chunks` WHERE `filestore_id` = %s"
+        data_sql = "SELECT `data` FROM `filestore_chunks` WHERE `chunk_id` = %s"
+        chunk_ids = self.dbc.autofetch_column(sql, args=(filestore_id,))
+        for chunk_id in chunk_ids:
+            yield self.dbc.autofetch_value(data_sql, args=(chunk_id))
+
     def get(self, apk_type, apk_arch):
         apks = self.get_apk_list(apk_type, apk_arch)
         if flask.request.url.split('/')[-1] == 'download':
             try:
                 if(apks[1]) == 200:
-                    file_id = apks[0]['file_id']
-                    sql = 'SELECT * FROM `filestore` WHERE `id` = %s'
-                    db_data = self.dbc.autofetch_row(sql, args=(file_id,))
-                    data = io.BytesIO(db_data['data'])
-                    data.seek(0,0)
-                    return flask.send_file(data, as_attachment=True, attachment_filename=db_data['filename'])
+                    mad_apk = apks[0]
+                    return flask.Response(
+                        flask.stream_with_context(self.chunk_generator(mad_apk['file_id'])),
+                        content_type=mad_apk['mimetype'],
+                        headers={
+                            'Content-Disposition': f'attachment; filename=%s' % (mad_apk['filename'])
+                        }
+                    )
                 else:
                     return apks
             except (KeyError, TypeError):
+                import traceback
+                traceback.print_exc()
                 return (None, 404)
             return apks
         else:
@@ -70,9 +80,9 @@ class APIMadAPK(APKHandler):
         try:
             file_data = self.get(apk_type, apk_arch)[0]
             del_data = {
-                'id': file_data['file_id']
+                'filestore_id': file_data['file_id']
             }
-            self.dbc.autoexec_delete('filestore', del_data)
+            self.dbc.autoexec_delete('filestore_meta', del_data)
             return (None, 202)
         except KeyError:
             return (None, 404)

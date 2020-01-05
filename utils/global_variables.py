@@ -1,4 +1,5 @@
 # This file is to specify any globals / magic-numbers used throughout MAD
+CHUNK_MAX_SIZE = 1024 * 1024 * 8 # 8MiB
 MAD_APK_USAGE_POGO = 0
 MAD_APK_USAGE_RGC = 1
 MAD_APK_USAGE_PD = 2

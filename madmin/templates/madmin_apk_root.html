@@ -8,10 +8,12 @@
     $('.upload').on('click', function() {
         $("#apk_type").val($(this).data('apk_type'));
         $("#apk_arch").val($(this).data('apk_arch'));
-        $('#file-input').trigger('click');
+        if($(this).data('apk_type') != undefined && $(this).data('apk_arch') != undefined)
+            $('#file-input').trigger('click');
     });
     $('#file-input').on('change', function () {
-        $("#upload_form").submit()
+        $("#upload_form").submit();
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Uploading APK...</h2>' });
     }).click();
 
     $(".delete").click(function() {
