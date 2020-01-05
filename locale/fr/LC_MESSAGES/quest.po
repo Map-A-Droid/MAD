@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-01-02 21:30+0100\n"
-"PO-Revision-Date: 2020-01-02 21:40+0100\n"
+"PO-Revision-Date: 2020-01-09 20:49+0100\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -47,7 +47,7 @@ msgid "Curveball"
 msgstr "à effet"
 
 #: questGen.py:126
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Catch {0}{different} {type}Pokemon{wb}"
 msgstr "Attrape {0}{different} Pokémon {type}{wb}"
 
@@ -82,7 +82,7 @@ msgstr "Fais tourner {0} PokéStops ou Arènes"
 #: questGen.py:160
 #, python-brace-format
 msgid "Spin {0} Pokestops you haven't visited before"
-msgstr "Faite pivoter {0} nouveaux PokéStops ou Arènes"
+msgstr "Fais tourner {0} nouveaux PokéStops ou Arènes"
 
 #: questGen.py:162
 #, python-brace-format
@@ -97,12 +97,12 @@ msgstr "Gagne {0} combats d’Arènes"
 #: questGen.py:167
 #, python-brace-format
 msgid "Use a supereffective Charged Attack in {0} Gym battles"
-msgstr "Utilise une Attaque Chargée très efficace dans {0} combats"
+msgstr "Utilise une Attaque Chargée très efficace dans {0} combats d'Arènes"
 
 #: questGen.py:169
 #, python-brace-format
 msgid "Battle in a Gym {0} times"
-msgstr "Gagne {0} combats d’Arènes"
+msgstr "Combats {0} fois dans une Arène"
 
 #: questGen.py:172
 #, python-brace-format
@@ -181,31 +181,31 @@ msgstr "Fais {0} {type} lancers {curve}{inrow}"
 #: questGen.py:246
 #, python-brace-format
 msgid "Earn {0} Candies walking with your buddy"
-msgstr "Gagne {0} Bonbons en marchant avec ton copain"
+msgstr "Gagne {0} bonbons en marchant avec ton copain"
 
 #: questGen.py:249
 msgid "Make a new friend"
-msgstr "Fais-toi un nouveau ami"
+msgstr "Fais-toi un nouvel ami"
 
 #: questGen.py:251
 #, python-brace-format
 msgid "Make {0} new friends"
-msgstr "Fais-toi des {0} nouveau amis"
+msgstr "Fais-toi {0} nouveaux amis"
 
 #: questGen.py:253
 #, python-brace-format
 msgid "Trade {0} Pokemon"
-msgstr "Échange {0} fois des Pokémon"
+msgstr "Échange {0} Pokémon"
 
 #: questGen.py:258
 #, python-brace-format
 msgid "Trade Pokemon caught {distance} km apart"
-msgstr "Échange des Pokémon attrapés à {distance} km l'un de l'autre"
+msgstr "Échange des Pokémon capturés à {distance}km l'un de l'autre"
 
 #: questGen.py:260
 #, python-brace-format
 msgid "Trade {0} Pokemon caught {distance} km apart"
-msgstr "Échange {0} Pokémon attrapés à {distance} km l'un de l'autre"
+msgstr "Échange {0} Pokémon capturés à {distance}km l'un de l'autre"
 
 #: questGen.py:262
 #, python-brace-format
@@ -215,17 +215,17 @@ msgstr "Envoie {0} Cadeaux à des amis"
 #: questGen.py:266
 #, python-brace-format
 msgid "Battle a Team Leader {0} times"
-msgstr "Combattre un chef {0} fois"
+msgstr "Combats un Chef d'Équipe {0} fois"
 
 #: questGen.py:268
 #, python-brace-format
 msgid "Battle another Trainer {0} times"
-msgstr "Combattez un autre joueur {0} mal"
+msgstr "Combats {0} fois contre un autre Dresseur"
 
 #: questGen.py:287
 #, python-brace-format
 msgid "Take {0} snapshots of {poke}"
-msgstr "Prendre {0} instantanés de {poke}"
+msgstr "Prends {0} photos de {poke}"
 
 #: questGen.py:289
 #, python-brace-format
@@ -235,20 +235,20 @@ msgstr "Prends {0} photos de Pokémon de type {type}"
 #: questGen.py:307
 #, python-brace-format
 msgid "Take {0} snapshots of your Buddy"
-msgstr "Prendre {0} instantanés avec ton copain"
+msgstr "Prends {0} photos de ton copain"
 
 #: questGen.py:312
 #, python-brace-format
 msgid "Battle {0} times against the Team GO Rocket Leaders"
-msgstr "Combattez {0} fois contre les Rocket Leaders de Team GO"
+msgstr "Gagne {0} fois contre les chefs de la Team GO Rocket"
 
 #: questGen.py:314
 msgid "Battle against a Team Rocket Grunt"
-msgstr "Combattez contre Rocket Grunt"
+msgstr "Bats un Sbire de la Team GO Rocket"
 
 #: questGen.py:318
 msgid "Battle"
-msgstr "Combat"
+msgstr "Combats"
 
 #: questGen.py:318
 msgid "Win"
@@ -260,7 +260,7 @@ msgstr " Œufs"
 
 #: questGen.py:321
 msgid "n Egg"
-msgstr "Œufs"
+msgstr " Œufs"
 
 #: questGen.py:322
 msgid " Raids"
@@ -305,21 +305,21 @@ msgstr " PokéStop"
 #: questGen.py:327
 #, python-brace-format
 msgid " {0} snapshots"
-msgstr "{0} instantanés"
+msgstr " {0} photos"
 
 #: questGen.py:327
 msgid " a snapshot"
-msgstr " un instantané"
+msgstr " une photo"
 
 #: questGen.py:328
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Make {0} {type}{curve}Throws"
-msgstr "Fais {0} {type} lancers {curve}{inrow}"
+msgstr "Fais {0} {type} lancers {curve}"
 
 #: questGen.py:328
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Make a {type}{curve}Throw"
-msgstr "Fais {type} lancers {curve}{inrow}"
+msgstr "Fais {type} lancers {curve}"
 
 #: questGen.py:329
 #, python-brace-format
@@ -337,7 +337,7 @@ msgstr "un cœur"
 
 #: questGen.py:331
 msgid "a"
-msgstr "1"
+msgstr "un"
 
 #~ msgid "Win {0} times against the Team GO Rocket Leaders"
 #~ msgstr "Gagner {0} fois contre les Rocket Leaders de Team GO"
