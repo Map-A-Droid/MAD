@@ -128,24 +128,24 @@ class WordToScreenMatching(object):
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}
         if "AccountPickerActivity" in topmost_app or 'SignInActivity' in topmost_app:
-            return ScreenType.GGL
+            return ScreenType.GGL, global_dict
         elif "GrantPermissionsActivity" in topmost_app:
-            return ScreenType.PERMISSION
+            return ScreenType.PERMISSION, global_dict
         elif "ConsentActivity" in topmost_app:
-            return ScreenType.CONSENT
+            return ScreenType.CONSENT, global_dict
         elif "com.nianticlabs.pokemongo" not in topmost_app:
-            return ScreenType.CLOSE
+            return ScreenType.CLOSE, global_dict
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
-            return self._nextscreen
+            return self._nextscreen, global_dict
         elif not self.get_devicesettings_value('screendetection', False):
             logger.info('No more screen detection - disabled ...')
-            return ScreenType.DISABLED
+            return ScreenType.DISABLED, global_dict
         else:
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                         delayAfter=2):
                 logger.error("_check_windows: Failed getting screenshot")
-                return ScreenType.ERROR
+                return ScreenType.ERROR, global_dict
 
             screenpath = self.get_screenshot_path()
 
@@ -155,7 +155,7 @@ class WordToScreenMatching(object):
             if not global_dict:
                 self._nextscreen = ScreenType.UNDEFINED
                 logger.warning('Could not understand any text on screen - starting next round...')
-                return ScreenType.ERROR
+                return ScreenType.ERROR, global_dict
 
             self._ratio = self._height / self._width
 
@@ -163,7 +163,7 @@ class WordToScreenMatching(object):
 
             if 'text' not in global_dict:
                 logger.error('Error while text detection')
-                return ScreenType.ERROR
+                return ScreenType.ERROR, global_dict
             elif returntype == ScreenType.UNDEFINED and "com.nianticlabs.pokemongo" in topmost_app:
                 return ScreenType.POGO, global_dict
 
