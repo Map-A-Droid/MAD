@@ -14,6 +14,7 @@ import numpy as np
 from utils.madGlobals import ScreenshotType
 from PIL import Image
 
+
 class LoginType(Enum):
     UNKNOWN = -1
     google = 1
@@ -172,6 +173,7 @@ class WordToScreenMatching(object):
     def __handle_login_screen(self, global_dict: dict, diff: int):
         temp_dict: dict = {}
         n_boxes = len(global_dict['level'])
+        logger.debug("Selecting login with: {}", global_dict)
         for i in range(n_boxes):
             if 'Facebook' in (global_dict['text'][i]):
                 temp_dict['Facebook'] = global_dict['top'][i] / diff
@@ -182,11 +184,13 @@ class WordToScreenMatching(object):
                 temp_dict['CLUB'] = global_dict['top'][i] / diff
 
             if self.get_devicesettings_value('logintype', 'google') == 'ptc':
+                logger.debug("PTC login for account, trying to handle that")
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
                     self._click_center_button(diff, global_dict, i)
                     time.sleep(5)
-
+                else:
+                    logger.error("Unhandled login!")
             else:
                 self._nextscreen = ScreenType.UNDEFINED
                 if 'Google' in (global_dict['text'][i]):
