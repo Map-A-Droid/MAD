@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    $('.upload').on('click', function() {
+        $("#apk_type").val($(this).data('apk_type'));
+        $("#apk_arch").val($(this).data('apk_arch'));
+        $('#file-input').trigger('click');
+    });
+    $('#file-input').on('change', function () {
+        $("#upload_form").submit()
+    }).click();
+
+    $(".delete").click(function() {
+        if(confirm('Are you sure you want to delete this APK?')) {
+            var elem =  $(this);
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Deleting an APK...</h2>' });
+            var apk_type = $(this).data('apk_type');
+            var apk_arch = $(this).data('apk_arch');
+            var url = '{{ url_for('api_madapk') }}/'+ apk_type +'/'+ apk_arch;
+            $.ajax({
+                url : '{{ url_for('api_madapk') }}/'+ apk_type +'/'+ apk_arch,
+                type : 'DELETE',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 202) {
+                        location.reload();
+                    }
+                    $.unblockUI();
+                },
+                error: function(data, status, xhr) {
+                    alert('Unable to delete the APK.  An unknown error occurred');
+                    $.unblockUI();
+                },
+            });
+        }
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+<div class="row">
+    <div class="col">
+        <div class="card border-secondary">
+            <div class="card-body py-2">
+                <p class="card-text">This section allows you to easily manage the required APKs for running MAD.</p>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="row mt-3">
+    <div class="col">
+        <table class="table table-striped table-hover table-sm">
+            <thead class="thead-dark">
+                <tr>
+                    <th style="width: 20%" class="align-middle">APK Type</th>
+                    <th style="width: 40%" class="align-middle">Version</th>
+                    <th style="width: 20%" class="align-middle d-none d-lg-table-cell">Architecture</th>
+                    <th style="width: 20%" class="text-right align-middle"></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for apk_type, architectures in apks.items()|sort %}
+                    {% for architecture, data in architectures.items() %}
+                        <tr>
+                            <td class="align-middle">{{ apk_type }}</td>
+                            <td class="align-middle">{{ data.version }}</td>
+                            <td class="align-middle">{{ architecture }}</td>
+                            <td align="right">
+                                <button type="button" data-apk_type="{{ apk_type }}" data-apk_arch="{{ architecture }}" class="upload btn btn-success btn-sm"><i class="fas fa-upload"></i></button>
+                                {% if data.file_id != None %}
+                                <button type="button" data-apk_type="{{ apk_type }}" data-apk_arch="{{ architecture }}" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
+                                {% endif %}
+                            </td>
+                        </tr>
+                    {% endfor %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+<div style='display: none;'>
+    <form id='upload_form' action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+        <input id="file-input" type="file" name="apk" style="display: none;" />
+        <input type='text' id="apk_type" name="apk_type"/>
+        <input type='text' id="apk_arch" name="apk_arch"/>
+    </form>
+</div>
+{% endblock %}

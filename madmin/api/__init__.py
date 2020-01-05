@@ -1,3 +1,4 @@
+from .apks import *
 from .resources import *
 from .import apiRequest, apiResponse
 import collections
@@ -13,7 +14,9 @@ valid_resources = {
     'monivlist': ftr_monlist.APIMonList,
     'routecalc': ftr_routecalc.APIRouteCalc,
     'walker': ftr_walker.APIWalker,
-    'walkerarea': ftr_walkerarea.APIWalkerArea
+    'walkerarea': ftr_walkerarea.APIWalkerArea,
+    # MAD APKs
+    'mad_apks': ftr_mad_apks.APIMadAPK,
 }
 
 class APIEntry(object):

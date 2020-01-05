@@ -675,6 +675,37 @@ class MADVersion(object):
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
                     logger.exception("Unexpected error: {}", e)
+        if self._version < 20:
+            query = (
+                "CREATE TABLE IF NOT EXISTS `filestore` ( "
+                "`id` INT NOT NULL AUTO_INCREMENT, "
+                "`filename` VARCHAR(256) NOT NULL, "
+                "`data` LONGBLOB NOT NULL, "
+                "PRIMARY KEY (`id`), "
+                "UNIQUE (`filename`))"
+            )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+                sys.exit(1)
+            sql = """CREATE TABLE IF NOT EXISTS `mad_apks` (
+                `id` INT NOT NULL AUTO_INCREMENT,
+                `usage` INT NOT NULL,
+                `arch` INT NOT NULL,
+                `version` VARCHAR(32) NOT NULL,
+                PRIMARY KEY (`id`),
+                UNIQUE (`usage`, `arch`),
+                CONSTRAINT `fk_fs_apks`
+                    FOREIGN KEY (`id`)
+                    REFERENCES `filestore` (`id`)
+                    ON DELETE CASCADE
+                )"""
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+                sys.exit(1)
 
         if self._version < 20:
             sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
