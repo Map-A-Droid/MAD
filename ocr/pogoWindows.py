@@ -842,14 +842,15 @@ class PogoWindows:
         return most_frequent_pixel[1]
 
     def screendetection_get_type_by_screen_analysis(self, image,
-                                                    identifier) -> Optional[Tuple[ScreenType, dict, int, int, int]]:
+                                                    identifier) -> Optional[Tuple[ScreenType,
+                                                                                  Optional[dict], int, int, int]]:
         return self.__thread_pool.apply_async(self.__screendetection_get_type_internal,
                                               (image, identifier)).get()
 
     def __screendetection_get_type_internal(self, image,
-                                            identifier) -> Optional[Tuple[ScreenType, dict, int, int, int]]:
+                                            identifier) -> Optional[Tuple[ScreenType, Optional[dict], int, int, int]]:
         returntype: ScreenType = ScreenType.UNDEFINED
-        globaldict: dict = {}
+        globaldict: Optional[dict] = {}
         diff: int = 1
         logger.debug(
             "__screendetection_get_type_internal: Detecting screen type - identifier {}", identifier)
