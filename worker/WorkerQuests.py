@@ -57,7 +57,6 @@ class WorkerQuests(MITMBase):
         # 1 => clear box
         # 2 => clear quest
         self.clear_thread_task = 0
-        self._start_inventory_clear = Event()
         self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
         self._clear_quest_counter = 0
@@ -118,7 +117,6 @@ class WorkerQuests(MITMBase):
         pass
 
     def _pre_location_update(self):
-        self._start_inventory_clear.set()
         self._update_injection_settings()
 
     def _move_to_location(self):
@@ -402,34 +400,31 @@ class WorkerQuests(MITMBase):
     def _clear_thread(self):
         logger.info('Starting clear Quest Thread')
         while not self._stop_worker_event.is_set():
-            time.sleep(1)
-            # wait for event signal
-            while not self._start_inventory_clear.is_set():
-                if self._stop_worker_event.is_set():
-                    return
+            if self.clear_thread_task == 0:
                 time.sleep(1)
-            if self.clear_thread_task > 0:
-                try:
-                    self._work_mutex.acquire()
-                    # TODO: less magic numbers?
-                    time.sleep(1)
-                    if self.clear_thread_task == 1:
-                        logger.info("Clearing box")
-                        self.clear_box(self._delay_add)
-                        self.clear_thread_task = 0
-                        self.set_devicesettings_value('last_cleanup_time', time.time())
-                    elif self.clear_thread_task == 2 and not self._level_mode:
-                        logger.info("Clearing quest")
-                        self._clear_quests(self._delay_add)
-                        self.clear_thread_task = 0
-                    time.sleep(1)
-                    self._start_inventory_clear.clear()
-                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) as e:
-                    logger.error("Worker removed while clearing quest/box")
-                    self._stop_worker_event.set()
-                    return
-                finally:
-                    self._work_mutex.release()
+                continue
+
+            try:
+                self._work_mutex.acquire()
+                # TODO: less magic numbers?
+                time.sleep(1)
+                if self.clear_thread_task == 1:
+                    logger.info("Clearing box")
+                    self.clear_box(self._delay_add)
+                    self.clear_thread_task = 0
+                    self.set_devicesettings_value('last_cleanup_time', time.time())
+                elif self.clear_thread_task == 2 and not self._level_mode:
+                    logger.info("Clearing quest")
+                    self._clear_quests(self._delay_add)
+                    self.clear_thread_task = 0
+                time.sleep(1)
+            except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) as e:
+                logger.error("Worker removed while clearing quest/box")
+                self._stop_worker_event.set()
+                return
+            finally:
+                self.clear_thread_task = 0
+                self._work_mutex.release()
 
     def clear_box(self, delayadd):
         stop_inventory_clear = Event()
@@ -704,7 +699,6 @@ class WorkerQuests(MITMBase):
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.info('Box is full... Next round!')
                 self.clear_thread_task = 1
-                self._start_inventory_clear.set()
                 time.sleep(5)
                 if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._id,
                                                                      self.current_location.lat,
@@ -724,7 +718,6 @@ class WorkerQuests(MITMBase):
                     time.sleep(10)
                     if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
                         logger.info('Quest is done without us noticing. Getting new Quest...')
-                    self._start_inventory_clear.set()
                     self.clear_thread_task = 2
                     break
                 elif data_received == FortSearchResultTypes.QUEST:
@@ -739,7 +732,6 @@ class WorkerQuests(MITMBase):
                             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
-                        self._start_inventory_clear.set()
                         self.clear_thread_task = 2
                         self._clear_quest_counter = 0
                 else:
@@ -749,7 +741,6 @@ class WorkerQuests(MITMBase):
                         if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                             # TODO: put in loop, count up for a reboot ;)
                             raise InternalStopWorkerException
-                    self._start_inventory_clear.set()
                     self.clear_thread_task = 2
                 break
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
@@ -763,7 +754,6 @@ class WorkerQuests(MITMBase):
                 logger.info("Brief speed lock or we already spun it, trying again")
                 if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
-                    self._start_inventory_clear.set()
                     self.clear_thread_task = 2
                     break
                 elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(self._id) > 6800:
