@@ -75,7 +75,6 @@ class DbWrapper:
     def autoexec_update(self, table, set_keyvals, **kwargs):
         return self._db_exec.autoexec_update(table, set_keyvals, **kwargs)
 
-
     def __db_timestring_to_unix_timestamp(self, timestring):
         try:
             dt = datetime.strptime(timestring, '%Y-%m-%d %H:%M:%S.%f')
@@ -399,13 +398,13 @@ class DbWrapper:
             i += 1
         return to_be_encountered
 
-    def stop_from_db_without_quests(self, geofence_helper, levelmode: bool = False):
+    def stop_from_db_without_quests(self, geofence_helper):
         logger.debug("DbWrapper::stop_from_db_without_quests called")
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
 
         query = (
-            "SELECT pokestop.latitude, pokestop.longitude, '' as visited_by "
+            "SELECT pokestop.latitude, pokestop.longitude "
             "FROM pokestop "
             "LEFT JOIN trs_quest ON pokestop.pokestop_id = trs_quest.GUID "
             "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
@@ -417,7 +416,7 @@ class DbWrapper:
         res = self.execute(query)
         list_of_coords: List[Location] = []
 
-        for (latitude, longitude, visited_by) in res:
+        for (latitude, longitude) in res:
             list_of_coords.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
@@ -430,13 +429,13 @@ class DbWrapper:
         logger.debug("DbWrapper::any_stops_unvisited called")
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         query = (
-            "SELECT pokestop.latitude, pokestop.longitude,GROUP_CONCAT(trs_visited.origin) AS vis "
+            "SELECT pokestop.latitude, pokestop.longitude "
             "FROM pokestop "
-            "LEFT JOIN trs_visited ON pokestop.pokestop_id = trs_visited.pokestop_id "
-            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
-            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
-            "GROUP by pokestop.pokestop_id HAVING INSTR(vis,'{}') < 1 LIMIT 1 "
-        ).format(minLat, minLon, maxLat, maxLon, origin)
+            "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
+            "WHERE pokestop.latitude >= {} AND pokestop.longitude >= {} "
+            "AND pokestop.latitude <= {} AND pokestop.longitude <= {} "
+            "AND trs_visited.origin IS NULL LIMIT 1"
+        ).format(origin, minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)
         unvisited: List[Location] = []
@@ -453,13 +452,13 @@ class DbWrapper:
         logger.debug("DbWrapper::stops_from_db_unvisited called")
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         query = (
-            "SELECT pokestop.latitude, pokestop.longitude,GROUP_CONCAT(trs_visited.origin) AS vis "
+            "SELECT pokestop.latitude, pokestop.longitude "
             "FROM pokestop "
-            "LEFT JOIN trs_visited ON pokestop.pokestop_id = trs_visited.pokestop_id "
-            "WHERE (pokestop.latitude >= {} AND pokestop.longitude >= {} "
-            "AND pokestop.latitude <= {} AND pokestop.longitude <= {}) "
-            "GROUP by pokestop.pokestop_id HAVING INSTR(vis,'{}') < 1"
-        ).format(minLat, minLon, maxLat, maxLon, origin)
+            "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
+            "WHERE pokestop.latitude >= {} AND pokestop.longitude >= {} "
+            "AND pokestop.latitude <= {} AND pokestop.longitude <= {} "
+            "AND trs_visited.origin IS NULL"
+        ).format(origin, minLat, minLon, maxLat, maxLon)
 
         res = self.execute(query)
         unvisited: List[Location] = []
