@@ -657,7 +657,7 @@ class WorkerBase(ABC):
             time.sleep(2)
         return
 
-    def _check_quest(self):
+    def _check_quest(self) -> ScreenType:
         logger.info('Precheck Quest Menu')
         questcounter: int = 0
         questloop: int = 0
@@ -670,7 +670,7 @@ class WorkerBase(ABC):
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                     delayAfter=2):
             logger.error("_check_windows: Failed getting screenshot")
-            return False
+            return ScreenType.ERROR
 
         while not returncode == ScreenType.POGO and not self._stop_worker_event.isSet():
             returncode = self._WordToScreenMatching.checkQuest(self.get_screenshot_path())
@@ -708,7 +708,7 @@ class WorkerBase(ABC):
             questloop += 1
             firstround = False
 
-        return
+        return ScreenType.POGO
 
     def _start_pogo(self) -> bool:
         """

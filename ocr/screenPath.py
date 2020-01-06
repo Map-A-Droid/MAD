@@ -433,20 +433,13 @@ class WordToScreenMatching(object):
         if screenpath is None or len(screenpath) == 0:
             logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR
-        globaldict = {}
+        globaldict = self._pogoWindowManager.get_screen_text(screenpath, self._id)
         frame = None
-        try:
-            with Image.open(screenpath) as frame:
-                frame = frame.convert('LA')
-                globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
-        except (FileNotFoundError, ValueError) as e:
-            logger.error("Failed opening image {} with exception {}", screenpath, e)
-            return ScreenType.ERROR
 
         click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
         if not globaldict:
             # dict is empty
-            return ScreenType.UNDEFINED
+            return ScreenType.ERROR
         n_boxes = len(globaldict['level'])
         for i in range(n_boxes):
             if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):

@@ -780,31 +780,38 @@ class PogoWindows:
             logger.debug("Could not find close button (X).")
             return False
 
-    def get_screen_text(self, screenshot, identifier):
-        if screenshot is None:
+    def get_screen_text(self, screenpath: str, identifier) -> Optional[dict]:
+        if screenpath is None:
             logger.error("get_screen_text: image does not exist")
-            return False
+            return None
 
         return self.__thread_pool.apply_async(self.__internal_get_screen_text,
-                                              (screenshot, identifier)).get()
+                                              (screenpath, identifier)).get()
 
-    def __internal_get_screen_text(self, screenshot, identifier):
-        returning_dict = []
+    def __internal_get_screen_text(self, screenpath: str, identifier) -> Optional[dict]:
+        returning_dict: Optional[dict] = {}
         logger.debug(
             "get_screen_text: Reading screen text - identifier {}", identifier)
 
         try:
-            returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=40,
-                                                       config='--dpi 70')
-        except Exception as e:
-            logger.error("Tesseract Error for device {}: {}. Exception: {}".format(str(identifier),
-                                                                                   str(returning_dict), e))
-            returning_dict = []
+            with Image.open(screenpath) as frame:
+                frame = frame.convert('LA')
+                try:
+                    returning_dict = pytesseract.image_to_data(frame, output_type=Output.DICT, timeout=40,
+                                                               config='--dpi 70')
+                except Exception as e:
+                    logger.error("Tesseract Error for device {}: {}. Exception: {}".format(str(identifier),
+                                                                                           str(returning_dict), e))
+                    returning_dict = None
+        except (FileNotFoundError, ValueError) as e:
+            logger.error("Failed opening image {} with exception {}", screenpath, e)
+            return None
 
         if isinstance(returning_dict, dict):
             return returning_dict
         else:
-            return []
+            logger.warning("Could not read text in image: {}", returning_dict)
+            return None
 
     def most_frequent_colour(self, screenshot, identifier) -> Optional[List[int]]:
         if screenshot is None:
