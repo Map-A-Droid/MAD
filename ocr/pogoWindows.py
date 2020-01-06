@@ -868,33 +868,32 @@ class PogoWindows:
 
                 frame = frame_org.convert('LA')
                 texts = [frame, frame_org]
+                for text in texts:
+                    try:
+                        globaldict = pytesseract.image_to_data(text, output_type=Output.DICT, timeout=40,
+                                                               config='--dpi 70')
+                    except Exception as e:
+                        logger.error("Tesseract Error for device {}: {}. Exception: {}".format(str(identifier),
+                                                                                               str(globaldict), e))
+                        globaldict = None
+                    logger.debug("Screentext: {}".format(str(globaldict)))
+                    if globaldict is None or 'text' not in globaldict:
+                        continue
+                    n_boxes = len(globaldict['level'])
+                    for i in range(n_boxes):
+                        if returntype != ScreenType.UNDEFINED:
+                            break
+                        if len(globaldict['text'][i]) > 3:
+                            for z in self._ScreenType:
+                                if globaldict['top'][i] > height / 4 and globaldict['text'][i] in self._ScreenType[z]:
+                                    returntype = ScreenType(z)
+                    if returntype != ScreenType.UNDEFINED:
+                        break
+
+                del texts
                 frame.close()
         except (FileNotFoundError, ValueError) as e:
             logger.error("Failed opening image {} with exception {}", image, e)
             return None
-
-        for text in texts:
-            try:
-                globaldict = pytesseract.image_to_data(text, output_type=Output.DICT, timeout=40,
-                                                       config='--dpi 70')
-            except Exception as e:
-                logger.error("Tesseract Error for device {}: {}. Exception: {}".format(str(identifier),
-                                                                                       str(globaldict), e))
-                globaldict = None
-            logger.debug("Screentext: {}".format(str(globaldict)))
-            if  globaldict is None or'text' not in globaldict:
-                continue
-            n_boxes = len(globaldict['level'])
-            for i in range(n_boxes):
-                if returntype != ScreenType.UNDEFINED:
-                    break
-                if len(globaldict['text'][i]) > 3:
-                    for z in self._ScreenType:
-                        if globaldict['top'][i] > height / 4 and globaldict['text'][i] in self._ScreenType[z]:
-                            returntype = ScreenType(z)
-            if returntype != ScreenType.UNDEFINED:
-                break
-
-        del texts
 
         return returntype, globaldict, width, height, diff
