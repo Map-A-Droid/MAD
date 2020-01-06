@@ -463,7 +463,7 @@ class DbWrapper:
         res = self.execute(query)
         unvisited: List[Location] = []
 
-        for (latitude, longitude, vis) in res:
+        for (latitude, longitude) in res:
             unvisited.append(Location(latitude, longitude))
 
         if geofence_helper is not None:
