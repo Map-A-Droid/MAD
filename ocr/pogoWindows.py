@@ -36,20 +36,20 @@ class PogoWindows:
         self._ScreenType[3]: list = ['KIDS', 'Google', 'Facebook']
         self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
         self._ScreenType[5]: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
-                                           'connexion.', 'connexion']
+                                     'connexion.', 'connexion']
         self._ScreenType[6]: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
-                                           'Authentification', 'Essaye']
+                                     'Authentification', 'Essaye']
         self._ScreenType[7]: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
         self._ScreenType[8]: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
         self._ScreenType[12]: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
-                                  'notifications', 'évenements,', 'evenements,', 'offres']
+                                      'notifications', 'évenements,', 'evenements,', 'offres']
         self._ScreenType[14]: list = ['kompatibel', 'compatible', 'OS', 'software', 'device', 'Gerät', 'Betriebssystem',
-                           'logiciel']
+                                      'logiciel']
         self._ScreenType[15]: list = ['continuer...', 'aktualisieren?', 'now?', 'Aktualisieren', 'Aktualisieren,',
-                                    'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer']
+                                      'aktualisieren', 'update', 'continue...', 'Veux-tu', 'Fais', 'continuer']
         self._ScreenType[16]: list = ['modified', 'client', 'Strike', 'suspension', 'third-party',
-                                    'modifizierte', 'Verstoß', 'Sperrung', 'Drittpartei']
-        self._ScreenType[17]: list = ['Suspension', 'suspended', 'violating', 'days',]
+                                      'modifizierte', 'Verstoß', 'Sperrung', 'Drittpartei']
+        self._ScreenType[17]: list = ['Suspension', 'suspended', 'violating', 'days', ]
         self._ScreenType[18]: list = ['Termination', 'terminated', 'permanently']
         self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                                       'found.', 'gefunden.', 'Signal']
@@ -125,8 +125,8 @@ class PogoWindows:
 
         if crop:
             screenshot_read = screenshot_read[int(height) - int(int(height / 4)):int(height),
-                                            int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
-                                            int(width) / 8)]
+                              int(int(width) / 2) - int(int(width) / 8):int(int(width) / 2) + int(
+                                  int(width) / 8)]
 
         logger.debug("__read_circle_count: Determined screenshot scale: " +
                      str(height) + " x " + str(width))
@@ -198,7 +198,7 @@ class PogoWindows:
 
         if crop:
             screenshot_read = screenshot_read[int(height) - int(height / 5):int(height),
-                                            int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
+                              int(width) / 2 - int(width) / 8:int(width) / 2 + int(width) / 8]
 
         logger.debug("__readCircleCords: Determined screenshot scale: " +
                      str(height) + " x " + str(width))
@@ -414,14 +414,15 @@ class PogoWindows:
             logger.error("Screenshot corrupted :(")
             return False
 
-        if self.__read_circle_count(os.path.join('', filename), identifier, float(11), communicator, xcord=False, crop=True,
+        if self.__read_circle_count(os.path.join('', filename), identifier, float(11), communicator, xcord=False,
+                                    crop=True,
                                     click=False, canny=True) == -1:
             logger.debug("__check_raid_line: Not active")
             return False
 
         height, width, _ = screenshot_read.shape
         screenshot_read = screenshot_read[int(height / 2) - int(height / 3):int(height / 2) + int(height / 3),
-                                        int(0):int(width)]
+                          int(0):int(width)]
         gray = cv2.cvtColor(screenshot_read, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (5, 5), 0)
         logger.debug("__check_raid_line: Determined screenshot scale: " +
@@ -449,7 +450,9 @@ class PogoWindows:
                     # Coords - X: " + str(x1) + " " + str(x2) + " Y: " + str(y1) + " " + str(y2)) return False
                 else:
                     if y1 == y2 and (x2 - x1 <= maxLineLength) and (
-                            x2 - x1 >= minLineLength) and ((x1 < width / 2 and x2 < width / 2) or (x1 < width / 2 and x2 > width / 2)) and y1 < (height / 2):
+                            x2 - x1 >= minLineLength) and (
+                            (x1 < width / 2 and x2 < width / 2) or (x1 < width / 2 and x2 > width / 2)) and y1 < (
+                            height / 2):
                         logger.debug(
                             "__check_raid_line: Nearby is active - but not Raid-Tab")
                         if clickinvers:
@@ -482,11 +485,12 @@ class PogoWindows:
             return False
 
         height, width, _ = image.shape
-        image = image[int(height / 2 - (height / 3))                      :int(height / 2 + (height / 3)), 0:int(width)]
+        image = image[int(height / 2 - (height / 3)):int(height / 2 + (height / 3)), 0:int(width)]
         cv2.imwrite(os.path.join(self.temp_dir_path, str(
             identifier) + '_AmountOfRaids.jpg'), image)
 
-        if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_AmountOfRaids.jpg'), identifier, 18,
+        if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_AmountOfRaids.jpg'),
+                                    identifier, 18,
                                     communicator) > 0:
             logger.info(
                 "__check_orange_raid_circle_present: Raidcircle found, assuming raids nearby")
@@ -558,7 +562,7 @@ class PogoWindows:
         time.sleep(4)
         return False
 
-    def __check_close_present(self, filename, identifier, communicator,  radiusratio=12, Xcord=True):
+    def __check_close_present(self, filename, identifier, communicator, radiusratio=12, Xcord=True):
         if not os.path.isfile(filename):
             logger.warning(
                 "__check_close_present: {} does not exist", str(filename))
@@ -575,7 +579,8 @@ class PogoWindows:
                                  str(identifier) + '_exitcircle.jpg'), image)
 
         if self.__read_circle_count(os.path.join(self.temp_dir_path, str(identifier) + '_exitcircle.jpg'), identifier,
-                                  float(radiusratio), communicator, xcord=False, crop=True, click=True, canny=True) > 0:
+                                    float(radiusratio), communicator, xcord=False, crop=True, click=True,
+                                    canny=True) > 0:
             return True
 
     def check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
@@ -590,7 +595,7 @@ class PogoWindows:
     def __internal_check_close_except_nearby_button(self, filename, identifier, communicator, close_raid=False):
         logger.debug(
             "__internal_check_close_except_nearby_button: Checking close except nearby with: file {}, identifier {}",
-                filename, identifier)
+            filename, identifier)
         try:
             screenshot_read = cv2.imread(filename)
         except:
@@ -641,7 +646,7 @@ class PogoWindows:
         else:
             logger.debug("Could not find close button (X).")
             return False
-        
+
     def get_inventory_text(self, filename, identifier, x1, x2, y1, y2):
         if not os.path.isfile(filename):
             logger.error("get_inventory_text: {} does not exist", str(filename))
@@ -666,7 +671,11 @@ class PogoWindows:
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
         cv2.imwrite(temp_path_item, gray)
         with Image.open(temp_path_item) as im:
-            text = pytesseract.image_to_string(im)
+            try:
+                text = pytesseract.image_to_string(im)
+            except Exception as e:
+                logger.error("Error running tesseract on inventory text: {}", e)
+                text = ""
         return text
 
     def check_pogo_mainscreen(self, filename, identifier):
@@ -695,7 +704,7 @@ class PogoWindows:
 
         height, width, _ = screenshot_read.shape
         gray = screenshot_read[int(height) - int(round(height / 5)):int(height),
-                               0: int(int(width) / 4)]
+               0: int(int(width) / 4)]
         height_, width_, _ = gray.shape
         radMin = int((width / float(6.8) - 3) / 2)
         radMax = int((width / float(6) + 3) / 2)
@@ -706,7 +715,7 @@ class PogoWindows:
         if circles is not None:
             circles = np.round(circles[0, :]).astype("int")
             for (x, y, r) in circles:
-                if x < width_ - width_/3:
+                if x < width_ - width_ / 3:
                     mainscreen += 1
 
         if mainscreen > 0:
@@ -729,7 +738,7 @@ class PogoWindows:
             return False
 
         if self.__read_circle_count(filename, identifier,
-                                  float(7.7), communicator, xcord=False, crop=True, click=True, canny=True) > 0:
+                                    float(7.7), communicator, xcord=False, crop=True, click=True, canny=True) > 0:
             logger.debug(
                 "Found close button (X). Closing the window - Ratio: 10")
             return True
@@ -772,10 +781,11 @@ class PogoWindows:
             "get_screen_text: Reading screen text - identifier {}", identifier)
 
         try:
-                returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=40,
-                                                           config='--dpi 70')
-        except:
-            logger.error("Tesseract Error for device {}: {}".format(str(identifier), str(returning_dict)))
+            returning_dict = pytesseract.image_to_data(screenshot, output_type=Output.DICT, timeout=40,
+                                                       config='--dpi 70')
+        except Exception as e:
+            logger.error("Tesseract Error for device {}: {}. Exception: {}".format(str(identifier),
+                                                                                 str(returning_dict), e))
             returning_dict = []
 
         if isinstance(returning_dict, dict):
