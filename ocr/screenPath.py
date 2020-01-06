@@ -151,9 +151,12 @@ class WordToScreenMatching(object):
 
             screenpath = self.get_screenshot_path()
 
-            returntype, global_dict, self._width, self._height, diff = \
-                self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self._id)
-
+            result = self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self._id)
+            if result is None:
+                logger.error("Failed analysing screen")
+                return ScreenType.ERROR, global_dict, diff
+            else:
+                returntype, global_dict, self._width, self._height, diff = result
             if not global_dict:
                 self._nextscreen = ScreenType.UNDEFINED
                 logger.warning('Could not understand any text on screen - starting next round...')
@@ -427,27 +430,35 @@ class WordToScreenMatching(object):
         return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
     def checkQuest(self, screenpath) -> ScreenType:
+        if screenpath is None or len(screenpath) == 0:
+            logger.error("Invalid screen path: {}", screenpath)
+            return ScreenType.ERROR
+        globaldict = {}
+        frame = None
+        try:
+            with Image.open(screenpath) as frame:
+                frame = frame.convert('LA')
+                globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
+        except (FileNotFoundError, ValueError) as e:
+            logger.error("Failed opening image {} with exception {}", screenpath, e)
+            return ScreenType.ERROR
 
-        with Image.open(screenpath) as frame:
-            frame = frame.convert('LA')
-
-            globaldict = self._pogoWindowManager.get_screen_text(frame, self._id)
-            click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
-            if not globaldict:
-                # dict is empty
-                return ScreenType.UNDEFINED
-            n_boxes = len(globaldict['level'])
-            for i in range(n_boxes):
-                if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
-                    logger.info('Found research menu')
-                    self._communicator.click(100, 100)
-                    return ScreenType.QUEST
-
-            logger.info('Listening to Dr. blabla - please wait')
-
-            self._communicator.backButton()
-            time.sleep(3)
+        click_text = 'FIELD,SPECIAL,FELD,SPEZIAL,SPECIALES,TERRAIN'
+        if not globaldict:
+            # dict is empty
             return ScreenType.UNDEFINED
+        n_boxes = len(globaldict['level'])
+        for i in range(n_boxes):
+            if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
+                logger.info('Found research menu')
+                self._communicator.click(100, 100)
+                return ScreenType.QUEST
+
+        logger.info('Listening to Dr. blabla - please wait')
+
+        self._communicator.backButton()
+        time.sleep(3)
+        return ScreenType.UNDEFINED
 
     def parse_permission(self, xml) -> bool:
         if xml is None:

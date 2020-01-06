@@ -5,6 +5,7 @@ import os
 import os.path
 import time
 from multiprocessing.pool import ThreadPool
+from typing import Optional, List, Tuple
 
 import cv2
 import numpy as np
@@ -54,11 +55,19 @@ class PogoWindows:
         self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                                       'found.', 'gefunden.', 'Signal']
 
-    def __most_present_colour(self, filename, max_colours):
-        with Image.open(filename) as img:
-            # put a higher value if there are many colors in your image
-            colors = img.getcolors(max_colours)
-        max_occurrence, most_present = 0, 0
+    def __most_present_colour(self, filename, max_colours) -> Optional[List[int]]:
+        if filename is None or max_colours is None:
+            logger.warning("Cannot retrieve most present colour of {} with {} max colours", filename, max_colours)
+            return None
+        try:
+            with Image.open(filename) as img:
+                # put a higher value if there are many colors in your image
+                colors = img.getcolors(max_colours)
+        except (FileNotFoundError, ValueError) as e:
+            logger.error("Failed opening image {} with exception {}", filename, e)
+            return None
+        max_occurrence: int = 0
+        most_present: List[int] = [0, 0, 0]
         try:
             for c in colors:
                 if c[0] > max_occurrence:
@@ -67,7 +76,7 @@ class PogoWindows:
         except TypeError:
             return None
 
-    def is_gps_signal_lost(self, filename, identifier):
+    def is_gps_signal_lost(self, filename, identifier) -> Optional[bool]:
         # run the check for the file here once before having the subprocess check it (as well)
         if not os.path.isfile(filename):
             logger.error("isGpsSignalLost: {} does not exist", str(filename))
@@ -75,7 +84,7 @@ class PogoWindows:
 
         return self.__thread_pool.apply_async(self.__internal_is_gps_signal_lost, (filename, identifier)).get()
 
-    def __internal_is_gps_signal_lost(self, filename, identifier):
+    def __internal_is_gps_signal_lost(self, filename, identifier) -> Optional[bool]:
         if not os.path.isfile(filename):
             logger.error("isGpsSignalLost: {} does not exist", str(filename))
             return None
@@ -98,14 +107,14 @@ class PogoWindows:
         tempPathColoured = self.temp_dir_path + "/" + str(identifier) + "_gpsError.png"
         cv2.imwrite(tempPathColoured, gpsError)
 
-        with Image.open(tempPathColoured) as col:
-            width, height = col.size
-
+        try:
+            with Image.open(tempPathColoured) as col:
+                width, height = col.size
+        except (FileNotFoundError, ValueError) as e:
+            logger.error("Failed opening image {} with exception {}", tempPathColoured, e)
+            return None
         # check for the colour of the GPS error
-        if self.__most_present_colour(tempPathColoured, width * height) == (240, 75, 95):
-            return True
-        else:
-            return False
+        return self.__most_present_colour(tempPathColoured, width * height) == (240, 75, 95)
 
     def __read_circle_count(self, filename, identifier, ratio, communicator, xcord=False, crop=False, click=False,
                             canny=False, secondratio=False):
@@ -571,8 +580,8 @@ class PogoWindows:
         try:
             image = cv2.imread(filename)
             height, width, _ = image.shape
-        except:
-            logger.error("Screenshot corrupted :(")
+        except Exception as e:
+            logger.error("Screenshot corrupted: {}", e)
             return False
 
         cv2.imwrite(os.path.join(self.temp_dir_path,
@@ -647,15 +656,15 @@ class PogoWindows:
             logger.debug("Could not find close button (X).")
             return False
 
-    def get_inventory_text(self, filename, identifier, x1, x2, y1, y2):
+    def get_inventory_text(self, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
         if not os.path.isfile(filename):
             logger.error("get_inventory_text: {} does not exist", str(filename))
-            return ""
+            return None
 
         return self.__thread_pool.apply_async(self.__internal_get_inventory_text,
                                               (filename, identifier, x1, x2, y1, y2)).get()
 
-    def __internal_get_inventory_text(self, filename, identifier, x1, x2, y1, y2):
+    def __internal_get_inventory_text(self, filename, identifier, x1, x2, y1, y2) -> Optional[str]:
         screenshot_read = cv2.imread(filename)
         temp_path_item = self.temp_dir_path + "/" + str(identifier) + "_inventory.png"
         h = x1 - x2
@@ -670,12 +679,16 @@ class PogoWindows:
         # resize image
         gray = cv2.resize(gray, dim, interpolation=cv2.INTER_AREA)
         cv2.imwrite(temp_path_item, gray)
-        with Image.open(temp_path_item) as im:
-            try:
-                text = pytesseract.image_to_string(im)
-            except Exception as e:
-                logger.error("Error running tesseract on inventory text: {}", e)
-                text = ""
+        try:
+            with Image.open(temp_path_item) as im:
+                try:
+                    text = pytesseract.image_to_string(im)
+                except Exception as e:
+                    logger.error("Error running tesseract on inventory text: {}", e)
+                    return None
+        except (FileNotFoundError, ValueError) as e:
+            logger.error("Failed opening image {} with exception {}", temp_path_item, e)
+            return None
         return text
 
     def check_pogo_mainscreen(self, filename, identifier):
@@ -785,7 +798,7 @@ class PogoWindows:
                                                        config='--dpi 70')
         except Exception as e:
             logger.error("Tesseract Error for device {}: {}. Exception: {}".format(str(identifier),
-                                                                                 str(returning_dict), e))
+                                                                                   str(returning_dict), e))
             returning_dict = []
 
         if isinstance(returning_dict, dict):
@@ -793,71 +806,82 @@ class PogoWindows:
         else:
             return []
 
-    def most_frequent_colour(self, screenshot, identifier):
+    def most_frequent_colour(self, screenshot, identifier) -> Optional[List[int]]:
         if screenshot is None:
             logger.error("get_screen_text: image does not exist")
-            return False
+            return None
 
         return self.__thread_pool.apply_async(self.__most_frequent_colour_internal,
                                               (screenshot, identifier)).get()
 
-    def __most_frequent_colour_internal(self, image, identifier):
+    def __most_frequent_colour_internal(self, image, identifier) -> Optional[List[int]]:
         logger.debug(
             "most_frequent_colour_internal: Reading screen text - identifier {}", identifier)
-        with Image.open(image) as img:
-            w, h = img.size
-            pixels = img.getcolors(w * h)
-            most_frequent_pixel = pixels[0]
+        try:
+            with Image.open(image) as img:
+                w, h = img.size
+                pixels = img.getcolors(w * h)
+                most_frequent_pixel = pixels[0]
 
-            for count, colour in pixels:
-                if count > most_frequent_pixel[0]:
-                    most_frequent_pixel = (count, colour)
+                for count, colour in pixels:
+                    if count > most_frequent_pixel[0]:
+                        most_frequent_pixel = (count, colour)
 
-            logger.debug("Most frequent pixel on {} screen: {}".format(str(identifier), (most_frequent_pixel[1])))
+                logger.debug("Most frequent pixel on {} screen: {}".format(str(identifier), (most_frequent_pixel[1])))
+        except (FileNotFoundError, ValueError) as e:
+            logger.error("Failed opening image {} with exception {}", image, e)
+            return None
 
         return most_frequent_pixel[1]
 
-    def screendetection_get_type_by_screen_analysis(self, image, identifier):
+    def screendetection_get_type_by_screen_analysis(self, image,
+                                                    identifier) -> Optional[Tuple[ScreenType, dict, int, int, int]]:
         return self.__thread_pool.apply_async(self.__screendetection_get_type_internal,
                                               (image, identifier)).get()
 
-    def __screendetection_get_type_internal(self, image, identifier) -> (ScreenType, dict, int, int, int):
+    def __screendetection_get_type_internal(self, image,
+                                            identifier) -> Optional[Tuple[ScreenType, dict, int, int, int]]:
         returntype: ScreenType = ScreenType.UNDEFINED
         globaldict: dict = {}
         diff: int = 1
         logger.debug(
             "__screendetection_get_type_internal: Detecting screen type - identifier {}", identifier)
 
-        with Image.open(image) as frame_org:
-            width, height = frame_org.size
+        texts = []
+        try:
+            with Image.open(image) as frame_org:
+                width, height = frame_org.size
 
-            logger.debug("Screensize of origin {}: W:{} x H:{}".format(str(identifier), str(width), str(height)))
+                logger.debug("Screensize of origin {}: W:{} x H:{}".format(str(identifier), str(width), str(height)))
 
-            if width < 1080:
-                logger.info('Resize screen ...')
-                frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
-                diff: int = 2
+                if width < 1080:
+                    logger.info('Resize screen ...')
+                    frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
+                    diff: int = 2
 
-            frame = frame_org.convert('LA')
-            textes = [frame, frame_org]
+                frame = frame_org.convert('LA')
+                texts = [frame, frame_org]
+                frame.close()
+        except (FileNotFoundError, ValueError) as e:
+            logger.error("Failed opening image {} with exception {}", image, e)
+            return None
 
-            for text in textes:
-                globaldict = self.__internal_get_screen_text(text, identifier)
-                logger.debug("Screentext: {}".format(str(globaldict)))
-                if 'text' not in globaldict:
-                    continue
-                n_boxes = len(globaldict['level'])
-                for i in range(n_boxes):
-                    if returntype != ScreenType.UNDEFINED:
-                        break
-                    if len(globaldict['text'][i]) > 3:
-                        for z in self._ScreenType:
-                            if globaldict['top'][i] > height / 4 and globaldict['text'][i] in self._ScreenType[z]:
-                                returntype = ScreenType(z)
+        for text in texts:
+            globaldict = self.__internal_get_screen_text(text, identifier)
+            logger.debug("Screentext: {}".format(str(globaldict)))
+            if 'text' not in globaldict:
+                continue
+            n_boxes = len(globaldict['level'])
+            for i in range(n_boxes):
                 if returntype != ScreenType.UNDEFINED:
                     break
+                if len(globaldict['text'][i]) > 3:
+                    for z in self._ScreenType:
+                        if globaldict['top'][i] > height / 4 and globaldict['text'][i] in self._ScreenType[z]:
+                            returntype = ScreenType(z)
+            if returntype != ScreenType.UNDEFINED:
+                break
 
-            frame.close()
-            del textes
+        del texts
 
         return returntype, globaldict, width, height, diff

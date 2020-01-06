@@ -486,9 +486,13 @@ class WorkerQuests(MITMBase):
 
                 try:
                     item_text = self._pogoWindowManager.get_inventory_text(self.get_screenshot_path(),
-                                                                       self._id, text_x1, text_x2, check_y_text_ending,
-                                                                       check_y_text_starter)
-
+                                                                           self._id, text_x1, text_x2,
+                                                                           check_y_text_ending, check_y_text_starter)
+                    if item_text is None:
+                        logger.error("Did not get any text in inventory")
+                        # TODO: could this be running forever?
+                        trash += 1
+                        pass
                     logger.info("Found item {}", str(item_text))
                     match_one_item : bool = False
                     for text in not_allow:
