@@ -27,8 +27,10 @@ class RouteManagerLeveling(RouteManagerQuests):
                 if len(entry.queue) > 0:
                     logger.debug("origin {} already has a queue, do not touch...", origin)
                     continue
-
                 unvisited_stops = self.db_wrapper.stops_from_db_unvisited(self.geofence_helper, origin)
+                if len(unvisited_stops) == 0:
+                    logger.info("There are no unvisited stops left in DB for {} - nothing more to do!", origin)
+                    continue
                 if len(self._route) > 0:
                     logger.info("Making a subroute of unvisited stops..")
                     for coord in self._route:
@@ -53,6 +55,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                 any_at_all = len(origin_local_list) > 0 or any_at_all
             return any_at_all
 
+
     def _local_recalc_subroute(self, unvisited_stops):
         to_be_route = np.zeros(shape=(len(unvisited_stops), 2))
         for i in range(len(unvisited_stops)):
@@ -60,6 +63,7 @@ class RouteManagerLeveling(RouteManagerQuests):
             to_be_route[i][1] = float(unvisited_stops[i].lng)
         new_route = self.calculate_new_route(to_be_route, self._max_radius, self._max_coords_within_radius, False, 1,
                                              True)
+
         return new_route
 
     def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,

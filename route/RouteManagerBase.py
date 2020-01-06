@@ -279,7 +279,7 @@ class RouteManagerBase(ABC):
                             calctype=None):
         if calctype is None:
             calctype = self._calctype
-        if coords:
+        if len(coords) > 0:
             new_route = self._route_resource.calculate_new_route(coords, max_radius, max_coords_within_radius,
                                                                 delete_old_route, calctype, self.useS2, self.S2level,
                                                                 num_procs=0,
