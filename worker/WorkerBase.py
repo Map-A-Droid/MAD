@@ -590,13 +590,11 @@ class WorkerBase(ABC):
                 logger.info("Found Black Loading Screen - waiting ...")
                 time.sleep(20)
 
-            if screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT]:
+            if screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT, ScreenType.CLOSE]:
                 logger.warning('Error getting Gamedata or strange ggl message appears')
                 self._loginerrorcounter += 1
-                self._restart_pogo(True)
-            elif screen_type == ScreenType.CLOSE:
-                logger.warning('Pogo not in foreground...')
-                self._restart_pogo(True)
+                if self._loginerrorcounter < 3:
+                    self._restart_pogo(True)
             elif screen_type == ScreenType.DISABLED:
                 # Screendetection is disabled
                 break
