@@ -627,9 +627,6 @@ class WorkerQuests(MITMBase):
                     logger.info("Levelmode: Stop already visited - skipping it")
                     self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
                     return False, True
-                elif self._level_mode and self._rocket:
-                    logger.info("Levelmode: Stop is rocketized, ignore it until later")
-                    return False, True
 
                 enabled: bool = fort.get("enabled", True)
                 closed: bool = fort.get("closed", False)
