@@ -36,7 +36,7 @@ class apk_manager(object):
     
     @auth_required
     def mad_apks(self):
-        apks = utils.apk_util.get_mad_apks(self._db)
+        apks = utils.apk_util.get_mad_apks(self._db, front_end=True)
         return render_template('madmin_apk_root.html', apks=apks)
 
     @auth_required

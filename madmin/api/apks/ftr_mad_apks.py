@@ -19,7 +19,7 @@ class APIMadAPK(APKHandler):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in global_variables.MAD_APK_ALLOWED_EXTENSIONS
 
     def get_apk_list(self, apk_type, apk_arch):
-        apks = utils.apk_util.get_mad_apks(self.dbc)
+        apks = utils.apk_util.get_mad_apks(self.dbc, front_end=True)
         try:
             apks[apk_type]
             try:
@@ -43,13 +43,6 @@ class APIMadAPK(APKHandler):
             else:
                 return (apks, 200)
 
-    def chunk_generator(self, filestore_id):
-        sql = "SELECT `chunk_id` FROM `filestore_chunks` WHERE `filestore_id` = %s"
-        data_sql = "SELECT `data` FROM `filestore_chunks` WHERE `chunk_id` = %s"
-        chunk_ids = self.dbc.autofetch_column(sql, args=(filestore_id,))
-        for chunk_id in chunk_ids:
-            yield self.dbc.autofetch_value(data_sql, args=(chunk_id))
-
     def get(self, apk_type, apk_arch):
         apks = self.get_apk_list(apk_type, apk_arch)
         if flask.request.url.split('/')[-1] == 'download':
@@ -64,7 +57,7 @@ class APIMadAPK(APKHandler):
                 if(apks[1]) == 200:
                     mad_apk = apks[0]
                     return flask.Response(
-                        flask.stream_with_context(self.chunk_generator(mad_apk['file_id'])),
+                        flask.stream_with_context(utils.apk_util.chunk_generator(self.dbc, mad_apk['file_id'])),
                         content_type=mad_apk['mimetype'],
                         headers={
                             'Content-Disposition': f'attachment; filename=%s' % (mad_apk['filename'])

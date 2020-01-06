@@ -7,6 +7,9 @@ MAD_APK_USAGE = {
     'pogo': MAD_APK_USAGE_POGO,
     'rgc': MAD_APK_USAGE_RGC,
     'pogodroid': MAD_APK_USAGE_PD,
+    'com.nianticlabs.pokemongo': MAD_APK_USAGE_POGO,
+    'de.grennith.rgc.remotegpscontroller': MAD_APK_USAGE_RGC,
+    'com.mad.pogodroid': MAD_APK_USAGE_PD,
 }
 MAD_APK_ARCH_NOARCH = 0
 MAD_APK_ARCH_ARMEABI_V7A = 1

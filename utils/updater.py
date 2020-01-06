@@ -2,12 +2,15 @@ import json
 import os
 import glob
 import time
+import re
+import io
 from datetime import datetime, timedelta
 from enum import Enum
 from multiprocessing import Queue
 from threading import RLock, Thread
 from utils.logging import logger
 from queue import Empty
+from utils import apk_util
 
 class jobType(Enum):
     INSTALLATION = 0
@@ -16,6 +19,7 @@ class jobType(Enum):
     STOP = 3
     PASSTHROUGH = 4
     START = 5
+    SMART_UPDATE = 6
     CHAIN = 99
 
 
@@ -25,13 +29,17 @@ class jobReturn(Enum):
     NOCONNECT = 2
     FAILURE = 3
     TERMINATED = 4
+    NOT_REQUIRED = 5
+
+SUCCESS_STATES = [jobReturn.SUCCESS, jobReturn.NOT_REQUIRED]
 
 
 class deviceUpdater(object):
-    def __init__(self, websocket, args, returning):
+    def __init__(self, websocket, args, returning, db):
         self._websocket = websocket
         self._update_queue = Queue()
         self._update_mutex = RLock()
+        self._db = db
         self._log = {}
         self._args = args
         self._commands: dict = {}
@@ -118,7 +126,7 @@ class deviceUpdater(object):
     def kill_old_jobs(self):
         logger.info("Checking for outdated jobs")
         for job in self._log.copy():
-            if self._log[job]['status'] in ('pending', 'starting', 'processing', 'not connected', 'future') \
+            if self._log[job]['status'] in ('pending', 'starting', 'processing', 'not connected', 'future', 'not required') \
                     and not self._log[job].get('auto', False):
                 logger.debug("Cancel job {} - it is outdated".format(str(job)))
                 self.write_status_log(str(job), field='status', value='cancelled')
@@ -253,7 +261,7 @@ class deviceUpdater(object):
 
                     errorcount = 0
 
-                    while jobstatus != jobReturn.SUCCESS and errorcount < 3:
+                    while jobstatus not in SUCCESS_STATES and errorcount < 3:
 
                         temp_comm = self._websocket.get_origin_communicator(origin)
 
@@ -277,12 +285,12 @@ class deviceUpdater(object):
                                     logger.info(
                                         'Job {} executed successfully - Device {} - File/Job {} (ID: {})'
                                             .format(str(jobtype), str(origin), str(file_), str(id_)))
-                                    self.write_status_log(str(id_), field='status', value='success')
-                                    self.write_status_log(str(id_), field='laststatus', value='success')
+                                    jobstatus = jobReturn.NOT_REQUIRED
+                                    if self._log[str(id_)]['status'] != 'not required':
+                                        self.write_status_log(str(id_), field='status', value='success')
+                                        jobstatus = jobReturn.SUCCESS
                                     self._globaljoblog[globalid]['laststatus'] = 'success'
                                     self._globaljoblog[globalid]['lastjobid'] = id_
-                                    jobstatus = jobReturn.SUCCESS
-
                                 else:
                                     logger.error(
                                         'Job {} could not be executed successfully - Device {} - File/Job {} (ID: {})'
@@ -307,7 +315,7 @@ class deviceUpdater(object):
                                 jobstatus = jobReturn.FAILURE
 
                     # check jobstatus and readd if possible
-                    if jobstatus != jobReturn.SUCCESS and (jobstatus == jobReturn.NOCONNECT
+                    if jobstatus not in SUCCESS_STATES and (jobstatus == jobReturn.NOCONNECT
                                                            and self._args.job_restart_notconnect == 0):
                         logger.error("Job for {} (File/Job: {} - Type {}) failed 3 times in row - aborting (ID: {})"
                                      .format(str(origin), str(file_), str(jobtype), str(id_)))
@@ -321,7 +329,7 @@ class deviceUpdater(object):
                             self._globaljoblog[globalid]['lastjobid'] = id_
                             self._globaljoblog[globalid]['laststatus'] = 'success'
 
-                    elif jobstatus == jobReturn.SUCCESS and redo:
+                    elif jobstatus in SUCCESS_STATES and redo:
                         logger.info('Readd this automatic job for {} (File/Job: {} - Type {})  (ID: {})'
                                     .format(str(origin), str(file_), str(jobtype), str(id_)))
                         self.restart_job(id_=id_)
@@ -447,8 +455,48 @@ class deviceUpdater(object):
             jobtype = jobType[jobtype.split('.')[1]]
             if jobtype == jobType.INSTALLATION:
                 file_ = self._log[str(item)]['file']
-                returning = ws_conn.install_apk(os.path.join(self._args.upload_path, file_), 300)
+                returning = ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
                 return returning if not 'RemoteGpsController'.lower() in str(file_).lower() else True
+            elif jobtype == jobtype.SMART_UPDATE:
+                package = self._log[str(item)]['file']
+                version_job = "dumpsys package %s | grep versionName" % (package,)
+                architecture_job = ws_conn.passthrough('getprop ro.product.cpu.abi')
+                package_ver_job = ws_conn.passthrough(version_job)
+                try:
+                    architecture = re.search(r'\[(\S+)\]', architecture_job).group(1)
+                except:
+                    logger.warning('Unable to determine the architecture of the device')
+                    return False
+                try:
+                    package_ver = re.search(r'versionName=([0-9\.]+)', package_ver_job).group(1)
+                except:
+                    logger.warning('Unable to determine version for {}: {}', self._log[str(item)]['file'], package_ver_job)
+                    return False
+                mad_apk = apk_util.get_mad_apk(self._db,
+                                               self._log[str(item)]['file'],
+                                               architecture=architecture)
+                if not mad_apk or mad_apk['file_id'] is None:
+                    try:
+                        arch = architecture
+                    except:
+                        arch = 'Unknown'
+                    logger.warning('No MAD APK for {} [{}]', package, arch)
+                    return False
+                requires_update = apk_util.has_newer_ver(package_ver, mad_apk['version'])
+                if requires_update is None:
+                    logger.info('Both versions are the same.  No update required')
+                    self.write_status_log(str(item), field='status', value='not required')
+                    return True
+                elif requires_update is False:
+                    logger.warning('MAD APK for {} is out of date', package)
+                    return False
+                else:
+                    logger.info('Smart Update APK Installation for {} to {}', package, self._log[str(item)]['origin'])
+                    apk_file = bytes()
+                    for chunk in apk_util.chunk_generator(self._db, mad_apk['file_id']):
+                        apk_file += chunk
+                    returning = ws_conn.install_apk(300, data=apk_file)
+                    return returning if not 'RemoteGpsController'.lower() in str(self._log[str(item)]['file']).lower() else True
             elif jobtype == jobType.REBOOT:
                 return ws_conn.reboot()
             elif jobtype == jobType.RESTART:
@@ -474,7 +522,7 @@ class deviceUpdater(object):
     def delete_log(self, onlysuccess=False):
         if onlysuccess:
             for job in self._log.copy():
-                if self._log[job]['status'] == 'success' and not self._log[job].get('redo', False):
+                if self._log[job]['status'] in ['success', 'not required'] and not self._log[job].get('redo', False):
                     self.write_status_log(str(job), delete=True)
 
         else:
