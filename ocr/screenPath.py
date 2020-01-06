@@ -429,7 +429,7 @@ class WordToScreenMatching(object):
         logger.info("Processing Screen: {}", str(ScreenType(screentype)))
         return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
-    def checkQuest(self, screenpath) -> ScreenType:
+    def checkQuest(self, screenpath: str) -> ScreenType:
         if screenpath is None or len(screenpath) == 0:
             logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR

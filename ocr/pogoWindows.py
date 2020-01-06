@@ -874,9 +874,15 @@ class PogoWindows:
             return None
 
         for text in texts:
-            globaldict = self.__internal_get_screen_text(text, identifier)
+            try:
+                globaldict = pytesseract.image_to_data(text, output_type=Output.DICT, timeout=40,
+                                                       config='--dpi 70')
+            except Exception as e:
+                logger.error("Tesseract Error for device {}: {}. Exception: {}".format(str(identifier),
+                                                                                       str(globaldict), e))
+                globaldict = None
             logger.debug("Screentext: {}".format(str(globaldict)))
-            if 'text' not in globaldict:
+            if  globaldict is None or'text' not in globaldict:
                 continue
             n_boxes = len(globaldict['level'])
             for i in range(n_boxes):
