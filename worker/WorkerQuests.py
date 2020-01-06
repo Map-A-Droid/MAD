@@ -381,9 +381,10 @@ class WorkerQuests(MITMBase):
                     self._restart_pogo(mitm_mapper=self._mitm_mapper)
 
                 logger.info('Open Stop')
-                data_received = self._open_pokestop(math.floor(time.time()))
+                self._stop_process_time = math.floor(time.time())
+                data_received = self._open_pokestop(self._stop_process_time)
                 if data_received is not None and data_received == LatestReceivedType.STOP:
-                    self._handle_stop(math.floor(time.time()))
+                    self._handle_stop(self._stop_process_time)
 
             else:
                 logger.debug('Currently in INIT Mode - no Stop processing')
@@ -615,7 +616,7 @@ class WorkerQuests(MITMBase):
                                               fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
                         (0 < rocket_incident_diff_ms <= 3600000):
-                    logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
+                    logger.info("Stop {}, {} is rocketized - who cares :)"
                                 .format(str(latitude), str(longitude)))
                     self._rocket = True
                 else:
@@ -689,9 +690,6 @@ class WorkerQuests(MITMBase):
                     self._checkPogoClose(takescreen=False)
 
             to += 1
-        if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED] and self._rocket:
-            logger.info('Check for Team Rocket Dialog or other open window')
-            self.process_rocket()
         return data_received
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
@@ -699,8 +697,6 @@ class WorkerQuests(MITMBase):
     def _handle_stop(self, timestamp: float):
         to = 0
         timeout = 35
-        if self._rocket:
-            timeout = 90
         data_received = FortSearchResultTypes.UNDEFINED
 
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
@@ -710,11 +706,13 @@ class WorkerQuests(MITMBase):
             time.sleep(1)
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.info('Box is full... Next round!')
+                self.clear_thread_task = 1
+                self._start_inventory_clear.set()
+                time.sleep(5)
                 if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._id,
                                                                      self.current_location.lat,
                                                                      self.current_location.lng):
                     logger.warning('Cannot process this stop again')
-                self.clear_thread_task = 1
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
                 if self._level_mode:
@@ -729,6 +727,7 @@ class WorkerQuests(MITMBase):
                     time.sleep(10)
                     if self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
                         logger.info('Quest is done without us noticing. Getting new Quest...')
+                    self._start_inventory_clear.set()
                     self.clear_thread_task = 2
                     break
                 elif data_received == FortSearchResultTypes.QUEST:
@@ -743,6 +742,7 @@ class WorkerQuests(MITMBase):
                             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
+                        self._start_inventory_clear.set()
                         self.clear_thread_task = 2
                         self._clear_quest_counter = 0
                 else:
@@ -752,6 +752,7 @@ class WorkerQuests(MITMBase):
                         if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                             # TODO: put in loop, count up for a reboot ;)
                             raise InternalStopWorkerException
+                    self._start_inventory_clear.set()
                     self.clear_thread_task = 2
                 break
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
@@ -759,12 +760,13 @@ class WorkerQuests(MITMBase):
                 logger.error('Softban - waiting...')
                 time.sleep(10)
                 self._stop_process_time = math.floor(time.time())
-                if self._open_pokestop(timestamp) is None:
+                if self._open_pokestop(self._stop_process_time) is None:
                     return
             else:
                 logger.info("Brief speed lock or we already spun it, trying again")
                 if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat, self.current_location.lng):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
+                    self._start_inventory_clear.set()
                     self.clear_thread_task = 2
                     break
                 elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(self._id) > 6800:
