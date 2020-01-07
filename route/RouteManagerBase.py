@@ -509,8 +509,12 @@ class RouteManagerBase(ABC):
             return latest
         delete_seconds_passed = 0
         if self.settings is not None:
-            delete_seconds_passed = self.settings.get(
-                "remove_from_queue_backlog", 900)
+            if self.mode = "mon_mitm":
+                delete_seconds_passed = self.settings.get(
+                        "remove_from_queue_backlog", 300)
+            else:
+                delete_seconds_passed = self.settings.get(
+                        "remove_from_queue_backlog", 0)
 
         if delete_seconds_passed is not None:
             delete_before = time.time() - delete_seconds_passed
@@ -600,19 +604,24 @@ class RouteManagerBase(ABC):
                 next_timestamp = next_prio[0]
                 next_coord = next_prio[1]
                 next_readableTime = datetime.fromtimestamp(next_timestamp).strftime('%Y-%m-%d %H:%M:%S')
-                if self.settings is not None:
-                    delete_seconds_passed = self.settings.get(
-                            "remove_from_queue_backlog", 900)
-                    if delete_seconds_passed is not None:
-                        delete_before = time.time() - delete_seconds_passed
-                    else:
-                        delete_before = 0
-                if next_timestamp < delete_before:
-                    logger.warning("Prio event for route {} surpassed the "
-                                   "maximum backlog time and will be skipped "
-                                   "(was scheduled for {})",
-                                   self.name, next_readableTime)
-                    return self.get_next_location(origin)
+                # TODO: Consider if we want to have the following functionality for other modes, too
+                # Problem: delete_seconds_passed = 0 makes sense in _filter_priority_queue_internal,
+                # because it will remove past events only at the moment of prioQ calculation,
+                # but here it would skip ALL events, because events can only be due when they are in the past
+                if self.mode = "mon_mitm":
+                    if self.settings is not None:
+                        delete_seconds_passed = self.settings.get(
+                                "remove_from_queue_backlog", 300)
+                        if delete_seconds_passed not in [None, 0]:
+                            delete_before = time.time() - delete_seconds_passed
+                        else:
+                            delete_before = 0
+                    if next_timestamp < delete_before:
+                        logger.warning("Prio event for route {} surpassed the "
+                                       "maximum backlog time and will be skipped "
+                                       "(was scheduled for {})",
+                                       self.name, next_readableTime)
+                        return self.get_next_location(origin)
                 if self._other_worker_closer_to_prioq(next_coord, origin):
                     self._last_round_prio[origin] = True
                     self._positiontyp[origin] = 1
