@@ -512,6 +512,13 @@ class RouteManagerBase(ABC):
             if self.mode == "mon_mitm":
                 delete_seconds_passed = self.settings.get(
                         "remove_from_queue_backlog", 300)
+                if delete_seconds_passed == 0:
+                    logger.error("You are running area {} in mon_mitm mode with "
+                            "priority queue enabled and remove_from_queue_backlog "
+                            "set to 0. This may result in building up a significant "
+                            "queue backlog and reduced scanning performance. "
+                            "Please review this setting or set it to the default "
+                            "of 300.", self.name)
             else:
                 delete_seconds_passed = self.settings.get(
                         "remove_from_queue_backlog", 0)
@@ -618,8 +625,10 @@ class RouteManagerBase(ABC):
                             delete_before = 0
                     if next_timestamp < delete_before:
                         logger.warning("Prio event for route {} surpassed the "
-                                       "maximum backlog time and will be skipped "
-                                       "(was scheduled for {})",
+                                       "maximum backlog time and will be skipped. "
+                                       "Make sure you run enough workers or reduce "
+                                       "the size of the area! "
+                                       "(event was scheduled for {})",
                                        self.name, next_readableTime)
                         return self.get_next_location(origin)
                 if self._other_worker_closer_to_prioq(next_coord, origin):

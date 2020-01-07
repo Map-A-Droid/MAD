@@ -112,7 +112,7 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Remove any events in priority queue that have been due for scanning before NOW - given time in seconds (Default: 300)",
+                    "description": "Remove any events from priority queue that have been due for scanning more than the given number of seconds ago. Setting this to 0 can cause a significant backlog buildup, leading to reduced scanning performance. (Default: 300)",
                     "expected": float
                 }
             },
