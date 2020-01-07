@@ -8,6 +8,7 @@ import apkutils
 from utils.logging import logger
 from madmin.functions import auth_required
 from utils.authHelper import check_auth
+from threading import Thread
 
 class APIMadAPK(APKHandler):
     component = 'mad_apk'
@@ -19,7 +20,7 @@ class APIMadAPK(APKHandler):
         return '.' in filename and filename.rsplit('.', 1)[1].lower() in global_variables.MAD_APK_ALLOWED_EXTENSIONS
 
     def get_apk_list(self, apk_type, apk_arch):
-        apks = utils.apk_util.get_mad_apks(self.dbc, front_end=True)
+        apks = utils.apk_util.get_mad_apks(self.dbc)
         try:
             apks[apk_type]
             try:
@@ -66,8 +67,6 @@ class APIMadAPK(APKHandler):
                 else:
                     return apks
             except (KeyError, TypeError):
-                import traceback
-                traceback.print_exc()
                 return (None, 404)
             return apks
         else:
@@ -75,6 +74,32 @@ class APIMadAPK(APKHandler):
 
     @auth_required
     def post(self, apk_type, apk_arch):
+        try:
+            call = self.api_req.data['call']
+            args = self.api_req.data.get('args', {})
+            if call == 'import':
+                downloader = utils.apk_util.AutoDownloader(self.dbc)
+                try:
+                    args=(int(apk_type), int(apk_arch))
+                    t = Thread(target=downloader.apk_download, args=args)
+                    t.start()
+                    return (None, 204)
+                except TypeError:
+                    return (None, 404)
+            elif call == 'search':
+                downloader = utils.apk_util.AutoDownloader(self.dbc)
+                try:
+                    downloader.apk_search(int(apk_type), int(apk_arch))
+                    return (None, 204)
+                except TypeError:
+                    return (None, 404)
+            else:
+                # RPC not implemented
+                return (call, 501)
+        except KeyError:
+            import traceback
+            traceback.print_exc()
+            return (call, 501)
         return (None, 500)
 
     @auth_required
