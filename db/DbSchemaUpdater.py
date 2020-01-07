@@ -50,6 +50,8 @@ class DbSchemaUpdater:
                      "`quest_timestamp` int(11) NOT NULL, "
                      "`quest_stardust` smallint(4) NOT NULL, "
                      "`quest_pokemon_id` smallint(4) NOT NULL, "
+                     "`quest_pokemon_form_id` smallint(6) NOT NULL, "
+                     "`quest_pokemon_costume_id` smallint(6) NOT NULL, "
                      "`quest_reward_type` smallint(3) NOT NULL, "
                      "`quest_item_id` smallint(3) NOT NULL, "
                      "`quest_item_amount` tinyint(2) NOT NULL, "
@@ -194,6 +196,16 @@ class DbSchemaUpdater:
             "column": "instance_id",
             "ctype": "int UNSIGNED NOT NULL FIRST",
             "modify_key": "DROP PRIMARY KEY, ADD PRIMARY KEY (`instance_id`, `origin`)"
+        },
+        {
+            "table": "trs_quest",
+            "column": "quest_pokemon_form_id",
+            "ctype": "smallint(6) NOT NULL DEFAULT 0"
+        },
+        {
+            "table": "trs_quest",
+            "column": "quest_pokemon_costume_id",
+            "ctype": "smallint(6) NOT NULL DEFAULT 0"
         }
     ]
 

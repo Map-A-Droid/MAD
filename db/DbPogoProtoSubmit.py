@@ -354,6 +354,8 @@ class DbPogoProtoSubmit:
         item_amount = item.get("amount", None)
         stardust = reward.get("stardust", None)
         pokemon_id = encounter.get("pokemon_id", None)
+        form_id = encounter.get("pokemon_display",{}).get("form_value", 0)
+        costume_id = encounter.get("pokemon_display", {}).get("costume_value", 0)
         target = goal.get("target", None)
         condition = goal.get("condition", None)
 
@@ -364,6 +366,7 @@ class DbPogoProtoSubmit:
 
         query_quests = (
             "INSERT INTO trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
+            "quest_pokemon_form_id, quest_pokemon_costume_id, "
             "quest_reward_type, quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, "
             "quest_task, quest_template) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
@@ -371,10 +374,12 @@ class DbPogoProtoSubmit:
             "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
             "quest_item_amount=VALUES(quest_item_amount), quest_target=VALUES(quest_target), "
             "quest_condition=VALUES(quest_condition), quest_reward=VALUES(quest_reward), "
-            "quest_task=VALUES(quest_task), quest_template=VALUES(quest_template)"
+            "quest_task=VALUES(quest_task), quest_template=VALUES(quest_template), "
+            "quest_pokemon_form_id=VALUES(quest_pokemon_form_id), "
+            "quest_pokemon_costume_id=VALUES(quest_pokemon_costume_id)"
         )
         vals = (
-            fort_id, quest_type, time.time(), stardust, pokemon_id, reward_type,
+            fort_id, quest_type, time.time(), stardust, pokemon_id, form_id, costume_id, reward_type,
             item_item, item_amount, target,
             json_condition, json.dumps(rewards), task, quest_template
         )
