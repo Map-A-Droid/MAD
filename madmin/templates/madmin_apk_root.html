@@ -5,11 +5,13 @@
 
 {% block scripts %}
 <script>
+  $(document).ready(function () {
     $('.upload').on('click', function() {
         $("#apk_type").val($(this).data('apk_type'));
         $("#apk_arch").val($(this).data('apk_arch'));
-        if($(this).data('apk_type') != undefined && $(this).data('apk_arch') != undefined)
+        if($(this).data('apk_type') != undefined && $(this).data('apk_arch') != undefined) {
             $('#file-input').trigger('click');
+        }
     });
     $('#file-input').on('change', function () {
         $("#upload_form").submit();
@@ -77,7 +79,6 @@
         success: function(data, status, xhr) {
             if(xhr.status == 200) {
               var apk_status = xhr.responseJSON;
-              console.log(apk_status);
               $.each($(".update_status"), function () {
                 var apk_type = $(this).data('apk_type');
                 var apk_arch = $(this).data('apk_arch');
@@ -153,7 +154,6 @@
             });
         }
     }
-$(document).ready(function () {
     check_apk_status();
     setInterval(check_apk_status, 5000);
   });

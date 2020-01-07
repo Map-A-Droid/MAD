@@ -5,6 +5,7 @@ from utils.MappingManager import MappingManager
 from utils.logging import logger
 from utils import apk_util
 from utils import global_variables
+import werkzeug.exceptions
 import json
 
 class apk_manager(object):
@@ -83,6 +84,9 @@ class apk_manager(object):
                     apk_util.MADAPKImporter(self._db, apk_upload.filename, apk_upload, apk_upload.content_type,
                                             apk_type = apk_type, architecture = apk_arch, mad_apk = True)
                     return redirect(url_for('mad_apks'))
+            except werkzeug.exceptions.RequestEntityTooLarge:
+                flash('File too large.  Please use a a smaller file')
+                return redirect(url_for('mad_apks'))
             except:
                 logger.exception('Unhandled exception occurred with the MAD APK', exc_info=True)
         return redirect(url_for('mad_apks'))
