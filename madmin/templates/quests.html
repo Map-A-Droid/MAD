@@ -117,12 +117,6 @@ function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_
     return rewardtext;
 }
 
-// Map pokemon_id to a pokemon_form in case the given pokemon_form is 0
-var replace_zero_forms = {
-    '327': 11, // Spinda
-    '412': 11  // Burmy
-};
-
 function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, quest_pokemon_form_id, quest_pokemon_costume_id) {
     switch (quest_reward_type) {
         case 2:
