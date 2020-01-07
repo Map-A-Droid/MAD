@@ -27,3 +27,5 @@ URL_POGO_APK_ARMEABI_V7A = 'https://www.apkmirror.com/apk/niantic-inc/pokemon-go
 URL_POGO_APK_ARM64_V8A = 'https://www.apkmirror.com/apk/niantic-inc/pokemon-go/variant-%7B%22arches_slug%22%3A%5B%22arm64-v8a%22%5D%7D/'
 URL_RGC_APK = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/APK/RemoteGpsController.apk'
 URL_PD_APK = 'https://www.maddev.de/apk/PogoDroid.apk'
+
+ADDRESSES_GITHUB = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/configs/addresses.json'

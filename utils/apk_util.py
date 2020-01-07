@@ -353,8 +353,12 @@ def get_mad_apks(db) -> dict:
         apks[apk['usage']][apk['arch']] = file_data
     return apks
 
-def get_mad_apk(db, apk_type: str, architecture: str ='noarch') -> dict:
+def get_mad_apk(db, apk_type, architecture='noarch') -> dict:
     apks = get_mad_apks(db)
+    if type(apk_type) is str:
+        apk_type = global_variables.MAD_APK_USAGE[apk_type]
+    if type(architecture) is str:
+        architecture = global_variables.MAD_APK_ARCH[architecture]
     try:
         return apks[global_variables.MAD_APK_USAGE[apk_type]][architecture]
     except KeyError:

@@ -11,6 +11,8 @@ from threading import RLock, Thread
 from utils.logging import logger
 from queue import Empty
 from utils import apk_util
+import requests
+from utils import global_variables
 
 class jobType(Enum):
     INSTALLATION = 0
@@ -30,8 +32,9 @@ class jobReturn(Enum):
     FAILURE = 3
     TERMINATED = 4
     NOT_REQUIRED = 5
+    NOT_SUPPORTED = 6
 
-SUCCESS_STATES = [jobReturn.SUCCESS, jobReturn.NOT_REQUIRED]
+SUCCESS_STATES = [jobReturn.SUCCESS, jobReturn.NOT_REQUIRED, jobReturn.NOT_SUPPORTED]
 
 
 class deviceUpdater(object):
@@ -285,8 +288,11 @@ class deviceUpdater(object):
                                     logger.info(
                                         'Job {} executed successfully - Device {} - File/Job {} (ID: {})'
                                             .format(str(jobtype), str(origin), str(file_), str(id_)))
-                                    jobstatus = jobReturn.NOT_REQUIRED
-                                    if self._log[str(id_)]['status'] != 'not required':
+                                    if self._log[str(id_)]['status'] == 'not required':
+                                        jobstatus = jobReturn.NOT_REQUIRED
+                                    elif self._log[str(id_)]['status'] == 'not supported':
+                                        jobstatus = jobReturn.NOT_SUPPORTED
+                                    else:
                                         self.write_status_log(str(id_), field='status', value='success')
                                         jobstatus = jobReturn.SUCCESS
                                     self._globaljoblog[globalid]['laststatus'] = 'success'
@@ -482,7 +488,26 @@ class deviceUpdater(object):
                         arch = 'Unknown'
                     logger.warning('No MAD APK for {} [{}]', package, arch)
                     return False
-                requires_update = apk_util.has_newer_ver(package_ver, mad_apk['version'])
+                requires_update = apk_util.is_newer_version(package_ver, mad_apk['version'])
+                # Validate it is supported
+                if package == 'com.nianticlabs.pokemongo':
+                    if architecture == 'armeabi-v7a':
+                        bits = '32'
+                    else:
+                        bits = '64'
+                    try:
+                        with open('configs/addresses.json') as fh:
+                            address_object = json.load(fh)
+                            composite_key = '%s_%s' % (mad_apk['version'], bits,)
+                            address_object[composite_key]
+                    except KeyError:
+                        try:
+                            requests.get(global_variables.ADDRESSES_GITHUB).json()[composite_key]
+                        except KeyError:
+                            logger.info('Unable to install APK since {} is not supported', composite_key)
+                            self.write_status_log(str(item), field='status', value='not supported')
+                            return True
+                    logger.debug('Supported PoGo version detected')
                 if requires_update is None:
                     logger.info('Both versions are the same.  No update required')
                     self.write_status_log(str(item), field='status', value='not required')
