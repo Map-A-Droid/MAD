@@ -46,6 +46,32 @@
         }
     });
 
+    $(".bulk_update").click(function() {
+        if(confirm('Are you sure you want to Update and Download this APK?')) {
+            $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Bulk Updating...</h2>' });
+            rpc_call = {
+              'call': 'search_download'
+            }
+            $.ajax({
+                contentType : 'application/json-rpc',
+                url : '{{ url_for('api_madapk') }}',
+                data: JSON.stringify(rpc_call),
+                type : 'POST',
+                success: function(data, status, xhr) {
+                    if(xhr.status == 204) {
+                        location.reload();
+                    }
+                    $.unblockUI();
+                },
+                error: function(data, status, xhr) {
+                    alert('Unable to delete the APK.  An unknown error occurred');
+                    $.unblockUI();
+                    location.reload();
+                },
+            });
+        }
+    });
+
     $(".delete").click(function() {
         if(confirm('Are you sure you want to delete this APK?')) {
             var elem =  $(this);
@@ -154,6 +180,7 @@
             });
         }
     }
+
     check_apk_status();
     setInterval(check_apk_status, 5000);
   });
@@ -171,6 +198,16 @@
         </div>
     </div>
 </div>
+{% with messages = get_flashed_messages() %}
+  {% if messages %}
+    <ul class=flashes>
+    {% for message in messages %}
+      <li>{{ message }}</li>
+    {% endfor %}
+    </ul>
+  {% endif %}
+{% endwith %}
+{% block body %}{% endblock %}
 <div class="row mt-3">
     <div class="col">
         <table class="table table-striped table-hover table-sm">
@@ -202,6 +239,9 @@
                 {% endfor %}
             </tbody>
         </table>
+        <div align="right">
+            Update Everything -><button class="bulk_update btn btn-info btn-sm"><i class="fas fa-3x fa-hat-wizard"></i></button>
+        </div>
     </div>
 </div>
 <div style='display: none;'>

@@ -1,12 +1,16 @@
 from utils import global_variables
 from utils.logging import logger
 from werkzeug.utils import secure_filename
+from threading import Thread
 import re
 import apkutils
 import requests
 import os
 import time
 import io
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 APK_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3',
@@ -15,6 +19,26 @@ APK_HEADERS = {
 class AutoDownloader(object):
     def __init__(self, dbc):
         self.dbc = dbc
+
+    def apk_all_actions(self):
+        self.apk_all_search()
+        self.apk_all_download()
+
+    def apk_all_search(self):
+        self.find_latest_pogo(global_variables.MAD_APK_ARCH_ARMEABI_V7A)
+        self.find_latest_pogo(global_variables.MAD_APK_ARCH_ARM64_V8A)
+        self.find_latest_rgc(global_variables.MAD_APK_ARCH_NOARCH)
+        self.find_latest_pd(global_variables.MAD_APK_ARCH_NOARCH)
+
+    def apk_all_download(self):
+        t = Thread(target=self.apk_nonblocking_download)
+        t.start()
+
+    def apk_nonblocking_download(self,):
+        self.download_pogo(global_variables.MAD_APK_ARCH_ARMEABI_V7A)
+        self.download_pogo(global_variables.MAD_APK_ARCH_ARM64_V8A)
+        self.download_rgc(global_variables.MAD_APK_ARCH_NOARCH)
+        self.download_pd(global_variables.MAD_APK_ARCH_NOARCH)
 
     def apk_search(self, apk_type, architecture):
         if apk_type == global_variables.MAD_APK_USAGE_POGO:
@@ -56,11 +80,14 @@ class AutoDownloader(object):
 
     def __download_simple(self, apk_type, architecture):
         latest_data = self.get_lastest(apk_type, architecture)
+        installed = get_mad_apk(self.dbc, apk_type, architecture)
         if not latest_data or latest_data['url'] is None:
             self.apk_search(apk_type, architecture)
             latest_data = self.get_lastest(apk_type, architecture)
         if not latest_data:
             logger.warning('Unable to find latest data')
+        elif installed and 'size' in installed and installed['size'] == int(latest_data['version']):
+            logger.info('Latest version already installed')
         else:
             filename = latest_data['url'].split('/')[-1]
             apk = APKDownloader(self.dbc, latest_data['url'], architecture, apk_type, filename=filename)
@@ -79,7 +106,7 @@ class AutoDownloader(object):
         curr_info = self.dbc.autofetch_row(sql, args=(apk_type, arch))
         head = requests.head(url, verify=False, headers=APK_HEADERS, allow_redirects=True)
         installed_size = curr_info.get('size', None)
-        mirror_size = head.headers['Content-Length']
+        mirror_size = int(head.headers['Content-Length'])
         if not curr_info or (installed_size and installed_size != mirror_size):
             logger.info('Newer version found on the mirror of size {}', mirror_size)
         else:
@@ -331,6 +358,10 @@ def get_mad_apk(db, apk_type: str, architecture: str ='noarch') -> dict:
     try:
         return apks[global_variables.MAD_APK_USAGE[apk_type]][architecture]
     except KeyError:
+        try:
+            return apks[apk_type][architecture]
+        except:
+            pass
         if architecture != 'noarch':
             return get_mad_apk(db, apk_type)
         else:

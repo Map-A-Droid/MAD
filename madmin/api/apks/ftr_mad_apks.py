@@ -93,6 +93,13 @@ class APIMadAPK(APKHandler):
                     return (None, 204)
                 except TypeError:
                     return (None, 404)
+            elif call == 'search_download':
+                downloader = utils.apk_util.AutoDownloader(self.dbc)
+                try:
+                    downloader.apk_all_actions()
+                    return (None, 204)
+                except TypeError:
+                    return (None, 404)
             else:
                 # RPC not implemented
                 return (call, 501)

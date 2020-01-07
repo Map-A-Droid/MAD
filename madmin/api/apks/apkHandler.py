@@ -11,7 +11,7 @@ class APKHandler(apiHandler.APIHandler):
     def create_routes(self):
         """ Creates all pertinent routes to for the API resource """
         self._app.route('/api/mad_apk',
-                        methods=['GET'],
+                        methods=['GET', 'POST'],
                         endpoint='api_madapk')(self.entrypoint)
         self._app.route('/api/mad_apk/<string:apk_type>',
                         methods=['GET'],
