@@ -688,8 +688,7 @@ class MADVersion(object):
                 "`filename` VARCHAR(255) NOT NULL, "
                 "`size` INT NOT NULL, "
                 "`mimetype` VARCHAR(255) NOT NULL, "
-                "PRIMARY KEY (`filestore_id`), "
-                "UNIQUE (`filename`))"
+                "PRIMARY KEY (`filestore_id`))"
             )
             try:
                 self.dbwrapper.execute(query, commit=True)
