@@ -12,7 +12,7 @@ import copy
 from db.DbWrapper import DbWrapper
 from db.DbSchemaUpdater import DbSchemaUpdater
 
-current_version = 19
+current_version = 20
 
 class MADVersion(object):
 
@@ -34,11 +34,11 @@ class MADVersion(object):
                 with open('version.json') as f:
                     version = json.load(f)
                 self._version = int(version['version'])
-                self.dbwrapper.set_mad_version(self._version)
+                self.dbwrapper.update_mad_version(self._version)
             except FileNotFoundError:
                 logger.warning("Could not find version.json during move to DB"
                         ", will use version 0")
-                self.dbwrapper.set_mad_version(0)
+                self.dbwrapper.update_mad_version(0)
                 self.start_update()
             dbVersion = self.dbwrapper.get_mad_version()
             if dbVersion:
@@ -675,6 +675,13 @@ class MADVersion(object):
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
                     logger.exception("Unexpected error: {}", e)
+
+        if self._version < 20:
+            sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
 
         self.set_version(current_version)
 
