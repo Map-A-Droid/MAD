@@ -685,9 +685,9 @@ class MADVersion(object):
             query = (
                 "CREATE TABLE IF NOT EXISTS `filestore_meta` ( "
                 "`filestore_id` INT NOT NULL AUTO_INCREMENT, "
-                "`filename` VARCHAR(256) NOT NULL, "
+                "`filename` VARCHAR(255) NOT NULL, "
                 "`size` INT NOT NULL, "
-                "`mimetype` VARCHAR(256) NOT NULL, "
+                "`mimetype` VARCHAR(255) NOT NULL, "
                 "PRIMARY KEY (`filestore_id`), "
                 "UNIQUE (`filename`))"
             )
