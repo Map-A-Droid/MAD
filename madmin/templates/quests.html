@@ -46,7 +46,7 @@ function setGrid(tableGridHtmlId, gridData) {
             {
                 "targets": [2],
                 "render": function (data, type, row) {
-                    var reward = build_quest_small(row.quest_reward_type_raw, row.item_id, row.pokemon_id);
+                    var reward = build_quest_small(row.quest_reward_type_raw, row.item_id, row.pokemon_id, row.quest_pokemon_form_id, row.quest_pokemon_costume_id);
                     return reward;
                 }
             },
@@ -123,7 +123,7 @@ var replace_zero_forms = {
     '412': 11  // Burmy
 };
 
-function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id) {
+function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, quest_pokemon_form_id, quest_pokemon_costume_id) {
     switch (quest_reward_type) {
         case 2:
             var image = '<center><img src="static/quest/reward_' + quest_item_id + '_1.png" width="50"></center>';
@@ -132,8 +132,9 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id) {
             var image = '<center><img src="static/quest/reward_stardust.png" width="50"></center>';
             break;
         case 7:
-            var form = replace_zero_forms[quest_pokemon_id] || '00';
-            var image = '<center><img src="asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + '.png" width="100"></center>';
+            var form = quest_pokemon_form_id || '00';
+            var costume = '_' + quest_pokemon_costume_id || '';
+            var image = '<center><img src="asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + costume +'.png" width="100"></center>';
             break;
     }
     return image;
