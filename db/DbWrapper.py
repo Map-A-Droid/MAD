@@ -317,7 +317,7 @@ class DbWrapper:
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
              quest_timestamp, quest_task, quest_reward, quest_template) in res:
             mon = "%03d" % quest_pokemon_id
-            form_id = "%02d" % form_id
+            form_id = "%02d" % quest_pokemon_form_id
             costume_id = "%02d" % quest_pokemon_costume_id
             questinfo[pokestop_id] = ({
                 'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,
