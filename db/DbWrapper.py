@@ -276,7 +276,8 @@ class DbWrapper:
 
         query = (
             "SELECT pokestop.pokestop_id, pokestop.latitude, pokestop.longitude, trs_quest.quest_type, "
-            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_reward_type, "
+            "trs_quest.quest_stardust, trs_quest.quest_pokemon_id, trs_quest.quest_pokemon_form_id, "
+            "trs_quest.quest_pokemon_costume_id, trs_quest.quest_reward_type, "
             "trs_quest.quest_item_id, trs_quest.quest_item_amount, pokestop.name, pokestop.image, "
             "trs_quest.quest_target, trs_quest.quest_condition, trs_quest.quest_timestamp, "
             "trs_quest.quest_task, trs_quest.quest_reward, trs_quest.quest_template "
@@ -311,14 +312,16 @@ class DbWrapper:
 
         res = self.execute(query + query_where)
 
-        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id, quest_reward_type,
+        for (pokestop_id, latitude, longitude, quest_type, quest_stardust, quest_pokemon_id,
+             quest_pokemon_form_id, quest_pokemon_costume_id, quest_reward_type,
              quest_item_id, quest_item_amount, name, image, quest_target, quest_condition,
              quest_timestamp, quest_task, quest_reward, quest_template) in res:
             mon = "%03d" % quest_pokemon_id
             questinfo[pokestop_id] = ({
                 'pokestop_id': pokestop_id, 'latitude': latitude, 'longitude': longitude,
                 'quest_type': quest_type, 'quest_stardust': quest_stardust,
-                'quest_pokemon_id': mon,
+                'quest_pokemon_id': mon, 'quest_pokemon_form_id': quest_pokemon_form_id,
+                'quest_pokemon_costume_id': quest_pokemon_costume_id,
                 'quest_reward_type': quest_reward_type, 'quest_item_id': quest_item_id,
                 'quest_item_amount': quest_item_amount, 'name': name, 'image': image,
                 'quest_target': quest_target,
