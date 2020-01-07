@@ -515,6 +515,16 @@ new Vue({
             coords.push(circle);
           });
 
+          Object.values(route.s2cells).forEach(function(cells) {
+            L.polygon(cells, {
+                pane: "routes",
+                color: color,
+                opacity: 0.3,
+                fillOpacity: 0,
+                weight: 1
+              }).addTo(group);
+          });
+
           var geojson = {
             "type": "LineString",
             "coordinates": $this.convertToLonLat(route.coordinates)
@@ -526,7 +536,7 @@ new Vue({
             style: {
               "color": color,
               "weight": 2,
-              "opacity": 0.5
+              "opacity": 0.4
             }
           }).addTo(group);
 
@@ -1445,9 +1455,8 @@ new Vue({
         var mon = $this.mons[key];
         var end = moment(mon["disappear_time"]*1000);
 
-        if (!now.isAfter(end)) {
+        if (!now.isAfter(end))
           return;
-        }
 
         map.removeLayer(leaflet_data["mons"][mon["encounter_id"]]);
         delete leaflet_data["mons"][mon["encounter_id"]];
@@ -1520,7 +1529,7 @@ new Vue({
       sidebar.close();
 
       if(setlat != 0 && setlng != 0) {
-          var circle = L.circle([setlat, setlng], {
+        var circle = L.circle([setlat, setlng], {
           color: 'blue',
           fillColor: 'blue',
           fillOpacity: 0.5,
@@ -1528,7 +1537,7 @@ new Vue({
         }).addTo(map);
 
         map.setView([setlat, setlng], 20);
-      };
+      }
 
       map.on('zoomend', this.l_event_zoomed);
       map.on('moveend', this.l_event_moveend);
@@ -1537,45 +1546,41 @@ new Vue({
         sidebar.close();
       });
 
-    var editableLayers = new L.FeatureGroup();
-    map.addLayer(editableLayers);
+      var editableLayers = new L.FeatureGroup();
+      map.addLayer(editableLayers);
 
-    var options = {
+      var options = {
         position: 'topright',
         draw: {
-            polyline: false,
-            polygon: {
-                allowIntersection: false,
-                drawError: {
-                    color: '#e1e100',
-                    message: '<strong>Oh snap!<strong> you can\'t draw that!'
-                },
-                shapeOptions: {
-                    color: '#ac00e6'
-                }
+          polyline: false,
+          polygon: {
+            allowIntersection: false,
+            drawError: {
+              color: '#e1e100',
+              message: '<strong>Oh snap!<strong> you can\'t draw that!'
             },
-            circle: false,
-            circlemarker: false,
-            rectangle: false,
-            line: false,
-            marker: false,
+            shapeOptions: {
+              color: '#ac00e6'
+            }
+          },
+          circle: false,
+          circlemarker: false,
+          rectangle: false,
+          line: false,
+          marker: false,
         },
         edit: {
-            featureGroup: editableLayers,
-            remove: false
+          featureGroup: editableLayers,
+          remove: false
         }
-    };
+      };
 
-    var drawControl = new L.Control.Draw(options);
-    map.addControl(drawControl);
+      var drawControl = new L.Control.Draw(options);
+      map.addControl(drawControl);
 
-    map.on(L.Draw.Event.CREATED, function (e) {
-        var type = e.layerType,
-            layer = e.layer;
-
-        if (type != "polygon") {
-          return;
-        }
+      map.on(L.Draw.Event.CREATED, function(e) {
+        var type = e.layerType;
+        var layer = e.layer;
 
         var fencename = prompt("Please enter name of fence", "");
         coords = loopCoords(layer.getLatLngs())
@@ -1583,21 +1588,21 @@ new Vue({
         layer.bindPopup('<b>' + fencename + '</b><br><a href=savefence?name=' + encodeURI(fencename) + '&coords=' + coords + '>Save to MAD</a>');
         editableLayers.addLayer(layer);
         layer.openPopup();
-    });
+      });
 
-    map.on('draw:edited', function (e) {
+      map.on('draw:edited', function(e) {
         var layers = e.layers;
-        layers.eachLayer(function (layer) {
-            coords = loopCoords(layer.getLatLngs())
-            layer._popup.setContent('<b>' + newfences[layer] + '</b><br><a href=savefence?name=' + encodeURI(newfences[layer]) + '&coords=' + coords + '>Save to MAD</a>')
-            layer.openPopup();
+        layers.eachLayer(function(layer) {
+          coords = loopCoords(layer.getLatLngs())
+          layer._popup.setContent('<b>' + newfences[layer] + '</b><br><a href=savefence?name=' + encodeURI(newfences[layer]) + '&coords=' + coords + '>Save to MAD</a>')
+          layer.openPopup();
         });
-    });
+      });
 
       // initial load
       this.map_fetch_everything();
 
-      // iuntervals
+      // intervals
       setInterval(this.map_fetch_everything, 6000);
       if (this.settings.cleanup) {
         this.cleanup();
