@@ -710,7 +710,7 @@ class RouteManagerBase(ABC):
 
     def _get_unprocessed_coords_from_worker(self) -> list:
         unprocessed_coords: list = []
-        with self._mananger_mutex:
+        with self._manager_mutex:
             for origin, entry in self._routepool.items():
                 unprocessed_coords.append(entry.queue)
 
