@@ -431,7 +431,8 @@ class WorkerQuests(MITMBase):
         stop_screen_clear = Event()
         logger.info('Cleanup Box')
         not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
-                     'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
+                     'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium', 'Raid', 'Teil',
+                     'Élément', 'mystérieux', 'Mysterious', 'Component', 'Mysteriöses')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
@@ -482,9 +483,13 @@ class WorkerQuests(MITMBase):
 
                 try:
                     item_text = self._pogoWindowManager.get_inventory_text(self.get_screenshot_path(),
-                                                                       self._id, text_x1, text_x2, check_y_text_ending,
-                                                                       check_y_text_starter)
-
+                                                                           self._id, text_x1, text_x2,
+                                                                           check_y_text_ending, check_y_text_starter)
+                    if item_text is None:
+                        logger.error("Did not get any text in inventory")
+                        # TODO: could this be running forever?
+                        trash += 1
+                        pass
                     logger.info("Found item {}", str(item_text))
                     match_one_item : bool = False
                     for text in not_allow:
@@ -660,7 +665,7 @@ class WorkerQuests(MITMBase):
             self._open_gym(self._delay_add)
             self.set_devicesettings_value('last_action_time', time.time())
             data_received = self._wait_for_data(
-                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
+                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=50)
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
                 time.sleep(10)
@@ -679,7 +684,7 @@ class WorkerQuests(MITMBase):
             elif data_received == LatestReceivedType.UNDEFINED:
                 logger.info('Getting timeout - or other unknown error. Try again')
                 if not self._checkPogoButton():
-                    self._checkPogoClose(takescreen=False)
+                    self._checkPogoClose(takescreen=True)
 
             to += 1
         return data_received
@@ -787,7 +792,8 @@ class WorkerQuests(MITMBase):
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?
             latest_proto = latest.get(proto_to_wait_for, None)
-            latest_timestamp = latest_proto.get("timestamp", 0)
+            latest_timestamp = latest_proto.get("timestamp", 0) + 5000
+            # ensure a small timedelta because pogo smts loads data later then excepted
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
@@ -822,8 +828,6 @@ class WorkerQuests(MITMBase):
                 if proto_to_wait_for == 4 and 'inventory_delta' in latest_data['payload'] and \
                         len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return LatestReceivedType.CLEAR
-                if proto_to_wait_for == PROTO_NUMBER_FOR_GMO:
-                    return LatestReceivedType.GMO
             else:
                 logger.debug("latest timestamp of proto {} ({}) is older than {}", str(
                         proto_to_wait_for), str(latest_timestamp), str(timestamp))

@@ -440,7 +440,7 @@ class DbWrapper:
         res = self.execute(query)
         unvisited: List[Location] = []
         if geofence_helper is not None:
-            for (latitude, longitude, vis) in res:
+            for (latitude, longitude) in res:
                 unvisited.append(Location(latitude, longitude))
 
             geofenced_coords = geofence_helper.get_geofenced_coordinates(unvisited)

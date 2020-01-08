@@ -218,7 +218,7 @@ class WorkerBase(ABC):
         while not self._stop_worker_event.isSet():
             time.sleep(1)
 
-        while t_main_work.isAlive():
+        while t_main_work.is_alive():
             time.sleep(1)
             t_main_work.join()
         logger.info("Worker {} stopped gracefully", str(self._id))
@@ -564,63 +564,51 @@ class WorkerBase(ABC):
             self._communicator.turnScreenOn()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
-    def _check_windows(self):
+    def _ensure_pogo_topmost(self):
         logger.info('Checking pogo screen...')
 
-        returncode: ScreenType = ScreenType.UNDEFINED
-
-        while not returncode == ScreenType.POGO and not self._stop_worker_event.is_set():
-            returncode = self._WordToScreenMatching.matchScreen()
-
-            if returncode != ScreenType.POGO:
-
-                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
-                                                   ScreenType.PERMISSION)) \
-                        and self._last_screen_type == returncode \
-                        and self._same_screen_count == 3:
-                    logger.warning('Gamefreezed - restarting device')
+        while not self._stop_worker_event.is_set():
+            screen_type: ScreenType = self._WordToScreenMatching.detect_screentype()
+            if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
+                self._last_screen_type = screen_type
+                logger.debug2("Found pogo or questlog to be open")
+                break
+            elif screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
+                logger.info("Found screen multiple times in a row")
+                if self._same_screen_count < 3:
+                    self._same_screen_count += 1
+                else:
+                    logger.warning('Game froze - restarting device')
                     self._reboot()
                     break
 
-                if (returncode not in (ScreenType.UNDEFINED, ScreenType.ERROR,
-                                                   ScreenType.PERMISSION)) \
-                        and self._last_screen_type == returncode \
-                        and self._same_screen_count < 3:
-                    self._same_screen_count += 1
-                    logger.warning('Getting same screen again - maybe Pogo freeze?')
+            # now handle all screens that may not have been handled by detect_screentype since that only clicks around
+            # so any clearing data whatsoever happens here (for now)
+            if screen_type == ScreenType.UNDEFINED:
+                logger.error("Undefined screentype!")
+            if screen_type == ScreenType.BLACK:
+                logger.info("Found Black Loading Screen - waiting ...")
+                time.sleep(20)
 
-                if returncode == ScreenType.BLACK:
-                    logger.info("Found Black Loading Screen - waiting ...")
-                    time.sleep(20)
-
-                if returncode == ScreenType.GAMEDATA or returncode == ScreenType.CONSENT:
-                    logger.warning('Error getting Gamedata or strange ggl message appears')
-                    self._loginerrorcounter += 1
+            if screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT, ScreenType.CLOSE]:
+                logger.warning('Error getting Gamedata or strange ggl message appears')
+                self._loginerrorcounter += 1
+                if self._loginerrorcounter < 3:
                     self._restart_pogo(True)
-
-                elif returncode == ScreenType.CLOSE:
-                    logger.warning('Pogo not in foreground...')
-                    self._restart_pogo(True)
-
-                elif returncode == ScreenType.DISABLED:
-                    # Screendetection is disabled
-                    break
-
-                elif returncode == ScreenType.UPDATE:
-                    logger.error('Found update pogo screen - wait for update action')
-                    # update pogo - later with new rgc version
-                    while not self._stop_worker_event.is_set():
-                        time.sleep(10)
-
-                elif returncode == ScreenType.ERROR or returncode == ScreenType.FAILURE:
+            elif screen_type == ScreenType.DISABLED:
+                # Screendetection is disabled
+                break
+            elif screen_type == ScreenType.UPDATE:
+                logger.warning('Found update pogo screen - sleeping 5 minutes for another check of the screen')
+                # update pogo - later with new rgc version
+                time.sleep(300)
+            elif screen_type in [ScreenType.ERROR, ScreenType.FAILURE]:
                     logger.warning('Something wrong with screendetection or pogo failure screen')
                     self._loginerrorcounter += 1
-
-                elif returncode == ScreenType.GPS:
+            elif screen_type == ScreenType.GPS:
                     logger.warning("Detected GPS error 11 - rebooting device")
                     self._reboot()
-
-                elif returncode == ScreenType.SN:
+            elif screen_type == ScreenType.SN:
                     logger.warning('Getting SN Screen - reset Magisk Settings')
                     time.sleep(3)
                     self._stop_pogo()
@@ -632,7 +620,7 @@ class WorkerBase(ABC):
                     self._reboot()
                     break
 
-                if self._loginerrorcounter == 2:
+            if self._loginerrorcounter == 2:
                     logger.error('Could not login again - (clearing game data + restarting device')
                     self._stop_pogo()
                     self._communicator.clearAppCache("com.nianticlabs.pokemongo")
@@ -642,8 +630,7 @@ class WorkerBase(ABC):
                     self._reboot()
                     break
 
-                self._last_screen_type = returncode
-
+            self._last_screen_type = screen_type
         logger.info('Checking pogo screen is finished')
         return True
 
@@ -653,7 +640,7 @@ class WorkerBase(ABC):
         time.sleep(5)
         self._communicator.resetAppdata("com.nianticlabs.pokemongo")
         self._turn_screen_on_and_start_pogo()
-        if not self._check_windows():
+        if not self._ensure_pogo_topmost():
             logger.error('Kill Worker...')
             self._stop_worker_event.set()
             return False
@@ -670,7 +657,7 @@ class WorkerBase(ABC):
             time.sleep(2)
         return
 
-    def _check_quest(self):
+    def _check_quest(self) -> ScreenType:
         logger.info('Precheck Quest Menu')
         questcounter: int = 0
         questloop: int = 0
@@ -683,7 +670,7 @@ class WorkerBase(ABC):
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                     delayAfter=2):
             logger.error("_check_windows: Failed getting screenshot")
-            return False
+            return ScreenType.ERROR
 
         while not returncode == ScreenType.POGO and not self._stop_worker_event.isSet():
             returncode = self._WordToScreenMatching.checkQuest(self.get_screenshot_path())
@@ -718,13 +705,12 @@ class WorkerBase(ABC):
             if questloop > 5:
                 logger.warning("Give up - maybe research screen is there...")
                 return ScreenType.POGO
-                break
             questloop += 1
             firstround = False
 
-        return
+        return ScreenType.POGO
 
-    def _start_pogo(self):
+    def _start_pogo(self) -> bool:
         """
         Routine to start pogo.
         Return the state as a boolean do indicate a successful start
@@ -747,7 +733,6 @@ class WorkerBase(ABC):
 
         cur_time = time.time()
         start_result = False
-        self._mitm_mapper.set_injection_status(self._id, False)
         while not pogo_topmost:
             start_result = self._communicator.startApp(
                 "com.nianticlabs.pokemongo")
@@ -759,9 +744,6 @@ class WorkerBase(ABC):
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()
-        if not self._wait_for_injection() or self._stop_worker_event.is_set():
-            raise InternalStopWorkerException
-
         return start_result
 
     def _stop_pogo(self):
@@ -848,7 +830,7 @@ class WorkerBase(ABC):
         self._getToRaidscreen(3)
         time.sleep(1)
 
-    def _get_trash_positions(self):
+    def _get_trash_positions(self, full_screen=False):
         logger.debug("_get_trash_positions: Get_trash_position.")
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
             logger.debug("_get_trash_positions: Failed getting screenshot")
@@ -860,7 +842,7 @@ class WorkerBase(ABC):
             return None
 
         logger.debug("_get_trash_positions: checking screen")
-        trashes = self._pogoWindowManager.get_trash_click_positions(self.get_screenshot_path())
+        trashes = self._pogoWindowManager.get_trash_click_positions(self.get_screenshot_path(), full_screen=full_screen)
 
         return trashes
 
