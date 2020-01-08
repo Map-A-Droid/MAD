@@ -435,7 +435,8 @@ class WorkerQuests(MITMBase):
         stop_screen_clear = Event()
         logger.info('Cleanup Box')
         not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
-                     'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère')
+                     'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium', 'Raid', 'Teil',
+                     'Élément', 'mystérieux', 'Mysterious', 'Component', 'Mysteriöses')
         x, y = self._resocalc.get_close_main_button_coords(self)[0], self._resocalc.get_close_main_button_coords(self)[
             1]
         self._communicator.click(int(x), int(y))
@@ -690,7 +691,7 @@ class WorkerQuests(MITMBase):
             elif data_received == LatestReceivedType.UNDEFINED:
                 logger.info('Getting timeout - or other unknown error. Try again')
                 if not self._checkPogoButton():
-                    self._checkPogoClose(takescreen=False)
+                    self._checkPogoClose(takescreen=True)
 
             to += 1
         if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED] and self._rocket:
