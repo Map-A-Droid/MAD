@@ -126,7 +126,11 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, q
             var image = '<center><img src="static/quest/reward_stardust.png" width="50"></center>';
             break;
         case 7:
+            var costume = '';
             var form = quest_pokemon_form_id || '00';
+            if (quest_pokemon_costume_id != '00') {
+                var costume = '_' + quest_pokemon_costume_id;
+            }
             var costume = '_' + quest_pokemon_costume_id || '';
             var image = '<center><img src="asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + costume +'.png" width="100"></center>';
             break;
