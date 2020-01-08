@@ -672,7 +672,7 @@ class WorkerQuests(MITMBase):
             self._open_gym(self._delay_add)
             self.set_devicesettings_value('last_action_time', time.time())
             data_received = self._wait_for_data(
-                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
+                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=50)
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
                 time.sleep(10)
@@ -803,7 +803,8 @@ class WorkerQuests(MITMBase):
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?
             latest_proto = latest.get(proto_to_wait_for, None)
-            latest_timestamp = latest_proto.get("timestamp", 0)
+            latest_timestamp = latest_proto.get("timestamp", 0) + 5000
+            # ensure a small timedelta because pogo smts loads data later then excepted
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
@@ -838,8 +839,6 @@ class WorkerQuests(MITMBase):
                 if proto_to_wait_for == 4 and 'inventory_delta' in latest_data['payload'] and \
                         len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return LatestReceivedType.CLEAR
-                if proto_to_wait_for == PROTO_NUMBER_FOR_GMO:
-                    return LatestReceivedType.GMO
             else:
                 logger.debug("latest timestamp of proto {} ({}) is older than {}", str(
                         proto_to_wait_for), str(latest_timestamp), str(timestamp))

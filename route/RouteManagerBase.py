@@ -708,6 +708,14 @@ class RouteManagerBase(ABC):
 
         return 0 if len(temp_worker_round_list) == 0 else min(temp_worker_round_list)
 
+    def _get_unprocessed_coords_from_worker(self) -> list:
+        unprocessed_coords: list = []
+        with self._mananger_mutex:
+            for origin, entry in self._routepool.items():
+                unprocessed_coords.append(entry.queue)
+
+        return unprocessed_coords
+
     def _other_worker_closer_to_prioq(self, prioqcoord, origin):
         logger.debug('Check distances from worker to prioQ coord')
         temp_distance: float = 0.0

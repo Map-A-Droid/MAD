@@ -109,7 +109,7 @@ class RouteManagerQuests(RouteManagerBase):
             else:
                 # we only want to add stops that we haven't spun yet
                 for stop in self._stoplist:
-                    if stop not in self._stops_not_processed:
+                    if stop not in self._stops_not_processed and stop not in self._get_unprocessed_coords_from_worker():
                         self._stops_not_processed[stop] = 1
                     else:
                         self._stops_not_processed[stop] += 1
