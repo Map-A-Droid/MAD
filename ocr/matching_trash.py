@@ -19,7 +19,7 @@ def get_delete_item_coords(x):
     return click_x
 
 
-def trash_image_matching(screen_img):
+def trash_image_matching(screen_img, full_screen):
     clicklist: List[Trash] = []
     screen = cv2.imread(screen_img)
     # print (screen.shape[:2])
@@ -66,7 +66,10 @@ def trash_image_matching(screen_img):
         loc = np.where(res >= threshold)
         boxcount = 0
         for pt in zip(*loc[::-1]):
-            if pt[0] > width/4*3 and pt[1] < height/6*5:
+            screen_height_max = height/6*5
+            if full_screen:
+                screen_height_max = height
+            if pt[0] > width/4*3 and pt[1] < screen_height_max:
                 x_coord = int(pt[0] + tW / 2)
                 y_coord = int(pt[1] + tH / 2)
 

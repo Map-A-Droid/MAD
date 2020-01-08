@@ -830,7 +830,7 @@ class WorkerBase(ABC):
         self._getToRaidscreen(3)
         time.sleep(1)
 
-    def _get_trash_positions(self):
+    def _get_trash_positions(self, full_screen=False):
         logger.debug("_get_trash_positions: Get_trash_position.")
         if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1)):
             logger.debug("_get_trash_positions: Failed getting screenshot")
@@ -842,7 +842,7 @@ class WorkerBase(ABC):
             return None
 
         logger.debug("_get_trash_positions: checking screen")
-        trashes = self._pogoWindowManager.get_trash_click_positions(self.get_screenshot_path())
+        trashes = self._pogoWindowManager.get_trash_click_positions(self.get_screenshot_path(), full_screen=full_screen)
 
         return trashes
 

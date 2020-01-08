@@ -239,12 +239,12 @@ class PogoWindows:
             logger.debug("__readCircleCords: Found no Circle")
             return False, 0, 0, 0, 0
 
-    def get_trash_click_positions(self, filename):
+    def get_trash_click_positions(self, filename, full_screen=False):
         if not os.path.isfile(filename):
             logger.error("get_trash_click_positions: {} does not exist", str(filename))
             return None
 
-        return self.__thread_pool.apply_async(trash_image_matching, (filename,)).get()
+        return self.__thread_pool.apply_async(trash_image_matching, (filename, full_screen, )).get()
 
     def read_amount_raid_circles(self, filename, identifier, communicator):
         if not os.path.isfile(filename):
