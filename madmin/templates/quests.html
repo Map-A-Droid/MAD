@@ -46,13 +46,14 @@ function setGrid(tableGridHtmlId, gridData) {
             {
                 "targets": [2],
                 "render": function (data, type, row) {
-                    var reward = build_quest_small(row.quest_reward_type_raw, row.item_id, row.pokemon_id, row.pokemon_form, row.pokemon_costume);
+                    var reward = build_quest_small(row.quest_reward_type_raw, row.item_id, row.pokemon_id, row.pokemon_form, row.pokemon_asset_bundle_id, row.pokemon_costume);
                     return reward;
                 }
             },
             {
                 "targets": [3],
                 "render": function (data, type, row) {
+                    //TODO use form names in rewards
                     var quest_text = build_reward_text(row.quest_reward_type_raw, row.item_amount, row.pokemon_name, row.item_type);
                     return quest_text;
                 }
@@ -117,7 +118,7 @@ function build_reward_text(quest_reward_type, quest_item_amount, monname, quest_
     return rewardtext;
 }
 
-function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, quest_pokemon_form_id, quest_pokemon_costume_id) {
+function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, quest_pokemon_form_id, quest_pokemon_asset_bundle_id, quest_pokemon_costume_id) {
     switch (quest_reward_type) {
         case 2:
             var image = '<center><img src="static/quest/reward_' + quest_item_id + '_1.png" width="50"></center>';
@@ -127,11 +128,12 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, q
             break;
         case 7:
             var costume = '';
-            var form = quest_pokemon_form_id || '00';
+            var asset_bundle = quest_pokemon_asset_bundle_id || '00';
             if (quest_pokemon_costume_id != '00') {
-                var costume = '_' + quest_pokemon_costume_id;
+                costume = '_' + quest_pokemon_costume_id;
             }
-            var image = '<center><img src="asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + form + costume +'.png" width="100"></center>';
+            // TODO offer config choice of asset repos with form id or asset bundle id
+            var image = '<center><img src="asset/pokemon_icons/pokemon_icon_' + quest_pokemon_id + '_' + asset_bundle + costume +'.png" width="100"></center>';
             break;
     }
     return image;
