@@ -106,16 +106,16 @@ class RouteCalc(resource.Resource):
                             route_name: str = 'Unknown'):
         if overwrite_calculation:
             calc_type = 'quick'
-        self.recalc_status = 1
+        self.set_recalc_status(True)
         if in_memory is False:
             if delete_old_route:
                 self.new_calc = True
                 logger.debug("Deleting routefile...")
                 self._data['fields']['routefile'] = []
-        self.save()
+                self.save()
         new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, in_memory, num_processes=num_procs,
                                       algorithm=calc_type, useS2=useS2, S2level=S2level, route_name=route_name)
-        self.recalc_status = 0
+        self.set_recalc_status(False)
         self.save()
         return new_route
 
@@ -173,6 +173,7 @@ class RouteCalc(resource.Resource):
                 calc_coord = '%s,%s' % (coord['lat'], coord['lng'])
                 calc_coords.append(calc_coord)
             # Only save if we aren't calculating in memory
+            print('saving new coords: %s' % (calc_coords,))
             self._data['fields']['routefile'] = calc_coords
             self.save()
         return export_data
@@ -191,3 +192,12 @@ class RouteCalc(resource.Resource):
         for event in clustered_events:
             coords_cleaned_up.append(event[1])
         return coords_cleaned_up
+
+    def set_recalc_status(self, status):
+        data = {
+            'recalc_status': int(status)
+        }
+        where = {
+            self.primary_key: self.identifier
+        }
+        self._dbc.autoexec_update(self.table, data, where_keyvals=where)
