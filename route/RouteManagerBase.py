@@ -110,9 +110,16 @@ class RouteManagerBase(ABC):
             self.delay_after_timestamp_prio = self.settings.get(
                 "delay_after_prio_event", None)
             self.starve_route = self.settings.get("starve_route", False)
+            if mode == "mon_mitm":
+                self.remove_from_queue_backlog = self.settings.get(
+                        "remove_from_queue_backlog", 300)
+            else:
+                self.remove_from_queue_backlog = self.settings.get(
+                        "remove_from_queue_backlog", 0)
         else:
             self.delay_after_timestamp_prio = None
             self.starve_route = False
+            self.remove_from_queue_backlog = None
 
         # initialize priority queue variables
         self._prio_queue = None
@@ -507,24 +514,16 @@ class RouteManagerBase(ABC):
             # exclude IV prioQ to also pass encounterIDs since we do not pass additional information through when
             # clustering
             return latest
-        delete_seconds_passed = 0
-        if self.settings is not None:
-            if self.mode == "mon_mitm":
-                delete_seconds_passed = self.settings.get(
-                        "remove_from_queue_backlog", 300)
-                if delete_seconds_passed == 0:
-                    logger.error("You are running area {} in mon_mitm mode with "
-                            "priority queue enabled and remove_from_queue_backlog "
-                            "set to 0. This may result in building up a significant "
-                            "queue backlog and reduced scanning performance. "
-                            "Please review this setting or set it to the default "
-                            "of 300.", self.name)
-            else:
-                delete_seconds_passed = self.settings.get(
-                        "remove_from_queue_backlog", 0)
+        if self.mode == "mon_mitm" and self.remove_from_queue_backlog == 0:
+            logger.error("You are running area {} in mon_mitm mode with "
+                    "priority queue enabled and remove_from_queue_backlog "
+                    "set to 0. This may result in building up a significant "
+                    "queue backlog and reduced scanning performance. "
+                    "Please review this setting or set it to the default "
+                    "of 300.", self.name)
 
-        if delete_seconds_passed is not None:
-            delete_before = time.time() - delete_seconds_passed
+        if self.remove_from_queue_backlog is not None:
+            delete_before = time.time() - self.remove_from_queue_backlog
         else:
             delete_before = 0
         len_before = len(latest)
@@ -616,13 +615,10 @@ class RouteManagerBase(ABC):
                 # because it will remove past events only at the moment of prioQ calculation,
                 # but here it would skip ALL events, because events can only be due when they are in the past
                 if self.mode == "mon_mitm":
-                    if self.settings is not None:
-                        delete_seconds_passed = self.settings.get(
-                                "remove_from_queue_backlog", 300)
-                        if delete_seconds_passed not in [None, 0]:
-                            delete_before = time.time() - delete_seconds_passed
-                        else:
-                            delete_before = 0
+                    if self.remove_from_queue_backlog not in [None, 0]:
+                        delete_before = time.time() - self.remove_from_queue_backlog
+                    else:
+                        delete_before = 0
                     if next_timestamp < delete_before:
                         logger.warning("Prio event for route {} surpassed the "
                                        "maximum backlog time and will be skipped. "
