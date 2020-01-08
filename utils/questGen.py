@@ -2,6 +2,7 @@ import gettext
 import json
 import re
 
+from utils.gamemechanicutil import form_mapper
 from utils.language import i8ln, open_json_file
 
 gettext.find('quest', 'locales', all=True)
@@ -26,6 +27,7 @@ def generate_quest(quest):
     item_type = ''
     pokemon_form = ''
     pokemon_costume = ''
+    pokemon_asset_bundle = '00'
 
     if quest_reward_type == _('Item'):
         item_amount = quest['quest_item_amount']
@@ -40,6 +42,8 @@ def generate_quest(quest):
         pokemon_id = quest['quest_pokemon_id']
         pokemon_form = quest['quest_pokemon_form_id']
         pokemon_costume = quest['quest_pokemon_costume_id']
+        if pokemon_form != '00':
+            pokemon_asset_bundle = form_mapper(pokemon_form)
 
     if not quest['task']:
         quest_task = questtask(
@@ -60,6 +64,7 @@ def generate_quest(quest):
         'pokemon_id': pokemon_id,
         'pokemon_name': pokemon_name,
         'pokemon_form': pokemon_form,
+        'pokemon_asset_bundle_id': pokemon_asset_bundle,
         'pokemon_costume': pokemon_costume,
         'quest_type': quest_type,
         'quest_type_raw': quest['quest_type'],
