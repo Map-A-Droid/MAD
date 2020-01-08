@@ -368,7 +368,7 @@ class DbPogoProtoSubmit:
             "INSERT INTO trs_quest (GUID, quest_type, quest_timestamp, quest_stardust, quest_pokemon_id, "
             "quest_pokemon_form_id, quest_pokemon_costume_id, "
             "quest_reward_type, quest_item_id, quest_item_amount, quest_target, quest_condition, quest_reward, "
-            "quest_task, quest_template) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
+            "quest_task, quest_template) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
             "ON DUPLICATE KEY UPDATE quest_type=VALUES(quest_type), quest_timestamp=VALUES(quest_timestamp), "
             "quest_stardust=VALUES(quest_stardust), quest_pokemon_id=VALUES(quest_pokemon_id), "
             "quest_reward_type=VALUES(quest_reward_type), quest_item_id=VALUES(quest_item_id), "
