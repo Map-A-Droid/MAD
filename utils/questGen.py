@@ -43,7 +43,7 @@ def generate_quest(quest):
         pokemon_form = quest['quest_pokemon_form_id']
         pokemon_costume = quest['quest_pokemon_costume_id']
         if pokemon_form != '00':
-            pokemon_asset_bundle = form_mapper(pokemon_form)
+            pokemon_asset_bundle = form_mapper(int(pokemon_id), pokemon_form)
 
     if not quest['task']:
         quest_task = questtask(
