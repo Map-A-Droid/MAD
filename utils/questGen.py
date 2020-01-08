@@ -24,7 +24,8 @@ def generate_quest(quest):
     pokemon_id = '000'
     pokemon_name = ''
     item_type = ''
-    pokemon_form = extractForm(quest["quest_reward"])
+    pokemon_form = ''
+    pokemon_costume = ''
 
     if quest_reward_type == _('Item'):
         item_amount = quest['quest_item_amount']
@@ -37,6 +38,8 @@ def generate_quest(quest):
         item_type = 'Pokemon'
         pokemon_name = i8ln(pokemonname(str(quest['quest_pokemon_id'])))
         pokemon_id = quest['quest_pokemon_id']
+        pokemon_form = quest['quest_pokemon_form_id']
+        pokemon_costume = quest['quest_pokemon_costume_id']
 
     if not quest['task']:
         quest_task = questtask(
@@ -57,6 +60,7 @@ def generate_quest(quest):
         'pokemon_id': pokemon_id,
         'pokemon_name': pokemon_name,
         'pokemon_form': pokemon_form,
+        'pokemon_costume': pokemon_costume,
         'quest_type': quest_type,
         'quest_type_raw': quest['quest_type'],
         'quest_reward_type': quest_reward_type,
@@ -64,7 +68,8 @@ def generate_quest(quest):
         'quest_task': quest_task,
         'quest_target': quest['quest_target'],
         'quest_condition': quest['quest_condition'],
-        'quest_template': quest['quest_template']
+        'quest_template': quest['quest_template'],
+
     })
     return quest_raw
 
