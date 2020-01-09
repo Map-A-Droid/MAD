@@ -105,15 +105,23 @@ class map(object):
             if route is None:
                 continue
             route_serialized = []
+            s2cells = {}
 
             for location in route:
                 route_serialized.append([
                     getCoordFloat(location.lat), getCoordFloat(location.lng)
                 ])
+
+                if mode == "raids_mitm":
+                    cells = S2Helper.get_S2cells_from_circle(location.lat, location.lng, 490)
+                    for cell in cells:
+                        s2cells[str(cell.id())] = S2Helper.coords_of_cell(cell.id())
+
             routeexport.append({
                 "name": name,
                 "mode": mode,
-                "coordinates": route_serialized
+                "coordinates": route_serialized,
+                "s2cells": s2cells
             })
 
         return jsonify(routeexport)
