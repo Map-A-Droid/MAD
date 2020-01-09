@@ -25,8 +25,8 @@ def generate_quest(quest):
     pokemon_id = '000'
     pokemon_name = ''
     item_type = ''
-    pokemon_form = ''
-    pokemon_costume = ''
+    pokemon_form = '00'
+    pokemon_costume = '00'
     pokemon_asset_bundle = '00'
 
     if quest_reward_type == _('Item'):
