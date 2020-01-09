@@ -192,6 +192,11 @@ if __name__ == "__main__":
         mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, ws_server, False)
         filename = args.mappings
         if args.only_routes:
+            recalc_in_progress = True
+            while recalc_in_progress:
+                time.sleep(5)
+                sql = "SELECT COUNT(*) > 0 FROM `settings_routecalc` WHERE `recalc_status` = 1"
+                recalc_in_progress = db_wrapper.autofetch_value(sql)
             logger.info("Done calculating routes!")
             # TODO: shutdown managers properly...
             sys.exit(0)
