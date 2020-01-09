@@ -116,7 +116,6 @@ class RouteCalc(resource.Resource):
         new_route = self.getJsonRoute(coords, max_radius, max_coords_within_radius, in_memory, num_processes=num_procs,
                                       algorithm=calc_type, useS2=useS2, S2level=S2level, route_name=route_name)
         self.set_recalc_status(False)
-        self.save()
         return new_route
 
     def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, in_memory, num_processes=1, algorithm='optimized',
@@ -173,7 +172,6 @@ class RouteCalc(resource.Resource):
                 calc_coord = '%s,%s' % (coord['lat'], coord['lng'])
                 calc_coords.append(calc_coord)
             # Only save if we aren't calculating in memory
-            print('saving new coords: %s' % (calc_coords,))
             self._data['fields']['routefile'] = calc_coords
             self.save()
         return export_data
