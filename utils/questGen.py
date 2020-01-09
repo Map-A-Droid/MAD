@@ -126,6 +126,10 @@ def questtask(typeid, condition, target):
     arr = {}
     arr['0'] = target
     text = questtype(typeid)
+    # TODO use the dict instead of regex parsing in all logic
+    condition_dict = {}
+    if condition is not None and condition != '':
+        condition_dict = json.loads(condition)
 
     if typeid == 4:
         arr['wb'] = ""
@@ -317,15 +321,18 @@ def questtask(typeid, condition, target):
                         cur += 1
     elif typeid == 29:
         # QUEST_BATTLE_TEAM_ROCKET Team Go rucket grunt batles.
-        # Condition type 27 means against a grunt leader WITH_INVASION_CHARACTER
-        if re.search(r'"type": 27', condition) is not None:
-            text = _('Battle {0} times against the Team GO Rocket Leaders')
-        elif int(target) == int(1):
+        # Condition type 27 means against a grunt leader WITH_INVASION_CHARACTER= 1
+        if int(target) == int(1):
             text = _('Battle against a Team Rocket Grunt')
 
-        # Condition type 18 means win a battle
-        if re.search(r'"type": 18', condition) is not None:
-            text = text.replace(_('Battle'), _('Win'))
+        for con in condition_dict:
+            if con.get('type', 0) == 27 and con.get('with_invasion_character',{}).get('category') == 1:
+                text = _('Battle {0} times against the Team GO Rocket Leaders')
+                # TODO Handle category for specific team leaders as well (Arlo, Cliff, Sierra)
+            if con.get('type', 0) == 18:
+                # Condition type 18 means win a battle
+                # TODO change WIN to Defeat like in-game
+                text = text.replace(_('Battle'), _('Win'))
 
     if int(target) == int(1):
         text = text.replace(_(' Eggs'), _('n Egg'))

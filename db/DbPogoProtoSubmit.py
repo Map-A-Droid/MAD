@@ -354,7 +354,7 @@ class DbPogoProtoSubmit:
         item_amount = item.get("amount", None)
         stardust = reward.get("stardust", None)
         pokemon_id = encounter.get("pokemon_id", None)
-        form_id = encounter.get("pokemon_display",{}).get("form_value", 0)
+        form_id = encounter.get("pokemon_display", {}).get("form_value", 0)
         costume_id = encounter.get("pokemon_display", {}).get("costume_value", 0)
         target = goal.get("target", None)
         condition = goal.get("condition", None)
