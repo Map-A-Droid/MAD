@@ -135,7 +135,10 @@ def errorFilter(record):
 # this is being used to change log level for gevent/Flask/Werkzeug
 class LogLevelChanger:
     def log(level, msg):
-        logger.opt(depth=6).log("DEBUG5", msg)
+        if level >= 40:
+            logger.log(level, msg)
+        else:
+            logger.opt(depth=6).log("DEBUG5", msg)
 
 
 # this is being used to intercept standard python logging to loguru
@@ -144,23 +147,7 @@ class InterceptHandler(logging.Handler):
         logger.opt(depth=6, exception=record.exc_info).log("DEBUG5", record.getMessage())
 
 
-def debug2(message, *args, **kwargs):
-    logger.opt(depth=1).log("DEBUG2", message, *args, **kwargs)
-
-
-def debug3(message, *args, **kwargs):
-    logger.opt(depth=1).log("DEBUG3", message, *args, **kwargs)
-
-
-def debug4(message, *args, **kwargs):
-    logger.opt(depth=1).log("DEBUG4", message, *args, **kwargs)
-
-
-def debug5(message, *args, **kwargs):
-    logger.opt(depth=1).log("DEBUG5", message, *args, **kwargs)
-
-
-logger.debug2 = debug2
-logger.debug3 = debug3
-logger.debug4 = debug4
-logger.debug5 = debug5
+logger.debug2 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG2", message, *args, **kwargs)
+logger.debug3 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG3", message, *args, **kwargs)
+logger.debug4 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG4", message, *args, **kwargs)
+logger.debug5 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG5", message, *args, **kwargs)
