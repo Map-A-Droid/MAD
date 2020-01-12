@@ -28,6 +28,11 @@ app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.secret_key = "8bc96865945be733f3973ba21d3c5949"
 log = logger
 
+@app.errorhandler(500)
+def internal_error(exception):
+    logger.opt(exception=True).critical("An unhanded exception occurred!")
+    return render_template('500.html'), 500
+
 
 def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
     # load routes
