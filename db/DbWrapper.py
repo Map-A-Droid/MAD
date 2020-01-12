@@ -1031,3 +1031,13 @@ class DbWrapper:
             }
             res = self._db_exec.autoexec_insert('madmin_instance', instance_data)
             return res
+
+    def get_mad_version(self):
+        return self.autofetch_value('SELECT val FROM versions where versions.key = %s', args=('mad_version'))
+
+    def update_mad_version(self, version):
+        update_data = {
+            'key': 'mad_version',
+            'val': version
+        }
+        return self.autoexec_insert('versions', update_data, optype="ON DUPLICATE")

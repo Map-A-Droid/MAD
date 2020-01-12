@@ -12,7 +12,7 @@ import copy
 from db.DbWrapper import DbWrapper
 from db.DbSchemaUpdater import DbSchemaUpdater
 
-current_version = 19
+current_version = 20
 
 class MADVersion(object):
 
@@ -25,19 +25,36 @@ class MADVersion(object):
         self.instance_id = data_manager.instance_id
 
     def get_version(self):
-        try:
-            # checking mappings.json
-            convert_mappings()
-            with open('version.json') as f:
-                version = json.load(f)
-            self._version = int(version['version'])
-            if int(self._version) < int(current_version):
-                logger.success('Performing update now')
+        # checking mappings.json
+        convert_mappings()
+        dbVersion = self.dbwrapper.get_mad_version()
+        if not dbVersion:
+            logger.warning("Moving internal MAD version to database")
+            try:
+                with open('version.json') as f:
+                    version = json.load(f)
+                self._version = int(version['version'])
+                self.dbwrapper.update_mad_version(self._version)
+            except FileNotFoundError:
+                logger.warning("Could not find version.json during move to DB"
+                        ", will use version 0")
+                self.dbwrapper.update_mad_version(0)
                 self.start_update()
-                logger.success('Updates finished')
-        except FileNotFoundError:
-            self.set_version(0)
+            dbVersion = self.dbwrapper.get_mad_version()
+            if dbVersion:
+                logger.success("Moved internal MAD version to database "
+                        "as version {}", dbVersion)
+            else:
+                logger.error("Moving internal MAD version to DB failed!")
+        else:
+            logger.info("Internal MAD version in DB is {}", dbVersion)
+            self._version = int(dbVersion)
+
+        if int(self._version) < int(current_version):
+            logger.warning('Performing updates from version {} to {} now',
+                    self._version, current_version)
             self.start_update()
+            logger.success('Updates to version {} finished', self._version)
 
     def start_update(self):
         if self._version < 1:
@@ -659,12 +676,18 @@ class MADVersion(object):
                 except Exception as e:
                     logger.exception("Unexpected error: {}", e)
 
+        if self._version < 20:
+            sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+
         self.set_version(current_version)
 
     def set_version(self, version):
-        output = {'version': version}
-        with open('version.json', 'w') as outfile:
-            json.dump(output, outfile)
+        self.dbwrapper.update_mad_version(version)
+        self._version = version
 
     def __convert_geofence(self, path):
         stripped_data = []
