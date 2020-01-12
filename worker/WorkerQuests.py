@@ -57,7 +57,6 @@ class WorkerQuests(MITMBase):
         # 1 => clear box
         # 2 => clear quest
         self.clear_thread_task = 0
-        self._start_inventory_clear = Event()
         self._delay_add = int(self.get_devicesettings_value("vps_delay", 0))
         self._stop_process_time = 0
         self._clear_quest_counter = 0
@@ -118,7 +117,6 @@ class WorkerQuests(MITMBase):
         pass
 
     def _pre_location_update(self):
-        self._start_inventory_clear.set()
         self._update_injection_settings()
 
     def _move_to_location(self):
@@ -381,9 +379,10 @@ class WorkerQuests(MITMBase):
                     self._restart_pogo(mitm_mapper=self._mitm_mapper)
 
                 logger.info('Open Stop')
-                data_received = self._open_pokestop(math.floor(time.time()))
+                self._stop_process_time = math.floor(time.time())
+                data_received = self._open_pokestop(self._stop_process_time)
                 if data_received is not None and data_received == LatestReceivedType.STOP:
-                    self._handle_stop(math.floor(time.time()))
+                    self._handle_stop(self._stop_process_time)
 
             else:
                 logger.debug('Currently in INIT Mode - no Stop processing')
@@ -401,34 +400,31 @@ class WorkerQuests(MITMBase):
     def _clear_thread(self):
         logger.info('Starting clear Quest Thread')
         while not self._stop_worker_event.is_set():
-            time.sleep(1)
-            # wait for event signal
-            while not self._start_inventory_clear.is_set():
-                if self._stop_worker_event.is_set():
-                    return
+            if self.clear_thread_task == 0:
                 time.sleep(1)
-            if self.clear_thread_task > 0:
-                try:
-                    self._work_mutex.acquire()
-                    # TODO: less magic numbers?
-                    time.sleep(1)
-                    if self.clear_thread_task == 1:
-                        logger.info("Clearing box")
-                        self.clear_box(self._delay_add)
-                        self.clear_thread_task = 0
-                        self.set_devicesettings_value('last_cleanup_time', time.time())
-                    elif self.clear_thread_task == 2 and not self._level_mode:
-                        logger.info("Clearing quest")
-                        self._clear_quests(self._delay_add)
-                        self.clear_thread_task = 0
-                    time.sleep(1)
-                    self._start_inventory_clear.clear()
-                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) as e:
-                    logger.error("Worker removed while clearing quest/box")
-                    self._stop_worker_event.set()
-                    return
-                finally:
-                    self._work_mutex.release()
+                continue
+
+            try:
+                self._work_mutex.acquire()
+                # TODO: less magic numbers?
+                time.sleep(1)
+                if self.clear_thread_task == 1:
+                    logger.info("Clearing box")
+                    self.clear_box(self._delay_add)
+                    self.clear_thread_task = 0
+                    self.set_devicesettings_value('last_cleanup_time', time.time())
+                elif self.clear_thread_task == 2 and not self._level_mode:
+                    logger.info("Clearing quest")
+                    self._clear_quests(self._delay_add)
+                    self.clear_thread_task = 0
+                time.sleep(1)
+            except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException) as e:
+                logger.error("Worker removed while clearing quest/box")
+                self._stop_worker_event.set()
+                return
+            finally:
+                self.clear_thread_task = 0
+                self._work_mutex.release()
 
     def clear_box(self, delayadd):
         stop_inventory_clear = Event()
@@ -620,7 +616,7 @@ class WorkerQuests(MITMBase):
                                               fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
                         (0 < rocket_incident_diff_ms <= 3600000):
-                    logger.info("Stop {}, {} is rocketized - processing dialog after getting data"
+                    logger.info("Stop {}, {} is rocketized - who cares :)"
                                 .format(str(latitude), str(longitude)))
                     self._rocket = True
                 else:
@@ -630,9 +626,6 @@ class WorkerQuests(MITMBase):
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     logger.info("Levelmode: Stop already visited - skipping it")
                     self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
-                    return False, True
-                elif self._level_mode and self._rocket:
-                    logger.info("Levelmode: Stop is rocketized, ignore it until later")
                     return False, True
 
                 enabled: bool = fort.get("enabled", True)
@@ -672,7 +665,7 @@ class WorkerQuests(MITMBase):
             self._open_gym(self._delay_add)
             self.set_devicesettings_value('last_action_time', time.time())
             data_received = self._wait_for_data(
-                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=35)
+                    timestamp=self._stop_process_time, proto_to_wait_for=104, timeout=50)
             if data_received == LatestReceivedType.GYM:
                 logger.info('Clicking GYM')
                 time.sleep(10)
@@ -694,9 +687,6 @@ class WorkerQuests(MITMBase):
                     self._checkPogoClose(takescreen=True)
 
             to += 1
-        if data_received in [LatestReceivedType.STOP, LatestReceivedType.UNDEFINED] and self._rocket:
-            logger.info('Check for Team Rocket Dialog or other open window')
-            self.process_rocket()
         return data_received
 
     # TODO: handle https://github.com/Furtif/POGOProtos/blob/master/src/POGOProtos/Networking/Responses
@@ -704,8 +694,6 @@ class WorkerQuests(MITMBase):
     def _handle_stop(self, timestamp: float):
         to = 0
         timeout = 35
-        if self._rocket:
-            timeout = 90
         data_received = FortSearchResultTypes.UNDEFINED
 
         while data_received != FortSearchResultTypes.QUEST and int(to) < 4:
@@ -715,11 +703,12 @@ class WorkerQuests(MITMBase):
             time.sleep(1)
             if data_received == FortSearchResultTypes.INVENTORY:
                 logger.info('Box is full... Next round!')
+                self.clear_thread_task = 1
+                time.sleep(5)
                 if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._id,
                                                                      self.current_location.lat,
                                                                      self.current_location.lng):
                     logger.warning('Cannot process this stop again')
-                self.clear_thread_task = 1
                 break
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
                 if self._level_mode:
@@ -764,7 +753,7 @@ class WorkerQuests(MITMBase):
                 logger.error('Softban - waiting...')
                 time.sleep(10)
                 self._stop_process_time = math.floor(time.time())
-                if self._open_pokestop(timestamp) is None:
+                if self._open_pokestop(self._stop_process_time) is None:
                     return
             else:
                 logger.info("Brief speed lock or we already spun it, trying again")
@@ -803,7 +792,8 @@ class WorkerQuests(MITMBase):
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?
             latest_proto = latest.get(proto_to_wait_for, None)
-            latest_timestamp = latest_proto.get("timestamp", 0)
+            latest_timestamp = latest_proto.get("timestamp", 0) + 5000
+            # ensure a small timedelta because pogo smts loads data later then excepted
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
@@ -838,8 +828,6 @@ class WorkerQuests(MITMBase):
                 if proto_to_wait_for == 4 and 'inventory_delta' in latest_data['payload'] and \
                         len(latest_data['payload']['inventory_delta']['inventory_items']) > 0:
                     return LatestReceivedType.CLEAR
-                if proto_to_wait_for == PROTO_NUMBER_FOR_GMO:
-                    return LatestReceivedType.GMO
             else:
                 logger.debug("latest timestamp of proto {} ({}) is older than {}", str(
                         proto_to_wait_for), str(latest_timestamp), str(timestamp))
