@@ -279,7 +279,7 @@ class MappingManager:
         else:
             return None
 
-    def routemanager_get_current_route(self, routemanager_name: str) -> Optional[List[Location]]:
+    def routemanager_get_current_route(self, routemanager_name: str) -> Optional[Tuple[List[Location], Dict[str, List[Location]]]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_current_route() if routemanager is not None else None
 
