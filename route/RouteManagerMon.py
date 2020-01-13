@@ -4,7 +4,7 @@ from utils.logging import logger
 
 class RouteManagerMon(RouteManagerBase):
     def _priority_queue_update_interval(self):
-        return 3540
+        return 600
 
     def _get_coords_after_finish_route(self) -> bool:
         self._init_route_queue()

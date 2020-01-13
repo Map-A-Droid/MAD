@@ -524,13 +524,11 @@ class RouteManagerBase(ABC):
             delete_before = time.time() - self.remove_from_queue_backlog
         else:
             delete_before = 0
-        len_before = len(latest)
-        latest = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
-        len_after = len(latest)
-        if len_after < len_before:
-            logger.warning("Dropped from {} to {} because of remove_from_queue_backlog. "
-                           "Make sure you have enough workers for your size of the area or "
-                           "adjust the size of the area itself.", len_before, len_after)
+        if self.mode == "mon_mitm":
+            delete_after = time.time() + 600
+            latest = [to_keep for to_keep in latest if not to_keep[0] < delete_before and not to_keep[0] > delete_after]
+        else:
+            latest = [to_keep for to_keep in latest if not to_keep[0] < delete_before]
         # TODO: sort latest by modified flag of event
         if cluster:
             merged = self.clustering_helper.get_clustered(latest)
