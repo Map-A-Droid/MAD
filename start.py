@@ -32,6 +32,9 @@ from websocket.WebsocketServer import WebsocketServer
 from utils.updater import deviceUpdater
 from utils.functions import generate_mappingjson
 
+import unittest
+from utils import local_api
+
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
 initLogging(args)
@@ -259,11 +262,18 @@ if __name__ == "__main__":
     exit_code = 0
     try:
         if args.unit_tests:
-            import unittest
-            import time
+            api_ready = False
+            api = local_api.LocalAPI()
+            logger.info('Checking API status')
+            while not api_ready:
+                try:
+                    api.get('/api')
+                    api_ready = True
+                    logger.info('API is ready for unit testing')
+                except:
+                    time.sleep(1)
             loader = unittest.TestLoader()
             start_dir = 'tests/'
-            time.sleep(5)
             suite = loader.discover(start_dir)
             runner = unittest.TextTestRunner()
             result = runner.run(suite)
