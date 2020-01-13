@@ -1062,8 +1062,8 @@ class RouteManagerBase(ABC):
     def get_settings(self) -> Optional[dict]:
         return self.settings
 
-    def get_current_route(self) -> List[Location]:
-        return self._route
+    def get_current_route(self) -> Optional[Tuple[List[Location], Dict[str, List[Location]]]]:
+        return (self._route, self._routepool)
 
     def get_current_prioroute(self) -> List[Location]:
         return self._prio_queue
