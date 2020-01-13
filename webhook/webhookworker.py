@@ -182,7 +182,7 @@ class WebhookWorker:
                 "quest_reward_type_raw": quest["quest_reward_type_raw"],
                 "quest_target": quest["quest_target"],
                 "pokemon_id": int(quest["pokemon_id"]),
-                "pokemon_form": int(quest["pokemon_form"]),
+                "pokemon_form": int(quest.get("pokemon_form", '0')),
                 "pokemon_costume": int(quest.get("pokemon_costume", '0')),
                 "item_amount": quest["item_amount"],
                 "item_id": quest["item_id"],
