@@ -285,41 +285,37 @@ if __name__ == "__main__":
     except KeyboardInterrupt or Exception:
         logger.info("Shutdown signal received")
     finally:
-        db_wrapper = None
-        logger.success("Stop called")
-        terminate_mad.set()
-        # mitm_mapper.shutdown()
-
-        # now cleanup all threads...
-        # TODO: check against args or init variables to None...
-        if t_whw is not None:
-            t_whw.join()
-        if ws_server is not None:
-            ws_server.stop_server()
-            t_ws.join()
-        if mitm_receiver_process is not None:
-            # mitm_receiver_thread.kill()
-            logger.info("Trying to stop receiver")
-            mitm_receiver_process.shutdown()
-            mitm_receiver_process.terminate()
-            logger.debug("Trying to join MITMReceiver")
-            mitm_receiver_process.join()
-            logger.debug("MITMReceiver joined")
-            # mitm_receiver.stop_receiver()
-            # mitm_receiver_thread.kill()
-        # if t_file_watcher is not None:
-        #     t_file_watcher.join()
-        if mapping_manager_manager is not None:
-            mapping_manager_manager.shutdown()
-        # time.sleep(10)
-        if mitm_mapper_manager is not None:
-            # mitm_mapper.shutdown()
-            logger.debug("Calling mitm_mapper shutdown")
-            mitm_mapper_manager.shutdown()
-        if db_pool_manager is not None:
-            logger.debug("Calling db_pool_manager shutdown")
-            db_pool_manager.shutdown()
-            logger.debug("Done shutting down db_pool_manager")
+        try:
+            db_wrapper = None
+            logger.success("Stop called")
+            terminate_mad.set()
+            # now cleanup all threads...
+            # TODO: check against args or init variables to None...
+            if t_whw is not None:
+                t_whw.join()
+            if ws_server is not None:
+                ws_server.stop_server()
+                t_ws.join()
+            if mitm_receiver_process is not None:
+                # mitm_receiver_thread.kill()
+                logger.info("Trying to stop receiver")
+                mitm_receiver_process.shutdown()
+                logger.debug("MITM child threads successfully shutdown.  Terminating parent thread")
+                mitm_receiver_process.terminate()
+                logger.debug("Trying to join MITMReceiver")
+                mitm_receiver_process.join()
+                logger.debug("MITMReceiver joined")
+            if mapping_manager_manager is not None:
+                mapping_manager_manager.shutdown()
+            if mitm_mapper_manager is not None:
+                logger.debug("Calling mitm_mapper shutdown")
+                mitm_mapper_manager.shutdown()
+            if db_pool_manager is not None:
+                logger.debug("Calling db_pool_manager shutdown")
+                db_pool_manager.shutdown()
+                logger.debug("Done shutting down db_pool_manager")
+        except:
+            logger.opt(exception=True).critical("An unhanded exception occurred during shutdown!")
         logger.info("Done shutting down")
         logger.debug(str(sys.exc_info()))
         sys.exit(exit_code)
