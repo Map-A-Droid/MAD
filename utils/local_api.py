@@ -1,16 +1,19 @@
 import requests
 import time
+from utils.walkerArgs import parseArgs
+
+mapping_args = parseArgs()
 
 class LocalAPI(requests.Session):
-    def __init__(self, logger, args, **kwargs):
+    def __init__(self, **kwargs):
         super(LocalAPI, self).__init__()
-        self.__logger = logger
-        self.__hostname = args.madmin_ip
-        self.__port = args.madmin_port
+        self.__logger = kwargs.get('logger', None)
+        self.__hostname = mapping_args.madmin_ip
+        self.__port = mapping_args.madmin_port
         self.__retries = kwargs.get('retries', 1)
         self.__timeout = kwargs.get('timeout', 1)
         self.__protocol = 'http' # madmin only runs on http unless behind a proxy so we can force http
-        self.auth = (args.madmin_user, args.madmin_password)
+        self.auth = (mapping_args.madmin_user, mapping_args.madmin_password)
 
     def prepare_request(self, request):
         """ Override the class function to create the URL with the URI and any other processing required """
@@ -21,7 +24,8 @@ class LocalAPI(requests.Session):
         # We are logging this before calling super.prepare_request because the function will merge existing data
         # with the new request data.  This can cause a security risk where the authentication will be saved in
         # plain text on the filesystem in the log.
-        self.__logger.debug("Requests data: {}", str(request.__dict__))
+        if self.__logger:
+            self.__logger.debug("Requests data: {}", str(request.__dict__))
         return super(LocalAPI, self).prepare_request(request)
     
     def send(self, request, **kwargs):
@@ -36,18 +40,22 @@ class LocalAPI(requests.Session):
         while not finished and attempt < self.__retries:
             try:
                 r = super(LocalAPI, self).send(request, **kwargs)
-                self.__logger.debug("API Call completed in {}", str(r.elapsed))
-                self.__logger.debug("Status code: {}", str(r.status_code))
+                if self.__logger:
+                    self.__logger.debug("API Call completed in {}", str(r.elapsed))
+                    self.__logger.debug("Status code: {}", str(r.status_code))
                 # If we receive Bad Gateway the call is not completed and should be retried
                 if r.status_code == 502:
-                    self.__logger.debug("Bad Gateway received.")
+                    if self.__logger:
+                        self.__logger.debug("Bad Gateway received.")
                 else:
                     return r
             except (requests.exceptions.Timeout, requests.exceptions.ConnectionError) as err:
-                self.__logger.warning(err)
+                if self.__logger:
+                    self.__logger.warning(err)
                 last_err = err
             except Exception as err:
-                self.__logger.warning("Unknown exception, {}", str(err))
+                if self.__logger:
+                    self.__logger.warning("Unknown exception, {}", str(err))
                 last_err = err
             # We did not finish successfully so sleep and increment the attempt
             attempt += 1
