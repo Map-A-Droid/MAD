@@ -61,7 +61,7 @@ if __name__ == "__main__":
 
     jobstatus: dict = {}
 
-    device_Updater = deviceUpdater(ws_server, args, jobstatus)
+    device_Updater = deviceUpdater(ws_server, args, jobstatus, db_wrapper)
 
     logger.success(
         'Starting MADmin on port {} - Open a browser, visit MADmin and go to "Settings"', int(args.madmin_port))

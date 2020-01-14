@@ -12,7 +12,7 @@ import copy
 from db.DbWrapper import DbWrapper
 from db.DbSchemaUpdater import DbSchemaUpdater
 
-current_version = 20
+current_version = 21
 
 class MADVersion(object):
 
@@ -675,14 +675,71 @@ class MADVersion(object):
                     self.dbwrapper.execute(alter_query, commit=True)
                 except Exception as e:
                     logger.exception("Unexpected error: {}", e)
-
         if self._version < 20:
             sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
             try:
                 self.dbwrapper.execute(sql, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
-
+        if self._version < 21:
+            query = (
+                "CREATE TABLE IF NOT EXISTS `filestore_meta` ( "
+                "`filestore_id` INT NOT NULL AUTO_INCREMENT, "
+                "`filename` VARCHAR(255) NOT NULL, "
+                "`size` INT NOT NULL, "
+                "`mimetype` VARCHAR(255) NOT NULL, "
+                "PRIMARY KEY (`filestore_id`))"
+            )
+            try:
+                self.dbwrapper.execute(query, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+            sql = """CREATE TABLE IF NOT EXISTS `mad_apks` (
+                `filestore_id` INT NOT NULL AUTO_INCREMENT,
+                `usage` INT NOT NULL,
+                `arch` INT NOT NULL,
+                `version` VARCHAR(32) NOT NULL,
+                PRIMARY KEY (`filestore_id`),
+                UNIQUE (`usage`, `arch`),
+                CONSTRAINT `fk_fs_apks`
+                    FOREIGN KEY (`filestore_id`)
+                    REFERENCES `filestore_meta` (`filestore_id`)
+                    ON DELETE CASCADE
+                )"""
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+            sql = """CREATE TABLE IF NOT EXISTS `filestore_chunks` (
+                `chunk_id` INT NOT NULL AUTO_INCREMENT,
+                `filestore_id` INT NOT NULL,
+                `size` INT NOT NULL,
+                `data` LONGBLOB,
+                PRIMARY KEY (`chunk_id`),
+                UNIQUE (`chunk_id`, `filestore_id`),
+                CONSTRAINT `fk_fs_chunks`
+                    FOREIGN KEY (`filestore_id`)
+                    REFERENCES `filestore_meta` (`filestore_id`)
+                    ON DELETE CASCADE
+                )"""
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+                sys.exit(1)
+            sql = """CREATE TABLE IF NOT EXISTS `mad_apk_autosearch` (
+                `usage` INT NOT NULL,
+                `arch` INT NOT NULL,
+                `version` VARCHAR(32) NULL,
+                `url` VARCHAR(256) NULL,
+                `download_status` TINYINT(1) NOT NULL DEFAULT 0,
+                `last_checked` DATETIME NOT NULL,
+                PRIMARY KEY (`usage`, `arch`)
+                )"""
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
         self.set_version(current_version)
 
     def set_version(self, version):

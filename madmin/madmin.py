@@ -15,6 +15,7 @@ from madmin.routes.control import control
 from madmin.routes.map import map
 from madmin.routes.config import config
 from madmin.routes.path import path
+from madmin.routes.apks import apk_manager
 from madmin.api import APIEntry
 from madmin.reverseproxy import ReverseProxied
 
@@ -45,6 +46,7 @@ def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: Mappin
     APIEntry(logger, app, data_manager, mapping_manager, ws_server, args.config_mode)
     config(db_wrapper, args, logger, app, mapping_manager, data_manager)
     path(db_wrapper, args, app, mapping_manager, jobstatus, data_manager)
+    apk_manager(db_wrapper, args, app, mapping_manager, jobstatus)
 
     app.logger.removeHandler(default_handler)
     logging.basicConfig(handlers=[InterceptHandler()], level=0)

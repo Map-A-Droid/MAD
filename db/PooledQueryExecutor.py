@@ -250,7 +250,7 @@ class PooledQueryExecutor:
         # TODO - Force LIMIT 1
         data = self.execute(sql, args=args, get_dict=True, raise_exc=True)
         if not data or len(data) == 0:
-            return data
+            return {}
         return data[0]
 
     def autofetch_column(self, sql, args=None):

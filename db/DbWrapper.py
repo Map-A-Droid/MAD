@@ -26,7 +26,8 @@ class DbWrapper:
         self.application_args = args
 
         self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
-        self.sanity_check.ensure_correct_sql_mode()
+        self.sanity_check.check_all()
+        self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
         self.schema_updater.ensure_unversioned_tables_exist()

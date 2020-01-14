@@ -78,6 +78,14 @@
                       <a href="{{ url_for('reload_jobs') }}" class="dropdown-item">Reload existing Jobs</a>
                     </div>
                   </li>
+                  <li class="nav-item dropdown">
+                      <a class="nav-link dropdown-toggle" href="system" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        System
+                    </a>
+                      <div class="dropdown-menu"i aria-labelledby="navbarDropdown">
+                      <a href="{{ url_for('mad_apks') }}" class="dropdown-item">MADmin APKs</a>
+                    </div>
+                  </li>
               </ul>
               <button type="button" class="btn btn-success btn-sm nav-link text-uppercase font-weight-bold" id="reload">Apply settings</a>
           </div>

@@ -2,7 +2,6 @@ import flask
 from madmin.functions import auth_required
 from . import apiResponse, apiRequest, apiException, global_variables
 import utils.data_manager
-import traceback
 
 
 class APIHandler(object):
@@ -22,6 +21,7 @@ class APIHandler(object):
         self._app = app
         self._base = api_base
         self._data_manager = data_manager
+        self.dbc = self._data_manager.dbc
         self._mapping_manager = mapping_manager
         self._ws_server = ws_server
         self._instance = self._data_manager.instance_id
@@ -36,6 +36,7 @@ class APIHandler(object):
         """
         pass
 
+    @auth_required
     def process_request(self, *args, **kwargs):
         """
         Define how to process the API request.  args and kwargs will be populated based off the route requirements
@@ -47,7 +48,6 @@ class APIHandler(object):
         """
         return (None, 501)
 
-    @auth_required
     def entrypoint(self, *args, **kwargs):
         """ Processes an API request
 
@@ -63,6 +63,8 @@ class APIHandler(object):
         try:
             self.api_req()
             processed_data = self.process_request(*args, **kwargs)
+            if type(processed_data) is flask.Response:
+                return processed_data
             response_data = processed_data[0]
             status_code = processed_data[1]
             try:

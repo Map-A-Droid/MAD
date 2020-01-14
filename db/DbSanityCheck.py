@@ -1,13 +1,21 @@
 import sys
 from utils.logging import logger
 from db.PooledQueryExecutor import PooledQueryExecutor
+from utils import global_variables
 
 class DbSanityCheck:
     blacklisted_modes = "NO_ZERO_DATE NO_ZERO_IN_DATE ONLY_FULL_GROUP_BY"
 
     def __init__(self, db_exec: PooledQueryExecutor):
         self._db_exec: PooledQueryExecutor = db_exec
+        self.failing_issues = False
+        self.supports_apks = False
 
+    def check_all(self):
+        self.ensure_correct_sql_mode()
+        self.validate_max_allowed_packet()
+        if self.failing_issues:
+            sys.exit(1)
 
     def ensure_correct_sql_mode(self):
         """
@@ -25,4 +33,14 @@ class DbSanityCheck:
             logger.error("Please drop those settings: {}.", ", ".join(detected_wrong_modes))
             logger.error(
                 "More info: https://mad-docs.readthedocs.io/en/latest/common-issues/faq/#sql-mode-error-mysql-strict-mode-mysql-mode")
-            sys.exit(1)
+            self.failing_issues = True
+
+    def validate_max_allowed_packet(self):
+        query = "SELECT @@global.max_allowed_packet"
+        res = self._db_exec.autofetch_value(query)
+        if res < global_variables.CHUNK_MAX_SIZE:
+            logger.error("max_allowed_packet may need to be adjusted to use the MAD APK feature")
+            logger.error("MAD will function without this being set but you will be unable to upload and serve MAD APK files")
+            logger.error("More info can be found @ https://dev.mysql.com/doc/refman/8.0/en/program-variables.html")
+        else:
+            self.supports_apks = True

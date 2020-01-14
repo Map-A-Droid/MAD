@@ -48,6 +48,8 @@ class APIRequest(object):
                 self.data['call']
             except (ValueError, KeyError):
                 raise apiException.FormattingError('Invalid RPC definition')
+        elif self.content_type == 'application/octet-stream':
+            self.data = data
 
     def process_request(self):
         # Determine the content-type of the request and convert accordingly

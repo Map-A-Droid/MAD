@@ -225,7 +225,7 @@ if __name__ == "__main__":
         t_ws.start()
 
         # init jobprocessor
-        device_Updater = deviceUpdater(ws_server, args, jobstatus)
+        device_Updater = deviceUpdater(ws_server, args, jobstatus, db_wrapper)
 
         webhook_worker = None
         if args.webhook:
