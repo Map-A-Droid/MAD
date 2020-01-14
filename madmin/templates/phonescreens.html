@@ -3,6 +3,10 @@
 {% block header %}
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" crossorigin="anonymous">
 <style>
+  div.container[role="main"] {
+    max-width: 80%;
+  }
+
   input[type=text],
   select,
   textarea {
@@ -46,6 +50,7 @@
    .screen {
         float: left;
         width: 30%;
+        max-width: max-content;
         border: black 2px;
         border-style: solid;
         margin: 10px;
