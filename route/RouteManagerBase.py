@@ -925,6 +925,10 @@ class RouteManagerBase(ABC):
                     elif len(new_subroute) == 0:
                         logger.info("New subroute of {} is empty...", origin)
                         entry.subroute = new_subroute
+                        entry.queue.clear()
+                        entry.queue = collections.deque()
+                        for location in new_subroute:
+                            entry.queue.append(location)
                     elif len(entry.subroute) > len(new_subroute) > 0:
                         logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
                                      "added)", origin)
