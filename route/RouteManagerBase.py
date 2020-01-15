@@ -869,8 +869,8 @@ class RouteManagerBase(ABC):
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
 
-            logger.info("Workers in route: {}".format(str(self._routepool)))
-            logger.info("New subroute length: {}".format(str(new_subroute_length)))
+            logger.debug("Workers in route: {}".format(str(self._routepool)))
+            logger.debug("New subroute length: {}".format(str(new_subroute_length)))
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
