@@ -986,6 +986,13 @@ class RouteManagerBase(ABC):
                             del missing_new_route_part[0: new_subroute.index(last_el_old_route)]
                             old_queue_list.extend(missing_new_route_part)
 
+                        else:
+                            logger.debug("Worker {} getting a completely new route - replace it")
+                            new_subroute_copy = collections.deque(new_subroute)
+                            old_queue_list.clear()
+                            while len(new_subroute_copy) > 0:
+                                entry.queue.append(new_subroute_copy.popleft())
+
                         entry.queue = collections.deque()
                         [entry.queue.append(i) for i in old_queue_list]
 
@@ -997,6 +1004,7 @@ class RouteManagerBase(ABC):
                     if less_coords:
                         new_subroute_length = 0
 
+            logger.debug("Current routepool: {}", self._routepool)
             logger.debug("Done updating subroutes")
             return True
             # TODO: A worker has been removed or added, we need to update the individual workerpools/queues
