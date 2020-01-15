@@ -849,6 +849,9 @@ class RouteManagerBase(ABC):
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
 
+            logger.debug("Current route for all workers: {}".format(str(self._current_route_round_coords)))
+            logger.info("Current route for all workers length: {}".format(str(len(self._current_route_round_coords))))
+
             if len(self._workers_registered) > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
@@ -863,6 +866,9 @@ class RouteManagerBase(ABC):
                     return False
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
+
+            logger.info("Workers in route: {}".format(str(self._workers_registered)))
+            logger.info("New subroute length: {}".format(str(new_subroute_length)))
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
@@ -887,6 +893,9 @@ class RouteManagerBase(ABC):
                     while len(temp_total_round) > 0 and (j <= new_subroute_length or i == len(self._routepool)):
                         j += 1
                         new_subroute.append(temp_total_round.popleft())
+
+                    logger.debug("New Subroute for worker {}: {}".format(str(origin), str(new_subroute)))
+                    logger.debug("Old Subroute for worker {}: {}".format(str(origin), str(entry.subroute)))
 
                     i += 1
                     if len(entry.subroute) == 0:
