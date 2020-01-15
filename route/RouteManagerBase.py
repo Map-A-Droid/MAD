@@ -922,6 +922,10 @@ class RouteManagerBase(ABC):
                             logger.debug('entry.subroute: {}', entry.subroute)
                             logger.debug('new_subroute == entry.subroute: {}', new_subroute == entry.subroute)
                             entry.subroute = new_subroute
+                            entry.queue.clear()
+                            entry.queue = collections.deque()
+                            for location in new_subroute:
+                                entry.queue.append(location)
                     elif len(new_subroute) == 0:
                         logger.info("New subroute of {} is empty...", origin)
                         entry.subroute = new_subroute
