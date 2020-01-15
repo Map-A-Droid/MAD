@@ -220,6 +220,8 @@ class RouteManagerBase(ABC):
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self.stop_routemanager()
+            else:
+                self.worker_changed_update_routepools()
         finally:
             self._workers_registered_mutex.release()
 
@@ -849,13 +851,16 @@ class RouteManagerBase(ABC):
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
 
-            if len(self._workers_registered) > len(self._current_route_round_coords):
+            logger.debug("Current route for all workers: {}".format(str(self._current_route_round_coords)))
+            logger.info("Current route for all workers length: {}".format(str(len(self._current_route_round_coords))))
+
+            if len(self._routepool) > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
             else:
                 try:
                     new_subroute_length = math.floor(len(self._current_route_round_coords) /
-                                                     len(self._workers_registered))
+                                                     len(self._routepool))
                     if new_subroute_length == 0:
                         return False
                 except Exception as e:
@@ -863,6 +868,9 @@ class RouteManagerBase(ABC):
                     return False
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
+
+            logger.info("Workers in route: {}".format(str(self._routepool)))
+            logger.info("New subroute length: {}".format(str(new_subroute_length)))
 
             # we want to order the dict by the time's we added the workers to the areas
             # we first need to build a list of tuples with only origin, time_added
@@ -888,6 +896,9 @@ class RouteManagerBase(ABC):
                         j += 1
                         new_subroute.append(temp_total_round.popleft())
 
+                    logger.debug("New Subroute for worker {}: {}".format(str(origin), str(new_subroute)))
+                    logger.debug("Old Subroute for worker {}: {}".format(str(origin), str(entry.subroute)))
+
                     i += 1
                     if len(entry.subroute) == 0:
                         logger.debug(
@@ -911,9 +922,17 @@ class RouteManagerBase(ABC):
                             logger.debug('entry.subroute: {}', entry.subroute)
                             logger.debug('new_subroute == entry.subroute: {}', new_subroute == entry.subroute)
                             entry.subroute = new_subroute
+                            entry.queue.clear()
+                            entry.queue = collections.deque()
+                            for location in new_subroute:
+                                entry.queue.append(location)
                     elif len(new_subroute) == 0:
                         logger.info("New subroute of {} is empty...", origin)
                         entry.subroute = new_subroute
+                        entry.queue.clear()
+                        entry.queue = collections.deque()
+                        for location in new_subroute:
+                            entry.queue.append(location)
                     elif len(entry.subroute) > len(new_subroute) > 0:
                         logger.debug("{}'s subroute is longer than it should be now (maybe a worker has been "
                                      "added)", origin)
@@ -954,6 +973,7 @@ class RouteManagerBase(ABC):
                             else:
                                 # clear old route and replace with new_subroute
                                 # maybe the worker jumps a wider distance
+                                logger.debug("Subroute of {} has changed. Replacing entirely", origin)
                                 entry.queue.clear()
                                 new_subroute_copy = collections.deque(new_subroute)
                                 while len(new_subroute_copy) > 0:
@@ -986,6 +1006,13 @@ class RouteManagerBase(ABC):
                             del missing_new_route_part[0: new_subroute.index(last_el_old_route)]
                             old_queue_list.extend(missing_new_route_part)
 
+                        else:
+                            logger.debug("Worker {} getting a completely new route - replace it")
+                            new_subroute_copy = collections.deque(new_subroute)
+                            old_queue_list.clear()
+                            while len(new_subroute_copy) > 0:
+                                entry.queue.append(new_subroute_copy.popleft())
+
                         entry.queue = collections.deque()
                         [entry.queue.append(i) for i in old_queue_list]
 
@@ -997,6 +1024,7 @@ class RouteManagerBase(ABC):
                     if less_coords:
                         new_subroute_length = 0
 
+            logger.debug("Current routepool: {}", self._routepool)
             logger.debug("Done updating subroutes")
             return True
             # TODO: A worker has been removed or added, we need to update the individual workerpools/queues

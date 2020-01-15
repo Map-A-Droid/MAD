@@ -184,7 +184,7 @@ class RouteManagerQuests(RouteManagerBase):
                     logger.info('There are less stops without quest than routepositions - recalc')
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
-                    logger.warning("Something wrong with area {}: it have many new stops - better delete routefile!",
+                    logger.warning("Something wrong with area {}: it have many new stops - better recalc route!",
                                    str(self.name))
                     logger.info("Recalc new route for area {}", str(self.name))
                     self._recalc_stop_route(stops)
