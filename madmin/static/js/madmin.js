@@ -750,38 +750,29 @@ new Vue({
     },
     map_fetch_stops(urlFilter) {
       var $this = this;
-
       if (!$this.layers.stat.stops) {
         return;
       }
-
       axios.get("get_stops" + urlFilter).then(function (res) {
         res.data.forEach(function(stop) {
-          console.log(stop);
-          if ($this.stops[stop["id"]]) {
+          var stop_id = stop["pokestop_id"];
+          if ($this.stops[stop_id]) {
             return;
           }
-          var color = "blue";
-          if(!stop["has_quest"]) {
-            color = "red";
-          }
-
-          $this.stops[stop["id"]] = stop;
-
-          leaflet_data["stops"][stop["id"]] = L.circle([stop["lat"], stop["lon"]], {
+          var color = stop["has_quest"] ? "blue" : "red";
+          $this.stops[stop_id] = stop;
+          leaflet_data["stops"][stop_id] = L.circle([stop["latitude"], stop["longitude"]], {
             radius: 8,
             color: color,
             fillColor: color,
             weight: 1,
             opacity: 0.7,
             fillOpacity: 0.5,
-            id: stop["id"]
+            id: stop_id
           }).bindPopup($this.build_stop_popup, { "className": "stoppopup"});
-
-          $this.addMouseEventPopup(leaflet_data["stops"][stop["id"]]);
-
+          $this.addMouseEventPopup(leaflet_data["stops"][stop_id]);
           if ($this.layers.stat.stops) {
-            leaflet_data["stops"][stop["id"]].addTo(map);
+            leaflet_data["stops"][stop_id].addTo(map);
           }
         });
       });
@@ -1071,32 +1062,31 @@ new Vue({
       return `
         <div class="content">
           ${base_popup}
-          <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: <strong>${moment(quest['timestamp']*1000).format("YYYY-MM-DD HH:mm:ss")}</strong></div>
+          <div id="questTimestamp"><i class="fa fa-clock"></i> Scanned: <strong>${moment(quest['timestamp']*1000).local().format("YYYY-MM-DD HH:mm:ss")}</strong></div>
           <br>
           ${this.build_quest(quest['quest_reward_type_raw'], quest['quest_task'], quest['pokemon_id'], quest['pokemon_form'], quest['pokemon_asset_bundle_id'], quest['pokemon_costume'], quest['item_id'], quest['item_amount'], quest['pokemon_name'], quest['item_type'])}
         </div>`;
     },
     build_stop_popup(marker) {
-      var stop = this.stops[marker.options.id]
-      var base_popup = this.build_stop_base_popup(stop["id"], stop["url"], stop["name"], stop["lat"], stop["lon"])
+      var stop = this.stops[marker.options.id];
+      var base_popup = this.build_stop_base_popup(stop["pokestop_id"], stop["image"], stop["name"], stop["latitude"], stop["longitude"])
 
       var incident = "";
-      var incident_expiration = moment(stop["incident_expiration"]*1000);
-      if (incident_expiration.isAfter(moment())) {
-        incident = `<div class="incident"><i class="fa fa-user-secret"></i> Incident ends: <strong>${incident_expiration.format("YYYY-MM-DD HH:mm:ss")}</strong></div>`
+      var incident_expiration = moment.utc(stop["incident_expiration"]*1000);
+      if (incident_expiration.isAfter(moment.utc())) {
+        incident = `<div class="incident"><i class="fa fa-user-secret"></i> Incident ends: <strong>${incident_expiration.local().format("YYYY-MM-DD HH:mm:ss")}</strong></div>`
       }
 
       var lure = "";
-      var lure_expiration = moment(stop["lure_expiration"]*1000);
+      var lure_expiration = moment.utc(stop["lure_expiration"]*1000);
       if (lure_expiration.isAfter(moment())) {
-        lure = `<div class="incident"><i class="fa fa-drumstick-bite"></i> Lure ends: <strong>${lure_expiration.format("YYYY-MM-DD HH:mm:ss")}</strong></div>`
+        lure = `<div class="incident"><i class="fa fa-drumstick-bite"></i> Lure ends: <strong>${lure_expiration.local().format("YYYY-MM-DD HH:mm:ss")}</strong></div>`
       }
-
       return `
         <div class="content">
           ${base_popup}
           <br>
-          <div class="timestamp"><i class="fa fa-clock"></i> Scanned: <strong>${moment(stop["last_updated"]*1000).format("YYYY-MM-DD HH:mm:ss")}</strong></div>
+          <div class="timestamp"><i class="fa fa-clock"></i> Scanned: <strong>${moment.utc(stop["last_updated"]*1000).local().format("YYYY-MM-DD HH:mm:ss")}</strong></div>
           ${incident}
           ${lure}
         </div>`;

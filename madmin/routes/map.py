@@ -314,10 +314,6 @@ class map(object):
     @auth_required
     def get_stops(self):
         neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
-        timestamp = request.args.get("timestamp", None)
-
-        coords = []
-
         data = self._db.get_stops_in_rectangle(
             neLat,
             neLon,
@@ -327,38 +323,9 @@ class map(object):
             oNeLon=oNeLon,
             oSwLat=oSwLat,
             oSwLon=oSwLon,
-            timestamp=timestamp
+            timestamp=request.args.get("timestamp", None)
         )
-
-        quests = self._db.quests_from_db(
-            neLat=neLat,
-            neLon=neLon,
-            swLat=swLat,
-            swLon=swLon,
-            oNeLat=oNeLat,
-            oNeLon=oNeLon,
-            oSwLat=oSwLat,
-            oSwLon=oSwLon,
-            timestamp=timestamp
-        )
-
-        for stopid, stop in data.items():
-            coords.append({
-                "id": stopid,
-                "name": stop["name"],
-                "url": stop['image'],
-                "lat": stop["latitude"],
-                "lon": stop["longitude"],
-                "active_fort_modifier": stop["active_fort_modifier"],
-                "last_updated": stop["last_updated"],
-                "lure_expiration": stop["lure_expiration"],
-                "incident_start": stop["incident_start"],
-                "incident_expiration": stop["incident_expiration"],
-                "incident_grunt_type": stop["incident_grunt_type"],
-                "has_quest": stopid in quests,
-            })
-
-        return jsonify(coords)
+        return jsonify(data)
 
     @logger.catch()
     @auth_required

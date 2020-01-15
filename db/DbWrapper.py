@@ -19,6 +19,8 @@ from db.DbStatsSubmit import DbStatsSubmit
 from db.DbStatsReader import DbStatsReader
 from db.DbWebhookReader import DbWebhookReader
 
+import re
+
 
 class DbWrapper:
     def __init__(self, db_exec, args):
@@ -626,58 +628,59 @@ class DbWrapper:
 
         return mons
 
-    def get_stops_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
+    def get_stops_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None,
+                               timestamp=None, check_quests=False):
         stops = {}
         args = []
-
+        conversions = ['ps.`last_modified`', 'ps.`lure_expiration`', 'ps.`last_updated`', 'ps.`incident_start`',
+                       'ps.`incident_expiration`']
         # base query to fetch stops
         query = (
-            "SELECT ps.`pokestop_id`, ps.`enabled`, ps.`latitude`, ps.`longitude`, ps.`last_modified`,\n"\
-            "ps.`lure_expiration`, ps.`active_fort_modifier`, ps.`last_updated`, ps.`name`, ps.`image`,\n"\
-            "ps.`incident_start`, ps.`incident_expiration`, ps.`incident_grunt_type`\n"\
+            "SELECT ps.`pokestop_id`, ps.`enabled`, ps.`latitude`, ps.`longitude`,\n"\
+            "%s,\n"\
+            "%s,\n"\
+            "%s,\n"\
+            "%s,\n"\
+            "%s,\n"\
+            "ps.`active_fort_modifier`, ps.`name`, ps.`image`, ps.`incident_grunt_type`\n"\
             "FROM pokestop ps\n"\
         )
-
         query_where = (
-            " WHERE (ps.`latitude` >= %s AND ps.`longitude` >= %s "
-            " AND ps.`latitude` <= %s AND ps.`longitude` <= %s) "
+            "WHERE (ps.`latitude` >= %%s AND ps.`longitude` >= %%s "
+            " AND ps.`latitude` <= %%s AND ps.`longitude` <= %%s) "
         )
         args += [swLat, swLon, neLat, neLon]
-
         if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
             oquery_where = (
-                " AND NOT (ps.`latitude` >= %s AND ps.`longitude` >= %s "
-                " AND ps.`latitude` <= %s AND ps.`longitude` <= %s) "
+                " AND NOT (ps.`latitude` >= %%s AND ps.`longitude` >= %%s "
+                " AND ps.`latitude` <= %%s AND ps.`longitude` <= %%s) "
             )
             args += [oSwLat, oSwLon, oNeLat, oNeLon]
-
             query_where = query_where + oquery_where
-
         elif timestamp is not None:
             tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
-            oquery_where = " AND ps.`last_updated` >= %s "
+            oquery_where = " AND ps.`last_updated` >= %%s "
             args += [tsdt]
             query_where = query_where + oquery_where
-
-        pokestops = self.autofetch_all(query + query_where, args=tuple(args))
-
+        conversion_txt = []
+        for conversion in conversions:
+            conversion_txt.append(adjust_tz_to_utc(conversion))
+        sql = query + query_where
+        pokestops = self.autofetch_all(sql % tuple(conversion_txt), args=tuple(args))
+        quests = self.quests_from_db(
+            neLat=neLat,
+            neLon=neLon,
+            swLat=swLat,
+            swLon=swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+        )
         for pokestop in pokestops:
-            stops[pokestop['pokestop_id']] = {
-                "enabled": pokestop['enabled'],
-                "latitude": pokestop['latitude'],
-                "longitude": pokestop['longitude'],
-                "last_modified": int(pokestop['last_modified'].replace(tzinfo=timezone.utc).timestamp()),
-                "lure_expiration": int(pokestop['lure_expiration'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['lure_expiration'] is not None else None,
-                "active_fort_modifier": pokestop['active_fort_modifier'],
-                "last_updated": int(pokestop['last_updated'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['last_updated'] is not None else None,
-                "name": pokestop['name'],
-                "image": pokestop['image'],
-                "incident_start": int(pokestop['incident_start'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['incident_start'] is not None else None,
-                "incident_expiration": int(pokestop['incident_expiration'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['incident_expiration'] is not None else None,
-                "incident_grunt_type": pokestop['incident_grunt_type']
-            }
-
-        return stops
+            pokestop['has_quest'] = pokestop['pokestop_id'] in quests
+        return pokestops
 
 
     def delete_stop(self, latitude: float, longitude: float):
@@ -1043,3 +1046,14 @@ class DbWrapper:
             'val': version
         }
         return self.autoexec_insert('versions', update_data, optype="ON DUPLICATE")
+
+def adjust_tz_to_utc(column: str, as_name: str=None) -> str:
+    # I would like to use convert_tz but this may not be populated.  Use offsets instead
+    is_dst = time.daylight and time.localtime().tm_isdst > 0
+    utc_offset = - (time.altzone if is_dst else time.timezone)
+    if not as_name:
+        try:
+            as_name = re.findall(r'(\w+)', column)[-1]
+        except:
+            as_name = column
+    return "UNIX_TIMESTAMP(%s) + %s AS '%s'" % (column, utc_offset, as_name)
