@@ -757,16 +757,21 @@ new Vue({
 
       axios.get("get_stops" + urlFilter).then(function (res) {
         res.data.forEach(function(stop) {
+          console.log(stop);
           if ($this.stops[stop["id"]]) {
             return;
+          }
+          var color = "blue";
+          if(!stop["has_quest"]) {
+            color = "red";
           }
 
           $this.stops[stop["id"]] = stop;
 
           leaflet_data["stops"][stop["id"]] = L.circle([stop["lat"], stop["lon"]], {
             radius: 8,
-            color: 'blue',
-            fillColor: 'blue',
+            color: color,
+            fillColor: color,
             weight: 1,
             opacity: 0.7,
             fillOpacity: 0.5,

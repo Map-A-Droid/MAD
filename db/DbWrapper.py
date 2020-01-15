@@ -628,52 +628,53 @@ class DbWrapper:
 
     def get_stops_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
         stops = {}
+        args = []
 
         # base query to fetch stops
         query = (
-            "SELECT pokestop_id, enabled, latitude, longitude, last_modified, lure_expiration, "
-            "active_fort_modifier, last_updated, name, image, incident_start, incident_expiration, "
-            "incident_grunt_type "
-            "FROM pokestop "
+            "SELECT ps.`pokestop_id`, ps.`enabled`, ps.`latitude`, ps.`longitude`, ps.`last_modified`,\n"\
+            "ps.`lure_expiration`, ps.`active_fort_modifier`, ps.`last_updated`, ps.`name`, ps.`image`,\n"\
+            "ps.`incident_start`, ps.`incident_expiration`, ps.`incident_grunt_type`\n"\
+            "FROM pokestop ps\n"\
         )
 
         query_where = (
-            " WHERE (latitude >= {} AND longitude >= {} "
-            " AND latitude <= {} AND longitude <= {}) "
-        ).format(swLat, swLon, neLat, neLon)
+            " WHERE (ps.`latitude` >= %s AND ps.`longitude` >= %s "
+            " AND ps.`latitude` <= %s AND ps.`longitude` <= %s) "
+        )
+        args += [swLat, swLon, neLat, neLon]
 
         if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
             oquery_where = (
-                " AND NOT (latitude >= {} AND longitude >= {} "
-                " AND latitude <= {} AND longitude <= {}) "
-            ).format(oSwLat, oSwLon, oNeLat, oNeLon)
+                " AND NOT (ps.`latitude` >= %s AND ps.`longitude` >= %s "
+                " AND ps.`latitude` <= %s AND ps.`longitude` <= %s) "
+            )
+            args += [oSwLat, oSwLon, oNeLat, oNeLon]
 
             query_where = query_where + oquery_where
 
         elif timestamp is not None:
             tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
-            oquery_where = " AND last_updated >= '{}' ".format(tsdt)
+            oquery_where = " AND ps.`last_updated` >= %s "
+            args += [tsdt]
             query_where = query_where + oquery_where
 
-        res = self.execute(query + query_where)
+        pokestops = self.autofetch_all(query + query_where, args=tuple(args))
 
-        for (stop_id, enabled, latitude, longitude, last_modified, lure_expiration,
-                active_fort_modifier, last_updated, name, image, incident_start,
-                incident_expiration, incident_grunt_type) in res:
-
-            stops[stop_id] = {
-                "enabled": enabled,
-                "latitude": latitude,
-                "longitude": longitude,
-                "last_modified": int(last_modified.replace(tzinfo=timezone.utc).timestamp()),
-                "lure_expiration": int(lure_expiration.replace(tzinfo=timezone.utc).timestamp()) if lure_expiration is not None else None,
-                "active_fort_modifier": active_fort_modifier,
-                "last_updated": int(last_updated.replace(tzinfo=timezone.utc).timestamp()) if last_updated is not None else None,
-                "name": name,
-                "image": image,
-                "incident_start": int(incident_start.replace(tzinfo=timezone.utc).timestamp()) if incident_start is not None else None,
-                "incident_expiration": int(incident_expiration.replace(tzinfo=timezone.utc).timestamp()) if incident_expiration is not None else None,
-                "incident_grunt_type": incident_grunt_type
+        for pokestop in pokestops:
+            stops[pokestop['pokestop_id']] = {
+                "enabled": pokestop['enabled'],
+                "latitude": pokestop['latitude'],
+                "longitude": pokestop['longitude'],
+                "last_modified": int(pokestop['last_modified'].replace(tzinfo=timezone.utc).timestamp()),
+                "lure_expiration": int(pokestop['lure_expiration'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['lure_expiration'] is not None else None,
+                "active_fort_modifier": pokestop['active_fort_modifier'],
+                "last_updated": int(pokestop['last_updated'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['last_updated'] is not None else None,
+                "name": pokestop['name'],
+                "image": pokestop['image'],
+                "incident_start": int(pokestop['incident_start'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['incident_start'] is not None else None,
+                "incident_expiration": int(pokestop['incident_expiration'].replace(tzinfo=timezone.utc).timestamp()) if pokestop['incident_expiration'] is not None else None,
+                "incident_grunt_type": pokestop['incident_grunt_type']
             }
 
         return stops

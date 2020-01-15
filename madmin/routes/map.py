@@ -330,8 +330,19 @@ class map(object):
             timestamp=timestamp
         )
 
-        for stopid in data:
-            stop = data[str(stopid)]
+        quests = self._db.quests_from_db(
+            neLat=neLat,
+            neLon=neLon,
+            swLat=swLat,
+            swLon=swLon,
+            oNeLat=oNeLat,
+            oNeLon=oNeLon,
+            oSwLat=oSwLat,
+            oSwLon=oSwLon,
+            timestamp=timestamp
+        )
+
+        for stopid, stop in data.items():
             coords.append({
                 "id": stopid,
                 "name": stop["name"],
@@ -343,7 +354,8 @@ class map(object):
                 "lure_expiration": stop["lure_expiration"],
                 "incident_start": stop["incident_start"],
                 "incident_expiration": stop["incident_expiration"],
-                "incident_grunt_type": stop["incident_grunt_type"]
+                "incident_grunt_type": stop["incident_grunt_type"],
+                "has_quest": stopid in quests,
             })
 
         return jsonify(coords)
