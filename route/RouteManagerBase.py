@@ -220,6 +220,8 @@ class RouteManagerBase(ABC):
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self.stop_routemanager()
+            else:
+                self.worker_changed_update_routepools()
         finally:
             self._workers_registered_mutex.release()
 
@@ -867,7 +869,7 @@ class RouteManagerBase(ABC):
             i: int = 0
             temp_total_round: collections.deque = collections.deque(self._current_route_round_coords)
 
-            logger.info("Workers in route: {}".format(str(self._workers_registered)))
+            logger.info("Workers in route: {}".format(str(self._routepool)))
             logger.info("New subroute length: {}".format(str(new_subroute_length)))
 
             # we want to order the dict by the time's we added the workers to the areas
@@ -963,6 +965,7 @@ class RouteManagerBase(ABC):
                             else:
                                 # clear old route and replace with new_subroute
                                 # maybe the worker jumps a wider distance
+                                logger.debug("Subroute of {} has changed. Replacing entirely", origin)
                                 entry.queue.clear()
                                 new_subroute_copy = collections.deque(new_subroute)
                                 while len(new_subroute_copy) > 0:
