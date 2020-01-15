@@ -852,13 +852,13 @@ class RouteManagerBase(ABC):
             logger.debug("Current route for all workers: {}".format(str(self._current_route_round_coords)))
             logger.info("Current route for all workers length: {}".format(str(len(self._current_route_round_coords))))
 
-            if len(self._workers_registered) > len(self._current_route_round_coords):
+            if len(self._routepool) > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
             else:
                 try:
                     new_subroute_length = math.floor(len(self._current_route_round_coords) /
-                                                     len(self._workers_registered))
+                                                     len(self._routepool))
                     if new_subroute_length == 0:
                         return False
                 except Exception as e:
