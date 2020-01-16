@@ -986,7 +986,7 @@ class DbWrapper:
     def update_trs_status_to_idle(self, dev_id):
         data = {
             'instance_id': self.instance_id,
-            'dev_id': dev_id,
+            'device_id': dev_id,
             'area_id': -1
         }
         self.autoexec_insert('trs_status', data)
