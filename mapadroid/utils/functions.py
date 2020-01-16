@@ -32,7 +32,7 @@ def creation_date(path_to_file):
 
 
 def generate_path(path):
-    return os.path.join(os.path.join(os.path.dirname(__file__), os.pardir, path))
+    return os.path.join(os.path.join(mapadroid.MAD_ROOT, path))
 
 
 def image_resize(image, savepath, width=None, height=None):

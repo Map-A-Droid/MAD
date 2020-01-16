@@ -30,7 +30,7 @@ def trash_image_matching(screen_img, full_screen):
         logger.error('trash_image_matching: {} appears to be corrupted', str(screen_img))
         return None
 
-    trash = cv2.imread(mapadroid.MAD_ROOT + 'static/img/trashcan.png', 0)
+    trash = cv2.imread(os.path.join(mapadroid.MAD_ROOT, 'static/img/trashcan.png'), 0)
 
     height, width = screen.shape
     _quest_x = get_delete_quest_coords(width)

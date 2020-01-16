@@ -6,6 +6,7 @@ from PIL import Image
 from flask import (render_template, request, redirect, flash, jsonify, url_for)
 from werkzeug.utils import secure_filename
 
+import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import (
     auth_required, generate_device_screenshot_path, nocache, allowed_file, uploaded_files
@@ -72,7 +73,7 @@ class control(object):
     @nocache
     @logger.catch()
     def get_phonescreens(self):
-        if not os.path.exists(os.path.join(self._args.temp_path, "madmin")):
+        if not os.path.exists(os.path.join(mapadroid.MAD_ROOT, self._args.temp_path, "madmin")):
             os.makedirs(os.path.join(self._args.temp_path, "madmin"))
 
         screens_phone = []
@@ -127,7 +128,7 @@ class control(object):
                                    'alt="NO websocket connection!"></b>'
                         filename = generate_device_screenshot_path(pho, devicemappings, self._args)
                         if os.path.isfile(filename):
-                            image_resize(filename, os.path.join(
+                            image_resize(filename, os.path.join(mapadroid.MAD_ROOT,
                                 self._args.temp_path, "madmin"), width=250)
                             screenshot_ending: str = ".jpg"
                             screen = "screenshot/madmin/screenshot_" + str(pho) + screenshot_ending
@@ -179,7 +180,7 @@ class control(object):
                                  screenshot_quality, screenshot_type)
 
         filename = generate_device_screenshot_path(origin, devicemappings, self._args)
-        image_resize(filename, os.path.join(self._args.temp_path, "madmin"), width=250)
+        image_resize(filename, os.path.join(mapadroid.MAD_ROOT, self._args.temp_path, "madmin"), width=250)
 
         return
 

@@ -111,8 +111,8 @@ def parseArgs():
     parser.add_argument('-tmp', '--temp_path', default='temp',
                         help='Temp Folder for OCR Scanning. Default: temp')
 
-    parser.add_argument('-upload', '--upload_path', default='upload',
-                        help='Path for uploaded Files via madmin and for device installation. Default: upload')
+    parser.add_argument('-upload', '--upload_path', default=os.path.join(mapadroid.MAD_ROOT, 'upload'),
+                        help='Path for uploaded Files via madmin and for device installation. Default: /absolute/path/to/upload')
 
     parser.add_argument('-pgasset', '--pogoasset', required=False,
                         help=('Path to Pogo Asset.'
