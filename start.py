@@ -18,8 +18,8 @@ from threading import Thread, active_count
 
 import psutil
 
-from mapadroid.utils.MappingManager import MappingManagerManager
-from mapadroid.utils import MappingManager, local_api
+from mapadroid.utils.MappingManager import MappingManager, MappingManagerManager
+from mapadroid.utils.local_api import LocalAPI
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
@@ -28,7 +28,7 @@ from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.version import MADVersion
 from mapadroid.utils.walkerArgs import parseArgs
-from mapadroid.websocket import WebsocketServer
+from mapadroid.websocket.WebsocketServer import WebsocketServer
 from mapadroid.utils.updater import deviceUpdater
 from mapadroid.utils.data_manager import DataManager
 
@@ -269,7 +269,7 @@ if __name__ == "__main__":
     try:
         if args.unit_tests:
             api_ready = False
-            api = local_api.LocalAPI()
+            api = LocalAPI()
             logger.info('Checking API status')
             while not api_ready:
                 try:

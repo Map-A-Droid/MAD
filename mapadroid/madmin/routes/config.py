@@ -6,10 +6,14 @@ from flask import (render_template, request, redirect, url_for, Response)
 from flask_caching import Cache
 
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
 from mapadroid.utils.logging import logger
+from mapadroid.utils.data_manager.dm_exceptions import (
+    ModeNotSpecified,
+    ModeUnknown
+)
 
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
@@ -115,8 +119,7 @@ class config(object):
                     pass
         try:
             settings_vars = self._data_manager.get_settings(section, mode=mode)
-        except (mapadroid.utils.data_manager.dm_exceptions.ModeNotSpecified,
-                mapadroid.utils.data_manager.dm_exceptions.ModeUnknown):
+        except (ModeNotSpecified, ModeUnknown):
             if identifier:
                 raise
             else:

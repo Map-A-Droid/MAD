@@ -1,6 +1,6 @@
 from typing import Optional
 
-from mapadroid.route import RouteManagerMon
+from mapadroid.route.RouteManagerMon import RouteManagerMon
 from mapadroid.route.RouteManagerIV import RouteManagerIV
 from mapadroid.route.RouteManagerLeveling import RouteManagerLeveling
 from mapadroid.route.RouteManagerQuests import RouteManagerQuests

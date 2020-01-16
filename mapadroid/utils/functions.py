@@ -5,7 +5,9 @@ import time
 
 from PIL import Image
 
-with open('madmin/static/vars/template/phone.tpl', 'r') as file:
+import mapadroid
+
+with open(os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates/phone.tpl'), 'r') as file:
     phone_template = file.read().replace('\n', '')
 
 

@@ -1,4 +1,5 @@
 import logging
+import os
 
 from flask import Flask, render_template
 from flask.logging import default_handler
@@ -18,8 +19,8 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, logger
 
 app = Flask(__name__,
-            static_folder=mapadroid.MAD_ROOT + 'static/madmin/static',
-            template_folder=mapadroid.MAD_ROOT + 'static/madmin/templates')
+            static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
+            template_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates'))
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024

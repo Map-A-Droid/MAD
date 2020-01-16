@@ -1,7 +1,7 @@
 import copy
 from unittest import TestCase
 
-from mapadroid.utils import local_api
+from mapadroid.utils.local_api import LocalAPI
 from . import global_variables
 
 
@@ -10,7 +10,7 @@ class APITestBase(TestCase):
     index = 0
 
     def setUp(self):
-        self.api = local_api.LocalAPI()
+        self.api = LocalAPI()
 
     def tearDown(self):
         self.remove_resources()

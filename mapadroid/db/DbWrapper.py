@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from functools import reduce
 from typing import List, Optional
 
-from mapadroid.db import DbSchemaUpdater
+from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
 from mapadroid.db.DbStatsReader import DbStatsReader

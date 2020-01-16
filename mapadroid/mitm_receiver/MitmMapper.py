@@ -6,8 +6,8 @@ from threading import Thread, Event
 from typing import Dict
 
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
-from mapadroid.mitm_receiver import PlayerStats
-from mapadroid.utils import MappingManager
+from mapadroid.mitm_receiver.PlayerStats import PlayerStats
+from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import logger
 from mapadroid.utils.walkerArgs import parseArgs
