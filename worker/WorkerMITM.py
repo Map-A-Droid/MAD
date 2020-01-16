@@ -14,6 +14,18 @@ from worker.MITMBase import MITMBase, LatestReceivedType
 
 
 class WorkerMITM(MITMBase):
+    def __init__(self, args, dev_id, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
+                 area_id: int, routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
+                 pogo_window_manager: PogoWindows, walker):
+        MITMBase.__init__(self, args, dev_id, id, last_known_state, websocket_handler,
+                          mapping_manager=mapping_manager, area_id=area_id, routemanager_name=routemanager_name,
+                          db_wrapper=db_wrapper, NoOcr=True,
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker)
+
+        # TODO: own InjectionSettings class
+        self._injection_settings = {}
+        self.__update_injection_settings()
+
     def _valid_modes(self):
         return ["iv_mitm", "raids_mitm", "mon_mitm"]
 
@@ -121,18 +133,6 @@ class WorkerMITM(MITMBase):
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
-    def __init__(self, args, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
-                 routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
-                 pogo_window_manager: PogoWindows, walker):
-        MITMBase.__init__(self, args, id, last_known_state, websocket_handler,
-                          mapping_manager=mapping_manager, routemanager_name=routemanager_name,
-                          db_wrapper=db_wrapper, NoOcr=True,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker)
-
-        # TODO: own InjectionSettings class
-        self._injection_settings = {}
-        self.__update_injection_settings()
-
     def __update_injection_settings(self):
         injected_settings = {}
 
@@ -189,15 +189,15 @@ class WorkerMITM(MITMBase):
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
-        self._mitm_mapper.update_latest(origin=self._id, key="ids_encountered", values_dict=self._encounter_ids)
-        self._mitm_mapper.update_latest(origin=self._id, key="ids_iv", values_dict=ids_iv)
-        self._mitm_mapper.update_latest(origin=self._id, key="injected_settings", values_dict=injected_settings)
+        self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
+        self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
+        self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
         data_requested = LatestReceivedType.UNDEFINED
         if latest is None:
             logger.debug(
-                "Nothing received from {} since MAD started", str(self._id))
+                "Nothing received from {} since MAD started", str(self._origin))
             time.sleep(0.5)
         elif proto_to_wait_for not in latest:
             logger.debug(

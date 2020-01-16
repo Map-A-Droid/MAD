@@ -466,6 +466,7 @@ class MappingManager:
         for device_id, device in raw_devices.items():
             device_dict = {}
             device_dict.clear()
+            device_dict['device_id'] = device_id
             walker = int(device["walker"])
             device_dict["adb"] = device.get("adbname", None)
             pool = device.get("pool", None)

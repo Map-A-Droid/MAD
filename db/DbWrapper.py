@@ -899,84 +899,47 @@ class DbWrapper:
 
     def save_status(self, data):
         logger.debug("dbWrapper::save_status")
+        literals = ['currentPos', 'lastPos']
+        data['instance_id'] = self.instance_id
+        self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
-        query = (
-            "INSERT into trs_status (instance_id, origin, currentPos, lastPos, routePos, routeMax, "
-            "routemanager, rebootCounter, lastProtoDateTime, "
-            "init, rebootingOption, restartCounter, currentSleepTime) values "
-            "(%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-            "ON DUPLICATE KEY UPDATE currentPos=VALUES(currentPos), "
-            "lastPos=VALUES(lastPos), routePos=VALUES(routePos), "
-            "routeMax=VALUES(routeMax), routemanager=VALUES(routemanager), "
-            "rebootCounter=VALUES(rebootCounter), lastProtoDateTime=IF(LENGTH(VALUES(lastProtoDateTime))=0, lastProtoDateTime, VALUES(lastProtoDateTime)), "
-            "init=VALUES(init), rebootingOption=VALUES(rebootingOption), restartCounter=VALUES(restartCounter), "
-            "currentSleepTime=VALUES(currentSleepTime)"
-        )
-        vals = (
-            self.instance_id,
-            data["Origin"], str(data["CurrentPos"]), str(
-                data["LastPos"]), data["RoutePos"], data["RouteMax"],
-            data["Routemanager"], data["RebootCounter"], data["LastProtoDateTime"],
-            data["Init"], data["RebootingOption"], data["RestartCounter"], data["CurrentSleepTime"]
-        )
-        self.execute(query, vals, commit=True)
-        return
-
-    def save_last_reboot(self, origin):
+    def save_last_reboot(self, dev_id):
         logger.debug("dbWrapper::save_last_reboot")
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        query = (
-            "insert into trs_status(instance_id, origin, lastPogoReboot, globalrebootcount) "
-            "values (%s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE lastPogoReboot=VALUES(lastPogoReboot), globalrebootcount=(globalrebootcount+1)"
+        literals = ['lastPogoReboot', 'globalrebootcount']
+        data = {
+            'instance_id': self.instance_id,
+            'device_id': dev_id,
+            'lastPogoReboot': 'NOW()',
+            'globalrebootcount': '(globalrebootcount+1)'
+        }
+        self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
-        )
-
-        vals = (
-            self.instance_id, origin, now, 1
-        )
-
-        self.execute(query, vals, commit=True)
-        return
-
-    def save_last_restart(self, origin):
+    def save_last_restart(self, dev_id):
         logger.debug("dbWrapper::save_last_restart")
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        query = (
-
-            "insert into trs_status(instance_id, origin, lastPogoRestart, globalrestartcount) "
-            "values (%s, %s, %s, %s) "
-            "ON DUPLICATE KEY UPDATE lastPogoRestart=VALUES(lastPogoRestart), globalrestartcount=(globalrestartcount+1)"
-
-        )
-
-        vals = (
-            self.instance_id, origin, now, 1
-        )
-
-        self.execute(query, vals, commit=True)
-        return
+        literals = ['lastPogoRestart', 'globalrestartcount']
+        data = {
+            'instance_id': self.instance_id,
+            'device_id': dev_id,
+            'lastPogoRestart': 'NOW()',
+            'globalrestartcount': '(globalrestartcount+1)'
+        }
+        self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
     def download_status(self):
         logger.debug("dbWrapper::download_status")
-        workerstatus = []
-
-        query = (
-            "SELECT trs.`origin`, trs.`currentPos`, trs.`lastPos`, trs.`routePos`, trs.`routeMax`,"
-            "trs.`routemanager` AS 'routemanager_id', trs.`rebootCounter`, trs.`lastProtoDateTime`,"
-            "trs.`lastPogoRestart`, trs.`init`, trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`,"
-            "trs.`globalrestartcount`, trs.`lastPogoReboot`, trs.`currentSleepTime`, sd.`device_id` AS 'origin_id'\n"
-            "FROM trs_status trs\n"
-            "INNER JOIN settings_device sd ON sd.name = (trs.origin COLLATE utf8mb4_unicode_ci) AND sd.`instance_id` = trs.`instance_id`\n"
-            "WHERE trs.`instance_id` = %s"
-        )
-        result = self.autofetch_all(query, args=(self.instance_id))
-        for row in result:
-            dt_fields = ['lastProtoDateTime', 'lastPogoRestart']
-            for field in dt_fields:
-                row[field] = str(row[field]) if row[field] is not None else None
-            workerstatus.append(row)
-        return workerstatus
+        sql = "SELECT trs.`device_id`, dev.`name`, trs.`routePos`, trs.`routeMax`, trs.`area_id`, sa.`name` AS 'rmname',\n"\
+              "sa.`mode`, trs.`rebootCounter`, trs.`init`, trs.`currentSleepTime`,\n"\
+              "trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`, trs.`globalrestartcount`,\n"\
+              "UNIX_TIMESTAMP(trs.`lastPogoRestart`) AS 'lastPogoRestart',\n"\
+              "UNIX_TIMESTAMP(trs.`lastProtoDateTime`) AS 'lastProtoDateTime',\n"\
+              "UNIX_TIMESTAMP(trs.`lastPogoReboot`) AS 'lastPogoReboot',\n"\
+              "CONCAT(ROUND(x(trs.`currentPos`), 5), ', ', ROUND(y(trs.`currentPos`), 5)) AS 'currentPos',\n"\
+              "CONCAT(ROUND(x(trs.`lastPos`), 5), ', ', ROUND(y(trs.`lastPos`), 5)) AS 'lastPos'\n"\
+              "FROM `trs_status` trs\n"\
+              "INNER JOIN `settings_device` dev ON dev.`device_id` = trs.`device_id`\n"\
+              "LEFT JOIN `settings_area` sa ON sa.`area_id` = trs.`area_id`"
+        workers = self.autofetch_all(sql)
+        return workers
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
                                oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):
@@ -1018,10 +981,13 @@ class DbWrapper:
 
         return cells
 
-    def update_trs_status_to_idle(self, origin):
-        query = "UPDATE trs_status SET routemanager = 'idle' WHERE origin = '" + origin + "'"
-        logger.debug(query)
-        self.execute(query, commit=True)
+    def update_trs_status_to_idle(self, dev_id):
+        data = {
+            'instance_id': self.instance_id,
+            'dev_id': dev_id,
+            'area_id': -1
+        }
+        self.autoexec_insert('trs_status', data)
 
     def get_instance_id(self, instance_name=None):
         if instance_name is None:
