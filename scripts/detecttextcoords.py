@@ -1,6 +1,7 @@
+import cv2
 import pytesseract
 from pytesseract import Output
-import cv2
+
 img = cv2.imread('c:\a\screenshot_MotoG4.jpg')
 
 d = pytesseract.image_to_data(img, output_type=Output.DICT)

@@ -2,16 +2,15 @@ import os
 import sys
 from threading import Thread
 
-from db.DbWrapper import DbWrapper
-from db.DbFactory import DbFactory
-from utils.MappingManager import MappingManagerManager, MappingManager
-from utils.logging import initLogging, logger
-from utils.version import MADVersion
-from utils.walkerArgs import parseArgs
-import utils.data_manager
-from websocket.WebsocketServer import WebsocketServer
-from utils.updater import deviceUpdater
-from utils.functions import generate_mappingjson
+from mapadroid.db.DbFactory import DbFactory
+from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManager import MappingManagerManager
+from mapadroid.utils.logging import initLogging, logger
+from mapadroid.utils.updater import deviceUpdater
+from mapadroid.utils.version import MADVersion
+from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.websocket import WebsocketServer
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -24,8 +23,9 @@ def create_folder(folder):
         os.makedirs(folder)
 
 
-def start_madmin(args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager, deviceUpdater, jobstatus):
-    from madmin.madmin import madmin_start
+def start_madmin(args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
+                 deviceUpdater, jobstatus):
+    from mapadroid.madmin.madmin import madmin_start
     madmin_start(args, db_wrapper, ws_server, mapping_manager, data_manager, deviceUpdater, jobstatus)
 
 
@@ -43,7 +43,7 @@ if __name__ == "__main__":
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
     instance_id = db_wrapper.get_instance_id()
-    data_manager = utils.data_manager.DataManager(db_wrapper, instance_id)
+    data_manager = mapadroid.utils.data_manager.DataManager(db_wrapper, instance_id)
     data_manager.clear_on_boot()
     version = MADVersion(args, data_manager)
     version.get_version()
@@ -52,7 +52,8 @@ if __name__ == "__main__":
     mapping_manager_manager = MappingManagerManager()
     mapping_manager_manager.start()
     mapping_manager_stop_event = mapping_manager_manager.Event()
-    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager, True)
+    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager,
+                                                                             True)
 
     ws_server = WebsocketServer(args, None, db_wrapper, mapping_manager, None, data_manager, configmode=True)
     t_ws = Thread(name='scanner', target=ws_server.start_server)
@@ -64,8 +65,10 @@ if __name__ == "__main__":
     device_Updater = deviceUpdater(ws_server, args, jobstatus, db_wrapper)
 
     logger.success(
-        'Starting MADmin on port {} - Open a browser, visit MADmin and go to "Settings"', int(args.madmin_port))
+        'Starting MADmin on port {} - Open a browser, visit MADmin and go to "Settings"',
+        int(args.madmin_port))
     t_flask = Thread(name='madmin', target=start_madmin,
-                     args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater, jobstatus))
+                     args=(
+                     args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater, jobstatus))
     t_flask.daemon = False
     t_flask.start()
