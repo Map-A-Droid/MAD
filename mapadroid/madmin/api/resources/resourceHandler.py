@@ -4,6 +4,7 @@ import re
 
 import flask
 
+import mapadroid.utils.data_manager.modules
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils.data_manager.dm_exceptions import (
     UnknownIdentifier,
@@ -14,6 +15,7 @@ from mapadroid.utils.data_manager.dm_exceptions import (
     SaveIssue
 )
 from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
+from mapadroid.utils.data_manager.modules import *
 from .. import apiHandler
 
 
@@ -230,7 +232,7 @@ class ResourceHandler(apiHandler.APIHandler):
                 resource_def = self._data_manager.get_resource_def(self.component, mode=self.mode)
                 resource_info = self.get_resource_info(resource_def)
             except ModeNotSpecified:
-                resource_def = copy.deepcopy(mapadroid.utils.data_manager.modules.MAPPINGS['area_nomode'])
+                resource_def = copy.deepcopy(MAPPINGS['area_nomode'])
                 resource_info = 'Please specify a mode for resource information Valid modes: %s'
                 resource_info %= (','.join(self._data_manager.get_valid_modes(self.component)),)
             if flask.request.method == 'GET':
