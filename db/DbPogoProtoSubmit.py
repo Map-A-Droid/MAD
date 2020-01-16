@@ -660,7 +660,6 @@ class DbPogoProtoSubmit:
                 and len(stop_data["pokestop_displays"]) > 0 \
                 and stop_data["pokestop_displays"][0]["character_display"] is not None \
                 and stop_data["pokestop_displays"][0]["character_display"]["character"] > 1:
-            logger.debug("rocket leader info {}", str(stop_data))
             start_ms = stop_data["pokestop_displays"][0]["incident_start_ms"]
             expiration_ms = stop_data["pokestop_displays"][0]["incident_expiration_ms"]
             incident_grunt_type = stop_data["pokestop_displays"][0]["character_display"]["character"]
