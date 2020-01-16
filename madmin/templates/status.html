@@ -18,54 +18,56 @@
         if ($.fn.dataTable.isDataTable(tableGridHtmlId)) {
             dataTable.destroy();
         }
+        console.log(gridData);
 
         dataTable = $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
-                { data: 'origin', title: 'Origin',
+                { data: 'name', title: 'Origin',
                   "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    $(nTd).html("<a href='{{ url_for('settings_devices') }}?id="+oData.origin_id+"'>"+oData.origin+"</a>");
+                    $(nTd).html("<a href='{{ url_for('settings_devices') }}?id="+oData.device_id+"'>"+oData.name+"</a>");
                   }
                 },
-                { data: 'routemanager', title: 'Route', 
+                { data: 'lastProtoDateTime', title: 'Last Update' },
+                { data: 'currentSleepTime', title: 'Next Action' },
+                { data: 'rmname', title: 'Route',
                   "fnCreatedCell": function (nTd, sData, oData, iRow, iCol) {
-                    if(oData.routemanager_id != -1) {
-                      $(nTd).html("<a href='{{ url_for('settings_areas') }}?id="+oData.routemanager_id+"&mode="+oData.routemanager_mode+"'>"+oData.routemanager+"</a>");
+                    if(oData.area_id != -1) {
+                      $(nTd).html("<a href='{{ url_for('settings_areas') }}?id="+oData.area_id+"&mode="+oData.mode+"'>"+oData.rmname+"</a>");
                     } else {
-                      $(nTd).html(oData.routemanager);
+                      $(nTd).html('Idle');
                     }
                   }
                 },
-                { data: 'routePos', title: 'Route Pos' },
-                { data: 'routeMax', title: 'Route Length' },
                 { data: 'init', title: 'Init Mode' },
-                { data: 'lastProtoDateTime', title: 'Last Date/Time of Data' },
-                { data: 'currentSleepTime', title: 'Next Action' },
+                { data: 'routeMax', title: 'Route Length' },
                 { data: 'restartCounter', title: 'Restart Counter' },
+                { data: 'globalrestartcount', title: 'Total Restarts' },
+                { data: 'lastPogoRestart', title: 'Last Restart' },
                 { data: 'rebootingOption', title: 'Reboot Device' },
                 { data: 'rebootCounter', title: 'Reboot Counter' },
-                { data: 'lastPogoRestart', title: 'Last Restart' },
-                { data: 'lastPogoReboot', title: 'Last Reboot' },
-                { data: 'globalrestartcount', title: 'Total Restarts' },
                 { data: 'globalrebootcount', title: 'Total Reboots' },
+                { data: 'lastPogoReboot', title: 'Last Reboot' },
                 { data: 'currentPos', title: 'Current Pos' },
                 { data: 'lastPos', title: 'Last Pos' }
             ],
             "columnDefs": [
                 {
-                    "targets": [3],
-                    "visible": false
-                },
-                {
-                    "targets": [2],
+                    "targets": [4, 9],
                     "render": function (data, type, row) {
-                        return row.routePos + "/" + row.routeMax
+                        return (parseInt(data) == 0 ? "False":"True");
                     }
                 },
                 {
                     "targets": [5],
                     "render": function (data, type, row) {
-                        var dateToShow = moment(data);
+                        return row.routePos + "/" + row.routeMax
+                    }
+                },
+                {
+                    "targets": [1],
+                    "render": function (data, type, row) {
+                        var dateToShow = moment.utc(data*1000);
                         if (dateToShow.isValid()) {
                             return dateToShow.fromNow();
                         }
@@ -74,16 +76,38 @@
                     }
                 },
                 {
-                    "targets": [6],
+                    "targets": [2],
                     "render": function (data, type, row) {
                         if(data == '0' || data == 0) {
                             return 'Now'
                         }
-                        var dateToShow = new moment().add(parseInt(data),"seconds")
+                        var dateToShow = new moment().utc().add(parseInt(data*1000),"seconds")
 
                         return dateToShow.fromNow(true);
                     }
-                }
+                },
+                {
+                    "targets": [8],
+                    "render": function (data, type, row) {
+                        var dateToShow = moment.utc(data*1000);
+                        if (dateToShow.isValid()) {
+                            return dateToShow.fromNow();
+                        }
+
+                        return "None";
+                    }
+                },
+                {
+                    "targets": [12],
+                    "render": function (data, type, row) {
+                        var dateToShow = moment.utc(data*1000);
+                        if (dateToShow.isValid()) {
+                            return dateToShow.fromNow();
+                        }
+
+                        return "None";
+                    }
+                },
             ],
             "order": [[0, "asc"]],
             "responsive": {{ responsive }},

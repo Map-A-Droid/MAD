@@ -12,7 +12,7 @@ import copy
 from db.DbWrapper import DbWrapper
 from db.DbSchemaUpdater import DbSchemaUpdater
 
-current_version = 21
+current_version = 22
 
 class MADVersion(object):
 
@@ -740,6 +740,73 @@ class MADVersion(object):
                 self.dbwrapper.execute(sql, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
+        if self._version < 22:
+            existing_data = self.dbwrapper.autofetch_all("SELECT * FROM `trs_status`")
+            sql = "DROP TABLE IF EXISTS`trs_status`"
+            try:
+                self.dbwrapper.execute(sql, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+            new_table = """
+                CREATE TABLE `trs_status` (
+                 `instance_id` INT UNSIGNED NOT NULL,
+                 `device_id` INT UNSIGNED NOT NULL,
+                 `currentPos` POINT DEFAULT NULL,
+                 `lastPos` POINT DEFAULT NULL,
+                 `routePos` INT DEFAULT NULL,
+                 `routeMax` INT DEFAULT NULL,
+                 `area_id` INT UNSIGNED DEFAULT NULL,
+                 `rebootCounter` INT DEFAULT NULL,
+                 `lastProtoDateTime` DATETIME DEFAULT NULL,
+                 `lastPogoRestart` DATETIME DEFAULT NULL,
+                 `init` TINYINT(1) DEFAULT NULL,
+                 `rebootingOption` TINYINT(1) DEFAULT NULL,
+                 `restartCounter` INT DEFAULT NULL,
+                 `lastPogoReboot` DATETIME DEFAULT NULL,
+                 `globalrebootcount` INT DEFAULT 0,
+                 `globalrestartcount` INT DEFAULT 0,
+                 `currentSleepTime` INT NOT NULL DEFAULT 0,
+                 PRIMARY KEY (`device_id`),
+                 CONSTRAINT `fk_ts_dev_id`
+                    FOREIGN KEY (`device_id`)
+                    REFERENCES `settings_device` (`device_id`)
+                    ON DELETE CASCADE,
+                 CONSTRAINT `fk_ts_instance`
+                     FOREIGN KEY (`instance_id`)
+                     REFERENCES `madmin_instance` (`instance_id`)
+                     ON DELETE CASCADE,
+                 CONSTRAINT `fk_ts_areaid`
+                     FOREIGN KEY (`area_id`)
+                     REFERENCES `settings_area` (`area_id`)
+                     ON DELETE CASCADE
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+            """
+            try:
+                self.dbwrapper.execute(new_table, commit=True)
+            except Exception as e:
+                logger.exception("Unexpected error: {}", e)
+            point_fields = ['currentPos', 'lastPos']
+            bool_fields = ['rebootingOption', 'init']
+            for row in existing_data:
+                dev_id_sql = "SELECT `device_id` FROM `settings_device` WHERE `name` = %s and `instance_id` = %s"
+                dev_id = self.dbwrapper.autofetch_value(dev_id_sql, args=(row['origin'], row['instance_id']))
+                del row['origin']
+                row['device_id'] = dev_id
+                try:
+                    row['area_id'] = int(row['routemanager'])
+                    del row['routemanager']
+                except:
+                    continue
+                for field in point_fields:
+                    if not row[field]:
+                        continue
+                    point = row[field].split(",")
+                    row[field] = "POINT(%s,%s)" % (point[0], point[1])
+                for field in bool_fields:
+                    if not row[field]:
+                        continue
+                    row[field] = 0 if row[field].lower() == 'false' else 1
+                self.dbwrapper.autoexec_insert('trs_status', row, literals=point_fields)
         self.set_version(current_version)
 
     def set_version(self, version):

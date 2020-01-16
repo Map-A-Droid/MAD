@@ -499,25 +499,7 @@ class statistics(object):
 
     @auth_required
     def get_status(self):
-        device_status = self._db.download_status()
-        areas = self._mapping_manager.get_areas()
-
-        data = []
-        for device in device_status:
-            try:
-                device['routemanager'] = areas[int(device['routemanager_id'])]['name']
-                device['routemanager_mode'] = areas[int(device['routemanager_id'])]['mode']
-            except (TypeError, ValueError, KeyError):
-                if device['routemanager_id'] == 'idle':
-                    device['routemanager'] = 'Idle'
-                    device['routemanager_mode'] = 'idle'
-                else:
-                    device['routemanager'] = 'Unknown Area %s' % (device['routemanager_id'],)
-                    device['routemanager_mode'] = 'Unknown Area %s' % (device['routemanager_id'],)
-                device['routemanager_id'] = -1
-            data.append(device)
-
-        return jsonify(data)
+        return jsonify(self._db.download_status())
 
     @auth_required
     @logger.catch()

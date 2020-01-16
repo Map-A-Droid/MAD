@@ -44,11 +44,11 @@ class WorkerQuests(MITMBase):
     def _valid_modes(self):
         return ["pokestops"]
 
-    def __init__(self, args, id, last_known_state, websocket_handler,  mapping_manager: MappingManager,
-                 routemanager_name: str, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker,
+    def __init__(self, args, dev_id, id, last_known_state, websocket_handler,  mapping_manager: MappingManager,
+                 area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogo_window_manager: PogoWindows, walker,
                  mitm_mapper: MitmMapper):
-        MITMBase.__init__(self, args, id, last_known_state, websocket_handler,
-                          mapping_manager=mapping_manager, routemanager_name=routemanager_name,
+        MITMBase.__init__(self, args, dev_id, id, last_known_state, websocket_handler,
+                          mapping_manager=mapping_manager, routemanager_name=routemanager_name, area_id=area_id,
                           db_wrapper=db_wrapper, NoOcr=False,
                           mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker)
 
@@ -73,7 +73,7 @@ class WorkerQuests(MITMBase):
         if self.clear_thread is not None:
             return
         self.clear_thread = Thread(name="clear_thread_%s" % str(
-                self._id), target=self._clear_thread)
+                self._origin), target=self._clear_thread)
         self.clear_thread.daemon = True
         self.clear_thread.start()
 
@@ -327,14 +327,14 @@ class WorkerQuests(MITMBase):
                 if time.time() - lastcleanupbox > 900:
                     # just cleanup if last cleanup time > 15 minutes ago
                     cleanupbox = True
-            self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._id, delay_used)
+            self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin, delay_used)
             while time.time() <= int(cur_time) + int(delay_used):
                 if delay_used > 200 and cleanupbox:
                     self.clear_thread_task = 1
                     cleanupbox = False
                 if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                         or self._stop_worker_event.is_set():
-                    logger.error("Worker {} get killed while sleeping", str(self._id))
+                    logger.error("Worker {} get killed while sleeping", str(self._origin))
                     self._current_sleep_time = 0
                     raise InternalStopWorkerException
                 time.sleep(1)
@@ -359,13 +359,13 @@ class WorkerQuests(MITMBase):
     def _post_move_location_routine(self, timestamp: float):
         if self._stop_worker_event.is_set():
             raise InternalStopWorkerException
-        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._id)
+        position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name, self._origin)
         if position_type is None:
             logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
 
         if self.get_devicesettings_value('rotate_on_lvl_30', False) and \
-                self._mitm_mapper.get_playerlevel(self._id) >= 30 and self._level_mode:
+                self._mitm_mapper.get_playerlevel(self._origin) >= 30 and self._level_mode:
             #switch if player lvl >= 30
             self.switch_account()
 
@@ -483,7 +483,7 @@ class WorkerQuests(MITMBase):
 
                 try:
                     item_text = self._pogoWindowManager.get_inventory_text(self.get_screenshot_path(),
-                                                                           self._id, text_x1, text_x2,
+                                                                           self._origin, text_x1, text_x2,
                                                                            check_y_text_ending, check_y_text_starter)
                     if item_text is None:
                         logger.error("Did not get any text in inventory")
@@ -574,13 +574,13 @@ class WorkerQuests(MITMBase):
             # TODO: here we have the latest update of encountered mons.
             # self._encounter_ids contains the complete dict.
             # encounter_ids only contains the newest update.
-        self._mitm_mapper.update_latest(origin=self._id, key="ids_encountered", values_dict=self._encounter_ids)
-        self._mitm_mapper.update_latest(origin=self._id, key="ids_iv", values_dict=ids_iv)
+        self._mitm_mapper.update_latest(origin=self._origin, key="ids_encountered", values_dict=self._encounter_ids)
+        self._mitm_mapper.update_latest(origin=self._origin, key="ids_iv", values_dict=ids_iv)
 
-        self._mitm_mapper.update_latest(origin=self._id, key="injected_settings", values_dict=injected_settings)
+        self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
     def _current_position_has_spinnable_stop(self, timestamp: float):
-        latest: dict = self._mitm_mapper.request_latest(self._id)
+        latest: dict = self._mitm_mapper.request_latest(self._origin)
         if latest is None or PROTO_NUMBER_FOR_GMO not in latest.keys():
             return False, False
 
@@ -625,7 +625,7 @@ class WorkerQuests(MITMBase):
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
                     logger.info("Levelmode: Stop already visited - skipping it")
-                    self._db_wrapper.submit_pokestop_visited(self._id, latitude, longitude)
+                    self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
                     return False, True
 
                 enabled: bool = fort.get("enabled", True)
@@ -705,7 +705,7 @@ class WorkerQuests(MITMBase):
                 logger.info('Box is full... Next round!')
                 self.clear_thread_task = 1
                 time.sleep(5)
-                if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._id,
+                if not self._mapping_manager.routemanager_redo_stop(self._routemanager_name, self._origin,
                                                                      self.current_location.lat,
                                                                      self.current_location.lng):
                     logger.warning('Cannot process this stop again')
@@ -713,7 +713,7 @@ class WorkerQuests(MITMBase):
             elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
                 if self._level_mode:
                     logger.info("Saving visitation info...")
-                    self._db_wrapper.submit_pokestop_visited(self._id,
+                    self._db_wrapper.submit_pokestop_visited(self._origin,
                                                              self.current_location.lat, self.current_location.lng)
                     # This is leveling mode, it's faster to just ignore spin result and continue ?
                     break
@@ -761,9 +761,9 @@ class WorkerQuests(MITMBase):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
                     self.clear_thread_task = 2
                     break
-                elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(self._id) > 6800:
+                elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(self._origin) > 6800:
                     logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
-                                   self._mitm_mapper.get_poke_stop_visits(self._id))
+                                   self._mitm_mapper.get_poke_stop_visits(self._origin))
 
                 # self._close_gym(self._delay_add)
 

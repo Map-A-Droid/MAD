@@ -246,8 +246,10 @@ class control(object):
         useadb = request.args.get('adb')
         restart = request.args.get('restart')
         devicemappings = self._mapping_manager.get_all_devicemappings()
-
         adb = devicemappings.get(origin, {}).get('adb', False)
+        device_id = devicemappings.get(origin, {}).get('device_id', False)
+        if device_id != False:
+            self._db.save_last_restart(device_id)
         self._logger.info('MADmin: Restart Pogo ({})', str(origin))
         if useadb == 'True' and \
                 self._adb_connect.send_shell_command(adb, origin, "am force-stop com.nianticlabs.pokemongo"):
@@ -279,8 +281,10 @@ class control(object):
         origin = request.args.get('origin')
         useadb = request.args.get('adb')
         devicemappings = self._mapping_manager.get_all_devicemappings()
-
         adb = devicemappings.get(origin, {}).get('adb', False)
+        device_id = devicemappings.get(origin, {}).get('device_id', False)
+        if device_id != False:
+            self._db.save_last_reboot(device_id)
         self._logger.info('MADmin: Restart device ({})', str(origin))
         if (useadb == 'True' and
                 self._adb_connect.send_shell_command(

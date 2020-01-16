@@ -343,23 +343,25 @@ class WebsocketServer(object):
                 devicesettings['last_location'] = Location(0.0, 0.0)
 
             logger.debug("Setting up worker for {}", str(origin))
+            dev_id = self.__mapping_manager.get_all_devicemappings()[origin]['device_id']
+            area_id = walker_settings['walkerarea']
             worker = None
             if walker_routemanager_mode is None:
                 pass
             elif walker_routemanager_mode in ["raids_mitm", "mon_mitm", "iv_mitm"]:
-                worker = WorkerMITM(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
+                worker = WorkerMITM(self.args, dev_id, origin, last_known_state, self, area_id=area_id, routemanager_name=walker_area_name,
                                     mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
                                     db_wrapper=self.__db_wrapper,
                                     pogo_window_manager=self.__pogoWindowManager, walker=walker_settings)
             elif walker_routemanager_mode in ["pokestops"]:
-                worker = WorkerQuests(self.args, origin, last_known_state, self, routemanager_name=walker_area_name,
+                worker = WorkerQuests(self.args, dev_id, origin, last_known_state, self, area_id=area_id, routemanager_name=walker_area_name,
                                       mitm_mapper=self.__mitm_mapper, mapping_manager=self.__mapping_manager,
                                       db_wrapper=self.__db_wrapper, pogo_window_manager=self.__pogoWindowManager,
                                       walker=walker_settings)
             elif walker_routemanager_mode in ["idle"]:
-                worker = WorkerConfigmode(self.args, origin, self, walker=walker_settings,
+                worker = WorkerConfigmode(self.args, dev_id, origin, self, walker=walker_settings,
                                           mapping_manager=self.__mapping_manager, mitm_mapper=self.__mitm_mapper,
-                                          db_wrapper=self.__db_wrapper, routemanager_name=walker_area_name)
+                                          db_wrapper=self.__db_wrapper, area_id=area_id, routemanager_name=walker_area_name)
             else:
                 logger.error("Mode not implemented")
                 sys.exit(1)
