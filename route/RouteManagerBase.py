@@ -847,7 +847,7 @@ class RouteManagerBase(ABC):
             return True
         with self._manager_mutex:
             logger.debug("Updating all routepools")
-            if len(self._workers_registered) == 0 or len(self._routepool):
+            if len(self._workers_registered) == 0 or len(self._routepool) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
 
