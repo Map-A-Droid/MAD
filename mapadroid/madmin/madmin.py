@@ -1,10 +1,10 @@
 import logging
-import sys
 
-from flask import Flask
+from flask import Flask, render_template
 from flask.logging import default_handler
 from werkzeug.middleware.proxy_fix import ProxyFix
 
+import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.api import APIEntry
 from mapadroid.madmin.reverseproxy import ReverseProxied
@@ -13,14 +13,13 @@ from mapadroid.madmin.routes.config import config
 from mapadroid.madmin.routes.control import control
 from mapadroid.madmin.routes.map import map
 from mapadroid.madmin.routes.path import path
-# routes
 from mapadroid.madmin.routes.statistics import statistics
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, logger
 
-sys.path.append("..")  # Adds higher directory to python modules path.
-
-app = Flask(__name__)
+app = Flask(__name__,
+            static_folder=mapadroid.MAD_ROOT + 'static/madmin/static',
+            template_folder=mapadroid.MAD_ROOT + 'static/madmin/templates')
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024

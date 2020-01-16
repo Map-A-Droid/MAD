@@ -63,7 +63,8 @@ class path(object):
 
     @auth_required
     def screens(self):
-        return render_template('screens.html', responsive=str(self._args.madmin_noresponsive).lower(),
+        return render_template('screens.html',
+                               responsive=str(self._args.madmin_noresponsive).lower(),
                                title="show success Screens")
 
     @auth_required
@@ -108,7 +109,8 @@ class path(object):
     def pickworker(self):
         jobname = request.args.get("jobname", None)
         type = request.args.get("type", None)
-        return render_template('workerpicker.html', responsive=str(self._args.madmin_noresponsive).lower(),
+        return render_template('workerpicker.html',
+                               responsive=str(self._args.madmin_noresponsive).lower(),
                                title="Select Worker", jobname=jobname, type=type)
 
     @auth_required
