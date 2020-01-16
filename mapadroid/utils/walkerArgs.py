@@ -25,7 +25,7 @@ def parseArgs():
     defaultconfigfiles = []
     if '-cf' not in sys.argv and '--config' not in sys.argv:
         defaultconfigfiles = [os.getenv('MAD_CONFIG', os.path.join(
-            os.path.dirname(__file__), '../configs/config.ini'))]
+            mapadroid.MAD_ROOT, 'configs/config.ini'))]
     parser = configargparse.ArgParser(
         default_config_files=defaultconfigfiles,
         auto_env_var_prefix='THERAIDMAPPER_')
