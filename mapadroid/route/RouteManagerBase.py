@@ -849,7 +849,7 @@ class RouteManagerBase(ABC):
         workers: int = 0
         if not self._is_started:
             return True
-        if len(self._current_route_round_coords) == 0:
+        if self.mode not in ("iv_mitm", "idle") and len(self._current_route_round_coords) == 0:
             logger.info("No more coords - breakup")
             return False
         if self.mode in ("iv_mitm", "idle"):
