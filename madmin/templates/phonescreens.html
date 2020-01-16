@@ -4,7 +4,13 @@
 <link rel="stylesheet" href="https://code.jquery.com/ui/1.12.1/themes/base/jquery-ui.css" crossorigin="anonymous">
 <style>
   div.container[role="main"] {
-    max-width: 80%;
+    max-width: 85%;
+  }
+
+  #devicegrid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
   }
 
   input[type=text],
@@ -327,7 +333,7 @@ e.preventDefault();
 
 <h2>{{header | safe }}</h2>
 <h4>Full click and swipe control your devices.</h4>
-<div>
+<div id="devicegrid">
   {% for item in editform %}
   {{item | safe }}
   {% endfor %}
