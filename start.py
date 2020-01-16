@@ -234,7 +234,7 @@ if __name__ == "__main__":
 
         webhook_worker = None
         if args.webhook:
-            from mapadroid.webhook import WebhookWorker
+            from mapadroid.webhook.webhookworker import WebhookWorker
 
             rarity = Rarity(args, db_wrapper)
             rarity.start_dynamic_rarity()
