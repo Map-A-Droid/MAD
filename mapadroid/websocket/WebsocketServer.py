@@ -23,6 +23,7 @@ from mapadroid.utils.routeutil import pre_check_value
 from mapadroid.worker.WorkerConfigmode import WorkerConfigmode
 from mapadroid.worker.WorkerMITM import WorkerMITM
 from mapadroid.worker.WorkerQuests import WorkerQuests
+from mapadroid.utils.data_manager.dm_exceptions import DataManagerException
 
 OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -165,7 +166,7 @@ class WebsocketServer(object):
                 logger.error("Failed registering client, closing connection")
                 await self.__close_websocket_client_connection("Failed...", websocket_client_connection)
                 return
-        except mapadroid.utils.data_manager.dm_exceptions.DataManagerException:
+        except DataManagerException:
             if websocket_client_connection.open:
                 await self.__close_websocket_client_connection("DataManagerException...",
                                                                websocket_client_connection)

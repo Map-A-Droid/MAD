@@ -5,6 +5,14 @@ import re
 import flask
 
 from mapadroid.madmin.functions import auth_required
+from mapadroid.utils.data_manager.dm_exceptions import (
+    UnknownIdentifier,
+    ModeNotSpecified,
+    ModeUnknown,
+    UpdateIssue,
+    DependencyError,
+    SaveIssue
+)
 from . import resource_exceptions
 from .. import apiHandler
 
@@ -221,7 +229,7 @@ class ResourceHandler(apiHandler.APIHandler):
             try:
                 resource_def = self._data_manager.get_resource_def(self.component, mode=self.mode)
                 resource_info = self.get_resource_info(resource_def)
-            except mapadroid.utils.data_manager.dm_exceptions.ModeNotSpecified:
+            except ModeNotSpecified:
                 resource_def = copy.deepcopy(mapadroid.utils.data_manager.modules.MAPPINGS['area_nomode'])
                 resource_info = 'Please specify a mode for resource information Valid modes: %s'
                 resource_info %= (','.join(self._data_manager.get_valid_modes(self.component)),)
@@ -241,7 +249,7 @@ class ResourceHandler(apiHandler.APIHandler):
                 return self.post(identifier, translated_data, resource_def, resource_info)
             elif flask.request.method == 'PUT':
                 return self.put(identifier, translated_data, resource_def, resource_info)
-        except mapadroid.utils.data_manager.ModeUnknown as err:
+        except ModeUnknown as err:
             msg = 'Invalid mode specified [%s].  Valid modes: %s'
             error = {
                 'error': msg % (err.mode, ','.join(self._data_manager.get_valid_modes(self.component)),)
@@ -253,9 +261,9 @@ class ResourceHandler(apiHandler.APIHandler):
                 'error': msg % (','.join(self._data_manager.get_valid_modes(self.component)),)
             }
             return (error, 400)
-        except mapadroid.utils.data_manager.UpdateIssue as err:
+        except UpdateIssue as err:
             return (err.issues, 422)
-        except mapadroid.utils.data_manager.UnknownIdentifier:
+        except UnknownIdentifier:
             return (None, 404)
 
     def delete(self, identifier, *args, **kwargs):
@@ -263,7 +271,7 @@ class ResourceHandler(apiHandler.APIHandler):
         try:
             resource = self._data_manager.get_resource(self.component, identifier)
             resource.delete()
-        except mapadroid.utils.data_manager.DependencyError as err:
+        except DependencyError as err:
             errors = []
             for section, identifier in err.dependencies:
                 # TODO - Fix TBD if name is not present
@@ -287,7 +295,7 @@ class ResourceHandler(apiHandler.APIHandler):
             if resource_def.configuration:
                 resource = self.translate_data_for_response(resource)
             return (resource, 200)
-        except mapadroid.utils.data_manager.UnknownIdentifier:
+        except UnknownIdentifier:
             return (None, 404)
 
     def patch(self, identifier, data, resource_def, resource_info, *args, **kwargs):
@@ -297,7 +305,7 @@ class ResourceHandler(apiHandler.APIHandler):
             resource = resource_def(self._data_manager, identifier=identifier)
             resource.update(data, append=append)
             resource.save()
-        except mapadroid.utils.data_manager.UnknownIdentifier:
+        except UnknownIdentifier:
             return (None, 404)
         else:
             headers = {
@@ -314,7 +322,7 @@ class ResourceHandler(apiHandler.APIHandler):
                 resource.update(data)
                 resource.save()
                 identifier = resource.identifier
-            except mapadroid.utils.data_manager.SaveIssue as err:
+            except SaveIssue as err:
                 # TODO - lets handle with a real exception.  Most likely a dupe key that should be presented to the user
                 return (str(err.args[0]), 400)
             uri = '%s/%s' % (flask.url_for('api_%s' % (self.component,)), identifier)
@@ -326,7 +334,7 @@ class ResourceHandler(apiHandler.APIHandler):
             converted = self.translate_data_for_response(resource)
             return (converted, 201, {'headers': headers})
         else:
-            raise (method, 405)
+            raise (flask.request.method, 405)
 
     def put(self, identifier, data, resource_def, resource_info, *args, **kwargs):
         """ API call to replace an object """
@@ -338,7 +346,7 @@ class ResourceHandler(apiHandler.APIHandler):
             resource.update(data)
             resource.identifier = identifier
             resource.save()
-        except mapadroid.utils.data_manager.UnknownIdentifier:
+        except UnknownIdentifier:
             headers = {
                 'X-Status': 'Object does not exist to update'
             }

@@ -9,6 +9,9 @@ from pathlib import Path
 from mapadroid.db import DbSchemaUpdater
 from mapadroid.utils.logging import logger
 from .convert_mapping import convert_mappings
+from mapadroid.utils.data_manager.dm_exceptions import (
+    UpdateIssue
+)
 
 current_version = 22
 
@@ -517,7 +520,7 @@ class MADVersion(object):
                                             geo_id = self.__convert_geofence(geofence)
                                             geofences[geofence] = geo_id
                                             elem[geofence_section] = geofences[geofence]
-                                        except mapadroid.utils.data_manager.dm_exceptions.UpdateIssue as err:
+                                        except UpdateIssue as err:
                                             conversion_issues.append((section, elem_id, err.issues))
                                     else:
                                         elem[geofence_section] = geofences[geofence]
@@ -606,7 +609,7 @@ class MADVersion(object):
                         resource.update(elem)
                         try:
                             resource.save(force_insert=True, ignore_issues=['unknown'])
-                        except mapadroid.utils.data_manager.dm_exceptions.UpdateIssue as err:
+                        except UpdateIssue as err:
                             conversion_issues.append((section, key, err.issues))
                         except Exception as err:
                             conversion_issues.append((section, key, err))
