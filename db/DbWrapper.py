@@ -933,8 +933,8 @@ class DbWrapper:
               "UNIX_TIMESTAMP(trs.`lastPogoRestart`) AS 'lastPogoRestart',\n"\
               "UNIX_TIMESTAMP(trs.`lastProtoDateTime`) AS 'lastProtoDateTime',\n"\
               "UNIX_TIMESTAMP(trs.`lastPogoReboot`) AS 'lastPogoReboot',\n"\
-              "CONCAT(x(trs.`currentPos`), ',', y(trs.`currentPos`)) AS 'currentPos',\n"\
-              "CONCAT(x(trs.`lastPos`), ',', y(trs.`lastPos`)) AS 'lastPos'\n"\
+              "CONCAT(ROUND(x(trs.`currentPos`), 5), ', ', ROUND(y(trs.`currentPos`), 5)) AS 'currentPos',\n"\
+              "CONCAT(ROUND(x(trs.`lastPos`), 5), ', ', ROUND(y(trs.`lastPos`), 5)) AS 'lastPos'\n"\
               "FROM `trs_status` trs\n"\
               "INNER JOIN `settings_device` dev ON dev.`device_id` = trs.`device_id`\n"\
               "LEFT JOIN `settings_area` sa ON sa.`area_id` = trs.`area_id`"
