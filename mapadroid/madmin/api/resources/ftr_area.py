@@ -1,4 +1,4 @@
-from . import resource_exceptions
+from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
 from .resourceHandler import ResourceHandler
 
 
@@ -60,6 +60,6 @@ class APIArea(ResourceHandler):
                     self.mode = data.area_type
         elif method == 'POST':
             if self.api_req.content_type != 'application/json-rpc':
-                raise resource_exceptions.NoModeSpecified()
+                raise NoModeSpecified()
         elif method == 'PUT':
-            raise resource_exceptions.NoModeSpecified()
+            raise NoModeSpecified()

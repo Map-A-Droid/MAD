@@ -13,7 +13,7 @@ from mapadroid.utils.data_manager.dm_exceptions import (
     DependencyError,
     SaveIssue
 )
-from . import resource_exceptions
+from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
 from .. import apiHandler
 
 
@@ -255,7 +255,7 @@ class ResourceHandler(apiHandler.APIHandler):
                 'error': msg % (err.mode, ','.join(self._data_manager.get_valid_modes(self.component)),)
             }
             return (error, 400)
-        except (mapadroid.utils.data_manager.ModeNotSpecified, resource_exceptions.NoModeSpecified):
+        except (ModeNotSpecified, NoModeSpecified):
             msg = 'Please specify a mode for resource information.  Valid modes: %s'
             error = {
                 'error': msg % (','.join(self._data_manager.get_valid_modes(self.component)),)

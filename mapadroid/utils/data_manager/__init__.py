@@ -1,8 +1,11 @@
 import collections
 
 from . import modules
-from .dm_exceptions import *
-
+from mapadroid.utils.data_manager.dm_exceptions import (
+    ModeUnknown,
+    ModeNotSpecified,
+    InvalidSection
+)
 
 # This is still known as the data manager but its more of a Resource Factory.  Its sole purpose is to produce a
 # single resource or a list of resources
@@ -27,17 +30,17 @@ class DataManager(object):
         try:
             return modules.MAPPINGS[section](self, identifier=identifier)
         except KeyError:
-            raise dm_exceptions.InvalidSection()
+            raise InvalidSection()
 
     def get_resource_def(self, section, **kwargs):
         mode = kwargs.get('mode', None)
         if section == 'area':
             if mode is None:
-                raise dm_exceptions.ModeNotSpecified(mode)
+                raise ModeNotSpecified(mode)
             try:
                 resource_class = modules.AREA_MAPPINGS[mode]
             except KeyError:
-                raise dm_exceptions.ModeUnknown(mode)
+                raise ModeUnknown(mode)
         else:
             resource_class = modules.MAPPINGS[section]
         return resource_class
