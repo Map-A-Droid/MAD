@@ -18,8 +18,6 @@
         if ($.fn.dataTable.isDataTable(tableGridHtmlId)) {
             dataTable.destroy();
         }
-        console.log(gridData);
-
         dataTable = $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
@@ -39,8 +37,8 @@
                     }
                   }
                 },
-                { data: 'init', title: 'Init Mode' },
                 { data: 'routeMax', title: 'Route Length' },
+                { data: 'init', title: 'Init Mode' },
                 { data: 'restartCounter', title: 'Restart Counter' },
                 { data: 'globalrestartcount', title: 'Total Restarts' },
                 { data: 'lastPogoRestart', title: 'Last Restart' },
@@ -53,61 +51,33 @@
             ],
             "columnDefs": [
                 {
-                    "targets": [4, 9],
+                    "targets": [5, 9],
                     "render": function (data, type, row) {
                         return (parseInt(data) == 0 ? "False":"True");
                     }
                 },
                 {
-                    "targets": [5],
+                    "targets": [4],
                     "render": function (data, type, row) {
                         return row.routePos + "/" + row.routeMax
                     }
                 },
                 {
-                    "targets": [1],
+                    "targets": [1,8,12],
                     "render": function (data, type, row) {
                         var dateToShow = moment.utc(data*1000);
                         if (dateToShow.isValid()) {
-                            return dateToShow.fromNow();
+                            return toHHMMSS(Math.abs(dateToShow.diff(moment.utc())/1000));
                         }
-
                         return "None";
                     }
                 },
                 {
                     "targets": [2],
                     "render": function (data, type, row) {
-                        if(data == '0' || data == 0) {
-                            return 'Now'
-                        }
-                        var dateToShow = new moment().utc().add(parseInt(data*1000),"seconds")
-
-                        return dateToShow.fromNow(true);
+                        return toHHMMSS(data);
                     }
-                },
-                {
-                    "targets": [8],
-                    "render": function (data, type, row) {
-                        var dateToShow = moment.utc(data*1000);
-                        if (dateToShow.isValid()) {
-                            return dateToShow.fromNow();
-                        }
-
-                        return "None";
-                    }
-                },
-                {
-                    "targets": [12],
-                    "render": function (data, type, row) {
-                        var dateToShow = moment.utc(data*1000);
-                        if (dateToShow.isValid()) {
-                            return dateToShow.fromNow();
-                        }
-
-                        return "None";
-                    }
-                },
+                }
             ],
             "order": [[0, "asc"]],
             "responsive": {{ responsive }},
@@ -121,6 +91,18 @@
             return JSON.parse( localStorage.getItem( 'MAD_STATUS_' + settings.sInstance ) )
             }
         });
+    }
+
+    var toHHMMSS = (secs) => {
+        var sec_num = parseInt(secs, 10)
+        var hours   = Math.floor(sec_num / 3600)
+        var minutes = Math.floor(sec_num / 60) % 60
+        var seconds = sec_num % 60
+
+        return [hours,minutes,seconds]
+            .map(v => v < 10 ? "0" + v : v)
+            .filter((v,i) => v !== "00" || i > 0)
+            .join(":")
     }
 
     function getStatusData() {
@@ -153,5 +135,11 @@
 
 {% block content %}
 <h2>Worker Status</h2>
+<div class="card border-secondary">
+  <div class="card-body py-2">
+    <p class="card-text">View workers and their current status.  Times are displayed as HH:MM:SS.  HH is only specified if required</p>
+  </div>
+</div>
+<br>
 <table id="show-data" class="table"></table>
 {% endblock %}
