@@ -220,8 +220,6 @@ class RouteManagerBase(ABC):
                 logger.info(
                     "Routemanager {} does not have any subscribing workers anymore, calling stop", str(self.name))
                 self.stop_routemanager()
-            else:
-                self.worker_changed_update_routepools()
         finally:
             self._workers_registered_mutex.release()
 
@@ -840,27 +838,32 @@ class RouteManagerBase(ABC):
 
     def worker_changed_update_routepools(self):
         less_coords: bool = False
+        workers: int = 0
         if not self._is_started:
             return True
+        if len(self._current_route_round_coords) == 0:
+            logger.info("No more coords - breakup")
+            return False
         if self.mode in ("iv_mitm", "idle"):
             logger.info('Not updating routepools in iv_mitm mode')
             return True
         with self._manager_mutex:
             logger.debug("Updating all routepools")
-            if len(self._workers_registered) == 0 or len(self._routepool) == 0:
+            workers = len(self._routepool)
+            if len(self._workers_registered) == 0 or workers == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
                 return False
 
             logger.debug("Current route for all workers: {}".format(str(self._current_route_round_coords)))
             logger.info("Current route for all workers length: {}".format(str(len(self._current_route_round_coords))))
 
-            if len(self._routepool) > len(self._current_route_round_coords):
+            if workers > len(self._current_route_round_coords):
                 less_coords = True
                 new_subroute_length = len(self._current_route_round_coords)
             else:
                 try:
                     new_subroute_length = math.floor(len(self._current_route_round_coords) /
-                                                     len(self._routepool))
+                                                     workers)
                     if new_subroute_length == 0:
                         return False
                 except Exception as e:
