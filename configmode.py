@@ -10,6 +10,7 @@ from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.updater import deviceUpdater
 from mapadroid.utils.version import MADVersion
 from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.data_manager.DataManager import DataManager
 from mapadroid.websocket import WebsocketServer
 
 args = parseArgs()
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
     instance_id = db_wrapper.get_instance_id()
-    data_manager = mapadroid.utils.data_manager.DataManager(db_wrapper, instance_id)
+    data_manager = DataManager(db_wrapper, instance_id)
     data_manager.clear_on_boot()
     version = MADVersion(args, data_manager)
     version.get_version()
