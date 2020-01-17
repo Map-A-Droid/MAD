@@ -4,62 +4,62 @@
 {% endblock %}
 
 {% block scripts %}
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
 
-    <script>
-        function setGrid(tableGridHtmlId, gridData) {
-            $(tableGridHtmlId).DataTable({
-                "data": gridData,
-                "columns": [
-                    {data: 'name', title: 'Name'},
-                    {data: 'filename', title: 'Hashpic'},
-                    {data: 'dist', title: 'Distance'},
-                    {data: 'id', title: 'Match'}
-                ],
-                "columnDefs": [
-                    {
-                        "targets": [0],
-                        "render": function (data, type, row) {
-                            return data + "<br /><br />Gym-ID: " + row.id;
-                        }
-                    },
-                    {
-                        "targets": [1],
-                        "render": function (data, type, row) {
-                            return "<img class='lazy' data-original='" + data + "' width=100>";
-                        }
-                    },
-                    {
-                        "targets": [3],
-                        "render": function (data, type, row) {
-                            return "<a href='modify_raid_gym?hash={{ hash }}&id=" + data + "&mon={{ mon }}&lvl={{ lvl }}'>Match to this Gym</a>";
-                        }
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'name', title: 'Name' },
+                { data: 'filename', title: 'Hashpic' },
+                { data: 'dist', title: 'Distance' },
+                { data: 'id', title: 'Match' }
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return data + "<br /><br />Gym-ID: " + row.id;
                     }
-                ],
-                "drawCallback": function () {
-                    $("img.lazy").lazyload();
                 },
-                "order": [[2, "desc"]],
-                "responsive": {{ responsive }},
-                "autoWidth": true
-            });
-        }
-
-        $(document).ready(function () {
-            $("#navraids").addClass("active");
-            $.ajax({
-                type: "GET",
-                url: "near_gym?lat={{ lat }}&lon={{ lon }}",
-                success: function (result) {
-                    setGrid('#show-data', result);
+                {
+                    "targets": [1],
+                    "render": function (data, type, row) {
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        return "<a href='modify_raid_gym?hash={{ hash }}&id=" + data + "&mon={{ mon }}&lvl={{ lvl }}'>Match to this Gym</a>";
+                    }
                 }
-            });
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "order": [[2, "desc"]],
+            "responsive": {{ responsive }},
+            "autoWidth": true
         });
-    </script>
+	}
+
+    $(document).ready(function () {
+        $("#navraids").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "near_gym?lat={{ lat }}&lon={{ lon }}",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+</script>
 {% endblock %}
 
 {% block content %}
-    <h2>Modify existing Raid</h2>
-    <h4><a href="raids">Back to Raids</a></h4>
-    <table id="show-data" class="table"></table>
+<h2>Modify existing Raid</h2>
+<h4><a href="raids">Back to Raids</a></h4>
+<table id="show-data" class="table"></table>
 {% endblock %}
