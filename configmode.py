@@ -4,7 +4,7 @@ from threading import Thread
 
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.db.DbWrapper import DbWrapper
-from mapadroid.utils import MappingManager
+from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.MappingManager import MappingManagerManager
 from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.updater import deviceUpdater
@@ -53,8 +53,7 @@ if __name__ == "__main__":
     mapping_manager_manager = MappingManagerManager()
     mapping_manager_manager.start()
     mapping_manager_stop_event = mapping_manager_manager.Event()
-    mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args, data_manager,
-                                                                             True)
+    mapping_manager: MappingManager = MappingManager(db_wrapper, args, data_manager, True)
 
     ws_server = WebsocketServer(args, None, db_wrapper, mapping_manager, None, data_manager, configmode=True)
     t_ws = Thread(name='scanner', target=ws_server.start_server)
