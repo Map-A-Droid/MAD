@@ -13,7 +13,7 @@ from mapadroid.utils.logging import logger
 class RouteManagerLeveling(RouteManagerQuests):
 
     def worker_changed_update_routepools(self):
-        with self._manager_mutex:
+        with self._manager_mutex and self._workers_registered_mutex:
             logger.info("Updating all routepools in levelmode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
                 logger.info("No registered workers, aborting __worker_changed_update_routepools...")
@@ -141,7 +141,8 @@ class RouteManagerLeveling(RouteManagerQuests):
     def _restore_original_route(self):
         if not self._tempinit:
             logger.info("Restoring original route")
-            self._route = self._routecopy.copy()
+            with self._manager_mutex:
+                self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
         self._manager_mutex.acquire()
