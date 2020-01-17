@@ -251,10 +251,23 @@ class WebsocketServer(object):
                 return False
             logger.info("Starting worker {}".format(origin))
             if self._configmode:
-                worker = WorkerConfigmode(self.args, origin, self, walker=None,
+                dev_id = self.__mapping_manager.get_all_devicemappings()[origin]['device_id']
+                devicesettings = self.__mapping_manager.get_devicesettings_of(origin)
+                client_mapping = self.__mapping_manager.get_devicemappings_of(origin)
+                walker_area_array = client_mapping["walker"]
+                walker_index = devicesettings.get('walker_area_index', 0)
+                walker_settings = walker_area_array[walker_index]
+                area_id = walker_settings['walkerarea']
+                worker = WorkerConfigmode(args=self.args,
+                                          dev_id=dev_id,
+                                          id=origin,
+                                          websocket_handler=self,
+                                          walker=None,
                                           mapping_manager=self.__mapping_manager,
                                           mitm_mapper=self.__mitm_mapper,
-                                          db_wrapper=self.__db_wrapper, routemanager_name=None)
+                                          db_wrapper=self.__db_wrapper,
+                                          area_id=area_id,
+                                          routemanager_name=None)
                 logger.debug("Starting worker for {}", str(origin))
                 new_worker_thread = Thread(
                     name='worker_%s' % origin, target=worker.start_worker)
