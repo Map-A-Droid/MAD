@@ -10,7 +10,7 @@ from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.updater import deviceUpdater
 from mapadroid.utils.version import MADVersion
 from mapadroid.utils.walkerArgs import parseArgs
-from mapadroid.utils.data_manager.DataManager import DataManager
+from mapadroid.utils.data_manager import DataManager
 from mapadroid.websocket import WebsocketServer
 
 args = parseArgs()
