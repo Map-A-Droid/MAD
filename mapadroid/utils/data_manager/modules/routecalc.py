@@ -1,4 +1,5 @@
 import json
+import numpy as np
 
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location

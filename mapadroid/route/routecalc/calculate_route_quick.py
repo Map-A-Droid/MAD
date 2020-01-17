@@ -1,4 +1,5 @@
-# coding:utf-8
+import numpy as np
+
 from mapadroid.utils.logging import logger
 
 from .util import *
