@@ -43,7 +43,7 @@ class MITMBase(WorkerBase):
         self._latest_encounter_update = 0
         self._encounter_ids = {}
         self._current_sleep_time = 0
-
+        self._db_wrapper.save_idle_status(dev_id, False)
         self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
                                                  self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_name),
@@ -295,5 +295,6 @@ class MITMBase(WorkerBase):
             'currentSleepTime': self._current_sleep_time
         }
         if self._rec_data_time:
-            save_data['lastProtoDateTime'] = self._rec_data_time
+            save_data['lastProtoDateTime'] = 'NOW()'
+            self._rec_data_time = None
         self._db_wrapper.save_status(save_data)

@@ -901,7 +901,7 @@ class DbWrapper:
 
     def save_status(self, data):
         logger.debug("dbWrapper::save_status")
-        literals = ['currentPos', 'lastPos']
+        literals = ['currentPos', 'lastPos', 'lastProtoDateTime']
         data['instance_id'] = self.instance_id
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
@@ -927,19 +927,21 @@ class DbWrapper:
         }
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
+    #def update_trs_status_to_idle(self, dev_id):
+    def save_idle_status(self, dev_id, status):
+        data = {
+            'instance_id': self.instance_id,
+            'device_id': dev_id,
+            'idle': status
+        }
+        self.autoexec_insert('trs_status', data, optype='ON DUPLICATE')
+
     def download_status(self):
         logger.debug("dbWrapper::download_status")
-        sql = "SELECT trs.`device_id`, dev.`name`, trs.`routePos`, trs.`routeMax`, trs.`area_id`, sa.`name` AS 'rmname',\n" \
-              "sa.`mode`, trs.`rebootCounter`, trs.`init`, trs.`currentSleepTime`,\n" \
-              "trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`, trs.`globalrestartcount`,\n" \
-              "UNIX_TIMESTAMP(trs.`lastPogoRestart`) AS 'lastPogoRestart',\n" \
-              "UNIX_TIMESTAMP(trs.`lastProtoDateTime`) AS 'lastProtoDateTime',\n" \
-              "UNIX_TIMESTAMP(trs.`lastPogoReboot`) AS 'lastPogoReboot',\n" \
-              "CONCAT(ROUND(x(trs.`currentPos`), 5), ', ', ROUND(y(trs.`currentPos`), 5)) AS 'currentPos',\n" \
-              "CONCAT(ROUND(x(trs.`lastPos`), 5), ', ', ROUND(y(trs.`lastPos`), 5)) AS 'lastPos'\n" \
-              "FROM `trs_status` trs\n" \
-              "INNER JOIN `settings_device` dev ON dev.`device_id` = trs.`device_id`\n" \
-              "LEFT JOIN `settings_area` sa ON sa.`area_id` = trs.`area_id`"
+        sql = "SELECT `device_id`, `name`, `routePos`, `routeMax`, `area_id`, `rmname`, `mode`, `rebootCounter`,\n"\
+              "`init`, `currentSleepTime`, `rebootingOption`, `restartCounter`, `globalrebootcount`,\n"\
+              "`globalrestartcount`, `lastPogoRestart`, `lastProtoDateTime`, `currentPos`, `lastPos`\n"\
+              "FROM `v_trs_status`"
         workers = self.autofetch_all(sql)
         return workers
 
@@ -982,14 +984,6 @@ class DbWrapper:
             })
 
         return cells
-
-    def update_trs_status_to_idle(self, dev_id):
-        data = {
-            'instance_id': self.instance_id,
-            'device_id': dev_id,
-            'area_id': -1
-        }
-        self.autoexec_insert('trs_status', data)
 
     def get_instance_id(self, instance_name=None):
         if instance_name is None:

@@ -13,7 +13,7 @@ from mapadroid.utils.data_manager.dm_exceptions import (
     UpdateIssue
 )
 
-current_version = 22
+current_version = 23
 
 
 class MADVersion(object):
@@ -754,72 +754,125 @@ class MADVersion(object):
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
         if self._version < 22:
-            existing_data = self.dbwrapper.autofetch_all("SELECT * FROM `trs_status`")
-            sql = "DROP TABLE IF EXISTS`trs_status`"
+            sql = "SELECT COUNT(*) FROM `information_schema`.`views` WHERE `TABLE_NAME` = 'v_trs_status'"
+            count = self.dbwrapper.autofetch_value(sql)
+            # We only want to perform the update if the view doesnt exist.  Prevent the bad queries against incorrect
+            # table structures
+            if not count:
+                existing_data = {}
+                sql = "SELECT trs.`instance_id`, trs.`origin`, trs.`currentPos`, trs.`lastPos`, trs.`routePos`,"\
+                      "trs.`routeMax`, trs.`routemanager`, trs.`rebootCounter`, trs.`lastProtoDateTime`,"\
+                      "trs.`lastPogoRestart`, trs.`init`, trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`,"\
+                      "trs.`globalrestartcount`, trs.`lastPogoReboot`, trs.`currentSleepTime`\n"\
+                      "FROM `trs_status` trs"
+                try:
+                    existing_data = self.dbwrapper.autofetch_all(sql)
+                except:
+                    pass
+                if not existing_data:
+                    existing_data = {}
+                sql = "DROP TABLE IF EXISTS `trs_status`"
+                try:
+                    self.dbwrapper.execute(sql, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
+                new_table = """
+                    CREATE TABLE `trs_status` (
+                     `instance_id` INT UNSIGNED NOT NULL,
+                     `device_id` INT UNSIGNED NOT NULL,
+                     `currentPos` POINT DEFAULT NULL,
+                     `lastPos` POINT DEFAULT NULL,
+                     `routePos` INT DEFAULT NULL,
+                     `routeMax` INT DEFAULT NULL,
+                     `area_id` INT UNSIGNED DEFAULT NULL,
+                     `rebootCounter` INT DEFAULT NULL,
+                     `lastProtoDateTime` DATETIME DEFAULT NULL,
+                     `lastPogoRestart` DATETIME DEFAULT NULL,
+                     `init` TINYINT(1) DEFAULT NULL,
+                     `rebootingOption` TINYINT(1) DEFAULT NULL,
+                     `restartCounter` INT DEFAULT NULL,
+                     `lastPogoReboot` DATETIME DEFAULT NULL,
+                     `globalrebootcount` INT DEFAULT 0,
+                     `globalrestartcount` INT DEFAULT 0,
+                     `currentSleepTime` INT NOT NULL DEFAULT 0,
+                     PRIMARY KEY (`device_id`),
+                     CONSTRAINT `fk_ts_dev_id`
+                        FOREIGN KEY (`device_id`)
+                        REFERENCES `settings_device` (`device_id`)
+                        ON DELETE CASCADE,
+                     CONSTRAINT `fk_ts_instance`
+                         FOREIGN KEY (`instance_id`)
+                         REFERENCES `madmin_instance` (`instance_id`)
+                         ON DELETE CASCADE,
+                     CONSTRAINT `fk_ts_areaid`
+                         FOREIGN KEY (`area_id`)
+                         REFERENCES `settings_area` (`area_id`)
+                         ON DELETE CASCADE
+                    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
+                """
+                try:
+                    self.dbwrapper.execute(new_table, commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
+                point_fields = ['currentPos', 'lastPos']
+                bool_fields = ['rebootingOption', 'init']
+                for row in existing_data:
+                    dev_id_sql = "SELECT `device_id` FROM `settings_device` WHERE `name` = %s and `instance_id` = %s"
+                    dev_id = self.dbwrapper.autofetch_value(dev_id_sql, args=(row['origin'], row['instance_id']))
+                    del row['origin']
+                    row['device_id'] = dev_id
+                    try:
+                        row['area_id'] = int(row['routemanager'])
+                        del row['routemanager']
+                    except:
+                        continue
+                    for field in point_fields:
+                        if not row[field]:
+                            continue
+                        point = row[field].split(",")
+                        row[field] = "POINT(%s,%s)" % (point[0], point[1])
+                    for field in bool_fields:
+                        if not row[field]:
+                            continue
+                        row[field] = 0 if row[field].lower() == 'false' else 1
+                    self.dbwrapper.autoexec_insert('trs_status', row, literals=point_fields)
+        if self._version < 23:
+            # Store as TIMESTAMP as it will handle everything with epoch
+            fields = ['lastProtoDateTime', 'lastPogoRestart', 'lastPogoReboot']
+            for field in fields:
+                sql = "ALTER TABLE `trs_status` CHANGE `%s` `%s` TIMESTAMP NULL DEFAULT NULL;"
+                try:
+                    self.dbwrapper.execute(sql % (field, field,), commit=True)
+                except Exception as e:
+                    logger.exception("Unexpected error: {}", e)
+            # Add an idle identifier since we can no longer set area names
+            sql = 'ALTER TABLE `trs_status` ADD `idle` TINYINT NULL DEFAULT 0 AFTER `area_id`;'
             try:
                 self.dbwrapper.execute(sql, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
-            new_table = """
-                CREATE TABLE `trs_status` (
-                 `instance_id` INT UNSIGNED NOT NULL,
-                 `device_id` INT UNSIGNED NOT NULL,
-                 `currentPos` POINT DEFAULT NULL,
-                 `lastPos` POINT DEFAULT NULL,
-                 `routePos` INT DEFAULT NULL,
-                 `routeMax` INT DEFAULT NULL,
-                 `area_id` INT UNSIGNED DEFAULT NULL,
-                 `rebootCounter` INT DEFAULT NULL,
-                 `lastProtoDateTime` DATETIME DEFAULT NULL,
-                 `lastPogoRestart` DATETIME DEFAULT NULL,
-                 `init` TINYINT(1) DEFAULT NULL,
-                 `rebootingOption` TINYINT(1) DEFAULT NULL,
-                 `restartCounter` INT DEFAULT NULL,
-                 `lastPogoReboot` DATETIME DEFAULT NULL,
-                 `globalrebootcount` INT DEFAULT 0,
-                 `globalrestartcount` INT DEFAULT 0,
-                 `currentSleepTime` INT NOT NULL DEFAULT 0,
-                 PRIMARY KEY (`device_id`),
-                 CONSTRAINT `fk_ts_dev_id`
-                    FOREIGN KEY (`device_id`)
-                    REFERENCES `settings_device` (`device_id`)
-                    ON DELETE CASCADE,
-                 CONSTRAINT `fk_ts_instance`
-                     FOREIGN KEY (`instance_id`)
-                     REFERENCES `madmin_instance` (`instance_id`)
-                     ON DELETE CASCADE,
-                 CONSTRAINT `fk_ts_areaid`
-                     FOREIGN KEY (`area_id`)
-                     REFERENCES `settings_area` (`area_id`)
-                     ON DELETE CASCADE
-                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
-            """
+            sql = """
+                CREATE VIEW `v_trs_status` AS
+                    SELECT trs.`device_id`, dev.`name`, trs.`routePos`, trs.`routeMax`, trs.`area_id`,
+                    IF(trs.`idle` = 1, 'Idle', IFNULL(sa.`name`, 'Idle')) AS 'rmname',
+                    IF(trs.`idle` = 1, 'Idle', IFNULL(sa.`mode`, 'Idle')) AS 'mode',
+                    trs.`rebootCounter`, trs.`init`, trs.`currentSleepTime`,
+                    trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`, trs.`globalrestartcount`,
+                    UNIX_TIMESTAMP(trs.`lastPogoRestart`) AS 'lastPogoRestart',
+                    UNIX_TIMESTAMP(trs.`lastProtoDateTime`) AS 'lastProtoDateTime',
+                    UNIX_TIMESTAMP(trs.`lastPogoReboot`) AS 'lastPogoReboot',
+                    CONCAT(ROUND(ST_X(trs.`currentPos`), 5), ', ', ROUND(ST_Y(trs.`currentPos`), 5)) AS 'currentPos',
+                    CONCAT(ROUND(ST_X(trs.`lastPos`), 5), ', ', ROUND(ST_Y(trs.`lastPos`), 5)) AS 'lastPos',
+                    `currentPos` AS 'currentPos_raw',
+                    `lastPos` AS 'lastPos_raw'
+                    FROM `trs_status` trs
+                    INNER JOIN `settings_device` dev ON dev.`device_id` = trs.`device_id`
+                    LEFT JOIN `settings_area` sa ON sa.`area_id` = trs.`area_id`
+                """
             try:
-                self.dbwrapper.execute(new_table, commit=True)
+                self.dbwrapper.execute(sql, commit=True)
             except Exception as e:
                 logger.exception("Unexpected error: {}", e)
-            point_fields = ['currentPos', 'lastPos']
-            bool_fields = ['rebootingOption', 'init']
-            for row in existing_data:
-                dev_id_sql = "SELECT `device_id` FROM `settings_device` WHERE `name` = %s and `instance_id` = %s"
-                dev_id = self.dbwrapper.autofetch_value(dev_id_sql, args=(row['origin'], row['instance_id']))
-                del row['origin']
-                row['device_id'] = dev_id
-                try:
-                    row['area_id'] = int(row['routemanager'])
-                    del row['routemanager']
-                except:
-                    continue
-                for field in point_fields:
-                    if not row[field]:
-                        continue
-                    point = row[field].split(",")
-                    row[field] = "POINT(%s,%s)" % (point[0], point[1])
-                for field in bool_fields:
-                    if not row[field]:
-                        continue
-                    row[field] = 0 if row[field].lower() == 'false' else 1
-                self.dbwrapper.autoexec_insert('trs_status', row, literals=point_fields)
         self.set_version(current_version)
 
     def set_version(self, version):

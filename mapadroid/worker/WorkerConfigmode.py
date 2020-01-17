@@ -49,7 +49,7 @@ class WorkerConfigmode(object):
         logger.info("Worker {} started in configmode", str(self._origin))
         self._mapping_manager.register_worker_to_routemanager(self._routemanager_name, self._origin)
         logger.debug("Setting device to idle for routemanager")
-        self._db_wrapper.update_trs_status_to_idle(self._dev_id)
+        self._db_wrapper.save_idle_status(self._dev_id, True)
         logger.debug("Device set to idle for routemanager {}", str(self._origin))
         while self.check_walker() and not self._stop_worker_event.is_set():
             position_type = self._mapping_manager.routemanager_get_position_type(self._routemanager_name,
@@ -136,7 +136,7 @@ class WorkerConfigmode(object):
                 self._stop_pogo()
                 killpogo = True
                 logger.debug("Setting device to idle for routemanager")
-                self._db_wrapper.update_trs_status_to_idle(self._dev_id)
+                self._db_wrapper.save_idle_status(self._dev_id, True)
                 logger.debug("Device set to idle for routemanager {}", str(self._origin))
             while check_walker_value_type(sleeptime) and not self._stop_worker_event.isSet():
                 time.sleep(1)
