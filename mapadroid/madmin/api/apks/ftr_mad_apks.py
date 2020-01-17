@@ -6,6 +6,11 @@ import flask
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
 from mapadroid.utils.authHelper import check_auth
+from mapadroid.utils.apk_util import (
+    chunk_generator, 
+    AutoDownloader,
+    get_mad_apks
+)
 from .apkHandler import APKHandler
 
 
@@ -20,7 +25,7 @@ class APIMadAPK(APKHandler):
             1].lower() in global_variables.MAD_APK_ALLOWED_EXTENSIONS
 
     def get_apk_list(self, apk_type, apk_arch):
-        apks = mapadroid.utils.apk_util.get_mad_apks(self.dbc)
+        apks = get_mad_apks(self.dbc)
         try:
             apks[apk_type]
             try:
@@ -58,8 +63,7 @@ class APIMadAPK(APKHandler):
                 if (apks[1]) == 200:
                     mad_apk = apks[0]
                     return flask.Response(
-                        flask.stream_with_context(
-                            mapadroid.utils.apk_util.chunk_generator(self.dbc, mad_apk['file_id'])),
+                        flask.stream_with_context(chunk_generator(self.dbc, mad_apk['file_id'])),
                         content_type=mad_apk['mimetype'],
                         headers={
                             'Content-Disposition': f'attachment; filename=%s' % (mad_apk['filename'])
@@ -79,7 +83,7 @@ class APIMadAPK(APKHandler):
             call = self.api_req.data['call']
             args = self.api_req.data.get('args', {})
             if call == 'import':
-                downloader = mapadroid.utils.apk_util.AutoDownloader(self.dbc)
+                downloader = AutoDownloader(self.dbc)
                 try:
                     args = (int(apk_type), int(apk_arch))
                     t = Thread(target=downloader.apk_download, args=args)
@@ -88,14 +92,14 @@ class APIMadAPK(APKHandler):
                 except TypeError:
                     return (None, 404)
             elif call == 'search':
-                downloader = mapadroid.utils.apk_util.AutoDownloader(self.dbc)
+                downloader = AutoDownloader(self.dbc)
                 try:
                     downloader.apk_search(int(apk_type), int(apk_arch))
                     return (None, 204)
                 except TypeError:
                     return (None, 404)
             elif call == 'search_download':
-                downloader = mapadroid.utils.apk_util.AutoDownloader(self.dbc)
+                downloader = AutoDownloader(self.dbc)
                 try:
                     downloader.apk_all_actions()
                     return (None, 204)
