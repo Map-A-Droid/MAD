@@ -163,9 +163,9 @@ class RouteCalc(resource.Resource):
             from timeit import default_timer as timer
             start = timer()
             if algorithm == 'quick':
-                from mapadroid.route.routecalc import route_calc_impl
+                from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
             else:
-                from mapadroid.route.routecalc import route_calc_impl
+                from mapadroid.route.routecalc.calculate_route_optimized import route_calc_impl
             sol_best = route_calc_impl(lessCoordinates, route_name, num_processes)
             end = timer()
             logger.info("Calculated route in {} minutes", str((end - start) / 60))
