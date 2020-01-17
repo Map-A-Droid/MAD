@@ -295,5 +295,6 @@ class MITMBase(WorkerBase):
             'currentSleepTime': self._current_sleep_time
         }
         if self._rec_data_time:
-            save_data['lastProtoDateTime'] = self._rec_data_time
+            save_data['lastProtoDateTime'] = 'NOW()'
+            self._rec_data_time = None
         self._db_wrapper.save_status(save_data)

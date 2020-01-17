@@ -901,7 +901,7 @@ class DbWrapper:
 
     def save_status(self, data):
         logger.debug("dbWrapper::save_status")
-        literals = ['currentPos', 'lastPos']
+        literals = ['currentPos', 'lastPos', 'lastProtoDateTime']
         data['instance_id'] = self.instance_id
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
