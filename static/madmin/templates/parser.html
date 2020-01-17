@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block header %}
+    <style>
+        input[type=text],
+        select,
+        textarea {
+            width: 100%;
+            padding: 12px 20px;
+            margin: 8px 0;
+            display: inline-block;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+
+        input[type=submit] {
+            width: 100%;
+            background-color: #4CAF50;
+            color: white;
+            padding: 14px 20px;
+            margin: 8px 0;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+
+        input[type=submit]:hover {
+            background-color: #45a049;
+        }
+
+        #inputdata {
+            border-radius: 5px;
+            background-color: #f2f2f2;
+            padding: 20px;
+            /*width: 80%;*/
+        }
+
+        hr {
+            border-style: solid;
+            border-color: lightgray;
+        }
+
+        .ui-sortable-helper {
+            background: #ffffcc;
+            display: table;
+            border-style: solid;
+            border-color: grey;
+            border-width: 1px;
+        }
+
+        }
+    </style>
+{% endblock %}
+
+{% block scripts %}
+    <script src="https://code.jquery.com/ui/1.12.1/jquery-ui.js"></script>
+    <script src="//cdnjs.cloudflare.com/ajax/libs/jqueryui-touch-punch/0.2.2/jquery.ui.touch-punch.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/jquery.validate.min.js"
+            integrity="sha256-bu/BP02YMudBc96kI7yklc639Mu4iKGUNNcam8D2nLc="
+            crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery-validate/1.19.0/additional-methods.min.js"
+            integrity="sha256-Z3MmjesRY6rcd+sYj8tTwb/+EV/4msqGW7EZiQc3TK8="
+            crossorigin="anonymous"></script>
+    <script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            $('body').Aplus();
+            $("#navsetting").addClass("active");
+
+            $("#settings").validate({
+                errorElement: "em",
+                errorPlacement: function (error, element) {
+                    // Add the `help-block` class to the error element
+                    error.addClass("help-block");
+
+                    if (element.prop("type") === "checkbox") {
+                        error.insertAfter(element.parent("label"));
+                    } else {
+                        error.insertAfter(element);
+                    }
+                },
+                highlight: function (element, errorClass, validClass) {
+                    $(element).parents().addClass("has-error").removeClass("has-success");
+                },
+                unhighlight: function (element, errorClass, validClass) {
+                    $(element).parents().addClass("has-success").removeClass("has-error");
+                }
+            });
+        });
+    </script>
+    <script>
+        var selectedData = new Array();
+        var fixHelper = function (e, ui) {
+            ui.children().each(function () {
+                $(this).width($(this).width());
+            });
+            return ui;
+        };
+
+        $("tbody").sortable({
+            helper: fixHelper,
+            handle: '.handle',
+            delay: 150,
+            stop: function () {
+                $('.row_position>tr').each(function () {
+                    selectedData.push($(this).attr("id"));
+                });
+                updateOrder(selectedData);
+            }
+        }).disableSelection();
+
+        function updateOrder(data) {
+            $.ajax({
+                url: "/savesortwalker?walkernr={{walkernr}}&edit={{edit}}",
+                data: {position: data},
+                success: function () {
+                    location.reload();
+                }
+            })
+        }
+    </script>
+    <script>
+        var validateWalkervalueMsg;
+        var validateWalkervalueDynamicErrorMsg = function () {
+            return validateWalkervalueMsg;
+        }
+        jQuery.validator.addMethod("validatewalkervalue", function (value, element) {
+
+            var digitsOnlyNotEmptyPattern = "^[0-9]+$";
+            var hourPattern = "((2[0-3]|[01]?[0-9]):([0-5][0-9]))";
+            var rangeHoursPattern = "(" + hourPattern + "-" + hourPattern + ")";
+            validateWalkervalueMsg = "";
+
+            // define rules we using,
+            // key-typename : array(pattern, message)
+            var rules = {
+                countdown: [digitsOnlyNotEmptyPattern, "Please set correct number of seconds - digits only."],
+                timer: ['^' + hourPattern + '$', "Please set correct time (24h format: XX:XX)."],
+                round: [digitsOnlyNotEmptyPattern, "Please set correct number of rounds - digits only."],
+                period: ['^' + rangeHoursPattern + '$', "Please set correct time (24h format: XX:XX-XX:XX)."],
+                coords: ['^(|' + hourPattern + '|' + rangeHoursPattern + ')$', "Please set correct time."],
+                idle: ['^(' + hourPattern + '|' + rangeHoursPattern + ')$', "Please set correct time."],
+            };
+
+            var type = $("select[name='walkertype']").val();
+            if (!(type in rules)) {
+                console.log("No rule implemented for " + type + " please fix :)");
+                return true;
+            }
+            var ruleToUse = new RegExp(rules[type][0], "");
+            if (ruleToUse.test(value)) {
+                return true;
+            } else {
+                validateWalkervalueMsg = rules[type][1];
+                return false;
+            }
+        }, validateWalkervalueDynamicErrorMsg);
+    </script>
+
+{% endblock %}
+
+{% block content %}
+
+    <h2>{{ header | safe }}</h2>
+
+    <h4><a href="showsettings?area={{ tabarea }}">Back to editor</a></h4>
+    <div id="inputdata">
+        {% for item in editform %}
+            {{ item | safe }}
+        {% endfor %}
+    </div>
+
+{% endblock %}

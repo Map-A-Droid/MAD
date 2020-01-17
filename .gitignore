@@ -1,10 +1,10 @@
 gym_info.json
-ocr/screenshots/*
-ocr/gym_img/*
-ocr/mon_img/*
+mapadroid/ocr/screenshots/*
+mapadroid/ocr/gym_img/*
+mapadroid/ocr/mon_img/*
 temp/*
 personal_commands/*
-ocr/weather/*
+mapadroid/ocr/weather/*
 version.json
 *.pyc
 *.log

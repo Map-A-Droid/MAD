@@ -5,7 +5,7 @@
 ![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)
 [![Build Status](https://travis-ci.org/Map-A-Droid/MAD.svg?branch=master)](https://travis-ci.org/Map-A-Droid/MAD)
 
-![MAD-Banner](static/banner_small_web.png)
+![MAD-Banner](https://maddev.eu/wp-content/uploads/2020/01/banner_small_web.png)
 
 Map'A'Droid is a scanner for PoGo based on Android devices.
 
@@ -18,16 +18,16 @@ Map'A'Droid is a scanner for PoGo based on Android devices.
 * [github wiki page](https://github.com/Map-A-Droid/MAD/wiki)
 * [Wiki Page](https://mad-docs.readthedocs.io/en/latest/) - For Installation instructions and other stuff
 * [ATV boxes](https://github.com/Map-A-Droid/MAD-ATV/wiki) - For information about running MAD on cheap ATV boxes
+* [RocketMAD](https://github.com/cecpk/RocketMAD) - Compatible map frontend
 
 ## Requirements
 
 * A supported version of Python: **3.6**, **3.7**, **3.8**
 * MySQL database, with RocketMap structure
 * Rooted Android device
-* PogoDroid token, obtainable [via Webshop](https://maddev.eu/shop/)
+* PogoDroid token, obtainable [maddev.eu](https://maddev.eu/shop/)
 * Game running in English, Deutsch or Français (for Quest mode)
 
->MAD is compatible with [this RocketMap fork](https://github.com/cecpk/OSM-Rocketmap).
 
 ## Installation
 
