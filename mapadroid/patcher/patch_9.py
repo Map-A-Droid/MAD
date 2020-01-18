@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 9'
+
     def _execute(self):
         alter_query = (
             "UPDATE trs_quest "

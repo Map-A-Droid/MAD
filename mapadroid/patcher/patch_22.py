@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Convert trs_status to epoch'
+
     def _execute(self):
         sql = "SELECT COUNT(*) FROM `information_schema`.`views` WHERE `TABLE_NAME` = 'v_trs_status'"
         count = self._db.autofetch_value(sql)
@@ -11,12 +13,12 @@ class Patch(PatchBase):
             existing_data = {}
             sql = "SELECT trs.`instance_id`, trs.`origin`, trs.`currentPos`, trs.`lastPos`, trs.`routePos`,"\
                   "trs.`routeMax`, trs.`routemanager`, trs.`rebootCounter`, trs.`lastProtoDateTime`,"\
-                  "trs.`lastPogoRestart`, trs.`init`, trs.`rebootingOption`, trs.`restartCounter`, trs.`globalrebootcount`,"\
-                  "trs.`globalrestartcount`, trs.`lastPogoReboot`, trs.`currentSleepTime`\n"\
+                  "trs.`lastPogoRestart`, trs.`init`, trs.`rebootingOption`, trs.`restartCounter`,"\
+                  "trs.`globalrebootcount`, trs.`globalrestartcount`, trs.`lastPogoReboot`, trs.`currentSleepTime`\n"\
                   "FROM `trs_status` trs"
             try:
                 existing_data = self._db.autofetch_all(sql)
-            except:
+            except Exception:
                 pass
             if not existing_data:
                 existing_data = {}
@@ -75,7 +77,7 @@ class Patch(PatchBase):
                 try:
                     row['area_id'] = int(row['routemanager'])
                     del row['routemanager']
-                except:
+                except Exception:
                     continue
                 for field in point_fields:
                     if not row[field]:

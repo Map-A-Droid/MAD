@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'MADmin APK Wizard'
+
     def _execute(self):
         query = (
             "CREATE TABLE IF NOT EXISTS `filestore_meta` ( "

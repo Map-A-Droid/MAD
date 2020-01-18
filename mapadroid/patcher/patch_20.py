@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 20'
+
     def _execute(self):
         sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
         try:

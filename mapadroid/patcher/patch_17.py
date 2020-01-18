@@ -1,13 +1,17 @@
 from ._patch_base import PatchBase
 import copy
 import json
+import os
+from pathlib import Path
 import mapadroid.utils.data_manager.modules
 from mapadroid.utils.data_manager.dm_exceptions import (
     UpdateIssue
 )
 
+
 class Patch(PatchBase):
     name = 'Database Migration'
+
     def _execute(self):
         try:
             # Goodbye mappings.json, it was nice knowing ya!
@@ -57,7 +61,7 @@ class Patch(PatchBase):
                 config_file[section]['index'] += 1
             if cache:
                 self.self._logger.info(
-                    'One or more resources with ID 0 found.  Converting them off 0 and updating the ' \
+                    'One or more resources with ID 0 found.  Converting them off 0 and updating the '
                     'mappings.json file.  {}', cache)
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(config_file, outfile, indent=4, sort_keys=True)
@@ -75,7 +79,7 @@ class Patch(PatchBase):
                 for elem_id, elem in config_file[section]['entries'].items():
                     try:
                         mode = elem['mode']
-                    except:
+                    except KeyError:
                         mode = None
                     resource_def = self._data_manager.get_resource_def(dm_section, mode=mode)
                     sql = "SELECT `%s` FROM `%s` WHERE `%s` = %%s AND `instance_id` != %%s"
@@ -84,8 +88,7 @@ class Patch(PatchBase):
                     exists = self._db.autofetch_value(sql % sql_args, args=sql_format_args)
                     if not exists:
                         continue
-                    self.self._logger.info('{} {} already exists and a new ID will be generated', dm_section,
-                                elem_id)
+                    self.self._logger.info('{} {} already exists and a new ID will be generated', dm_section, elem_id)
                     if dm_section not in generate_new_ids:
                         generate_new_ids[dm_section] = {}
                     generate_new_ids[dm_section][elem_id] = None
@@ -101,10 +104,8 @@ class Patch(PatchBase):
                 for key, elem in copy.deepcopy(config_file[section]['entries']).items():
                     save_elem = copy.deepcopy(elem)
                     self.self._logger.debug('Converting {} {}', section, key)
-                    tmp_mode = None
                     if section == 'areas':
                         mode = elem['mode']
-                        tmp_mode = mode
                         del elem['mode']
                         resource = mapadroid.utils.data_manager.modules.MAPPINGS['area'](
                             self._data_manager, mode=mode)
@@ -162,7 +163,7 @@ class Patch(PatchBase):
                             save_elem['settings']['mon_ids_iv'] = str(
                                 generate_new_ids['monivlist'][monlist])
                             self.self._logger.info('Updating monivlist from {} to {}', key,
-                                        elem['settings']['mon_ids_iv'])
+                                                   elem['settings']['mon_ids_iv'])
                         except KeyError:
                             pass
                     elif dm_section == 'device':
@@ -186,7 +187,7 @@ class Patch(PatchBase):
                             try:
                                 new_list.append(str(generate_new_ids['walkerarea'][walkerarea_id]))
                                 self.self._logger.info('Updating walker-walkerarea from {} to {}', walkerarea_id,
-                                            new_list[-1])
+                                                       new_list[-1])
                             except KeyError:
                                 new_list.append(walkerarea_id)
                         elem['setup'] = new_list
@@ -203,7 +204,7 @@ class Patch(PatchBase):
                     try:
                         generate_new_ids[dm_section][key]
                         save_new_id = True
-                    except:
+                    except KeyError:
                         resource.identifier = key
                     resource.update(elem)
                     try:
@@ -221,7 +222,7 @@ class Patch(PatchBase):
                                 config_file[section]['index'] = resource.identifier + 1
             if conversion_issues:
                 self.self._logger.error(
-                    'The configuration was not partially moved to the database.  The following resources ' \
+                    'The configuration was not partially moved to the database.  The following resources '
                     'were not converted.')
                 for (section, identifier, issue) in conversion_issues:
                     self.self._logger.error('{} {}: {}', section, identifier, issue)
@@ -230,9 +231,6 @@ class Patch(PatchBase):
                     json.dump(config_file, outfile, indent=4, sort_keys=True)
         except IOError:
             pass
-        except Exception as err:
-            self.self._logger.exception('Unknown issue during migration. Exiting')
-            self.issues = True
 
     def __convert_geofence(self, path):
         stripped_data = []

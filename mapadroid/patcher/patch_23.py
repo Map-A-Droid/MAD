@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Create view for status page'
+
     def _execute(self):
         # Store as TIMESTAMP as it will handle everything with epoch
         fields = ['lastProtoDateTime', 'lastPogoRestart', 'lastPogoReboot']

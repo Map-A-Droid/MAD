@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 13'
+
     def _execute(self):
         # Adding current_sleep for worker status
         if not self._schema_updater.check_column_exists('trs_status', 'currentSleepTime'):

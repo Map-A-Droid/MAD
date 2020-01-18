@@ -6,7 +6,7 @@ import sys
 from mapadroid.db import DbSchemaUpdater
 from mapadroid.utils.logging import logger
 
-# Dictionary containing all required updates.  They are stored as (UpdateOrder, filename)
+# OrderedDict containing all required updates with their filename reference.  The dict is stored as (version, filename)
 MAD_UPDATES = OrderedDict([
     (1, 'patch_1'),
     (2, 'patch_2'),
@@ -28,6 +28,7 @@ MAD_UPDATES = OrderedDict([
     (22, 'patch_22'),
     (23, 'patch_23'),
 ])
+
 
 class MADVersion(object):
     def __init__(self, args, data_manager):
@@ -57,7 +58,7 @@ class MADVersion(object):
                 else:
                     logger.error('Patch was unsuccessful.  Exiting')
                     sys.exit(1)
-            except:
+            except Exception:
                 logger.opt(exception=True).error('Patch was unsuccessful.  Exiting')
                 sys.exit(1)
 
@@ -113,7 +114,7 @@ class MADVersion(object):
                     logger.info('Finished converting mapping file')
         except IOError:
             pass
-        except Exception as err:
+        except Exception:
             logger.exception('Unknown issue during migration. Exiting')
             sys.exit(1)
 
@@ -133,7 +134,7 @@ class MADVersion(object):
                                ", will use version 0")
                 self.__set_version(0)
             dbVersion = self.dbwrapper.get_mad_version()
-            if dbVersion != None:
+            if dbVersion is not None:
                 logger.success("Moved internal MAD version to database "
                                "as version {}", dbVersion)
             else:

@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 11'
+
     def _execute(self):
         query = (
             "ALTER TABLE trs_stats_detect_raw "

@@ -2,8 +2,10 @@ from ._patch_base import PatchBase
 import json
 import shutil
 
+
 class Patch(PatchBase):
     name = 'Patch 14'
+
     def _execute(self):
         update_order = ['monivlist', 'auth', 'devicesettings', 'areas', 'walker', 'devices']
         old_data = {}
@@ -73,8 +75,7 @@ class Patch(PatchBase):
                             if 'setup' in entry:
                                 for ind, area in enumerate(entry['setup']):
                                     try:
-                                        area['walkerarea'] = '/api/area/%s' % (
-                                        cache['areas'][area['walkerarea']],)
+                                        area['walkerarea'] = '/api/area/%s' % (cache['areas'][area['walkerarea']],)
                                     except KeyError:
                                         # The area no longer exists.  Remove from the path
                                         pass
@@ -89,8 +90,7 @@ class Patch(PatchBase):
                         elif key == 'devices':
                             if 'pool' in entry:
                                 try:
-                                    entry['pool'] = '/api/devicesetting/%s' % (
-                                    cache['devicesettings'][entry['pool']],)
+                                    entry['pool'] = '/api/devicesetting/%s' % (cache['devicesettings'][entry['pool']],)
                                 except Exception:
                                     if entry['pool'] is not None:
                                         self._logger.error('DeviceSettings {} is not valid', entry['pool'])
@@ -110,6 +110,3 @@ class Patch(PatchBase):
                     json.dump(new_data, outfile, indent=4, sort_keys=True)
         except IOError:
             pass
-        except Exception as err:
-            self._logger.exception('Unknown issue during migration. Exiting')
-            self.issues = True

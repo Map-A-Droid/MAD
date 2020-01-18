@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 12'
+
     def _execute(self):
         if self._schema_updater.check_index_exists('trs_stats_detect_raw', 'typeworker'):
             query = (

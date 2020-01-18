@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 10'
+
     def _execute(self):
         query = (
             "CREATE TABLE IF NOT EXISTS trs_s2cells ( "

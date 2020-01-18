@@ -1,7 +1,9 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 18'
+
     def _execute(self):
         query = (
             "ALTER TABLE `trs_status` CHANGE `instance` `instance` VARCHAR(50) CHARACTER "

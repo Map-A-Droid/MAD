@@ -2,8 +2,10 @@ from ._patch_base import PatchBase
 import json
 import re
 
+
 class Patch(PatchBase):
     name = 'Patch 15'
+
     def _execute(self):
         try:
             with open(self._application_args.mappings, 'rb') as fh:
@@ -13,9 +15,6 @@ class Patch(PatchBase):
                 json.dump(settings, outfile, indent=4, sort_keys=True)
         except IOError:
             pass
-        except Exception as err:
-            self._logger.exception('Unknown issue during migration. Exiting')
-            self.issues = True
 
     def __convert_to_id(self, data):
         regex = re.compile(r'/api/.*/\d+')

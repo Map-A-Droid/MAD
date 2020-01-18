@@ -1,15 +1,17 @@
 from ._patch_base import PatchBase
 
+
 class Patch(PatchBase):
     name = 'Patch 19'
+
     def _execute(self):
         # Non-instanced devices in trs_status will cause the upgrade to fail.  Since these entries are prior
         # to bfbadcd we can remove them
         sql = "SELECT `origin` FROM `trs_status` WHERE `instance` = ''"
         bad_devs = self._db.autofetch_column(sql)
         if bad_devs:
-            self._logger.warning('Found devices that have no instance.  These will be removed from the table. ' \
-                           '{}', bad_devs)
+            self._logger.warning('Found devices that have no instance.  These will be removed from the table. '
+                                 '{}', bad_devs)
             del_data = {
                 'instance': ''
             }
@@ -28,7 +30,7 @@ class Patch(PatchBase):
                 devs = self._db.autofetch_all(sql)
                 if devs is None:
                     devs = []
-            except:
+            except Exception:
                 devs = []
             for dev in devs:
                 if dev['instance'] not in instances:
