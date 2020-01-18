@@ -26,7 +26,7 @@ from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.rarity import Rarity
-from mapadroid.utils.version import MADVersion
+from mapadroid.patcher import MADVersion
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 from mapadroid.utils.updater import deviceUpdater
