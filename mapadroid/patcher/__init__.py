@@ -52,9 +52,9 @@ class MADVersion(object):
             # Execute the patch and catch any errors for logging
             try:
                 patch = patch_base.Patch(logger, self.dbwrapper, self.data_manager, self._application_args)
-                if not patch.issues:
-                    logger.info('Successfully applied patch')
+                if patch.completed and not patch.issues:
                     self.__set_version(patch_ver)
+                    logger.info('Successfully applied patch')
                 else:
                     logger.error('Patch was unsuccessful.  Exiting')
                     sys.exit(1)

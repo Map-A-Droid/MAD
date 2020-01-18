@@ -34,9 +34,8 @@ class PatchBase(object):
         if self._pre_validation():
             self._logger.info('Applying patch')
             self._execute()
-            if not self.issues:
-                if self._post_validation():
-                    self.completed = True
+            if not self.issues and self._post_validation():
+                self.completed = True
 
     def _execute(self):
         raise NotImplementedError('Patch not implemented')
