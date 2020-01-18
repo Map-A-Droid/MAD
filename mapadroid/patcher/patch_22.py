@@ -87,4 +87,3 @@ class Patch(PatchBase):
                         continue
                     row[field] = 0 if row[field].lower() == 'false' else 1
                 self._db.autoexec_insert('trs_status', row, literals=point_fields)
-        self.completed = True

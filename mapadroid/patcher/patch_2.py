@@ -13,4 +13,3 @@ class Patch(PatchBase):
         except Exception as e:
             self._logger.info("Unexpected error: {}", e)
             self.issues = True
-        self.completed = True

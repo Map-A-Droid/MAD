@@ -233,7 +233,6 @@ class Patch(PatchBase):
         except Exception as err:
             self.self._logger.exception('Unknown issue during migration. Exiting')
             self.issues = True
-        self.completed = True
 
     def __convert_geofence(self, path):
         stripped_data = []

@@ -133,7 +133,7 @@ class MADVersion(object):
                                ", will use version 0")
                 self.__set_version(0)
             dbVersion = self.dbwrapper.get_mad_version()
-            if dbVersion:
+            if dbVersion != None:
                 logger.success("Moved internal MAD version to database "
                                "as version {}", dbVersion)
             else:
