@@ -179,7 +179,7 @@ class MitmMapper(object):
         else:
             return -1
 
-    def get_poke_stop_visits(self, origin: str):
+    def get_poke_stop_visits(self, origin: str) -> int:
         if self.__playerstats.get(origin, None) is not None:
             return self.__playerstats.get(origin).get_poke_stop_visits()
         else:

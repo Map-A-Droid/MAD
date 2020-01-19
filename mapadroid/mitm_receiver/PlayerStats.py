@@ -14,7 +14,7 @@ class PlayerStats(object):
     def __init__(self, id, application_args, mitm_mapper_parent: MitmMapper):
         self._id = id
         self.__application_args = application_args
-        self._level = 0
+        self._level: int = 0
         self._last_action_time = 0
         self._last_period = 0
         self.__stats_collected: dict = {}
@@ -24,22 +24,22 @@ class PlayerStats(object):
         self._generate_stats = application_args.game_stats
         self.__mapping_mutex = Lock()
         self.__mitm_mapper_parent: MitmMapper = mitm_mapper_parent
-        self._poke_stop_visits = 0
+        self._poke_stop_visits: int = 0
 
-    def set_level(self, level):
+    def set_level(self, level: int):
         logger.debug('[{}] - set level {}', str(self._id), str(level))
         self._level = int(level)
         return True
 
-    def get_level(self):
+    def get_level(self) -> int:
         return self._level
 
-    def set_poke_stop_visits(self, visits):
+    def set_poke_stop_visits(self, visits: int):
         logger.debug('[{}] - set pokestops visited {}', str(self._id), str(visits))
         self._poke_stop_visits = visits
         return True
 
-    def get_poke_stop_visits(self):
+    def get_poke_stop_visits(self) -> int:
         return self._poke_stop_visits
 
     def gen_player_stats(self, data: dict):
@@ -73,8 +73,8 @@ class PlayerStats(object):
         try:
             with open(os.path.join(self.__application_args.file_path, str(self._id) + '.stats')) as f:
                 data = json.load(f)
-                self.set_level(data[self._id][0]['level'])
-                self.set_poke_stop_visits(data[self._id][0]['poke_stop_visits'])
+                self.set_level(int(data[self._id][0]['level']))
+                self.set_poke_stop_visits(int(data[self._id][0]['poke_stop_visits']))
         except IOError:
             logger.error('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
