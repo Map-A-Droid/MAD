@@ -161,16 +161,8 @@ if __name__ == "__main__":
     version.get_version()
 
     # create folders
-    create_folder(args.raidscreen_path)
     create_folder(args.file_path)
     create_folder(args.upload_path)
-
-    if args.only_ocr:
-        logger.error(
-            "OCR scanning support has been dropped. Please get PogoDroid "
-            "and scan using MITM methods."
-        )
-        sys.exit(1)
 
     if not args.only_scan and not args.only_routes:
         logger.error("No runmode selected. \nAllowed modes:\n"

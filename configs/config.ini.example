@@ -45,7 +45,6 @@
 
 #pogoasset:                  # Path to Pogo Assets: See: https://github.com/ZeChrales/PogoAssets/ (git clone)
 #temp_path:                  # Path for generated files while detecting raids (Default: temp/)
-#raidscreen_path:            # Path for taken screenshots (Default: ocr/screenshots/)
 #file_path:                  # Defines directory to save worker stats- and position files and calculated routes (Default: files/)
 #mappings:                   # optional: defines the path of the mappings file (Default: configs/mappings.json)
 #upload_path:                # Path for uploaded Files via madmin and for device installation. (Default: upload/)

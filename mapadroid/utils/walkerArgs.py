@@ -96,10 +96,6 @@ def parseArgs():
     # Runtypes
     parser.add_argument('-os', '--only_scan', action='store_true', default=True,
                         help='Use this instance only for scanning.')
-    parser.add_argument('-oo', '--only_ocr', action='store_true', default=False,
-                        help='LEGACY: Use this instance only for OCR.')
-    parser.add_argument('-om', '--ocr_multitask', action='store_true', default=False,
-                        help='Running OCR in sub-processes (module multiprocessing) to speed up analysis of raids.')
     parser.add_argument('-otc', '--ocr_thread_count', type=int, default=2,
                         help='Amount of threads/processes to be used for screenshot-analysis.')
     parser.add_argument('-wm', '--with_madmin', action='store_true', default=False,
@@ -117,10 +113,6 @@ def parseArgs():
     parser.add_argument('-pgasset', '--pogoasset', required=False,
                         help=('Path to Pogo Asset.'
                               'See https://github.com/ZeChrales/PogoAssets/'))
-
-    parser.add_argument('-rscrpath', '--raidscreen_path', default='ocr/screenshots',
-                        # TODO: check if user appended / or not and deal accordingly (rmeove it?)
-                        help='Folder for processed Raidscreens. Default: ocr/screenshots')
 
     # div. settings
 

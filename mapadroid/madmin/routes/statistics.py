@@ -74,7 +74,7 @@ class statistics(object):
     @auth_required
     def statistics_shiny(self):
         return render_template('statistics/shiny_statistics.html', title="MAD Shiny Statisics",
-                               time=self._args.madmin_time, running_ocr=self._args.only_ocr,
+                               time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @logger.catch

@@ -1,4 +1,4 @@
-from flask import (send_from_directory, render_template, request, jsonify, redirect, url_for)
+from flask import send_from_directory, render_template, request, jsonify, redirect, url_for
 
 from mapadroid.madmin.functions import auth_required, get_quest_areas
 from mapadroid.utils import MappingManager
@@ -24,14 +24,8 @@ class path(object):
         routes = [
             ("/screenshot/<path:path>", self.pushscreens),
             ("/static/<path:path>", self.pushstatic),
-            ("/gym_img/<path:path>", self.pushGyms),
-            ("/screenshots/<path:path>", self.pushScreens),
             ("/asset/<path:path>", self.pushAssets),
-            ("/screens", self.screens),
             ("/", self.root),
-            ("/raids", self.raids),
-            ("/gyms", self.gyms),
-            ("/unknown", self.unknown),
             ("/quests", self.quest),
             ("/quests_pub", self.quest_pub),
             ("/pick_worker", self.pickworker),
@@ -50,43 +44,12 @@ class path(object):
         return send_from_directory(generate_path('madmin/static'), path)
 
     @auth_required
-    def pushGyms(self, path):
-        return send_from_directory('../ocr/gym_img', path)
-
-    @auth_required
-    def pushScreens(self, path):
-        return send_from_directory('../' + self._args.raidscreen_path, path)
-
-    @auth_required
     def pushAssets(self, path):
         return send_from_directory(self._args.pogoasset, path)
 
     @auth_required
-    def screens(self):
-        return render_template('screens.html',
-                               responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show success Screens")
-
-    @auth_required
     def root(self):
         return redirect(url_for('settings'))
-
-    @auth_required
-    def raids(self):
-        return render_template('raids.html', sort=str(self._args.madmin_sort),
-                               responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show Raid Matching")
-
-    @auth_required
-    def gyms(self):
-        return render_template('gyms.html', sort=self._args.madmin_sort,
-                               responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show Gym Matching")
-
-    @auth_required
-    def unknown(self):
-        return render_template('unknown.html', responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="show unkown Gym")
 
     @auth_required
     @logger.catch()
