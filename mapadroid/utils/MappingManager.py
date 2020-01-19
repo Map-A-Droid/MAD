@@ -96,22 +96,10 @@ class MappingManager:
 
         self.update(full_lock=True)
 
-        if self.__args.auto_reload_config:
-            logger.info("Starting file watcher for mappings.json changes.")
-            self.__t_file_watcher = Thread(name='file_watcher', target=self.__file_watcher, )
-            self.__t_file_watcher.daemon = False
-            self.__t_file_watcher.start()
         self.__devicesettings_setter_queue: Queue = Queue()
-        self.__devicesettings_setter_consumer_thread: Thread = Thread(name='devicesettings_setter_consumer',
-                                                                      target=self.__devicesettings_setter_consumer, )
-        self.__devicesettings_setter_consumer_thread.daemon = True
-        self.__devicesettings_setter_consumer_thread.start()
 
     def shutdown(self):
         logger.fatal("MappingManager exiting")
-        self.__stop_file_watcher_event.set()
-        self.__t_file_watcher.join()
-        self.__devicesettings_setter_consumer_thread.join()
 
     def get_auths(self) -> Optional[dict]:
         return self._auths
@@ -126,26 +114,6 @@ class MappingManager:
 
     def get_devicesettings_of(self, device_name: str) -> Optional[dict]:
         return self._devicemappings.get(device_name, None).get('settings', None)
-
-    def __devicesettings_setter_consumer(self):
-        logger.info("Starting Devicesettings consumer Thread")
-        while not self.__stop_file_watcher_event.is_set():
-            try:
-                set_settings = self.__devicesettings_setter_queue.get_nowait()
-            except Empty:
-                time.sleep(0.2)
-                continue
-            except (EOFError, KeyboardInterrupt):
-                logger.info("Devicesettings setter thread noticed shutdown")
-                return
-
-            if set_settings is not None:
-                device_name, key, value = set_settings
-                with self.__mappings_mutex:
-                    if self._devicemappings.get(device_name, None) is not None:
-                        if self._devicemappings[device_name].get("settings", None) is None:
-                            self._devicemappings[device_name]["settings"] = {}
-                        self._devicemappings[device_name]['settings'][key] = value
 
     def set_devicesetting_value_of(self, device_name: str, key: str, value):
         if self._devicemappings.get(device_name, None) is not None:
@@ -624,39 +592,6 @@ class MappingManager:
                 self._auths = self.__get_latest_auths()
 
         logger.info("Mappings have been updated")
-
-    def __file_watcher(self):
-        # We're on a 20-second timer.
-        refresh_time_sec = int(self.__args.auto_reload_delay)
-        filename = self.__args.mappings
-        logger.info('Mappings.json reload delay: {} seconds', refresh_time_sec)
-
-        while not self.__stop_file_watcher_event.is_set():
-            # Wait (x-1) seconds before refresh, min. 1s.
-            try:
-                time.sleep(max(1, refresh_time_sec - 1))
-            except KeyboardInterrupt:
-                logger.info("Mappings.json watch got interrupted, stopping")
-                break
-            try:
-                # Only refresh if the file has changed.
-                current_time_sec = time.time()
-                file_modified_time_sec = os.path.getmtime(filename)
-                time_diff_sec = current_time_sec - file_modified_time_sec
-
-                # File has changed in the last refresh_time_sec seconds.
-                if time_diff_sec < refresh_time_sec:
-                    logger.info(
-                        'Change found in {}. Updating device mappings.', filename)
-                    self.update()
-                else:
-                    logger.debug('No change found in {}.', filename)
-            except KeyboardInterrupt as e:
-                logger.info("Got interrupt signal, stopping watching mappings.json")
-                break
-            except Exception as e:
-                logger.exception(
-                    'Exception occurred while updating device mappings: {}.', e)
 
     def get_all_devices(self):
         devices = []
