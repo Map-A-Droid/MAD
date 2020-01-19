@@ -107,11 +107,6 @@ class MappingManager:
     def get_devicemappings_of(self, device_name: str) -> Optional[dict]:
         return self._devicemappings.get(device_name, None)
 
-    def set_devicemapping_value_of(self, device_name: str, key: str, value):
-        with self.__mappings_mutex:
-            if self._devicemappings.get(device_name, None) is not None:
-                self._devicemappings[device_name][key] = value
-
     def get_devicesettings_of(self, device_name: str) -> Optional[dict]:
         return self._devicemappings.get(device_name, None).get('settings', None)
 
