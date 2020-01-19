@@ -9,6 +9,7 @@ from pathlib import Path
 from mapadroid.db import DbSchemaUpdater
 from mapadroid.utils.logging import logger
 from .convert_mapping import convert_mappings
+import mapadroid.utils.data_manager.modules
 from mapadroid.utils.data_manager.dm_exceptions import (
     UpdateIssue
 )
