@@ -544,6 +544,7 @@ class WebhookWorker:
 
         area_names = self.__args.webhook_excluded_areas.split(",")
         for area_name in area_names:
+            area_name = area_name.strip()
             for name, gf in tmp_excluded_areas.items():
                 if (area_name.endswith("*") and name.startswith(area_name[:-1])) or area_name == name:
                     self.__excluded_areas.append(gf)
