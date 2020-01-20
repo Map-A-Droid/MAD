@@ -604,12 +604,12 @@ class WebsocketServer(object):
 
         # now wait for the response!
         result = None
-        logger.debug("Timeout: {}", str(timeout))
+        logger.debug("Timeout towards {}: {}", id, str(timeout))
         event_triggered = None
         try:
             event_triggered = await asyncio.wait_for(message_event.wait(), timeout=timeout)
         except asyncio.TimeoutError as te:
-            logger.warning("Timeout, increasing timeout-counter")
+            logger.warning("Timeout, increasing timeout-counter of {}", id)
             # TODO: why is the user removed here?
             new_count = await self.__increase_fail_counter(id)
             if new_count > 5:
@@ -631,6 +631,9 @@ class WebsocketServer(object):
             else:
                 logger.debug("Received binary data to {}, starting with {}", str(
                     id), str(result[:10]))
+        else:
+            logger.warning("Did not received answer in time from {}", id)
+
         return result
 
     def send_and_wait(self, id, worker_instance, message, timeout, byte_command: int = None):
