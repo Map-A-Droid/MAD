@@ -45,7 +45,7 @@ mode_mapping = {
 class JoinQueue(object):
     def __init__(self, stop_trigger, mapping_manager):
         self._joinqueue: Queue = Queue()
-        self.__stop_file_watcher_event = stop_trigger
+        self.__shutdown_event = stop_trigger
         self._mapping_mananger = mapping_manager
         self.__route_join_thread: Thread = Thread(name='route_joiner',
                                                   target=self.__route_join, )
@@ -54,7 +54,7 @@ class JoinQueue(object):
 
     def __route_join(self):
         logger.info("Starting Route join Thread - safemode")
-        while not self.__stop_file_watcher_event.is_set():
+        while not self.__shutdown_event.is_set():
             try:
                 routejoin = self._joinqueue.get_nowait()
             except Empty:
@@ -89,14 +89,18 @@ class MappingManager:
         self._routemanagers: Optional[Dict[str, dict]] = None
         self._auths: Optional[dict] = None
         self._monlists: Optional[dict] = None
-        self.__stop_file_watcher_event: Event = Event()
-        self.join_routes_queue = JoinQueue(self.__stop_file_watcher_event, self)
+        self.__shutdown_event: Event = Event()
+        self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
         self.__raw_json: Optional[dict] = None
         self.__mappings_mutex: Lock = Lock()
 
         self.update(full_lock=True)
 
         self.__devicesettings_setter_queue: Queue = Queue()
+        self.__devicesettings_setter_consumer_thread: Thread = Thread(name='devicesettings_setter_consumer',
+                                                                      target=self.__devicesettings_setter_consumer, )
+        self.__devicesettings_setter_consumer_thread.daemon = True
+        self.__devicesettings_setter_consumer_thread.start()
 
     def shutdown(self):
         logger.fatal("MappingManager exiting")
@@ -109,6 +113,26 @@ class MappingManager:
 
     def get_devicesettings_of(self, device_name: str) -> Optional[dict]:
         return self._devicemappings.get(device_name, None).get('settings', None)
+
+    def __devicesettings_setter_consumer(self):
+        logger.info("Starting Devicesettings consumer Thread")
+        while not self.__shutdown_event.is_set():
+            try:
+                set_settings = self.__devicesettings_setter_queue.get_nowait()
+            except Empty:
+                time.sleep(0.2)
+                continue
+            except (EOFError, KeyboardInterrupt):
+                logger.info("Devicesettings setter thread noticed shutdown")
+                return
+
+            if set_settings is not None:
+                device_name, key, value = set_settings
+                with self.__mappings_mutex:
+                    if self._devicemappings.get(device_name, None) is not None:
+                        if self._devicemappings[device_name].get("settings", None) is None:
+                            self._devicemappings[device_name]["settings"] = {}
+                        self._devicemappings[device_name]['settings'][key] = value
 
     def set_devicesetting_value_of(self, device_name: str, key: str, value):
         if self._devicemappings.get(device_name, None) is not None:
