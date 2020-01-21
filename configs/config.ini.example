@@ -85,11 +85,6 @@
 #adb_server_ip:               # IP address of ADB server (Default: 127.0.0.1)
 #adb_server_port:             # Port of ADB server (Default: 5037)
 
-# auto reload mappings
-######################
-#auto_reload_config          # Auto reload mappings configuration
-#auto_reload_delay:           # Auto reload mappings configuration delay in seconds (Default: 60)
-
 # Game Stats
 ######################
 #game_stats                  # Generate worker stats
