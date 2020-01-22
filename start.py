@@ -26,7 +26,7 @@ from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.rarity import Rarity
-from mapadroid.patcher import MADVersion
+from mapadroid.patcher import MADPatcher
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 from mapadroid.utils.updater import deviceUpdater
@@ -154,11 +154,13 @@ if __name__ == "__main__":
     install_thread_excepthook()
 
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
-    instance_id = db_wrapper.get_instance_id()
+    try:
+        instance_id = db_wrapper.get_instance_id()
+    except:
+        instance_id = None
     data_manager = DataManager(db_wrapper, instance_id)
     data_manager.clear_on_boot()
-    version = MADVersion(args, data_manager)
-    version.get_version()
+    MADPatcher(args, data_manager)
 
     # create folders
     create_folder(args.file_path)

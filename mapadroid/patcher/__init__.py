@@ -5,6 +5,7 @@ import shutil
 import sys
 from mapadroid.db import DbSchemaUpdater
 from mapadroid.utils.logging import logger
+import mysql.connector
 
 # OrderedDict containing all required updates with their filename reference.  The dict is stored as (version, filename)
 MAD_UPDATES = OrderedDict([
@@ -30,15 +31,17 @@ MAD_UPDATES = OrderedDict([
 ])
 
 
-class MADVersion(object):
+class MADPatcher(object):
     def __init__(self, args, data_manager):
         self._application_args = args
         self.data_manager = data_manager
         self.dbwrapper = self.data_manager.dbc
         self._schema_updater: DbSchemaUpdater = self.dbwrapper.schema_updater
-        self._version = 0
         self._madver = list(MAD_UPDATES.keys())[-1]
+        self.__get_installed_version()
         self.instance_id = data_manager.instance_id
+        if self.__update_required():
+            self.__update_mad()
 
     def __apply_update(self, patch_ver):
         filename = MAD_UPDATES[patch_ver]
@@ -53,7 +56,7 @@ class MADVersion(object):
             try:
                 patch = patch_base.Patch(logger, self.dbwrapper, self.data_manager, self._application_args)
                 if patch.completed and not patch.issues:
-                    self.__set_version(patch_ver)
+                    self.__set_installed_ver(patch_ver)
                     logger.info('Successfully applied patch')
                 else:
                     logger.error('Patch was unsuccessful.  Exiting')
@@ -118,47 +121,62 @@ class MADVersion(object):
             logger.exception('Unknown issue during migration. Exiting')
             sys.exit(1)
 
-    def get_version(self):
+    def __get_installed_version(self):
         # checking mappings.json
         self.convert_mappings()
-        dbVersion = self.dbwrapper.get_mad_version()
-        if not dbVersion:
+        try:
+            self._installed_ver = self.dbwrapper.get_mad_version()
+        except mysql.connector.Error as err:
+            # This would be a lot easier with transactions
+            try:
+                with open('scripts/SQL/rocketmap.sql') as fh:
+                    tables = "".join(fh.readlines()).split(";")
+                    for table in tables:
+                        install_cmd = '%s;%s;%s'
+                        args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
+                        self.dbwrapper.execute(install_cmd % args, commit=True)
+                self.instance_id = self.dbwrapper.get_instance_id()
+                self.data_manager.instance_id = self.instance_id
+                self.__set_installed_ver(self._madver)
+                logger.success('Successfully installed MAD schema to the database')
+            except:
+                logger.critical('Unable to install default MAD schema.  Please install the schema from '
+                                'scripts/SQL/rocketmap.sql')
+                sys.exit(1)
+        if not self._installed_ver:
             logger.warning("Moving internal MAD version to database")
             try:
                 with open('version.json') as f:
                     version = json.load(f)
-                self._version = int(version['version'])
-                self.__set_version(self._version)
+                self._installed_ver = int(version['version'])
+                self.__set_installed_ver(self._installed_ver)
             except FileNotFoundError:
                 logger.warning("Could not find version.json during move to DB"
                                ", will use version 0")
-                self.__set_version(0)
-            dbVersion = self.dbwrapper.get_mad_version()
-            if dbVersion is not None:
+                self.__set_installed_ver(0)
+            self._installed_ver = self.dbwrapper.get_mad_version()
+            if self._installed_ver is not None:
                 logger.success("Moved internal MAD version to database "
-                               "as version {}", dbVersion)
+                               "as version {}", self._installed_ver)
             else:
                 logger.error("Moving internal MAD version to DB failed!")
         else:
-            logger.info("Internal MAD version in DB is {}", dbVersion)
-            self._version = int(dbVersion)
-        if int(self._version) < self._madver:
-            logger.warning('Performing updates from version {} to {} now',
-                           self._version, self._madver)
-            self.start_update()
-            logger.success('Updates to version {} finished', self._version)
+            logger.info("Internal MAD version in DB is {}", self._installed_ver)
 
-    def __set_version(self, version):
+    def __set_installed_ver(self, version):
         self.dbwrapper.update_mad_version(version)
-        self._version = version
+        self._installed_ver = version
 
-    def start_update(self):
-        if self._madver < self._version:
+    def __update_mad(self):
+        if self._madver < self._installed_ver:
             logger.error('Mis-matched version number detected.  Not applying any updates')
         else:
+            logger.warning('Performing updates from version {} to {} now',
+                           self._installed_ver, self._madver)
+            self.__update_mad()
             all_patches = list(MAD_UPDATES.keys())
             try:
-                last_ver = all_patches.index(self._version)
+                last_ver = all_patches.index(self._installed_ver)
                 first_patch = last_ver + 1
             except ValueError:
                 first_patch = 0
@@ -166,3 +184,22 @@ class MADVersion(object):
             logger.info('Patches to apply: {}', updates_to_apply)
             for patch_ver in updates_to_apply:
                 self.__apply_update(patch_ver)
+            logger.success('Updates to version {} finished', self._installed_ver)
+
+    def __update_required(self):
+        if self._installed_ver == 0:
+            sql = "SELECT COUNT(*) FROM `information_schema`.`views` WHERE `TABLE_NAME` = 'v_trs_status'"
+            count = self.dbwrapper.autofetch_value(sql)
+            if count:
+                logger.success('It looks like the database has been successfully installed.  Setting version to {}',
+                               self._madver)
+                self.__set_installed_ver(self._madver)
+                return False
+            else:
+                return True
+        else:
+            self._schema_updater.ensure_unversioned_tables_exist()
+            self._schema_updater.ensure_unversioned_columns_exist()
+            self._schema_updater.create_madmin_databases_if_not_exists()
+            self._schema_updater.ensure_unversioned_madmin_columns_exist()
+            return self._installed_ver < self._madver

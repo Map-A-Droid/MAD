@@ -27,47 +27,48 @@ class DbWrapper:
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.schema_updater.ensure_unversioned_tables_exist()
-        self.schema_updater.ensure_unversioned_columns_exist()
-        self.schema_updater.create_madmin_databases_if_not_exists()
-        self.schema_updater.ensure_unversioned_madmin_columns_exist()
         self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
-        self.instance_id = self.get_instance_id()
+        try:
+            self.instance_id = self.get_instance_id()
+        except:
+            self.instance_id = None
+            logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
+                           'installed, this message is safe to ignore')
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
 
-    def execute(self, sql, args=None, commit=False):
-        return self._db_exec.execute(sql, args, commit)
+    def execute(self, sql, args=None, commit=False, **kwargs):
+        return self._db_exec.execute(sql, args, commit, **kwargs)
 
-    def executemany(self, sql, args, commit=False):
-        return self._db_exec.executemany(sql, args, commit)
+    def executemany(self, sql, args, commit=False, **kwargs):
+        return self._db_exec.executemany(sql, args, commit, **kwargs)
 
-    def autofetch_all(self, sql, args=()):
+    def autofetch_all(self, sql, args=(), **kwargs):
         """ Fetch all data and have it returned as a dictionary """
-        return self._db_exec.autofetch_all(sql, args=args)
+        return self._db_exec.autofetch_all(sql, args=args, **kwargs)
 
-    def autofetch_value(self, sql, args=()):
+    def autofetch_value(self, sql, args=(), **kwargs):
         """ Fetch the first value from the first row """
-        return self._db_exec.autofetch_value(sql, args=args)
+        return self._db_exec.autofetch_value(sql, args=args, **kwargs)
 
-    def autofetch_row(self, sql, args=()):
+    def autofetch_row(self, sql, args=(), **kwargs):
         """ Fetch the first row and have it return as a dictionary """
-        return self._db_exec.autofetch_row(sql, args=args)
+        return self._db_exec.autofetch_row(sql, args=args, **kwargs)
 
-    def autofetch_column(self, sql, args=None):
+    def autofetch_column(self, sql, args=None, **kwargs):
         """ get one field for 0, 1, or more rows in a query and return the result in a list
         """
-        return self._db_exec.autofetch_column(sql, args=args)
+        return self._db_exec.autofetch_column(sql, args=args, **kwargs)
 
-    def autoexec_delete(self, table, keyvals, literals=[], where_append=[]):
-        return self._db_exec.autoexec_delete(table, keyvals, literals=literals, where_append=where_append)
+    def autoexec_delete(self, table, keyvals, literals=[], where_append=[], **kwargs):
+        return self._db_exec.autoexec_delete(table, keyvals, literals=literals, where_append=where_append, **kwargs)
 
-    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT"):
-        return self._db_exec.autoexec_insert(table, keyvals, literals=literals, optype=optype)
+    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT", **kwargs):
+        return self._db_exec.autoexec_insert(table, keyvals, literals=literals, optype=optype, **kwargs)
 
     def autoexec_update(self, table, set_keyvals, **kwargs):
         return self._db_exec.autoexec_update(table, set_keyvals, **kwargs)
@@ -990,7 +991,7 @@ class DbWrapper:
         if instance_name is None:
             instance_name = self.application_args.status_name
         sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
-        res = self._db_exec.autofetch_value(sql, args=(instance_name,))
+        res = self._db_exec.autofetch_value(sql, args=(instance_name,), suppress_log=True)
         if res:
             return res
         else:
@@ -1001,7 +1002,8 @@ class DbWrapper:
             return res
 
     def get_mad_version(self):
-        return self.autofetch_value('SELECT val FROM versions where versions.key = %s', args=('mad_version'))
+        return self.autofetch_value('SELECT val FROM versions where versions.key = %s', args=('mad_version'),
+                                    suppress_log=True)
 
     def update_mad_version(self, version):
         update_data = {
@@ -1009,7 +1011,6 @@ class DbWrapper:
             'val': version
         }
         return self.autoexec_insert('versions', update_data, optype="ON DUPLICATE")
-
 
 def adjust_tz_to_utc(column: str, as_name: str = None) -> str:
     # I would like to use convert_tz but this may not be populated.  Use offsets instead

@@ -19,10 +19,12 @@ class DataManager(object):
         # This function should handle any on-boot clearing.  It is not initiated by __init__ on the off-chance that
         # a third-party integration has triggered the data_manager
         # Clear any route calcs because that thread is not active
-        clear_recalcs = {
-            'recalc_status': 0
-        }
-        self.dbc.autoexec_update('settings_routecalc', clear_recalcs)
+        if self.instance_id:
+            clear_recalcs = {
+                'recalc_status': 0,
+                'instance_id': self.instance_id
+            }
+            self.dbc.autoexec_update('settings_routecalc', clear_recalcs)
 
     def get_resource(self, section, identifier=None, **kwargs):
         if section == 'area':
