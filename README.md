@@ -4,6 +4,8 @@
 ![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)
 ![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)
 [![Build Status](https://travis-ci.org/Map-A-Droid/MAD.svg?branch=master)](https://travis-ci.org/Map-A-Droid/MAD)
+[![Discord](https://discordapp.com/api/guilds/465247740553592832/widget.png?style=shield)](https://discord.gg/7TT58jU)
+
 
 ![MAD-Banner](https://maddev.eu/wp-content/uploads/2020/01/banner_small_web.png)
 
