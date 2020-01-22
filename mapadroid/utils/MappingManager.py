@@ -294,6 +294,8 @@ class MappingManager:
         successful = False
         try:
             routemanager = self.__fetch_routemanager(routemanager_name)
+            if not routemanager:
+                return False
             active = False
             if routemanager._check_routepools_thread:
                 active = True
@@ -499,7 +501,12 @@ class MappingManager:
             if mode == "raids_mitm":
                 coords = self.__db_wrapper.gyms_from_db(geofence_helper)
                 if including_stops:
-                    coords.extend(self.__db_wrapper.stops_from_db(geofence_helper))
+                    try:
+                        stops = self.__db_wrapper.stops_from_db(geofence_helper)
+                        if stops:
+                            coords.extend(stops)
+                    except:
+                        pass
             elif mode == "mon_mitm":
                 if coords_spawns_known:
                     logger.debug("Reading known Spawnpoints from DB")
