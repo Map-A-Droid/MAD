@@ -76,11 +76,11 @@ class Communicator:
     def clearAppCache(self, package_name) -> bool:
         return self.__runAndOk("more cache {}\r\n".format(package_name), self.__command_timeout)
 
-    def magisk_off(self, package_name) -> bool:
-        return self.passthrough("su -c magiskhide --rm {}".format(package_name))
+    def magisk_off(self) -> bool:
+        return self.passthrough("su -c magiskhide --disable")
 
-    def magisk_on(self, package_name) -> bool:
-        return self.passthrough("su -c magiskhide --add {}".format(package_name))
+    def magisk_on(self) -> bool:
+        return self.passthrough("su -c magiskhide --enable")
 
     def turnScreenOn(self) -> bool:
         return self.__runAndOk("more screen on\r\n", self.__command_timeout)
