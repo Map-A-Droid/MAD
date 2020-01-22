@@ -4,9 +4,9 @@ import functools
 import math
 import os
 import time
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from threading import Event, Lock, Thread, current_thread
-from typing import Optional
+from typing import Optional, Union
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -20,17 +20,19 @@ from mapadroid.utils.madGlobals import (
     InternalStopWorkerException,
     WebsocketWorkerRemovedException,
     WebsocketWorkerTimeoutException,
-    ScreenshotType
-)
+    ScreenshotType,
+    WebsocketWorkerConnectionClosedException)
 from mapadroid.utils.resolution import Resocalculator
 from mapadroid.utils.routeutil import check_walker_value_type
+from mapadroid.websocket.WebsocketConnectedClientEntry import WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
+from mapadroid.worker.AbstractWorker import AbstractWorker
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
-class WorkerBase(ABC):
-    def __init__(self, args, dev_id, origin, last_known_state, websocket_handler,
+class WorkerBase(AbstractWorker):
+    def __init__(self, args, dev_id, origin, last_known_state, websocket_client_entry: WebsocketConnectedClientEntry,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogoWindowManager: PogoWindows,
                  NoOcr: bool = True,
@@ -39,9 +41,9 @@ class WorkerBase(ABC):
         self._mapping_manager: MappingManager = mapping_manager
         self._routemanager_name: str = routemanager_name
         self._area_id = area_id
-        self._websocket_handler = websocket_handler
+        self._websocket_handler: WebsocketConnectedClientEntry = websocket_client_entry
         self._communicator: Communicator = Communicator(
-            websocket_handler, origin, self, args.websocket_command_timeout)
+            websocket_client_entry, origin, self, args.websocket_command_timeout)
         self._dev_id: int = dev_id
         self._origin: str = origin
         self._applicationArgs = args
@@ -326,8 +328,8 @@ class WorkerBase(ABC):
         # TODO: signal websocketserver the removal
         try:
             self._internal_pre_work()
-        except (
-        InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+        except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                WebsocketWorkerConnectionClosedException):
             logger.error(
                 "Failed initializing worker {}, connection terminated exceptionally", str(self._origin))
             self._internal_cleanup()
@@ -347,8 +349,8 @@ class WorkerBase(ABC):
                 if not walkercheck:
                     self.set_devicesettings_value('finished', True)
                     break
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker {} killed by walker settings", str(self._origin))
                 break
@@ -357,8 +359,8 @@ class WorkerBase(ABC):
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 self._internal_health_check()
                 self._health_check()
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.error(
                     "Websocket connection to {} lost while running healthchecks, connection terminated "
                     "exceptionally",
@@ -369,8 +371,8 @@ class WorkerBase(ABC):
                 settings = self._internal_grab_next_location()
                 if settings is None:
                     continue
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker of {} does not support mode that's to be run, connection terminated exceptionally",
                     str(self._origin))
@@ -381,16 +383,16 @@ class WorkerBase(ABC):
                 valid = self._check_location_is_valid()
                 if not valid:
                     break
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker {} get non valid coords!", str(self._origin))
                 break
 
             try:
                 self._pre_location_update()
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker of {} stopping because of stop signal in pre_location_update, connection terminated "
                     "exceptionally",
@@ -405,8 +407,8 @@ class WorkerBase(ABC):
                              self.get_devicesettings_value("last_location", Location(0, 0)).lng,
                              self.current_location.lat, self.current_location.lng)
                 time_snapshot, process_location = self._move_to_location()
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker {} failed moving to new location, stopping worker, connection terminated exceptionally",
                     str(self._origin))
@@ -424,8 +426,8 @@ class WorkerBase(ABC):
 
                 try:
                     self._post_move_location_routine(time_snapshot)
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException,
-                        WebsocketWorkerTimeoutException):
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                        WebsocketWorkerConnectionClosedException):
                     logger.warning(
                         "Worker {} failed running post_move_location_routine, stopping worker",
                         str(self._origin))
@@ -543,15 +545,6 @@ class WorkerBase(ABC):
         self.current_location = self._mapping_manager.routemanager_get_next_location(self._routemanager_name,
                                                                                      self._origin)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
-
-    def _init_routine(self):
-        if self._applicationArgs.initial_restart is False:
-            self._turn_screen_on_and_start_pogo()
-        else:
-            if not self._start_pogo():
-                while not self._restart_pogo():
-                    logger.warning("failed starting pogo")
-                    # TODO: stop after X attempts
 
     def _check_for_mad_job(self):
         if self.get_devicesettings_value("job", False):
@@ -1185,3 +1178,4 @@ class WorkerBase(ABC):
             self._origin), str(self._screen_x), str(self._screen_y), str(x_offset), str(y_offset))
         self._resocalc.get_x_y_ratio(
             self, self._screen_x, self._screen_y, x_offset, y_offset)
+

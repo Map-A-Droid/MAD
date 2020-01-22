@@ -14,6 +14,7 @@ from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import logger
 from mapadroid.utils.s2Helper import S2Helper
+from mapadroid.worker.WorkerType import WorkerType
 
 mode_mapping = {
     "raids_mitm": {
@@ -253,9 +254,9 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_level_mode() if routemanager is not None else None
 
-    def routemanager_get_mode(self, routemanager_name: str) -> Optional[str]:
+    def routemanager_get_mode(self, routemanager_name: str) -> WorkerType:
         routemanager = self.__fetch_routemanager(routemanager_name)
-        return routemanager.get_mode() if routemanager is not None else None
+        return routemanager.get_mode() if routemanager is not None else WorkerType.UNDEFINED.value
 
     def routemanager_get_name(self, routemanager_name: str) -> Optional[str]:
         routemanager = self.__fetch_routemanager(routemanager_name)

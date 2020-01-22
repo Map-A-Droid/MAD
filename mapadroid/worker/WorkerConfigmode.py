@@ -10,13 +10,14 @@ from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import (
     WebsocketWorkerRemovedException,
     WebsocketWorkerTimeoutException,
-    InternalStopWorkerException
-)
+    InternalStopWorkerException,
+    WebsocketWorkerConnectionClosedException)
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.communicator import Communicator
+from mapadroid.worker.AbstractWorker import AbstractWorker
 
 
-class WorkerConfigmode(object):
+class WorkerConfigmode(AbstractWorker):
     def __init__(self, args, dev_id, id, websocket_handler, walker, mapping_manager,
                  mitm_mapper: MitmMapper, db_wrapper: DbWrapper, area_id: int, routemanager_name: str):
         self._args = args
@@ -144,7 +145,8 @@ class WorkerConfigmode(object):
             if killpogo:
                 try:
                     self._start_pogo()
-                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+                except (WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                        WebsocketWorkerConnectionClosedException):
                     logger.error("Timeout during init of worker {}", str(self._origin))
             return False
         else:
@@ -217,7 +219,7 @@ class WorkerConfigmode(object):
             return True
         try:
             start_result = self._communicator.reboot()
-        except WebsocketWorkerRemovedException:
+        except (WebsocketWorkerRemovedException, WebsocketWorkerConnectionClosedException):
             logger.error(
                 "Could not reboot due to client already having disconnected")
             start_result = False
