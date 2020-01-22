@@ -152,7 +152,11 @@ class WebsocketServer(object):
             # logger.info("All done with {}", str(
             #    websocket_client_connection.request_headers.get_all("Origin")[0]))
             # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
-            entry.worker_thread.join()
+            # entry.worker_thread.join() is blocking the entire loop, do not do that! We need to tidy stuff up elsewhere
+            while entry.worker_thread.is_alive():
+                await asyncio.sleep(1)
+                if not entry.worker_thread.is_alive():
+                    entry.worker_thread.join()
         logger.info("Done with connection from {} ({})", origin, websocket_client_connection.remote_address)
 
     async def __get_new_worker(self, origin: str):
