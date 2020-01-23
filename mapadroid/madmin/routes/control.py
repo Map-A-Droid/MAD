@@ -13,6 +13,7 @@ from mapadroid.madmin.functions import (
 )
 from mapadroid.utils import MappingManager
 from mapadroid.utils.adb import ADBConnect
+from mapadroid.utils.collections import Location
 from mapadroid.utils.functions import (creation_date, generate_phones, image_resize)
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import ScreenshotType
@@ -338,7 +339,7 @@ class control(object):
                           str(coords[0]), str(coords[1]), str(origin))
         try:
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.set_location(coords[0], coords[1], 0)
+            temp_comm.set_location(Location(coords[0], coords[1]), 0)
             if int(sleeptime) > 0:
                 self._logger.info("MADmin: Set additional sleeptime: {} ({})",
                                   str(sleeptime), str(origin))
@@ -366,7 +367,7 @@ class control(object):
             self._logger.info('MADMin: Send text successfully ({})', str(origin))
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.send_text(text)
+            temp_comm.enter_text(text)
 
         time.sleep(2)
         return self.take_screenshot(origin, useadb)

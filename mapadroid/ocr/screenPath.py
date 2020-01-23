@@ -384,13 +384,13 @@ class WordToScreenMatching(object):
         # username
         self._communicator.click(self._width / 2, username_y)
         time.sleep(.5)
-        self._communicator.send_text(ptc.username)
+        self._communicator.enter_text(ptc.username)
         self._communicator.click(100, 100)
         time.sleep(2)
         # password
         self._communicator.click(self._width / 2, password_y)
         time.sleep(.5)
-        self._communicator.send_text(ptc.password)
+        self._communicator.enter_text(ptc.password)
         self._communicator.click(100, 100)
         time.sleep(2)
         # button
