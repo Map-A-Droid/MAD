@@ -122,6 +122,8 @@ class WebsocketServer(object):
             self.__internal_worker_join_thread.join()
         # TODO: this could block forever, should we just place a timeout and have daemon = True handle it all anyway?
         self.__worker_shutdown_queue.join()
+        self.__loop.call_soon_threadsafe(self.__loop.stop)
+
         logger.info("Stopped websocket server")
 
     def __internal_worker_join(self):
