@@ -202,7 +202,7 @@ class WebsocketServer(object):
                 if entry.worker_thread.is_alive() and not entry.worker_instance.is_stopping():
                     logger.info("Worker thread of {} still alive, continue as usual", origin)
                     # TODO: does this need more handling? probably update communicator or whatever?
-                elif not entry.worker_instance.is_stopping():
+                elif not entry.worker_thread.is_alive():
                     logger.info("Old thread is dead, trying to start a new one for {}", origin)
                     if not await self.__add_worker_and_thread_to_entry(entry, origin):
                         async with self.__users_connecting_mutex:
@@ -214,7 +214,7 @@ class WebsocketServer(object):
                     # random sleep to not have clients try again in sync
                     await asyncio.sleep(rand.uniform(3, 15))
                     async with self.__users_connecting_mutex:
-                        logger.debug("Removing {} from users_connecting")
+                        logger.debug("Removing {} from users_connecting", origin)
                         self.__users_connecting.remove(origin)
                     return
 
