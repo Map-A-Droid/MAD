@@ -4,7 +4,7 @@ import os
 
 def open_json_file(jsonfile):
     try:
-        with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json') as f:
+        with open('locale/' + os.environ['LANGUAGE'] + '/' + jsonfile + '.json', encoding='utf8') as f:
             file_open = json.load(f)
     except:
         with open('locale/en/' + jsonfile + '.json') as f:
@@ -17,7 +17,7 @@ def i8ln(word):
     lang_file = 'locale/' + os.environ['LANGUAGE'] + '/mad.json'
     if os.path.isfile(lang_file):
         with open(lang_file) as f:
-            language_file = json.load(f)
+            language_file = json.load(f, encoding='utf8')
         if word in language_file:
             return language_file[word]
 
