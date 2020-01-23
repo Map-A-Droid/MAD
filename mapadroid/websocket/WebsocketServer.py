@@ -218,6 +218,9 @@ class WebsocketServer(object):
             receiver_task = asyncio.ensure_future(
                 self.__client_message_receiver(origin, entry))
             await receiver_task
+        except Exception as e:
+            logger.opt(exception=True).error("Other unhandled exception during registration of {}: {}",
+                                             origin, e)
         # also check if thread is already running to not start it again. If it is not alive, we need to create it..
         finally:
             logger.info("Awaiting unregister of {}", origin)
