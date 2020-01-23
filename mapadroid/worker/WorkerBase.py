@@ -318,7 +318,6 @@ class WorkerBase(AbstractWorker):
             logger.info("Stopping worker's asyncio loop")
             self.loop.call_soon_threadsafe(self.loop.stop)
             self._async_io_looper_thread.join()
-            time.sleep(10)
 
         self._communicator.cleanup()
 

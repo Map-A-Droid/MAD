@@ -192,7 +192,7 @@ class WebsocketServer(object):
                 if entry.websocket_client_connection.open:
                     logger.error("Old connection open while a new one is attempted to be established, "
                                  "aborting handling of connection from {}", origin)
-                    await asyncio.sleep(10)
+                    await asyncio.sleep(random.uniform(10, 15))
                     async with self.__users_connecting_mutex:
                         self.__users_connecting.remove(origin)
                     return
@@ -214,9 +214,9 @@ class WebsocketServer(object):
                     # random sleep to not have clients try again in sync
                     await asyncio.sleep(random.uniform(3, 15))
                     async with self.__users_connecting_mutex:
+                        logger.debug("Removing {} from users_connecting")
                         self.__users_connecting.remove(origin)
                     return
-
 
             self.__current_users[origin] = entry
         try:
