@@ -162,26 +162,16 @@ class WebsocketServer(object):
                                                       worker_instance=None,
                                                       worker_thread=None,
                                                       loop_running=self.__loop)
-                communicator: AbstractCommunicator = Communicator(
-                    entry, origin, None, self.__args.websocket_command_timeout)
-                worker: Optional[AbstractWorker] = await self.__worker_factory \
-                    .get_worker_using_settings(origin, self.__enable_configmode,
-                                               communicator=communicator)
-                # to break circular dependencies, we need to set the worker ref >.<
-                communicator.worker_instance_ref = worker
-                if worker is None:
+                if not await self.__add_worker_and_thread_to_entry(entry, origin):
+                    async with self.__users_connecting_mutex:
+                        self.__users_connecting.remove(origin)
                     return
-                new_worker_thread = Thread(
-                    name='worker_%s' % origin, target=worker.start_worker)
-
-                new_worker_thread.daemon = True
-                entry.worker_thread = new_worker_thread
-                entry.worker_instance = worker
             else:
                 logger.info("There is a worker thread entry present, handling accordingly")
                 if entry.websocket_client_connection.open:
                     logger.error("Old connection open while a new one is attempted to be established, "
                                  "aborting handling")
+                    await asyncio.sleep(10)
                     async with self.__users_connecting_mutex:
                         self.__users_connecting.remove(origin)
                     return
@@ -192,17 +182,10 @@ class WebsocketServer(object):
                     logger.info("Worker thread still alive, continue as usual")
                     # TODO: does this need more handling? probably update communicator or whatever?
                 else:
-                    worker: Optional[AbstractWorker] = await self.__worker_factory \
-                        .get_worker_using_settings(origin, self.__enable_configmode, entry)
-                    if worker is None:
-                        # TODO: handle properly
+                    if not await self.__add_worker_and_thread_to_entry(entry, origin):
+                        async with self.__users_connecting_mutex:
+                            self.__users_connecting.remove(origin)
                         return
-                    new_worker_thread = Thread(
-                        name='worker_%s' % origin, target=worker.start_worker)
-
-                    new_worker_thread.daemon = True
-                    entry.worker_instance = worker
-                    entry.worker_thread = new_worker_thread
 
             self.__current_users[origin] = entry
         try:
@@ -220,6 +203,23 @@ class WebsocketServer(object):
             # TODO: cleanup thread is not really desired, I'd prefer to only restart a worker if the route changes :(
             self.__worker_shutdown_queue.put(entry.worker_thread)
         logger.info("Done with connection from {} ({})", origin, websocket_client_connection.remote_address)
+
+    async def __add_worker_and_thread_to_entry(self, entry, origin) -> bool:
+        communicator: AbstractCommunicator = Communicator(
+            entry, origin, None, self.__args.websocket_command_timeout)
+        worker: Optional[AbstractWorker] = await self.__worker_factory \
+            .get_worker_using_settings(origin, self.__enable_configmode,
+                                       communicator=communicator)
+        if worker is None:
+            return False
+        # to break circular dependencies, we need to set the worker ref >.<
+        communicator.worker_instance_ref = worker
+        new_worker_thread = Thread(
+            name='worker_%s' % origin, target=worker.start_worker)
+        new_worker_thread.daemon = True
+        entry.worker_thread = new_worker_thread
+        entry.worker_instance = worker
+        return True
 
     async def __get_new_worker(self, origin: str):
         # fetch worker from factory...
