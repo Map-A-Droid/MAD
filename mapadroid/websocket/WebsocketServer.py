@@ -1,9 +1,9 @@
 import functools
 import queue
 import time
-from random import random
 from threading import Thread, current_thread, Lock, Event
 from typing import Dict, Optional, Set, KeysView, Coroutine
+import random as rand
 
 import websockets
 import asyncio
@@ -192,7 +192,7 @@ class WebsocketServer(object):
                 if entry.websocket_client_connection.open:
                     logger.error("Old connection open while a new one is attempted to be established, "
                                  "aborting handling of connection from {}", origin)
-                    await asyncio.sleep(random.uniform(10, 15))
+                    await asyncio.sleep(rand.uniform(10, 15))
                     async with self.__users_connecting_mutex:
                         self.__users_connecting.remove(origin)
                     return
@@ -212,7 +212,7 @@ class WebsocketServer(object):
                     logger.info("Old thread is about to stop. Wait a little and have {} reconnect",
                                 origin)
                     # random sleep to not have clients try again in sync
-                    await asyncio.sleep(random.uniform(3, 15))
+                    await asyncio.sleep(rand.uniform(3, 15))
                     async with self.__users_connecting_mutex:
                         logger.debug("Removing {} from users_connecting")
                         self.__users_connecting.remove(origin)
