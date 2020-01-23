@@ -16,8 +16,8 @@ def open_json_file(jsonfile):
 def i8ln(word):
     lang_file = 'locale/' + os.environ['LANGUAGE'] + '/mad.json'
     if os.path.isfile(lang_file):
-        with open(lang_file) as f:
-            language_file = json.load(f, encoding='utf8')
+        with open(lang_file, encoding='utf8') as f:
+            language_file = json.load(f)
         if word in language_file:
             return language_file[word]
 
