@@ -17,6 +17,10 @@ class AbstractWorker(ABC):
         pass
 
     @abstractmethod
+    def is_stopping(self) -> bool:
+        pass
+
+    @abstractmethod
     def set_geofix_sleeptime(self, sleeptime: int) -> bool:
         pass
 

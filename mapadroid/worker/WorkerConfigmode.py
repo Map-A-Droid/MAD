@@ -79,6 +79,9 @@ class WorkerConfigmode(AbstractWorker):
             self._stop_worker_event.set()
             logger.warning("Worker {} stop called", str(self._origin))
 
+    def is_stopping(self) -> bool:
+        return self._stop_worker_event.is_set()
+
     def set_geofix_sleeptime(self, sleeptime: int):
         return True
 

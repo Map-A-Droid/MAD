@@ -762,6 +762,9 @@ class WorkerBase(AbstractWorker):
         self._wait_pogo_start_delay()
         return start_result
 
+    def is_stopping(self) -> bool:
+        return self._stop_worker_event.is_set()
+
     def _stop_pogo(self):
         attempts = 0
         stop_result = self._communicator.stop_app("com.nianticlabs.pokemongo")

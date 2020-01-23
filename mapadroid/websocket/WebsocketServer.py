@@ -199,7 +199,7 @@ class WebsocketServer(object):
 
                 entry.websocket_client_connection = websocket_client_connection
                 # TODO: also change the worker's Communicator? idk yet
-                if entry.worker_thread.is_alive():
+                if entry.worker_thread.is_alive() and not entry.worker_instance.is_stopping():
                     logger.info("Worker thread of {} still alive, continue as usual", origin)
                     # TODO: does this need more handling? probably update communicator or whatever?
                 else:
@@ -213,6 +213,7 @@ class WebsocketServer(object):
         try:
             if not entry.worker_thread.is_alive():
                 entry.worker_thread.start()
+            # TODO: we need to somehow check threads and synchronize connection status with worker status?
             async with self.__users_connecting_mutex:
                 self.__users_connecting.remove(origin)
             receiver_task = asyncio.ensure_future(
