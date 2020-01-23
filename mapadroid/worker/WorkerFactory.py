@@ -43,6 +43,8 @@ class WorkerFactory:
                 walker_index -= 1
                 self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index',
                                                                   walker_index)
+            else:
+                logger.debug('Previous area was finished, move on')
         return walker_index
 
     async def __initalize_devicesettings(self, origin):
@@ -69,8 +71,7 @@ class WorkerFactory:
 
         # preckeck walker setting
         walker_area_name = walker_area_array[walker_index]['walkerarea']
-        while not pre_check_value(walker_settings) and walker_index - 1 <= len(walker_area_array):
-            walker_area_name = walker_area_array[walker_index]['walkerarea']
+        while not pre_check_value(walker_settings) and walker_index < len(walker_area_array):
             logger.info(
                 '{} not using area {} - Walkervalue out of range', str(origin),
                 str(self.__mapping_manager.routemanager_get_name(walker_area_name)))
@@ -86,6 +87,7 @@ class WorkerFactory:
             self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index',
                                                               walker_index)
             walker_settings = walker_area_array[walker_index]
+            walker_area_name = walker_area_array[walker_index]['walkerarea']
 
         logger.debug("Checking walker_area_index length")
         if walker_index >= len(walker_area_array):
