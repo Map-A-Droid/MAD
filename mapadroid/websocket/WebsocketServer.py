@@ -171,9 +171,10 @@ class WebsocketServer(object):
                 return
             else:
                 self.__users_connecting.add(origin)
-        # check if the origin is already handed to an instance and just switch the connection if the thread is still
-        # running
+
+        continue_register = True
         async with self.__current_users_mutex:
+            logger.debug("Checking if an entry for {} is already present", origin)
             entry = self.__current_users.get(origin, None)
             if entry is None:
                 logger.info("Need to start a new worker thread for {}", origin)
@@ -184,18 +185,13 @@ class WebsocketServer(object):
                                                       worker_thread=None,
                                                       loop_running=self.__loop)
                 if not await self.__add_worker_and_thread_to_entry(entry, origin):
-                    async with self.__users_connecting_mutex:
-                        self.__users_connecting.remove(origin)
-                    return
+                    continue_register = False
             else:
                 logger.info("There is a worker thread entry for {} present, handling accordingly", origin)
                 if entry.websocket_client_connection.open:
                     logger.error("Old connection open while a new one is attempted to be established, "
                                  "aborting handling of connection from {}", origin)
-                    await asyncio.sleep(rand.uniform(10, 15))
-                    async with self.__users_connecting_mutex:
-                        self.__users_connecting.remove(origin)
-                    return
+                    continue_register = False
 
                 entry.websocket_client_connection = websocket_client_connection
                 # TODO: also change the worker's Communicator? idk yet
@@ -205,20 +201,22 @@ class WebsocketServer(object):
                 elif not entry.worker_thread.is_alive():
                     logger.info("Old thread is dead, trying to start a new one for {}", origin)
                     if not await self.__add_worker_and_thread_to_entry(entry, origin):
-                        async with self.__users_connecting_mutex:
-                            self.__users_connecting.remove(origin)
-                        return
+                        continue_register = False
                 else:
                     logger.info("Old thread is about to stop. Wait a little and have {} reconnect",
                                 origin)
                     # random sleep to not have clients try again in sync
-                    await asyncio.sleep(rand.uniform(3, 15))
-                    async with self.__users_connecting_mutex:
-                        logger.debug("Removing {} from users_connecting", origin)
-                        self.__users_connecting.remove(origin)
-                    return
+                    continue_register = False
+            if continue_register:
+                self.__current_users[origin] = entry
 
-            self.__current_users[origin] = entry
+        if not continue_register:
+            await asyncio.sleep(rand.uniform(3, 15))
+            async with self.__users_connecting_mutex:
+                logger.debug("Removing {} from users_connecting", origin)
+                self.__users_connecting.remove(origin)
+            return
+
         try:
             if not entry.worker_thread.is_alive():
                 entry.worker_thread.start()
