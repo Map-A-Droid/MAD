@@ -154,7 +154,6 @@ class WebsocketServer(object):
     async def __connection_handler(self, websocket_client_connection: websockets.WebSocketClientProtocol,
                                    path: str) -> None:
         if self.__stop_server.is_set():
-            await self.__close_websocket_client_connection("stopping...", websocket_client_connection)
             return
         # check auth and stuff TODO
         origin: Optional[str] = await self.__authenticate_connection(websocket_client_connection)
