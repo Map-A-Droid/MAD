@@ -1,7 +1,8 @@
+import functools
 import queue
 import time
 from threading import Thread, current_thread, Lock, Event
-from typing import Dict, Optional, Set, KeysView
+from typing import Dict, Optional, Set, KeysView, Coroutine
 
 import websockets
 import asyncio
@@ -53,13 +54,27 @@ class WebsocketServer(object):
                                                              self.__db_wrapper, self.__pogo_window_manager)
 
         # asyncio loop for the entire server
-        self.__loop: asyncio.AbstractEventLoop = asyncio.new_event_loop()
+        self.__loop: Optional[asyncio.AbstractEventLoop] = None
         self.__loop_tid: int = -1
         self.__loop_mutex = Lock()
         self.__worker_shutdown_queue: queue.Queue[Thread] = queue.Queue()
         self.__internal_worker_join_thread: Thread = Thread(name='worker_join_thread',
                                                             target=self.__internal_worker_join)
         self.__internal_worker_join_thread.daemon = True
+
+    def _add_task_to_loop(self, coro: Coroutine):
+        f = functools.partial(self.__loop.create_task, coro)
+        if current_thread() == self.__loop_tid:
+            # We can call directly if we're not going between threads.
+            return f()
+        else:
+            # We're in a non-event loop thread so we use a Future
+            # to get the task from the event loop thread once
+            # it's ready.
+            return self.__loop.call_soon_threadsafe(f)
+
+    async def __setup_first_loop(self):
+        self.__current_users_mutex = asyncio.Lock()
 
     def start_server(self) -> None:
         logger.info("Starting websocket-server...")
@@ -68,6 +83,7 @@ class WebsocketServer(object):
         asyncio.set_event_loop(self.__loop)
         if not self.__internal_worker_join_thread.is_alive():
             self.__internal_worker_join_thread.start()
+        self._add_task_to_loop(self.__setup_first_loop())
         # the type-check here is sorta wrong, not entirely sure why
         # noinspection PyTypeChecker
         self.__loop.run_until_complete(
