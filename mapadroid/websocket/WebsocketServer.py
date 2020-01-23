@@ -54,7 +54,7 @@ class WebsocketServer(object):
                                                              self.__db_wrapper, self.__pogo_window_manager)
 
         # asyncio loop for the entire server
-        self.__loop: Optional[asyncio.AbstractEventLoop] = None
+        self.__loop: Optional[asyncio.AbstractEventLoop] = asyncio.new_event_loop()
         self.__loop_tid: int = -1
         self.__loop_mutex = Lock()
         self.__worker_shutdown_queue: queue.Queue[Thread] = queue.Queue()
@@ -78,6 +78,7 @@ class WebsocketServer(object):
 
     def start_server(self) -> None:
         logger.info("Starting websocket-server...")
+
         logger.debug("Device mappings: {}", str(self.__mapping_manager.get_all_devicemappings()))
 
         asyncio.set_event_loop(self.__loop)
