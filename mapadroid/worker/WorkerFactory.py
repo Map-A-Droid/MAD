@@ -8,7 +8,7 @@ from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.madGlobals import WrongAreaInWalker
 from mapadroid.utils.routeutil import pre_check_value
-from mapadroid.websocket.WebsocketConnectedClientEntry import WebsocketConnectedClientEntry
+from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.worker.WorkerConfigmode import WorkerConfigmode
 from mapadroid.worker.WorkerMITM import WorkerMITM
@@ -133,10 +133,10 @@ class WorkerFactory:
             self.__mapping_manager.set_devicesetting_value_of(origin, "last_location", Location(0.0, 0.0))
 
     async def get_worker_using_settings(self, origin: str, enable_configmode: bool,
-                                        websocket_client_entry: WebsocketConnectedClientEntry) \
+                                        communicator: AbstractCommunicator) \
             -> Optional[AbstractWorker]:
         if enable_configmode:
-            return self.get_configmode_worker(origin, websocket_client_entry)
+            return self.get_configmode_worker(origin, communicator)
 
         # not a configmore worker, move on adjusting devicesettings etc
         # TODO: get worker
@@ -158,10 +158,10 @@ class WorkerFactory:
 
         # we can finally create an instance of the worker, bloody hell...
         # TODO: last_known_state has never been used and got kinda deprecated due to devicesettings...
-        return self.get_worker(origin, walker_routemanager_mode, websocket_client_entry, dev_id, {}, area_id,
+        return self.get_worker(origin, walker_routemanager_mode, communicator, dev_id, {}, area_id,
                                walker_configuration.walker_settings, walker_configuration.walker_area_name)
 
-    def get_worker(self, origin: str, worker_type: WorkerType, websocket_client_entry: WebsocketConnectedClientEntry,
+    def get_worker(self, origin: str, worker_type: WorkerType, communicator: AbstractCommunicator,
                    dev_id: str, last_known_state: dict, area_id: int,
                    walker_settings: dict, walker_area_name: str) -> Optional[AbstractWorker]:
         if origin is None or worker_type is None or worker_type == WorkerType.UNDEFINED:
@@ -173,24 +173,24 @@ class WorkerFactory:
         elif worker_type in [WorkerType.IV_MITM, WorkerType.IV_MITM.value,
                              WorkerType.MON_MITM, WorkerType.MON_MITM.value,
                              WorkerType.RAID_MITM, WorkerType.RAID_MITM.value]:
-            return WorkerMITM(self.__args, dev_id, origin, last_known_state, websocket_client_entry, area_id=area_id,
+            return WorkerMITM(self.__args, dev_id, origin, last_known_state, communicator, area_id=area_id,
                               routemanager_name=walker_area_name, mitm_mapper=self.__mitm_mapper,
                               mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
                               pogo_window_manager=self.__pogo_windows, walker=walker_settings)
         elif worker_type in [WorkerType.STOPS, WorkerType.STOPS.value]:
-            return WorkerQuests(self.__args, dev_id, origin, last_known_state, websocket_client_entry, area_id=area_id,
+            return WorkerQuests(self.__args, dev_id, origin, last_known_state, communicator, area_id=area_id,
                                 routemanager_name=walker_area_name, mitm_mapper=self.__mitm_mapper,
                                 mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
                                 pogo_window_manager=self.__pogo_windows, walker=walker_settings)
         elif worker_type in [WorkerType.IDLE, WorkerType.IDLE.value]:
-            return WorkerConfigmode(self.__args, dev_id, origin, websocket_client_entry, walker=walker_settings,
+            return WorkerConfigmode(self.__args, dev_id, origin, communicator, walker=walker_settings,
                                     mapping_manager=self.__mapping_manager, mitm_mapper=self.__mitm_mapper,
                                     db_wrapper=self.__db_wrapper, area_id=area_id, routemanager_name=walker_area_name)
         else:
             logger.error("WorkerFactor::get_worker failed to create a worker...")
             return None
 
-    def get_configmode_worker(self, origin: str, websocket_client_entry: WebsocketConnectedClientEntry):
+    def get_configmode_worker(self, origin: str, communicator: AbstractCommunicator) -> WorkerConfigmode:
         dev_id = self.__mapping_manager.get_all_devicemappings()[origin]['device_id']
         devicesettings = self.__mapping_manager.get_devicesettings_of(origin)
         client_mapping = self.__mapping_manager.get_devicemappings_of(origin)
@@ -200,8 +200,8 @@ class WorkerFactory:
         area_id = walker_settings['walkerarea']
         worker = WorkerConfigmode(args=self.__args,
                                   dev_id=dev_id,
-                                  id=origin,
-                                  websocket_handler=websocket_client_entry,
+                                  origin=origin,
+                                  communicator=communicator,
                                   walker=None,
                                   mapping_manager=self.__mapping_manager,
                                   mitm_mapper=self.__mitm_mapper,

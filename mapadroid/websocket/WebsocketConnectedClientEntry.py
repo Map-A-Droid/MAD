@@ -3,7 +3,7 @@ import math
 import queue
 import time
 from threading import Thread
-from typing import NamedTuple, Optional, Dict
+from typing import Optional, Dict
 
 import websockets
 

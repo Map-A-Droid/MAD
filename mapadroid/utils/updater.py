@@ -547,11 +547,11 @@ class deviceUpdater(object):
             elif jobtype == jobType.REBOOT:
                 return ws_conn.reboot()
             elif jobtype == jobType.RESTART:
-                return ws_conn.restartApp("com.nianticlabs.pokemongo")
+                return ws_conn.restart_app("com.nianticlabs.pokemongo")
             elif jobtype == jobType.STOP:
-                return ws_conn.stopApp("com.nianticlabs.pokemongo")
+                return ws_conn.stop_app("com.nianticlabs.pokemongo")
             elif jobtype == jobType.START:
-                return ws_conn.startApp("com.nianticlabs.pokemongo")
+                return ws_conn.start_app("com.nianticlabs.pokemongo")
             elif jobtype == jobType.PASSTHROUGH:
                 command = self._log[str(item)]['file']
                 returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
