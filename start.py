@@ -291,6 +291,15 @@ if __name__ == "__main__":
             terminate_mad.set()
             # now cleanup all threads...
             # TODO: check against args or init variables to None...
+            if mitm_receiver_process is not None:
+                # mitm_receiver_thread.kill()
+                logger.info("Trying to stop receiver")
+                mitm_receiver_process.shutdown()
+                logger.debug("MITM child threads successfully shutdown.  Terminating parent thread")
+                mitm_receiver_process.terminate()
+                logger.debug("Trying to join MITMReceiver")
+                mitm_receiver_process.join()
+                logger.debug("MITMReceiver joined")
             if device_Updater is not None:
                 device_Updater.stop_updater()
             if t_whw is not None:
@@ -301,15 +310,6 @@ if __name__ == "__main__":
                 ws_server.stop_server()
                 logger.info("Waiting for websocket-thread to exit")
                 t_ws.join()
-            if mitm_receiver_process is not None:
-                # mitm_receiver_thread.kill()
-                logger.info("Trying to stop receiver")
-                mitm_receiver_process.shutdown()
-                logger.debug("MITM child threads successfully shutdown.  Terminating parent thread")
-                mitm_receiver_process.terminate()
-                logger.debug("Trying to join MITMReceiver")
-                mitm_receiver_process.join()
-                logger.debug("MITMReceiver joined")
             if mapping_manager_manager is not None:
                 mapping_manager_manager.shutdown()
             if mitm_mapper_manager is not None:
