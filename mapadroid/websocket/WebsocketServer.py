@@ -46,9 +46,9 @@ class WebsocketServer(object):
         # Dict keeping currently running connections and workers for management
         # Do think twice before plainly accessing, there's locks to be used
         self.__current_users: Dict[str, WebsocketConnectedClientEntry] = {}
-        self.__current_users_mutex: asyncio.Lock = asyncio.Lock()
+        self.__current_users_mutex: Optional[asyncio.Lock] = None
         self.__users_connecting: Set[str] = set()
-        self.__users_connecting_mutex: asyncio.Lock = asyncio.Lock()
+        self.__users_connecting_mutex: Optional[asyncio.Lock] = None
 
         self.__worker_factory: WorkerFactory = WorkerFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
                                                              self.__db_wrapper, self.__pogo_window_manager)
@@ -74,7 +74,8 @@ class WebsocketServer(object):
             return self.__loop.call_soon_threadsafe(f)
 
     async def __setup_first_loop(self):
-        self.__current_users_mutex = asyncio.Lock()
+        self.__current_users_mutex: asyncio.Lock = asyncio.Lock()
+        self.__users_connecting_mutex: asyncio.Lock = asyncio.Lock()
 
     def start_server(self) -> None:
         logger.info("Starting websocket-server...")
@@ -148,8 +149,8 @@ class WebsocketServer(object):
         logger.info("Worker join-thread done")
 
     @logger.catch()
-    async def __connection_handler(self, websocket_client_connection: websockets.WebSocketClientProtocol, path: str) \
-            -> None:
+    async def __connection_handler(self, websocket_client_connection: websockets.WebSocketClientProtocol,
+                                   path: str) -> None:
         if self.__stop_server.is_set():
             await self.__close_websocket_client_connection("stopping...", websocket_client_connection)
             return
