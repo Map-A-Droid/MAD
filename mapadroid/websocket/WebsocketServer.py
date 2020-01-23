@@ -1,6 +1,7 @@
 import functools
 import queue
 import time
+from random import random
 from threading import Thread, current_thread, Lock, Event
 from typing import Dict, Optional, Set, KeysView, Coroutine
 
@@ -210,7 +211,8 @@ class WebsocketServer(object):
                 else:
                     logger.info("Old thread is about to stop. Wait a little and have {} reconnect",
                                 origin)
-                    await asyncio.sleep(5)
+                    # random sleep to not have clients try again in sync
+                    await asyncio.sleep(random.uniform(3, 15))
                     async with self.__users_connecting_mutex:
                         self.__users_connecting.remove(origin)
                     return
