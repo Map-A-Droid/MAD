@@ -343,7 +343,7 @@ class WebsocketServer(object):
     async def get_connected_origins(self) -> List[str]:
         async with self.__current_users_mutex:
             origins_connected: List[str] = []
-            for origin, entry in self.__current_users:
+            for origin, entry in self.__current_users.items():
                 if entry.websocket_client_connection.open:
                     origins_connected.append(origin)
             return origins_connected
