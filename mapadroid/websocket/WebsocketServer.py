@@ -341,7 +341,7 @@ class WebsocketServer(object):
         logger.info("Connection to device {} closed", origin_of_worker)
 
     async def get_connected_origins(self) -> List[str]:
-        async with self.__current_users_mutex
+        async with self.__current_users_mutex:
             origins_connected: List[str] = []
             for origin, entry in self.__current_users:
                 if entry.websocket_client_connection.open:
