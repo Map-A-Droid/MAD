@@ -943,8 +943,9 @@ class DbWrapper:
               "`init`, `currentSleepTime`, `rebootingOption`, `restartCounter`, `globalrebootcount`,\n"\
               "`globalrestartcount`, `lastPogoRestart`, `lastProtoDateTime`, `currentPos`, `lastPos`,\n"\
               "`lastPogoReboot`\n"\
-              "FROM `v_trs_status`"
-        workers = self.autofetch_all(sql)
+              "FROM `v_trs_status`\n"\
+              "WHERE `instance_id` = %s"
+        workers = self.autofetch_all(sql, args=(self.instance_id,))
         return workers
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
