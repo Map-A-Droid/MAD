@@ -43,7 +43,7 @@ class Patch(PatchBase):
                     self._db.autoexec_update('trs_status', update_data, where_keyvals=dev, suppress_issue=True,
                                              raise_exec=True)
                 except Exception:
-                    logger.warning('Unable to set {}', update_data)
+                    self._logger.warning('Unable to set {}', update_data)
             # Drop the old column
             alter_query = (
                 "ALTER TABLE trs_status "

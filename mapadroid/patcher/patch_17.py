@@ -172,7 +172,7 @@ class Patch(PatchBase):
                             save_elem['settings']['mon_ids_iv'] = str(
                                 generate_new_ids['monivlist'][monlist])
                             self._logger.info('Updating monivlist from {} to {}', key,
-                                                   elem['settings']['mon_ids_iv'])
+                                              elem['settings']['mon_ids_iv'])
                         except KeyError:
                             pass
                     elif dm_section == 'device':
@@ -196,7 +196,7 @@ class Patch(PatchBase):
                             try:
                                 new_list.append(str(generate_new_ids['walkerarea'][walkerarea_id]))
                                 self._logger.info('Updating walker-walkerarea from {} to {}', walkerarea_id,
-                                                       new_list[-1])
+                                                  new_list[-1])
                             except KeyError:
                                 new_list.append(walkerarea_id)
                         elem['setup'] = new_list
