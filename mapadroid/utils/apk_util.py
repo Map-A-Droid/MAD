@@ -125,7 +125,7 @@ class AutoDownloader(object):
         logger.info('Searching for a new version of PoGo [{}]', architecture)
         download_url = None
         url = global_variables.URL_POGO_APK_ARMEABI_V7A
-        if architecture == global_variables.URL_POGO_APK_ARM64_V8A:
+        if architecture == global_variables.MAD_APK_ARCH_ARM64_V8A:
             url = global_variables.URL_POGO_APK_ARM64_V8A
         response = requests.get(url, verify=False, headers=APK_HEADERS)
         parsed = str(response.content)
@@ -367,10 +367,7 @@ def get_mad_apks(db) -> dict:
 
 def get_mad_apk(db, apk_type, architecture='noarch') -> dict:
     apks = get_mad_apks(db)
-    if type(apk_type) is str:
-        apk_type = global_variables.MAD_APK_USAGE[apk_type]
-    if type(architecture) is str:
-        architecture = global_variables.MAD_APK_ARCH[architecture]
+    apk_type, architecture = convert_to_backend(apk_type=apk_type, apk_arch=architecture)
     try:
         return apks[global_variables.MAD_APK_USAGE[apk_type]][architecture]
     except KeyError:
@@ -410,3 +407,24 @@ def is_newer_version(first_ver: str, second_ver: str) -> bool:
     if not solution:
         first_is_newer = True
     return first_is_newer
+
+def convert_to_backend(apk_type=None, apk_arch=None):
+    if apk_type and isinstance(apk_type, str):
+        if apk_type == 'pogo':
+            apk_type = global_variables.MAD_APK_USAGE_POGO
+        elif apk_type == 'rgc':
+            apk_type = global_variables.MAD_APK_USAGE_RGC
+        elif apk_type == 'pogodroid':
+            apk_type = global_variables.MAD_APK_USAGE_PD
+        else:
+            apk_type = None
+    if apk_arch and isinstance(apk_arch, str):
+        if apk_arch == 'armeabi-v7a':
+            apk_arch = global_variables.MAD_APK_ARCH_ARMEABI_V7A
+        elif apk_arch == 'arm64-v8a':
+            apk_arch = global_variables.MAD_APK_ARCH_ARM64_V8A
+        elif apk_arch == 'noarch':
+            apk_arch = global_variables.MAD_APK_ARCH_NOARCH
+        else:
+            global_variables.MAD_APK_ARCH_NOARCH
+    return (apk_type, apk_arch)

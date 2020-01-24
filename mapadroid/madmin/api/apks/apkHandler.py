@@ -1,6 +1,6 @@
 import flask
 
-from mapadroid.utils import global_variables
+from mapadroid.utils import global_variables, apk_util
 from .. import apiHandler
 
 
@@ -45,31 +45,14 @@ class APKHandler(apiHandler.APIHandler):
                 apk_type = kwargs.get('apk_type', None)
                 apk_type = int(apk_type)
             except:
-                pass
+                apk_type, _ = apk_util.convert_to_backend(apk_type=apk_type)
+                if apk_type is None:
+                    return (None, 404)
             try:
                 apk_arch = kwargs.get('apk_arch', None)
                 apk_arch = int(apk_arch)
             except:
-                pass
-                # apk_arch = global_variables.MAD_APK_ARCH_NOARCH
-            if apk_type and isinstance(apk_type, str):
-                if apk_type == 'pogo':
-                    apk_type = global_variables.MAD_APK_USAGE_POGO
-                elif apk_type == 'rgc':
-                    apk_type = global_variables.MAD_APK_USAGE_RGC
-                elif apk_type == 'pogodroid':
-                    apk_type = global_variables.MAD_APK_USAGE_PD
-                else:
-                    return (None, 404)
-            if apk_arch and isinstance(apk_arch, str):
-                if apk_arch == 'armeabi-v7a':
-                    apk_arch = global_variables.MAD_APK_ARCH_ARMEABI_V7A
-                elif apk_arch == 'arm64-v8a':
-                    apk_arch = global_variables.MAD_APK_ARCH_ARM64_V8A
-                elif apk_arch == 'noarch':
-                    apk_arch = global_variables.MAD_APK_ARCH_NOARCH
-                else:
-                    global_variables.MAD_APK_ARCH_NOARCH
+                _, apk_arch = apk_util.convert_to_backend(apk_arch=apk_arch)
             if flask.request.method == 'GET':
                 return self.get(apk_type=apk_type, apk_arch=apk_arch)
             elif flask.request.method == 'DELETE':
