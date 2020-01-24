@@ -121,40 +121,41 @@ class MADPatcher(object):
     def __get_installed_version(self):
         # checking mappings.json
         self.__convert_mappings()
+        schema_isntalled = False
         try:
             self._installed_ver = self.dbwrapper.get_mad_version()
         except mysql.connector.Error:
             # Version table does not exist.  This is installed with the base install so we can assume the required
             # tables have not been created
+            schema_isntalled = True
             self.__install_schema()
         finally:
             # If we do not have an installed version the table might exist but not populated.  Attempt to setup the
             # version table, read the file, and set the current version
             if not self._installed_ver:
-                try:
-                    sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
-                    self.dbwrapper.execute(sql, commit=True)
-                except mysql.connector.Error:
-                    # The key exists but we dont have a version?  Did someone decide to edit manually?
-                    logger.critical('Unable to add primary key to version table.  Please ask in the help channel of '
-                                    'your language.')
-                    sys.exit(1)
-                else:
-                    # The key did not exist.  This probably means the the madmin_instance table does not exist either.
-                    # Create it so we can reference it moving forward
-                    self.__install_instance_table()
-                # Attempt to read the old version.json file to get the latest install version in the database
-                try:
-                    with open('version.json') as f:
-                        self._installed_ver = json.load(f)['version']
-                    logger.warning("Moving internal MAD version to database")
-                    self.__set_installed_ver(self._installed_ver)
-                except FileNotFoundError:
-                    logger.warning("Could not find version.json during move to DB")
-                    sys.exit(0)
-                # Reload the instance ID
-                self.dbwrapper.get_instance_id()
-                self.data_manager.instance_id = self.dbwrapper.instance_id
+                if not schema_isntalled:
+                    try:
+                        sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
+                        self.dbwrapper.execute(sql, commit=True)
+                    except mysql.connector.Error:
+                        # The key exists but we dont have a version?  Did someone decide to edit manually?
+                        logger.critical('Unable to add primary key to version table.  Please ask in the help channel '
+                                        'of your language.')
+                        sys.exit(1)
+                    else:
+                        # The key did not exist.  This probably means the the madmin_instance table does not exist either.
+                        # Create it so we can reference it moving forward
+                        self.__install_instance_table()
+                    # Attempt to read the old version.json file to get the latest install version in the database
+                    try:
+                        with open('version.json') as f:
+                            self._installed_ver = json.load(f)['version']
+                        logger.warning("Moving internal MAD version to database")
+                        self.__set_installed_ver(self._installed_ver)
+                    except FileNotFoundError:
+                        logger.warning("Could not find version.json during move to DB")
+                        sys.exit(0)
+                self.__reload_instance_id()
                 logger.success("Moved internal MAD version to database as version {}", self._installed_ver)
         if not self._installed_ver:
             self._installed_ver = self.dbwrapper.get_mad_version()
@@ -183,10 +184,15 @@ class MADPatcher(object):
                     self.dbwrapper.execute(install_cmd % args, commit=True, suppress_log=True)
             self.__set_installed_ver(self._madver)
             logger.success('Successfully installed MAD schema to the database')
+            self.__reload_instance_id()
         except Exception:
             logger.critical('Unable to install default MAD schema.  Please install the schema from '
                             'scripts/SQL/rocketmap.sql')
             sys.exit(1)
+
+    def __reload_instance_id(self):
+        self.dbwrapper.get_instance_id()
+        self.data_manager.instance_id = self.dbwrapper.instance_id
 
     def __set_installed_ver(self, version):
         self._installed_ver = version
