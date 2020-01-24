@@ -9,8 +9,7 @@ before_install:
   - mysql -u root -e "CREATE DATABASE mad;"
   - mysql -u root -e "CREATE USER 'mad'@'localhost' IDENTIFIED BY 'mad';"
   - mysql -u root -e "GRANT ALL ON mad.* TO 'mad'@'localhost';"
-  - mysql -u root -A mad < scripts/SQL/rocketmap.sql
 install:
-  - pip install -r requirements.txt
+  - pip3 install -r requirements.txt
 script:
   - python3 start.py -ut -wm -cf configs/config.ini.travis -mf configs/mappings.travis.json
