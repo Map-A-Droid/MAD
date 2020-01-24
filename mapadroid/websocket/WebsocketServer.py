@@ -2,7 +2,7 @@ import functools
 import queue
 import time
 from threading import Thread, current_thread, Lock, Event
-from typing import Dict, Optional, Set, KeysView, Coroutine
+from typing import Dict, Optional, Set, KeysView, Coroutine, List
 import random as rand
 
 import websockets
@@ -340,8 +340,19 @@ class WebsocketServer(object):
         await websocket_client_connection.close()
         logger.info("Connection to device {} closed", origin_of_worker)
 
-    def get_reg_origins(self) -> KeysView[str]:
-        return self.__current_users.keys()
+    async def get_connected_origins(self) -> List[str]:
+        async with self.__current_users_mutex
+            origins_connected: List[str] = []
+            for origin, entry in self.__current_users:
+                if entry.websocket_client_connection.open:
+                    origins_connected.append(origin)
+            return origins_connected
+
+    def get_reg_origins(self) -> List[str]:
+        future = asyncio.run_coroutine_threadsafe(
+            self.get_connected_origins(),
+            self.__loop)
+        return future.result()
 
     def get_origin_communicator(self, origin: str) -> Optional[AbstractCommunicator]:
         # TODO: this should probably lock?
