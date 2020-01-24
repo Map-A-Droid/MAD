@@ -5,7 +5,8 @@ from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import logger
-from mapadroid.utils.madGlobals import ScreenshotType, WebsocketWorkerConnectionClosedException
+from mapadroid.utils.madGlobals import ScreenshotType, WebsocketWorkerConnectionClosedException, \
+    WebsocketWorkerTimeoutException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import WebsocketConnectedClientEntry
 from mapadroid.worker.AbstractWorker import AbstractWorker
@@ -28,7 +29,10 @@ class Communicator(AbstractCommunicator):
     def cleanup(self) -> None:
         logger.info(
             "Communicator of {} calling exit to cleanup worker in websocket", str(self.worker_id))
-        self.terminate_connection()
+        try:
+            self.terminate_connection()
+        except (WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException):
+            logger.info("Communicator-cleanup of {} resulted in timeout or connection has already been closed")
 
     def __runAndOk(self, command, timeout) -> bool:
         return self.__run_and_ok_bytes(command, timeout)
