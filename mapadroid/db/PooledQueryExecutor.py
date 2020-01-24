@@ -63,7 +63,7 @@ class PooledQueryExecutor:
             conn_args['prepared'] = True
         return conn.cursor(**conn_args)
 
-    def execute(self, sql, args=None, commit=False, **kwargs):
+    def execute(self, sql, args=(), commit=False, **kwargs):
         """
         Execute a sql, it could be with args and with out args. The usage is
         similar with execute() function in module pymysql.
@@ -78,31 +78,39 @@ class PooledQueryExecutor:
         get_id = kwargs.get('get_id', False)
         get_dict = kwargs.get('get_dict', False)
         raise_exc = kwargs.get('raise_exc', False)
-
+        suppress_log = kwargs.get('suppress_log', False)
         try:
-            if args:
-                if type(args) != tuple:
-                    args = (args,)
-                cursor.execute(sql, args)
+            multi = False
+            if type(args) != tuple and args is not None:
+                args = (args,)
+            if sql.count(';') > 1:
+                multi = True
+                for res in conn.cmd_query_iter(sql):
+                    pass
             else:
-                cursor.execute(sql)
+                cursor.execute(sql, args)
             logger.debug4(cursor.statement)
             if commit is True:
-                affected_rows = cursor.rowcount
                 conn.commit()
-                if get_id:
-                    return cursor.lastrowid
-                else:
-                    return affected_rows
+                if not multi:
+                    affected_rows = cursor.rowcount
+                    if get_id:
+                        return cursor.lastrowid
+                    else:
+                        return affected_rows
             else:
-                res = cursor.fetchall()
-                if get_dict:
-                    return self.__convert_to_dict(cursor.column_names, res)
-                return res
+                if not multi:
+                    res = cursor.fetchall()
+                    if get_dict:
+                        return self.__convert_to_dict(cursor.column_names, res)
+                    return res
         except mysql.connector.Error as err:
-            logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
+            if not suppress_log:
+                logger.error("Failed executing query: {}, error: {}", str(sql), str(err))
             logger.debug(sql)
             logger.debug(args)
+            if raise_exc:
+                raise err
             return None
         except Exception as e:
             logger.error("Unspecified exception in dbWrapper: {}", str(e))
@@ -111,7 +119,7 @@ class PooledQueryExecutor:
             self.close(conn, cursor)
             self._connection_semaphore.release()
 
-    def executemany(self, sql, args, commit=False):
+    def executemany(self, sql, args, commit=False, **kwargs):
         """
         Execute with many args. Similar with executemany() function in pymysql.
         args should be a sequence.
@@ -126,7 +134,7 @@ class PooledQueryExecutor:
         cursor = conn.cursor()
 
         try:
-            cursor.executemany(sql, args)
+            cursor.executemany(sql, args, **kwargs)
 
             if commit is True:
                 conn.commit()
@@ -234,29 +242,29 @@ class PooledQueryExecutor:
                 ondupe_out += [tmp_value]
         return (column_names, column_substituion, column_values, literal_values, ondupe_out)
 
-    def autofetch_all(self, sql, args=()):
+    def autofetch_all(self, sql, args=(), **kwargs):
         """ Fetch all data and have it returned as a dictionary """
-        return self.execute(sql, args=args, get_dict=True, raise_exc=True)
+        return self.execute(sql, args=args, get_dict=True, raise_exc=True, **kwargs)
 
-    def autofetch_value(self, sql, args=()):
+    def autofetch_value(self, sql, args=(), **kwargs):
         """ Fetch the first value from the first row """
-        data = self.execute(sql, args=args, raise_exc=True)
+        data = self.execute(sql, args=args, raise_exc=True, **kwargs)
         if not data or len(data) == 0:
             return None
         return data[0][0]
 
-    def autofetch_row(self, sql, args=()):
+    def autofetch_row(self, sql, args=(), **kwargs):
         """ Fetch the first row and have it return as a dictionary """
         # TODO - Force LIMIT 1
-        data = self.execute(sql, args=args, get_dict=True, raise_exc=True)
+        data = self.execute(sql, args=args, get_dict=True, raise_exc=True, **kwargs)
         if not data or len(data) == 0:
             return {}
         return data[0]
 
-    def autofetch_column(self, sql, args=None):
+    def autofetch_column(self, sql, args=None, **kwargs):
         """ get one field for 0, 1, or more rows in a query and return the result in a list
         """
-        data = self.execute(sql, args=args, raise_exc=True)
+        data = self.execute(sql, args=args, raise_exc=True, **kwargs)
         if data is None:
             data = []
         returned_vals = []
@@ -264,7 +272,7 @@ class PooledQueryExecutor:
             returned_vals.append(row[0])
         return returned_vals
 
-    def autoexec_delete(self, table, keyvals, literals=[], where_append=[]):
+    def autoexec_delete(self, table, keyvals, literals=[], where_append=[], **kwargs):
         """ Performs a delete
         Args:
             table (str): Table to run the query against
@@ -284,9 +292,9 @@ class PooledQueryExecutor:
         query += "\nAND ".join(k for k in where_clauses)
         literal_values = [table] + literal_values
         query = query % tuple(literal_values)
-        self.execute(query, args=tuple(column_values), commit=True, raise_exc=True)
+        self.execute(query, args=tuple(column_values), commit=True, raise_exc=True, **kwargs)
 
-    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT"):
+    def autoexec_insert(self, table, keyvals, literals=[], optype="INSERT", **kwargs):
         """ Auto-inserts into a table and handles all escaping
         Args:
             table (str): Table to run the query against
@@ -327,9 +335,9 @@ class PooledQueryExecutor:
             query += "\nON DUPLICATE KEY UPDATE\n" \
                      "%s" % dupe_out
             column_values += ondupe_values
-        return self.execute(query, args=tuple(column_values), commit=True, get_id=True, raise_exc=True)
+        return self.execute(query, args=tuple(column_values), commit=True, get_id=True, raise_exc=True, **kwargs)
 
-    def autoexec_update(self, table, set_keyvals, literals=[], where_keyvals={}, where_literals=[]):
+    def autoexec_update(self, table, set_keyvals, literals=[], where_keyvals={}, where_literals=[], **kwargs):
         """ Auto-updates into a table and handles all escaping
         Args:
             table (str): Table to run the query against
@@ -361,4 +369,4 @@ class PooledQueryExecutor:
             where_clause = self.__create_clause(where_col_names, where_col_sub)
             first_sub.append("\nAND".join(where_clause) % tuple(where_literal_val))
         query = query % tuple(first_sub)
-        self.execute(query, args=tuple(actual_values), commit=True, raise_exc=True)
+        self.execute(query, args=tuple(actual_values), commit=True, raise_exc=True, **kwargs)
