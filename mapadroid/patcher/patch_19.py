@@ -22,7 +22,7 @@ class Patch(PatchBase):
         res = self._db.autofetch_value(sql)
         if res:
             instances = {
-                self._application_args.status_name: self.instance_id
+                self._application_args.status_name: self._db.instance_id
             }
             # We dont want to mess with collations so just pull in and compare
             sql = "SELECT `instance`, `origin` FROM `trs_status`"
@@ -39,7 +39,11 @@ class Patch(PatchBase):
                 update_data = {
                     'instance_id': instances[dev['instance']]
                 }
-                self._db.autoexec_update('trs_status', update_data, where_keyvals=dev)
+                try:
+                    self._db.autoexec_update('trs_status', update_data, where_keyvals=dev, suppress_issue=True,
+                                             raise_exec=True)
+                except Exception:
+                    logger.warning('Unable to set {}', update_data)
             # Drop the old column
             alter_query = (
                 "ALTER TABLE trs_status "

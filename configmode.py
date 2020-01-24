@@ -47,8 +47,8 @@ if __name__ == "__main__":
     except:
         instance_id = None
     data_manager = DataManager(db_wrapper, instance_id)
-    data_manager.clear_on_boot()
     MADPatcher(args, data_manager)
+    data_manager.clear_on_boot()
 
     MappingManagerManager.register('MappingManager', MappingManager)
     mapping_manager_manager = MappingManagerManager()

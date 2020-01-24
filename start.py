@@ -159,8 +159,8 @@ if __name__ == "__main__":
     except:
         instance_id = None
     data_manager = DataManager(db_wrapper, instance_id)
-    data_manager.clear_on_boot()
     MADPatcher(args, data_manager)
+    data_manager.clear_on_boot()
 
     # create folders
     create_folder(args.file_path)

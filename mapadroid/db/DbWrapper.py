@@ -32,7 +32,7 @@ class DbWrapper:
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
         try:
-            self.instance_id = self.get_instance_id()
+            self.get_instance_id()
         except:
             self.instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
@@ -993,13 +993,14 @@ class DbWrapper:
         sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
         res = self._db_exec.autofetch_value(sql, args=(instance_name,), suppress_log=True)
         if res:
-            return res
+            self.instance_id = res
         else:
             instance_data = {
                 'name': instance_name
             }
             res = self._db_exec.autoexec_insert('madmin_instance', instance_data)
-            return res
+            self.instance_id = res
+        return self.instance_id
 
     def get_mad_version(self):
         return self.autofetch_value('SELECT val FROM versions where versions.key = %s', args=('mad_version'),

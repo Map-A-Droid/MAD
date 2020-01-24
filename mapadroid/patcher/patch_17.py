@@ -59,8 +59,17 @@ class Patch(PatchBase):
                 config_file[section]['entries'][cache[section]] = entry
                 del config_file[section]['entries']["0"]
                 config_file[section]['index'] += 1
+                # Update the trs_status table to reflect the latest
+                if section == 'areas':
+                    updated = {
+                        'routemanager': cache[section]
+                    }
+                    where = {
+                        'routemanager': 0
+                    }
+                    self.dbwrapper.autoexec_update('trs_status', updated, where_keyvals=where)
             if cache:
-                self.self._logger.info(
+                self._logger.info(
                     'One or more resources with ID 0 found.  Converting them off 0 and updating the '
                     'mappings.json file.  {}', cache)
                 with open(self._application_args.mappings, 'w') as outfile:
@@ -88,7 +97,7 @@ class Patch(PatchBase):
                     exists = self._db.autofetch_value(sql % sql_args, args=sql_format_args)
                     if not exists:
                         continue
-                    self.self._logger.info('{} {} already exists and a new ID will be generated', dm_section, elem_id)
+                    self._logger.info('{} {} already exists and a new ID will be generated', dm_section, elem_id)
                     if dm_section not in generate_new_ids:
                         generate_new_ids[dm_section] = {}
                     generate_new_ids[dm_section][elem_id] = None
@@ -103,7 +112,7 @@ class Patch(PatchBase):
                     dm_section = 'devicepool'
                 for key, elem in copy.deepcopy(config_file[section]['entries']).items():
                     save_elem = copy.deepcopy(elem)
-                    self.self._logger.debug('Converting {} {}', section, key)
+                    self._logger.debug('Converting {} {}', section, key)
                     if section == 'areas':
                         mode = elem['mode']
                         del elem['mode']
@@ -141,7 +150,7 @@ class Patch(PatchBase):
                                             stripped_data.append(stripped)
                                 except IOError as err:
                                     conversion_issues.append((section, elem_id, err))
-                                    self.self._logger.warning('Unable to open %s.  Using empty route' % (route))
+                                    self._logger.warning('Unable to open %s.  Using empty route' % (route))
                                 route_resource['routefile'] = stripped_data
                                 route_resource.save(force_insert=True)
                                 routecalcs[route] = route_resource.identifier
@@ -162,7 +171,7 @@ class Patch(PatchBase):
                             elem['settings']['mon_ids_iv'] = generate_new_ids['monivlist'][monlist]
                             save_elem['settings']['mon_ids_iv'] = str(
                                 generate_new_ids['monivlist'][monlist])
-                            self.self._logger.info('Updating monivlist from {} to {}', key,
+                            self._logger.info('Updating monivlist from {} to {}', key,
                                                    elem['settings']['mon_ids_iv'])
                         except KeyError:
                             pass
@@ -171,14 +180,14 @@ class Patch(PatchBase):
                             pool_id = elem['pool']
                             elem['pool'] = generate_new_ids['devicepool'][pool_id]
                             save_elem['pool'] = str(generate_new_ids['devicepool'][pool_id])
-                            self.self._logger.info('Updating device pool from {} to {}', pool_id, elem['pool'])
+                            self._logger.info('Updating device pool from {} to {}', pool_id, elem['pool'])
                         except KeyError:
                             pass
                         try:
                             walker_id = elem['walker']
                             elem['walker'] = generate_new_ids['walker'][walker_id]
                             save_elem['walker'] = str(generate_new_ids['walker'][walker_id])
-                            self.self._logger.info('Updating device walker from {} to {}', walker_id, elem['walker'])
+                            self._logger.info('Updating device walker from {} to {}', walker_id, elem['walker'])
                         except KeyError:
                             pass
                     elif dm_section == 'walker':
@@ -186,7 +195,7 @@ class Patch(PatchBase):
                         for walkerarea_id in elem['setup']:
                             try:
                                 new_list.append(str(generate_new_ids['walkerarea'][walkerarea_id]))
-                                self.self._logger.info('Updating walker-walkerarea from {} to {}', walkerarea_id,
+                                self._logger.info('Updating walker-walkerarea from {} to {}', walkerarea_id,
                                                        new_list[-1])
                             except KeyError:
                                 new_list.append(walkerarea_id)
@@ -197,7 +206,7 @@ class Patch(PatchBase):
                             area_id = elem['walkerarea']
                             elem['walkerarea'] = generate_new_ids['area'][area_id]
                             save_elem['walkerarea'] = str(generate_new_ids['area'][area_id])
-                            self.self._logger.info('Updating walkerarea from {} to {}', area_id, elem['walkerarea'])
+                            self._logger.info('Updating walkerarea from {} to {}', area_id, elem['walkerarea'])
                         except KeyError:
                             pass
                     save_new_id = False
@@ -221,11 +230,11 @@ class Patch(PatchBase):
                             if resource.identifier >= int(config_file[section]['index']):
                                 config_file[section]['index'] = resource.identifier + 1
             if conversion_issues:
-                self.self._logger.error(
+                self._logger.error(
                     'The configuration was not partially moved to the database.  The following resources '
                     'were not converted.')
                 for (section, identifier, issue) in conversion_issues:
-                    self.self._logger.error('{} {}: {}', section, identifier, issue)
+                    self._logger.error('{} {}: {}', section, identifier, issue)
             if generate_new_ids:
                 with open(self._application_args.mappings, 'w') as outfile:
                     json.dump(config_file, outfile, indent=4, sort_keys=True)

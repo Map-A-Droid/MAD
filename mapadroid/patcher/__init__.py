@@ -24,9 +24,7 @@ MAD_UPDATES = OrderedDict([
     (17, 'patch_17'),
     (18, 'patch_18'),
     (19, 'patch_19'),
-    (20, 'patch_20'),
     (21, 'patch_21'),
-    (22, 'patch_22'),
     (23, 'patch_23'),
 ])
 
@@ -39,7 +37,6 @@ class MADPatcher(object):
         self._schema_updater: DbSchemaUpdater = self.dbwrapper.schema_updater
         self._madver = list(MAD_UPDATES.keys())[-1]
         self.__get_installed_version()
-        self.instance_id = data_manager.instance_id
         if self.__update_required():
             self.__update_mad()
 
@@ -65,7 +62,7 @@ class MADPatcher(object):
                 logger.opt(exception=True).error('Patch was unsuccessful.  Exiting')
                 sys.exit(1)
 
-    def convert_mappings(self):
+    def __convert_mappings(self):
         mapping_file = self._application_args.mappings
         save_mapping_file = self._application_args.mappings.replace('.json', '_org.json')
         try:
@@ -123,49 +120,77 @@ class MADPatcher(object):
 
     def __get_installed_version(self):
         # checking mappings.json
-        self.convert_mappings()
+        self.__convert_mappings()
         try:
             self._installed_ver = self.dbwrapper.get_mad_version()
-        except mysql.connector.Error as err:
-            # This would be a lot easier with transactions
-            try:
-                with open('scripts/SQL/rocketmap.sql') as fh:
-                    tables = "".join(fh.readlines()).split(";")
-                    for table in tables:
-                        install_cmd = '%s;%s;%s'
-                        args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
-                        self.dbwrapper.execute(install_cmd % args, commit=True)
-                self.instance_id = self.dbwrapper.get_instance_id()
-                self.data_manager.instance_id = self.instance_id
-                self.__set_installed_ver(self._madver)
-                logger.success('Successfully installed MAD schema to the database')
-            except:
-                logger.critical('Unable to install default MAD schema.  Please install the schema from '
-                                'scripts/SQL/rocketmap.sql')
-                sys.exit(1)
+        except mysql.connector.Error:
+            # Version table does not exist.  This is installed with the base install so we can assume the required
+            # tables have not been created
+            self.__install_schema()
+        finally:
+            # If we do not have an installed version the table might exist but not populated.  Attempt to setup the
+            # version table, read the file, and set the current version
+            if not self._installed_ver:
+                try:
+                    sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
+                    self.dbwrapper.execute(sql, commit=True)
+                except mysql.connector.Error:
+                    # The key exists but we dont have a version?  Did someone decide to edit manually?
+                    logger.critical('Unable to add primary key to version table.  Please ask in the help channel of '
+                                    'your language.')
+                    sys.exit(1)
+                else:
+                    # The key did not exist.  This probably means the the madmin_instance table does not exist either.
+                    # Create it so we can reference it moving forward
+                    self.__install_instance_table()
+                # Attempt to read the old version.json file to get the latest install version in the database
+                try:
+                    with open('version.json') as f:
+                        self._installed_ver = json.load(f)['version']
+                    logger.warning("Moving internal MAD version to database")
+                    self.__set_installed_ver(self._installed_ver)
+                except FileNotFoundError:
+                    logger.warning("Could not find version.json during move to DB")
+                    sys.exit(0)
+                # Reload the instance ID
+                self.dbwrapper.get_instance_id()
+                self.data_manager.instance_id = self.dbwrapper.instance_id
+                logger.success("Moved internal MAD version to database as version {}", self._installed_ver)
         if not self._installed_ver:
-            logger.warning("Moving internal MAD version to database")
-            try:
-                with open('version.json') as f:
-                    version = json.load(f)
-                self._installed_ver = int(version['version'])
-                self.__set_installed_ver(self._installed_ver)
-            except FileNotFoundError:
-                logger.warning("Could not find version.json during move to DB"
-                               ", will use version 0")
-                self.__set_installed_ver(0)
             self._installed_ver = self.dbwrapper.get_mad_version()
-            if self._installed_ver is not None:
-                logger.success("Moved internal MAD version to database "
-                               "as version {}", self._installed_ver)
-            else:
+            if self._installed_ver is None:
                 logger.error("Moving internal MAD version to DB failed!")
+                sys.exit(1)
         else:
             logger.info("Internal MAD version in DB is {}", self._installed_ver)
 
+    def __install_instance_table(self):
+        sql = "CREATE TABLE `madmin_instance` (\n"\
+              "`instance_id` int(10) unsigned NOT NULL AUTO_INCREMENT,\n"\
+              "`name` varchar(128) COLLATE utf8mb4_unicode_ci NOT NULL,\n"\
+              "PRIMARY KEY (`instance_id`),\n"\
+              "UNIQUE KEY `name` (`name`)\n"\
+              ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;"
+        self.dbwrapper.execute(sql, commit=True, suppress_log=True)
+
+    def __install_schema(self):
+        try:
+            with open('scripts/SQL/rocketmap.sql') as fh:
+                tables = "".join(fh.readlines()).split(";")
+                for table in tables:
+                    install_cmd = '%s;%s;%s'
+                    args = ('SET FOREIGN_KEY_CHECKS=0', 'SET NAMES utf8mb4', table)
+                    self.dbwrapper.execute(install_cmd % args, commit=True, suppress_log=True)
+            self.__set_installed_ver(self._madver)
+            logger.success('Successfully installed MAD schema to the database')
+        except Exception:
+            logger.critical('Unable to install default MAD schema.  Please install the schema from '
+                            'scripts/SQL/rocketmap.sql')
+            sys.exit(1)
+
     def __set_installed_ver(self, version):
-        self.dbwrapper.update_mad_version(version)
         self._installed_ver = version
+        self.dbwrapper.update_mad_version(version)
 
     def __update_mad(self):
         if self._madver < self._installed_ver:
@@ -173,7 +198,6 @@ class MADPatcher(object):
         else:
             logger.warning('Performing updates from version {} to {} now',
                            self._installed_ver, self._madver)
-            self.__update_mad()
             all_patches = list(MAD_UPDATES.keys())
             try:
                 last_ver = all_patches.index(self._installed_ver)
@@ -198,6 +222,8 @@ class MADPatcher(object):
             else:
                 return True
         else:
+            # TODO - When should these be executed?  Can the be added somewhere and ignored?
+            # Execute these weird unversioned elements.  Seriously dont know a good time for them
             self._schema_updater.ensure_unversioned_tables_exist()
             self._schema_updater.ensure_unversioned_columns_exist()
             self._schema_updater.create_madmin_databases_if_not_exists()

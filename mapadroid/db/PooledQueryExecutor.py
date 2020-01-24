@@ -81,7 +81,7 @@ class PooledQueryExecutor:
         suppress_log = kwargs.get('suppress_log', False)
         try:
             multi = False
-            if type(args) != tuple:
+            if type(args) != tuple and args is not None:
                 args = (args,)
             if sql.count(';') > 1:
                 multi = True
