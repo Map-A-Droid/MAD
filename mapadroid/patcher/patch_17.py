@@ -56,9 +56,11 @@ class Patch(PatchBase):
                 except KeyError:
                     continue
                 cache[section] = str(config_file[section]['index'])
+
                 config_file[section]['entries'][cache[section]] = entry
                 del config_file[section]['entries']["0"]
                 config_file[section]['index'] += 1
+                self._logger.info('Found a {} with an ID of 0.  Setting ID to {}', section, cache[section])
                 # Update the trs_status table to reflect the latest
                 if section == 'areas':
                     updated = {
@@ -67,7 +69,7 @@ class Patch(PatchBase):
                     where = {
                         'routemanager': 0
                     }
-                    self.dbwrapper.autoexec_update('trs_status', updated, where_keyvals=where)
+                    self._db.autoexec_update('trs_status', updated, where_keyvals=where)
             if cache:
                 self._logger.info(
                     'One or more resources with ID 0 found.  Converting them off 0 and updating the '

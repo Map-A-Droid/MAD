@@ -77,6 +77,10 @@ class Patch(PatchBase):
                 row['device_id'] = dev_id
                 try:
                     row['area_id'] = int(row['routemanager'])
+                    if row['area_id'] == 0:
+                        self._logger.warning('Detected a device that has a routemanager of 0.  Skipping due to '
+                                             'foreign key issues {}', row)
+                        continue
                     del row['routemanager']
                 except Exception:
                     continue
