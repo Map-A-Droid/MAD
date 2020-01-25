@@ -95,6 +95,7 @@ class map(object):
     @auth_required
     def get_route(self):
         routeexport = []
+        subroutes = []
 
         routemanager_names = self._mapping_manager.get_all_routemanager_names()
 
@@ -105,13 +106,14 @@ class map(object):
 
             if route is None:
                 continue
-            s2cells = {}
             routeexport.append(get_routepool_route(name, mode, route))
             if len(workers) > 1:
-                for worker, worker_route in workers.items():
+                for worker in sorted(workers.keys()):
+                    worker_route = workers[worker]
                     disp_name = '%s - %s' % (name, worker,)
-                    routeexport.append(get_routepool_route(disp_name, mode, worker_route))
-
+                    subroutes.append(get_routepool_route(disp_name, mode, worker_route))
+        if subroutes:
+            routeexport += subroutes
         return jsonify(routeexport)
 
     @auth_required
