@@ -35,5 +35,33 @@
             "TYPE": "jobType.SMART_UPDATE",
             "SYNTAX": "de.grennith.rgc.remotegpscontroller"
         }
+    ],
+    "Reboot-Device":
+    [
+        {
+            "TYPE": "jobType.REBOOT",
+            "SYNTAX": ""
+        }
+    ],
+    "Restart-Pogo":
+    [
+        {
+            "TYPE": "jobType.RESTART",
+            "SYNTAX": ""
+        }
+    ],
+    "Stop-Pogo":
+    [
+        {
+            "TYPE": "jobType.STOP",
+            "SYNTAX": ""
+        }
+    ],
+    "Start-Pogo":
+    [
+        {
+            "TYPE": "jobType.START",
+            "SYNTAX": ""
+        }
     ]
 }

@@ -51,14 +51,6 @@ def uploaded_files(datetimeformat, jobs):
     for command in jobs:
         files.append({'jobname': command, 'creation': '', 'type': 'jobType.CHAIN'})
 
-    processJson = ({'jobname': 'Reboot-Device', 'creation': '', 'type': 'jobType.REBOOT'})
-    files.append(processJson)
-    processJson = ({'jobname': 'Restart-Pogo', 'creation': '', 'type': 'jobType.RESTART'})
-    files.append(processJson)
-    processJson = ({'jobname': 'Stop-Pogo', 'creation': '', 'type': 'jobType.STOP'})
-    files.append(processJson)
-    processJson = ({'jobname': 'Start-Pogo', 'creation': '', 'type': 'jobType.START'})
-    files.append(processJson)
     return files
 
 
