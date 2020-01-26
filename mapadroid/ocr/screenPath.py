@@ -384,13 +384,13 @@ class WordToScreenMatching(object):
         # username
         self._communicator.click(self._width / 2, username_y)
         time.sleep(.5)
-        self._communicator.sendText(ptc.username)
+        self._communicator.enter_text(ptc.username)
         self._communicator.click(100, 100)
         time.sleep(2)
         # password
         self._communicator.click(self._width / 2, password_y)
         time.sleep(.5)
-        self._communicator.sendText(ptc.password)
+        self._communicator.enter_text(ptc.password)
         self._communicator.click(100, 100)
         time.sleep(2)
         # button
@@ -411,7 +411,7 @@ class WordToScreenMatching(object):
         click_y = (self._height / 1.69) + self._screenshot_y_offset
         logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
         self._communicator.click(click_x, click_y)
-        self._communicator.touchandhold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
+        self._communicator.touch_and_hold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
         time.sleep(1)
         self._communicator.click(click_x, click_y)
         time.sleep(1)
@@ -421,7 +421,7 @@ class WordToScreenMatching(object):
         time.sleep(1)
 
     def detect_screentype(self) -> ScreenType:
-        topmostapp = self._communicator.topmostApp()
+        topmostapp = self._communicator.topmost_app()
         if not topmostapp:
             return ScreenType.ERROR
 
@@ -449,7 +449,7 @@ class WordToScreenMatching(object):
 
         logger.info('Listening to Dr. blabla - please wait')
 
-        self._communicator.backButton()
+        self._communicator.back_button()
         time.sleep(3)
         return ScreenType.UNDEFINED
 

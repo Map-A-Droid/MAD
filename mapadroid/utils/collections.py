@@ -7,3 +7,4 @@ Relation = collections.namedtuple(
 Trash = collections.namedtuple('Trash', ['x', 'y'])
 Login_PTC = collections.namedtuple('PTC', ['username', 'password'])
 Login_GGL = collections.namedtuple('GGL', ['username'])
+OutgoingMessage = collections.namedtuple('OutgoingMessage', ['id', 'message'])

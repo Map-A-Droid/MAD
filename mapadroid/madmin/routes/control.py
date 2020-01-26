@@ -13,6 +13,7 @@ from mapadroid.madmin.functions import (
 )
 from mapadroid.utils import MappingManager
 from mapadroid.utils.adb import ADBConnect
+from mapadroid.utils.collections import Location
 from mapadroid.utils.functions import (creation_date, generate_phones, image_resize)
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import ScreenshotType
@@ -79,7 +80,7 @@ class control(object):
         screens_phone = []
         ws_connected_phones = []
         if self._ws_server is not None:
-            phones = self._ws_server.get_reg_origins().copy()
+            phones = self._ws_server.get_reg_origins()
         else:
             phones = []
         devicemappings = self._mapping_manager.get_all_devicemappings()
@@ -241,7 +242,7 @@ class control(object):
                               str(real_click_y),
                               str(real_click_xe), str(real_click_ye), str(origin))
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.touchandhold(int(real_click_x), int(
+            temp_comm.touch_and_hold(int(real_click_x), int(
                 real_click_y), int(real_click_xe), int(real_click_ye))
 
         time.sleep(2)
@@ -273,12 +274,12 @@ class control(object):
             temp_comm = self._ws_server.get_origin_communicator(origin)
             if restart:
                 self._logger.info('MADMin: trying to restart game on {}', str(origin))
-                temp_comm.restartApp("com.nianticlabs.pokemongo")
+                temp_comm.restart_app("com.nianticlabs.pokemongo")
 
                 time.sleep(1)
             else:
                 self._logger.info('MADMin: trying to stop game on {}', str(origin))
-                temp_comm.stopApp("com.nianticlabs.pokemongo")
+                temp_comm.stop_app("com.nianticlabs.pokemongo")
 
             self._logger.info('MADMin: WS command successfully ({})', str(origin))
         time.sleep(2)
@@ -318,7 +319,7 @@ class control(object):
             self._logger.info('MADMin: ADB shell command successfully ({})', str(origin))
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.resetAppdata("com.nianticlabs.pokemongo")
+            temp_comm.reset_app_data("com.nianticlabs.pokemongo")
         return redirect(url_for('get_phonescreens'), code=302)
 
     @auth_required
@@ -338,7 +339,7 @@ class control(object):
                           str(coords[0]), str(coords[1]), str(origin))
         try:
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.setLocation(coords[0], coords[1], 0)
+            temp_comm.set_location(Location(coords[0], coords[1]), 0)
             if int(sleeptime) > 0:
                 self._logger.info("MADmin: Set additional sleeptime: {} ({})",
                                   str(sleeptime), str(origin))
@@ -366,7 +367,7 @@ class control(object):
             self._logger.info('MADMin: Send text successfully ({})', str(origin))
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
-            temp_comm.sendText(text)
+            temp_comm.enter_text(text)
 
         time.sleep(2)
         return self.take_screenshot(origin, useadb)
@@ -389,9 +390,9 @@ class control(object):
         else:
             temp_comm = self._ws_server.get_origin_communicator(origin)
             if command == 'home':
-                temp_comm.homeButton()
+                temp_comm.home_button()
             elif command == 'back':
-                temp_comm.backButton()
+                temp_comm.back_button()
 
         time.sleep(2)
         return self.take_screenshot(origin, useadb)

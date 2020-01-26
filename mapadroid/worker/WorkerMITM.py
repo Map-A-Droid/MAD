@@ -6,20 +6,22 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.collections import Location
 from mapadroid.utils.geo import (
     get_distance_of_two_points_in_meters,
     get_lat_lng_offsets_by_distance
 )
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
 
 
 class WorkerMITM(MITMBase):
-    def __init__(self, args, dev_id, id, last_known_state, websocket_handler, mapping_manager: MappingManager,
+    def __init__(self, args, dev_id, id, last_known_state, communicator: AbstractCommunicator, mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
                  pogo_window_manager: PogoWindows, walker):
-        MITMBase.__init__(self, args, dev_id, id, last_known_state, websocket_handler,
+        MITMBase.__init__(self, args, dev_id, id, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_name=routemanager_name,
                           db_wrapper=db_wrapper, NoOcr=True,
@@ -67,8 +69,8 @@ class WorkerMITM(MITMBase):
                 or (self.last_location.lat == 0.0 and self.last_location.lng == 0.0)):
             logger.debug("main: Teleporting...")
             self._transporttype = 0
-            self._communicator.setLocation(
-                self.current_location.lat, self.current_location.lng, 0)
+            self._communicator.set_location(
+                Location(self.current_location.lat, self.current_location.lng), 0)
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
 
@@ -98,25 +100,22 @@ class WorkerMITM(MITMBase):
                                                                float(self.current_location.lng) + lng_offset)
                 logger.info("Walking roughly: {}", str(to_walk))
                 time.sleep(0.3)
-                self._communicator.walkFromTo(self.current_location.lat,
-                                              self.current_location.lng,
-                                              self.current_location.lat + lat_offset,
-                                              self.current_location.lng + lng_offset,
-                                              11)
+                self._communicator.walk_from_to(self.current_location,
+                                                Location(self.current_location.lat + lat_offset,
+                                                         self.current_location.lng + lng_offset),
+                                                11)
                 logger.debug("Walking back")
                 time.sleep(0.3)
-                self._communicator.walkFromTo(self.current_location.lat + lat_offset,
-                                              self.current_location.lng + lng_offset,
-                                              self.current_location.lat,
-                                              self.current_location.lng,
-                                              11)
+                self._communicator.walk_from_to(Location(self.current_location.lat + lat_offset,
+                                                self.current_location.lng + lng_offset),
+                                                self.current_location,
+                                                11)
                 logger.debug("Done walking")
                 time.sleep(1)
         else:
             logger.info("main: Walking...")
             self._transporttype = 1
-            self._communicator.walkFromTo(self.last_location.lat, self.last_location.lng,
-                                          self.current_location.lat, self.current_location.lng, speed)
+            self._communicator.walk_from_to(self.last_location, self.current_location, speed)
             # the time we will take as a starting point to wait for data...
             cur_time = math.floor(time.time())
             logger.debug2("Done walking, fetching time to sleep")

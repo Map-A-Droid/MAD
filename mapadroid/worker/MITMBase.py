@@ -9,6 +9,7 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerBase import WorkerBase
 
 Location = collections.namedtuple('Location', ['lat', 'lng'])
@@ -24,12 +25,12 @@ class LatestReceivedType(Enum):
 
 
 class MITMBase(WorkerBase):
-    def __init__(self, args, dev_id, origin, last_known_state, websocket_handler,
+    def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper, mitm_mapper: MitmMapper,
                  pogoWindowManager: PogoWindows,
                  NoOcr=False, walker=None):
-        WorkerBase.__init__(self, args, dev_id, origin, last_known_state, websocket_handler,
+        WorkerBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                             mapping_manager=mapping_manager, area_id=area_id,
                             routemanager_name=routemanager_name,
                             db_wrapper=db_wrapper, NoOcr=True,
@@ -143,7 +144,7 @@ class MITMBase(WorkerBase):
         return data_requested
 
     def _start_pogo(self) -> bool:
-        pogo_topmost = self._communicator.isPogoTopmost()
+        pogo_topmost = self._communicator.is_pogo_topmost()
         if pogo_topmost:
             return True
         self._mitm_mapper.set_injection_status(self._origin, False)

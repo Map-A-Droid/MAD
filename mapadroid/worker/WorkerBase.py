@@ -4,9 +4,9 @@ import functools
 import math
 import os
 import time
-from abc import ABC, abstractmethod
+from abc import abstractmethod
 from threading import Event, Lock, Thread, current_thread
-from typing import Optional
+from typing import Optional, Union
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -14,34 +14,32 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.ocr.screenPath import WordToScreenMatching
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils import MappingManager
+from mapadroid.utils.collections import Location
 from mapadroid.utils.hamming import hamming_distance
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import (
     InternalStopWorkerException,
     WebsocketWorkerRemovedException,
     WebsocketWorkerTimeoutException,
-    ScreenshotType
-)
+    ScreenshotType,
+    WebsocketWorkerConnectionClosedException)
 from mapadroid.utils.resolution import Resocalculator
 from mapadroid.utils.routeutil import check_walker_value_type
-from mapadroid.websocket.communicator import Communicator
+from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.worker.AbstractWorker import AbstractWorker
 
-Location = collections.namedtuple('Location', ['lat', 'lng'])
 
-
-class WorkerBase(ABC):
-    def __init__(self, args, dev_id, origin, last_known_state, websocket_handler,
+class WorkerBase(AbstractWorker):
+    def __init__(self, args, dev_id, origin, last_known_state, communicator: AbstractCommunicator,
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogoWindowManager: PogoWindows,
                  NoOcr: bool = True,
                  walker=None):
-        # self.thread_pool = ThreadPool(processes=2)
+        AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._mapping_manager: MappingManager = mapping_manager
         self._routemanager_name: str = routemanager_name
         self._area_id = area_id
-        self._websocket_handler = websocket_handler
-        self._communicator: Communicator = Communicator(
-            websocket_handler, origin, self, args.websocket_command_timeout)
+
         self._dev_id: int = dev_id
         self._origin: str = origin
         self._applicationArgs = args
@@ -249,7 +247,7 @@ class WorkerBase(ABC):
                 .replace('_', '').split(',')
             logger.info('Setting startcoords or walker lat {} / lng {}'.format(str(startcoords[0]),
                                                                                str(startcoords[1])))
-            self._communicator.setLocation(startcoords[0], startcoords[1], 0)
+            self._communicator.set_location(Location(startcoords[0], startcoords[1]), 0)
 
         try:
             self._work_mutex.acquire()
@@ -306,7 +304,11 @@ class WorkerBase(ABC):
     def _internal_cleanup(self):
         # set the event just to make sure - in case of exceptions for example
         self._stop_worker_event.set()
-        self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
+        try:
+            self._mapping_manager.unregister_worker_from_routemanager(self._routemanager_name, self._origin)
+        except ConnectionResetError as e:
+            logger.warning("Failed unregistering from routemanager, routemanager may have stopped running already."
+                           "Exception: {}", e)
         logger.info("Internal cleanup of {} started", str(self._origin))
         self._cleanup()
         logger.info(
@@ -316,9 +318,8 @@ class WorkerBase(ABC):
             logger.info("Stopping worker's asyncio loop")
             self.loop.call_soon_threadsafe(self.loop.stop)
             self._async_io_looper_thread.join()
-            time.sleep(10)
 
-        self._communicator.cleanup_websocket()
+        self._communicator.cleanup()
 
         logger.info("Internal cleanup of {} finished", str(self._origin))
 
@@ -326,8 +327,8 @@ class WorkerBase(ABC):
         # TODO: signal websocketserver the removal
         try:
             self._internal_pre_work()
-        except (
-        InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+        except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                WebsocketWorkerConnectionClosedException):
             logger.error(
                 "Failed initializing worker {}, connection terminated exceptionally", str(self._origin))
             self._internal_cleanup()
@@ -347,8 +348,8 @@ class WorkerBase(ABC):
                 if not walkercheck:
                     self.set_devicesettings_value('finished', True)
                     break
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker {} killed by walker settings", str(self._origin))
                 break
@@ -357,8 +358,8 @@ class WorkerBase(ABC):
                 # TODO: consider getting results of health checks and aborting the entire worker?
                 self._internal_health_check()
                 self._health_check()
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.error(
                     "Websocket connection to {} lost while running healthchecks, connection terminated "
                     "exceptionally",
@@ -369,8 +370,8 @@ class WorkerBase(ABC):
                 settings = self._internal_grab_next_location()
                 if settings is None:
                     continue
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker of {} does not support mode that's to be run, connection terminated exceptionally",
                     str(self._origin))
@@ -381,16 +382,16 @@ class WorkerBase(ABC):
                 valid = self._check_location_is_valid()
                 if not valid:
                     break
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker {} get non valid coords!", str(self._origin))
                 break
 
             try:
                 self._pre_location_update()
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker of {} stopping because of stop signal in pre_location_update, connection terminated "
                     "exceptionally",
@@ -405,8 +406,8 @@ class WorkerBase(ABC):
                              self.get_devicesettings_value("last_location", Location(0, 0)).lng,
                              self.current_location.lat, self.current_location.lng)
                 time_snapshot, process_location = self._move_to_location()
-            except (
-            InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException):
+            except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                    WebsocketWorkerConnectionClosedException):
                 logger.warning(
                     "Worker {} failed moving to new location, stopping worker, connection terminated exceptionally",
                     str(self._origin))
@@ -424,8 +425,8 @@ class WorkerBase(ABC):
 
                 try:
                     self._post_move_location_routine(time_snapshot)
-                except (InternalStopWorkerException, WebsocketWorkerRemovedException,
-                        WebsocketWorkerTimeoutException):
+                except (InternalStopWorkerException, WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException,
+                        WebsocketWorkerConnectionClosedException):
                     logger.warning(
                         "Worker {} failed running post_move_location_routine, stopping worker",
                         str(self._origin))
@@ -521,7 +522,7 @@ class WorkerBase(ABC):
             logger.error("Unknown walker mode! Killing worker")
             return False
 
-    def set_geofix_sleeptime(self, sleeptime):
+    def set_geofix_sleeptime(self, sleeptime: int) -> bool:
         self._geofix_sleeptime = sleeptime
         return True
 
@@ -544,15 +545,6 @@ class WorkerBase(ABC):
                                                                                      self._origin)
         return self._mapping_manager.routemanager_get_settings(self._routemanager_name)
 
-    def _init_routine(self):
-        if self._applicationArgs.initial_restart is False:
-            self._turn_screen_on_and_start_pogo()
-        else:
-            if not self._start_pogo():
-                while not self._restart_pogo():
-                    logger.warning("failed starting pogo")
-                    # TODO: stop after X attempts
-
     def _check_for_mad_job(self):
         if self.get_devicesettings_value("job", False):
             logger.info("Worker {} get a job - waiting".format(str(self._origin)))
@@ -570,20 +562,20 @@ class WorkerBase(ABC):
             return True
 
     def _turn_screen_on_and_start_pogo(self):
-        if not self._communicator.isScreenOn():
-            self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
+        if not self._communicator.is_screen_on():
+            self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             logger.warning("Turning screen on")
-            self._communicator.turnScreenOn()
+            self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
         # check if pogo is running and start it if necessary
         logger.info("turnScreenOnAndStartPogo: (Re-)Starting Pogo")
         self._start_pogo()
 
     def _check_screen_on(self):
-        if not self._communicator.isScreenOn():
-            self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
+        if not self._communicator.is_screen_on():
+            self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             logger.warning("Turning screen on")
-            self._communicator.turnScreenOn()
+            self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 2))
 
     def _ensure_pogo_topmost(self):
@@ -636,7 +628,7 @@ class WorkerBase(ABC):
                 time.sleep(3)
                 self._stop_pogo()
                 self._communicator.magisk_off("com.nianticlabs.pokemongo")
-                self._communicator.clearAppCache("com.nianticlabs.pokemongo")
+                self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
                 time.sleep(1)
                 self._communicator.magisk_on("com.nianticlabs.pokemongo")
                 time.sleep(1)
@@ -646,10 +638,10 @@ class WorkerBase(ABC):
             if self._loginerrorcounter == 2:
                 logger.error('Could not login again - (clearing game data + restarting device')
                 self._stop_pogo()
-                self._communicator.clearAppCache("com.nianticlabs.pokemongo")
+                self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
                 if self.get_devicesettings_value('clear_game_data', False):
                     logger.info('Clearing game data')
-                    self._communicator.resetAppdata("com.nianticlabs.pokemongo")
+                    self._communicator.reset_app_data("com.nianticlabs.pokemongo")
                 self._reboot()
                 break
 
@@ -661,7 +653,7 @@ class WorkerBase(ABC):
         logger.info('Switching User - please wait ...')
         self._stop_pogo()
         time.sleep(5)
-        self._communicator.resetAppdata("com.nianticlabs.pokemongo")
+        self._communicator.reset_app_data("com.nianticlabs.pokemongo")
         self._turn_screen_on_and_start_pogo()
         if not self._ensure_pogo_topmost():
             logger.error('Kill Worker...')
@@ -739,14 +731,14 @@ class WorkerBase(ABC):
         Return the state as a boolean do indicate a successful start
         :return:
         """
-        pogo_topmost = self._communicator.isPogoTopmost()
+        pogo_topmost = self._communicator.is_pogo_topmost()
         if pogo_topmost:
             return True
 
-        if not self._communicator.isScreenOn():
-            self._communicator.startApp("de.grennith.rgc.remotegpscontroller")
+        if not self._communicator.is_screen_on():
+            self._communicator.start_app("de.grennith.rgc.remotegpscontroller")
             logger.warning("Turning screen on")
-            self._communicator.turnScreenOn()
+            self._communicator.turn_screen_on()
             time.sleep(self.get_devicesettings_value("post_turn_screen_on_delay", 7))
 
         # Disable vibration
@@ -757,10 +749,10 @@ class WorkerBase(ABC):
         cur_time = time.time()
         start_result = False
         while not pogo_topmost:
-            start_result = self._communicator.startApp(
+            start_result = self._communicator.start_app(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
-            pogo_topmost = self._communicator.isPogoTopmost()
+            pogo_topmost = self._communicator.is_pogo_topmost()
 
         if start_result:
             logger.warning("startPogo: Started pogo successfully...")
@@ -769,18 +761,21 @@ class WorkerBase(ABC):
         self._wait_pogo_start_delay()
         return start_result
 
+    def is_stopping(self) -> bool:
+        return self._stop_worker_event.is_set()
+
     def _stop_pogo(self):
         attempts = 0
-        stop_result = self._communicator.stopApp("com.nianticlabs.pokemongo")
-        pogoTopmost = self._communicator.isPogoTopmost()
+        stop_result = self._communicator.stop_app("com.nianticlabs.pokemongo")
+        pogoTopmost = self._communicator.is_pogo_topmost()
         while pogoTopmost:
             attempts += 1
             if attempts > 10:
                 return False
-            stop_result = self._communicator.stopApp(
+            stop_result = self._communicator.stop_app(
                 "com.nianticlabs.pokemongo")
             time.sleep(1)
-            pogoTopmost = self._communicator.isPogoTopmost()
+            pogoTopmost = self._communicator.is_pogo_topmost()
         return stop_result
 
     def _reboot(self, mitm_mapper: Optional[MitmMapper] = None):
@@ -801,12 +796,12 @@ class WorkerBase(ABC):
         return start_result
 
     def _start_pogodroid(self):
-        start_result = self._communicator.startApp("com.mad.pogodroid")
+        start_result = self._communicator.start_app("com.mad.pogodroid")
         time.sleep(5)
         return start_result
 
     def _stopPogoDroid(self):
-        stopResult = self._communicator.stopApp("com.mad.pogodroid")
+        stopResult = self._communicator.stop_app("com.mad.pogodroid")
         return stopResult
 
     def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
@@ -816,7 +811,7 @@ class WorkerBase(ABC):
                      str(successful_stop))
         if successful_stop:
             if clear_cache:
-                self._communicator.clearAppCache("com.nianticlabs.pokemongo")
+                self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
             time.sleep(1)
             if mitm_mapper is not None:
                 mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 4, 0,
@@ -935,7 +930,7 @@ class WorkerBase(ABC):
         logger.debug(
             "_check_pogo_main_screen: Trying to get to the Mainscreen with {} max attempts...",
             str(maxAttempts))
-        pogoTopmost = self._communicator.isPogoTopmost()
+        pogoTopmost = self._communicator.is_pogo_topmost()
         if not pogoTopmost:
             return False
 
@@ -991,7 +986,7 @@ class WorkerBase(ABC):
     def _check_pogo_main_screen_tr(self):
         logger.debug(
             "_check_pogo_main_screen_tr: Trying to get to the Mainscreen ")
-        pogoTopmost = self._communicator.isPogoTopmost()
+        pogoTopmost = self._communicator.is_pogo_topmost()
         if not pogoTopmost:
             return False
 
@@ -1013,7 +1008,7 @@ class WorkerBase(ABC):
 
     def _checkPogoButton(self):
         logger.debug("checkPogoButton: Trying to find buttons")
-        pogoTopmost = self._communicator.isPogoTopmost()
+        pogoTopmost = self._communicator.is_pogo_topmost()
         if not pogoTopmost:
             return False
 
@@ -1061,7 +1056,7 @@ class WorkerBase(ABC):
 
     def _checkPogoClose(self, takescreen=True):
         logger.debug("checkPogoClose: Trying to find closeX")
-        pogoTopmost = self._communicator.isPogoTopmost()
+        pogoTopmost = self._communicator.is_pogo_topmost()
         if not pogoTopmost:
             return False
 
@@ -1091,7 +1086,7 @@ class WorkerBase(ABC):
         # check for any popups (including post login OK)
         logger.debug(
             "getToRaidscreen: Trying to get to the raidscreen with {} max attempts...", str(maxAttempts))
-        pogoTopmost = self._communicator.isPogoTopmost()
+        pogoTopmost = self._communicator.is_pogo_topmost()
         if not pogoTopmost:
             return False
 
@@ -1173,7 +1168,7 @@ class WorkerBase(ABC):
     def _get_screen_size(self):
         if self._stop_worker_event.is_set():
             raise WebsocketWorkerRemovedException
-        screen = self._communicator.getscreensize()
+        screen = self._communicator.get_screensize()
         if screen is None:
             raise WebsocketWorkerRemovedException
         screen = screen.strip().split(' ')
@@ -1185,3 +1180,4 @@ class WorkerBase(ABC):
             self._origin), str(self._screen_x), str(self._screen_y), str(x_offset), str(y_offset))
         self._resocalc.get_x_y_ratio(
             self, self._screen_x, self._screen_y, x_offset, y_offset)
+

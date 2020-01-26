@@ -177,11 +177,12 @@ if __name__ == "__main__":
 
     mapping_manager_manager = None
     mapping_manager: Optional[MappingManager] = None
-
+    pogoWindowManager = None
     ws_server = None
     t_ws = None
     t_file_watcher = None
     t_whw = None
+    device_Updater = None
 
     if args.only_scan or args.only_routes:
         MappingManagerManager.register('MappingManager', MappingManager)
@@ -201,7 +202,6 @@ if __name__ == "__main__":
             # TODO: shutdown managers properly...
             sys.exit(0)
 
-        pogoWindowManager = None
         jobstatus: dict = {}
         MitmMapperManager.register('MitmMapper', MitmMapper)
         mitm_mapper_manager = MitmMapperManager()
@@ -291,11 +291,6 @@ if __name__ == "__main__":
             terminate_mad.set()
             # now cleanup all threads...
             # TODO: check against args or init variables to None...
-            if t_whw is not None:
-                t_whw.join()
-            if ws_server is not None:
-                ws_server.stop_server()
-                t_ws.join()
             if mitm_receiver_process is not None:
                 # mitm_receiver_thread.kill()
                 logger.info("Trying to stop receiver")
@@ -305,6 +300,16 @@ if __name__ == "__main__":
                 logger.debug("Trying to join MITMReceiver")
                 mitm_receiver_process.join()
                 logger.debug("MITMReceiver joined")
+            if device_Updater is not None:
+                device_Updater.stop_updater()
+            if t_whw is not None:
+                logger.info("Waiting for webhook-thread to exit")
+                t_whw.join()
+            if ws_server is not None:
+                logger.info("Stopping websocket server")
+                ws_server.stop_server()
+                logger.info("Waiting for websocket-thread to exit")
+                t_ws.join()
             if mapping_manager_manager is not None:
                 mapping_manager_manager.shutdown()
             if mitm_mapper_manager is not None:

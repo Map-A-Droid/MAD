@@ -5,7 +5,7 @@ import re
 import time
 from datetime import datetime, timedelta
 from enum import Enum
-from multiprocessing import Queue
+from multiprocessing import Queue, Event
 from queue import Empty
 from threading import RLock, Thread
 
@@ -61,12 +61,18 @@ class deviceUpdater(object):
         self.kill_old_jobs()
         self.load_automatic_jobs()
 
+        self._stop_updater_threads: Event = Event()
         self.t_updater = []
         for i in range(self._args.job_thread_count):
             t = Thread(name='apk_updater-{}'.format(str(i)), target=self.process_update_queue, args=(i,))
             t.daemon = True
             self.t_updater.append(t)
             t.start()
+
+    def stop_updater(self):
+        self._stop_updater_threads.set()
+        for thread in self.t_updater:
+            thread.join()
 
     def init_jobs(self):
         self._commands = {}
@@ -146,13 +152,17 @@ class deviceUpdater(object):
     def process_update_queue(self, threadnumber):
         logger.info("Starting Device Job processor thread No {}".format(str(threadnumber)))
         time.sleep(10)
-        while True:
+        while not self._stop_updater_threads.is_set():
             try:
                 jobstatus = jobReturn.UNKNOWN
                 try:
-                    item = self._update_queue.get()
+                    # item = self._update_queue.get()
+                    item = self._update_queue.get_nowait()
                 except Empty:
-                    time.sleep(2)
+                    time.sleep(1)
+                    continue
+                if item is None:
+                    time.sleep(1)
                     continue
 
                 if item not in self._log:
@@ -384,6 +394,7 @@ class deviceUpdater(object):
                 break
 
             time.sleep(2)
+        logger.info("Updater thread stopped")
 
     @logger.catch()
     def preadd_job(self, origin, job, id_, type, globalid=None):
@@ -547,11 +558,11 @@ class deviceUpdater(object):
             elif jobtype == jobType.REBOOT:
                 return ws_conn.reboot()
             elif jobtype == jobType.RESTART:
-                return ws_conn.restartApp("com.nianticlabs.pokemongo")
+                return ws_conn.restart_app("com.nianticlabs.pokemongo")
             elif jobtype == jobType.STOP:
-                return ws_conn.stopApp("com.nianticlabs.pokemongo")
+                return ws_conn.stop_app("com.nianticlabs.pokemongo")
             elif jobtype == jobType.START:
-                return ws_conn.startApp("com.nianticlabs.pokemongo")
+                return ws_conn.start_app("com.nianticlabs.pokemongo")
             elif jobtype == jobType.PASSTHROUGH:
                 command = self._log[str(item)]['file']
                 returning = ws_conn.passthrough(command).replace('\r', '').replace('\n', '').replace('  ', '')
