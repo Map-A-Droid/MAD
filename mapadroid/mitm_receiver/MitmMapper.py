@@ -157,6 +157,8 @@ class MitmMapper(object):
         return updated
 
     def set_injection_status(self, origin, status=True):
+        if not self.__injected[origin] and status is True:
+            logger.info("Worker {} is injected now", str(origin))
         self.__injected[origin] = status
 
     def get_injection_status(self, origin):

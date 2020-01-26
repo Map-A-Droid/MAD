@@ -2,6 +2,7 @@ import json
 import sys
 import time
 from multiprocessing import JoinableQueue, Process
+from typing import Union
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
@@ -134,18 +135,26 @@ class MITMReceiver(Process):
                               EndpointAction(handler, self.__application_args, self.__mapping_manager),
                               methods=methods_passed)
 
-    def proto_endpoint(self, origin, data):
+    def proto_endpoint(self, origin: str, data: Union[dict, list]):
         logger.debug2("Receiving proto from {}".format(origin))
         logger.debug4("Proto data received from {}: {}".format(origin, str(data)))
+        if isinstance(data, list):
+            # list of protos... we hope so at least....
+            for proto in data:
+                self.__handle_proto_data_dict(origin, proto)
+        elif isinstance(data, dict):
+            # single proto, parse it...
+            self.__handle_proto_data_dict(origin, data)
+
+        self.__mitm_mapper.set_injection_status(origin)
+
+    def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
         type = data.get("type", None)
         if type is None or type == 0:
             logger.warning(
                 "Could not read method ID. Stopping processing of proto")
-            return None
-        if not self.__mitm_mapper.get_injection_status(origin):
-            logger.info("Worker {} is injected now", str(origin))
-            self.__mitm_mapper.set_injection_status(origin)
-        # extract timestamp from data
+            return
+
         timestamp: float = data.get("timestamp", int(time.time()))
         self.__mitm_mapper.update_latest(
             origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
@@ -154,7 +163,6 @@ class MITMReceiver(Process):
         self._data_queue.put(
             (timestamp, data, origin)
         )
-        return None
 
     def get_latest(self, origin, data):
         injected_settings = self.__mitm_mapper.request_latest(
