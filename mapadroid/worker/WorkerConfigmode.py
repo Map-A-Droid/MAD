@@ -89,6 +89,8 @@ class WorkerConfigmode(AbstractWorker):
         return True
 
     def check_walker(self):
+        if self._walker is None:
+            return True
         mode = self._walker['walkertype']
         if mode == "countdown":
             logger.info("Checking walker mode 'countdown'")
