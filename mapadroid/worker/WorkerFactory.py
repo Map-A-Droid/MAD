@@ -194,12 +194,6 @@ class WorkerFactory:
 
     def get_configmode_worker(self, origin: str, communicator: AbstractCommunicator) -> WorkerConfigmode:
         dev_id = self.__mapping_manager.get_all_devicemappings()[origin]['device_id']
-        devicesettings = self.__mapping_manager.get_devicesettings_of(origin)
-        client_mapping = self.__mapping_manager.get_devicemappings_of(origin)
-        walker_area_array = client_mapping["walker"]
-        walker_index = devicesettings.get('walker_area_index', 0)
-        walker_settings = walker_area_array[walker_index]
-        area_id = walker_settings['walkerarea']
         worker = WorkerConfigmode(args=self.__args,
                                   dev_id=dev_id,
                                   origin=origin,
@@ -208,7 +202,7 @@ class WorkerFactory:
                                   mapping_manager=self.__mapping_manager,
                                   mitm_mapper=self.__mitm_mapper,
                                   db_wrapper=self.__db_wrapper,
-                                  area_id=area_id,
+                                  area_id=0,
                                   routemanager_name=None)
         return worker
 
