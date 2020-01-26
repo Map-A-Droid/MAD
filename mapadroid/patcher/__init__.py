@@ -37,9 +37,23 @@ class MADPatcher(object):
         self.dbwrapper = self.data_manager.dbc
         self._schema_updater: DbSchemaUpdater = self.dbwrapper.schema_updater
         self._madver = list(MAD_UPDATES.keys())[-1]
-        self.__get_installed_version()
-        if self.__update_required():
-            self.__update_mad()
+        self._installed_ver = None
+        self.__validate_versions_schema()
+        # If the versions table does not exist we have to install the schema.  When the schema is set, we are then on
+        # the latest table so none of these checks are required
+        if self._installed_ver is None:
+            self.__convert_mappings()
+            self.__get_installed_version()
+            # TODO - When should these be executed?  Can the be added somewhere and ignored?
+            # Execute these weird unversioned elements.  Seriously dont know a good time for them
+            self._schema_updater.ensure_unversioned_tables_exist()
+            self._schema_updater.ensure_unversioned_columns_exist()
+            self._schema_updater.create_madmin_databases_if_not_exists()
+            self._schema_updater.ensure_unversioned_madmin_columns_exist()
+            if self.__update_required():
+                self.__update_mad()
+            else:
+                logger.success('MAD DB is running latest version')
 
     def __apply_update(self, patch_ver):
         filename = MAD_UPDATES[patch_ver]
@@ -55,7 +69,7 @@ class MADPatcher(object):
                 patch = patch_base.Patch(logger, self.dbwrapper, self.data_manager, self._application_args)
                 if patch.completed and not patch.issues:
                     self.__set_installed_ver(patch_ver)
-                    logger.info('Successfully applied patch')
+                    logger.success('Successfully applied patch')
                 else:
                     logger.error('Patch was unsuccessful.  Exiting')
                     sys.exit(1)
@@ -120,16 +134,12 @@ class MADPatcher(object):
             sys.exit(1)
 
     def __get_installed_version(self):
-        # checking mappings.json
-        self.__convert_mappings()
         try:
             self._installed_ver = self.dbwrapper.get_mad_version()
             if self._installed_ver:
                 logger.info("Internal MAD version in DB is {}", self._installed_ver)
             else:
                 logger.info('Partial schema detected.  Additional steps required')
-                sql = "ALTER TABLE versions ADD PRIMARY KEY(`key`)"
-                self.dbwrapper.execute(sql, commit=True, suppress_log=True)
                 self.__install_instance_table()
                 # Attempt to read the old version.json file to get the latest install version in the database
                 try:
@@ -143,10 +153,9 @@ class MADPatcher(object):
                     self.__set_installed_ver(self._installed_ver)
                 self.__reload_instance_id()
                 logger.success("Moved internal MAD version to database as version {}", self._installed_ver)
-        except mysql.connector.Error:
-            # Version table does not exist.  This is installed with the base install so we can assume the required
-            # tables have not been created
-            self.__install_schema()
+        except Exception:
+            logger.opt(exception=True).critical('Unknown exception occurred during getting the MAD DB version.'
+                                                '  Exiting')
 
     def __install_instance_table(self):
         sql = "CREATE TABLE `madmin_instance` (\n"\
@@ -192,7 +201,18 @@ class MADPatcher(object):
                 last_ver = all_patches.index(self._installed_ver)
                 first_patch = last_ver + 1
             except ValueError:
-                first_patch = 0
+                # The current version of the patch was most likely removed as it was no longer needed.  Determine
+                # where to start by finding the last executed
+                next_patch = None
+                for patch_ver in all_patches:
+                    if self._installed_ver > patch_ver:
+                        continue
+                    next_patch = patch_ver
+                    break
+                try:
+                    first_patch = all_patches.index(next_patch)
+                except ValueError:
+                    logger.critical('Unable to find the next patch to apply')
             updates_to_apply = all_patches[first_patch:]
             logger.info('Patches to apply: {}', updates_to_apply)
             for patch_ver in updates_to_apply:
@@ -200,21 +220,43 @@ class MADPatcher(object):
             logger.success('Updates to version {} finished', self._installed_ver)
 
     def __update_required(self):
-        if self._installed_ver == 0:
-            sql = "SELECT COUNT(*) FROM `information_schema`.`views` WHERE `TABLE_NAME` = 'v_trs_status'"
-            count = self.dbwrapper.autofetch_value(sql)
-            if count:
-                logger.success('It looks like the database has been successfully installed.  Setting version to {}',
-                               self._madver)
-                self.__set_installed_ver(self._madver)
-                return False
-            else:
-                return True
+        return self._installed_ver < self._madver
+
+    def __update_versions_table(self):
+        sql = "ALTER TABLE `versions` ADD PRIMARY KEY(`key`)"
+        self.dbwrapper.execute(sql, commit=True, suppress_log=True, raise_exc=True)
+
+    def __validate_versions_schema(self):
+        """ Verify status of the versions table
+
+            Validate the PK exists for the version table.  If it does not, attempt to create it.  If we run into
+            duplicate keys, de-dupe the table then apply the PK
+        """
+        try:
+            sql = "SHOW FIELDS FROM `versions`"
+            columns = self.dbwrapper.autofetch_all(sql, suppress_log=True)
+        except mysql.connector.Error:
+            # Version table does not exist.  This is installed with the base install so we can assume the required
+            # tables have not been created
+            self.__install_schema()
         else:
-            # TODO - When should these be executed?  Can the be added somewhere and ignored?
-            # Execute these weird unversioned elements.  Seriously dont know a good time for them
-            self._schema_updater.ensure_unversioned_tables_exist()
-            self._schema_updater.ensure_unversioned_columns_exist()
-            self._schema_updater.create_madmin_databases_if_not_exists()
-            self._schema_updater.ensure_unversioned_madmin_columns_exist()
-            return self._installed_ver < self._madver
+            for column in columns:
+                if column['Field'] != 'key':
+                    continue
+                if column['Key'] != 'PRI':
+                    logger.info('Primary key not configured on the versions table.  Applying fix')
+                    try:
+                        self.__update_versions_table()
+                    except mysql.connector.Error as err:
+                        if err.errno == 1062:
+                            logger.info('Multiple versions detected in the table.  Performing maintenance on the table')
+                            sql = "SELECT `key`, MAX(`val`) AS 'val' FROM `versions`"
+                            max_vers = self.dbwrapper.autofetch_all(sql)
+                            logger.info('Versions: {}', max_vers)
+                            sql = "DELETE FROM `versions`"
+                            self.dbwrapper.execute(sql, commit=True)
+                            for elem in max_vers:
+                                self.dbwrapper.autoexec_insert('versions', elem)
+                            logger.success('Successfully de-duplicated versions table and set each key to the '
+                                           'maximum value from the table')
+                            self.__update_versions_table()

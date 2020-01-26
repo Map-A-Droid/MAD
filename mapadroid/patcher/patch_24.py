@@ -6,7 +6,7 @@ class Patch(PatchBase):
 
     def _execute(self):
         sql = """
-            ALTER VIEW `v_trs_status` AS
+            CREATE OR REPLACE VIEW `v_trs_status` AS
                 SELECT trs.`instance_id`, trs.`device_id`, dev.`name`, trs.`routePos`, trs.`routeMax`, trs.`area_id`,
                 IF(trs.`idle` = 1, 'Idle', IFNULL(sa.`name`, 'Idle')) AS 'rmname',
                 IF(trs.`idle` = 1, 'Idle', IFNULL(sa.`mode`, 'Idle')) AS 'mode',
