@@ -140,11 +140,11 @@ class MITMReceiver(Process):
         logger.debug4("Proto data received from {}: {}".format(origin, str(data)))
         if isinstance(data, list):
             # list of protos... we hope so at least....
-            logger.info("Receiving list of protos")
+            logger.debug2("Receiving list of protos")
             for proto in data:
                 self.__handle_proto_data_dict(origin, proto)
         elif isinstance(data, dict):
-            logger.info("Receiving single proto")
+            logger.debug2("Receiving single proto")
             # single proto, parse it...
             self.__handle_proto_data_dict(origin, data)
 
