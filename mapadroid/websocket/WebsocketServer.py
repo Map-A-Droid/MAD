@@ -379,3 +379,21 @@ class WebsocketServer(object):
 
     def set_job_deactivated(self, origin) -> None:
         self.__mapping_manager.set_devicesetting_value_of(origin, 'job', False)
+
+    async def __close_and_signal_stop(self, origin: str) -> None:
+        logger.info("Signalling {} to stop", origin)
+        async with self.__current_users_mutex:
+            entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
+            if entry is not None:
+                entry.worker_instance.stop_worker()
+                await self.__close_websocket_client_connection(entry.origin,
+                                                               entry.websocket_client_connection)
+                logger.info("Done signalling {} to stop", origin)
+            else:
+                logger.warning("Unable to signal {} to stop, not present", origin)
+
+    def force_disconnect(self, origin) -> None:
+        future = asyncio.run_coroutine_threadsafe(
+            self.__close_and_signal_stop(origin),
+            self.__loop)
+        future.result()

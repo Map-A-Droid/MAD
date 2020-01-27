@@ -18,10 +18,11 @@ from mapadroid.utils.functions import (creation_date, generate_phones, image_res
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import ScreenshotType
 from mapadroid.utils.updater import jobType
+from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 
 class control(object):
-    def __init__(self, db_wrapper: DbWrapper, args, mapping_manager: MappingManager, websocket, logger, app,
+    def __init__(self, db_wrapper: DbWrapper, args, mapping_manager: MappingManager, websocket: WebsocketServer, logger, app,
                  deviceUpdater):
         self._db: DbWrapper = db_wrapper
         self._args = args
@@ -34,7 +35,7 @@ class control(object):
 
         self._mapping_manager: MappingManager = mapping_manager
 
-        self._ws_server = websocket
+        self._ws_server: WebsocketServer = websocket
         self._ws_connected_phones: list = []
         self._logger = logger
         self._app = app
