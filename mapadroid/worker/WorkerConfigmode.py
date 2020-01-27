@@ -14,7 +14,6 @@ from mapadroid.utils.madGlobals import (
     WebsocketWorkerConnectionClosedException)
 from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
-from mapadroid.websocket.communicator import Communicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 
 
@@ -24,8 +23,6 @@ class WorkerConfigmode(AbstractWorker):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
 
         self._args = args
-        self._communicator = Communicator(
-            websocket_handler, origin, self, args.websocket_command_timeout)
         self._stop_worker_event = Event()
         self._dev_id = dev_id
         self._origin = origin
@@ -92,6 +89,8 @@ class WorkerConfigmode(AbstractWorker):
         return True
 
     def check_walker(self):
+        if self._walker is None:
+            return True
         mode = self._walker['walkertype']
         if mode == "countdown":
             logger.info("Checking walker mode 'countdown'")
@@ -245,3 +244,7 @@ class WorkerConfigmode(AbstractWorker):
                 raise InternalStopWorkerException
             time.sleep(1)
             delay_count += 1
+
+    def trigger_check_research(self):
+        # not on configmode
+        return
