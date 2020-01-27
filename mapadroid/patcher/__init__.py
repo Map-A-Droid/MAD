@@ -43,8 +43,6 @@ class MADPatcher(object):
         if self._installed_ver is None:
             self.__convert_mappings()
             self.__get_installed_version()
-            # TODO - When should these be executed?  Can the be added somewhere and ignored?
-            # Execute these weird unversioned elements.  Seriously dont know a good time for them
             self._schema_updater.ensure_unversioned_tables_exist()
             self._schema_updater.ensure_unversioned_columns_exist()
             self._schema_updater.create_madmin_databases_if_not_exists()
