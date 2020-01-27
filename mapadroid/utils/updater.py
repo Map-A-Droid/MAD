@@ -510,7 +510,7 @@ class deviceUpdater(object):
                                    package_ver_job)
                     return False
                 mad_apk = apk_util.get_mad_apk(self._db,
-                                               self._log[str(item)]['file'],
+                                               global_variables.MAD_APK_USAGE[self._log[str(item)]['file']],
                                                architecture=architecture)
                 if not mad_apk or mad_apk['file_id'] is None:
                     try:
