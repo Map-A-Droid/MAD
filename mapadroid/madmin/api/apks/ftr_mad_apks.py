@@ -109,8 +109,6 @@ class APIMadAPK(APKHandler):
                 # RPC not implemented
                 return (call, 501)
         except KeyError:
-            import traceback
-            traceback.print_exc()
             return (call, 501)
         return (None, 500)
 

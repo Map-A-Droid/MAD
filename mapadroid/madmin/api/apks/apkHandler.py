@@ -43,14 +43,16 @@ class APKHandler(apiHandler.APIHandler):
         try:
             try:
                 apk_type = kwargs.get('apk_type', None)
-                apk_type = int(apk_type)
+                if apk_type is not None:
+                    apk_type = int(apk_type)
             except:
                 apk_type, _ = apk_util.convert_to_backend(apk_type=apk_type)
                 if apk_type is None:
                     return (None, 404)
             try:
                 apk_arch = kwargs.get('apk_arch', None)
-                apk_arch = int(apk_arch)
+                if apk_arch is not None:
+                    apk_arch = int(apk_arch)
             except:
                 _, apk_arch = apk_util.convert_to_backend(apk_arch=apk_arch)
             if flask.request.method == 'GET':
@@ -61,6 +63,4 @@ class APKHandler(apiHandler.APIHandler):
                 data = self.post(apk_type=apk_type, apk_arch=apk_arch)
                 return data
         except:
-            import traceback
-            traceback.print_exc()
             return (None, 404)
