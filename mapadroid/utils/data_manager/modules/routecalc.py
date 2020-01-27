@@ -27,7 +27,6 @@ class RouteCalc(resource.Resource):
 
     def _default_load(self):
         self.recalc_status = False
-        self.new_calc = False
 
     def get_dependencies(self):
         tables = ['settings_area_idle',
@@ -57,20 +56,18 @@ class RouteCalc(resource.Resource):
         data = self.translate_keys(data, 'load')
         self._data['fields']['routefile'] = json.loads(data['routefile'])
         self.recalc_status = data['recalc_status']
-        self.new_calc = False
 
-    def save(self, force_insert=False, ignore_issues=[]):
+    def save(self, force_insert=False, ignore_issues=[], update_time=False):
         self.presave_validation(ignore_issues=ignore_issues)
         literals = []
         core_data = self.get_resource()
         core_data['routefile'] = json.dumps(self._data['fields']['routefile'])
         core_data['recalc_status'] = self.recalc_status
-        if self.new_calc:
+        if update_time:
             core_data['last_updated'] = 'NOW()'
             literals.append('last_updated')
         super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues,
                      literals=literals)
-        self.new_calc = False
 
     def validate_custom(self):
         issues = {}
@@ -111,7 +108,6 @@ class RouteCalc(resource.Resource):
         self.set_recalc_status(True)
         if in_memory is False:
             if delete_old_route:
-                self.new_calc = True
                 logger.debug("Deleting routefile...")
                 self._data['fields']['routefile'] = []
                 self.save()
@@ -138,7 +134,6 @@ class RouteCalc(resource.Resource):
                 lineSplit = line.split(',')
                 export_data.append({'lat': float(lineSplit[0].strip()),
                                     'lng': float(lineSplit[1].strip())})
-            self.new_calc = False
             return export_data
 
         lessCoordinates = coords
@@ -179,7 +174,7 @@ class RouteCalc(resource.Resource):
                 calc_coords.append(calc_coord)
             # Only save if we aren't calculating in memory
             self._data['fields']['routefile'] = calc_coords
-            self.save()
+            self.save(update_time=True)
         return export_data
 
     def getLessCoords(self, npCoordinates, maxRadius, maxCountPerCircle, useS2: bool = False,

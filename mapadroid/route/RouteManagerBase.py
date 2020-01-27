@@ -357,7 +357,7 @@ class RouteManagerBase(ABC):
         for coord in new_route:
             calc_coords.append('%s,%s' % (coord['lat'], coord['lng']))
         self._route_resource['routefile'] = calc_coords
-        self._route_resource.save()
+        self._route_resource.save(update_time=True)
         connected_worker_count = len(self._workers_registered)
         if connected_worker_count > 0:
             for worker in self._workers_registered:
