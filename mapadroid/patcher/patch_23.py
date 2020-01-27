@@ -67,9 +67,28 @@ class Patch(PatchBase):
         point_fields = ['currentPos', 'lastPos']
         bool_fields = ['rebootingOption', 'init']
         for row in existing_data:
+            if 'instance' in row:
+                try:
+                    row['instance_id'] = int(row['instance'])
+                    del row['instance']
+                except ValueError:
+                    if row['instance'] == '':
+                        self._logger.warning('Found an non-instanced row in trs_status.  Skipping {}', row)
+                        continue
+                    instance_id_sql = "SELECT `instance_id` FROM `madmin_instance` WHERE `name` = %s"
+                    instance_id = self._db.autofetch_value(instance_id_sql, row['instance'])
+                    if not instance_id:
+                        self._logger.warning('Detected a device that has an invalid instance.  Skipping due to '
+                                             'foreign key issues {}', row)
+                        continue
+                    del row['instance']
+                    row['instance_id'] = instance_id
             if 'origin' in row:
                 dev_id_sql = "SELECT `device_id` FROM `settings_device` WHERE `name` = %s and `instance_id` = %s"
                 dev_id = self._db.autofetch_value(dev_id_sql, args=(row['origin'], row['instance_id']))
+                if not device_id:
+                    self._logger.warning('Device name is not a configured device.  Skipping {}', row)
+                    continue
                 del row['origin']
                 row['device_id'] = dev_id
             try:
