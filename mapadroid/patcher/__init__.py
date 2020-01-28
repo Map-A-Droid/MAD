@@ -226,6 +226,8 @@ class MADPatcher(object):
         self.dbwrapper.execute(sql, commit=True, suppress_log=True, raise_exc=True)
 
     def __validate_trs_schema(self):
+        point_fields = ['currentPos', 'lastPos']
+        bool_fields = ['rebootingOption', 'init']
         sql = "SHOW FIELDS FROM `trs_status`"
         fields = self.dbwrapper.autofetch_all(sql)
         field_defs = {}
@@ -235,6 +237,14 @@ class MADPatcher(object):
         sql = "SELECT %s FROM `trs_status`" % (','.join(field_defs.keys()),)
         if 'device_id' not in field_defs.keys() or 'instance_id' not in field_defs.keys():
             logger.info('Invalid schema detected on trs_status.  Rolling back to 22')
+            self._installed_ver = 22
+        for field in point_fields:
+            if field_defs[field]['Type'] == 'point':
+                continue
+            self._installed_ver = 22
+        for field in bool_fields:
+            if field_defs[field]['Type'] == 'tinyint(1)':
+                continue
             self._installed_ver = 22
 
     def __validate_versions_schema(self):

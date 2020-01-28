@@ -193,12 +193,6 @@ class DbSchemaUpdater:
             "ctype": "smallint(1) NULL"
         },
         {
-            "table": "trs_status",
-            "column": "instance_id",
-            "ctype": "int UNSIGNED NOT NULL FIRST",
-            "modify_key": "DROP PRIMARY KEY, ADD PRIMARY KEY (`instance_id`, `origin`)"
-        },
-        {
             "table": "trs_quest",
             "column": "quest_pokemon_form_id",
             "ctype": "smallint(6) NOT NULL DEFAULT 0"
