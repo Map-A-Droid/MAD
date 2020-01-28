@@ -1,7 +1,7 @@
-from . import area
+from .area import Area
 
 
-class AreaIVMITM(area.Area):
+class AreaIVMITM(Area):
     area_table = 'settings_area_iv_mitm'
     area_type = 'iv_mitm'
     configuration = {
@@ -70,7 +70,9 @@ class AreaIVMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = Disable PrioQ (Default: empty)",
+                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to "
+                                   "scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = "
+                                   "Disable PrioQ (Default: empty)",
                     "expected": int
                 }
             },
@@ -78,7 +80,8 @@ class AreaIVMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 300)",
+                    "description": "Cluster events within the given timedelta in seconds. The latest event in time "
+                                   "within a timedelta will be used to scan the clustered events (Default: 300)",
                     "expected": float
                 }
             },
@@ -86,7 +89,8 @@ class AreaIVMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Remove any events from priority queue that have been due for scanning before NOW - given time in seconds (Default: 0)",
+                    "description": "Remove any events from priority queue that have been due for scanning before NOW "
+                                   "- given time in seconds (Default: 0)",
                     "expected": bool
                 }
             },
@@ -95,7 +99,8 @@ class AreaIVMITM(area.Area):
                     "type": "option",
                     "require": False,
                     "values": [None, False, True],
-                    "description": "Disable round-robin of route vs. priority queue events. If True, your route may not be completed in time and e.g. only spawns will be scanned (Default: False)",
+                    "description": "Disable round-robin of route vs. priority queue events. If True, your route may not"
+                                   " be completed in time and e.g. only spawns will be scanned (Default: False)",
                     "expected": bool
                 }
             },

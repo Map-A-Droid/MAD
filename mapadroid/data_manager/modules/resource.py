@@ -1,9 +1,8 @@
 from collections import UserDict
-
 import mysql
-
+from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
 from mapadroid.utils.logging import logger
-from .. import dm_exceptions
+
 
 USER_READABLE_ERRORS = {
     str: 'string (MapADroid)',
@@ -29,7 +28,7 @@ class ResourceTracker(UserDict):
         super().__init__(initialdata)
         for key, entry in self.__config.items():
             try:
-                if entry['settings']['require'] == False:
+                if entry['settings']['require'] is False:
                     continue
                 if key not in initialdata:
                     self.issues['missing'].append(key)
@@ -39,7 +38,7 @@ class ResourceTracker(UserDict):
     def __delitem__(self, key):
         """ Removes the key from the dict.  Tracks it in the removal state so it can be correctly set to null """
         try:
-            if self.__config[key]['settings']['require'] == True:
+            if self.__config[key]['settings']['require'] is True:
                 if 'empty' in self.__config[key]['settings']:
                     super().__setitem__(key, self.__config[key]['settings']['empty'])
                 else:
@@ -52,7 +51,7 @@ class ResourceTracker(UserDict):
         for update_key in keys:
             try:
                 self.issues[update_key].remove(key)
-            except:
+            except ValueError:
                 pass
 
     def __setitem__(self, key, value):
@@ -77,18 +76,18 @@ class ResourceTracker(UserDict):
         try:
             empty = self.__config[key]['settings']['empty']
             has_empty = True
-        except:
+        except KeyError:
             has_empty = False
         if not isinstance(value, expected):
             try:
-                if value is None and required == False:
+                if value is None and required is False:
                     pass
                 else:
                     try:
                         if expected is list:
                             raise ValueError
                         value = self.format_value(value, expected)
-                    except:
+                    except Exception:
                         if has_empty and (value == empty or value is None):
                             if value != empty and value is None:
                                 value = empty
@@ -105,7 +104,7 @@ class ResourceTracker(UserDict):
                     this_iteration['missing'] = True
                     if key not in self.issues['missing']:
                         self.issues['missing'].append(key)
-        except:
+        except TypeError:
             pass
         # We only want to check sub-resources if we have finished the load from the DB
         if resource and self.completed:
@@ -116,7 +115,7 @@ class ResourceTracker(UserDict):
             for identifier in tmp:
                 try:
                     self._data_manager.get_resource(resource, identifier=identifier)
-                except dm_exceptions.UnknownIdentifier:
+                except UnknownIdentifier:
                     invalid.append((key, resource, identifier))
             if invalid:
                 this_iteration['invalud_uri'] = True
@@ -127,7 +126,7 @@ class ResourceTracker(UserDict):
         super().__setitem__(key, value)
         try:
             self.removal.remove(key)
-        except:
+        except ValueError:
             pass
         keys = ['invalid', 'invalid_uri', 'missing']
         for update_key in keys:
@@ -135,7 +134,7 @@ class ResourceTracker(UserDict):
                 continue
             try:
                 self.issues[update_key].remove(key)
-            except:
+            except ValueError:
                 pass
 
     def format_value(self, value, expected):
@@ -178,8 +177,8 @@ class Resource(object):
         if self.identifier is not None:
             try:
                 self.identifier = int(self.identifier)
-            except:
-                raise dm_exceptions.UnknownIdentifier()
+            except (TypeError, ValueError):
+                raise UnknownIdentifier()
             self._load()
         else:
             self._default_load()
@@ -241,14 +240,11 @@ class Resource(object):
         return self.get_resource().keys()
 
     def update(self, *args, **kwargs):
+        append = kwargs.get('append', False)
         try:
-            append = kwargs.get('append', False)
             del kwargs['append']
-        except:
+        except KeyError:
             append = False
-        invalid_fields = []
-        invalid_uris = []
-        unknown_fields = []
         for d in list(args) + [kwargs]:
             for k, v in d.items():
                 if type(v) is dict:
@@ -262,11 +258,11 @@ class Resource(object):
     def _cleanup_load(self):
         try:
             del self._data[self.primary_key]
-        except:
+        except KeyError:
             pass
         try:
             del self._data['instance_id']
-        except:
+        except KeyError:
             pass
         fields = ['fields', 'settings']
         for field in fields:
@@ -280,10 +276,10 @@ class Resource(object):
 
     def delete(self):
         if self.identifier is None:
-            raise dm_exceptions.UnknownIdentifier()
+            raise UnknownIdentifier()
         dependencies = self.get_dependencies()
         if dependencies:
-            raise dm_exceptions.DependencyError(dependencies)
+            raise DependencyError(dependencies)
         del_data = {
             self.primary_key: self.identifier,
             'instance_id': self.instance_id
@@ -310,7 +306,7 @@ class Resource(object):
         query = "SELECT * FROM `%s` WHERE `%s` = %%s AND `instance_id` = %%s" % (self.table, self.primary_key)
         data = self._dbc.autofetch_row(query, args=(self.identifier, self.instance_id))
         if not data:
-            raise dm_exceptions.UnknownIdentifier()
+            raise UnknownIdentifier()
         data = self.translate_keys(data, 'load')
         for field, val in data.items():
             if 'settings' in self.configuration and field in self.configuration['settings']:
@@ -327,9 +323,9 @@ class Resource(object):
             try:
                 for field, val in self.configuration[section].items():
                     try:
-                        val['settings']['require'] == True and val['settings']['empty']
+                        val['settings']['require'] is True and val['settings']['empty']
                         defaults[field] = val['settings']['empty']
-                    except:
+                    except KeyError:
                         continue
                 self._data[section] = ResourceTracker(self.configuration[section], self._data_manager,
                                                       initialdata=defaults)
@@ -366,7 +362,7 @@ class Resource(object):
         if issues:
             logger.debug('Unable to save the resource {} / {}: {}', self.__class__.__name__, self.identifier,
                          issues)
-            raise dm_exceptions.UpdateIssue(**issues)
+            raise UpdateIssue(**issues)
 
     def save(self, core_data=None, force_insert=False, ignore_issues=[], **kwargs):
         self.presave_validation(ignore_issues=ignore_issues)
@@ -403,7 +399,7 @@ class Resource(object):
                 }
                 self._dbc.autoexec_update(self.table, data, where_keyvals=where, **kwargs)
         except mysql.connector.Error as err:
-            raise dm_exceptions.SaveIssue(err)
+            raise SaveIssue(err)
         return self.identifier
 
     @classmethod

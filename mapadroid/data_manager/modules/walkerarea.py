@@ -1,7 +1,8 @@
-from . import resource
+from typing import Optional, List, Tuple
+from .resource import Resource
 
 
-class WalkerArea(resource.Resource):
+class WalkerArea(Resource):
     table = 'settings_walkerarea'
     name_field = 'walkertext'
     primary_key = 'walkerarea_id'
@@ -64,29 +65,29 @@ class WalkerArea(resource.Resource):
         }
     }
 
-    def get_dependencies(self):
+    def get_dependencies(self) -> List[Tuple[str, int]]:
         sql = 'SELECT `walker_id` FROM `settings_walker_to_walkerarea` WHERE `walkerarea_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, walkerarea_id in enumerate(dependencies[:]):
             dependencies[ind] = ('walker', walkerarea_id)
         return dependencies
 
-    def _load(self):
+    def _load(self) -> None:
         super()._load()
         try:
-            if self._data['fields']['walkermax'] == None:
+            if self._data['fields']['walkermax'] is None:
                 self._data['fields']['walkermax'] = ''
         except KeyError:
             self._data['fields']['walkermax'] = ''
 
-    def save(self, force_insert=False, ignore_issues=[]):
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
         self.presave_validation(ignore_issues=ignore_issues)
         try:
             if self._data['fields']['walkermax'] == '':
                 core_data = self.get_resource(backend=True)
                 core_data['walkermax'] = None
-                super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
+                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
             else:
-                super().save(force_insert=force_insert, ignore_issues=ignore_issues)
+                return super().save(force_insert=force_insert, ignore_issues=ignore_issues)
         except KeyError:
             super().save()

@@ -1,7 +1,8 @@
-from . import resource
+from typing import List, Tuple
+from .resource import Resource
 
 
-class DevicePool(resource.Resource):
+class DevicePool(Resource):
     table = 'settings_devicepool'
     name_field = 'devicepool'
     primary_key = 'pool_id'
@@ -58,7 +59,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in seconds after a screenshot has been taken and about to be saved (Default: 2.0 / 7.0 - Task Dependent)",
+                    "description": "Delay in seconds after a screenshot has been taken and about to be saved (Default: "
+                                   "2.0 / 7.0 - Task Dependent)",
                     "expected": float
                 }
             },
@@ -82,7 +84,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses do not necessarily appear immediately. (Default: 3.5)",
+                    "description": "Delay in minutes to wait before moving to the location of a hatched egg. Raidbosses"
+                                   " do not necessarily appear immediately. (Default: 3.5)",
                     "expected": float
                 }
             },
@@ -98,7 +101,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Number of seconds to tap the + button when clearing an inventory item. (Default: 3)",
+                    "description": "Number of seconds to tap the + button when clearing an inventory item. "
+                                   "(Default: 3)",
                     "expected": float
                 }
             },
@@ -106,7 +110,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Timeout in seconds while waiting for data after setting/reaching a location. (Default: 45)",
+                    "description": "Timeout in seconds while waiting for data after setting/reaching a location. "
+                                   "(Default: 45)",
                     "expected": float
                 }
             },
@@ -123,7 +128,8 @@ class DevicePool(resource.Resource):
                     "type": "option",
                     "require": False,
                     "values": [None, False, True],
-                    "description": "Reboot device if reboot_thresh is reached.  This value is doubled when init is active (Default: False)",
+                    "description": "Reboot device if reboot_thresh is reached.  This value is doubled when init is "
+                                   "active (Default: False)",
                     "expected": bool
                 }
             },
@@ -131,7 +137,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart device after restart Pogo N times. This value is doubled when init is active (Default: 3))",
+                    "description": "Restart device after restart Pogo N times. This value is doubled when init is "
+                                   "active (Default: 3)",
                     "expected": int
                 }
             },
@@ -139,7 +146,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Restart Pogo after reaching MITM Timeout N times.  This value is doubled when init is active (Default: 5)",
+                    "description": "Restart Pogo after reaching MITM Timeout N times.  This value is doubled when init "
+                                   "is active (Default: 5)",
                     "expected": int
                 }
             },
@@ -147,7 +155,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "The delay in seconds to wait after taking a screenshot to copy it and start the next (Default: 1)",
+                    "description": "The delay in seconds to wait after taking a screenshot to copy it and start the "
+                                   "next (Default: 1)",
                     "expected": float
                 }
             },
@@ -155,7 +164,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Adjust the x-axis click offset on devices with softbars and/or black upper bars. (+ right - left / Default: 0)",
+                    "description": "Adjust the x-axis click offset on devices with softbars and/or black upper bars. "
+                                   "(+ right - left / Default: 0)",
                     "expected": int
                 }
             },
@@ -163,7 +173,8 @@ class DevicePool(resource.Resource):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Adjust the y-axis click offset on devices with softbars and/or black upper bars. (+ down - up / Default: 0)",
+                    "description": "Adjust the y-axis click offset on devices with softbars and/or black upper bars. "
+                                   "(+ down - up / Default: 0)",
                     "expected": int
                 }
             },
@@ -197,7 +208,8 @@ class DevicePool(resource.Resource):
                     "type": "option",
                     "values": [None, False, True],
                     "require": False,
-                    "description": "Use this argument if there are login/logout problems with this device or you want to levelup accounts  (Default: False)",
+                    "description": "Use this argument if there are login/logout problems with this device or you want "
+                                   "to levelup accounts  (Default: False)",
                     "expected": bool
                 }
             },
@@ -212,7 +224,7 @@ class DevicePool(resource.Resource):
         }
     }
 
-    def get_dependencies(self):
+    def get_dependencies(self) -> List[Tuple[str, int]]:
         sql = 'SELECT `device_id` FROM `settings_device` WHERE `pool_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier))
         for ind, walkerarea_id in enumerate(dependencies[:]):

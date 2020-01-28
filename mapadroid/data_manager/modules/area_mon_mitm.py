@@ -1,7 +1,7 @@
-from . import area
+from .area import Area
 
 
-class AreaMonMITM(area.Area):
+class AreaMonMITM(Area):
     area_table = 'settings_area_mon_mitm'
     area_type = 'mon_mitm'
     configuration = {
@@ -73,7 +73,8 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to determine if the worker should walk or teleport (Default: 0)",
+                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to "
+                                   "determine if the worker should walk or teleport (Default: 0)",
                     "expected": float
                 }
             },
@@ -81,7 +82,8 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Max. distance of walking - If the distance between points is greater than this value the worker will teleport (Default: 0)",
+                    "description": "Max. distance of walking - If the distance between points is greater than this "
+                                   "value the worker will teleport (Default: 0)",
                     "expected": float
                 }
             },
@@ -89,7 +91,9 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = Disable PrioQ (Default: empty)",
+                    "description": "Offset to be added to events such as spawns or raid starts. E.g. if you want to "
+                                   "scan gyms at least a minute after an egg has hatched, set it to 60.  Empty = "
+                                   "Disable PrioQ (Default: empty)",
                     "expected": int
                 }
             },
@@ -97,7 +101,8 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Cluster events within the given timedelta in seconds. The latest event in time within a timedelta will be used to scan the clustered events (Default: 300)",
+                    "description": "Cluster events within the given timedelta in seconds. The latest event in time "
+                                   "within a timedelta will be used to scan the clustered events (Default: 300)",
                     "expected": float
                 }
             },
@@ -105,7 +110,8 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Maximum number of prioQ events to cluster (default: unlimited, 0 or empty to set unlimited)",
+                    "description": "Maximum number of prioQ events to cluster (default: unlimited, 0 or empty to set "
+                                   "unlimited)",
                     "expected": int
                 }
             },
@@ -113,7 +119,9 @@ class AreaMonMITM(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Remove any events from priority queue that have been due for scanning more than the given number of seconds ago. Setting this to 0 can cause a significant backlog buildup, leading to reduced scanning performance. (Default: 300)",
+                    "description": "Remove any events from priority queue that have been due for scanning more than "
+                                   "the given number of seconds ago. Setting this to 0 can cause a significant backlog "
+                                   "buildup, leading to reduced scanning performance. (Default: 300)",
                     "expected": float
                 }
             },
@@ -122,7 +130,8 @@ class AreaMonMITM(area.Area):
                     "type": "option",
                     "require": False,
                     "values": [None, False, True],
-                    "description": "Disable round-robin of route vs. priority queue events. If True, your route may not be completed in time and e.g. only spawns will be scanned (Default: False)",
+                    "description": "Disable round-robin of route vs. priority queue events. If True, your route may "
+                                   "not be completed in time and e.g. only spawns will be scanned (Default: False)",
                     "expected": bool
                 }
             },

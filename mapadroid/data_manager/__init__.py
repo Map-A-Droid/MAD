@@ -1,5 +1,6 @@
 import collections
-
+import copy
+from typing import Optional, List, Dict
 from . import modules
 from .dm_exceptions import (
     ModeUnknown,
@@ -7,16 +8,19 @@ from .dm_exceptions import (
     InvalidSection,
     DataManagerException
 )
+from .modules.resource import Resource
+from mapadroid.db.DbWrapper import DbWrapper
+
 
 # This is still known as the data manager but its more of a Resource Factory.  Its sole purpose is to produce a
 # single resource or a list of resources
 class DataManager(object):
-    def __init__(self, dbc, instance_id):
+    def __init__(self, dbc: DbWrapper, instance_id: int):
         self.dbc = dbc
         self.instance_id = instance_id
         self.__paused_devices = []
 
-    def clear_on_boot(self):
+    def clear_on_boot(self) -> None:
         # This function should handle any on-boot clearing.  It is not initiated by __init__ on the off-chance that
         # a third-party integration has triggered the data_manager
         # Clear any route calcs because that thread is not active
@@ -27,7 +31,7 @@ class DataManager(object):
             }
             self.dbc.autoexec_update('settings_routecalc', clear_recalcs)
 
-    def get_resource(self, section, identifier=None, **kwargs):
+    def get_resource(self, section: str, identifier: Optional[int] = None, **kwargs) -> Resource:
         if section == 'area':
             return modules.AreaFactory(self, identifier=identifier)
         try:
@@ -35,7 +39,7 @@ class DataManager(object):
         except KeyError:
             raise InvalidSection()
 
-    def get_resource_def(self, section, **kwargs):
+    def get_resource_def(self, section: str, **kwargs) -> Resource:
         mode = kwargs.get('mode', None)
         if section == 'area':
             if mode is None:
@@ -48,9 +52,7 @@ class DataManager(object):
             resource_class = modules.MAPPINGS[section]
         return resource_class
 
-    def get_root_resource(self, section, **kwargs):
-        fetch_all = kwargs.get('fetch_all', 1)
-        mode = kwargs.get('mode', None)
+    def get_root_resource(self, section: str, **kwargs) -> Dict[int, Resource]:
         default_sort = kwargs.get('default_sort', None)
         backend = kwargs.get('backend', False)
         resource_class = None
@@ -81,7 +83,7 @@ class DataManager(object):
             data[identifier] = elem
         return data
 
-    def get_settings(self, section, **kwargs):
+    def get_settings(self, section: str, **kwargs) -> Dict[str, str]:
         resource_class = self.get_resource_def(section, **kwargs)
         config = resource_class.configuration
         valid_config = {}
@@ -92,9 +94,9 @@ class DataManager(object):
             pass
         return valid_config
 
-    def search(self, section, **kwargs):
+    def search(self, section: str, **kwargs) -> Dict[int, Resource]:
         resource_def = kwargs.get('resource_def', None)
-        resource_info = kwargs.get('resource_info', None)
+        mode = kwargs.get('mode', None)
         params = kwargs.get('params', {})
         if resource_def is None:
             try:
@@ -108,13 +110,13 @@ class DataManager(object):
             results[identifier] = resource
         return results
 
-    def get_valid_modes(self, section):
+    def get_valid_modes(self, section: str) -> List[str]:
         valid_modes = []
         if section == 'area':
             valid_modes = sorted(modules.AREA_MAPPINGS.keys())
         return valid_modes
 
-    def set_device_state(self, dev_name, active):
+    def set_device_state(self, dev_name: str, active: int) -> None:
         if active == 1:
             try:
                 self.__paused_devices.remove(dev_name)
@@ -124,5 +126,5 @@ class DataManager(object):
             if dev_name not in self.__paused_devices:
                 self.__paused_devices.append(dev_name)
 
-    def is_device_active(self, dev_name):
+    def is_device_active(self, dev_name: str) -> bool:
         return dev_name not in self.__paused_devices

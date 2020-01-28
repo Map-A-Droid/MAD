@@ -1,8 +1,10 @@
-from . import resource
+from typing import Optional, List, Tuple
+from ..dm_exceptions import DataManagerException
+from .resource import Resource
 from .walkerarea import WalkerArea
 
 
-class Walker(resource.Resource):
+class Walker(Resource):
     table = 'settings_walker'
     name_field = 'walkername'
     primary_key = 'walker_id'
@@ -35,14 +37,14 @@ class Walker(resource.Resource):
         }
     }
 
-    def get_dependencies(self):
+    def get_dependencies(self) -> List[Tuple[str, int]]:
         sql = 'SELECT `device_id` FROM `settings_device` WHERE `walker_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, device_id in enumerate(dependencies[:]):
             dependencies[ind] = ('device', device_id)
         return dependencies
 
-    def delete(self):
+    def delete(self) -> None:
         # Get all walkerareas to determine if they need to be cleaned up
         sql = "SELECT `walkerarea_id` FROM `settings_walker_to_walkerarea` WHERE `walker_id` = %s"
         walkerareas = self._dbc.autofetch_column(sql, args=(self.identifier,))
@@ -55,7 +57,7 @@ class Walker(resource.Resource):
                 walkerarea = WalkerArea(self._data_manager, identifier=walkerarea_id)
                 walkerarea.delete()
 
-    def _load(self):
+    def _load(self) -> None:
         super()._load()
         mon_query = "SELECT `walkerarea_id`\n" \
                     "FROM `settings_walker_to_walkerarea`\n" \
@@ -63,7 +65,7 @@ class Walker(resource.Resource):
         mons = self._dbc.autofetch_column(mon_query, args=(self.identifier))
         self._data['fields']['setup'] = mons
 
-    def save(self, force_insert=False, ignore_issues=[]):
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
         self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
             'walkername': self._data['fields']['walkername']
@@ -89,6 +91,6 @@ class Walker(resource.Resource):
             try:
                 resource = self._data_manager.get_resource('walkerarea', identifier=removed)
                 resource.delete()
-            except:
+            except DataManagerException:
                 pass
         return self.identifier

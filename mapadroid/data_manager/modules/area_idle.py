@@ -1,7 +1,7 @@
-from . import area
+from .area import Area
 
 
-class AreaIdle(area.Area):
+class AreaIdle(Area):
     area_table = 'settings_area_idle'
     area_type = 'idle'
     configuration = {
