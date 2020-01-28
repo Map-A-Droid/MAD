@@ -10,7 +10,7 @@ from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.language import i8ln, open_json_file
 from mapadroid.utils.logging import logger
-from mapadroid.utils.data_manager.dm_exceptions import (
+from mapadroid.data_manager.dm_exceptions import (
     ModeNotSpecified,
     ModeUnknown
 )

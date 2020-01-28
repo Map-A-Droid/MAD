@@ -30,7 +30,7 @@ from mapadroid.patcher import MADPatcher
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.websocket.WebsocketServer import WebsocketServer
 from mapadroid.utils.updater import deviceUpdater
-from mapadroid.utils.data_manager import DataManager
+from mapadroid.data_manager import DataManager
 
 import unittest
 

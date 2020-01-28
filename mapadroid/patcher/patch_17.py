@@ -3,8 +3,8 @@ import copy
 import json
 import os
 from pathlib import Path
-import mapadroid.utils.data_manager.modules
-from mapadroid.utils.data_manager.dm_exceptions import (
+import mapadroid.data_manager.modules
+from mapadroid.data_manager.dm_exceptions import (
     UpdateIssue
 )
 
@@ -118,7 +118,7 @@ class Patch(PatchBase):
                     if section == 'areas':
                         mode = elem['mode']
                         del elem['mode']
-                        resource = mapadroid.utils.data_manager.modules.MAPPINGS['area'](
+                        resource = mapadroid.data_manager.modules.MAPPINGS['area'](
                             self._data_manager, mode=mode)
                         geofence_sections = ['geofence_included', 'geofence_excluded']
                         for geofence_section in geofence_sections:
@@ -159,7 +159,7 @@ class Patch(PatchBase):
                             if route in routecalcs:
                                 elem['routecalc'] = routecalcs[route]
                     else:
-                        resource = mapadroid.utils.data_manager.modules.MAPPINGS[dm_section](
+                        resource = mapadroid.data_manager.modules.MAPPINGS[dm_section](
                             self._data_manager)
                     # Settings made it into some configs where it should not be.  lets clear those out now
                     if 'settings' in elem and 'settings' not in resource.configuration:

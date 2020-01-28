@@ -15,9 +15,9 @@ from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.data_manager import DataManager
-from mapadroid.utils.data_manager.modules.geofence import GeoFence
-from mapadroid.utils.data_manager.modules.routecalc import RouteCalc
+from mapadroid.data_manager import DataManager
+from mapadroid.data_manager.modules.geofence import GeoFence
+from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import logger
 from mapadroid.utils.walkerArgs import parseArgs
