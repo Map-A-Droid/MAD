@@ -43,6 +43,8 @@ class MADPatcher(object):
         if self._installed_ver is None:
             self.__convert_mappings()
             self.__get_installed_version()
+            if self._installed_ver in [23, 24]:
+                self.__validate_trs_schema()
             self._schema_updater.ensure_unversioned_tables_exist()
             self._schema_updater.ensure_unversioned_columns_exist()
             self._schema_updater.create_madmin_databases_if_not_exists()
@@ -222,6 +224,18 @@ class MADPatcher(object):
     def __update_versions_table(self):
         sql = "ALTER TABLE `versions` ADD PRIMARY KEY(`key`)"
         self.dbwrapper.execute(sql, commit=True, suppress_log=True, raise_exc=True)
+
+    def __validate_trs_schema(self):
+        sql = "SHOW FIELDS FROM `trs_status`"
+        fields = self.dbwrapper.autofetch_all(sql)
+        field_defs = {}
+        for field in fields:
+            field_name = field['Field']
+            field_defs[field_name] = field
+        sql = "SELECT %s FROM `trs_status`" % (','.join(field_defs.keys()),)
+        if 'device_id' not in field_defs.keys() or 'instance_id' not in field_defs.keys():
+            logger.info('Invalid schema detected on trs_status.  Rolling back to 22')
+            self._installed_ver = 22
 
     def __validate_versions_schema(self):
         """ Verify status of the versions table
