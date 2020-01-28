@@ -85,12 +85,12 @@ class Patch(PatchBase):
                     row['instance_id'] = instance_id
             if 'origin' in row:
                 dev_id_sql = "SELECT `device_id` FROM `settings_device` WHERE `name` = %s and `instance_id` = %s"
-                dev_id = self._db.autofetch_value(dev_id_sql, args=(row['origin'], row['instance_id']))
+                device_id = self._db.autofetch_value(dev_id_sql, args=(row['origin'], row['instance_id']))
                 if not device_id:
                     self._logger.warning('Device name is not a configured device.  Skipping {}', row)
                     continue
                 del row['origin']
-                row['device_id'] = dev_id
+                row['device_id'] = device_id
             try:
                 row['area_id'] = int(row['routemanager'])
                 if row['area_id'] == 0:
