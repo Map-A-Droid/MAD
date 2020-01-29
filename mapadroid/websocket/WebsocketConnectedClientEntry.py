@@ -85,17 +85,17 @@ class WebsocketConnectedClientEntry:
                 self.fail_counter = 0
                 if isinstance(new_entry.message, str):
                     logger.debug("Response to {}: {}",
-                                 str(id), str(new_entry.message.strip()))
+                                 self.origin, str(new_entry.message.strip()))
                 else:
-                    logger.debug("Received binary data to {}, starting with {}", str(
-                        id), str(new_entry.message[:10]))
+                    logger.debug("Received binary data to {}, starting with {}", self.origin,
+                                 str(new_entry.message[:10]))
                 response = new_entry.message
         except asyncio.TimeoutError:
             logger.warning("Timeout, increasing timeout-counter of {}", self.origin)
             self.fail_counter += 1
             if self.fail_counter > 5:
                 logger.error("5 consecutive timeouts to {} or origin is not longer connected, cleanup",
-                             str(id))
+                             self.origin)
                 raise WebsocketWorkerTimeoutException
         finally:
             logger.debug("Cleaning up received messaged of {}.", self.origin)
@@ -113,7 +113,7 @@ class WebsocketConnectedClientEntry:
             to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
             to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
             to_be_sent += message
-            logger.debug("To be sent to {} (message ID: {}): {}", id, message_id, str(to_be_sent[:10]))
+            logger.debug("To be sent to {} (message ID: {}): {}", self.origin, message_id, str(to_be_sent[:10]))
         else:
             logger.error("Tried to send invalid message (bytes without byte command or no byte/str passed)")
             return
