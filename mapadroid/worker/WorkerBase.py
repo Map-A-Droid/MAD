@@ -296,6 +296,8 @@ class WorkerBase(AbstractWorker):
                     pogo_started = self._start_pogo()
             else:
                 pogo_started = self._start_pogo()
+        except Exception as e:
+            logger.warning("Exception during internal health check of worker, not handled further: {}", e)
         finally:
             self._work_mutex.release()
         logger.debug("_internal_health_check: worker lock released")

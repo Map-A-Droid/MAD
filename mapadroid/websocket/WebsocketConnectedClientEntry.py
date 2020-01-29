@@ -59,7 +59,7 @@ class WebsocketConnectedClientEntry:
         if self.worker_instance is None or self.worker_instance != worker_instance and worker_instance != 'madmin':
             # TODO: consider changing this...
             raise WebsocketWorkerRemovedException
-        elif self.websocket_client_connection.closed:
+        elif not self.websocket_client_connection.open:
             raise WebsocketWorkerConnectionClosedException
 
         # install new ReceivedMessageEntry
@@ -92,15 +92,16 @@ class WebsocketConnectedClientEntry:
                 response = new_entry.message
         except asyncio.TimeoutError:
             logger.warning("Timeout, increasing timeout-counter of {}", self.origin)
-            # TODO: why is the user removed here?
             self.fail_counter += 1
             if self.fail_counter > 5:
                 logger.error("5 consecutive timeouts to {} or origin is not longer connected, cleanup",
                              str(id))
                 raise WebsocketWorkerTimeoutException
         finally:
+            logger.debug("Cleaning up received messaged of {}.", self.origin)
             async with self.received_mutex:
                 self.received_messages.pop(message_id)
+        logger.debug("Done sending command to {}.", self.origin)
         return response
 
     async def __send_message(self, message_id: int, message: MessageTyping,
