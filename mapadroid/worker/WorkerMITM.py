@@ -135,6 +135,12 @@ class WorkerMITM(MITMBase):
         if not self._wait_for_injection() or self._stop_worker_event.is_set():
             raise InternalStopWorkerException
 
+        reached_main_menu = self._check_pogo_main_screen(10, True)
+        if not reached_main_menu:
+            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                # TODO: put in loop, count up for a reboot ;)
+                raise InternalStopWorkerException
+
     def __update_injection_settings(self):
         injected_settings = {}
 
