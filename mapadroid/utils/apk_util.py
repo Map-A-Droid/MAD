@@ -367,15 +367,15 @@ def get_mad_apks(db) -> dict:
 
 def get_mad_apk(db, apk_type, architecture='noarch') -> dict:
     apks = get_mad_apks(db)
-    apk_type, architecture = convert_to_backend(apk_type=apk_type, apk_arch=architecture)
+    apk_type, apk_arch = convert_to_backend(apk_type=apk_type, apk_arch=architecture)
     try:
-        return apks[global_variables.MAD_APK_USAGE[apk_type]][architecture]
+        return apks[global_variables.MAD_APK_USAGE[apk_type]][apk_arch]
     except KeyError:
         try:
-            return apks[apk_type][architecture]
+            return apks[apk_type][apk_arch]
         except:
             pass
-        if architecture != 'noarch':
+        if apk_arch != global_variables.MAD_APK_ARCH_NOARCH:
             return get_mad_apk(db, apk_type)
         else:
             return False
