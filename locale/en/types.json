@@ -142,5 +142,21 @@
   "38": {
     "prototext": "QUEST_BUDDY_YATTA",
     "text": ""
+  },
+  "39": {
+    "prototext": "QUEST_CATCH_VOTE0_PLURAL",
+    "text": "Vote for Machop Community Day! Catch {0} Pokémon"
+  },
+  "40": {
+    "prototext": "QUEST_CATCH_VOTE1_PLURAL",
+    "text": "Vote for Rhyhorn Community Day! Catch {0} Pokémon"
+  },
+  "41": {
+    "prototext": "QUEST_CATCH_VOTE2_PLURAL",
+    "text": "Vote for Vulpix Community Day! Catch {0} Pokémon"
+  },
+  "42": {
+    "prototext": "QUEST_CATCH_VOTE3_PLURAL",
+    "text": "Vote for Dratini Community Day! Catch {0} Pokémon"
   }
 }
