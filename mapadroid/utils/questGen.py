@@ -47,7 +47,7 @@ def generate_quest(quest):
 
     if not quest['task']:
         quest_task = questtask(
-            quest['quest_type'], quest['quest_condition'], quest['quest_target'], quest['quest_template'])
+            quest['quest_type'], quest['quest_condition'], quest['quest_target'])
     else:
         quest_task = quest['task']
 
@@ -114,7 +114,7 @@ def pokemonname(id):
     return file[str(int(id))]["name"]
 
 
-def questtask(typeid, condition, target, quest_template):
+def questtask(typeid, condition, target):
     gettext.find('quest', 'locales', all=True)
     lang = gettext.translation('quest', localedir='locale', fallback=True)
     lang.install()
@@ -333,10 +333,6 @@ def questtask(typeid, condition, target, quest_template):
                 # Condition type 18 means win a battle
                 # TODO change WIN to Defeat like in-game
                 text = text.replace(_('Battle'), _('Win'))
-
-    quest_templates = open_json_file('quest_templates')
-    if quest_template in quest_templates:
-        text = _(quest_templates[quest_template])
 
     if int(target) == int(1):
         text = text.replace(_(' Eggs'), _('n Egg'))
