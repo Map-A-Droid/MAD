@@ -334,15 +334,6 @@ def questtask(typeid, condition, target):
                 # TODO change WIN to Defeat like in-game
                 text = text.replace(_('Battle'), _('Win'))
 
-    elif typeid == 39:
-        text = _('Vote for Machop Community Day! Catch {0} Pokémon')
-    elif typeid == 40:
-        text = _('Vote for Machop Community Day! Catch {0} Pokémon')
-    elif typeid == 41:
-        text = _('Vote for Machop Community Day! Catch {0} Pokémon')
-    elif typeid == 42:
-        text = _('Vote for Machop Community Day! Catch {0} Pokémon')
-
     if int(target) == int(1):
         text = text.replace(_(' Eggs'), _('n Egg'))
         text = text.replace(_(' Raids'), _(' Raid'))
