@@ -250,6 +250,12 @@ class RouteManagerBase(ABC):
     def _check_started(self):
         return self._is_started
 
+    def _reboot_worker(self, origin):
+        get_worker_ws_connection = self._ws_server.get_origin_communicator(origin)
+        if get_worker_ws_connection:
+            logger.info("Rebooting Worker {}".format(str(origin)))
+            get_worker_ws_connection.reboot()
+
     def _start_priority_queue(self):
         logger.info("Try to activate PrioQ thread for route {}".format(str(self.name)))
         if (
@@ -830,6 +836,7 @@ class RouteManagerBase(ABC):
                             "Worker {} has not accessed a location in {} seconds, removing from routemanager",
                             origin, timeout)
                         self.unregister_worker(origin)
+                        self._reboot_worker(origin)
 
             i = 0
             while i < 60 and not self._stop_update_thread.is_set():
