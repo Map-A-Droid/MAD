@@ -58,48 +58,6 @@ CREATE TABLE `gymdetails` (
         ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `gymmember` (
-    `gym_id` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `pokemon_uid` bigint(20) unsigned NOT NULL,
-    `last_scanned` datetime NOT NULL,
-    `deployment_time` datetime NOT NULL,
-    `cp_decayed` smallint(6) NOT NULL,
-    KEY `gymmember_gym_id` (`gym_id`),
-    KEY `gymmember_pokemon_uid` (`pokemon_uid`),
-    KEY `gymmember_last_scanned` (`last_scanned`),
-    PRIMARY KEY (`gym_id`),
-    CONSTRAINT `fk_gm_gym_id` FOREIGN KEY (`gym_id`)
-        REFERENCES `gym` (`gym_id`)
-        ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
-CREATE TABLE `gympokemon` (
-    `pokemon_uid` bigint(20) unsigned NOT NULL,
-    `pokemon_id` smallint(6) NOT NULL,
-    `cp` smallint(6) NOT NULL,
-    `trainer_name` varchar(191) COLLATE utf8mb4_unicode_ci NOT NULL,
-    `num_upgrades` smallint(6) DEFAULT NULL,
-    `move_1` smallint(6) DEFAULT NULL,
-    `move_2` smallint(6) DEFAULT NULL,
-    `height` float DEFAULT NULL,
-    `weight` float DEFAULT NULL,
-    `stamina` smallint(6) DEFAULT NULL,
-    `stamina_max` smallint(6) DEFAULT NULL,
-    `cp_multiplier` float DEFAULT NULL,
-    `additional_cp_multiplier` float DEFAULT NULL,
-    `iv_defense` smallint(6) DEFAULT NULL,
-    `iv_stamina` smallint(6) DEFAULT NULL,
-    `iv_attack` smallint(6) DEFAULT NULL,
-    `gender` smallint(6) DEFAULT NULL,
-    `form` smallint(6) DEFAULT NULL,
-    `costume` smallint(6) DEFAULT NULL,
-    `weather_boosted_condition` smallint(6) DEFAULT NULL,
-    `shiny` tinyint(1) DEFAULT NULL,
-    `last_seen` datetime NOT NULL,
-    PRIMARY KEY (`pokemon_uid`),
-    KEY `gympokemon_trainer_name` (`trainer_name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
 CREATE TABLE `mad_apk_autosearch` (
     `usage` int(11) NOT NULL,
     `arch` int(11) NOT NULL,
