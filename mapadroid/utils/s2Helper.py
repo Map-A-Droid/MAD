@@ -1,6 +1,5 @@
 import math
 import multiprocessing
-import sys
 from typing import List
 
 import gpxdata
@@ -182,10 +181,9 @@ class S2Helper:
             if not results:
                 logger.error('No cells regarded as valid for desired scan area. '
                              'Check your provided geofences. Aborting.')
-                sys.exit(1)
-        logger.info("Ordering location")
-        results = S2Helper.order_location_list_rows(results)
-
+            else:
+                logger.info("Ordering location")
+                results = S2Helper.order_location_list_rows(results)
         return results
 
     @staticmethod

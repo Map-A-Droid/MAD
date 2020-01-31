@@ -93,3 +93,14 @@ class Area(resource.Resource):
               "%s\n" \
               "ORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, where, res_obj.search_field)
         return dbc.autofetch_column(sql, args=tuple(sql_args))
+
+    def validate_custom(self):
+        issues = {}
+        try:
+            if self._data['fields']['geofence_included'] == self._data['fields']['geofence_excluded']:
+                issues = {
+                    'invalid': [('geofence_excluded', 'Cannot be the same as geofence_included')]
+                }
+        except KeyError:
+            pass
+        return issues

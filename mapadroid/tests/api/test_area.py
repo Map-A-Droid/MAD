@@ -144,3 +144,14 @@ class APIArea(api_base.APITestBase):
         response = self.api.post(area_obj['uri'], json=recalc_payload, headers=headers)
         self.assertEqual(response.status_code, 204)
         self.remove_resources()
+
+    def test_invalid_geofence_settings(self):
+        area_obj = super().create_valid_resource('area')
+        patch = {
+            'geofence_excluded': area_obj['resources']['geofence_included']['uri']
+        }
+        response = self.api.patch(area_obj['uri'], json=patch)
+        expected = {'invalid': [['geofence_excluded', 'Cannot be the same as geofence_included']]}
+        self.assertDictEqual(response.json(), expected)
+        self.assertEqual(response.status_code, 422)
+        self.remove_resources()
