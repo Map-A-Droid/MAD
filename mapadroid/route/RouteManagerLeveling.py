@@ -11,6 +11,18 @@ from mapadroid.utils.logging import logger
 
 
 class RouteManagerLeveling(RouteManagerQuests):
+    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
+                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
+                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+                 level: bool = False, calctype: str = "quick", joinqueue=None, ws_server = None):
+        RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+                                    max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
+                                    path_to_include_geofence=path_to_include_geofence,
+                                    path_to_exclude_geofence=path_to_exclude_geofence,
+                                    routefile=routefile, init=init,
+                                    name=name, settings=settings, mode=mode, level=level, calctype=calctype,
+                                    joinqueue=joinqueue, ws_server=ws_server
+                                    )
 
     def worker_changed_update_routepools(self):
         with self._manager_mutex and self._workers_registered_mutex:
@@ -66,19 +78,6 @@ class RouteManagerLeveling(RouteManagerQuests):
                                              True)
 
         return new_route
-
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "quick", joinqueue=None):
-        RouteManagerQuests.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                    max_radius=max_radius, max_coords_within_radius=max_coords_within_radius,
-                                    path_to_include_geofence=path_to_include_geofence,
-                                    path_to_exclude_geofence=path_to_exclude_geofence,
-                                    routefile=routefile, init=init,
-                                    name=name, settings=settings, mode=mode, level=level, calctype=calctype,
-                                    joinqueue=joinqueue
-                                    )
 
     def generate_stop_list(self):
         time.sleep(5)

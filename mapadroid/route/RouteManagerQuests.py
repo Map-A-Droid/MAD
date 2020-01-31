@@ -10,6 +10,26 @@ Location = collections.namedtuple('Location', ['lat', 'lng'])
 
 
 class RouteManagerQuests(RouteManagerBase):
+    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
+                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
+                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
+                 level: bool = False, calctype: str = "quick", joinqueue=None, ws_server = None):
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+                                  max_radius=max_radius,
+                                  max_coords_within_radius=max_coords_within_radius,
+                                  path_to_include_geofence=path_to_include_geofence,
+                                  path_to_exclude_geofence=path_to_exclude_geofence,
+                                  routefile=routefile, init=init,
+                                  name=name, settings=settings, mode=mode, level=level, calctype=calctype,
+                                  joinqueue=joinqueue, ws_server=ws_server
+                                  )
+        self.starve_route = False
+        self._stoplist: List[Location] = []
+
+        self._shutdown_route: bool = False
+        self._routecopy: List[Location] = []
+        self._tempinit: bool = False
+
     def generate_stop_list(self):
         time.sleep(5)
         stops = self.db_wrapper.stop_from_db_without_quests(self.geofence_helper)
@@ -39,26 +59,6 @@ class RouteManagerQuests(RouteManagerBase):
                               in_memory=True)
 
         self._init_route_queue()
-
-    def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
-                 max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
-                 routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "quick", joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                  max_radius=max_radius,
-                                  max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, level=level, calctype=calctype,
-                                  joinqueue=joinqueue
-                                  )
-        self.starve_route = False
-        self._stoplist: List[Location] = []
-
-        self._shutdown_route: bool = False
-        self._routecopy: List[Location] = []
-        self._tempinit: bool = False
 
     def _get_coords_after_finish_route(self) -> bool:
         self._manager_mutex.acquire()
