@@ -1,7 +1,9 @@
-from . import resource
+from typing import Optional, Dict, List, Tuple
+from .resource import Resource
+from mapadroid.db.DbWrapper import DbWrapper
 
 
-class Area(resource.Resource):
+class Area(Resource):
     table = 'settings_area'
     name_field = 'name'
     primary_key = 'area_id'
@@ -10,19 +12,19 @@ class Area(resource.Resource):
         'mon_ids_iv': 'monlist_id'
     }
 
-    def get_dependencies(self):
+    def get_dependencies(self) -> List[Tuple[str, int]]:
         sql = 'SELECT `walkerarea_id` FROM `settings_walkerarea` WHERE `area_id` = %s'
         dependencies = self._dbc.autofetch_column(sql, args=(self.identifier,))
         for ind, walkerarea_id in enumerate(dependencies[:]):
             dependencies[ind] = ('walkerarea', walkerarea_id)
         return dependencies
 
-    def get_resource(self, backend=False):
+    def get_resource(self, backend: Optional[bool] = False) -> Resource:
         resource = super().get_resource(backend=backend)
         resource['mode'] = self.area_type
         return resource
 
-    def _load(self):
+    def _load(self) -> None:
         super()._load()
         mode_query = "SELECT * FROM `%s` WHERE `area_id` = %%s" % (self.area_table,)
         mode_data = self._dbc.autofetch_row(mode_query, args=(self.identifier))
@@ -31,7 +33,7 @@ class Area(resource.Resource):
             if field in self.configuration['fields']:
                 self._data['fields'][field] = val
             elif 'settings' in self.configuration and field in self.configuration[
-                'settings'] and val is not None:
+                 'settings'] and val is not None:
                 self._data['settings'][field] = val
             else:
                 continue
@@ -39,7 +41,7 @@ class Area(resource.Resource):
         routecalc = self._data_manager.get_resource('routecalc', self._data['fields']['routecalc'])
         self.recalc_status = routecalc.recalc_status
 
-    def save(self, force_insert=False, ignore_issues=[]):
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
         has_identifier = True if self.identifier else False
         self.presave_validation(ignore_issues=ignore_issues)
         core_data = {
@@ -52,7 +54,7 @@ class Area(resource.Resource):
                 save_data = {}
                 if self._data['settings']:
                     save_data.update(dict(self._data['settings']))
-            except KeyError as err:
+            except KeyError:
                 pass
             for field in self.configuration['fields']:
                 if field in core_data:
@@ -68,7 +70,7 @@ class Area(resource.Resource):
                     routecalc.save()
                     save_data['routecalc'] = routecalc.identifier
                 save_data = self.translate_keys(save_data, 'save')
-                res = self._dbc.autoexec_insert(self.area_table, save_data, optype="ON DUPLICATE")
+                self._dbc.autoexec_insert(self.area_table, save_data, optype="ON DUPLICATE")
             return self.identifier
         except Exception as err:
             if not has_identifier and self.identifier:
@@ -80,7 +82,7 @@ class Area(resource.Resource):
             raise err
 
     @classmethod
-    def search(cls, dbc, res_obj, instance_id, *args, **kwargs):
+    def search(cls, dbc: DbWrapper, res_obj: Resource, instance_id: int, *args, **kwargs):
         where = ""
         mode = kwargs.get('mode', None)
         where = "WHERE `instance_id` = %s"
@@ -94,7 +96,7 @@ class Area(resource.Resource):
               "ORDER BY `%s` ASC" % (res_obj.primary_key, res_obj.table, where, res_obj.search_field)
         return dbc.autofetch_column(sql, args=tuple(sql_args))
 
-    def validate_custom(self):
+    def validate_custom(self) -> Dict[str, List[Tuple[str, str]]]:
         issues = {}
         try:
             if self._data['fields']['geofence_included'] == self._data['fields']['geofence_excluded']:

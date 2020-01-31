@@ -1,14 +1,14 @@
 import json
 import numpy as np
-
+from typing import Optional, Dict, List, Tuple
+from .resource import Resource
+from ..dm_exceptions import UnknownIdentifier
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import logger
-from . import resource
-from .. import dm_exceptions
 
 
-class RouteCalc(resource.Resource):
+class RouteCalc(Resource):
     table = 'settings_routecalc'
     primary_key = 'routecalc_id'
     configuration = {
@@ -25,17 +25,16 @@ class RouteCalc(resource.Resource):
         }
     }
 
-    def _default_load(self):
+    def _default_load(self) -> None:
         self.recalc_status = False
 
-    def get_dependencies(self):
+    def get_dependencies(self) -> None:
         tables = ['settings_area_idle',
                   'settings_area_iv_mitm',
                   'settings_area_mon_mitm',
                   'settings_area_pokestops',
                   'settings_area_raids_mitm'
                   ]
-        columns = ['geofence_included', 'geofence_excluded']
         sql = 'SELECT `area_id` FROM `%s` WHERE `routecalc` = %%s'
         dependencies = []
         for table in tables:
@@ -44,20 +43,21 @@ class RouteCalc(resource.Resource):
                 area_dependencies = self._dbc.autofetch_column(table_sql, args=(self.identifier))
                 for ind, area_id in enumerate(area_dependencies[:]):
                     dependencies.append(('area', area_id))
-            except:
+            except TypeError:
                 pass
         return dependencies
 
-    def _load(self):
+    def _load(self) -> None:
         query = "SELECT * FROM `%s` WHERE `%s` = %%s AND `instance_id` = %%s" % (self.table, self.primary_key)
         data = self._dbc.autofetch_row(query, args=(self.identifier, self.instance_id))
         if not data:
-            raise dm_exceptions.UnknownIdentifier()
+            raise UnknownIdentifier()
         data = self.translate_keys(data, 'load')
         self._data['fields']['routefile'] = json.loads(data['routefile'])
         self.recalc_status = data['recalc_status']
 
-    def save(self, force_insert=False, ignore_issues=[], update_time=False):
+    def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = [],
+             update_time: bool = False) -> int:
         self.presave_validation(ignore_issues=ignore_issues)
         literals = []
         core_data = self.get_resource()
@@ -66,10 +66,10 @@ class RouteCalc(resource.Resource):
         if update_time:
             core_data['last_updated'] = 'NOW()'
             literals.append('last_updated')
-        super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues,
-                     literals=literals)
+        return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues,
+                            literals=literals)
 
-    def validate_custom(self):
+    def validate_custom(self) -> Dict[str, List[Tuple[str, str]]]:
         issues = {}
         invalid_data = []
         for line, row in enumerate(self['routefile']):
@@ -86,7 +86,7 @@ class RouteCalc(resource.Resource):
             for val in row_split:
                 try:
                     float(val)
-                except:
+                except (TypeError, ValueError):
                     if not invalid_data:
                         issues = {
                             'invalid': [('routefile', 'Must be one coord set per line (float,float)')]
@@ -100,9 +100,10 @@ class RouteCalc(resource.Resource):
     # ============ Resource-Specific Functions ============
     # =====================================================
 
-    def calculate_new_route(self, coords, max_radius, max_coords_within_radius, delete_old_route, calc_type,
-                            useS2, S2level, num_procs=0, overwrite_calculation=False, in_memory=False,
-                            route_name: str = 'Unknown'):
+    def calculate_new_route(self, coords: List[Tuple[str, str]], max_radius: int, max_coords_within_radius: int,
+                            delete_old_route: bool, calc_type: str, useS2: bool, S2level: int, num_procs: int = 0,
+                            overwrite_calculation: bool = False, in_memory: bool = False, route_name: str = 'Unknown'
+                            ) -> List[Dict[str, float]]:
         if overwrite_calculation:
             calc_type = 'quick'
         self.set_recalc_status(True)
@@ -118,11 +119,12 @@ class RouteCalc(resource.Resource):
         self.set_recalc_status(False)
         return new_route
 
-    def getJsonRoute(self, coords, maxRadius, maxCoordsInRadius, in_memory, num_processes=1,
-                     algorithm='optimized',
-                     useS2: bool = False, S2level: int = 15, route_name: str = 'Unknown'):
+    def getJsonRoute(self, coords: List[Tuple[str, str]], max_radius: int, max_coords_within_radius: int,
+                     in_memory: bool, num_processes: int = 1, algorithm: str = 'optimized', useS2: bool = False,
+                     S2level: int = 15, route_name: str = 'Unknown') -> List[Dict[str, float]]:
         export_data = []
-        if useS2: logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
+        if useS2:
+            logger.debug("Using S2 method for calculation with S2 level: {}", S2level)
         if not in_memory and \
                 (self._data['fields']['routefile'] is not None and len(
                     self._data['fields']['routefile']) > 0):
@@ -137,9 +139,9 @@ class RouteCalc(resource.Resource):
             return export_data
 
         lessCoordinates = coords
-        if len(coords) > 0 and maxRadius and maxCoordsInRadius:
+        if len(coords) > 0 and max_radius and max_coords_within_radius:
             logger.info("Calculating route for {}", route_name)
-            newCoords = self.getLessCoords(coords, maxRadius, maxCoordsInRadius, useS2, S2level)
+            newCoords = self.getLessCoords(coords, max_radius, max_coords_within_radius, useS2, S2level)
             lessCoordinates = np.zeros(shape=(len(newCoords), 2))
             for i in range(len(lessCoordinates)):
                 lessCoordinates[i][0] = newCoords[i][0]
@@ -177,15 +179,15 @@ class RouteCalc(resource.Resource):
             self.save(update_time=True)
         return export_data
 
-    def getLessCoords(self, npCoordinates, maxRadius, maxCountPerCircle, useS2: bool = False,
-                      S2level: int = 15):
+    def getLessCoords(self, npCoordinates: List[Tuple[str, str]], max_radius: int, max_coords_within_radius: int,
+                      useS2: bool = False, S2level: int = 15):
         coordinates = []
         for coord in npCoordinates:
             coordinates.append(
                 (0, Location(coord[0].item(), coord[1].item()))
             )
 
-        clustering_helper = ClusteringHelper(max_radius=maxRadius, max_count_per_circle=maxCountPerCircle,
+        clustering_helper = ClusteringHelper(max_radius=max_radius, max_count_per_circle=max_coords_within_radius,
                                              max_timedelta_seconds=0, useS2=useS2, S2level=S2level)
         clustered_events = clustering_helper.get_clustered(coordinates)
         coords_cleaned_up = []
@@ -193,7 +195,7 @@ class RouteCalc(resource.Resource):
             coords_cleaned_up.append(event[1])
         return coords_cleaned_up
 
-    def set_recalc_status(self, status):
+    def set_recalc_status(self, status: int) -> None:
         data = {
             'recalc_status': int(status)
         }

@@ -1,4 +1,6 @@
+from typing import Optional
 from . import area_idle, area_iv_mitm, area_mon_mitm, area_pokestops, area_raids_mitm
+from .resource import Resource
 from .area import Area
 from .auth import Auth
 from .device import Device
@@ -8,12 +10,12 @@ from .monivlist import MonIVList
 from .routecalc import RouteCalc
 from .walker import Walker
 from .walkerarea import WalkerArea
-from .. import dm_exceptions
+from ..dm_exceptions import InvalidArea, ModeNotSpecified, ModeUnknown, UnknownIdentifier
 
 
-def AreaFactory(data_manager, identifier=None, mode=None):
+def AreaFactory(data_manager, identifier: Optional[int] = None, mode: Optional[str] = None) -> Resource:
     if identifier is None and mode is None:
-        raise dm_exceptions.InvalidArea(mode)
+        raise InvalidArea(mode)
     elif identifier is not None:
         sql = "SELECT `mode` FROM `settings_area` WHERE `area_id` = %s and `instance_id` = %s"
         mode = data_manager.dbc.autofetch_value(sql, args=(identifier, data_manager.instance_id))
@@ -21,10 +23,10 @@ def AreaFactory(data_manager, identifier=None, mode=None):
         return AREA_MAPPINGS[mode](data_manager, identifier=identifier)
     except KeyError:
         if identifier is not None:
-            raise dm_exceptions.UnknownIdentifier()
-        raise dm_exceptions.ModeUnknown(mode)
+            raise UnknownIdentifier()
+        raise ModeUnknown(mode)
     except ValueError:
-        raise dm_exceptions.ModeNotSpecified(mode)
+        raise ModeNotSpecified(mode)
 
 
 MAPPINGS = {

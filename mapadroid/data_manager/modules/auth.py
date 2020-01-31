@@ -1,7 +1,7 @@
-from . import resource
+from .resource import Resource
 
 
-class Auth(resource.Resource):
+class Auth(Resource):
     table = 'settings_auth'
     name_field = 'username'
     primary_key = 'auth_id'

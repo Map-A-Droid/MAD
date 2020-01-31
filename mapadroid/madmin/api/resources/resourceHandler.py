@@ -4,9 +4,9 @@ import re
 
 import flask
 
-import mapadroid.utils.data_manager.modules
+import mapadroid.data_manager.modules
 from mapadroid.madmin.functions import auth_required
-from mapadroid.utils.data_manager.dm_exceptions import (
+from mapadroid.data_manager.dm_exceptions import (
     UnknownIdentifier,
     ModeNotSpecified,
     ModeUnknown,
@@ -15,7 +15,7 @@ from mapadroid.utils.data_manager.dm_exceptions import (
     SaveIssue
 )
 from mapadroid.madmin.api.resources.resource_exceptions import NoModeSpecified
-from mapadroid.utils.data_manager.modules import *
+from mapadroid.data_manager.modules import *
 from .. import apiHandler
 
 

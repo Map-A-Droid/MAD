@@ -2,7 +2,7 @@ import json
 
 import flask
 
-from mapadroid.utils.data_manager.modules.resource import Resource
+from mapadroid.data_manager.modules.resource import Resource
 from . import apiException
 
 

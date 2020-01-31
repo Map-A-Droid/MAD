@@ -14,7 +14,7 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.authHelper import check_auth
-from mapadroid.utils.data_manager import DataManager
+from mapadroid.data_manager import DataManager
 from mapadroid.utils.logging import logger, InterceptHandler
 import logging
 

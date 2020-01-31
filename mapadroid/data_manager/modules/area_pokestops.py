@@ -1,7 +1,7 @@
-from . import area
+from .area import Area
 
 
-class AreaPokestops(area.Area):
+class AreaPokestops(Area):
     area_table = 'settings_area_pokestops'
     area_type = 'pokestops'
     configuration = {
@@ -82,7 +82,8 @@ class AreaPokestops(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to determine if the worker should walk or teleport (Default: 0)",
+                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to "
+                                   "determine if the worker should walk or teleport (Default: 0)",
                     "expected": float
                 }
             },
@@ -90,7 +91,8 @@ class AreaPokestops(area.Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Max. distance of walking - If the distance between points is greater than this value the worker will teleport (Default: 0)",
+                    "description": "Max. distance of walking - If the distance between points is greater than this "
+                                   "value the worker will teleport (Default: 0)",
                     "expected": float
                 }
             },
