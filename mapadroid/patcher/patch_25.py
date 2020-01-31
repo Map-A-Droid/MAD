@@ -23,3 +23,11 @@ class Patch(PatchBase):
             self._db.execute(sql, commit=True)
         except Exception:
             pass
+        sql = "DELETE fc\n"\
+              "FROM `filestore_chunks` fc\n"\
+              "LEFT JOIN `mad_apks` ma ON ma.`filestore_id` = fc.`filestore_id`\n"\
+              "WHERE ma.`filestore_id` IS NULL"
+        try:
+            self._db.execute(sql, commit=True)
+        except Exception:
+            pass
