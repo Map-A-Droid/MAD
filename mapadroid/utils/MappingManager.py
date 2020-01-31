@@ -407,7 +407,8 @@ class MappingManager:
                                                                                    "optimized"),
                                                                  joinqueue=self.join_routes_queue,
                                                                  S2level=mode_mapping.get(mode, {}).get(
-                                                                     "s2_cell_level", 30)
+                                                                     "s2_cell_level", 30),
+                                                                 ws_server = self.__ws_server
                                                                  )
 
             if mode not in ("iv_mitm", "idle"):

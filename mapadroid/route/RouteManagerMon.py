@@ -1,8 +1,21 @@
 from mapadroid.route.RouteManagerBase import RouteManagerBase
 from mapadroid.utils.logging import logger
 
-
 class RouteManagerMon(RouteManagerBase):
+    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
+                 path_to_include_geofence,
+                 path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
+                 name="unknown", settings=None, joinqueue=None, ws_server = None):
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+                                  max_radius=max_radius,
+                                  max_coords_within_radius=max_coords_within_radius,
+                                  path_to_include_geofence=path_to_include_geofence,
+                                  path_to_exclude_geofence=path_to_exclude_geofence,
+                                  routefile=routefile, init=init,
+                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue, ws_server=ws_server
+                                  )
+        self.coords_spawns_known = coords_spawns_known
+
     def _priority_queue_update_interval(self):
         return 600
 
@@ -14,20 +27,6 @@ class RouteManagerMon(RouteManagerBase):
         self.recalc_route(self._max_radius, self._max_coords_within_radius, 1, delete_old_route=True,
                           in_memory=False)
         self._init_route_queue()
-
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, coords_spawns_known=False, init=False,
-                 name="unknown", settings=None, joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                  max_radius=max_radius,
-                                  max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
-                                  )
-        self.coords_spawns_known = coords_spawns_known
 
     def _retrieve_latest_priority_queue(self):
         return self.db_wrapper.retrieve_next_spawns(self.geofence_helper)

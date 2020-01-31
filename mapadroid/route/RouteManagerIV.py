@@ -6,6 +6,25 @@ from mapadroid.utils.logging import logger
 
 
 class RouteManagerIV(RouteManagerBase):
+    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
+                 path_to_include_geofence,
+                 path_to_exclude_geofence, routefile, mode=None, init=False,
+                 name="unknown", settings=None, joinqueue=None, ws_server = None):
+        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
+                                  max_radius=max_radius,
+                                  max_coords_within_radius=max_coords_within_radius,
+                                  path_to_include_geofence=path_to_include_geofence,
+                                  path_to_exclude_geofence=path_to_exclude_geofence,
+                                  routefile=routefile, init=init,
+                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue,
+                                  ws_server=ws_server
+                                  )
+        self.encounter_ids_left: List[int] = []
+        self.starve_route = True
+        if self.delay_after_timestamp_prio is None:
+            # just set a value to enable the queue
+            self.delay_after_timestamp_prio = 5
+
     def _priority_queue_update_interval(self):
         return 60
 
@@ -46,24 +65,6 @@ class RouteManagerIV(RouteManagerBase):
     def _cluster_priority_queue_criteria(self):
         # clustering is of no use for now
         pass
-
-    def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
-                 path_to_include_geofence,
-                 path_to_exclude_geofence, routefile, mode=None, init=False,
-                 name="unknown", settings=None, joinqueue=None):
-        RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
-                                  max_radius=max_radius,
-                                  max_coords_within_radius=max_coords_within_radius,
-                                  path_to_include_geofence=path_to_include_geofence,
-                                  path_to_exclude_geofence=path_to_exclude_geofence,
-                                  routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
-                                  )
-        self.encounter_ids_left: List[int] = []
-        self.starve_route = True
-        if self.delay_after_timestamp_prio is None:
-            # just set a value to enable the queue
-            self.delay_after_timestamp_prio = 5
 
     def _delete_coord_after_fetch(self) -> bool:
         return False

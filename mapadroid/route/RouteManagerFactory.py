@@ -7,7 +7,6 @@ from mapadroid.route.RouteManagerQuests import RouteManagerQuests
 from mapadroid.route.RouteManagerRaids import RouteManagerRaids
 from mapadroid.worker.WorkerType import WorkerType
 
-
 class RouteManagerFactory:
     @staticmethod
     def get_routemanager(db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
@@ -17,7 +16,8 @@ class RouteManagerFactory:
                          init: bool = False, name: str = "unknown", settings=None,
                          coords_spawns_known: bool = False,
                          level: bool = False, calctype: str = "optimized", useS2: bool = False,
-                         S2level: int = 15, joinqueue=None):
+                         S2level: int = 15, joinqueue=None,
+                         ws_server = None):
 
         if mode == WorkerType.RAID_MITM.value:
             route_manager = RouteManagerRaids(db_wrapper, dbm, area_id, coords, max_radius,
@@ -25,7 +25,7 @@ class RouteManagerFactory:
                                               path_to_include_geofence, path_to_exclude_geofence, routefile,
                                               mode=mode, settings=settings, init=init, name=name,
                                               joinqueue=joinqueue,
-                                              useS2=useS2, S2level=S2level
+                                              useS2=useS2, S2level=S2level, ws_server=ws_server
                                               )
         elif mode == WorkerType.MON_MITM.value:
             route_manager = RouteManagerMon(db_wrapper, dbm, area_id, coords, max_radius,
@@ -33,20 +33,20 @@ class RouteManagerFactory:
                                             path_to_include_geofence, path_to_exclude_geofence, routefile,
                                             mode=mode, settings=settings, init=init, name=name,
                                             joinqueue=joinqueue,
-                                            coords_spawns_known=coords_spawns_known
+                                            coords_spawns_known=coords_spawns_known, ws_server=ws_server
                                             )
         elif mode == WorkerType.IV_MITM.value:
             route_manager = RouteManagerIV(db_wrapper, dbm, area_id, coords, 0, 99999999,
                                            path_to_include_geofence, path_to_exclude_geofence, routefile,
                                            mode=mode, settings=settings, init=False, name=name,
-                                           joinqueue=joinqueue
+                                           joinqueue=joinqueue, ws_server=ws_server
                                            )
         elif mode == WorkerType.IDLE.value:
             route_manager = RouteManagerRaids(db_wrapper, dbm, area_id, coords, max_radius,
                                               max_coords_within_radius,
                                               path_to_include_geofence, path_to_exclude_geofence, routefile,
                                               mode=mode, settings=settings, init=init, name=name,
-                                              joinqueue=joinqueue
+                                              joinqueue=joinqueue, ws_server=ws_server
                                               )
         elif mode == WorkerType.STOPS.value:
             if level:
@@ -56,7 +56,7 @@ class RouteManagerFactory:
                                                      routefile,
                                                      mode=mode, settings=settings, init=init, name=name,
                                                      level=True,
-                                                     calctype=calctype, joinqueue=joinqueue
+                                                     calctype=calctype, joinqueue=joinqueue, ws_server=ws_server
                                                      )
             else:
                 route_manager = RouteManagerQuests(db_wrapper, dbm, area_id, coords, max_radius,
@@ -65,7 +65,7 @@ class RouteManagerFactory:
                                                    routefile,
                                                    mode=mode, settings=settings, init=init, name=name,
                                                    level=level,
-                                                   calctype=calctype, joinqueue=joinqueue
+                                                   calctype=calctype, joinqueue=joinqueue, ws_server=ws_server
                                                    )
         else:
             raise RuntimeError("Invalid mode found in mapping parser.")

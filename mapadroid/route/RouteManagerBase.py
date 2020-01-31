@@ -51,7 +51,8 @@ class RouteManagerBase(ABC):
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown",
                  settings: dict = None,
                  level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15,
-                 joinqueue=None):
+                 joinqueue=None,
+                 ws_server = None):
         self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
         self.name: str = name
@@ -59,6 +60,7 @@ class RouteManagerBase(ABC):
         self.useS2: bool = useS2
         self.S2level: int = S2level
         self.area_id = area_id
+        self._ws_server = ws_server
 
         self._coords_unstructured: List[Location] = coords
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
