@@ -292,7 +292,7 @@ class MITMBase(WorkerBase):
             'rebootCounter': self._reboot_count,
             'init': routemanager_init,
             'rebootingOption': self.get_devicesettings_value("reboot", False),
-            'restartCounter': self._reboot_count,
+            'restartCounter': self._restart_count,
             'currentSleepTime': self._current_sleep_time
         }
         if self._rec_data_time:

@@ -789,6 +789,8 @@ class WorkerBase(AbstractWorker):
                                                    self._routemanager_name),
                                                99)
         self._db_wrapper.save_last_reboot(self._dev_id)
+        self._reboot_count = 0
+        self._restart_count = 0
         self.stop_worker()
         return start_result
 
@@ -804,6 +806,7 @@ class WorkerBase(AbstractWorker):
     def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = self._stop_pogo()
         self._db_wrapper.save_last_restart(self._dev_id)
+        self._restart_count = 0
         logger.debug("restartPogo: stop game resulted in {}",
                      str(successful_stop))
         if successful_stop:
