@@ -50,7 +50,7 @@ class DataManager(object):
                 raise ModeUnknown(mode)
         else:
             resource_class = modules.MAPPINGS[section]
-        return resource_class
+        return copy.deepcopy(resource_class)
 
     def get_root_resource(self, section: str, **kwargs) -> Dict[int, Resource]:
         default_sort = kwargs.get('default_sort', None)
