@@ -8,7 +8,7 @@ CREATE TABLE `filestore_chunks` (
     `data` longblob,
     PRIMARY KEY (`chunk_id`),
     UNIQUE KEY `chunk_id` (`chunk_id`,`filestore_id`),
-    KEY `fk_fs_chunks` (`filestore_id`),
+    KEY `k_fs_chunks` (`filestore_id`),
     CONSTRAINT `fk_fs_chunks` FOREIGN KEY (`filestore_id`)
         REFERENCES `filestore_meta` (`filestore_id`)
         ON DELETE CASCADE
