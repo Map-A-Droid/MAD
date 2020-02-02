@@ -229,7 +229,7 @@ class MADAPKImporter(object):
                 filestore_id = None
                 # Determine if we already have this file-type uploaded.  If so, remove it once the new one is
                 # completed and update the id
-                if self.mad_apk and self.apk_type and self.architecture:
+                if self.mad_apk and self.apk_type is not None and self.architecture is not None:
                     filestore_id_sql = "SELECT `filestore_id` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
                     filestore_id = self.dbc.autofetch_value(filestore_id_sql,
                                                             args=(self.apk_type, self.architecture,))

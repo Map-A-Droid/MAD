@@ -51,8 +51,7 @@ class RouteManagerBase(ABC):
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown",
                  settings: dict = None,
                  level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15,
-                 joinqueue=None,
-                 ws_server = None):
+                 joinqueue=None):
         self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
         self.name: str = name
@@ -60,7 +59,6 @@ class RouteManagerBase(ABC):
         self.useS2: bool = useS2
         self.S2level: int = S2level
         self.area_id = area_id
-        self._ws_server = ws_server
 
         self._coords_unstructured: List[Location] = coords
         self.geofence_helper: GeofenceHelper = GeofenceHelper(
@@ -252,12 +250,6 @@ class RouteManagerBase(ABC):
 
     def _check_started(self):
         return self._is_started
-
-    def _reboot_worker(self, origin):
-        get_worker_ws_connection = self._ws_server.get_origin_communicator(origin)
-        if get_worker_ws_connection:
-            logger.info("Rebooting Worker {}".format(str(origin)))
-            get_worker_ws_connection.reboot()
 
     def _start_priority_queue(self):
         logger.info("Try to activate PrioQ thread for route {}".format(str(self.name)))

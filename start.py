@@ -189,7 +189,7 @@ if __name__ == "__main__":
         mapping_manager_manager = MappingManagerManager()
         mapping_manager_manager.start()
         mapping_manager: MappingManager = mapping_manager_manager.MappingManager(db_wrapper, args,
-                                                                                 data_manager, ws_server,
+                                                                                 data_manager,
                                                                                  False)
         filename = args.mappings
         if args.only_routes:

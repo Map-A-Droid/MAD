@@ -78,12 +78,11 @@ class MappingManagerManager(SyncManager):
 
 
 class MappingManager:
-    def __init__(self, db_wrapper: DbWrapper, args, data_manager, ws_server, configmode: bool = False):
+    def __init__(self, db_wrapper: DbWrapper, args, data_manager, configmode: bool = False):
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__args = args
         self.__configmode: bool = configmode
         self.__data_manager = data_manager
-        self.__ws_server = ws_server
 
         self._devicemappings: Optional[dict] = None
         self._areas: Optional[dict] = None
@@ -94,6 +93,7 @@ class MappingManager:
         self.join_routes_queue = JoinQueue(self.__shutdown_event, self)
         self.__raw_json: Optional[dict] = None
         self.__mappings_mutex: Lock = Lock()
+        self._known_woorker: dict = {}
 
         self.update(full_lock=True)
 
@@ -413,7 +413,6 @@ class MappingManager:
                                                                  joinqueue=self.join_routes_queue,
                                                                  S2level=mode_mapping.get(mode, {}).get(
                                                                      "s2_cell_level", 30),
-                                                                 ws_server = self.__ws_server
                                                                  )
 
             if mode not in ("iv_mitm", "idle") or area.get("level", False) is False:

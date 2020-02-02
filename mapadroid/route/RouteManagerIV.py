@@ -9,15 +9,14 @@ class RouteManagerIV(RouteManagerBase):
     def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
                  path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, init=False,
-                 name="unknown", settings=None, joinqueue=None, ws_server = None):
+                 name="unknown", settings=None, joinqueue=None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
                                   path_to_include_geofence=path_to_include_geofence,
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
-                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue,
-                                  ws_server=ws_server
+                                  name=name, settings=settings, mode=mode, joinqueue=joinqueue
                                   )
         self.encounter_ids_left: List[int] = []
         self.starve_route = True

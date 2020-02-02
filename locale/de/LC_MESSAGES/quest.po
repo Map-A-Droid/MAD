@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-01-02 21:30+0100\n"
-"PO-Revision-Date: 2020-01-02 21:36+0100\n"
+"PO-Revision-Date: 2020-01-29 14:51+0100\n"
 "Last-Translator: Isdor\n"
 "Language-Team: discord\n"
 "Language: de_DE\n"
@@ -130,7 +130,7 @@ msgstr "Verschicke {0} Pokemon"
 #: questGen.py:182
 #, python-brace-format
 msgid "Favourite {0} Pokemon"
-msgstr "Favourite {0} Pokemon"
+msgstr "Favorisiere {0} Pokemon"
 
 #: questGen.py:184
 #, python-brace-format
@@ -144,7 +144,7 @@ msgstr " Beeren"
 #: questGen.py:191
 #, python-brace-format
 msgid "Power up Pokemon {0} times"
-msgstr "Power up Pokemon  {0} mal"
+msgstr "Power up Pokemon {0} mal"
 
 #: questGen.py:193
 #, python-brace-format
@@ -247,7 +247,7 @@ msgstr "Kämpfe {0} mal gegen Team Go Rocket Bosse"
 
 #: questGen.py:314
 msgid "Battle against a Team Rocket Grunt"
-msgstr "Kämpfe gegen Team Go Rocket Bosse"
+msgstr "Besiege einen Team Go Rocket-Rüpel"
 
 #: questGen.py:318
 msgid "Battle"
@@ -312,17 +312,17 @@ msgstr " {0} Fotos"
 
 #: questGen.py:327
 msgid " a snapshot"
-msgstr " Foto"
+msgstr " ein Foto"
 
 #: questGen.py:328
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Make {0} {type}{curve}Throws"
-msgstr "Lande {0} {type}{curve} Würfe {inrow}"
+msgstr "Lande {0} {type}{curve} Würfe"
 
 #: questGen.py:328
-#, fuzzy, python-brace-format
+#, python-brace-format
 msgid "Make a {type}{curve}Throw"
-msgstr "Lande einen {type}{curve} Würfe {inrow}"
+msgstr "Lande einen {type}{curve} Wurf"
 
 #: questGen.py:329
 #, python-brace-format
