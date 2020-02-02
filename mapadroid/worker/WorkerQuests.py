@@ -438,6 +438,10 @@ class WorkerQuests(MITMBase):
         logger.info('Cleanup Box')
         # sleep for check_routepools thread
         self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin, 300)
+        reached_main_menu = self._check_pogo_main_screen(10, True)
+        if not reached_main_menu:
+            if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                raise InternalStopWorkerException
         not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium',
                      'Raid', 'Teil',

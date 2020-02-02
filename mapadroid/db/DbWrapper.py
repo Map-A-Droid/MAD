@@ -886,7 +886,7 @@ class DbWrapper:
             )
         return next_up
 
-    def get_nearest_stops_from_position(self, geofence_helper, origin, lat, lon, limit=None):
+    def get_nearest_stops_from_position(self, geofence_helper, origin, lat, lon, limit=None, ignore_spinned=True):
         """
         Retrieve the nearest stops from lat / lon (optional with limit)
         :return:
@@ -894,10 +894,14 @@ class DbWrapper:
 
         logger.debug("DbWrapper::get_nearest_stops_from_position called")
         limitstr: str = ""
+        ignore_spinnedstr: str = ""
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
         if limit is not None:
             limitstr = "limit {}".format(limit)
+
+        if ignore_spinned:
+            ignore_spinnedstr = "AND trs_visited.origin IS NULL"
 
         query = (
             "SELECT latitude, longitude, SQRT("
@@ -907,8 +911,8 @@ class DbWrapper:
             "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
             "where "
             "(latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
-            "AND trs_visited.origin IS NULL ORDER BY distance {} "
-        ).format(lat, lon, origin, minLat, minLon, maxLat, maxLon, limitstr)
+            "{} ORDER BY distance {} "
+        ).format(lat, lon, origin, minLat, minLon, maxLat, maxLon, ignore_spinnedstr, limitstr)
 
         res = self.execute(query)
         stops: List[Location] = []
