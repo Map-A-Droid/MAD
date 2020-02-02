@@ -13,7 +13,7 @@ class RouteManagerQuests(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "quick", joinqueue=None, ws_server = None):
+                 level: bool = False, calctype: str = "quick", joinqueue=None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
@@ -21,7 +21,7 @@ class RouteManagerQuests(RouteManagerBase):
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
                                   name=name, settings=settings, mode=mode, level=level, calctype=calctype,
-                                  joinqueue=joinqueue, ws_server=ws_server
+                                  joinqueue=joinqueue
                                   )
         self.starve_route = False
         self._stoplist: List[Location] = []

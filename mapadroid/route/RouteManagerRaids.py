@@ -6,8 +6,7 @@ class RouteManagerRaids(RouteManagerBase):
     def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
                  path_to_include_geofence,
                  path_to_exclude_geofence, routefile, mode=None, settings=None, init=False,
-                 name="unknown", joinqueue=None, useS2: bool = False, S2level: int = 15,
-                 ws_server = None):
+                 name="unknown", joinqueue=None, useS2: bool = False, S2level: int = 15):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
@@ -15,7 +14,7 @@ class RouteManagerRaids(RouteManagerBase):
                                   path_to_exclude_geofence=path_to_exclude_geofence,
                                   routefile=routefile, init=init,
                                   name=name, settings=settings, mode=mode, useS2=True, S2level=S2level,
-                                  joinqueue=joinqueue, ws_server=ws_server
+                                  joinqueue=joinqueue
                                   )
 
     def _priority_queue_update_interval(self):
