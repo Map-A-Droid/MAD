@@ -39,23 +39,28 @@ class RouteManagerLeveling(RouteManagerQuests):
                 if len(entry.queue) > 0:
                     logger.debug("origin {} already has a queue, do not touch...", origin)
                     continue
-                unvisited_stops = self.db_wrapper.stops_from_db_unvisited(self.geofence_helper, origin)
+                current_worker_pos = entry.current_pos
+                unvisited_stops = self.db_wrapper.get_nearest_stops_from_position(geofence_helper=self.geofence_helper,
+                                                                                  origin=origin,
+                                                                                  lat=current_worker_pos.lat,
+                                                                                  lon=current_worker_pos.lng,
+                                                                                  limit=20)
                 if len(unvisited_stops) == 0:
                     logger.info("There are no unvisited stops left in DB for {} - nothing more to do!",
                                 origin)
                     continue
-                if len(self._route) > 0:
-                    logger.info("Making a subroute of unvisited stops..")
-                    for coord in self._route:
-                        coord_location = Location(coord.lat, coord.lng)
-                        if coord_location in self._coords_to_be_ignored:
-                            logger.info('Already tried this Stop but it failed spinnable test, skip it')
-                            continue
-                        if coord_location in unvisited_stops:
-                            origin_local_list.append(coord_location)
-                if len(origin_local_list) == 0:
-                    logger.info("None of the stops in original route was unvisited, recalc a route")
+
+                for coord in unvisited_stops:
+                    coord_location = Location(coord.lat, coord.lng)
+                    if coord_location in self._coords_to_be_ignored:
+                        logger.info('Already tried this Stop but it failed spinnable test, skip it')
+                        continue
+                    origin_local_list.append(coord_location)
+
+                if len(unvisited_stops) > 0:
+                    logger.info("Recalc a route")
                     new_route = self._local_recalc_subroute(unvisited_stops)
+                    origin_local_list.clear()
                     for coord in new_route:
                         origin_local_list.append(Location(coord["lat"], coord["lng"]))
 
@@ -66,7 +71,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                 entry.queue.clear()
                 [entry.queue.append(i) for i in origin_local_list]
                 any_at_all = len(origin_local_list) > 0 or any_at_all
-            return any_at_all
+            return True
 
     def _local_recalc_subroute(self, unvisited_stops):
         to_be_route = np.zeros(shape=(len(unvisited_stops), 2))
@@ -78,14 +83,6 @@ class RouteManagerLeveling(RouteManagerQuests):
                                              True)
 
         return new_route
-
-    def generate_stop_list(self):
-        time.sleep(5)
-        stops_in_fence = self.db_wrapper.stops_from_db(self.geofence_helper)
-
-        logger.info('Detected stops without quests: {}', str(len(stops_in_fence)))
-        logger.debug('Detected stops without quests: {}', str(stops_in_fence))
-        self._stoplist: List[Location] = stops_in_fence
 
     def _retrieve_latest_priority_queue(self):
         return None
@@ -112,36 +109,11 @@ class RouteManagerLeveling(RouteManagerQuests):
                 logger.info('Other worker shutdown route {} - leaving it', str(self.name))
                 return False
 
-            if self._start_calc:
-                logger.info("Another process already calculate the new route")
-                return True
-            self._start_calc = True
-            self._restore_original_route()
-
-            any_unvisited = False
-            for origin in self._routepool:
-                any_unvisited = self.db_wrapper.any_stops_unvisited(self.geofence_helper, origin)
-                if any_unvisited:
-                    break
-
-            if not any_unvisited:
-                logger.info("Not getting any stops - leaving now.")
-                self._shutdown_route = True
-                self._start_calc = False
-                return False
-
-            # Redo individual routes
             self.worker_changed_update_routepools()
             self._start_calc = False
             return True
         finally:
             self._manager_mutex.release()
-
-    def _restore_original_route(self):
-        if not self._tempinit:
-            logger.info("Restoring original route")
-            with self._manager_mutex:
-                self._route = self._routecopy.copy()
 
     def _check_unprocessed_stops(self):
         self._manager_mutex.acquire()
@@ -164,50 +136,12 @@ class RouteManagerLeveling(RouteManagerQuests):
                     logger.info('Other worker shutdown route {} - leaving it', str(self.name))
                     return False
 
-                self.generate_stop_list()
-                stops = self._stoplist
                 self._prio_queue = None
                 self.delay_after_timestamp_prio = None
                 self.starve_route = False
                 self._first_round_finished = False
                 self._start_check_routepools()
 
-                if not self._first_started:
-                    logger.info(
-                        "First starting quest route - copying original route {} for later use",
-                        str(self.name))
-                    self._routecopy = self._route.copy()
-                    self._first_started = True
-                else:
-                    logger.info("Restoring original route {} ", str(self.name))
-                    self._route = self._routecopy.copy()
-
-                new_stops = list(set(stops) - set(self._route))
-                if len(new_stops) > 0:
-                    logger.info("There's {} new stops not in route", len(new_stops))
-
-                if len(stops) == 0:
-                    logger.info('No  Stops detected in route {} - quit worker', str(self.name))
-                    self._shutdown_route = True
-                    self._restore_original_route()
-                    self._route: List[Location] = []
-                    return False
-
-                if 0 < len(stops) < len(self._route) \
-                        and len(stops) / len(self._route) <= 0.3:
-                    # Calculating new route because 70 percent of stops are processed
-                    logger.info('There are less stops without quest than routepositions - recalc')
-                    self._recalc_stop_route(stops)
-                elif len(self._route) == 0 and len(stops) > 0:
-                    logger.warning("Something wrong with area {}: it have many new stops "
-                                   "- you should delete routefile!!",
-                                   str(self.name))
-                    logger.info("Recalc new route for area {}", str(self.name))
-                    self._recalc_stop_route(stops)
-                else:
-                    self._init_route_queue()
-
-                logger.info('Getting {} positions in route {}'.format(len(self._route), str(self.name)))
                 return True
 
         finally:
@@ -231,7 +165,6 @@ class RouteManagerLeveling(RouteManagerQuests):
             self._is_started = False
             self._round_started_time = None
             if self.init: self._first_started = False
-            self._restore_original_route()
             self._shutdown_route = False
 
         # clear not processed stops

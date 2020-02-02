@@ -248,6 +248,12 @@ class WorkerBase(AbstractWorker):
             logger.info('Setting startcoords or walker lat {} / lng {}'.format(str(startcoords[0]),
                                                                                str(startcoords[1])))
             self._communicator.set_location(Location(startcoords[0], startcoords[1]), 0)
+            # setting worker startposition to routemanager
+            # only with autonomous lvl mode (atm!)
+            self._mapping_manager.set_worker_startposition(routemanager_name=self._routemanager_name,
+                                                           worker_name=self._origin,
+                                                           lat=str(startcoords[0]),
+                                                           lon=str(startcoords[1]))
 
         with self._work_mutex:
             try:

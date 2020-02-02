@@ -287,6 +287,11 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         routemanager.set_worker_sleeping(worker_name, sleep_duration)
 
+    def set_worker_startposition(self, routemanager_name: str, worker_name: str,
+                                         lat: float, lon: float):
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        routemanager.set_worker_startposition(worker_name, lat, lon)
+
     def routemanager_get_position_type(self, routemanager_name: str, worker_name: str) -> Optional[str]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
@@ -411,13 +416,14 @@ class MappingManager:
                                                                  ws_server = self.__ws_server
                                                                  )
 
-            if mode not in ("iv_mitm", "idle"):
+            if mode not in ("iv_mitm", "idle") or area.get("level", False) is False:
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),
                                              init=area.get("init", False),
                                              range_init=mode_mapping.get(area_true.area_type, {}).get(
                                                  "range_init", 630),
-                                             including_stops=area.get("including_stops", False))
+                                             including_stops=area.get("including_stops", False),
+                                             level=area.get("level", False))
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area_true.area_type]["range"]
                 max_count_in_radius = mode_mapping[area_true.area_type]["max_count"]
@@ -494,7 +500,8 @@ class MappingManager:
         return devices
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
-                       init: bool = False, range_init: int = 630, including_stops: bool = False) -> List[
+                       init: bool = False, range_init: int = 630, including_stops: bool = False, level: bool = False) \
+            -> List[
         Location]:
         coords: List[Location] = []
         if not init:
@@ -516,8 +523,10 @@ class MappingManager:
                 else:
                     logger.debug("Reading unknown Spawnpoints from DB")
                     coords = self.__db_wrapper.get_undetected_spawns(geofence_helper)
-            elif mode == "pokestops":
+            elif mode == "pokestops" and not level:
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
+            elif level:
+                coords = []
             else:
                 logger.error("Mode not implemented yet: {}", str(mode))
                 exit(1)

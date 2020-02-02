@@ -886,6 +886,42 @@ class DbWrapper:
             )
         return next_up
 
+    def get_nearest_stops_from_position(self, geofence_helper, origin, lat, lon, limit=None):
+        """
+        Retrieve the nearest stops from lat / lon (optional with limit)
+        :return:
+        """
+
+        logger.debug("DbWrapper::get_nearest_stops_from_position called")
+        limitstr: str = ""
+
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        if limit is not None:
+            limitstr = "limit {}".format(limit)
+
+        query = (
+            "SELECT latitude, longitude, SQRT("
+            "POW(69.1 * (latitude - {}), 2) + "
+            "POW(69.1 * ({} - longitude) * COS(latitude / 57.3), 2)) AS distance "
+            "FROM pokestop "
+            "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
+            "where "
+            "(latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
+            "AND trs_visited.origin IS NULL ORDER BY distance {} "
+        ).format(lat, lon, origin, minLat, minLon, maxLat, maxLon, limitstr)
+
+        res = self.execute(query)
+        stops: List[Location] = []
+
+        for (latitude, longitude, distance) in res:
+            stops.append(Location(latitude, longitude))
+
+        if geofence_helper is not None:
+            geofenced_coords = geofence_helper.get_geofenced_coordinates(stops)
+            return geofenced_coords
+        else:
+            return stops
+
     def insert_usage(self, instance, cpu, mem, garbage, timestamp):
         logger.debug("dbWrapper::insert_usage")
 

@@ -84,7 +84,7 @@ class Resocalculator(object):
             click_x1 = int(self._screen_x) / 1.46
             click_x2 = int(self._screen_x) / 1.26
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.12)
-        return click_x1, click_x2, click_y
+        return click_x1, click_x2, click_y - int(self._y_offset / 2)
 
     def get_confirm_delete_quest_coords(self):
         click_x = int(self._screen_x) / 2
@@ -116,7 +116,7 @@ class Resocalculator(object):
         elif float(self._xyratio) < 1.7:
             click_x = int(self._screen_x) / 1.09
             click_y = int(self._screen_y) - (int(self._screen_x) / 0.77)
-        return click_x + self._x_offset, click_y + self._y_offset
+        return click_x + self._x_offset, click_y - self._y_offset
 
     def get_inventory_text_diff(self):
         if float(self._xyratio) > 2.1:
@@ -178,7 +178,7 @@ class Resocalculator(object):
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.5)
         elif float(self._xyratio) < 1.7:
             click_y = int(self._screen_y) - (int(self._screen_x) / 1.7)
-        return click_x, click_y
+        return click_x, click_y - int(self._y_offset / 2)
 
     def get_leave_mon_coords(self):
         click_x = int(self._screen_x) / 11.25
