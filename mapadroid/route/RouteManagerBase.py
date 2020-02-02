@@ -575,7 +575,9 @@ class RouteManagerBase(ABC):
                 logger.debug("No subroute/routepool entry of {} present, creating it", origin)
                 self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [],
                                                          time_added=time.time())
-                self._routepool[origin].current_pos = self._worker_start_position[origin]
+                self._routepool[origin].current_pos = Location(0.0, 0.0)
+                if origin in self._worker_start_position:
+                    self._routepool[origin].current_pos = self._worker_start_position[origin]
                 if not self.worker_changed_update_routepools():
                     logger.info("Failed updating routepools after adding a worker to it")
                     return None
