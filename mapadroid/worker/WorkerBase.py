@@ -752,7 +752,7 @@ class WorkerBase(AbstractWorker):
             pogo_topmost = self._communicator.is_pogo_topmost()
 
         if start_result:
-            logger.warning("startPogo: Started pogo successfully...")
+            logger.success("startPogo: Started pogo successfully...")
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()

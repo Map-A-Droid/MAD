@@ -830,7 +830,6 @@ class RouteManagerBase(ABC):
                             "Worker {} has not accessed a location in {} seconds, removing from routemanager",
                             origin, timeout)
                         self.unregister_worker(origin)
-                        self._reboot_worker(origin)
 
             i = 0
             while i < 60 and not self._stop_update_thread.is_set():
