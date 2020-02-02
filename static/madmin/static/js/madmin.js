@@ -499,6 +499,9 @@ new Vue({
                         mode = route.mode;
                     }
 
+                    let stack = []
+                    let processedCells = {};
+
                     route.coordinates.forEach(function (coord) {
                         circle = L.circle(coord, {
                             pane: "routes",
@@ -513,16 +516,59 @@ new Vue({
 
                         circle.addTo(group);
                         coords.push(circle);
-                    });
 
-                    Object.values(route.s2cells).forEach(function (cells) {
-                        L.polygon(cells, {
-                            pane: "routes",
+                        if (mode == "raids") {
+                          // super dirty workaround to get bounds
+                          // of a circle. The getbounds() function
+                          // is only available if it has been added
+                          // to the map.
+                          // See https://github.com/Leaflet/Leaflet/issues/4978
+                          circle.addTo(map);
+                          const bounds = circle.getBounds();
+                          circle.removeFrom(map);
+
+                          const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
+                          processedCells[centerCell.toString()] = true
+                          stack.push(centerCell)
+                          L.polygon(centerCell.getCornerLatLngs(), {
                             color: color,
-                            opacity: 0.3,
+                            opacity: 0.5,
+                            weight: 1,
                             fillOpacity: 0,
-                            weight: 1
-                        }).addTo(group);
+                            interactive: false
+                          }).addTo(group);
+
+                          while (stack.length > 0) {
+                            const cell = stack.pop();
+                            const neighbors = cell.getNeighbors()
+                            neighbors.forEach(function (ncell, index) {
+                              if (processedCells[ncell.toString()] !== true) {
+                                const cornerLatLngs = ncell.getCornerLatLngs();
+
+                                for (let i = 0; i < 4; i++) {
+                                  const item = cornerLatLngs[i];
+                                  const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
+                                  if (item.lat >= bounds.getSouthWest().lat
+                                      && item.lng >= bounds.getSouthWest().lng
+                                      && item.lat <= bounds.getNorthEast().lat
+                                      && item.lng <= bounds.getNorthEast().lng
+                                      && distance <= cradius) {
+                                    processedCells[ncell.toString()] = true;
+                                    stack.push(ncell);
+                                    L.polygon(ncell.getCornerLatLngs(), {
+                                      color: color,
+                                      opacity: 0.5,
+                                      weight: 1,
+                                      fillOpacity: 0,
+                                      interactive: false
+                                    }).addTo(group);
+                                    break
+                                  }
+                                }
+                              }
+                            })
+                          }
+                        }
                     });
 
                     var geojson = {

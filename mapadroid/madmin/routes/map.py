@@ -354,18 +354,16 @@ class map(object):
 
 
 def get_routepool_route(name, mode, coords):
-    (parsed_coords, s2cells) = get_routepool_coords(coords, mode)
+    parsed_coords = get_routepool_coords(coords, mode)
     return {
         "name": name,
         "mode": mode,
         "coordinates": parsed_coords,
-        "s2cells": s2cells
     }
 
 
 def get_routepool_coords(coord_list, mode):
     route_serialized = []
-    s2cells = {}
     prepared_coords = coord_list
     if isinstance(coord_list, RoutePoolEntry):
         prepared_coords = coord_list.subroute
@@ -373,8 +371,4 @@ def get_routepool_coords(coord_list, mode):
         route_serialized.append([
             getCoordFloat(location.lat), getCoordFloat(location.lng)
         ])
-        if mode == "raids_mitm":
-            cells = S2Helper.get_S2cells_from_circle(location.lat, location.lng, 490)
-            for cell in cells:
-                s2cells[str(cell.id())] = S2Helper.coords_of_cell(cell.id())
-    return (route_serialized, s2cells)
+    return (route_serialized)
