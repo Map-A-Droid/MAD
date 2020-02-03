@@ -72,6 +72,11 @@ class RouteManagerLeveling(RouteManagerQuests):
                 entry.queue.clear()
                 [entry.queue.append(i) for i in origin_local_list]
                 any_at_all = len(origin_local_list) > 0 or any_at_all
+                # saving new startposition of walker in db
+                newstartposition: Location = entry.queue[0]
+                self.db_wrapper.save_last_walker_position(origin=origin,
+                                                          lat=newstartposition.lat,
+                                                          lng=newstartposition.lng)
             return True
 
     def _local_recalc_subroute(self, unvisited_stops):

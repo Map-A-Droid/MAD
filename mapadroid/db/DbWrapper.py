@@ -926,6 +926,17 @@ class DbWrapper:
         else:
             return stops
 
+    def save_last_walker_position(self, origin, lat, lng):
+        logger.debug("dbWrapper::save_last_walker_position")
+
+        query = (
+            "update settings_device set startcoords_of_walker=%s, %s where instance_id=%s and name=%s"
+        )
+        vals = (
+            lat, lng, self.instance_id, origin
+        )
+        self.execute(query, vals, commit=True)
+
     def insert_usage(self, instance, cpu, mem, garbage, timestamp):
         logger.debug("dbWrapper::insert_usage")
 
