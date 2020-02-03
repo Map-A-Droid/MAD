@@ -1,3 +1,4 @@
+var locinjectPane = null;
 var locInjectBtn = L.easyButton({
     position: "bottomright",
     states: [{
@@ -7,6 +8,8 @@ var locInjectBtn = L.easyButton({
         onClick: function (btn, map) {
             clickToScanActive = true;
             L.DomUtil.addClass(map._container, 'crosshair-cursor-enabled');
+            locInjectPane = map.createPane("locinject")
+            locInjectPane.style.pointerEvents = 'auto';
             btn.state('scanmode-deactivate');
         }
     }, {
@@ -16,6 +19,7 @@ var locInjectBtn = L.easyButton({
         onClick: function (btn, map) {
             clickToScanActive = false;
             L.DomUtil.removeClass(map._container, 'crosshair-cursor-enabled');
+            L.DomUtil.remove(locInjectPane);
             btn.state('scanmode-activate');
         }
     }]
@@ -41,6 +45,7 @@ $(document).on("hidden.bs.modal", "#injectionModal", function (e) {
     locInjectBtn.state("scanmode-activate");
     clickToScanActive = false;
     L.DomUtil.removeClass(map._container, 'crosshair-cursor-enabled');
+    L.DomUtil.remove(locInjectPane);
 });
 
 $(document).on("click", "#sendworker", function () {
