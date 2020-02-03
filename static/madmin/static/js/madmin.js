@@ -148,6 +148,18 @@ new Vue({
         spawns: {},
         mons: {},
         cellupdates: {},
+        fetchers: {
+          workers: false,
+          gyms: false,
+          routes: false,
+          geofences: false,
+          spawns: false,
+          quests: false,
+          stops: false,
+          mons: false,
+          prioroutes: false,
+          cells: false
+        },
         layers: {
             stat: {
                 spawns: false,
@@ -350,7 +362,12 @@ new Vue({
         map_fetch_workers() {
             var $this = this;
 
-            axios.get("get_position").then(function (res) {
+            if (this.fetchers.workers == true) {
+              return;
+            }
+
+            this.fetchers.workers = true;
+            axios.get("get_workers").then(function (res) {
                 res.data.forEach(function (worker) {
                     var name = worker["name"];
 
@@ -379,6 +396,8 @@ new Vue({
                         }
                     }
                 });
+            }).then(function() {
+              $this.fetchers.workers = false;
             });
         },
         map_fetch_gyms(urlFilter) {
@@ -388,6 +407,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.gyms == true) {
+              return;
+            }
+
+            this.fetchers.gyms = true;
             axios.get('get_gymcoords' + urlFilter).then(function (res) {
                 res.data.forEach(function (gym) {
                     switch (gym['team_id']) {
@@ -469,11 +493,18 @@ new Vue({
                         leaflet_data["raids"][gym["id"]].addTo(map);
                     }
                 });
+            }).then(function() {
+              $this.fetchers.gyms = true;
             });
         },
         map_fetch_routes() {
             var $this = this;
 
+            if (this.fetchers.routes == true) {
+              return;
+            }
+
+            this.fetchers.routes = true;
             axios.get("get_route").then(function (res) {
                 res.data.forEach(function (route) {
                     var group = L.layerGroup();
@@ -596,11 +627,18 @@ new Vue({
 
                     $this.$set($this.layers.dyn.routes, name, settings);
                 });
+            }).then(function() {
+              $this.fetchers.routes = false;
             });
         },
         map_fetch_prioroutes() {
             var $this = this;
 
+            if (this.fetchers.prioroutes == true) {
+              return;
+            }
+
+            this.fetchers.prioroutes = true;
             axios.get("get_prioroute").then(function (res) {
                 res.data.forEach(function (route) {
                     var group = L.layerGroup();
@@ -684,6 +722,8 @@ new Vue({
 
                     $this.$set($this.layers.dyn.prioroutes, name, settings);
                 });
+            }).then(function() {
+              $this.fetchers.prioroutes = false;
             });
         },
         map_fetch_spawns(urlFilter) {
@@ -693,6 +733,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.spawns == true) {
+              return;
+            }
+
+            this.fetchers.spawns = true;
             axios.get('get_spawns' + urlFilter).then(function (res) {
                 res.data.forEach(function (spawn) {
                     if (spawn['endtime'] !== null) {
@@ -763,6 +808,8 @@ new Vue({
                         }
                     }
                 });
+            }).then(function() {
+              $this.fetchers.spawns = false;
             });
         },
         map_fetch_quests(urlFilter) {
@@ -772,6 +819,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.quests == true) {
+              return;
+            }
+
+            this.fetchers.quests = true;
             axios.get("get_quests" + urlFilter).then(function (res) {
                 res.data.forEach(function (quest) {
                     if ($this.quests[quest["pokestop_id"]]) {
@@ -792,6 +844,8 @@ new Vue({
                         leaflet_data["quests"][quest["pokestop_id"]].addTo(map);
                     }
                 });
+            }).then(function() {
+              $this.fetchers.quests = false;
             });
         },
         map_fetch_stops(urlFilter) {
@@ -799,6 +853,12 @@ new Vue({
             if (!$this.layers.stat.stops) {
                 return;
             }
+
+            if (this.fetchers.stops == true) {
+              return;
+            }
+
+            this.fetchers.stops = true;
             axios.get("get_stops" + urlFilter).then(function (res) {
                 res.data.forEach(function (stop) {
                     var stop_id = stop["pokestop_id"];
@@ -821,10 +881,18 @@ new Vue({
                         leaflet_data["stops"][stop_id].addTo(map);
                     }
                 });
+            }).then(function() {
+              $this.fetchers.stops = false;
             });
         },
         map_fetch_geofences() {
             var $this = this;
+
+            if (this.fetchers.geofences == true) {
+              return;
+            }
+
+            this.fetchers.geofences = true;
             axios.get('get_geofence').then(function (res) {
                 res.data.forEach(function (geofence) {
                     var group = L.layerGroup();
@@ -854,6 +922,8 @@ new Vue({
 
                     $this.$set($this.layers.dyn.geofences, name, settings);
                 });
+            }).then(function() {
+              $this.fetchers.geofences = false;
             });
         },
         map_fetch_mons(urlFilter) {
@@ -863,6 +933,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.mons == true) {
+              return;
+            }
+
+            this.fetchers.mons = true;
             axios.get('get_map_mons' + urlFilter).then(function (res) {
                 res.data.forEach(function (mon) {
 
@@ -907,6 +982,8 @@ new Vue({
                         }
                     }
                 });
+            }).then(function() {
+              $this.fetchers.mons = false;
             });
         },
         map_fetch_cells(urlFilter) {
@@ -916,6 +993,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.cells == true) {
+              return;
+            }
+
+            this.fetchers.cells = true;
             axios.get('get_cells' + urlFilter).then(function (res) {
                 const now = Math.round((new Date()).getTime() / 1000);
 
@@ -939,6 +1021,8 @@ new Vue({
                             .addTo(map);
                     }
                 })
+            }).then(function() {
+              $this.fetchers.cells = false;
             });
         },
         changeDynamicLayers(type) {

@@ -39,7 +39,7 @@ class map(object):
     def add_route(self):
         routes = [
             ("/map", self.map),
-            ("/get_position", self.get_position),
+            ("/get_workers", self.get_workers),
             ("/get_geofence", self.get_geofence),
             ("/get_route", self.get_route),
             ("/get_prioroute", self.get_prioroute),
@@ -62,7 +62,7 @@ class map(object):
                                setlat=setlat, setlng=setlng)
 
     @auth_required
-    def get_position(self):
+    def get_workers(self):
         positions = []
         devicemappings = self._mapping_manager.get_all_devicemappings()
         for name, values in devicemappings.items():
