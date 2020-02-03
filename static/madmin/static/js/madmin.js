@@ -396,7 +396,7 @@ new Vue({
                         }
                     }
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.workers = false;
             });
         },
@@ -493,7 +493,7 @@ new Vue({
                         leaflet_data["raids"][gym["id"]].addTo(map);
                     }
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.gyms = true;
             });
         },
@@ -627,7 +627,7 @@ new Vue({
 
                     $this.$set($this.layers.dyn.routes, name, settings);
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.routes = false;
             });
         },
@@ -722,7 +722,7 @@ new Vue({
 
                     $this.$set($this.layers.dyn.prioroutes, name, settings);
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.prioroutes = false;
             });
         },
@@ -808,7 +808,7 @@ new Vue({
                         }
                     }
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.spawns = false;
             });
         },
@@ -844,7 +844,7 @@ new Vue({
                         leaflet_data["quests"][quest["pokestop_id"]].addTo(map);
                     }
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.quests = false;
             });
         },
@@ -881,7 +881,7 @@ new Vue({
                         leaflet_data["stops"][stop_id].addTo(map);
                     }
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.stops = false;
             });
         },
@@ -922,7 +922,7 @@ new Vue({
 
                     $this.$set($this.layers.dyn.geofences, name, settings);
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.geofences = false;
             });
         },
@@ -982,7 +982,7 @@ new Vue({
                         }
                     }
                 });
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.mons = false;
             });
         },
@@ -1021,7 +1021,7 @@ new Vue({
                             .addTo(map);
                     }
                 })
-            }).then(function() {
+            }).finally(function() {
               $this.fetchers.cells = false;
             });
         },
