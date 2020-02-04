@@ -16,7 +16,7 @@
     $('#file-input').on('change', function () {
         $("#upload_form").submit();
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Uploading APK...</h2>' });
-    }).click();
+    });
 
     $(".search").click(function() {
         if(confirm('Are you sure you want to search for an updated APK?  Currently no locks so dont spam it :)')) {
