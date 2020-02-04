@@ -1,3 +1,4 @@
+import copy
 from collections import UserDict
 import mysql
 from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
@@ -327,7 +328,7 @@ class Resource(object):
                         defaults[field] = val['settings']['empty']
                     except KeyError:
                         continue
-                self._data[section] = ResourceTracker(self.configuration[section], self._data_manager,
+                self._data[section] = ResourceTracker(copy.deepcopy(self.configuration[section]), self._data_manager,
                                                       initialdata=defaults)
             except KeyError:
                 continue
