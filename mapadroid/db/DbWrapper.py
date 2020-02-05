@@ -906,7 +906,7 @@ class DbWrapper:
         query = (
             "SELECT latitude, longitude, SQRT("
             "POW(69.1 * (latitude - {}), 2) + "
-            "POW(69.1 * ({} - longitude) * COS(latitude / 57.3), 2)) AS distance "
+            "POW(69.1 * ({} - longitude)) * 100 AS distance "
             "FROM pokestop "
             "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
             "where "
