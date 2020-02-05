@@ -919,10 +919,10 @@ class DbWrapper:
                 "POW(69.1 * ({} - longitude), 2)) AS distance "
                 "FROM pokestop "
                 "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
-                "where SQRT(POW(69.1 * (latitude - 35.717653), 2) + POW(69.1 * (139.761243 - longitude), 2)) <= {} and "
+                "where SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} and "
                 "(latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
                 "{} ORDER BY distance {} "
-            ).format(lat, lon, origin, maxdistance, minLat, minLon, maxLat, maxLon, ignore_spinnedstr, limitstr)
+            ).format(lat, lon, origin, lat, lon, maxdistance, minLat, minLon, maxLat, maxLon, ignore_spinnedstr, limitstr)
 
             res = self.execute(query)
 
