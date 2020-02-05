@@ -886,7 +886,8 @@ class DbWrapper:
             )
         return next_up
 
-    def get_nearest_stops_from_position(self, geofence_helper, origin, lat, lon, limit=None, ignore_spinned=True):
+    def get_nearest_stops_from_position(self, geofence_helper, origin: str, lat, lon, limit: int = 20,
+                                        ignore_spinned: bool = True, maxdistance: int = 1):
         """
         Retrieve the nearest stops from lat / lon (optional with limit)
         :return:
@@ -895,26 +896,50 @@ class DbWrapper:
         logger.debug("DbWrapper::get_nearest_stops_from_position called")
         limitstr: str = ""
         ignore_spinnedstr: str = ""
+        loopcount: int = 0
+        getlocations: bool = False
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
-        if limit is not None:
+        if limit > 0:
             limitstr = "limit {}".format(limit)
 
         if ignore_spinned:
             ignore_spinnedstr = "AND trs_visited.origin IS NULL"
 
-        query = (
-            "SELECT latitude, longitude, SQRT("
-            "POW(69.1 * (latitude - {}), 2) + "
-            "POW(69.1 * ({} - longitude)) * 100 AS distance "
-            "FROM pokestop "
-            "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
-            "where "
-            "(latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
-            "{} ORDER BY distance {} "
-        ).format(lat, lon, origin, minLat, minLon, maxLat, maxLon, ignore_spinnedstr, limitstr)
+        while not getlocations:
 
-        res = self.execute(query)
+            loopcount += 1
+            if loopcount >= 4:
+                logger.error("Not getting any new stop - abort")
+                return []
+
+            query = (
+                "SELECT latitude, longitude, SQRT("
+                "POW(69.1 * (latitude - {}), 2) + "
+                "POW(69.1 * ({} - longitude)) * 100 AS distance "
+                "FROM pokestop "
+                "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
+                "where distance <= {}"
+                "(latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
+                "{} ORDER BY distance {} "
+            ).format(lat, lon, origin, maxdistance, minLon, maxLat, maxLon, ignore_spinnedstr, limitstr)
+
+            res = self.execute(query)
+
+            # getting 0 new locations - more distance!
+            if len(res) == 0:
+                maxdistance += 1
+
+            # getting less then the requested max. locations
+            elif len(res) < limit:
+                # using last found location as new startlocation
+                lat = res[len(res) - 1][0]
+                lon = res[len(res) - 1][1]
+
+            else:
+                # getting new locations
+                getlocations = True
+
         stops: List[Location] = []
 
         for (latitude, longitude, distance) in res:
