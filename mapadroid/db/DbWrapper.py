@@ -909,35 +909,38 @@ class DbWrapper:
         while not getlocations:
 
             loopcount += 1
-            if loopcount >= 4:
+            if loopcount >= 10:
                 logger.error("Not getting any new stop - abort")
                 return []
 
             query = (
                 "SELECT latitude, longitude, SQRT("
                 "POW(69.1 * (latitude - {}), 2) + "
-                "POW(69.1 * ({} - longitude)) * 100 AS distance "
+                "POW(69.1 * ({} - longitude), 2)) AS distance "
                 "FROM pokestop "
                 "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
-                "where distance <= {}"
+                "where SQRT(POW(69.1 * (latitude - 35.717653), 2) + POW(69.1 * (139.761243 - longitude), 2)) <= {} and "
                 "(latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
                 "{} ORDER BY distance {} "
-            ).format(lat, lon, origin, maxdistance, minLon, maxLat, maxLon, ignore_spinnedstr, limitstr)
+            ).format(lat, lon, origin, maxdistance, minLat, minLon, maxLat, maxLon, ignore_spinnedstr, limitstr)
 
             res = self.execute(query)
 
             # getting 0 new locations - more distance!
             if len(res) == 0:
+                logger.warning("No location found - need more distance")
                 maxdistance += 1
 
             # getting less then the requested max. locations
             elif len(res) < limit:
                 # using last found location as new startlocation
+                logger.warning("Not enough locations found - setting new startposition")
                 lat = res[len(res) - 1][0]
                 lon = res[len(res) - 1][1]
 
             else:
                 # getting new locations
+                logger.info("Getting enough locations")
                 getlocations = True
 
         stops: List[Location] = []
