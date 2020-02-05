@@ -937,6 +937,7 @@ class DbWrapper:
                 logger.warning("Not enough locations found - setting new startposition")
                 lat = res[len(res) - 1][0]
                 lon = res[len(res) - 1][1]
+                maxdistance += .5
 
             else:
                 # getting new locations
