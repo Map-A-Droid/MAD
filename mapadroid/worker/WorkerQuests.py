@@ -154,6 +154,8 @@ class WorkerQuests(MITMBase):
             self._communicator.set_location(
                 Location(self.current_location.lat, self.current_location.lng), 0)
             # the time we will take as a starting point to wait for data...
+            time.sleep(2)
+            # wait 2 seconds - teleport may be quick running
             cur_time = math.floor(time.time())
 
             delay_used = self.get_devicesettings_value('post_teleport_delay', 7)
@@ -822,7 +824,7 @@ class WorkerQuests(MITMBase):
             # proto has previously been received, let's check the timestamp...
             # TODO: int vs str-key?
             latest_proto = latest.get(proto_to_wait_for, None)
-            latest_timestamp = latest_proto.get("timestamp", 0)
+            latest_timestamp = latest_proto.get("timestamp", 0) + 1000
             # ensure a small timedelta because pogo smts loads data later then excepted
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
