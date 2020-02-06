@@ -499,7 +499,7 @@ new Vue({
                     }
                 });
             }).finally(function() {
-              $this.fetchers.gyms = true;
+              $this.fetchers.gyms = false;
             });
         },
         map_fetch_routes() {
