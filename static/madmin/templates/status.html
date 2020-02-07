@@ -67,7 +67,7 @@
                         if (type == "sort") { return data; }
                         var dateToShow = moment.utc(data * 1000);
                         if (dateToShow.isValid() && data != null && data != undefined) {
-                            return toHHMMSS(Math.abs(dateToShow.diff(moment.utc()) / 1000));
+                            return toHHMMSS_mark(Math.abs(dateToShow.diff(moment.utc()) / 1000));
                         }
                         return "None";
                     }
