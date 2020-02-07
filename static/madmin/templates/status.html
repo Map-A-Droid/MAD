@@ -95,12 +95,6 @@
             "autoWidth": false,
             "stateSave": true,
             "stateDuration": 0,                                    
-            "stateSaveCallback": function(settings,data) {
-                localStorage.setItem( 'MAD_STATUS_' + settings.sInstance, JSON.stringify(data) )
-            },
-            "stateLoadCallback": function(settings) {
-                return JSON.parse( localStorage.getItem( 'MAD_STATUS_' + settings.sInstance ) )
-            }
         });
     
     var toHHMMSS_mark = (secs) => {
