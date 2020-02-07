@@ -62,7 +62,18 @@
                     }
                 },
                 {
-                    "targets": [1, 8, 12],
+                    "targets": [1],
+                    "render": function (data, type, row) {
+                        if (type == "sort") { return data; }
+                        var dateToShow = moment.utc(data * 1000);
+                        if (dateToShow.isValid() && data != null && data != undefined) {
+                            return toHHMMSS(Math.abs(dateToShow.diff(moment.utc()) / 1000));
+                        }
+                        return "None";
+                    }
+                },
+                {
+                    "targets": [8, 12],
                     "render": function (data, type, row) {
                         if (type == "sort") { return data; }
                         var dateToShow = moment.utc(data * 1000);
@@ -91,6 +102,15 @@
                 return JSON.parse( localStorage.getItem( 'MAD_STATUS_' + settings.sInstance ) )
             }
         });
+    
+    var toHHMMSS_mark = (secs) => {
+        var sec_test = parseInt(secs, 10);
+        if (sec_test <  localStorage['MAD_MAXSECONDS_STATUS']) {
+                return "✔️";
+        }
+        return toHHMMSS(secs);
+    }
+    
     var toHHMMSS = (secs) => {
         var sec_num = parseInt(secs, 10)
         var hours   = Math.floor(sec_num / 3600)
@@ -105,8 +125,12 @@
     
     $(document).ready(function () {
         $("#navstatus").addClass("active");
+        $('input#maxSeconds').val(localStorage["MAD_MAXSECONDS_STATUS"]);
+        $('input#maxSeconds').on('input', function() {
+                localStorage['MAD_MAXSECONDS_STATUS'] = $(this).val();
+        });
         setInterval(function () {
-                dataTable.ajax.reload( null, false ); // user paging is not reset on reload
+                dataTable.ajax.reload(null, false); //user paging is not reset on reload
         }, 10000);
     });
 </script>
@@ -122,4 +146,10 @@
 </div>
 <br>
 <table id="show-data" class="table"></table>
+<div class="card border-secondary">
+  <div class="card-body py-2">
+    <p class="card-text">How many seconds for green tick? <input type="number" id="maxSeconds" /></p>
+  </div>
+</div>
+<br />
 {% endblock %}
