@@ -136,6 +136,7 @@ def questtask(typeid, condition, target, quest_template):
         arr['type'] = ""
         arr['poke'] = ""
         arr['different'] = ""
+        arr['item'] = ""
 
         text = _("Catch {0}{different} {type}Pokemon{wb}")
         match_object = re.search(r'"pokemon_type": \[([0-9, ]+)\]', condition)
@@ -205,45 +206,53 @@ def questtask(typeid, condition, target, quest_template):
         text = _('Power up Pokemon {0} times')
     elif typeid == 15:
         text = _("Evolve {0} Pokemon")
-        if re.search(r'"type": 11', condition) is not None:
-            text = _("Use an item to evolve a Pokemon")
-        elif re.search(r'"type": 1', condition) is not None:
-            text = _("Evolve {0} {type}Pokemon")
-            arr['wb'] = ""
-            arr['type'] = ""
-            arr['poke'] = ""
-            match_object = re.search(
-                r'"pokemon_type": \[([0-9, ]+)\]', condition)
-            if match_object is not None:
-                pt = match_object.group(1).split(', ')
-                last = len(pt)
-                cur = 1
-                if last == 1:
-                    arr['type'] = pokemonTypes[pt[0]].title() + _('-type ')
-                else:
-                    for ty in pt:
-                        arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
-                            _('-type ') if last == cur else '-, ')
-                        cur += 1
-        elif re.search(r'"type": 2', condition) is not None:
-            arr['wb'] = ""
-            arr['type'] = ""
-            arr['poke'] = ""
+        for con in condition_dict:
+            if con.get('type', 0) == 11:
+                text = _("Use an item to evolve a Pokemon")
+                # Try to find the exact evolution item needed
+                # [{"type": 11, "with_item": {"item": 1106}}]
+                with_item = con.get('with_item', {}).get('item', None)
+                if with_item is not None:
+                    text = _('Use a {item} to evolve a Pokemon')
 
-            match_object = re.search(
-                r'"pokemon_ids": \[([0-9, ]+)\]', condition)
-            if match_object is not None:
-                pt = match_object.group(1).split(', ')
-                last = len(pt)
-                cur = 1
-                if last == 1:
-                    arr['poke'] = i8ln(pokemonname(pt[0]))
-                else:
-                    for ty in pt:
-                        arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
-                            '' if last == cur else ', ')
-                        cur += 1
-                text = _('Evolve {0} {poke}')
+                    arr['item'] = items[str(with_item)]['name']
+            if con.get('type', 0) == 1:
+                text = _("Evolve {0} {type}Pokemon")
+                arr['wb'] = ""
+                arr['type'] = ""
+                arr['poke'] = ""
+                match_object = re.search(
+                    r'"pokemon_type": \[([0-9, ]+)\]', condition)
+                if match_object is not None:
+                    pt = match_object.group(1).split(', ')
+                    last = len(pt)
+                    cur = 1
+                    if last == 1:
+                        arr['type'] = pokemonTypes[pt[0]].title() + _('-type ')
+                    else:
+                        for ty in pt:
+                            arr['type'] += (_('or ') if last == cur else '') + pokemonTypes[ty].title() + (
+                                _('-type ') if last == cur else '-, ')
+                            cur += 1
+            if re.search(r'"type": 2', condition) is not None:
+                arr['wb'] = ""
+                arr['type'] = ""
+                arr['poke'] = ""
+
+                match_object = re.search(
+                    r'"pokemon_ids": \[([0-9, ]+)\]', condition)
+                if match_object is not None:
+                    pt = match_object.group(1).split(', ')
+                    last = len(pt)
+                    cur = 1
+                    if last == 1:
+                        arr['poke'] = i8ln(pokemonname(pt[0]))
+                    else:
+                        for ty in pt:
+                            arr['poke'] += (_('or ') if last == cur else '') + i8ln(pokemonname(ty)) + (
+                                '' if last == cur else ', ')
+                            cur += 1
+                    text = _('Evolve {0} {poke}')
     elif typeid == 16:
         arr['inrow'] = ""
         arr['curve'] = ""
@@ -335,7 +344,7 @@ def questtask(typeid, condition, target, quest_template):
                 text = text.replace(_('Battle'), _('Win'))
 
     quest_templates = open_json_file('quest_templates')
-    if quest_template in quest_templates:
+    if quest_template is not None and quest_template in quest_templates:
         text = _(quest_templates[quest_template])
 
     if int(target) == int(1):
