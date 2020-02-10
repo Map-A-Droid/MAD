@@ -300,11 +300,12 @@ class WebsocketServer(object):
     async def __client_message_receiver(self, origin: str, client_entry: WebsocketConnectedClientEntry) -> None:
         if client_entry is None:
             return
+        connection: websockets.WebSocketClientProtocol = client_entry.websocket_client_connection
         logger.info("Consumer handler of {} starting", origin)
-        while client_entry.websocket_client_connection.open:
+        while connection.open:
             message = None
             try:
-                message = await asyncio.wait_for(client_entry.websocket_client_connection.recv(), timeout=4.0)
+                message = await asyncio.wait_for(connection.recv(), timeout=4.0)
             except asyncio.TimeoutError:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:
