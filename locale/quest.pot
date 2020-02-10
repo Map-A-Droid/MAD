@@ -1,338 +1,344 @@
 # SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR ORGANIZATION
+# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
+# This file is distributed under the same license as the PACKAGE package.
 # FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-# 
+#
+#, fuzzy
 msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-01-02 21:30+0100\n"
+"POT-Creation-Date: 2020-02-10 08:10+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: \n"
 "MIME-Version: 1.0\n"
-"Content-Type: text/plain; charset=cp1252\n"
+"Content-Type: text/plain; charset=CHARSET\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Generated-By: pygettext.py 1.5\n"
 
-#: questGen.py:29 questGen.py:85
+#: questGen.py:32 questGen.py:95
 msgid "Item"
 msgstr ""
 
-#: questGen.py:33 questGen.py:35 questGen.py:86
+#: questGen.py:36 questGen.py:38 questGen.py:96
 msgid "Stardust"
 msgstr ""
 
-#: questGen.py:36 questGen.py:87
+#: questGen.py:39 questGen.py:97
 msgid "Pokemon"
 msgstr ""
 
-#: questGen.py:114
+#: questGen.py:124
 msgid "Nice"
 msgstr ""
 
-#: questGen.py:114
+#: questGen.py:124
 msgid "Great"
 msgstr ""
 
-#: questGen.py:115
+#: questGen.py:125
 msgid "Excellent"
 msgstr ""
 
-#: questGen.py:115
+#: questGen.py:125
 msgid "Curveball"
 msgstr ""
 
-#: questGen.py:126
+#: questGen.py:141
 #, python-brace-format
 msgid "Catch {0}{different} {type}Pokemon{wb}"
 msgstr ""
 
-#: questGen.py:133 questGen.py:137 questGen.py:208 questGen.py:212
-#: questGen.py:300 questGen.py:304
+#: questGen.py:148 questGen.py:152 questGen.py:230 questGen.py:234
+#: questGen.py:324 questGen.py:328
 msgid "-type "
 msgstr ""
 
-#: questGen.py:136 questGen.py:153 questGen.py:211 questGen.py:229
-#: questGen.py:284 questGen.py:303
+#: questGen.py:151 questGen.py:168 questGen.py:233 questGen.py:251
+#: questGen.py:308 questGen.py:327
 msgid "or "
 msgstr ""
 
-#: questGen.py:141
+#: questGen.py:156
 msgid " with weather boost"
 msgstr ""
 
-#: questGen.py:143
+#: questGen.py:158
 msgid " different species of"
 msgstr ""
 
-#: questGen.py:156
+#: questGen.py:171
 #, python-brace-format
 msgid "Catch {0} {poke}"
 msgstr ""
 
-#: questGen.py:158
+#: questGen.py:173
 #, python-brace-format
 msgid "Spin {0} Pokestops or Gyms"
 msgstr ""
 
-#: questGen.py:160
+#: questGen.py:175
 #, python-brace-format
 msgid "Spin {0} Pokestops you haven't visited before"
 msgstr ""
 
-#: questGen.py:162
+#: questGen.py:177
 #, python-brace-format
 msgid "Hatch {0} Eggs"
 msgstr ""
 
-#: questGen.py:165
+#: questGen.py:180
 #, python-brace-format
 msgid "Win {0} Gym Battles"
 msgstr ""
 
-#: questGen.py:167
+#: questGen.py:182
 #, python-brace-format
 msgid "Use a supereffective Charged Attack in {0} Gym battles"
 msgstr ""
 
-#: questGen.py:169
+#: questGen.py:184
 #, python-brace-format
 msgid "Battle in a Gym {0} times"
 msgstr ""
 
-#: questGen.py:172
+#: questGen.py:187
 #, python-brace-format
 msgid "Win {0} Raids"
 msgstr ""
 
-#: questGen.py:174
+#: questGen.py:189
 msgid "Win a level 3 or higher raid"
 msgstr ""
 
-#: questGen.py:176
-msgid "Win a level 2 or higher raid"
-msgstr ""
-
-#: questGen.py:178
-#, python-brace-format
-msgid "Battle in {0} Raids"
-msgstr ""
-
-#: questGen.py:180
-#, python-brace-format
-msgid "Transfer {0} Pokemon"
-msgstr ""
-
-#: questGen.py:182
-#, python-brace-format
-msgid "Favourite {0} Pokemon"
-msgstr ""
-
-#: questGen.py:184
-#, python-brace-format
-msgid "Use {0} {type}Berries to help catch Pokemon"
-msgstr ""
-
-#: questGen.py:189
-msgid " Berry"
-msgstr ""
-
 #: questGen.py:191
-#, python-brace-format
-msgid "Power up Pokemon {0} times"
+msgid "Win a level 2 or higher raid"
 msgstr ""
 
 #: questGen.py:193
 #, python-brace-format
-msgid "Evolve {0} Pokemon"
+msgid "Battle in {0} Raids"
 msgstr ""
 
 #: questGen.py:195
-msgid "Use an item to evolve a Pokemon"
+#, python-brace-format
+msgid "Transfer {0} Pokemon"
 msgstr ""
 
 #: questGen.py:197
 #, python-brace-format
+msgid "Favourite {0} Pokemon"
+msgstr ""
+
+#: questGen.py:199
+#, python-brace-format
+msgid "Use {0} {type}Berries to help catch Pokemon"
+msgstr ""
+
+#: questGen.py:204
+msgid " Berry"
+msgstr ""
+
+#: questGen.py:206
+#, python-brace-format
+msgid "Power up Pokemon {0} times"
+msgstr ""
+
+#: questGen.py:208
+#, python-brace-format
+msgid "Evolve {0} Pokemon"
+msgstr ""
+
+#: questGen.py:211
+msgid "Use an item to evolve a Pokemon"
+msgstr ""
+
+#: questGen.py:216
+#, python-brace-format
+msgid "Use a {item} to evolve a Pokemon"
+msgstr ""
+
+#: questGen.py:219
+#, python-brace-format
 msgid "Evolve {0} {type}Pokemon"
 msgstr ""
 
-#: questGen.py:232
+#: questGen.py:254
 #, python-brace-format
 msgid "Evolve {0} {poke}"
 msgstr ""
 
-#: questGen.py:238
+#: questGen.py:260
 msgid " in a row"
 msgstr ""
 
-#: questGen.py:240
-msgid "Curveball "
-msgstr ""
-
-#: questGen.py:244
-#, python-brace-format
-msgid "Make {0} {type}{curve}Throws{inrow}"
-msgstr ""
-
-#: questGen.py:246
-#, python-brace-format
-msgid "Earn {0} Candies walking with your buddy"
-msgstr ""
-
-#: questGen.py:249
-msgid "Make a new friend"
-msgstr ""
-
-#: questGen.py:251
-#, python-brace-format
-msgid "Make {0} new friends"
-msgstr ""
-
-#: questGen.py:253
-#, python-brace-format
-msgid "Trade {0} Pokemon"
-msgstr ""
-
-#: questGen.py:258
-#, python-brace-format
-msgid "Trade Pokemon caught {distance} km apart"
-msgstr ""
-
-#: questGen.py:260
-#, python-brace-format
-msgid "Trade {0} Pokemon caught {distance} km apart"
-msgstr ""
-
 #: questGen.py:262
-#, python-brace-format
-msgid "Send {0} gifts to friends"
+msgid "Curveball "
 msgstr ""
 
 #: questGen.py:266
 #, python-brace-format
-msgid "Battle a Team Leader {0} times"
+msgid "Make {0} {type}{curve}Throws{inrow}"
 msgstr ""
 
 #: questGen.py:268
 #, python-brace-format
+msgid "Earn {0} Candies walking with your buddy"
+msgstr ""
+
+#: questGen.py:271
+msgid "Make a new friend"
+msgstr ""
+
+#: questGen.py:273
+#, python-brace-format
+msgid "Make {0} new friends"
+msgstr ""
+
+#: questGen.py:275
+#, python-brace-format
+msgid "Trade {0} Pokemon"
+msgstr ""
+
+#: questGen.py:280
+#, python-brace-format
+msgid "Trade Pokemon caught {distance} km apart"
+msgstr ""
+
+#: questGen.py:282
+#, python-brace-format
+msgid "Trade {0} Pokemon caught {distance} km apart"
+msgstr ""
+
+#: questGen.py:284
+#, python-brace-format
+msgid "Send {0} gifts to friends"
+msgstr ""
+
+#: questGen.py:288
+#, python-brace-format
+msgid "Battle a Team Leader {0} times"
+msgstr ""
+
+#: questGen.py:290
+#, python-brace-format
 msgid "Battle another Trainer {0} times"
 msgstr ""
 
-#: questGen.py:287
-#, python-brace-format
-msgid "Take {0} snapshots of {poke}"
-msgstr ""
-
-#: questGen.py:289
-#, python-brace-format
-msgid "Take {0} snapshots of {type} Pokemon"
-msgstr ""
-
-#: questGen.py:307
+#: questGen.py:294
 #, python-brace-format
 msgid "Take {0} snapshots of your Buddy"
 msgstr ""
 
-#: questGen.py:312
+#: questGen.py:311
+#, python-brace-format
+msgid "Take {0} snapshots of {poke}"
+msgstr ""
+
+#: questGen.py:313
+#, python-brace-format
+msgid "Take {0} snapshots of {type} Pokemon"
+msgstr ""
+
+#: questGen.py:334
+msgid "Battle against a Team Rocket Grunt"
+msgstr ""
+
+#: questGen.py:338
 #, python-brace-format
 msgid "Battle {0} times against the Team GO Rocket Leaders"
 msgstr ""
 
-#: questGen.py:314
-msgid "Battle against a Team Rocket Grunt"
-msgstr ""
-
-#: questGen.py:318
+#: questGen.py:343
 msgid "Battle"
 msgstr ""
 
-#: questGen.py:318
+#: questGen.py:343
 msgid "Win"
 msgstr ""
 
-#: questGen.py:321
+#: questGen.py:350
 msgid " Eggs"
 msgstr ""
 
-#: questGen.py:321
+#: questGen.py:350
 msgid "n Egg"
 msgstr ""
 
-#: questGen.py:322
+#: questGen.py:351
 msgid " Raids"
 msgstr ""
 
-#: questGen.py:322
+#: questGen.py:351
 msgid " Raid"
 msgstr ""
 
-#: questGen.py:323
+#: questGen.py:352
 msgid " Battles"
 msgstr ""
 
-#: questGen.py:323
+#: questGen.py:352
 msgid " Battle"
 msgstr ""
 
-#: questGen.py:324
+#: questGen.py:353
 msgid " candies"
 msgstr ""
 
-#: questGen.py:324
+#: questGen.py:353
 msgid " candy"
 msgstr ""
 
-#: questGen.py:325
+#: questGen.py:354
 msgid " gifts"
 msgstr ""
 
-#: questGen.py:325
+#: questGen.py:354
 msgid " gift"
 msgstr ""
 
-#: questGen.py:326
+#: questGen.py:355
 msgid " Pokestops"
 msgstr ""
 
-#: questGen.py:326
+#: questGen.py:355
 msgid " Pokestop"
 msgstr ""
 
-#: questGen.py:327
+#: questGen.py:356
 #, python-brace-format
 msgid " {0} snapshots"
 msgstr ""
 
-#: questGen.py:327
+#: questGen.py:356
 msgid " a snapshot"
 msgstr ""
 
-#: questGen.py:328
+#: questGen.py:357
 #, python-brace-format
 msgid "Make {0} {type}{curve}Throws"
 msgstr ""
 
-#: questGen.py:328
+#: questGen.py:357
 #, python-brace-format
 msgid "Make a {type}{curve}Throw"
 msgstr ""
 
-#: questGen.py:329
+#: questGen.py:358
 #, python-brace-format
 msgid " {0} times"
 msgstr ""
 
-#: questGen.py:330
+#: questGen.py:359
 #, python-brace-format
 msgid "{0} hearts"
 msgstr ""
 
-#: questGen.py:330
+#: questGen.py:359
 msgid "a heart"
 msgstr ""
 
-#: questGen.py:331
+#: questGen.py:360
 msgid "a"
 msgstr ""
