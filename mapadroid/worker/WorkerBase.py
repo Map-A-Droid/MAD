@@ -252,8 +252,8 @@ class WorkerBase(AbstractWorker):
             # only with autonomous lvl mode (atm!)
             self._mapping_manager.set_worker_startposition(routemanager_name=self._routemanager_name,
                                                            worker_name=self._origin,
-                                                           lat=str(startcoords[0]),
-                                                           lon=str(startcoords[1]))
+                                                           lat=float(startcoords[0]),
+                                                           lon=float(startcoords[1]))
 
         with self._work_mutex:
             try:
