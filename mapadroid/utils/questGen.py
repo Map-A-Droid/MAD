@@ -208,13 +208,12 @@ def questtask(typeid, condition, target, quest_template):
         text = _("Evolve {0} Pokemon")
         for con in condition_dict:
             if con.get('type', 0) == 11:
-                text = _("Use an item to evolve a Pokemon")
+                text = _("Use an item to evolve {0} Pokemon")
                 # Try to find the exact evolution item needed
                 # [{"type": 11, "with_item": {"item": 1106}}]
                 with_item = con.get('with_item', {}).get('item', None)
                 if with_item is not None:
-                    text = _('Use a {item} to evolve a Pokemon')
-
+                    text = _('Use {item} to evolve {0} Pokemon')
                     arr['item'] = items[str(with_item)]['name']
             if con.get('type', 0) == 1:
                 text = _("Evolve {0} {type}Pokemon")
