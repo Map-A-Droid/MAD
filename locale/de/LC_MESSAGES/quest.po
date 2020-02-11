@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-10 08:10+0100\n"
-"PO-Revision-Date: 2020-02-10 08:16+0100\n"
+"POT-Creation-Date: 2020-02-11 11:32+0100\n"
+"PO-Revision-Date: 2020-02-11 11:33+0100\n"
 "Last-Translator: Isdor\n"
 "Language-Team: discord\n"
 "Language: de_DE\n"
@@ -15,7 +15,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Generated-By: pygettext.py 1.5\n"
-"X-Generator: Poedit 2.2.4\n"
+"X-Generator: Poedit 2.3\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
 #: questGen.py:32 questGen.py:95
@@ -152,13 +152,14 @@ msgid "Evolve {0} Pokemon"
 msgstr "Entwickle {0} Pokemon"
 
 #: questGen.py:211
-msgid "Use an item to evolve a Pokemon"
-msgstr "Verwende ein Item um ein Pokemon zu entwickeln"
+#, python-brace-format
+msgid "Use an item to evolve {0} Pokemon"
+msgstr "Verwende ein Item um {0} Pokemon zu entwickeln"
 
 #: questGen.py:216
 #, python-brace-format
-msgid "Use a {item} to evolve a Pokemon"
-msgstr "Benutze einem {item}, um ein Pokemon zu entwickeln"
+msgid "Use {item} to evolve {0} Pokemon"
+msgstr "Benutze {item}, um {0} Pokemon zu entwickeln"
 
 #: questGen.py:219
 #, python-brace-format

@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-10 08:10+0100\n"
+"POT-Creation-Date: 2020-02-11 11:32+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -151,12 +151,13 @@ msgid "Evolve {0} Pokemon"
 msgstr ""
 
 #: questGen.py:211
-msgid "Use an item to evolve a Pokemon"
+#, python-brace-format
+msgid "Use an item to evolve {0} Pokemon"
 msgstr ""
 
 #: questGen.py:216
 #, python-brace-format
-msgid "Use a {item} to evolve a Pokemon"
+msgid "Use {item} to evolve {0} Pokemon"
 msgstr ""
 
 #: questGen.py:219
