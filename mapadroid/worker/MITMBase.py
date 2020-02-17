@@ -45,6 +45,7 @@ class MITMBase(WorkerBase):
         self._encounter_ids = {}
         self._current_sleep_time = 0
         self._db_wrapper.save_idle_status(dev_id, False)
+        self._clear_quests_failcount = 0
         self._mitm_mapper.collect_location_stats(self._origin, self.current_location, 1, time.time(), 2, 0,
                                                  self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_name),
@@ -105,6 +106,7 @@ class MITMBase(WorkerBase):
                                                      position_type, time.time(),
                                                      self._mapping_manager.routemanager_get_mode(
                                                          self._routemanager_name), self._transporttype)
+
         else:
             # TODO: timeout also happens if there is no useful data such as mons nearby in mon_mitm mode, we need to
             # TODO: be more precise (timeout vs empty data)
@@ -201,12 +203,27 @@ class MITMBase(WorkerBase):
         if trashcancheck is None:
             logger.error('Could not find any trashcan - abort')
             return
-        logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
+        if len(trashcancheck) == 0:
+            self._clear_quests_failcount += 1
+            if self._clear_quests_failcount < 3:
+                logger.warning("Could not find any trashcan on a valid screen"
+                    "shot {} time(s) in a row!", self._clear_quests_failcount)
+            else:
+                logger.error("Unable to clear quests 3 times in a row. Restart "
+                        "pogo ...")
+                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                    # TODO: put in loop, count up for a reboot ;)
+                    raise InternalStopWorkerException
+                return
+        else:
+            logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
         # get confirm box coords
         x, y = self._resocalc.get_confirm_delete_quest_coords(self)[0], \
                self._resocalc.get_confirm_delete_quest_coords(self)[1]
 
         for trash in range(len(trashcancheck)):
+            self._clear_quests_failcount = 0
+            self.set_devicesettings_value('last_questclear_time', time.time())
             logger.info("Delete old quest {}", int(trash) + 1)
             self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
             time.sleep(1 + int(delayadd))
