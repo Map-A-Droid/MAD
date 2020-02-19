@@ -70,7 +70,10 @@ class WorkerBase(AbstractWorker):
         self._not_injected_count: int = 0
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
-        self._loginerrorcounter: int = 0
+        self._loginerrorcounter: int = 0#
+        self._mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+        self._levelmode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        self._geofencehelper = self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name)
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self.get_devicesettings_value("last_location", None)
@@ -242,7 +245,25 @@ class WorkerBase(AbstractWorker):
     def _internal_pre_work(self):
         current_thread().name = self._origin
 
-        if self.get_devicesettings_value("startcoords_of_walker", None) is not None:
+        start_position = self.get_devicesettings_value("startcoords_of_walker", None)
+
+        if start_position and self._levelmode:
+            startcoords = self.get_devicesettings_value("startcoords_of_walker").replace(' ', '') \
+                .replace('_', '').split(',')
+
+            if not self._geofencehelper.is_coord_inside_include_geofence(Location(
+                    str(startcoords[0]), str(startcoords[1]))):
+                logger.warning("Startcoords not in geofence - setting new position")
+                lat, lng, _, _ = self._geofencehelper.get_polygon_from_fence()
+                start_position = str(lat) + "," + str(lng)
+
+        if start_position is None and self._levelmode:
+            logger.warning("Starting levelmode without worker start position")
+            # setting coords
+            lat, lng, _, _ = self._geofencehelper.get_polygon_from_fence()
+            start_position = str(lat) + "," + str(lng)
+
+        if start_position is not None:
             startcoords = self.get_devicesettings_value("startcoords_of_walker").replace(' ', '') \
                 .replace('_', '').split(',')
             logger.info('Setting startcoords or walker lat {} / lng {}'.format(str(startcoords[0]),

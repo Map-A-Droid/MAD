@@ -110,8 +110,8 @@ class WorkerQuests(MITMBase):
         if self._level_mode:
             logger.info("Starting Level Mode")
             # we wait a few seconds for getting stops to db (maybe we visit a fresh area)
-            logger.info("Sleeping 2 minutes for getting mitm data")
-            #time.sleep(120)
+            logger.info("Sleeping one minute for getting data")
+            time.sleep(60)
         else:
             # initial cleanup old quests
             if not self._init:
