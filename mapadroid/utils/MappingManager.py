@@ -415,7 +415,7 @@ class MappingManager:
                                                                      "s2_cell_level", 30),
                                                                  )
 
-            if mode not in ("iv_mitm", "idle") or area.get("level", False) is False:
+            if mode not in ("iv_mitm", "idle") or mode == "pokestops" and area.get("level", False) is False:
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),
                                              init=area.get("init", False),
