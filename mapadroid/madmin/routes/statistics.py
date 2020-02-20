@@ -356,7 +356,7 @@ class statistics(object):
             shiny_stats_v2.append({'img': monPic, 'name': monName, 'worker': dat[8], 'lat': dat[2],
                                    'lat_5': "{:.5f}".format(dat[2]), 'lng_5': "{:.5f}".format(dat[3]),
                                    'lng': dat[3], 'timestamp': timestamp.strftime(self._datetimeformat),
-                                   'form': dat[1], 'mon_id': dat[0], 'encounter_id': dat[9]})
+                                   'form': dat[1], 'mon_id': dat[0], 'encounter_id': str(dat[9])})
 
         # print(shiny_count)
         global_shiny_stats_v2 = []
