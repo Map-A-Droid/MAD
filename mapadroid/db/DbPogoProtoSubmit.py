@@ -93,7 +93,7 @@ class DbPogoProtoSubmit:
         Update/Insert a mon with IVs
         """
         wild_pokemon = encounter_proto.get("wild_pokemon", None)
-        if wild_pokemon is None:
+        if wild_pokemon is None or wild_pokemon.get("status") == 5:
             return
 
         logger.debug("Updating IV sent by {} for encounter at {}".format(str(origin), str(timestamp)))
