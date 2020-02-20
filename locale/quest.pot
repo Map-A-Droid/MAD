@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-11 11:32+0100\n"
+"POT-Creation-Date: 2020-02-20 19:23+0100\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -243,7 +243,7 @@ msgid "Take {0} snapshots of {type} Pokemon"
 msgstr ""
 
 #: questGen.py:334
-msgid "Battle against a Team Rocket Grunt"
+msgid "Battle a Team Rocket Grunt"
 msgstr ""
 
 #: questGen.py:338
@@ -256,7 +256,7 @@ msgid "Battle"
 msgstr ""
 
 #: questGen.py:343
-msgid "Win"
+msgid "Defeat"
 msgstr ""
 
 #: questGen.py:350

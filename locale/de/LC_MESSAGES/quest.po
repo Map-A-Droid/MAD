@@ -6,8 +6,8 @@ msgid ""
 msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2020-02-11 11:32+0100\n"
-"PO-Revision-Date: 2020-02-11 11:33+0100\n"
+"POT-Creation-Date: 2020-02-20 19:23+0100\n"
+"PO-Revision-Date: 2020-02-20 19:25+0100\n"
 "Last-Translator: Isdor\n"
 "Language-Team: discord\n"
 "Language: de_DE\n"
@@ -247,7 +247,7 @@ msgid "Take {0} snapshots of {type} Pokemon"
 msgstr "Schieße {0} Fotos von {type}Pokemon"
 
 #: questGen.py:334
-msgid "Battle against a Team Rocket Grunt"
+msgid "Battle a Team Rocket Grunt"
 msgstr "Besiege einen Team Go Rocket-Rüpel"
 
 #: questGen.py:338
@@ -260,8 +260,8 @@ msgid "Battle"
 msgstr "Kampf"
 
 #: questGen.py:343
-msgid "Win"
-msgstr "Gewinne"
+msgid "Defeat"
+msgstr "Besiegen"
 
 #: questGen.py:350
 msgid " Eggs"
@@ -347,6 +347,9 @@ msgstr "Ein Herz"
 #: questGen.py:360
 msgid "a"
 msgstr "ein"
+
+#~ msgid "Win"
+#~ msgstr "Gewinne"
 
 #, fuzzy
 #~ msgid "Use a {type} to evolve a Pokemon"
