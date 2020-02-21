@@ -526,7 +526,7 @@ class WorkerQuests(MITMBase):
                     logger.info("Found item {}", str(item_text))
                     match_one_item: bool = False
                     for text in not_allow:
-                        if self.similar(text, item_text) > 0.5:
+                        if self.similar(text, item_text) > 0.6:
                             match_one_item = True
                     if match_one_item:
                         logger.info('Could not delete this item - check next one')
