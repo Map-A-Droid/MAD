@@ -52,6 +52,17 @@ var setlng = {{ setlng }};
               </div>
             </li>
             {% endraw %}
+            <li class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">Highlight</div>
+              <div class="form-group">
+                {% raw %}
+                <select class="form-control form-control-sm" v-model="settings.workerHighlight">
+                  <option :value="undefined">None (highlight quests)</option>
+                  <option v-for="worker in workers" v-bind:value="worker.name">Worker {{ worker.name }}</option>
+                </select>
+                {% endraw %}
+              </div>
+            </li>
           </ul>
         </div>
       </div>

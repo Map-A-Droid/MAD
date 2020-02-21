@@ -229,7 +229,8 @@ new Vue({
                     quests: 40,
                     mons: 67
                 }
-            }
+            },
+            workerHighlight: null
         }
     },
     watch: {
@@ -334,6 +335,10 @@ new Vue({
                     });
                 }
             }
+        },
+        'settings.workerHighlight': function (newVal, oldVal) {
+            this.updateStopHighlight();
+            this.updateStoredSetting('settings-workerHighlight', newVal);
         }
     },
     mounted() {
@@ -868,9 +873,14 @@ new Vue({
                 res.data.forEach(function (stop) {
                     var stop_id = stop["pokestop_id"];
                     if ($this.stops[stop_id]) {
-                        return;
+                        if ($this.stops[stop_id]["last_updated"] === stop["last_updated"]) {
+                            return;
+                        }
+
+                        map.removeLayer(leaflet_data["stops"][stop_id]);
+                        delete leaflet_data["stops"][stop_id];
                     }
-                    var color = stop["has_quest"] ? "blue" : "red";
+                    var color = $this.getStopColor(stop);
                     $this.stops[stop_id] = stop;
                     leaflet_data["stops"][stop_id] = L.circle([stop["latitude"], stop["longitude"]], {
                         radius: 8,
@@ -1030,6 +1040,17 @@ new Vue({
               $this.fetchers.cells = false;
             });
         },
+        updateStopHighlight() {
+            for (var stopID of Object.keys(this.stops)) {
+                if (leaflet_data["stops"][stopID]) {
+                    var color = this.getStopColor(this.stops[stopID]);
+                    leaflet_data["stops"][stopID].setStyle({
+                        color: color,
+                        fillColor: color
+                    });
+                }
+            }
+        },
         changeDynamicLayers(type) {
             for (k in this.layers.dyn[type]) {
                 tlayer = this.layers.dyn[type][k];
@@ -1075,6 +1096,13 @@ new Vue({
                 fillOpacity: 0.4,
                 weight: 1
             };
+        },
+        getStopColor(stop) {
+            var color = stop["has_quest"] ? "blue" : "red";
+            if (this.settings.workerHighlight && stop["visited_by"]) {
+                color = stop["visited_by"].includes(this.settings.workerHighlight) ? 'green' : color;
+            }
+            return color;
         },
         getRandomColor() {
             // generates only dark colors for better contrast
@@ -1206,6 +1234,11 @@ new Vue({
             var stop = this.stops[marker.options.id];
             var base_popup = this.build_stop_base_popup(stop["pokestop_id"], stop["image"], stop["name"], stop["latitude"], stop["longitude"])
 
+            var visited = "";
+            if (stop['visited_by']) {
+                visited = `<div class="visited"><i class="fa fa-shoe-prints"></i> Visited by workers: <strong>${stop['visited_by'].join(', ')}</strong></div>`
+            }
+
             var incident = "";
             var incident_expiration = moment.utc(stop["incident_expiration"] * 1000);
             if (incident_expiration.isAfter(moment.utc())) {
@@ -1222,6 +1255,7 @@ new Vue({
           ${base_popup}
           <br>
           <div class="timestamp"><i class="fa fa-clock"></i> Scanned: <strong>${moment.utc(stop["last_updated"] * 1000).local().format("YYYY-MM-DD HH:mm:ss")}</strong></div>
+          ${visited}
           ${incident}
           ${lure}
         </div>`;
@@ -1612,6 +1646,7 @@ new Vue({
             this.settings.routes.coordinateRadius.raids = this.getStoredSetting('settings-coordinateRadius-raids', 490);
             this.settings.routes.coordinateRadius.quests = this.getStoredSetting('settings-coordinateRadius-quests', 40);
             this.settings.routes.coordinateRadius.mons = this.getStoredSetting('settings-coordinateRadius-mons', 67);
+            this.settings.workerHighlight = this.getStoredSetting('settings-workerHighlight');
             for (index of Object.keys(this.layers.stat)) {
                 this.layers.stat[index] = this.getStoredSetting("layer-stat-" + index, false);
             }

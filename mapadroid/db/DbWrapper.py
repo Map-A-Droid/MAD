@@ -632,9 +632,7 @@ class DbWrapper:
         return mons
 
     def get_stops_in_rectangle(self, neLat, neLon, swLat, swLon, oNeLat=None, oNeLon=None, oSwLat=None,
-                               oSwLon=None,
-                               timestamp=None, check_quests=False):
-        stops = {}
+                               oSwLon=None, timestamp=None):
         args = []
         conversions = ['ps.`last_modified`', 'ps.`lure_expiration`', 'ps.`last_updated`',
                        'ps.`incident_start`',
@@ -647,8 +645,10 @@ class DbWrapper:
             "%s,\n" \
             "%s,\n" \
             "%s,\n" \
-            "ps.`active_fort_modifier`, ps.`name`, ps.`image`, ps.`incident_grunt_type`\n" \
+            "ps.`active_fort_modifier`, ps.`name`, ps.`image`, ps.`incident_grunt_type`,\n" \
+            "GROUP_CONCAT(trs_visited.`origin`) AS `visited_by`\n" \
             "FROM pokestop ps\n" \
+            "LEFT JOIN trs_visited ON (ps.`pokestop_id` = trs_visited.`pokestop_id`)\n" \
             )
         query_where = (
             "WHERE (ps.`latitude` >= %%s AND ps.`longitude` >= %%s "
@@ -671,6 +671,7 @@ class DbWrapper:
         for conversion in conversions:
             conversion_txt.append(adjust_tz_to_utc(conversion))
         sql = query + query_where
+        sql += " GROUP BY ps.`pokestop_id`"
         pokestops = self.autofetch_all(sql % tuple(conversion_txt), args=tuple(args))
         quests = self.quests_from_db(
             neLat=neLat,
@@ -685,6 +686,8 @@ class DbWrapper:
         )
         for pokestop in pokestops:
             pokestop['has_quest'] = pokestop['pokestop_id'] in quests
+            if pokestop['visited_by']:
+                pokestop['visited_by'] = pokestop['visited_by'].split(',')
         return pokestops
 
     def delete_stop(self, latitude: float, longitude: float):
