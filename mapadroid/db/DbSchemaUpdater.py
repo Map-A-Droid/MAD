@@ -29,7 +29,6 @@ class DbSchemaUpdater:
                      "`first_detection` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, "
                      "`last_non_scanned` datetime DEFAULT NULL, "
                      "`calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL, "
-                     "`eventid`int(11) NOT NULL DEFAULT 1, "
                      "UNIQUE KEY `spawnpoint_2` (`spawnpoint`), "
                      "KEY `spawnpoint` (`spawnpoint`)"
                      )
@@ -43,17 +42,6 @@ class DbSchemaUpdater:
                      "`tth_secs` int(11) DEFAULT NULL, "
                      "PRIMARY KEY (`id`), "
                      "KEY `trs_spawnpointdd_spawnpoint_id` (`spawnpoint_id`)"
-                     )
-        },
-        # SP Event Table
-        {
-            "table": "trs_event",
-            "spec": ("`id` int(11) NOT NULL AUTO_INCREMENT, "
-                     "`event_name` varchar(100), "
-                     "`event_start`datetime, "
-                     "`event_end` datetime, "
-                     "`event_lure_duration` int(11), "
-                     "PRIMARY KEY (`id`)"
                      )
         },
         # Quest table
@@ -218,16 +206,6 @@ class DbSchemaUpdater:
             "table": "trs_quest",
             "column": "quest_pokemon_costume_id",
             "ctype": "smallint(6) NOT NULL DEFAULT 0"
-        },
-        {
-            "table": "settings_walkerarea",
-            "column": "eventid",
-            "ctype": "int(11)"
-        },
-        {
-            "table": "trs_spawn",
-            "column": "eventid",
-            "ctype": "int(11) NOT NULL DEFAULT 1"
         }
     ]
 
