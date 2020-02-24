@@ -21,13 +21,14 @@ class DbWrapper:
     def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
+        self._event_id: int = 0
 
         self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
         self.sanity_check.check_all()
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration, self._event_id)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
@@ -37,6 +38,9 @@ class DbWrapper:
             self.instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
                            'installed, this message is safe to ignore')
+
+    def set_event_id(self, eventid: int):
+        self._event_id = eventid
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
@@ -834,6 +838,7 @@ class DbWrapper:
     def retrieve_next_spawns(self, geofence_helper):
         """
         Retrieve the spawnpoints with their respective unixtimestamp that are due in the next 300 seconds
+        Check for Event and select only normal and (if active) current Event Spawns
         :return:
         """
 
@@ -847,7 +852,8 @@ class DbWrapper:
             "FROM trs_spawn "
             "WHERE calc_endminsec IS NOT NULL "
             "AND (latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
-        ).format(minLat, minLon, maxLat, maxLon)
+            "AND eventid in (1, {})"
+        ).format(minLat, minLon, maxLat, maxLon, self._event_id)
 
         res = self.execute(query)
         next_up = []
@@ -950,6 +956,61 @@ class DbWrapper:
               "WHERE `instance_id` = %s"
         workers = self.autofetch_all(sql, args=(self.instance_id,))
         return workers
+
+    def get_events(self, event_id=None):
+        logger.debug("dbWrapper::get_events")
+        eventidstr: str = ""
+        if event_id is not None:
+            eventidstr = "where `id` = " + str(event_id)
+        sql = "select `id`, `event_name`, `event_start`, `event_end`, IF(`event_name`='DEFAULT',1,0) as locked "\
+              "from trs_event " + eventidstr + " order by id asc"
+        events = self.autofetch_all(sql)
+        return events
+
+    def save_event(self, event_name, event_start, event_end, id=None):
+        logger.debug("DbWrapper::save_event called")
+        if id is None:
+            query = (
+                "INSERT INTO trs_event (event_name, event_start, event_end) "
+                "VALUES (%s, %s, %s) "
+            )
+            vals = (event_name, event_start, event_end)
+        else:
+            query = (
+                "UPDATE trs_event set event_name=%s, event_start=%s, event_end=%s "
+                "where id=%s"
+            )
+            vals = (event_name, event_start, event_end, id)
+
+        self.execute(query, vals, commit=True)
+        return True
+
+    def delete_event(self, id=None):
+        logger.debug("DbWrapper::delete_event called")
+        if id is None:
+            return False
+        else:
+            query = (
+                "DELETE from trs_event where id=%s"
+            )
+            vals = (id)
+
+        self.execute(query, vals, commit=True)
+        return True
+
+    def get_current_event(self):
+        logger.debug("DbWrapper::get_current_event called")
+        sql = "select `id` " \
+              "from trs_event "\
+              "where now() between `event_start` and `event_end` and `event_name`<>'DEFAULT'"
+        found = self._db_exec.execute(sql)
+
+        if found and len(found) > 0 and found[0][0]:
+            logger.info("Found an active Event with id {}".format(str(found[0][0])))
+            return found[0][0]
+        else:
+            logger.info("There is no active event - returning default value (1)")
+            return 1
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
                                oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):

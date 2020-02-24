@@ -20,9 +20,10 @@ class DbPogoProtoSubmit:
     """
     default_spawndef = 240
 
-    def __init__(self, db_exec: PooledQueryExecutor, lure_duration: int):
+    def __init__(self, db_exec: PooledQueryExecutor, lure_duration: int, event_id: int):
         self._db_exec: PooledQueryExecutor = db_exec
         self._lure_duration: int = lure_duration
+        self._event_id: int = event_id
 
     def mons(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]], mitm_mapper):
         """

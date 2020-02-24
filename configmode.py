@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from threading import Thread
 
 from mapadroid.db.DbFactory import DbFactory
@@ -12,6 +13,7 @@ from mapadroid.patcher import MADPatcher
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.data_manager import DataManager
 from mapadroid.websocket.WebsocketServer import WebsocketServer
+from mapadroid.utils.event import Event
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -42,6 +44,10 @@ if __name__ == "__main__":
     create_folder(args.upload_path)
 
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
+
+    event = Event(args, db_wrapper)
+    event.start_event_checker()
+
     try:
         instance_id = db_wrapper.get_instance_id()
     except:

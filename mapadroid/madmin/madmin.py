@@ -15,6 +15,7 @@ from mapadroid.madmin.routes.control import control
 from mapadroid.madmin.routes.map import map
 from mapadroid.madmin.routes.path import path
 from mapadroid.madmin.routes.statistics import statistics
+from mapadroid.madmin.routes.event import event
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, logger
 
@@ -47,6 +48,7 @@ def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: Mappin
     config(db_wrapper, args, logger, app, mapping_manager, data_manager)
     path(db_wrapper, args, app, mapping_manager, jobstatus, data_manager)
     apk_manager(db_wrapper, args, app, mapping_manager, jobstatus)
+    event(db_wrapper, args, logger, app, mapping_manager, data_manager)
 
     app.logger.removeHandler(default_handler)
     logging.basicConfig(handlers=[InterceptHandler()], level=0)

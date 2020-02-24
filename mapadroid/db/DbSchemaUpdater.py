@@ -44,6 +44,16 @@ class DbSchemaUpdater:
                      "KEY `trs_spawnpointdd_spawnpoint_id` (`spawnpoint_id`)"
                      )
         },
+        # SP Event Table
+        {
+            "table": "trs_event",
+            "spec": ("`id` int(11) NOT NULL AUTO_INCREMENT, "
+                     "`event_name` varchar(100), "
+                     "`event_start`datetime, "
+                     "`event_end` datetime, "
+                     "PRIMARY KEY (`id`)"
+                     )
+        },
         # Quest table
         {
             "table": "trs_quest",
@@ -195,6 +205,11 @@ class DbSchemaUpdater:
         {
             "table": "trs_quest",
             "column": "quest_pokemon_form_id",
+            "ctype": "smallint(6) NOT NULL DEFAULT 0"
+        },
+        {
+            "table": "trs_quest",
+            "column": "quest_pokemon_costume_id",
             "ctype": "smallint(6) NOT NULL DEFAULT 0"
         },
         {
