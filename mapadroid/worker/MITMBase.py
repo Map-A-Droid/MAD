@@ -29,12 +29,12 @@ class MITMBase(WorkerBase):
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper, mitm_mapper: MitmMapper,
                  pogoWindowManager: PogoWindows,
-                 NoOcr=False, walker=None):
+                 NoOcr=False, walker=None, event=None):
         WorkerBase.__init__(self, args, dev_id, origin, last_known_state, communicator,
                             mapping_manager=mapping_manager, area_id=area_id,
                             routemanager_name=routemanager_name,
                             db_wrapper=db_wrapper, NoOcr=True,
-                            pogoWindowManager=pogoWindowManager, walker=walker)
+                            pogoWindowManager=pogoWindowManager, walker=walker, event=event)
 
         self._reboot_count = 0
         self._restart_count = 0
