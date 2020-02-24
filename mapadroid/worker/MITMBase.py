@@ -209,6 +209,7 @@ class MITMBase(WorkerBase):
                 logger.warning("Could not find any trashcan on a valid screen"
                     "shot {} time(s) in a row!", self._clear_quests_failcount)
             else:
+                self._clear_quests_failcount = 0
                 logger.error("Unable to clear quests 3 times in a row. Restart "
                         "pogo ...")
                 if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
