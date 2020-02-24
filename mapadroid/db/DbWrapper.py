@@ -42,9 +42,11 @@ class DbWrapper:
 
     def set_event_id(self, eventid: int):
         self._event_id = eventid
+        self.proto_submit.set_event_id(eventid)
 
     def set_event_lure_duration(self, lureduration: int):
         self._event_lure_duration = lureduration
+        self.proto_submit.set_event_lure_duration(lureduration)
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)

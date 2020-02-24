@@ -25,6 +25,12 @@ class DbPogoProtoSubmit:
         self._lure_duration: int = lure_duration
         self._event_id: int = event_id
 
+    def set_event_id(self, eventid: int):
+        self._event_id = eventid
+
+    def set_event_lure_duration(self, lureduration: int):
+        self._lure_duration = lureduration
+
     def mons(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]], mitm_mapper):
         """
         Update/Insert mons from a map_proto dict
