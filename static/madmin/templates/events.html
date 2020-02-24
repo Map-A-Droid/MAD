@@ -15,11 +15,12 @@
                 { data: 'event_name', title: 'Name' },
                 { data: 'event_start', title: 'Start' },
                 { data: 'event_end', title: 'End' },
+                { data: 'event_lure_duration', title: 'Lure Duration' },
                 { data: '', title: 'Actions' }
             ],
             "columnDefs": [
                 {
-                    "targets": [3],
+                    "targets": [4],
                     "render": function (data, type, row) {
                        if(row.locked == "0") {
                             var link = "<a href='edit_event?id=" + row.id +
@@ -79,7 +80,6 @@
 	  {% endif %}
 	{% endwith %}
 </p>
-<div class="alert alert-warning"><a href="edit_event"><i class='fas fa-plus-circle'></i> Add new Event</a><br></div>
-
 <table id="show-data" class="table" style="width:100%;"></table>
+<div class="alert alert-warning"><a href="edit_event"><i class='fas fa-plus-circle'></i> Add new Event</a><br></div>
 {% endblock %}

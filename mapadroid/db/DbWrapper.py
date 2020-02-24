@@ -22,13 +22,14 @@ class DbWrapper:
         self._db_exec = db_exec
         self.application_args = args
         self._event_id: int = 0
+        self._event_lure_duration: int = 30
 
         self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
         self.sanity_check.check_all()
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration, self._event_id)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, self._event_lure_duration, self._event_id)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
@@ -41,6 +42,9 @@ class DbWrapper:
 
     def set_event_id(self, eventid: int):
         self._event_id = eventid
+
+    def set_event_lure_duration(self, lureduration: int):
+        self._event_lure_duration = lureduration
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
@@ -962,25 +966,26 @@ class DbWrapper:
         eventidstr: str = ""
         if event_id is not None:
             eventidstr = "where `id` = " + str(event_id)
-        sql = "select `id`, `event_name`, `event_start`, `event_end`, IF(`event_name`='DEFAULT',1,0) as locked "\
+        sql = "select `id`, `event_name`, `event_start`, `event_end`, `event_lure_duration`, " \
+              "IF(`event_name`='DEFAULT',1,0) as locked "\
               "from trs_event " + eventidstr + " order by id asc"
         events = self.autofetch_all(sql)
         return events
 
-    def save_event(self, event_name, event_start, event_end, id=None):
+    def save_event(self, event_name, event_start, event_end, event_lure_duration=30, id=None):
         logger.debug("DbWrapper::save_event called")
         if id is None:
             query = (
-                "INSERT INTO trs_event (event_name, event_start, event_end) "
-                "VALUES (%s, %s, %s) "
+                "INSERT INTO trs_event (event_name, event_start, event_end, event_lure_duration) "
+                "VALUES (%s, %s, %s, %s) "
             )
-            vals = (event_name, event_start, event_end)
+            vals = (event_name, event_start, event_end, event_lure_duration)
         else:
             query = (
-                "UPDATE trs_event set event_name=%s, event_start=%s, event_end=%s "
+                "UPDATE trs_event set event_name=%s, event_start=%s, event_end=%s,  event_lure_duration=%s "
                 "where id=%s"
             )
-            vals = (event_name, event_start, event_end, id)
+            vals = (event_name, event_start, event_end, event_lure_duration, id)
 
         self.execute(query, vals, commit=True)
         return True
@@ -1000,17 +1005,17 @@ class DbWrapper:
 
     def get_current_event(self):
         logger.debug("DbWrapper::get_current_event called")
-        sql = "select `id` " \
+        sql = "select `id`, `event_lure_duration` " \
               "from trs_event "\
               "where now() between `event_start` and `event_end` and `event_name`<>'DEFAULT'"
         found = self._db_exec.execute(sql)
 
         if found and len(found) > 0 and found[0][0]:
-            logger.info("Found an active Event with id {}".format(str(found[0][0])))
-            return found[0][0]
+            logger.info("Found an active Event with id {} (Lure Duration: {})".format(str(found[0][0]), str(found[0][1])))
+            return found[0][0], found[0][1]
         else:
-            logger.info("There is no active event - returning default value (1)")
-            return 1
+            logger.info("There is no active event - returning default value (1) (Lure Duration: 30)")
+            return 1, 30
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
                                oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):

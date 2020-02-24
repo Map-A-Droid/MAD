@@ -51,6 +51,7 @@ class DbSchemaUpdater:
                      "`event_name` varchar(100), "
                      "`event_start`datetime, "
                      "`event_end` datetime, "
+                     "`event_lure_duration` int(11), "
                      "PRIMARY KEY (`id`)"
                      )
         },

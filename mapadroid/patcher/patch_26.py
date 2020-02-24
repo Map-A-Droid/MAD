@@ -6,8 +6,8 @@ class Patch(PatchBase):
 
     def _execute(self):
         sql = "Insert into `trs_event` "\
-              "(`event_name`, `event_start`, `event_end`) values "\
-              "('DEFAULT', '1970-01-01', '2099-12-31')"
+              "(`event_name`, `event_start`, `event_end` `event_lure_duration`) values "\
+              "('DEFAULT', '1970-01-01', '2099-12-31', 30)"
         try:
             self._db.execute(sql, commit=True, suppress_log=False)
         except Exception:

@@ -46,30 +46,35 @@
            <input type="hidden" name="id" value="{{id}}">
         {% endif %}
     <p id="datepair">
-	<div class="form-group">
-    <label for="nameform">Event Name</label>
-    <input type="text" class="form-control" placeholder="Enter Event Name" value="{{event_name}}" name="event_name" required>
-    </div>
-    <div class="form-group datepair">
-    <label for="fromform">Event Start Date</label>
-    <input type="text" class="form-control date start" autocomplete="off" name="event_start_date" value="{{event_start_date}}" required>
-    </div>
-    <div class="form-group datepair">
-    <label for="fromform">Event Start Time</label>
-    <input type="text" class="form-control time start" autocomplete="off" name="event_start_time" value="{{event_start_time}}" required>
-    </div>
-    <div class="form-group datepair">
-    <label for="fromform">Event End Date</label>
-    <input type="text" class="form-control date start" autocomplete="off" name="event_end_date" value="{{event_end_date}}" required>
-    </div>
-    <div class="form-group datepair">
-    <label for="fromform">Event End Time</label>
-    <input type="text" class="form-control time start" autocomplete="off" name="event_end_time" value="{{event_end_time}}" required>
+	    <div class="form-group">
+        <label for="nameform">Event Name</label>
+        <input type="text" class="form-control" placeholder="Enter Event Name" value="{{event_name}}" name="event_name" required>
+        </div>
+        <div class="form-group datepair">
+        <label for="fromform">Event Start Date</label>
+        <input type="text" class="form-control date start" autocomplete="off" name="event_start_date" value="{{event_start_date}}" required>
+        </div>
+        <div class="form-group datepair">
+        <label for="fromform">Event Start Time</label>
+        <input type="text" class="form-control time start" autocomplete="off" name="event_start_time" value="{{event_start_time}}" required>
+        </div>
+        <div class="form-group datepair">
+        <label for="fromform">Event End Date</label>
+        <input type="text" class="form-control date start" autocomplete="off" name="event_end_date" value="{{event_end_date}}" required>
+        </div>
+        <div class="form-group datepair">
+        <label for="fromform">Event End Time</label>
+        <input type="text" class="form-control time start" autocomplete="off" name="event_end_time" value="{{event_end_time}}" required>
+        </div>
+        <div class="form-group datepair">
+        <label for="fromform">Event Lure Duration</label>
+        <input type="number" class="form-control" placeholder="Default: 30 (minutes) " autocomplete="off" name="event_lure_duration" value="{{event_lure_duration}}">
+        </div>
     </div>
 
     <button type="submit" class="btn btn-primary">Save</button>
-
-    </form>
 </p>
+    </form>
+
 </div>
 {% endblock %}
