@@ -226,7 +226,7 @@ if __name__ == "__main__":
 
         logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
         ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager,
-                                    data_manager)
+                                    data_manager, event=event)
         t_ws = Thread(name='scanner', target=ws_server.start_server)
         t_ws.daemon = False
         t_ws.start()

@@ -63,7 +63,8 @@ if __name__ == "__main__":
     mapping_manager: MappingManager = MappingManager(db_wrapper, args, data_manager, True)
 
     ws_server = WebsocketServer(args=args, mitm_mapper=None, db_wrapper=db_wrapper, mapping_manager=mapping_manager,
-                                pogo_window_manager=None, data_manager=data_manager, enable_configmode=True)
+                                pogo_window_manager=None, data_manager=data_manager, event=event,
+                                enable_configmode=True)
     t_ws = Thread(name='scanner', target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()

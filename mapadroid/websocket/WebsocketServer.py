@@ -32,7 +32,7 @@ logging.getLogger('websockets.protocol').addHandler(InterceptHandler())
 
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper, mapping_manager: MappingManager,
-                 pogo_window_manager: PogoWindows, data_manager: DataManager, enable_configmode: bool = False):
+                 pogo_window_manager: PogoWindows, data_manager: DataManager, event, enable_configmode: bool = False):
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__mapping_manager: MappingManager = mapping_manager
@@ -40,6 +40,7 @@ class WebsocketServer(object):
         self.__data_manager: DataManager = data_manager
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self.__enable_configmode: bool = enable_configmode
+        self._event = event
 
         # Event to signal that the server is to be stopped. Used to not accept new connections for example
         self.__stop_server: Event = Event()
@@ -52,7 +53,7 @@ class WebsocketServer(object):
         self.__users_connecting_mutex: Optional[asyncio.Lock] = None
 
         self.__worker_factory: WorkerFactory = WorkerFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
-                                                             self.__db_wrapper, self.__pogo_window_manager)
+                                                             self.__db_wrapper, self.__pogo_window_manager, event)
 
         # asyncio loop for the entire server
         self.__loop: Optional[asyncio.AbstractEventLoop] = asyncio.new_event_loop()

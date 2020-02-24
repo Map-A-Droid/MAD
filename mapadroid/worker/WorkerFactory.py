@@ -26,12 +26,13 @@ class WalkerConfiguration(NamedTuple):
 
 class WorkerFactory:
     def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
-                 pogo_windows: PogoWindows):
+                 pogo_windows: PogoWindows, event):
         self.__args = args
         self.__mapping_manager: MappingManager = mapping_manager
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__pogo_windows: PogoWindows = pogo_windows
+        self.__event = event
 
     async def __get_walker_index(self, devicesettings, origin):
         walker_index = devicesettings.get('walker_area_index', 0)
@@ -71,7 +72,8 @@ class WorkerFactory:
 
         # preckeck walker setting
         walker_area_name = walker_area_array[walker_index]['walkerarea']
-        while not pre_check_value(walker_settings) and walker_index < len(walker_area_array):
+        while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
+                and walker_index < len(walker_area_array):
             logger.info(
                 '{} not using area {} - Walkervalue out of range', str(origin),
                 str(self.__mapping_manager.routemanager_get_name(walker_area_name)))

@@ -48,8 +48,10 @@ def check_time_period(period):
         return False
 
 
-def pre_check_value(walker_settings):
+def pre_check_value(walker_settings, eventid):
     walkertype = walker_settings['walkertype']
+    print (walker_settings)
+    print(eventid)
     if walkertype in ('timer', 'period', 'coords', 'idle'):
         walkervalue = walker_settings['walkervalue']
         if len(walkervalue) == 0:
