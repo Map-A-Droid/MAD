@@ -1,4 +1,5 @@
 import time
+import datetime
 from threading import Thread
 from mapadroid.utils.logging import logger
 
@@ -12,10 +13,13 @@ class Event(object):
 
     def event_checker(self):
         while True:
+            count: int = 0
             self._event_id, self._lure_duration = self._dbwrapper.get_current_event()
             self._dbwrapper.set_event_id(self._event_id)
             self._dbwrapper.set_event_lure_duration(self._lure_duration)
-            time.sleep(60)
+            while count < 60 and int(datetime.datetime.fromtimestamp(int(time.time())).strftime('%M')) != 0:
+                count += 1
+                time.sleep(1)
 
     def start_event_checker(self):
         t = Thread(target=self.event_checker,

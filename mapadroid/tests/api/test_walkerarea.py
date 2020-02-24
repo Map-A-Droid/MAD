@@ -80,8 +80,7 @@ class APIWalkerArea(api_base.APITestBase):
     def test_valid_patch(self):
         walkerarea_obj = super().create_valid_resource('walkerarea')
         payload = {
-            'walkertext': 'Updated UnitTest',
-            'eventid': None
+            'walkertext': 'Updated UnitTest'
         }
         response = self.api.patch(walkerarea_obj['uri'], json=payload)
         self.assertEqual(response.status_code, 204)
