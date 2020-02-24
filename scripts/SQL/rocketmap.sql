@@ -510,6 +510,7 @@ CREATE TABLE `settings_walkerarea` (
     `algo_type` enum('countdown','timer','round','period','coords','idle') COLLATE utf8mb4_unicode_ci NOT NULL,
     `algo_value` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `max_walkers` int(11) DEFAULT NULL,
+    `eventid` int(11),
     PRIMARY KEY (`walkerarea_id`),
     KEY `fk_wa_instance` (`instance_id`),
     KEY `settings_walkerarea_ibfk_1` (`area_id`),
@@ -548,6 +549,15 @@ CREATE TABLE `trs_quest` (
     KEY `quest_type` (`quest_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+CREATE TABLE `trs_events` (
+    `id` int(11) NOT NULL AUTO_INCREMENT,
+    `event_name` varchar(100),
+    `event_start`datetime,
+    `event_end` datetime,
+    `event_lure_duration` int(11),
+    PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
 CREATE TABLE `trs_s2cells` (
     `id` bigint(20) unsigned NOT NULL,
     `level` int(11) NOT NULL,
@@ -567,6 +577,7 @@ CREATE TABLE `trs_spawn` (
     `first_detection` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
     `last_non_scanned` datetime DEFAULT NULL,
     `calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `eventid`int(11) NOT NULL DEFAULT 1,
     UNIQUE KEY `spawnpoint_2` (`spawnpoint`),
     KEY `spawnpoint` (`spawnpoint`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
