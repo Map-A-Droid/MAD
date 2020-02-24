@@ -331,7 +331,7 @@ def questtask(typeid, condition, target, quest_template):
         # QUEST_BATTLE_TEAM_ROCKET Team Go rucket grunt batles.
         # Condition type 27 means against a grunt leader WITH_INVASION_CHARACTER= 1
         if int(target) == int(1):
-            text = _('Battle against a Team Rocket Grunt')
+            text = _('Battle a Team Rocket Grunt')
 
         for con in condition_dict:
             if con.get('type', 0) == 27 and con.get('with_invasion_character', {}).get('category') == 1:
@@ -340,7 +340,7 @@ def questtask(typeid, condition, target, quest_template):
             if con.get('type', 0) == 18:
                 # Condition type 18 means win a battle
                 # TODO change WIN to Defeat like in-game
-                text = text.replace(_('Battle'), _('Win'))
+                text = text.replace(_('Battle'), _('Defeat'))
 
     quest_templates = open_json_file('quest_templates')
     if quest_template is not None and quest_template in quest_templates:
