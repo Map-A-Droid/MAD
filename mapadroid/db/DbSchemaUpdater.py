@@ -29,6 +29,7 @@ class DbSchemaUpdater:
                      "`first_detection` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP, "
                      "`last_non_scanned` datetime DEFAULT NULL, "
                      "`calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL, "
+                     "`eventid`int(11) NOT NULL DEFAULT 1, "
                      "UNIQUE KEY `spawnpoint_2` (`spawnpoint`), "
                      "KEY `spawnpoint` (`spawnpoint`)"
                      )
@@ -226,7 +227,7 @@ class DbSchemaUpdater:
         {
             "table": "trs_spawn",
             "column": "eventid",
-            "ctype": "int(11)"
+            "ctype": "int(11) NOT NULL DEFAULT 1"
         }
     ]
 

@@ -723,7 +723,8 @@ class DbWrapper:
             "SELECT latitude, longitude "
             "FROM trs_spawn "
             "WHERE (latitude >= {} AND longitude >= {} "
-            "AND latitude <= {} AND longitude <= {}) "
+            "AND latitude <= {} AND longitude <= {}) and "
+            "eventid=0 "
         ).format(minLat, minLon, maxLat, maxLon)
 
         list_of_coords: List[Location] = []
@@ -757,7 +758,8 @@ class DbWrapper:
         query = (
             "SELECT latitude, longitude "
             "FROM trs_spawn "
-            "WHERE calc_endminsec is NULL"
+            "WHERE calc_endminsec is NULL and "
+            "eventid=1"
         )
         list_of_coords: List[Location] = []
         logger.debug(

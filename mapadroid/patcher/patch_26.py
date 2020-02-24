@@ -6,7 +6,7 @@ class Patch(PatchBase):
 
     def _execute(self):
         sql = "INSERT IGNORE into `trs_event` "\
-              "(`id`, event_name`, `event_start`, `event_end`, `event_lure_duration`) values "\
+              "(`id`, `event_name`, `event_start`, `event_end`, `event_lure_duration`) values "\
               "('1', 'DEFAULT', '1970-01-01', '2099-12-31', 30)"
         try:
             self._db.execute(sql, commit=True, suppress_log=False)

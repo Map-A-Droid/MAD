@@ -45,9 +45,6 @@ if __name__ == "__main__":
 
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
 
-    event = Event(args, db_wrapper)
-    event.start_event_checker()
-
     try:
         instance_id = db_wrapper.get_instance_id()
     except:
@@ -61,6 +58,9 @@ if __name__ == "__main__":
     mapping_manager_manager.start()
     mapping_manager_stop_event = mapping_manager_manager.Event()
     mapping_manager: MappingManager = MappingManager(db_wrapper, args, data_manager, True)
+
+    event = Event(args, db_wrapper)
+    event.start_event_checker()
 
     ws_server = WebsocketServer(args=args, mitm_mapper=None, db_wrapper=db_wrapper, mapping_manager=mapping_manager,
                                 pogo_window_manager=None, data_manager=data_manager, event=event,
