@@ -214,16 +214,16 @@ class DbPogoProtoSubmit:
 
         query_spawnpoints = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
-            "last_scanned, spawndef, calc_endminsec) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s) "
+            "last_scanned, spawndef, calc_endminsec, eventid) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
             "earliest_unseen=LEAST(earliest_unseen, VALUES(earliest_unseen)), "
             "spawndef=VALUES(spawndef), calc_endminsec=VALUES(calc_endminsec)"
         )
 
         query_spawnpoints_unseen = (
-            "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, last_non_scanned, spawndef) "
-            "VALUES (%s, %s, %s, %s, %s, %s) "
+            "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, last_non_scanned, spawndef, "
+            "eventid) VALUES (%s, %s, %s, %s, %s, %s, %s) "
             "ON DUPLICATE KEY UPDATE spawndef=VALUES(spawndef), last_non_scanned=VALUES(last_non_scanned)"
         )
 
@@ -262,14 +262,14 @@ class DbPogoProtoSubmit:
                     calcendtime = fulldate.strftime("%M:%S")
 
                     spawnpoint_args.append(
-                        (spawnid, lat, lng, earliest_unseen, last_scanned, newspawndef, calcendtime)
+                        (spawnid, lat, lng, earliest_unseen, last_scanned, newspawndef, calcendtime, self._event_id)
                     )
                 else:
                     earliest_unseen = 99999999
                     last_non_scanned = now
 
                     spawnpoint_args_unseen.append(
-                        (spawnid, lat, lng, earliest_unseen, last_non_scanned, newspawndef)
+                        (spawnid, lat, lng, earliest_unseen, last_non_scanned, newspawndef, self._event_id)
                     )
 
         self._db_exec.executemany(query_spawnpoints, spawnpoint_args, commit=True)
