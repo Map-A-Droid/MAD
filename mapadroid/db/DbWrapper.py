@@ -995,13 +995,29 @@ class DbWrapper:
         if id is None:
             return False
         else:
+            # delete event
             query = (
                 "DELETE from trs_event where id=%s"
             )
             vals = (id)
+            self.execute(query, vals, commit=True)
 
-        self.execute(query, vals, commit=True)
+            # delete SP with eventid
+            query = (
+                "DELETE from trs_spawn where eventid=%s"
+            )
+            vals = (id)
+            self.execute(query, vals, commit=True)
         return True
+
+    def delete_stop(self, latitude: float, longitude: float):
+        logger.debug('Deleting stop from db')
+        query = (
+            "delete from pokestop where latitude=%s and longitude=%s"
+        )
+        del_vars = (latitude, longitude)
+        self.execute(query, del_vars, commit=True)
+
 
     def get_current_event(self):
         logger.debug("DbWrapper::get_current_event called")
