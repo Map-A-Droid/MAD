@@ -549,7 +549,7 @@ CREATE TABLE `trs_quest` (
     KEY `quest_type` (`quest_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `trs_events` (
+CREATE TABLE `trs_event` (
     `id` int(11) NOT NULL AUTO_INCREMENT,
     `event_name` varchar(100),
     `event_start`datetime,
