@@ -222,6 +222,11 @@ class DbSchemaUpdater:
             "table": "settings_walkerarea",
             "column": "eventid",
             "ctype": "int(11)"
+        },
+        {
+            "table": "trs_spawn",
+            "column": "eventid",
+            "ctype": "int(11)"
         }
     ]
 
