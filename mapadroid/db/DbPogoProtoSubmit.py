@@ -20,16 +20,8 @@ class DbPogoProtoSubmit:
     """
     default_spawndef = 240
 
-    def __init__(self, db_exec: PooledQueryExecutor, lure_duration: int, event_id: int):
+    def __init__(self, db_exec: PooledQueryExecutor):
         self._db_exec: PooledQueryExecutor = db_exec
-        self._lure_duration: int = lure_duration
-        self._event_id: int = event_id
-
-    def set_event_id(self, eventid: int):
-        self._event_id = eventid
-
-    def set_event_lure_duration(self, lureduration: int):
-        self._lure_duration = lureduration
 
     def mons(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]], mitm_mapper):
         """
@@ -221,7 +213,9 @@ class DbPogoProtoSubmit:
         query_spawnpoints = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, "
             "last_scanned, spawndef, calc_endminsec, eventid) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, "
+            "(select id from trs_event where now() between event_start and "
+            "event_end order by event_start desc limit 1)) "
             "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
             "earliest_unseen=LEAST(earliest_unseen, VALUES(earliest_unseen)), "
             "spawndef=VALUES(spawndef), calc_endminsec=VALUES(calc_endminsec)"
@@ -229,7 +223,9 @@ class DbPogoProtoSubmit:
 
         query_spawnpoints_unseen = (
             "INSERT INTO trs_spawn (spawnpoint, latitude, longitude, earliest_unseen, last_non_scanned, spawndef, "
-            "eventid) VALUES (%s, %s, %s, %s, %s, %s, %s) "
+            "eventid) VALUES (%s, %s, %s, %s, %s, %s, "
+            "(select id from trs_event where now() between event_start and "
+            "event_end order by event_start desc limit 1)) "
             "ON DUPLICATE KEY UPDATE spawndef=VALUES(spawndef), last_non_scanned=VALUES(last_non_scanned)"
         )
 
@@ -268,14 +264,14 @@ class DbPogoProtoSubmit:
                     calcendtime = fulldate.strftime("%M:%S")
 
                     spawnpoint_args.append(
-                        (spawnid, lat, lng, earliest_unseen, last_scanned, newspawndef, calcendtime, self._event_id)
+                        (spawnid, lat, lng, earliest_unseen, last_scanned, newspawndef, calcendtime)
                     )
                 else:
                     earliest_unseen = 99999999
                     last_non_scanned = now
 
                     spawnpoint_args_unseen.append(
-                        (spawnid, lat, lng, earliest_unseen, last_non_scanned, newspawndef, self._event_id)
+                        (spawnid, lat, lng, earliest_unseen, last_non_scanned, newspawndef)
                     )
 
         self._db_exec.executemany(query_spawnpoints, spawnpoint_args, commit=True)
@@ -648,9 +644,19 @@ class DbPogoProtoSubmit:
         incident_grunt_type = None
 
         if len(stop_data["active_fort_modifier"]) > 0:
+            # get current lure duration
+            sql = "select `event_lure_duration` " \
+                  "from trs_event " \
+                  "where now() between `event_start` and `event_end` and `event_name`<>'DEFAULT'"
+            found = self._db_exec.execute(sql)
+            if found and len(found) > 0 and found[0][0]:
+                lure_duration = int(found[0][0])
+            else:
+                lure_duration = int(30)
+
             active_fort_modifier = stop_data["active_fort_modifier"][0]
             lure = datetime.utcfromtimestamp(
-                self._lure_duration * 60 + (stop_data["last_modified_timestamp_ms"] / 1000)
+                lure_duration * 60 + (stop_data["last_modified_timestamp_ms"] / 1000)
             ).strftime("%Y-%m-%d %H:%M:%S")
 
         if "pokestop_displays" in stop_data \

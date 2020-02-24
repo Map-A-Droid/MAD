@@ -29,7 +29,7 @@ class DbWrapper:
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, self._event_lure_duration, self._event_id)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
@@ -42,11 +42,9 @@ class DbWrapper:
 
     def set_event_id(self, eventid: int):
         self._event_id = eventid
-        self.proto_submit.set_event_id(eventid)
 
     def set_event_lure_duration(self, lureduration: int):
         self._event_lure_duration = lureduration
-        self.proto_submit.set_event_lure_duration(lureduration)
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
