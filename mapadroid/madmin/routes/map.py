@@ -175,7 +175,8 @@ class map(object):
                 "spawndef": spawn["spawndef"],
                 "lastnonscan": spawn["lastnonscan"],
                 "lastscan": spawn["lastscan"],
-                "first_detection": spawn["first_detection"]
+                "first_detection": spawn["first_detection"],
+                "event": spawn["event"]
             })
 
         return jsonify(coords)
