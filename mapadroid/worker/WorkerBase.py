@@ -252,7 +252,7 @@ class WorkerBase(AbstractWorker):
                 .replace('_', '').split(',')
 
             if not self._geofencehelper.is_coord_inside_include_geofence(Location(
-                    str(startcoords[0]), str(startcoords[1]))):
+                    float(startcoords[0]), float(startcoords[1]))):
                 logger.warning("Startcoords not in geofence - setting middle of fence as startposition")
                 lat, lng = self._geofencehelper.get_middle_from_fence()
                 start_position = str(lat) + "," + str(lng)
