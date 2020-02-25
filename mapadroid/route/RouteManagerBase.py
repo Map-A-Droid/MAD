@@ -135,6 +135,9 @@ class RouteManagerBase(ABC):
         else:
             return None
 
+    def get_max_radius(self):
+        return self._max_radius
+
     def _start_check_routepools(self):
         self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
                                                target=self._check_routepools)

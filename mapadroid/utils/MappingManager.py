@@ -291,6 +291,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_position_type(worker_name) if routemanager is not None else None
 
+    def routemanager_get_max_radius(self, routemanager_name: str):
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.get_max_radius() if routemanager is not None else None
+
     def routemanager_recalcualte(self, routemanager_name):
         successful = False
         try:
