@@ -216,9 +216,14 @@ class DbPogoProtoSubmit:
             "VALUES (%s, %s, %s, %s, %s, %s, %s, "
             "(select id from trs_event where now() between event_start and "
             "event_end order by event_start desc limit 1)) "
-            "ON DUPLICATE KEY UPDATE last_scanned=VALUES(last_scanned), "
+            "ON DUPLICATE KEY UPDATE "
+            "last_scanned=VALUES(last_scanned), "
             "earliest_unseen=LEAST(earliest_unseen, VALUES(earliest_unseen)), "
-            "spawndef=VALUES(spawndef), calc_endminsec=VALUES(calc_endminsec)"
+            "spawndef=if(((select id from trs_event where now() between event_start and event_end order "
+            "by event_start desc limit 1)=1 and eventid=1) or select id from trs_event where now() between "
+            "event_start and event_end order by event_start desc limit 1)<>1 and eventid<>1, VALUES(spawndef), "
+            "spawndef), "
+            "calc_endminsec=VALUES(calc_endminsec)"
         )
 
         query_spawnpoints_unseen = (
@@ -226,7 +231,12 @@ class DbPogoProtoSubmit:
             "eventid) VALUES (%s, %s, %s, %s, %s, %s, "
             "(select id from trs_event where now() between event_start and "
             "event_end order by event_start desc limit 1)) "
-            "ON DUPLICATE KEY UPDATE spawndef=VALUES(spawndef), last_non_scanned=VALUES(last_non_scanned)"
+            "ON DUPLICATE KEY UPDATE "
+            "spawndef=if(((select id from trs_event where now() between event_start and event_end order "
+            "by event_start desc limit 1)=1 and eventid=1) or select id from trs_event where now() between "
+            "event_start and event_end order by event_start desc limit 1)<>1 and eventid<>1, VALUES(spawndef), "
+            "spawndef), "
+            "last_non_scanned=VALUES(last_non_scanned)"
         )
 
         now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
