@@ -453,8 +453,7 @@ class WorkerBase(AbstractWorker):
     def check_walker(self):
         mode = self._walker['walkertype']
         walkereventid = self._walker.get('eventid', None)
-        if walkereventid is None: walkereventid = 1
-        if walkereventid != self._event.get_current_event_id():
+        if walkereventid is not None and walkereventid != self._event.get_current_event_id():
             logger.warning("A other Event has started - leaving now")
             return False
         if mode == "countdown":

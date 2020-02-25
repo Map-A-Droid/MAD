@@ -17,7 +17,7 @@ class Event(object):
             self._event_id, self._lure_duration = self._dbwrapper.get_current_event()
             self._dbwrapper.set_event_id(self._event_id)
             self._dbwrapper.set_event_lure_duration(self._lure_duration)
-            while count < 60 and int(datetime.datetime.fromtimestamp(int(time.time())).strftime('%M')) != 0:
+            while count < 60:
                 count += 1
                 time.sleep(1)
 
