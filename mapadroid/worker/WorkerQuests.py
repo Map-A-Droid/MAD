@@ -528,6 +528,7 @@ class WorkerQuests(MITMBase):
                     for text in not_allow:
                         if self.similar(text, item_text) > 0.6:
                             match_one_item = True
+                            break
                     if match_one_item:
                         logger.info('Could not delete this item - check next one')
                         trash += 1
