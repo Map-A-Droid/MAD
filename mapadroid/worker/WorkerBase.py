@@ -253,14 +253,14 @@ class WorkerBase(AbstractWorker):
 
             if not self._geofencehelper.is_coord_inside_include_geofence(Location(
                     str(startcoords[0]), str(startcoords[1]))):
-                logger.warning("Startcoords not in geofence - setting new position")
-                lat, lng, _, _ = self._geofencehelper.get_polygon_from_fence()
+                logger.warning("Startcoords not in geofence - setting middle of fence as startposition")
+                lat, lng = self._geofencehelper.get_middle_from_fence()
                 start_position = str(lat) + "," + str(lng)
 
         if start_position is None and self._levelmode:
             logger.warning("Starting levelmode without worker start position")
             # setting coords
-            lat, lng, _, _ = self._geofencehelper.get_polygon_from_fence()
+            lat, lng = self._geofencehelper.get_middle_from_fence()
             start_position = str(lat) + "," + str(lng)
 
         if start_position is not None:

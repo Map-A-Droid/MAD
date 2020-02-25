@@ -928,33 +928,31 @@ class DbWrapper:
             res = self.execute(query)
 
             # getting 0 new locations - more distance!
-            if len(res) == 0:
-                logger.warning("No location found - need more distance")
+            if len(res) == 0 or len(res) < limit:
+                logger.warning("No location found or getting not enough locations - need more distance")
                 maxdistance += 1
-
-            # getting less then the requested max. locations
-            elif len(res) < limit:
-                # using last found location as new startlocation
-                logger.warning("Not enough locations found - setting new startposition")
-                lat = res[len(res) - 1][0]
-                lon = res[len(res) - 1][1]
-                maxdistance += .5
 
             else:
                 # getting new locations
-                logger.info("Getting enough locations")
-                getlocations = True
+                logger.info("Getting enough locations - checking the coords now")
 
-        stops: List[Location] = []
+            stops: List[Location] = []
 
-        for (latitude, longitude, distance) in res:
-            stops.append(Location(latitude, longitude))
+            for (latitude, longitude, distance) in res:
+                stops.append(Location(latitude, longitude))
 
-        if geofence_helper is not None:
-            geofenced_coords = geofence_helper.get_geofenced_coordinates(stops)
-            return geofenced_coords
-        else:
-            return stops
+            if geofence_helper is not None:
+                geofenced_coords = geofence_helper.get_geofenced_coordinates(stops)
+                if len(geofenced_coords) == limit:
+                    return geofenced_coords
+                logger.warning("The coords are out of the fence - increase distance")
+                if loopcount >= 5:
+                    # setting middle of fence as new startposition
+                    lat, lon = geofence_helper.get_middle_from_fence()
+                else:
+                    maxdistance += 1
+            else:
+                return stops
 
     def save_last_walker_position(self, origin, lat, lng):
         logger.debug("dbWrapper::save_last_walker_position")

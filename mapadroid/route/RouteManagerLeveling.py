@@ -46,7 +46,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                                                                                   lon=current_worker_pos.lng,
                                                                                   limit=30,
                                                                                   ignore_spinned=self.settings.get("ignore_spinned_stops", True),
-                                                                                  maxdistance=1000)
+                                                                                  maxdistance=5)
                 if len(unvisited_stops) == 0:
                     logger.info("There are no unvisited stops left in DB for {} - nothing more to do!",
                                 origin)

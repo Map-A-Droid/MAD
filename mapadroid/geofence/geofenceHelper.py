@@ -39,6 +39,18 @@ class GeofenceHelper:
 
         return minLat, minLon, maxLat, maxLon
 
+    def get_middle_from_fence(self):
+        maxLat, minLat, maxLon, minLon = -90, 90, -180, 180
+        if self.geofenced_areas:
+            for va in self.geofenced_areas:
+                for fence in va['polygon']:
+                    maxLat = max(fence['lat'], maxLat)
+                    minLat = min(fence['lat'], minLat)
+                    maxLon = max(fence['lon'], maxLon)
+                    minLon = min(fence['lon'], minLon)
+
+        return (maxLat-minLat)/2, (maxLon-minLon)/2
+
     def is_coord_inside_include_geofence(self, coordinate):
         # logger.debug("Checking if coord {} is inside fences", str(coordinate))
         # Coordinate is not valid if in one excluded area.
