@@ -794,8 +794,8 @@ class DbWrapper:
 
         query = (
             "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
-            "spawndef, last_scanned, first_detection, last_non_scanned "
-            "FROM `trs_spawn`"
+            "spawndef, last_scanned, first_detection, last_non_scanned, trs_event.event_name "
+            "FROM `trs_spawn` inner join trs_event on trs_event.id = trs_spawn.eventid "
         )
 
         if neLat is not None:
@@ -827,7 +827,7 @@ class DbWrapper:
         query = query + query_where
         res = self.execute(query)
 
-        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned) in res:
+        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned, event) in res:
             spawn[spawnid] = {
                 'id': spawnid,
                 'lat': lat,
@@ -836,7 +836,8 @@ class DbWrapper:
                 'spawndef': spawndef,
                 'lastscan': str(last_scanned),
                 'lastnonscan': str(last_non_scanned),
-                'first_detection': str(first_detection)
+                'first_detection': str(first_detection),
+                'event': event
             }
 
         return str(json.dumps(spawn))

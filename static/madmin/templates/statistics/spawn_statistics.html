@@ -121,6 +121,7 @@
 
                 setGrid('#show-spawnpoints-stats', spawnpoint_count, [
                     { data: 'fence', title: 'Fence' },
+                    { data: 'event', title: 'Type/Event' },
                     { data: 'sum', title: 'Spawnpoints' },
                     { data: 'known', title: 'known' },
                     { data: 'unknown', title: 'unknown' }
@@ -235,7 +236,7 @@
             "paging": true,
             "columns": columns,
             "ordering": true,
-            "order": [[1, "desc"]],
+            "order": [[0, "asc"]],
             "columnDefs": defs,
             "responsive": {{ responsive }},
             "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
