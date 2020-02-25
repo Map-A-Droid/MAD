@@ -40,7 +40,6 @@ class WebsocketServer(object):
         self.__data_manager: DataManager = data_manager
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self.__enable_configmode: bool = enable_configmode
-        self._event = event
 
         # Event to signal that the server is to be stopped. Used to not accept new connections for example
         self.__stop_server: Event = Event()

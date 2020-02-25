@@ -19,7 +19,7 @@ class Patch(PatchBase):
         if not self._schema_updater.check_column_exists('settings_walkerarea', 'eventid'):
             query = (
                 "ALTER TABLE settings_walkerarea "
-                "ADD eventid INT(11)"
+                "ADD eventid INT DEFAULT NULL,"
             )
             try:
                 self._db.execute(query, commit=True)
@@ -32,7 +32,7 @@ class Patch(PatchBase):
                     `event_name` varchar(100), 
                     `event_start`datetime, 
                     `event_end` datetime, 
-                    `event_lure_duration` int(11), 
+                    `event_lure_duration` int NOT NULL DEFAULT 30, 
                     PRIMARY KEY (`id`)
                     )"""
         try:

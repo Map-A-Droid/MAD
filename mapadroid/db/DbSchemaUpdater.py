@@ -201,11 +201,6 @@ class DbSchemaUpdater:
             "table": "trs_quest",
             "column": "quest_pokemon_costume_id",
             "ctype": "smallint(6) NOT NULL DEFAULT 0"
-        },
-        {
-            "table": "trs_quest",
-            "column": "quest_pokemon_costume_id",
-            "ctype": "smallint(6) NOT NULL DEFAULT 0"
         }
     ]
 

@@ -21,7 +21,7 @@ class DbWrapper:
     def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
-        self._event_id: int = 0
+        self._event_id: int = 1
         self._event_lure_duration: int = 30
 
         self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
@@ -724,7 +724,7 @@ class DbWrapper:
             "FROM trs_spawn "
             "WHERE (latitude >= {} AND longitude >= {} "
             "AND latitude <= {} AND longitude <= {}) and "
-            "eventid=0 "
+            "eventid=1"
         ).format(minLat, minLon, maxLat, maxLon)
 
         list_of_coords: List[Location] = []
@@ -1011,15 +1011,6 @@ class DbWrapper:
             vals = (id)
             self.execute(query, vals, commit=True)
         return True
-
-    def delete_stop(self, latitude: float, longitude: float):
-        logger.debug('Deleting stop from db')
-        query = (
-            "delete from pokestop where latitude=%s and longitude=%s"
-        )
-        del_vars = (latitude, longitude)
-        self.execute(query, del_vars, commit=True)
-
 
     def get_current_event(self):
         logger.debug("DbWrapper::get_current_event called")
