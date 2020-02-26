@@ -40,6 +40,7 @@ class APIWalkerArea(api_base.APITestBase):
         result = copy.deepcopy(payload)
         result['walkerarea'] = area_obj['uri']
         payload['walkerarea'] = area_obj['uri']
+        result['eventid'] = ''
         del payload['walkervalue']
         super().valid_post(payload, result)
         self.remove_resources()
