@@ -24,10 +24,10 @@
                     "targets": [5],
                     "render": function (data, type, row) {
                        if(row.locked == "0") {
-                            var link = "<a href='edit_event?id=" + row.id +
-                                "' title='Edit Event'><i class='fas fa-edit'></i></a> <a href='del_event?id=" +
+                            var link = "<button type='button' class='delete btn btn-info btn-sm'><a href='edit_event?id=" + row.id +
+                                "' title='Edit Event'><i class='fas fa-edit'></i></a></button> <button type='button' class='delete btn btn-danger btn-sm'><a href='del_event?id=" +
                                 row.id +
-                                "' class='confirm' title='Do you really want to delete this event and all SP for it?'><i class='fas fa-times'></i></a>";
+                                "' class='confirm' title='Do you really want to delete this event and all SP for it?'><i class='fas fa-times'></i></a></button";
                              return link
                        } else {
                            return ""
@@ -46,7 +46,7 @@
             localStorage.setItem( 'MAD_EVENTS_' + settings.sInstance, JSON.stringify(data) )
             },
             "stateLoadCallback": function(settings) {
-            return JSON.parse( localStorage.getItem( 'MAD_INSTALL_FILES_' + settings.sInstance ) )
+            return JSON.parse( localStorage.getItem( 'MAD_EVENTS_' + settings.sInstance ) )
             }
 
         });
@@ -67,6 +67,9 @@
 <style>
     table.dataTable tr.odd { background-color: #F8F8F8; }
     table.dataTable tr.even { background-color: white; }
+    i.fas {
+        color: white;
+    }
 </style>
 {% endblock %}
 
@@ -82,5 +85,6 @@
 	{% endwith %}
 </p>
 <table id="show-data" class="table" style="width:100%;"></table>
-<div class="alert alert-warning"><a href="edit_event"><i class='fas fa-plus-circle'></i> Add new Event</a><br></div>
+<div class="alert alert-warning"><a href="edit_event">
+	<button type='button' class='delete btn btn-success btn-sm'><i class='fas fa-plus-circle'></i></button> Add new Event</a><br></div>
 {% endblock %}

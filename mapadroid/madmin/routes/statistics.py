@@ -2,7 +2,7 @@ import datetime
 import json
 import time
 
-from flask import (jsonify, render_template, request)
+from flask import (jsonify, render_template, request, redirect, url_for)
 
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
@@ -45,6 +45,8 @@ class statistics(object):
             ("/statistics_spawns", self.statistics_spawns),
             ("/shiny_stats", self.statistics_shiny),
             ("/shiny_stats_data", self.shiny_stats_data),
+            ("/delete_spawns", self.delete_spawns),
+            ("/convert_spawns", self.convert_spawns),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -524,9 +526,12 @@ class statistics(object):
         unknown = {}
         processed_fences = []
         events = []
+        eventidhelper = {}
 
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type='mon_mitm')
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
         for possible_fence in possible_fences:
+            mode = possible_fences[possible_fence]['mode']
+            area_id = possible_fences[possible_fence]['area_id']
 
             for subfence in possible_fences[possible_fence]['include']:
                 if subfence in processed_fences:
@@ -545,9 +550,12 @@ class statistics(object):
 
                 for spawnid in data:
                     eventname: str = data[str(spawnid)]["event"]
+                    eventid: str = data[str(spawnid)]["eventid"]
                     if not eventname in known: known[eventname] = []
                     if not eventname in unknown: unknown[eventname] = []
-                    if eventname not in events: events.append(eventname)
+                    if eventname not in events:
+                        events.append(eventname)
+                        eventidhelper[eventname] = eventid
 
                     if data[str(spawnid)]["endtime"] is None:
                         unknown[eventname].append(spawnid)
@@ -556,10 +564,47 @@ class statistics(object):
 
                 for event in events:
                     coords.append({'fence': subfence, 'known': len(known[event]), 'unknown': len(unknown[event]),
-                                   'sum': len(known[event]) + len(unknown[event]), 'event': event})
+                                   'sum': len(known[event]) + len(unknown[event]), 'event': event, 'mode': mode,
+                                   'area_id': area_id, 'eventid': eventidhelper[event]})
 
         stats = {'spawnpoints': coords}
         return jsonify(stats)
+
+    @auth_required
+    @logger.catch()
+    def delete_spawns(self):
+        area_id = request.args.get('id', None)
+        event_id = request.args.get('eventid', None)
+        if area_id is not None and event_id is not None:
+            self._db.delete_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
+        return redirect(url_for('statistics_spawns'), code=302)
+
+    @auth_required
+    @logger.catch()
+    def convert_spawns(self):
+        area_id = request.args.get('id', None)
+        event_id = request.args.get('eventid', None)
+        if area_id is not None and event_id is not None:
+            self._db.convert_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
+        return redirect(url_for('statistics_spawns'), code=302)
+
+    @auth_required
+    @logger.catch()
+    def get_spawnpoints_from_id(self, id, eventid):
+        spawns = []
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=id)
+        for possible_fence in possible_fences:
+            for subfence in possible_fences[possible_fence]['include']:
+                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+                data = json.loads(
+                    self._db.download_spawns(
+                        fence=fence,
+                        eventid=eventid
+                    )
+                )
+                for spawnid in data:
+                    spawns.append(spawnid)
+        return spawns
 
     @auth_required
     def statistics_spawns(self):

@@ -786,15 +786,37 @@ class DbWrapper:
             #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
+    def delete_spawnpoints(self, spawnpoint_ids):
+        logger.debug("dbWrapper::delete_spawnpoints")
+        query = (
+            "DELETE "
+            "FROM trs_spawn "
+            "WHERE spawnpoint in ({})".format(str(','.join(spawnpoint_ids)))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
+    def convert_spawnpoints(self, spawnpoint_ids):
+        print(spawnpoint_ids)
+        logger.debug("dbWrapper::convert_spawnpoints")
+        query = (
+            "UPDATE trs_spawn "
+            "set eventid = 1 WHERE spawnpoint in ({})".format(str(','.join(spawnpoint_ids)))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
     def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
-                        oSwLat=None, oSwLon=None, timestamp=None, fence=None):
+                        oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None):
         logger.debug("dbWrapper::download_spawns")
         spawn = {}
         query_where = ""
 
         query = (
             "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
-            "spawndef, last_scanned, first_detection, last_non_scanned, trs_event.event_name "
+            "spawndef, last_scanned, first_detection, last_non_scanned, trs_event.event_name, trs_event.id "
             "FROM `trs_spawn` inner join trs_event on trs_event.id = trs_spawn.eventid "
         )
 
@@ -823,11 +845,16 @@ class DbWrapper:
         if fence is not None:
             query_where = query_where + " where ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
                                         "POINT(trs_spawn.latitude, trs_spawn.longitude))".format(str(fence))
+            query = query + query_where
 
-        query = query + query_where
+        if eventid is not None:
+            query_where = " and eventid = {}".format(str(eventid))
+            query = query + query_where
+
         res = self.execute(query)
 
-        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned, event) in res:
+        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned, eventname, eventid) \
+                in res:
             spawn[spawnid] = {
                 'id': spawnid,
                 'lat': lat,
@@ -837,7 +864,8 @@ class DbWrapper:
                 'lastscan': str(last_scanned),
                 'lastnonscan': str(last_non_scanned),
                 'first_detection': str(first_detection),
-                'event': event
+                'event': eventname,
+                'eventid': eventid
             }
 
         return str(json.dumps(spawn))
