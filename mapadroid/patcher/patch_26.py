@@ -11,7 +11,7 @@ class Patch(PatchBase):
                 "ADD eventid INT(11) NOT NULL DEFAULT 1"
             )
             try:
-                self._db.execute(query, commit=True)
+                self._db.execute(query, commit=True, raise_exc=True)
             except Exception as e:
                 self._logger.exception("Unexpected error: {}", e)
                 self.issues = True
@@ -19,10 +19,10 @@ class Patch(PatchBase):
         if not self._schema_updater.check_column_exists('settings_walkerarea', 'eventid'):
             query = (
                 "ALTER TABLE settings_walkerarea "
-                "ADD eventid INT DEFAULT NULL,"
+                "ADD eventid INT DEFAULT NULL"
             )
             try:
-                self._db.execute(query, commit=True)
+                self._db.execute(query, commit=True, raise_exc=True)
             except Exception as e:
                 self._logger.exception("Unexpected error: {}", e)
                 self.issues = True
@@ -36,7 +36,7 @@ class Patch(PatchBase):
                     PRIMARY KEY (`id`)
                     )"""
         try:
-            self._db.execute(sql, commit=True)
+            self._db.execute(sql, commit=True, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
@@ -45,7 +45,7 @@ class Patch(PatchBase):
               "(`id`, `event_name`, `event_start`, `event_end`, `event_lure_duration`) values " \
               "('1', 'DEFAULT', '1970-01-01', '2099-12-31', 30)"
         try:
-            self._db.execute(sql, commit=True, suppress_log=False)
+            self._db.execute(sql, commit=True, suppress_log=False, raise_exc=True)
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
