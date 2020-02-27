@@ -610,7 +610,7 @@ class WorkerBase(AbstractWorker):
                 logger.warning('Error getting Gamedata or strange ggl message appears')
                 self._loginerrorcounter += 1
                 if self._loginerrorcounter < 2:
-                    self._restart_pogo(True)
+                    self._restart_pogo_safe()
             elif screen_type == ScreenType.DISABLED:
                 # Screendetection is disabled
                 break
@@ -626,15 +626,8 @@ class WorkerBase(AbstractWorker):
                 logger.warning("Detected GPS error 11 - rebooting device")
                 self._reboot()
             elif screen_type == ScreenType.SN:
-                logger.warning('Getting SN Screen - reset Magisk Settings')
-                time.sleep(3)
-                self._stop_pogo()
-                self._communicator.magisk_off("com.nianticlabs.pokemongo")
-                self._communicator.clear_app_cache("com.nianticlabs.pokemongo")
-                time.sleep(1)
-                self._communicator.magisk_on("com.nianticlabs.pokemongo")
-                time.sleep(1)
-                self._reboot()
+                logger.warning('Getting SN Screen - restart PoGo and later PD')
+                self._restart_pogo_safe()
                 break
 
             if self._loginerrorcounter > 1:
@@ -651,6 +644,23 @@ class WorkerBase(AbstractWorker):
             self._last_screen_type = screen_type
         logger.info('Checking pogo screen is finished')
         return True
+
+    def _restart_pogo_safe(self):
+        self._stop_pogo()
+        time.sleep(1)
+        self._stopPogoDroid()
+        time.sleep(1)
+        self._communicator.magisk_off()
+        time.sleep(1)
+        self._communicator.magisk_on()
+        time.sleep(1)
+        self._communicator.start_app("com.nianticlabs.pokemongo")
+        time.sleep(25)
+        self._stop_pogo()
+        time.sleep(1)
+        self._start_pogodroid()
+        time.sleep(1)
+        return self._communicator.start_app("com.nianticlabs.pokemongo")
 
     def _switch_user(self):
         logger.info('Switching User - please wait ...')
