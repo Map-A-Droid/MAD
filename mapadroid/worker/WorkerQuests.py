@@ -650,9 +650,7 @@ class WorkerQuests(MITMBase):
                 fort_type: int = fort.get("type", 0)
                 if fort_type == 0:
                     self._db_wrapper.delete_stop(latitude, longitude)
-                    # TODO: if you know what fort_type 0 means, please edit
-                    # this logline accordingly :)
-                    logger.warning("Can't spin the stop because of fort_type 0")
+                    logger.warning("Tried to open a stop but found a gym instead!")
                     return False, True
 
                 rocket_incident_diff_ms = 0
