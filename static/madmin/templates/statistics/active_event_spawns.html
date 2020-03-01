@@ -28,7 +28,7 @@
                     var lastscan = new Date(Date.parse(row.lastscan));
                     var lastnonscan = new Date(Date.parse(row.lastnonscan));
                     if (lastscan > lastnonscan) {
-                        return ("0" + lastscan.getDate()).slice(-2) + "-" + ("0"+(lastscan.getMonth()+1)).slice(-2) + "-" + lastscan.getFullYear() + " " + ("0" + lastscan.getHours()).slice(-2) + ":" + ("0" + lastscan.getMinutes()).slice(-2);
+                        return ("0" + lastscan.getFullYear() + "-" + ("0"+(lastscan.getMonth()+1)).slice(-2) + "-" + lastscan.getDate()).slice(-2) + " " + ("0" + lastscan.getHours()).slice(-2) + ":" + ("0" + lastscan.getMinutes()).slice(-2);
                     } else {
                         return lastnonscan.getFullYear() + "-" + ("0"+(lastnonscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastnonscan.getDate()).slice(-2) + " " + ("0" + lastnonscan.getHours()).slice(-2) + ":" + ("0" + lastnonscan.getMinutes()).slice(-2) + ":" + ("0" + lastnonscan.getSeconds()).slice(-2);;
 
