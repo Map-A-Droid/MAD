@@ -930,7 +930,7 @@ class DbWrapper:
             # getting 0 new locations - more distance!
             if len(res) == 0 or len(res) < limit:
                 logger.warning("No location found or getting not enough locations - need more distance")
-                maxdistance += 1
+                maxdistance += 2
 
             else:
                 # getting new locations
@@ -950,7 +950,7 @@ class DbWrapper:
                     # setting middle of fence as new startposition
                     lat, lon = geofence_helper.get_middle_from_fence()
                 else:
-                    maxdistance += 1
+                    maxdistance += 2
             else:
                 return stops
 
