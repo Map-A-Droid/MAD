@@ -49,7 +49,7 @@ class GeofenceHelper:
                     maxLon = max(fence['lon'], maxLon)
                     minLon = min(fence['lon'], minLon)
 
-        return (maxLat-minLat)/2, (maxLon-minLon)/2
+        return minLat+((maxLat-minLat)/2), minLon+((maxLon-minLon)/2)
 
     def is_coord_inside_include_geofence(self, coordinate):
         # logger.debug("Checking if coord {} is inside fences", str(coordinate))

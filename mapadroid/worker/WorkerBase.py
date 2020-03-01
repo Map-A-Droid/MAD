@@ -264,8 +264,7 @@ class WorkerBase(AbstractWorker):
             start_position = str(lat) + "," + str(lng)
 
         if start_position is not None:
-            startcoords = self.get_devicesettings_value("startcoords_of_walker").replace(' ', '') \
-                .replace('_', '').split(',')
+            startcoords = start_position.replace(' ', '').replace('_', '').split(',')
             logger.info('Setting startcoords or walker lat {} / lng {}'.format(str(startcoords[0]),
                                                                                str(startcoords[1])))
             self._communicator.set_location(Location(startcoords[0], startcoords[1]), 0)
