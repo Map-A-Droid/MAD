@@ -47,6 +47,10 @@ class statistics(object):
             ("/shiny_stats_data", self.shiny_stats_data),
             ("/delete_spawns", self.delete_spawns),
             ("/convert_spawns", self.convert_spawns),
+            ("/active_event_spawns", self.active_event_spawns),
+            ("/get_active_event_spawns", self.get_active_event_spawns),
+            ("/delete_spawn", self.delete_spawn),
+            ("/convert_spawn", self.convert_spawn),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -590,7 +594,29 @@ class statistics(object):
 
     @auth_required
     @logger.catch()
-    def get_spawnpoints_from_id(self, id, eventid):
+    def delete_spawn(self):
+        id = request.args.get('id', None)
+        area_id = request.args.get('id', None)
+        event_id = request.args.get('eventid', None)
+        event = request.args.get('event', None)
+        if id is not None:
+            self._db.delete_spawnpoint(id)
+        return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
+
+    @auth_required
+    @logger.catch()
+    def convert_spawn(self):
+        id = request.args.get('id', None)
+        area_id = request.args.get('area_id', None)
+        event_id = request.args.get('event_id', None)
+        event = request.args.get('event', None)
+        if id is not None:
+            self._db.convert_spawnpoint(id)
+        return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
+
+    @auth_required
+    @logger.catch()
+    def get_spawnpoints_from_id(self, id, eventid, todayonly=False):
         spawns = []
         possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=id)
         for possible_fence in possible_fences:
@@ -599,7 +625,8 @@ class statistics(object):
                 data = json.loads(
                     self._db.download_spawns(
                         fence=fence,
-                        eventid=eventid
+                        eventid=eventid,
+                        todayonly=todayonly
                     )
                 )
                 for spawnid in data:
@@ -611,3 +638,38 @@ class statistics(object):
         return render_template('statistics/spawn_statistics.html', title="MAD Spawnpoint Statisics",
                                time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
+
+    @auth_required
+    def get_active_event_spawns(self):
+        active_spawns: list = []
+        data = {}
+        area_id = request.args.get('area_id', None)
+        event_id = request.args.get('event_id', None)
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=area_id)
+        for possible_fence in possible_fences:
+            for subfence in possible_fences[possible_fence]['include']:
+                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+                data = json.loads(
+                    self._db.download_spawns(
+                        fence=fence,
+                        eventid=event_id,
+                        todayonly=True
+                    )
+                )
+        for spawn in data:
+            sp = data[spawn]
+            active_spawns.append({'id': sp['id'], 'lat': sp['lat'], 'lon': sp['lon'],
+                                  'lastscan': sp['lastscan'],
+                                  'lastnonscan': sp['lastnonscan']})
+
+        return jsonify(active_spawns)
+
+    @auth_required
+    def active_event_spawns(self):
+        area_id = request.args.get('id', None)
+        event_id = request.args.get('eventid', None)
+        event = request.args.get('event', None)
+        return render_template('statistics/active_event_spawns.html', title="MAD Spawnpoint Statisics",
+                               time=self._args.madmin_time,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               areaid=area_id, eventid=event_id, event=event)

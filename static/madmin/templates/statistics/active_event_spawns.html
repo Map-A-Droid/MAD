@@ -14,29 +14,35 @@
         $(tableGridHtmlId).DataTable({
             "data": gridData,
             "columns": [
-                    { data: 'fence', title: 'Fence' },
-                    { data: 'event', title: 'Type/Event' },
-                    { data: 'mode', title: 'Mode' },
-                    { data: 'sum', title: 'Spawnpoints' },
-                    { data: 'known', title: 'known' },
-                    { data: 'unknown', title: 'unknown' },
+                    { data: 'id', title: 'Id' },
+                    { data: 'lat', title: 'Latitude' },
+                    { data: 'lon', title: 'Longitude' },
+                    { data: '', title: 'Last scanned' },
                     { data: '', title: 'Actions' }
             ],
             "columnDefs": [
+            {
+                "targets": [3],
+
+                "render": function (data, type, row) {
+                    var lastscan = new Date(Date.parse(row.lastscan));
+                    var lastnonscan = new Date(Date.parse(row.lastnonscan));
+                    if (lastscan > lastnonscan) {
+                        return ("0" + lastscan.getDate()).slice(-2) + "-" + ("0"+(lastscan.getMonth()+1)).slice(-2) + "-" + lastscan.getFullYear() + " " + ("0" + lastscan.getHours()).slice(-2) + ":" + ("0" + lastscan.getMinutes()).slice(-2);
+                    } else {
+                        return lastnonscan.getFullYear() + "-" + ("0"+(lastnonscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastnonscan.getDate()).slice(-2) + " " + ("0" + lastnonscan.getHours()).slice(-2) + ":" + ("0" + lastnonscan.getMinutes()).slice(-2) + ":" + ("0" + lastnonscan.getSeconds()).slice(-2);;
+
+                    }
+                }
+            },
                 {
-                    "targets": [6],
+                    "targets": [4],
                     "render": function (data, type, row) {
-                        var del = "<button type='button' class='delete btn btn-danger btn-sm'><a href='delete_spawns?id=" + row.area_id + "&eventid=" + row.eventid + "' class='confirm' title='Do you really want to delete these spawnpoints?'><i class='fa fa-trash'></i></a></button>";
-                        var conv = "";
-                        var activetoday = "";
-                        if (row.event != "DEFAULT") {
-                            var conv = "<button type='button' class='delete btn btn-info btn-sm'><a href='convert_spawns?id=" + row.area_id + "&eventid=" + row.eventid + "' class='confirm' title='Do you really want to convert these spawnpoints to normal spawnpoints?'><i class='fa fa-exchange-alt'></i></a></button>";
-                            var activetoday = "<button type='button' class='delete btn btn-success btn-sm'><a href='active_event_spawns?id=" + row.area_id + "&eventid=" + row.eventid + "&event=" + row.event +"' title='Check still active event spawnpoints'> <i class='fa fa-clock'></i></a></button>";
+                        var del = "<button type='button' class='delete btn btn-danger btn-sm'><a href='delete_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}' class='confirm' title='Do you really want to delete that spawnpoint?'><i class='fa fa-trash'></i></a></button>";
+                        var conv = "<button type='button' class='delete btn btn-info btn-sm'><a href='convert_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}' class='confirm' title='Do you really want to convert that spawnpoint to a normal spawnpoint?'><i class='fa fa-exchange-alt'></i></a></button>";
+                        var map = "<button type='button' class='delete btn btn-success btn-sm'><a href='map?lat=" + row.lat + "&lng=" + row.lon + "' title='Show on Madmin map'> <i class='fa fa-map-marker'></i></a></button>";
 
-                        }
-
-
-                             return del + " " + activetoday + " " + conv
+                        return del + " " + conv + " " + map
 
                     }
                 }
@@ -50,10 +56,10 @@
             "stateSave": true,
             "stateDuration": 0,
             "stateSaveCallback": function(settings,data) {
-            localStorage.setItem( 'MAD_aeSP_' + settings.sInstance, JSON.stringify(data) )
+            localStorage.setItem( 'MAD_SP_' + settings.sInstance, JSON.stringify(data) )
             },
             "stateLoadCallback": function(settings) {
-            return JSON.parse( localStorage.getItem( 'MAD_aeSP_' + settings.sInstance ) )
+            return JSON.parse( localStorage.getItem( 'MAD_SP_' + settings.sInstance ) )
             }
 
         });
@@ -65,10 +71,10 @@
         $("#navgyms").addClass("active");
         $.ajax({
             type: "GET",
-            url: "get_spawnpoints_stats",
+            url: "get_active_event_spawns?area_id={{areaid}}&event_id={{eventid}}",
             success: function (result) {
                 setTimeout($.unblockUI, 100);
-                setGrid('#show-spawnpoints-stats', result.spawnpoints);
+                setGrid('#show-spawnpoints-stats', result);
             }
         });
     });
@@ -136,6 +142,6 @@
 {% endblock %}
 
 {% block content %}
-<h2>Spawnpoint Statistics</h2>
+<h2>Still active event Spawnpoints (Event: {{event}})</h2>
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
 {% endblock %}

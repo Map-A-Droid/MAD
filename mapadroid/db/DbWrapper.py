@@ -798,7 +798,6 @@ class DbWrapper:
         return True
 
     def convert_spawnpoints(self, spawnpoint_ids):
-        print(spawnpoint_ids)
         logger.debug("dbWrapper::convert_spawnpoints")
         query = (
             "UPDATE trs_spawn "
@@ -808,8 +807,29 @@ class DbWrapper:
         self.execute(query, commit=True)
         return True
 
+    def delete_spawnpoint(self, spawnpoint_id):
+        logger.debug("dbWrapper::delete_spawnpoints")
+        query = (
+            "DELETE "
+            "FROM trs_spawn "
+            "WHERE spawnpoint={}".format(str(spawnpoint_id))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
+    def convert_spawnpoint(self, spawnpoint_id):
+        logger.debug("dbWrapper::convert_spawnpoints")
+        query = (
+            "UPDATE trs_spawn "
+            "set eventid = 1 WHERE spawnpoint={}".format(str(spawnpoint_id))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
     def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
-                        oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None):
+                        oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None, todayonly=False):
         logger.debug("dbWrapper::download_spawns")
         spawn = {}
         query_where = ""
@@ -849,6 +869,10 @@ class DbWrapper:
 
         if eventid is not None:
             query_where = " and eventid = {}".format(str(eventid))
+            query = query + query_where
+
+        if todayonly:
+            query_where = " and (DATE(last_scanned) = DATE(NOW()) or DATE(last_non_scanned) = DATE(NOW())) "
             query = query + query_where
 
         res = self.execute(query)
