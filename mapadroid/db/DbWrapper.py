@@ -996,7 +996,6 @@ class DbWrapper:
         }
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
-    #def update_trs_status_to_idle(self, dev_id):
     def save_idle_status(self, dev_id, status):
         data = {
             'instance_id': self.instance_id,
@@ -1037,7 +1036,7 @@ class DbWrapper:
             vals = (event_name, event_start, event_end, event_lure_duration)
         else:
             query = (
-                "UPDATE trs_event set event_name=%s, event_start=%s, event_end=%s,  event_lure_duration=%s "
+                "UPDATE trs_event set event_name=%s, event_start=%s, event_end=%s, event_lure_duration=%s "
                 "where id=%s"
             )
             vals = (event_name, event_start, event_end, event_lure_duration, id)
@@ -1073,11 +1072,25 @@ class DbWrapper:
         found = self._db_exec.execute(sql)
 
         if found and len(found) > 0 and found[0][0]:
-            logger.info("Found an active Event with id {} (Lure Duration: {})".format(str(found[0][0]), str(found[0][1])))
+            logger.info("Found an active Event with id {} (Lure Duration: {})".format(str(found[0][0]),
+                                                                                      str(found[0][1])))
             return found[0][0], found[0][1]
         else:
             logger.info("There is no active event - returning default value (1) (Lure Duration: 30)")
             return 1, 30
+
+    def check_if_event_is_active(self, eventid):
+        logger.debug("DbWrapper::check_if_event_is_active called")
+        sql = "select * " \
+              "from trs_event " \
+              "where now() between `event_start` and `event_end` and `id`=%s"
+        vals = (eventid)
+        res = self.execute(sql, vals)
+        number_of_rows = len(res)
+        if number_of_rows > 0:
+            return True
+        else:
+            return False
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
                                oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):

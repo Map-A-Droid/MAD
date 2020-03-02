@@ -2,7 +2,7 @@ import datetime
 import json
 import time
 
-from flask import (jsonify, render_template, request, redirect, url_for)
+from flask import (jsonify, render_template, request, redirect, url_for, flash)
 
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
@@ -579,6 +579,9 @@ class statistics(object):
     def delete_spawns(self):
         area_id = request.args.get('id', None)
         event_id = request.args.get('eventid', None)
+        if self._db.check_if_event_is_active(event_id):
+            flash('Event is still active - cannot convert the spawnpoints now.')
+            return redirect(url_for('statistics_spawns'), code=302)
         if area_id is not None and event_id is not None:
             self._db.delete_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
         return redirect(url_for('statistics_spawns'), code=302)
@@ -588,6 +591,10 @@ class statistics(object):
     def convert_spawns(self):
         area_id = request.args.get('id', None)
         event_id = request.args.get('eventid', None)
+        if self._db.check_if_event_is_active(event_id):
+            flash('Event is still active - cannot convert the spawnpoints now.')
+            return redirect(url_for('statistics_spawns'), code=302)
+
         if area_id is not None and event_id is not None:
             self._db.convert_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
         return redirect(url_for('statistics_spawns'), code=302)
@@ -596,9 +603,12 @@ class statistics(object):
     @logger.catch()
     def delete_spawn(self):
         id = request.args.get('id', None)
-        area_id = request.args.get('id', None)
-        event_id = request.args.get('eventid', None)
+        area_id = request.args.get('area_id', None)
+        event_id = request.args.get('event_id', None)
         event = request.args.get('event', None)
+        if self._db.check_if_event_is_active(event_id):
+            flash('Event is still active - cannot delete this spawnpoint now.')
+            return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
         if id is not None:
             self._db.delete_spawnpoint(id)
         return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
@@ -610,6 +620,9 @@ class statistics(object):
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
         event = request.args.get('event', None)
+        if self._db.check_if_event_is_active(event_id):
+            flash('Event is still active - cannot convert this spawnpoint now.')
+            return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
         if id is not None:
             self._db.convert_spawnpoint(id)
         return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
