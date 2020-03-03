@@ -26,13 +26,15 @@
                 {
                     "targets": [6],
                     "render": function (data, type, row) {
-                        var del = "<button type='button' class='delete btn btn-danger btn-sm'><a href='delete_spawns?id=" + row.area_id + "&eventid=" + row.eventid + "' class='confirm' title='Do you really want to delete these spawnpoints?'><i class='fa fa-trash'></i></a></button>";
+                        var del = "<button type='button' class='delete btn btn-danger btn-sm confirm' data-areaid='" + row.area_id + "' data-eventid='" + row.eventid + "' title='Do you really want to delete these spawnpoints?'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>";
                         var conv = "";
                         var activetoday = "";
                         if (row.event != "DEFAULT") {
-                            var conv = "<button type='button' class='delete btn btn-info btn-sm'><a href='convert_spawns?id=" + row.area_id + "&eventid=" + row.eventid + "' class='confirm' title='Do you really want to convert these spawnpoints to normal spawnpoints?'><i class='fa fa-exchange-alt'></i></a></button>";
-                            var activetoday = "<button type='button' class='delete btn btn-success btn-sm'><a href='active_event_spawns?id=" + row.area_id + "&eventid=" + row.eventid + "&event=" + row.event +"' title='Check still active event spawnpoints'> <i class='fa fa-clock'></i></a></button>";
-
+                            var conv = "<button type='button' class='convert delete btn btn-info btn-sm' data-areaid='" + row.area_id + "' data-eventid='" + row.eventid + "'> <div class='convert_div' style='display:inline;'><i class='fa fa-exchange-alt'></i></div></button>";
+                            var activetoday = "<button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i></button>";
+                            if(row.todayspawns > 0) {
+                                var activetoday = "<button type='button' class='activetoday btn btn-success btn-sm'><a href='active_event_spawns?id=" + row.area_id + "&eventid=" + row.eventid + "&event=" + row.event +"' title='Check still active event spawnpoints'><i class='fa fa-clock'></i></a></button>";
+                            }
                         }
 
 
@@ -59,8 +61,8 @@
         });
 	}
 
-    $(document).ready(function () {
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+	function loadData() {
+	    $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
         $('body').Aplus();
         $("#navgyms").addClass("active");
         $.ajax({
@@ -71,7 +73,107 @@
                 setGrid('#show-spawnpoints-stats', result.spawnpoints);
             }
         });
+	}
+
+
+
+
+
+    $(document).ready(function () {
+        loadData();
     });
+
+
+    $( "#show-spawnpoints-stats" ).on( "click", '.convert', function(e) {
+        e.stopImmediatePropagation();
+        var convert_div = $(this).find(".convert_div");
+        convert_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        var areaid = $(this).data('areaid');
+        var eventid = $(this).data('eventid');
+        convert_div.append(elem);
+
+        $.ajax({
+            type: 'GET',
+            url:'convert_spawns',
+            data:'id='+ areaid +'&eventid='+ eventid,
+            success: function(msg){
+                if (msg.status == 'success') {
+                    $( "#show-spawnpoints-stats" ).DataTable().destroy();
+                    loadData();
+                } else if (msg.status == 'event') {
+                    alert('Event is still active.');
+                    convert_div.empty();
+                    elem = $(document.createElement("i")).attr({
+                          'class': 'fa fa-minus-circle',
+                    });
+                    convert_div.append(elem);
+                }
+            },
+            error: function(msg) {
+                alert(msg);
+                convert_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                convert_div.append(elem);
+            }
+        });
+
+     });
+
+     $( "#show-spawnpoints-stats" ).on( "click", 'button.delete', function(e) {
+        e.stopImmediatePropagation();
+        var delete_div = $(this).find(".delete_div");
+        var parentRow = $(this).closest("tr")[0];
+
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+        var areaid = $(this).data('areaid');
+        var eventid = $(this).data('eventid');
+
+
+        $.ajax({
+            type: 'GET',
+            url:'delete_spawns',
+            data:'id='+ areaid +'&eventid='+ eventid,
+            success: function(msg){
+            if (msg.status == 'success') {
+                $( "#show-spawnpoints-stats" ).DataTable().rows( parentRow )
+               .remove()
+               .draw();
+            } else if (msg.status == 'event') {
+                alert('Event is still active.');
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
 </script>
 <style>
     table.dataTable tr.odd { background-color: #F8F8F8; }

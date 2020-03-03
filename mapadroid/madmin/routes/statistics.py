@@ -2,7 +2,7 @@ import datetime
 import json
 import time
 
-from flask import (jsonify, render_template, request, redirect, url_for, flash)
+from flask import (jsonify, render_template, request, redirect, url_for, flash, Response)
 
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
@@ -569,7 +569,9 @@ class statistics(object):
                 for event in events:
                     coords.append({'fence': subfence, 'known': len(known[event]), 'unknown': len(unknown[event]),
                                    'sum': len(known[event]) + len(unknown[event]), 'event': event, 'mode': mode,
-                                   'area_id': area_id, 'eventid': eventidhelper[event]})
+                                   'area_id': area_id, 'eventid': eventidhelper[event],
+                                   'todayspawns': self.get_active_event_spawns_helper
+                                                      (areaid=area_id, eventid=eventidhelper[event], sumonnly=True)})
 
         stats = {'spawnpoints': coords}
         return jsonify(stats)
@@ -580,11 +582,10 @@ class statistics(object):
         area_id = request.args.get('id', None)
         event_id = request.args.get('eventid', None)
         if self._db.check_if_event_is_active(event_id):
-            flash('Event is still active - cannot convert the spawnpoints now.')
-            return redirect(url_for('statistics_spawns'), code=302)
+            return jsonify({'status': 'event'})
         if area_id is not None and event_id is not None:
             self._db.delete_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
-        return redirect(url_for('statistics_spawns'), code=302)
+        return jsonify({'status': 'success'})
 
     @auth_required
     @logger.catch()
@@ -592,12 +593,10 @@ class statistics(object):
         area_id = request.args.get('id', None)
         event_id = request.args.get('eventid', None)
         if self._db.check_if_event_is_active(event_id):
-            flash('Event is still active - cannot convert the spawnpoints now.')
-            return redirect(url_for('statistics_spawns'), code=302)
-
+            return jsonify({'status': 'event'})
         if area_id is not None and event_id is not None:
             self._db.convert_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
-        return redirect(url_for('statistics_spawns'), code=302)
+        return jsonify({'status': 'success'})
 
     @auth_required
     @logger.catch()
@@ -654,28 +653,35 @@ class statistics(object):
 
     @auth_required
     def get_active_event_spawns(self):
-        active_spawns: list = []
-        data = {}
+
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=area_id)
+
+        return jsonify(self.get_active_event_spawns_helper(areaid=area_id, eventid=event_id))
+
+    def get_active_event_spawns_helper(self, areaid, eventid, sumonnly=False):
+        active_spawns: list = []
+        data = {}
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=areaid)
         for possible_fence in possible_fences:
             for subfence in possible_fences[possible_fence]['include']:
                 fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
                 data = json.loads(
                     self._db.download_spawns(
                         fence=fence,
-                        eventid=event_id,
+                        eventid=eventid,
                         todayonly=True
                     )
                 )
+        if sumonnly:
+            return len(data)
         for spawn in data:
             sp = data[spawn]
             active_spawns.append({'id': sp['id'], 'lat': sp['lat'], 'lon': sp['lon'],
                                   'lastscan': sp['lastscan'],
                                   'lastnonscan': sp['lastnonscan']})
 
-        return jsonify(active_spawns)
+        return active_spawns
 
     @auth_required
     def active_event_spawns(self):

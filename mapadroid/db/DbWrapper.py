@@ -788,6 +788,8 @@ class DbWrapper:
 
     def delete_spawnpoints(self, spawnpoint_ids):
         logger.debug("dbWrapper::delete_spawnpoints")
+        if len(spawnpoint_ids) == 0:
+            return True
         query = (
             "DELETE "
             "FROM trs_spawn "
@@ -1081,6 +1083,8 @@ class DbWrapper:
 
     def check_if_event_is_active(self, eventid):
         logger.debug("DbWrapper::check_if_event_is_active called")
+        if int(eventid) == 1:
+            return False
         sql = "select * " \
               "from trs_event " \
               "where now() between `event_start` and `event_end` and `id`=%s"
