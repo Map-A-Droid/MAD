@@ -848,7 +848,8 @@ class DbWrapper:
         return True
 
     def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
-                        oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None, todayonly=False):
+                        oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None, todayonly=False,
+                        olderthanxdays=None):
         logger.debug("dbWrapper::download_spawns")
         spawn = {}
         query_where = ""
@@ -892,6 +893,12 @@ class DbWrapper:
 
         if todayonly:
             query_where = " and (DATE(last_scanned) = DATE(NOW()) or DATE(last_non_scanned) = DATE(NOW())) "
+            query = query + query_where
+
+        if olderthanxdays is not None:
+            query_where = " and (DATE(last_scanned) < DATE(NOW()) - INTERVAL {} DAY and " \
+                          "DATE(last_non_scanned) < DATE(NOW()) - INTERVAL {} DAY) ".format(str(olderthanxdays),
+                                                                                              str(olderthanxdays))
             query = query + query_where
 
         res = self.execute(query)

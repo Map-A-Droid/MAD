@@ -26,6 +26,7 @@ class statistics(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self.add_route()
+        self.outdatedays = self._args.outdated_spawnpoints
 
     def add_route(self):
         routes = [
@@ -47,8 +48,8 @@ class statistics(object):
             ("/shiny_stats_data", self.shiny_stats_data),
             ("/delete_spawns", self.delete_spawns),
             ("/convert_spawns", self.convert_spawns),
-            ("/active_event_spawns", self.active_event_spawns),
-            ("/get_active_event_spawns", self.get_active_event_spawns),
+            ("/spawn_details", self.spawn_details),
+            ("/get_spawn_details", self.get_spawn_details),
             ("/delete_spawn", self.delete_spawn),
             ("/convert_spawn", self.convert_spawn),
         ]
@@ -364,7 +365,6 @@ class statistics(object):
                                    'lng': dat[3], 'timestamp': timestamp.strftime(self._datetimeformat),
                                    'form': dat[1], 'mon_id': dat[0], 'encounter_id': str(dat[9])})
 
-        # print(shiny_count)
         global_shiny_stats_v2 = []
         data = self._db_stats_reader.get_shiny_stats_global_v2(set(found_shiny_mon_id), timestamp_from,
                                                                timestamp_to)
@@ -570,8 +570,13 @@ class statistics(object):
                     coords.append({'fence': subfence, 'known': len(known[event]), 'unknown': len(unknown[event]),
                                    'sum': len(known[event]) + len(unknown[event]), 'event': event, 'mode': mode,
                                    'area_id': area_id, 'eventid': eventidhelper[event],
-                                   'todayspawns': self.get_active_event_spawns_helper
-                                                      (areaid=area_id, eventid=eventidhelper[event], sumonnly=True)})
+                                   'todayspawns': self.get_spawn_details_helper
+                                                      (areaid=area_id, eventid=eventidhelper[event], todayonly=True,
+                                                       sumonly=True),
+                                   'outdatedspawns': self.get_spawn_details_helper
+                                   (areaid=area_id, eventid=eventidhelper[event], olderthanxdays=self.outdatedays,
+                                    sumonly=True)
+                                   })
 
         stats = {'spawnpoints': coords}
         return jsonify(stats)
@@ -581,10 +586,14 @@ class statistics(object):
     def delete_spawns(self):
         area_id = request.args.get('id', None)
         event_id = request.args.get('eventid', None)
-        if self._db.check_if_event_is_active(event_id):
+        olderthanxdays = request.args.get('olderthanxdays', None)
+        if self._db.check_if_event_is_active(event_id) and olderthanxdays is None:
             return jsonify({'status': 'event'})
         if area_id is not None and event_id is not None:
-            self._db.delete_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
+            self._db.delete_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id, olderthanxdays=olderthanxdays))
+        if olderthanxdays is not None:
+            flash('Successfully deleted outdated spawnpoints')
+            return redirect(url_for('statistics_spawns'), code=302)
         return jsonify({'status': 'success'})
 
     @auth_required
@@ -607,10 +616,10 @@ class statistics(object):
         event = request.args.get('event', None)
         if self._db.check_if_event_is_active(event_id):
             flash('Event is still active - cannot delete this spawnpoint now.')
-            return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
+            return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
         if id is not None:
             self._db.delete_spawnpoint(id)
-        return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
+        return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
 
     @auth_required
     @logger.catch()
@@ -621,14 +630,14 @@ class statistics(object):
         event = request.args.get('event', None)
         if self._db.check_if_event_is_active(event_id):
             flash('Event is still active - cannot convert this spawnpoint now.')
-            return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
+            return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
         if id is not None:
             self._db.convert_spawnpoint(id)
-        return redirect(url_for('active_event_spawns', id=area_id, eventid=event_id, event=event), code=302)
+        return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
 
     @auth_required
     @logger.catch()
-    def get_spawnpoints_from_id(self, id, eventid, todayonly=False):
+    def get_spawnpoints_from_id(self, id, eventid, todayonly=False, olderthanxdays=None):
         spawns = []
         possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=id)
         for possible_fence in possible_fences:
@@ -638,7 +647,8 @@ class statistics(object):
                     self._db.download_spawns(
                         fence=fence,
                         eventid=eventid,
-                        todayonly=todayonly
+                        todayonly=todayonly,
+                        olderthanxdays=olderthanxdays
                     )
                 )
                 for spawnid in data:
@@ -652,14 +662,23 @@ class statistics(object):
                                responsive=str(self._args.madmin_noresponsive).lower())
 
     @auth_required
-    def get_active_event_spawns(self):
+    def get_spawn_details(self):
 
         area_id = request.args.get('area_id', None)
         event_id = request.args.get('event_id', None)
+        mode = request.args.get('mode', None)
+        olderthanxdays = None
+        todayonly = False
 
-        return jsonify(self.get_active_event_spawns_helper(areaid=area_id, eventid=event_id))
+        if mode == "OLD":
+            olderthanxdays = self.outdatedays
+        else:
+            todayonly=True
 
-    def get_active_event_spawns_helper(self, areaid, eventid, sumonnly=False):
+        return jsonify(self.get_spawn_details_helper(areaid=area_id, eventid=event_id, olderthanxdays=olderthanxdays,
+                                                     todayonly=todayonly))
+
+    def get_spawn_details_helper(self, areaid, eventid, todayonly=False, olderthanxdays=None, sumonly=False):
         active_spawns: list = []
         data = {}
         possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=areaid)
@@ -670,10 +689,11 @@ class statistics(object):
                     self._db.download_spawns(
                         fence=fence,
                         eventid=eventid,
-                        todayonly=True
+                        todayonly=todayonly,
+                        olderthanxdays=olderthanxdays
                     )
                 )
-        if sumonnly:
+        if sumonly:
             return len(data)
         for spawn in data:
             sp = data[spawn]
@@ -684,11 +704,13 @@ class statistics(object):
         return active_spawns
 
     @auth_required
-    def active_event_spawns(self):
+    def spawn_details(self):
         area_id = request.args.get('id', None)
         event_id = request.args.get('eventid', None)
         event = request.args.get('event', None)
-        return render_template('statistics/active_event_spawns.html', title="MAD Spawnpoint Statisics",
+        mode = request.args.get('mode', "OLD")
+        return render_template('statistics/spawn_details.html', title="MAD Spawnpoint Details",
                                time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               areaid=area_id, eventid=event_id, event=event)
+                               areaid=area_id, eventid=event_id, event=event, mode=mode,
+                               olderthanxdays=self.outdatedays)
