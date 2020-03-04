@@ -34,6 +34,7 @@ var setlng = {{ setlng }};
         <li><a href="#routes" role="tab"><i class="fa fa-route"></i></a></li>
         <li><a href="#prioroutes" role="tab"><i class="fas fa-sort-numeric-up"></i></a></li>
         <li><a href="#geofences" role="tab"><i class="fa fa-draw-polygon"></i></a></li>
+        <li><a href="#spawns" role="tab"><i class="fa fa-splotch"></i></a></li>
         <li><a href="#settings" role="tab"><i class="fa fa-cog"></i></a></li>
       </ul>
     </div>
@@ -102,6 +103,23 @@ var setlng = {{ setlng }};
               <div class="custom-control custom-switch">
                 <input :id="'layers-dyn-geofences-'+index" type="checkbox" v-model="layers.dyn.geofences[index].show" class="custom-control-input" />
                 <label :for="'layers-dyn-geofences-'+index" class="custom-control-label"></label>
+              </div>
+            </li>
+            {% endraw %}
+          </ul>
+        </div>
+      </div>
+
+      <div class="leaflet-sidebar-pane" id="spawns">
+        <h1 class="leaflet-sidebar-header bg-dark">Spawnpoints<div class="leaflet-sidebar-close"><i class="fa fa-caret-left"></i></div></h1>
+        <div class="sidebar-pane-content">
+          <ul class="list-group list-group-flush">
+            {% raw %}
+            <li v-for="(spawns, index) in layers.dyn.spawns" class="list-group-item layer-item d-flex">
+              <div class="flex-grow-1">{{ index }}</div>
+              <div class="custom-control custom-switch">
+                <input :id="'layers-dyn-spawns-'+index" type="checkbox" v-model="layers.dyn.spawns[index].show" class="custom-control-input" />
+                <label :for="'layers-dyn-spawns-'+index" class="custom-control-label"></label>
               </div>
             </li>
             {% endraw %}

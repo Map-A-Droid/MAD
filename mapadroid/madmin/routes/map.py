@@ -150,7 +150,7 @@ class map(object):
         neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
         timestamp = request.args.get("timestamp", None)
 
-        coords = []
+        coords = {}
         data = json.loads(
             self._db.download_spawns(
                 neLat,
@@ -167,7 +167,9 @@ class map(object):
 
         for spawnid in data:
             spawn = data[str(spawnid)]
-            coords.append({
+            if spawn["event"] not in coords:
+                coords[spawn["event"]] = []
+            coords[spawn["event"]].append({
                 "id": spawn["id"],
                 "endtime": spawn["endtime"],
                 "lat": spawn["lat"],
@@ -179,7 +181,11 @@ class map(object):
                 "event": spawn["event"]
             })
 
-        return jsonify(coords)
+        cluster_spawns = []
+        for spawn in coords:
+            cluster_spawns.append({"EVENT": spawn, "Coords": coords[spawn]})
+
+        return jsonify(cluster_spawns)
 
     @auth_required
     def get_gymcoords(self):
