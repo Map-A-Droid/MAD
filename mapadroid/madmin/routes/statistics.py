@@ -612,7 +612,7 @@ class statistics(object):
         todayonly = request.args.get('todayonly', False)
         if self._db.check_if_event_is_active(event_id):
             if todayonly:
-                flash('Cannot converted spawnpoints during an event')
+                flash('Cannot convert spawnpoints during an event')
                 return redirect(url_for('statistics_spawns'), code=302)
             return jsonify({'status': 'event'})
         if area_id is not None and event_id is not None:

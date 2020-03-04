@@ -31,7 +31,6 @@
                         return "<i class='fa fa-check fablack'></i></a></li> " + lastscan.getFullYear() + "-" + ("0"+(lastscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastscan.getDate()).slice(-2) + " " + ("0" + lastscan.getHours()).slice(-2) + ":" + ("0" + lastscan.getMinutes()).slice(-2) + ":" + ("0" + lastscan.getSeconds()).slice(-2)
                     } else {
                         return "<i class='fa fa-ban fablack'></i></a></li> " + lastnonscan.getFullYear() + "-" + ("0"+(lastnonscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastnonscan.getDate()).slice(-2) + " " + ("0" + lastnonscan.getHours()).slice(-2) + ":" + ("0" + lastnonscan.getMinutes()).slice(-2) + ":" + ("0" + lastnonscan.getSeconds()).slice(-2);
-
                     }
                 }
             },
@@ -154,7 +153,7 @@
     <button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints
 {% else %}
     <h2>Still active event spawnpoints (Event: {{event}})</h2>
-    <button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints
+    <button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints
 {% endif %}
 <br>
 <div class="legend">
