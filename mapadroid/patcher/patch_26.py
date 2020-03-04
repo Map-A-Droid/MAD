@@ -49,3 +49,14 @@ class Patch(PatchBase):
         except Exception as e:
             self._logger.exception("Unexpected error: {}", e)
             self.issues = True
+
+        if not self._schema_updater.check_column_exists('settings_area_mon_mitm', 'include_event_id'):
+            query = (
+                "ALTER TABLE settings_area_mon_mitm "
+                "ADD include_event_id INT DEFAULT NULL"
+            )
+            try:
+                self._db.execute(query, commit=True, raise_exc=True)
+            except Exception as e:
+                self._logger.exception("Unexpected error: {}", e)
+                self.issues = True

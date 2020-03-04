@@ -714,18 +714,24 @@ class DbWrapper:
                                                                           str(longitude))
         self.execute(query, commit=True)
 
-    def get_detected_spawns(self, geofence_helper) -> List[Location]:
+    def get_detected_spawns(self, geofence_helper, include_event_id) -> List[Location]:
         logger.debug("DbWrapper::get_detected_spawns called")
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        event_ids: list = []
+        #adding default spawns
+        event_ids.append(1)
+
+        if include_event_id is not None:
+            event_ids.append(include_event_id)
 
         query = (
             "SELECT latitude, longitude "
             "FROM trs_spawn "
             "WHERE (latitude >= {} AND longitude >= {} "
             "AND latitude <= {} AND longitude <= {}) and "
-            "eventid=1"
-        ).format(minLat, minLon, maxLat, maxLon)
+            "eventid in ({})"
+        ).format(minLat, minLon, maxLat, maxLon, str(', '.join(str(v) for v in event_ids)))
 
         list_of_coords: List[Location] = []
         logger.debug(
@@ -752,15 +758,26 @@ class DbWrapper:
             #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
-    def get_undetected_spawns(self, geofence_helper):
+    def get_undetected_spawns(self, geofence_helper, include_event_id):
         logger.debug("DbWrapper::get_undetected_spawns called")
+
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        event_ids: list = []
+        # adding default spawns
+        event_ids.append(1)
+
+        if include_event_id is not None:
+            event_ids.append(int(include_event_id))
 
         query = (
             "SELECT latitude, longitude "
             "FROM trs_spawn "
-            "WHERE calc_endminsec is NULL and "
-            "eventid=1"
-        )
+            "WHERE (latitude >= {} AND longitude >= {} "
+            "AND latitude <= {} AND longitude <= {}) and "
+            "calc_endminsec is NULL and "
+            "eventid in ({})"
+        ).format(minLat, minLon, maxLat, maxLon, str(', '.join(str(v) for v in event_ids)))
+
         list_of_coords: List[Location] = []
         logger.debug(
             "DbWrapper::get_undetected_spawns executing select query")

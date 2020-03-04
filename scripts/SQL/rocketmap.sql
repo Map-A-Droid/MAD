@@ -259,6 +259,7 @@ CREATE TABLE `settings_area_mon_mitm` (
     `monlist_id` int(10) unsigned DEFAULT NULL,
     `min_time_left_seconds` int(11) DEFAULT NULL,
     `max_clustering` int(11) DEFAULT NULL,
+    `include_event_id` int DEFAULT NULL,
     PRIMARY KEY (`area_id`),
     KEY `fk_am_monid` (`monlist_id`),
     KEY `fk_area_mon_mitm_geofence` (`geofence_included`),
