@@ -31,10 +31,12 @@
                         var activetoday = "";
                         var outdated = "";
 
-                        var outdated = "<button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i></button>";
+                        if (row.event == "DEFAULT") {
+                            outdated = "<button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i></button>";
                             if(row.outdatedspawns > 0) {
                                 var outdated = "<button type='button' class='outdated btn btn-dark btn-sm'><a href='spawn_details?id=" + row.area_id + "&eventid=" + row.eventid + "&event=" + row.event +"&mode=OLD' title='Show outdated Spawnpoints ( " + row.outdatedspawns + " )'><i class='fa fa-history'></i></a></button>";
                             }
+                        }
 
 
                         if (row.event != "DEFAULT") {
