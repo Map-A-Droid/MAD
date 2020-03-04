@@ -609,10 +609,17 @@ class statistics(object):
     def convert_spawns(self):
         area_id = request.args.get('id', None)
         event_id = request.args.get('eventid', None)
+        todayonly = request.args.get('todayonly', False)
         if self._db.check_if_event_is_active(event_id):
+            if todayonly:
+                flash('Cannot converted spawnpoints during an event')
+                return redirect(url_for('statistics_spawns'), code=302)
             return jsonify({'status': 'event'})
         if area_id is not None and event_id is not None:
-            self._db.convert_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id))
+            self._db.convert_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id, todayonly=todayonly))
+        if todayonly:
+            flash('Successfully converted spawnpoints')
+            return redirect(url_for('statistics_spawns'), code=302)
         return jsonify({'status': 'success'})
 
     @auth_required
