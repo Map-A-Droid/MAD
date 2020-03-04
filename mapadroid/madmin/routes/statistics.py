@@ -567,15 +567,23 @@ class statistics(object):
                         known[eventname].append(spawnid)
 
                 for event in events:
+                    today: int = 0
+                    outdate: int = 0
+
+                    if event == "DEFAULT":
+                        outdate = self.get_spawn_details_helper\
+                            (areaid=area_id, eventid=eventidhelper[event], olderthanxdays=self.outdatedays,
+                             sumonly=True)
+                    else:
+                        today = self.get_spawn_details_helper\
+                            (areaid=area_id, eventid=eventidhelper[event], todayonly=True,
+                             sumonly=True)
+
                     coords.append({'fence': subfence, 'known': len(known[event]), 'unknown': len(unknown[event]),
                                    'sum': len(known[event]) + len(unknown[event]), 'event': event, 'mode': mode,
                                    'area_id': area_id, 'eventid': eventidhelper[event],
-                                   'todayspawns': self.get_spawn_details_helper
-                                                      (areaid=area_id, eventid=eventidhelper[event], todayonly=True,
-                                                       sumonly=True),
-                                   'outdatedspawns': self.get_spawn_details_helper
-                                   (areaid=area_id, eventid=eventidhelper[event], olderthanxdays=self.outdatedays,
-                                    sumonly=True)
+                                   'todayspawns': today,
+                                   'outdatedspawns': outdate
                                    })
 
         stats = {'spawnpoints': coords}
