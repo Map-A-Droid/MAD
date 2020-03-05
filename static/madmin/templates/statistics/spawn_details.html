@@ -151,9 +151,11 @@
 {% if mode == 'OLD' %}
     <h2>Outdated spawnpoints (Event: {{event}})</h2>
     <button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints
-{% else %}
+{% elif mode == 'ACTIVE' %}
     <h2>Still active event spawnpoints (Event: {{event}})</h2>
     <button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints
+{% elif mode == 'ALL' %}
+    <h2>All Spawnpoints (Event: {{event}})</h2>
 {% endif %}
 <br>
 <div class="legend">

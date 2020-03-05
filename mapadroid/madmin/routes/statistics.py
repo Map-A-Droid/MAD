@@ -688,6 +688,9 @@ class statistics(object):
 
         if mode == "OLD":
             olderthanxdays = self.outdatedays
+        elif mode == "ALL":
+            olderthanxdays = None
+            todayonly = None
         else:
             todayonly=True
 

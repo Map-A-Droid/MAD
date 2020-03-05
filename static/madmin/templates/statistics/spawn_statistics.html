@@ -26,6 +26,7 @@
                 {
                     "targets": [6],
                     "render": function (data, type, row) {
+                        var all = "<button type='button' class='btn btn-primary btn-sm'><a href='spawn_details?id=" + row.area_id + "&eventid=" + row.eventid + "&event=" + row.event +"&mode=ALL' title='Show all Spawnpoints ( " + row.sum + " )'><i class='fa fa-eye'></i></a></button>";
                         var del = "<button type='button' class='delete btn btn-danger btn-sm confirm' data-areaid='" + row.area_id + "' data-eventid='" + row.eventid + "' title='Do you really want to delete these spawnpoints?'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>";
                         var conv = "";
                         var activetoday = "";
@@ -49,7 +50,7 @@
                         }
 
 
-                             return del + " " + activetoday + " " + outdated + " " + conv
+                             return all + " " + del + " " + activetoday + " " + outdated + " " + conv
 
                     }
                 }

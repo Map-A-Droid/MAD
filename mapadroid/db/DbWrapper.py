@@ -870,7 +870,9 @@ class DbWrapper:
 
         query = (
             "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
-            "spawndef, last_scanned, first_detection, last_non_scanned, trs_event.event_name, trs_event.id "
+            "spawndef, if(last_scanned is not Null,last_scanned, '1970-01-01 00:00:00'), "
+            "first_detection, if(last_non_scanned is not Null,last_non_scanned, '1970-01-01 00:00:00'), "
+            "trs_event.event_name, trs_event.id "
             "FROM `trs_spawn` inner join trs_event on trs_event.id = trs_spawn.eventid "
         )
 
@@ -910,8 +912,10 @@ class DbWrapper:
             query = query + query_where
 
         if olderthanxdays is not None:
-            query_where = " and (DATE(last_scanned) < DATE(NOW()) - INTERVAL {} DAY and " \
-                          "DATE(last_non_scanned) < DATE(NOW()) - INTERVAL {} DAY) ".format(str(olderthanxdays),
+            query_where = " and (DATE(if(last_scanned is not Null,last_scanned, '1970-01-01 00:00:00'))" \
+                          " < DATE(NOW()) - INTERVAL {} DAY and " \
+                          "DATE(if(last_non_scanned is not Null,last_non_scanned, '1970-01-01 00:00:00')) " \
+                          "< DATE(NOW()) - INTERVAL {} DAY)".format(str(olderthanxdays),
                                                                                               str(olderthanxdays))
             query = query + query_where
 
