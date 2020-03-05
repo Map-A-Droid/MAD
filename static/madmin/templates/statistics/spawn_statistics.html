@@ -302,32 +302,16 @@
 
 {% block content %}
 <h2>Spawnpoint Statistics</h2>
-<div class="legend">
-	<h4>Legend</h4>
-	<table>
-		<tr>
-			<td><button type='button' class='btn btn-primary btn-sm'><i class='fa fa-eye'></i></button></td>
-			<td>Show all Spawnpoints</td>
-		</tr>
-		<tr>
-			<td><button type='button' class='delete btn btn-danger btn-sm confirm'><i class='fa fa-trash'></i></button></td>
-		    <td>Delete all spawnpoints</td>
-		</tr>
-		<tr>
-			<td><button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-clock'></i></button></td>
-		    <td>No / still active event spawnpoints</td>
-		</tr>
-		<tr>
-			<td><button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-history'></i></button></td>
-		    <td>No / outdated spawnpoints</td>
-		</tr>
-		<tr>
-			<td><button type='button' class='convert delete btn btn-info btn-sm'><i class='fa fa-exchange-alt'></i></button></td>
-		    <td>Convert event spawnpoints</td>
-		</tr>
-	</table>
+<div class="dropdown">
+  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
+  <ul class="dropdown-menu dropdown-menu-right">
+      <li class="dropdown-item"><button type='button' class='btn btn-primary btn-sm'><i class='fa fa-eye'></i></button> Show all Spawnpoints</li>
+      <li class="dropdown-item"><button type='button' class='delete btn btn-danger btn-sm confirm'><i class='fa fa-trash'></i></button> Delete all spawnpoints</li>
+	  <li class="dropdown-item"><button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-clock'></i></button> No / still active event spawnpoints</li>
+	  <li class="dropdown-item"><button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-history'></i></button> No / outdated spawnpoints</li>
+	  <li class="dropdown-item"><button type='button' class='convert delete btn btn-info btn-sm'><i class='fa fa-exchange-alt'></i></button> Convert event spawnpoints</li>
+  </ul>
 </div>
-
 <p>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}
@@ -338,7 +322,7 @@
 	{% endwith %}
 </p>
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
-<div class="p-3 mb-2 bg-secondary text-white">
+<div class="p-1 mb-1 bg-success text-white">
 	<div id="delete_unfenced_coords">
 		<button type='button' class='delete btn btn-danger btn-sm'><div class='delete_all_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>  Delete all unfenced spawnpoints.
     </div>

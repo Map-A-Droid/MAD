@@ -150,26 +150,18 @@
 {% block content %}
 {% if mode == 'OLD' %}
     <h2>Outdated spawnpoints (Event: {{event}})</h2>
-    <button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}&index={{index}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints
 {% elif mode == 'ACTIVE' %}
     <h2>Still active event spawnpoints (Event: {{event}})</h2>
-    <button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True&index={{index}}'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints
 {% elif mode == 'ALL' %}
     <h2>All Spawnpoints (Event: {{event}})</h2>
 {% endif %}
-<br>
-<div class="legend">
-	<h4>Legend</h4>
-	<table>
-		<tr>
-			<td><i class='fa fa-check fablack'></i></td>
-		    <td>Known Endtime</td>
-		</tr>
-		<tr>
-			<td><i class='fa fa-ban fablack'></i></td>
-		    <td>Unknown Endtime</td>
-		</tr>
-	</table>
+
+<div class="dropdown">
+  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
+  <ul class="dropdown-menu dropdown-menu-right">
+      <li class="dropdown-item"><i class='fa fa-check fablack'></i> Known Endtime</li>
+      <li class="dropdown-item"><i class='fa fa-ban fablack'></i> Unknown Endtime</li>
+  </ul>
 </div>
 <p>
 	{% with messages = get_flashed_messages() %}
@@ -181,4 +173,9 @@
 	{% endwith %}
 </p>
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
+{% if mode == 'OLD' %}
+    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}&index={{index}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints</div>
+{% elif mode == 'ACTIVE' %}
+    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True&index={{index}}'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints</div>
+{% endif %}
 {% endblock %}
