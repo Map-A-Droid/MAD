@@ -38,11 +38,11 @@
                     "targets": [4],
                     "render": function (data, type, row) {
                         var conv = "";
-                        var del = "<button type='button' class='delete btn btn-danger btn-sm'><a href='delete_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}' class='confirm' title='Do you really want to delete that spawnpoint?'><i class='fa fa-trash'></i></a></button>";
+                        var del = "<button type='button' class='delete btn btn-danger btn-sm'><a href='delete_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}' class='confirm' title='Do you really want to delete that spawnpoint?'><i class='fa fa-trash'></i></a></button>";
                         {% if event != 'DEFAULT' %}
-                            conv = "<button type='button' class='delete btn btn-info btn-sm'><a href='convert_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}' class='confirm' title='Do you really want to convert that spawnpoint to a normal spawnpoint?'><i class='fa fa-exchange-alt'></i></a></button>";
+                            conv = "<button type='button' class='delete btn btn-info btn-sm'><a href='convert_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}' class='confirm' title='Do you really want to convert that spawnpoint to a normal spawnpoint?'><i class='fa fa-exchange-alt'></i></a></button>";
                         {% endif %}
-                        var map = "<button type='button' class='delete btn btn-success btn-sm'><a href='map?lat=" + row.lat + "&lng=" + row.lon + "' title='Show on Madmin map'> <i class='fa fa-map-marker'></i></a></button>";
+                        var map = "<button type='button' class='delete btn btn-success btn-sm'><a href='map?lat=" + row.lat + "&lng=" + row.lon + "' title='Show on Madmin map' target=_new> <i class='fa fa-map-marker'></i></a></button>";
 
                         return del + " " + conv + " " + map
 
@@ -73,7 +73,7 @@
         $("#navgyms").addClass("active");
         $.ajax({
             type: "GET",
-            url: "get_spawn_details?area_id={{areaid}}&event_id={{eventid}}&mode={{mode}}",
+            url: "get_spawn_details?area_id={{areaid}}&event_id={{eventid}}&mode={{mode}}&index={{index}}",
             success: function (result) {
                 setTimeout($.unblockUI, 100);
                 setGrid('#show-spawnpoints-stats', result);
@@ -150,10 +150,10 @@
 {% block content %}
 {% if mode == 'OLD' %}
     <h2>Outdated spawnpoints (Event: {{event}})</h2>
-    <button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints
+    <button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}&index={{index}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints
 {% elif mode == 'ACTIVE' %}
     <h2>Still active event spawnpoints (Event: {{event}})</h2>
-    <button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints
+    <button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True&index={{index}}'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints
 {% elif mode == 'ALL' %}
     <h2>All Spawnpoints (Event: {{event}})</h2>
 {% endif %}
