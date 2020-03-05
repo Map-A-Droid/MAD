@@ -847,6 +847,20 @@ class DbWrapper:
         self.execute(query, commit=True)
         return True
 
+    def get_all_spawnpoints(self):
+        logger.debug("dbWrapper::get_all_spawnpoints")
+        spawn = []
+        query = (
+            "SELECT spawnpoint "
+            "FROM `trs_spawn`"
+        )
+        res = self.execute(query)
+
+        for (spawnid, ) in res:
+            spawn.append(spawnid)
+
+        return spawn
+
     def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
                         oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None, todayonly=False,
                         olderthanxdays=None):

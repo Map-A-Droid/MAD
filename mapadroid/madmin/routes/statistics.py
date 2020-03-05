@@ -52,6 +52,7 @@ class statistics(object):
             ("/get_spawn_details", self.get_spawn_details),
             ("/delete_spawn", self.delete_spawn),
             ("/convert_spawn", self.convert_spawn),
+            ("/delete_unfenced_spawns", self.delete_unfenced_spawns),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -729,3 +730,28 @@ class statistics(object):
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                areaid=area_id, eventid=event_id, event=event, mode=mode,
                                olderthanxdays=self.outdatedays)
+
+    @auth_required
+    def delete_unfenced_spawns(self):
+        processed_fences = []
+        spawns = []
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+        for possible_fence in possible_fences:
+            for subfence in possible_fences[possible_fence]['include']:
+                if subfence in processed_fences:
+                    continue
+                processed_fences.append(subfence)
+                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+                data = json.loads(
+                    self._db.download_spawns(
+                        fence=fence
+                    )
+                )
+                for spawnid in data:
+                    spawns.append(spawnid)
+
+        self._db.delete_spawnpoints([x for x in self._db.get_all_spawnpoints() if x not in spawns])
+
+        return jsonify({'status': 'success'})
+
+

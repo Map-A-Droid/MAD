@@ -142,6 +142,47 @@
 
      });
 
+     $( "#delete_unfenced_coords" ).on( "click", '.delete', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to delete all unfenced spawnpoints?");
+        if (r != true) {
+             return;
+        }
+        var delete_div = $(this).find(".delete_all_div");
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+
+        $.ajax({
+            type: 'GET',
+            url:'delete_unfenced_spawns',
+            success: function(msg){
+                if (msg.status == 'success') {
+
+                    delete_div.empty();
+                    elem = $(document.createElement("i")).attr({
+                         'class': 'fa fa-check',
+                    });
+                    delete_div.append(elem);
+                }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
      $( "#show-spawnpoints-stats" ).on( "click", 'button.delete', function(e) {
         e.stopImmediatePropagation();
         var r = confirm("You really want to delete this spawnpoints?");
@@ -279,6 +320,7 @@
 		</tr>
 	</table>
 </div>
+
 <p>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}
@@ -289,4 +331,10 @@
 	{% endwith %}
 </p>
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
+<div class="p-3 mb-2 bg-secondary text-white">
+	<div id="delete_unfenced_coords">
+		<button type='button' class='delete btn btn-danger btn-sm'><div class='delete_all_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>  Delete all unfenced spawnpoints.
+    </div>
+
+</div>
 {% endblock %}
