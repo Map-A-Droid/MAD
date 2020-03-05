@@ -569,7 +569,7 @@ CREATE TABLE `trs_s2cells` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_spawn` (
-    `spawnpoint` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `spawnpoint` bigint(20) unsigned NOT NULL,
     `latitude` double NOT NULL,
     `longitude` double NOT NULL,
     `spawndef` int(11) NOT NULL DEFAULT '240',
@@ -579,8 +579,8 @@ CREATE TABLE `trs_spawn` (
     `last_non_scanned` datetime DEFAULT NULL,
     `calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `eventid` int NOT NULL DEFAULT 1,
-    UNIQUE KEY `spawnpoint_2` (`spawnpoint`),
-    KEY `spawnpoint` (`spawnpoint`)
+    PRIMARY KEY (`spawnpoint`),
+    KEY `event_lat_long` (`eventid`, latitude`, `longitude`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_spawnsightings` (
