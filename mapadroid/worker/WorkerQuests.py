@@ -761,9 +761,11 @@ class WorkerQuests(MITMBase):
                                                                     self.current_location.lng):
                     logger.warning('Cannot process this stop again')
                 break
-            elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN:
+            elif data_received == FortSearchResultTypes.QUEST or data_received == FortSearchResultTypes.COOLDOWN or \
+                    (data_received == FortSearchResultTypes.FULL and self._level_mode):
                 if self._level_mode:
                     logger.info("Saving visitation info...")
+                    self._latest_quest = math.floor(time.time())
                     self._db_wrapper.submit_pokestop_visited(self._origin,
                                                              self.current_location.lat,
                                                              self.current_location.lng)
