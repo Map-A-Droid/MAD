@@ -419,7 +419,7 @@ class MappingManager:
                                              range_init=mode_mapping.get(area_true.area_type, {}).get(
                                                  "range_init", 630),
                                              including_stops=area.get("including_stops", False),
-                                             include_event_id=area['settings'].get("include_event_id", None))
+                                             include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area_true.area_type]["range"]
