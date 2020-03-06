@@ -4,7 +4,7 @@
 ![Python 3.7](https://img.shields.io/badge/python-3.7-blue.svg)
 ![Python 3.8](https://img.shields.io/badge/python-3.8-blue.svg)
 [![Build Status](https://travis-ci.org/Map-A-Droid/MAD.svg?branch=master)](https://travis-ci.org/Map-A-Droid/MAD)
-[![Discord](https://discordapp.com/api/guilds/465247740553592832/widget.png?style=shield)](https://discord.gg/7TT58jU)
+[![Discord](https://discordapp.com/api/guilds/465247740553592832/widget.png?style=shield)](https://discord.gg/arKePet)
 
 
 ![MAD-Banner](https://maddev.eu/wp-content/uploads/2020/01/banner_small_web.png)
@@ -14,7 +14,7 @@ Map'A'Droid is a scanner for PoGo based on Android devices.
 ## Information
 
 * [Website](https://www.maddev.eu/) - For general information
-* [Discord](https://discord.gg/7TT58jU) - For general support
+* [Discord](https://discord.gg/arKePet) - For general support
 * [Github Issues](https://github.com/Map-A-Droid/MAD/issues) - For reporting bugs (not for support!)
 * [Supported Devices](https://github.com/Map-A-Droid/MAD-device-list) - Supported devices by MAD
 * [github wiki page](https://github.com/Map-A-Droid/MAD/wiki)
