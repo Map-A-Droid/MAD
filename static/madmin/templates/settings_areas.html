@@ -131,6 +131,20 @@ $(document).ready(function () {
 
 {% block content %}
 {{ super() }}
+
+<div class="dropdown">
+  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
+  <ul class="dropdown-menu dropdown-menu-right">
+      <li class="dropdown-item"><button type="button" class="btn btn-success btn-sm"><i class="fas fa-route"></i></button> Edit Route calc</li>
+    {% if config_mode == False %}
+      <li class="dropdown-item"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-sync"></i></button> Recalculate route</li>
+      <li class="dropdown-item"><img src="{{ url_for('static', filename='loading.gif') }}" width="32px" height="32px"/> Route recalculation in progress</li>
+    {% endif %}
+      <li class="dropdown-item"><button type="button" class="btn btn-success btn-sm"><i class="far fa-edit"></i></button> Edit area</li>
+      <li class="dropdown-item"><button type="button" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button> Delete area</li>
+  </ul>
+</div>
+<br>
 <div class="row">
   <div class="col">
     <div class="card border-secondary">
@@ -138,41 +152,13 @@ $(document).ready(function () {
         <p class="card-text">Areas define zones where scanning should happen. Areas can be assigned to Walkers and Walkers must be assigned to Devices. Every area requires a file containing one or more geofences. MAD will build a route based on these areas and the elements within them.</p>
       </div>
     </div>
-    <div class="legend">
-      <h4>Legend</h4>
-      <table>
-        <tbody>
-          <tr>
-            <td><button type="button" class="btn btn-success btn-sm"><i class="fas fa-route"></i></button></td>
-            <td>Edit Route calc</td>
-          </tr>
-          {% if config_mode == False %}
-          <tr>
-            <td><button type="button" class="btn btn-info btn-sm"><i class="fa fa-sync"></i></button></td>
-            <td>Recalculate route</td>
-          </tr>
-          <tr>
-            <td><img src="{{ url_for('static', filename='loading.gif') }}" width="32px" height="32px"/></td>
-            <td>Route recalculation in progress</td>
-          </tr>
-          {% endif %}
-          <tr>
-            <td><button type="button" class="btn btn-success btn-sm"><i class="far fa-edit"></i></button></td>
-            <td>Edit area</td>
-          </tr>
-          <tr>
-            <td><button type="button" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></i></td>
-            <td>Delete area</td>
-          </tr>
-        </tbody>
-      </table>
-    </div>
   </div>
 </div>
+
 <div class="row mt-3">
   <div class="col">
     <table class="table table-striped table-hover table-sm">
-      <thead class="thead-dark">
+      <thead >
         <tr>
           <th style="width: 40%" class="align-middle">Name</th>
           <th style="width: 10%" class="align-middle">Mode</th>

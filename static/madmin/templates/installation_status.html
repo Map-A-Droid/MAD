@@ -48,11 +48,11 @@
                     "targets": [5],
                     "render": function (data, type, row) {
                          var redolink = "";
-                         var link = "<img src='static/autojob.png' alt='automatic job' width='30'>";
+                         var link = "<i class='fa fa-car'></i>";
 
                          if(!row.auto) {
-                             link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a>";
-                             redolink = "<a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a>";
+                             link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><i class='fa fa-trash'></i></a>";
+                             redolink = "<a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><i class='fas fa-undo'></i></a>";
                          }
 
                          return link + " " + redolink;

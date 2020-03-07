@@ -89,17 +89,22 @@
                         show: true,
                         radius: 0.8,
                         threshold: 0.1
+                    },
+                    legend: {
+                        show: true,
+                        labelBoxBorderColor: 'green'
                     }
                 }
             },
             legend: {
-                show: true,
+                show: false,
+                labelBoxBorderColor: 'green',
                 labelFormatter: function (label, series) {
-                    return '<div id="legendContainer" style="color:black;">' +
-                        label + ' : ' +
-                        (series.data[0][1]) +
-                        '</div>';
-                }
+                     return "12311232" + label + ' : ' +(series.data[0][1]);
+                },
+                container: '.flc-bar',
+
+
             }
         };
 
@@ -438,13 +443,7 @@
         height: 300px;
     }
 
-    #legendContainer {
-        background-color: #fff;
-        padding: 2px;
-        margin-bottom: 8px;
-        display: inline-block;
-        margin: 0 auto;
-    }
+
 
     #flotcontainer {
         width: 600px;
