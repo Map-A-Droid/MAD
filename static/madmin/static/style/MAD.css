@@ -13,7 +13,7 @@
 [data-theme="dark"] .svg-inline--fa { color: #fff !important }
 [data-theme="dark"] .leaflet-sidebar-header.bg-dark { background-color: #506680!important; }
 
-[data-theme="dark"] a.confirm { color: #000; }
+
 
 [data-theme="dark"] table.dataTable tr.odd { background-color: transparent !important; }
 [data-theme="dark"] table.dataTable tr.even { background-color: transparent !important; }
@@ -28,6 +28,16 @@
 [data-theme="dark"] table.dataTable tbody>tr.selected, table.dataTable tbody>tr>.selected {
     background-color: #B0BED9 !important;
     color: #000;
+}
+
+[data-theme="dark"] .phonename {
+    background-color: #506680;
+    color: #000 !important;
+}
+
+[data-theme="dark"] #button {
+    background-color: #000 !important;
+    color: #fff !important;
 }
 
 [data-theme="dark"] #show-data_length { color: #FFFFFF;}
