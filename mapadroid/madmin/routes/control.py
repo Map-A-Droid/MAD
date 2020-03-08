@@ -126,8 +126,7 @@ class control(object):
                 for pho in devicemappings:
                     if phonename.serial == devicemappings[pho].get('adb', False):
                         adb_option = True
-                        add_text = '<b>ADB - no WS<img src="/static/warning.png" width="20px" ' \
-                                   'alt="NO websocket connection!"></b>'
+                        add_text = '<b>ADB - no WS <i class="fa fa-exclamation-triangle"></i></b>'
                         filename = generate_device_screenshot_path(pho, devicemappings, self._args)
                         if os.path.isfile(filename):
                             image_resize(filename, os.path.join(mapadroid.MAD_ROOT,
