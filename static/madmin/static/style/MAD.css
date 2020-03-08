@@ -13,8 +13,6 @@
 [data-theme="dark"] .svg-inline--fa { color: #fff !important }
 [data-theme="dark"] .leaflet-sidebar-header.bg-dark { background-color: #506680!important; }
 
-
-
 [data-theme="dark"] table.dataTable tr.odd { background-color: transparent !important; }
 [data-theme="dark"] table.dataTable tr.even { background-color: transparent !important; }
 
@@ -54,6 +52,7 @@
 [data-theme="dark"] .card-text { color: #000; }
 [data-theme="dark"] a.dropdown-item { color: #000; }
 [data-theme="dark"] th { border-bottom: 0px !important; }
+[data-theme="dark"] .sorting_1 { background-color: transparent !important; }
 
 [data-theme="dark"] #legendContainer {
     background-color: transparent;

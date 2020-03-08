@@ -158,7 +158,7 @@
 </p>
 <table id="show-data" class="table" style="width:100%;"></table>
 {% if not withautojobs %}
-<div class="alert alert-warning"><a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a><br>
-<a href="delete_log?only_success=true" class='confirm' title='Do you really want to delete the logs?'>Delete successful Jobs</a></div>
+<i class='fa fa-trash'></i> <a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a><br>
+<i class='fa fa-trash'></i> <a href="delete_log?only_success=true" class='confirm' title='Do you really want to delete the logs?'>Delete successful Jobs</a>
 {% endif %}
 {% endblock %}
