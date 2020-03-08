@@ -47,12 +47,15 @@
 [data-theme="dark"] .dataTables_info { color: #fff !important; }
 [data-theme="dark"] .dataTables_filter { color: #fff !important; }
 [data-theme="dark"] .dataTables_length { color: #fff !important; }
+[data-theme="dark"] #show-spawnpoints-stats_previous { color: #fff !important; }
+[data-theme="dark"] #show-spawnpoints-stats_next { color: #fff !important; }
 
 [data-theme="dark"] a { color: #eee; }
 [data-theme="dark"] .card-text { color: #000; }
 [data-theme="dark"] a.dropdown-item { color: #000; }
 [data-theme="dark"] th { border-bottom: 0px !important; }
 [data-theme="dark"] .sorting_1 { background-color: transparent !important; }
+[data-theme="dark"] .child { background-color: transparent !important; }
 [data-theme="dark"] #info { color: #fff !important; }
 
 [data-theme="dark"] #legendContainer {
@@ -69,8 +72,37 @@
 [data-theme="dark"] #flot_stop > div.legend > table { background-color: #111; }
 [data-theme="dark"] #flot_ratio > div.legend > table { background-color: #111; }
 [data-theme="dark"] #tooltip { background-color: #000 !important; }
-[data-theme="dark"] .fas, [data-theme="dark"] .fa { color: #fff !important;
+[data-theme="dark"] .fas, [data-theme="dark"] .fa { color: #fff !important; }
+
+[data-theme="dark"] .blockMsg {
+    border: 1px solid white !important;
+    background-color: #000 !important;
+    color: #fff !important;
+    cursor: default !important;
 }
+
+[data-theme="dark"] .dropdown-item {
+    color: #fff !important;
+    background-color: #000 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover {
+    color: #506680 !important;
+}
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: #000 !important;
+    border: 1px solid white !important;
+}
+
+[data-theme="dark"] .darkmode-label { color: #fff !important; }
+[data-theme="dark"] .darkmode-label:hover { color: #506680 !important; }
+
+[data-theme="dark"] ::-webkit-scrollbar { width: 10px; }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #f1f1f1; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #888; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #555; }
+
 thead {
     background-color: #000;
     color: #fff;
@@ -88,6 +120,9 @@ body {
     font-family: 'Roboto', sans-serif !important;
 }
 
-.darkmode_check {
-    margin-left: 2em;
-}
+.darkmode_check { margin-left: 1.5em; }
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #fff; }
+::-webkit-scrollbar-thumb { background: #888; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
