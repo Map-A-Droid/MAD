@@ -49,6 +49,7 @@
 [data-theme="dark"] .dataTables_length { color: #fff !important; }
 [data-theme="dark"] #show-spawnpoints-stats_previous { color: #fff !important; }
 [data-theme="dark"] #show-spawnpoints-stats_next { color: #fff !important; }
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button { color: #fff !important; }
 
 [data-theme="dark"] a { color: #eee; }
 [data-theme="dark"] .card-text { color: #000; }
