@@ -48,8 +48,12 @@ def check_time_period(period):
         return False
 
 
-def pre_check_value(walker_settings):
+def pre_check_value(walker_settings, eventid):
     walkertype = walker_settings['walkertype']
+    walkereventid = walker_settings.get('eventid', None)
+    if walkereventid is not None and walkereventid != eventid:
+        logger.warning("Area is used for another event - leaving now")
+        return False
     if walkertype in ('timer', 'period', 'coords', 'idle'):
         walkervalue = walker_settings['walkervalue']
         if len(walkervalue) == 0:

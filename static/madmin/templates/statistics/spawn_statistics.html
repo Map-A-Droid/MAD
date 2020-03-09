@@ -4,267 +4,255 @@
 {% endblock %}
 
 {% block scripts %}
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.selection.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.pie.min.js"></script>
-<script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.flash.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
-<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
-<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+
+
 <script>
-
-
-
-
-    $(function () {
-
-        var options_dots = {
-            xaxis: {
-                mode: "time",
-                {% if time == "12" %}
-                timeformat: "%d.%m<br>%I:00 %p - ",
-                {% else %}
-                timeformat: "%d.%m<br>%H:00 - ",
-                {% endif %}
-                minTickSize: [1, "hour"],
-                timezone: "browser"
-            },
-            series: {
-                lines: {
-                    show: true,
-                    color: '#ffa500'
-                },
-                points: {
-                    show: true
-                }
-            },
-            grid: {
-                hoverable: true,
-                borderWidth: 1,
-                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
-            },
-            legend: {
-                container: $("#legendContainer_spawn"),
-                noColumns: 0
-            }
-        };
-
-        var options_bars = {
-            xaxis: {
-                mode: "time",
-                {% if time == "12" %}
-                timeformat: "%d.%m<br>%I:00:00 %p",
-                {% else %}
-                timeformat: "%d.%m<br>%H:00:00",
-                {% endif %}
-                minTickSize: [3, "hour"],
-                timezone: "browser"
-            },
-            series: {
-                bars: {
-                    show: true
-                }
-            },
-            bars: {
-                align: "center",
-                barWidth: 60 * 40 * 1000
-            },
-            grid: {
-                hoverable: true,
-                borderWidth: 2,
-                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
-            },
-            legend: {
-                container: $("#legendContainer_quest"),
-                noColumns: 0
-            }
-        };
-
-        var options_pie = {
-            series: {
-                pie: {
-                    show: true,
-                    radius: 1,
-                    tilt: 0.5,
-                    label: {
-                        show: true,
-                        radius: 0.8,
-                        threshold: 0.1
-                    }
-                }
-            },
-            legend: {
-                show: true,
-                labelFormatter: function (label, series) {
-                    return '<div id="legendContainer" style="color:black;">' +
-                        label + ' : ' +
-                        (series.data[0][1]) +
-                        '</div>';
-                }
-            }
-        };
-
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
-
-        $.ajax({
-            "url": "get_spawnpoints_stats",
-            "type": "GET",
-            "cache": false,
-            "dataType": "json",
-            success: function (result) {
-
-                spawnpoint_count = result.spawnpoints
-
-                setGrid('#show-spawnpoints-stats', spawnpoint_count, [
-                    { data: 'fence', title: 'Fence' },
-                    { data: 'sum', title: 'Spawnpoints' },
-                    { data: 'known', title: 'known' },
-                    { data: 'unknown', title: 'unknown' }
-                ]);
-
-            },
-            complete: function () {
-                setTimeout($.unblockUI, 100);
-            }
-
-        });
-
-        var previousPoint = null, previousLabel = null;
-
-        $.fn.UseTooltip = function () {
-            $(this).bind("plothover", function (event, pos, item) {
-                if (item) {
-                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
-                        previousPoint = item.dataIndex;
-                        previousLabel = item.series.label;
-                        $("#tooltip").remove();
-
-                        var x = item.datapoint[0];
-                        var y = item.datapoint[1];
-                        var color = item.series.color;
-                        showTooltip(item.pageX,
-                            item.pageY,
-                            color,
-                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: " + timeConverter(x, 'hour') + "</strong>");
-                    }
-                } else {
-                    $("#tooltip").remove();
-                    previousPoint = null;
-                }
-            });
-        };
-
-        $.fn.UseTooltipFull = function () {
-            $(this).bind("plothover", function (event, pos, item) {
-                if (item) {
-                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
-                        previousPoint = item.dataIndex;
-                        previousLabel = item.series.label;
-                        $("#tooltip").remove();
-
-                        var x = item.datapoint[0];
-                        var y = item.datapoint[1];
-                        var color = item.series.color;
-                        showTooltip(item.pageX,
-                            item.pageY,
-                            color,
-                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Time</strong>: " + timeConverter(x, 'full') + "</strong>");
-                    }
-                } else {
-                    $("#tooltip").remove();
-                    previousPoint = null;
-                }
-            });
-        };
-
-        function timeConverter(timestamp, mode) {
-            var a = new Date(timestamp);
-            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-            var year = a.getFullYear();
-            var month = months[a.getMonth()];
-            var date = a.getDate();
-            var hour = a.getHours();
-            var hour_till = a.getHours() + 1;
-            var min = a.getMinutes();
-            min = min < 10 ? '0' + min : min;
-            var sec = a.getSeconds();
-            sec = sec < 10 ? '0' + sec : sec;
-
-            {% if time == "12" %}
-            var ampm = hour >= 12 ? 'pm' : 'am';
-            hour = hour % 12;
-            hour = hour ? hour : 12;
-            hour_till = hour_till % 12;
-            hour_till = hour_till ? hour_till : 12;
-            hour_till + ' ' + ampm;
-            sec = sec + ' ' + ampm;
-            {% endif %}
-
-            if (mode == 'hour') {
-                var time = hour + ' - ' + hour_till
-            } else {
-                var time = hour + ':' + min + ':' + sec
-            }
-            return time;
-        }
-
-        function showTooltip(x, y, color, contents) {
-            $('<div id="tooltip">' + contents + '</div>').css({
-                position: 'absolute',
-                display: 'none',
-                top: y - 40,
-                left: x - 120,
-                border: '2px solid ' + color,
-                padding: '3px',
-                'font-size': '9px',
-                'border-radius': '5px',
-                'background-color': '#fff',
-                'font-family': 'Verdana, Arial, Helvetica, Tahoma, sans-serif',
-                opacity: 0.9
-            }).appendTo("body").fadeIn(200);
-        }
-
-        function setGrid(tableGridHtmlId, gridData, columns, defs) {
+    function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
             "data": gridData,
-            "searching": true,
-            "paging": true,
-            "columns": columns,
-            "ordering": true,
-            "order": [[1, "desc"]],
-            "columnDefs": defs,
-            "responsive": {{ responsive }},
-            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
-            dom: 'Blfrtip',
-            buttons: [
-                'copy', 'csv', 'excel', 'pdf'
+            "columns": [
+                    { data: 'fence', title: 'Fence' },
+                    { data: 'event', title: 'Type/Event' },
+                    { data: 'mode', title: 'Mode' },
+                    { data: 'sum', title: 'Spawnpoints' },
+                    { data: 'known', title: 'known' },
+                    { data: 'unknown', title: 'unknown' },
+                    { data: '', title: 'Actions' }
             ],
-            "stripeClasses": [ 'odd', 'even' ],
-            sorting: true,
-            stateSave: true,
-            stateSaveCallback: function(settings,data) {
-            localStorage.setItem( 'DataTables_' + settings.sInstance, JSON.stringify(data) )
+            "columnDefs": [
+                {
+                    "targets": [6],
+                    "render": function (data, type, row) {
+                        var all = "<button type='button' class='btn btn-primary btn-sm'><a href='spawn_details?id=" + row.area_id + "&eventid=" + row.eventid + "&index=" + row.index + "&event=" + row.event +"&mode=ALL' title='Show all Spawnpoints ( " + row.sum + " )'><i class='fa fa-eye'></i></a></button>";
+                        var del = "<button type='button' class='delete btn btn-danger btn-sm confirm' data-areaid='" + row.area_id + "' data-index='" + row.index + "' data-eventid='" + row.eventid + "' title='Do you really want to delete these spawnpoints?'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>";
+                        var conv = "";
+                        var activetoday = "";
+                        var outdated = "";
+
+                        if (row.event == "DEFAULT") {
+                            outdated = "<button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i></button>";
+                            if(row.outdatedspawns > 0) {
+                                var outdated = "<button type='button' class='outdated btn btn-dark btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event +"&mode=OLD' title='Show outdated Spawnpoints ( " + row.outdatedspawns + " )'><i class='fa fa-history'></i></a></button>";
+                            }
+                        }
+
+                        if (row.event != "DEFAULT") {
+                            var conv = "<button type='button' class='convert delete btn btn-info btn-sm' data-areaid='" + row.area_id + "' data-index='" + row.index + "' data-eventid='" + row.eventid + "'> <div class='convert_div' style='display:inline;'><i class='fa fa-exchange-alt'></i></div></button>";
+                            var activetoday = "<button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i></button>";
+                            if(row.todayspawns > 0) {
+                                var activetoday = "<button type='button' class='activetoday btn btn-success btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event +"&mode=ACTIVE' title='Check still active event spawnpoints ( " + row.todayspawns + " )'><i class='fa fa-clock'></i></a></button>";
+                            }
+
+
+                        }
+
+
+                             return all + " " + del + " " + activetoday + " " + outdated + " " + conv
+
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
             },
-            stateLoadCallback: function(settings) {
-            return JSON.parse( localStorage.getItem( 'DataTables_' + settings.sInstance ) )
+            "responsive": {{ responsive }},
+            "order": [[ 0, "asc" ]],
+            "ordering": false,
+            "stateSave": true,
+            "stateDuration": 0,
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_aeSP_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_aeSP_' + settings.sInstance ) )
+            }
+
+        });
+	}
+
+	function loadData() {
+	    $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+        $('body').Aplus();
+        $("#navgyms").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "get_spawnpoints_stats",
+            success: function (result) {
+                setTimeout($.unblockUI, 100);
+                setGrid('#show-spawnpoints-stats', result.spawnpoints);
             }
         });
-	    }
+	}
 
 
 
+
+
+    $(document).ready(function () {
+        loadData();
     });
 
+
+    $( "#show-spawnpoints-stats" ).on( "click", '.convert', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to convert this spawnpoints to normale one?");
+        if (r != true) {
+             return;
+        }
+        var convert_div = $(this).find(".convert_div");
+        convert_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        var areaid = $(this).data('areaid');
+        var eventid = $(this).data('eventid');
+        var index = $(this).data('index');
+        convert_div.append(elem);
+
+        $.ajax({
+            type: 'GET',
+            url:'convert_spawns',
+            data:'id='+ areaid +'&eventid='+ eventid + '&index=' + index,
+            success: function(msg){
+                if (msg.status == 'success') {
+                    $( "#show-spawnpoints-stats" ).DataTable().destroy();
+                    loadData();
+                } else if (msg.status == 'event') {
+                    alert('Event is still active.');
+                    convert_div.empty();
+                    elem = $(document.createElement("i")).attr({
+                          'class': 'fa fa-minus-circle',
+                    });
+                    convert_div.append(elem);
+                }
+            },
+            error: function(msg) {
+                alert(msg);
+                convert_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                convert_div.append(elem);
+            }
+        });
+
+     });
+
+     $( "#delete_unfenced_coords" ).on( "click", '.delete', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to delete all unfenced spawnpoints?");
+        if (r != true) {
+             return;
+        }
+        var delete_div = $(this).find(".delete_all_div");
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+
+        $.ajax({
+            type: 'GET',
+            url:'delete_unfenced_spawns',
+            success: function(msg){
+                if (msg.status == 'success') {
+
+                    delete_div.empty();
+                    elem = $(document.createElement("i")).attr({
+                         'class': 'fa fa-check',
+                    });
+                    delete_div.append(elem);
+                }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
+     $( "#show-spawnpoints-stats" ).on( "click", 'button.delete', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to delete this spawnpoints?");
+        if (r != true) {
+             return;
+        }
+        var delete_div = $(this).find(".delete_div");
+        var parentRow = $(this).closest("tr")[0];
+
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+        var areaid = $(this).data('areaid');
+        var eventid = $(this).data('eventid');
+        var index = $(this).data('index');
+
+
+        $.ajax({
+            type: 'GET',
+            url:'delete_spawns',
+            data:'id='+ areaid +'&eventid='+ eventid + '&index=' + index,
+            success: function(msg){
+            if (msg.status == 'success') {
+                $( "#show-spawnpoints-stats" ).DataTable().rows( parentRow )
+               .remove()
+               .draw();
+            } else if (msg.status == 'event') {
+                alert('Event is still active.');
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
 </script>
+<style>
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
+
+
 
 <style type="text/css">
     #flot_usage {
         width: 100%;
         height: 300px;
+    }
+
+    i.fa {
+        color: white;
     }
 
     #flot_spawn {
@@ -314,5 +302,30 @@
 
 {% block content %}
 <h2>Spawnpoint Statistics</h2>
+<div class="dropdown">
+  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
+  <ul class="dropdown-menu dropdown-menu-right">
+      <li class="dropdown-item"><button type='button' class='btn btn-primary btn-sm'><i class='fa fa-eye'></i></button> Show all Spawnpoints</li>
+      <li class="dropdown-item"><button type='button' class='delete btn btn-danger btn-sm confirm'><i class='fa fa-trash'></i></button> Delete all spawnpoints</li>
+	  <li class="dropdown-item"><button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-clock'></i></button> No / still active event spawnpoints</li>
+	  <li class="dropdown-item"><button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-history'></i></button> No / outdated spawnpoints</li>
+	  <li class="dropdown-item"><button type='button' class='convert delete btn btn-info btn-sm'><i class='fa fa-exchange-alt'></i></button> Convert event spawnpoints</li>
+  </ul>
+</div>
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		{% for message in messages %}
+		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+		{% endfor %}
+	  {% endif %}
+	{% endwith %}
+</p>
 <table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
+<div class="p-1 mb-1 bg-success text-white">
+	<div id="delete_unfenced_coords">
+		<button type='button' class='delete btn btn-danger btn-sm'><div class='delete_all_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>  Delete all unfenced spawnpoints.
+    </div>
+
+</div>
 {% endblock %}

@@ -408,6 +408,8 @@ class MappingManager:
                                                                  joinqueue=self.join_routes_queue,
                                                                  S2level=mode_mapping.get(mode, {}).get(
                                                                      "s2_cell_level", 30),
+                                                                 include_event_id=
+                                                                 area['settings'].get("include_event_id", None)
                                                                  )
 
             if mode not in ("iv_mitm", "idle"):
@@ -416,7 +418,9 @@ class MappingManager:
                                              init=area.get("init", False),
                                              range_init=mode_mapping.get(area_true.area_type, {}).get(
                                                  "range_init", 630),
-                                             including_stops=area.get("including_stops", False))
+                                             including_stops=area.get("including_stops", False),
+                                             include_event_id=area.get("settings", {}).get("include_event_id", None))
+
                 route_manager.add_coords_list(coords)
                 max_radius = mode_mapping[area_true.area_type]["range"]
                 max_count_in_radius = mode_mapping[area_true.area_type]["max_count"]
@@ -493,8 +497,8 @@ class MappingManager:
         return devices
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
-                       init: bool = False, range_init: int = 630, including_stops: bool = False) -> List[
-        Location]:
+                       init: bool = False, range_init: int = 630, including_stops: bool = False,
+                       include_event_id=None) -> List[ Location]:
         coords: List[Location] = []
         if not init:
             # grab data from DB depending on mode
@@ -511,10 +515,10 @@ class MappingManager:
             elif mode == "mon_mitm":
                 if coords_spawns_known:
                     logger.debug("Reading known Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_detected_spawns(geofence_helper)
+                    coords = self.__db_wrapper.get_detected_spawns(geofence_helper, include_event_id)
                 else:
                     logger.debug("Reading unknown Spawnpoints from DB")
-                    coords = self.__db_wrapper.get_undetected_spawns(geofence_helper)
+                    coords = self.__db_wrapper.get_undetected_spawns(geofence_helper, include_event_id)
             elif mode == "pokestops":
                 coords = self.__db_wrapper.stops_from_db(geofence_helper)
             else:

@@ -103,6 +103,7 @@
 #madmin_password: MySecret   # MADmin password for login
 #quests_public               # Disables login for /quests_pub, /get_quests and /asset to use /quests_pub as public quest overview
 #geofence_file_path:         # Defines directory to save created madmin map geofence files (Default: configs/geofences)
+#outdated_spawnpoints:       # Define when a spawnpoint is out of date (in days). Default: 3.
 
 # webhook
 ######################

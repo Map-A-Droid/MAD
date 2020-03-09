@@ -34,13 +34,14 @@ class WorkerBase(AbstractWorker):
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogoWindowManager: PogoWindows,
                  NoOcr: bool = True,
-                 walker=None):
+                 walker=None, event=None):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._mapping_manager: MappingManager = mapping_manager
         self._routemanager_name: str = routemanager_name
         self._area_id = area_id
 
         self._dev_id: int = dev_id
+        self._event = event
         self._origin: str = origin
         self._applicationArgs = args
         self._last_known_state = last_known_state
@@ -451,6 +452,10 @@ class WorkerBase(AbstractWorker):
 
     def check_walker(self):
         mode = self._walker['walkertype']
+        walkereventid = self._walker.get('eventid', None)
+        if walkereventid is not None and walkereventid != self._event.get_current_event_id():
+            logger.warning("A other Event has started - leaving now")
+            return False
         if mode == "countdown":
             logger.info("Checking walker mode 'countdown'")
             countdown = self._walker['walkervalue']

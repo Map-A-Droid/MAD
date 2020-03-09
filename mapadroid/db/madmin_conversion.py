@@ -292,6 +292,7 @@ TABLES = [
         `algo_type` enum('countdown','timer','round','period','coords', 'idle') COLLATE utf8mb4_unicode_ci NOT NULL,
         `algo_value` varchar(256) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `max_walkers` int  DEFAULT NULL,
+        `eventid` int DEFAULT NULL,
         PRIMARY KEY (`walkerarea_id`),
         CONSTRAINT `fk_wa_instance`
             FOREIGN KEY (`instance_id`) 

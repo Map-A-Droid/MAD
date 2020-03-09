@@ -1,5 +1,6 @@
 import os
 import sys
+import time
 from threading import Thread
 
 from mapadroid.db.DbFactory import DbFactory
@@ -12,6 +13,7 @@ from mapadroid.patcher import MADPatcher
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.data_manager import DataManager
 from mapadroid.websocket.WebsocketServer import WebsocketServer
+from mapadroid.utils.event import Event
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
@@ -42,6 +44,7 @@ if __name__ == "__main__":
     create_folder(args.upload_path)
 
     db_wrapper, db_pool_manager = DbFactory.get_wrapper(args)
+
     try:
         instance_id = db_wrapper.get_instance_id()
     except:
@@ -56,8 +59,12 @@ if __name__ == "__main__":
     mapping_manager_stop_event = mapping_manager_manager.Event()
     mapping_manager: MappingManager = MappingManager(db_wrapper, args, data_manager, True)
 
+    event = Event(args, db_wrapper)
+    event.start_event_checker()
+
     ws_server = WebsocketServer(args=args, mitm_mapper=None, db_wrapper=db_wrapper, mapping_manager=mapping_manager,
-                                pogo_window_manager=None, data_manager=data_manager, enable_configmode=True)
+                                pogo_window_manager=None, data_manager=data_manager, event=event,
+                                enable_configmode=True)
     t_ws = Thread(name='scanner', target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()

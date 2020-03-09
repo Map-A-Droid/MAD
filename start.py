@@ -26,6 +26,7 @@ from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.rarity import Rarity
+from mapadroid.utils.event import Event
 from mapadroid.patcher import MADPatcher
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.websocket.WebsocketServer import WebsocketServer
@@ -133,6 +134,10 @@ def create_folder(folder):
         logger.info(str(folder) + ' created')
         os.makedirs(folder)
 
+def event_checker(db_wrapper):
+    while True:
+        db_wrapper.get_current_event()
+        time.sleep(60)
 
 def check_dependencies():
     with open("requirements.txt", "r") as f:
@@ -202,6 +207,9 @@ if __name__ == "__main__":
             # TODO: shutdown managers properly...
             sys.exit(0)
 
+        event = Event(args, db_wrapper)
+        event.start_event_checker()
+
         jobstatus: dict = {}
         MitmMapperManager.register('MitmMapper', MitmMapper)
         mitm_mapper_manager = MitmMapperManager()
@@ -218,7 +226,7 @@ if __name__ == "__main__":
 
         logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
         ws_server = WebsocketServer(args, mitm_mapper, db_wrapper, mapping_manager, pogoWindowManager,
-                                    data_manager)
+                                    data_manager, event=event)
         t_ws = Thread(name='scanner', target=ws_server.start_server)
         t_ws.daemon = False
         t_ws.start()

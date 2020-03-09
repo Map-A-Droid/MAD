@@ -150,8 +150,8 @@ new Vue({
         gyms: {},
         quests: {},
         stops: {},
-        spawns: {},
         mons: {},
+        spawns: {},
         cellupdates: {},
         fetchers: {
           workers: false,
@@ -167,7 +167,6 @@ new Vue({
         },
         layers: {
             stat: {
-                spawns: false,
                 gyms: false,
                 quests: false,
                 stops: false,
@@ -178,7 +177,8 @@ new Vue({
             dyn: {
                 routes: {},
                 prioroutes: {},
-                geofences: {}
+                geofences: {},
+                spawns: {}
             }
         },
         workers: {},
@@ -241,13 +241,6 @@ new Vue({
             this.changeStaticLayer("raids", oldVal, newVal);
             this.changeStaticLayer("gyms", oldVal, newVal);
         },
-        "layers.stat.spawns": function (newVal, oldVal) {
-            if (newVal && !init) {
-                this.map_fetch_spawns(this.buildUrlFilter(true));
-            }
-
-            this.changeStaticLayer("spawns", oldVal, newVal);
-        },
         "layers.stat.workers": function (newVal, oldVal) {
             if (newVal && !init) {
                 this.map_fetch_workers(this.buildUrlFilter(true));
@@ -283,12 +276,19 @@ new Vue({
 
             this.changeStaticLayer("cellupdates", oldVal, newVal);
         },
+        "layers.dyn.spawns": {
+            deep: true,
+            handler: function () {
+                this.changeDynamicLayers("spawns");
+            }
+        },
         "layers.dyn.geofences": {
             deep: true,
             handler: function () {
                 this.changeDynamicLayers("geofences");
             }
         },
+
         "layers.dyn.routes": {
             deep: true,
             handler: function () {
@@ -355,7 +355,7 @@ new Vue({
             this.map_fetch_gyms(urlFilter);
             this.map_fetch_routes();
             this.map_fetch_geofences();
-            this.map_fetch_spawns(urlFilter);
+            this.map_fetch_spawns();
             this.map_fetch_quests(urlFilter);
             this.map_fetch_stops(urlFilter);
             this.map_fetch_mons(urlFilter);
@@ -731,12 +731,8 @@ new Vue({
               $this.fetchers.prioroutes = false;
             });
         },
-        map_fetch_spawns(urlFilter) {
-            var $this = this;
-
-            if (!$this.layers.stat.spawns) {
-                return;
-            }
+        map_fetch_spawns() {
+           var $this = this;
 
             if (this.fetchers.spawns == true) {
               return;
@@ -744,75 +740,94 @@ new Vue({
 
             this.fetchers.spawns = true;
             axios.get('get_spawns' + urlFilter).then(function (res) {
-                res.data.forEach(function (spawn) {
-                    if (spawn['endtime'] !== null) {
-                        var endsplit = spawn['endtime'].split(':');
-                        var endMinute = parseInt(endsplit[0]);
-                        var endSecond = parseInt(endsplit[1]);
-                        var despawntime = moment();
-                        var now = moment();
+                res.data.forEach(function (spawns) {
 
-                        if (spawn['spawndef'] == 15) {
-                            var timeshift = 60;
+                    if ($this.layers.dyn.spawns[spawns['EVENT']]) {
+                            return;
+                    }
+
+                    spawns['Coords'].forEach(function (spawn) {
+                        var eventname = spawns['EVENT'];
+
+                        if (spawn['endtime'] !== null) {
+                            var endsplit = spawn['endtime'].split(':');
+                            var endMinute = parseInt(endsplit[0]);
+                            var endSecond = parseInt(endsplit[1]);
+                            var despawntime = moment();
+                            var now = moment();
+
+                            if (spawn['spawndef'] == 15) {
+                                var timeshift = 60;
+                            } else {
+                                var timeshift = 30;
+                            }
+
+                            // setting despawn and spawn time
+                            despawntime.minute(endMinute);
+                            despawntime.second(endSecond);
+                            var spawntime = moment(despawntime);
+                            spawntime.subtract(timeshift, 'm');
+
+                            if (despawntime.isBefore(now)) {
+                                // already despawned. shifting hours
+                                spawntime.add(1, 'h');
+                                despawntime.add(1, 'h');
+                            }
+
+                            timeformat = 'YYYY-MM-DD HH:mm:ss';
+                            if (now.isBetween(spawntime, despawntime)) {
+                                var color = "green";
+                            } else if (spawntime.isAfter(now)) {
+                                var color = "blue";
+                            }
                         } else {
-                            var timeshift = 30;
+                            var color = "red";
                         }
 
-                        // setting despawn and spawn time
-                        despawntime.minute(endMinute);
-                        despawntime.second(endSecond);
-                        var spawntime = moment(despawntime);
-                        spawntime.subtract(timeshift, 'm');
-
-                        if (despawntime.isBefore(now)) {
-                            // already despawned. shifting hours
-                            spawntime.add(1, 'h');
-                            despawntime.add(1, 'h');
+                        var skip = true;
+                        if ($this["spawns"][eventname] && $this["spawns"][eventname][spawn["id"]]) {
+                            // check if we should update an existing spawn
+                            if ($this["spawns"][eventname][spawn["id"]]["endtime"] === null && spawn["endtime"] !== null) {
+                                map.removeLayer(leaflet_data["spawns"][eventname][spawn["id"]]);
+                                delete leaflet_data["spawns"][eventname][spawn["id"]];
+                            } else {
+                                skip = false;
+                            }
                         }
 
-                        timeformat = 'YYYY-MM-DD HH:mm:ss';
-                        if (now.isBetween(spawntime, despawntime)) {
-                            var color = "green";
-                        } else if (spawntime.isAfter(now)) {
-                            var color = "blue";
-                        }
-                    } else {
-                        var color = "red";
-                    }
+                        if (skip) {
+                            // store spawn meta data
+                            if (!$this["spawns"][eventname]) {
+                                $this["spawns"][eventname] = {};
+                            }
 
-                    var skip = true;
-                    if ($this["spawns"][spawn["id"]]) {
-                        // check if we should update an existing spawn
-                        if ($this["spawns"][spawn["id"]]["endtime"] === null && spawn["endtime"] !== null) {
-                            map.removeLayer(leaflet_data["spawns"][spawn["id"]]);
-                            delete leaflet_data["spawns"][spawn["id"]];
-                        } else {
-                            skip = false;
-                        }
-                    }
+                            $this["spawns"][eventname][spawn["id"]] = spawn;
 
-                    if (skip) {
-                        // store spawn meta data
-                        $this["spawns"][spawn["id"]] = spawn;
+                            if (!leaflet_data["spawns"][eventname]) {
+                                leaflet_data["spawns"][eventname] = {};
+                            }
 
-                        leaflet_data["spawns"][spawn["id"]] = L.circle([spawn['lat'], spawn['lon']], {
-                            radius: 2,
-                            color: color,
-                            fillColor: color,
-                            weight: 1,
-                            opacity: 0.7,
-                            fillOpacity: 0.5,
-                            id: spawn["id"]
-                        }).bindPopup($this.build_spawn_popup, {'className': 'spawnpopup'});
+                            leaflet_data["spawns"][eventname][spawn["id"]] = L.circle([spawn['lat'], spawn['lon']], {
+                                radius: 2,
+                                color: color,
+                                fillColor: color,
+                                weight: 1,
+                                opacity: 0.7,
+                                fillOpacity: 0.5,
+                                id: spawn["id"],
+                                event: eventname
+                            }).bindPopup($this.build_spawn_popup, {'className': 'spawnpopup'});
 
-                        $this.addMouseEventPopup(leaflet_data["spawns"][spawn["id"]]);
+                            $this.addMouseEventPopup(leaflet_data["spawns"][eventname][spawn["id"]]);
 
-                        // only add them if they're set to visible
-                        if ($this.layers.stat.spawns) {
-                            leaflet_data["spawns"][spawn["id"]].addTo(map);
-                        }
-                    }
-                });
+                            }
+
+                        });
+                            var settings = {
+                                "show": $this.getStoredSetting("layers-dyn-spawns-" + spawns['EVENT'], false)
+                            };
+                            $this.$set($this.layers.dyn.spawns, spawns['EVENT'], settings);
+                    });
             }).finally(function() {
               $this.fetchers.spawns = false;
             });
@@ -1035,10 +1050,31 @@ new Vue({
                 tlayer = this.layers.dyn[type][k];
                 this.updateStoredSetting("layers-dyn-" + type + "-" + k, tlayer.show);
 
+
+
                 if (tlayer.show == true && !map.hasLayer(leaflet_data[type][k])) {
-                    map.addLayer(leaflet_data[type][k]);
-                } else if (tlayer.show == false && map.hasLayer(leaflet_data[type][k])) {
-                    map.removeLayer(leaflet_data[type][k]);
+                   if (type=="spawns") {
+                       for (var prop in leaflet_data[type][k]) {
+                           if (typeof(leaflet_data[type][k][prop]) == 'object') {
+                               map.addLayer(leaflet_data[type][k][prop]);
+                           }
+                       }
+                   } else {
+                       map.addLayer(leaflet_data[type][k]);
+                   }
+
+                } else if (tlayer.show == false) {
+                if (type=="spawns") {
+                       for (var prop in leaflet_data[type][k]) {
+                           if (typeof(leaflet_data[type][k][prop]) == 'object') {
+                               map.removeLayer(leaflet_data[type][k][prop]);
+                           }
+                       }
+                   } else {
+                       if (map.hasLayer(leaflet_data[type][k])) {
+                          map.removeLayer(leaflet_data[type][k]);
+                       }
+                   }
                 }
             }
         },
@@ -1294,7 +1330,7 @@ new Vue({
         </div>`;
         },
         build_spawn_popup(marker) {
-            spawn = this.spawns[marker.options.id];
+            spawn = this.spawns[marker.options.event][marker.options.id];
 
             if (spawn['endtime'] !== null) {
                 var timeformat = "YYYY-MM-DD HH:mm:ss";
@@ -1352,6 +1388,7 @@ new Vue({
             <div class="timestamp"><i class="fas fa-eye"></i> <abbr title="This is the time a mon has been seen on this spawnpoint.">Last mon seen</abbr>: <strong>${lastMon}</strong></div>
             <div class="timestamp"><i class="fa fa-clock"></i> <abbr title="The timestamp of the last time this spawnpoint's despawn time has been confirmed.">Last confirmation</abbr>: <strong>${spawn["lastscan"]}</strong></div>
             <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown despawn time"}</strong></div>
+            <div class="spawnType"><i class="fas fa-calendar-week"></i></i> Event- / Spawntype: <strong>${spawn["event"]}</strong></div>
             <div class="spawnTiming">${spawntiming}</div>
           </div>
         </div>`;

@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'id', title: 'Event ID' },
+                { data: 'event_name', title: 'Name' },
+                { data: 'event_start', title: 'Start' },
+                { data: 'event_end', title: 'End' },
+                { data: 'event_lure_duration', title: 'Lure Duration' },
+                { data: '', title: 'Actions' }
+            ],
+            "columnDefs": [
+                {
+                    "targets": [5],
+                    "render": function (data, type, row) {
+                       if(row.locked == "0") {
+                            var link = "<button type='button' class='delete btn btn-info btn-sm'><a href='edit_event?id=" + row.id +
+                                "' title='Edit Event'><i class='fas fa-edit'></i></a></button> <button type='button' class='delete btn btn-danger btn-sm'><a href='del_event?id=" +
+                                row.id +
+                                "' class='confirm' title='Do you really want to delete this event and all SP for it?'><i class='fas fa-times'></i></a></button";
+                             return link
+                       } else {
+                           return ""
+                       }
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "responsive": {{ responsive }},
+            "order": [[ 1, "asc" ]],
+            "stateSave": true,
+            "stateDuration": 0,
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_EVENTS_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_EVENTS_' + settings.sInstance ) )
+            }
+
+        });
+	}
+
+    $(document).ready(function () {
+        $('body').Aplus();
+        $("#navgyms").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "get_events",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+</script>
+<style>
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+    i.fas {
+        color: white;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>MAD Events</h2>
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		{% for message in messages %}
+		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+		{% endfor %}
+	  {% endif %}
+	{% endwith %}
+</p>
+<table id="show-data" class="table" style="width:100%;"></table>
+<div class="p-1 mb-1 bg-success text-white"><a href="edit_event">
+	<button type='button' class='delete btn btn-danger btn-sm'><i class='fas fa-plus-circle'></i></button></a> Add new Event<br></div>
+{% endblock %}

@@ -2,7 +2,7 @@ import datetime
 import json
 import time
 
-from flask import (jsonify, render_template, request)
+from flask import (jsonify, render_template, request, redirect, url_for, flash, Response)
 
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
@@ -26,6 +26,7 @@ class statistics(object):
         else:
             self._datetimeformat = '%Y-%m-%d %H:%M:%S'
         self.add_route()
+        self.outdatedays = self._args.outdated_spawnpoints
 
     def add_route(self):
         routes = [
@@ -45,6 +46,13 @@ class statistics(object):
             ("/statistics_spawns", self.statistics_spawns),
             ("/shiny_stats", self.statistics_shiny),
             ("/shiny_stats_data", self.shiny_stats_data),
+            ("/delete_spawns", self.delete_spawns),
+            ("/convert_spawns", self.convert_spawns),
+            ("/spawn_details", self.spawn_details),
+            ("/get_spawn_details", self.get_spawn_details),
+            ("/delete_spawn", self.delete_spawn),
+            ("/convert_spawn", self.convert_spawn),
+            ("/delete_unfenced_spawns", self.delete_unfenced_spawns),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -358,7 +366,6 @@ class statistics(object):
                                    'lng': dat[3], 'timestamp': timestamp.strftime(self._datetimeformat),
                                    'form': dat[1], 'mon_id': dat[0], 'encounter_id': str(dat[9])})
 
-        # print(shiny_count)
         global_shiny_stats_v2 = []
         data = self._db_stats_reader.get_shiny_stats_global_v2(set(found_shiny_mon_id), timestamp_from,
                                                                timestamp_to)
@@ -520,12 +527,18 @@ class statistics(object):
     def get_spawnpoints_stats(self):
 
         coords = []
-        known = []
-        unknown = []
+        known = {}
+        unknown = {}
         processed_fences = []
+        events = []
+        eventidhelper = {}
 
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type='mon_mitm')
+
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
         for possible_fence in possible_fences:
+            mode = possible_fences[possible_fence]['mode']
+            area_id = possible_fences[possible_fence]['area_id']
+            subfenceindex: int = 0
 
             for subfence in possible_fences[possible_fence]['include']:
                 if subfence in processed_fences:
@@ -534,6 +547,7 @@ class statistics(object):
                 fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
                 known.clear()
                 unknown.clear()
+                events.clear()
 
                 data = json.loads(
                     self._db.download_spawns(
@@ -542,18 +556,214 @@ class statistics(object):
                 )
 
                 for spawnid in data:
+                    eventname: str = data[str(spawnid)]["event"]
+                    eventid: str = data[str(spawnid)]["eventid"]
+                    if not eventname in known: known[eventname] = []
+                    if not eventname in unknown: unknown[eventname] = []
+                    if eventname not in events:
+                        events.append(eventname)
+                        eventidhelper[eventname] = eventid
+
                     if data[str(spawnid)]["endtime"] is None:
-                        unknown.append(spawnid)
+                        unknown[eventname].append(spawnid)
                     else:
-                        known.append(spawnid)
-                coords.append({'fence': subfence, 'known': len(known), 'unknown': len(unknown),
-                               'sum': len(known) + len(unknown)})
+                        known[eventname].append(spawnid)
+
+                for event in events:
+                    today: int = 0
+                    outdate: int = 0
+
+                    if event == "DEFAULT":
+                        outdate = self.get_spawn_details_helper\
+                            (areaid=area_id, eventid=eventidhelper[event], olderthanxdays=self.outdatedays,
+                             sumonly=True, index=subfenceindex)
+                    else:
+                        today = self.get_spawn_details_helper\
+                            (areaid=area_id, eventid=eventidhelper[event], todayonly=True,
+                             sumonly=True, index=subfenceindex)
+
+                    coords.append({'fence': subfence, 'known': len(known[event]), 'unknown': len(unknown[event]),
+                                   'sum': len(known[event]) + len(unknown[event]), 'event': event, 'mode': mode,
+                                   'area_id': area_id, 'eventid': eventidhelper[event],
+                                   'todayspawns': today, 'outdatedspawns': outdate, 'index': subfenceindex
+                                   })
+
+                subfenceindex += 1
 
         stats = {'spawnpoints': coords}
         return jsonify(stats)
+
+    @auth_required
+    @logger.catch()
+    def delete_spawns(self):
+        area_id = request.args.get('id', None)
+        event_id = request.args.get('eventid', None)
+        olderthanxdays = request.args.get('olderthanxdays', None)
+        index = request.args.get('index', 0)
+        if self._db.check_if_event_is_active(event_id) and olderthanxdays is None:
+            return jsonify({'status': 'event'})
+        if area_id is not None and event_id is not None:
+            self._db.delete_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id, olderthanxdays=olderthanxdays,
+                                                                     index=index))
+        if olderthanxdays is not None:
+            flash('Successfully deleted outdated spawnpoints')
+            return redirect(url_for('statistics_spawns'), code=302)
+        return jsonify({'status': 'success'})
+
+    @auth_required
+    @logger.catch()
+    def convert_spawns(self):
+        area_id = request.args.get('id', None)
+        event_id = request.args.get('eventid', None)
+        todayonly = request.args.get('todayonly', False)
+        index = request.args.get('index', 0)
+        if self._db.check_if_event_is_active(event_id):
+            if todayonly:
+                flash('Cannot convert spawnpoints during an event')
+                return redirect(url_for('statistics_spawns'), code=302)
+            return jsonify({'status': 'event'})
+        if area_id is not None and event_id is not None:
+            self._db.convert_spawnpoints(self.get_spawnpoints_from_id(area_id, event_id, todayonly=todayonly,
+                                                                      index=index))
+        if todayonly:
+            flash('Successfully converted spawnpoints')
+            return redirect(url_for('statistics_spawns'), code=302)
+        return jsonify({'status': 'success'})
+
+    @auth_required
+    @logger.catch()
+    def delete_spawn(self):
+        id = request.args.get('id', None)
+        area_id = request.args.get('area_id', None)
+        event_id = request.args.get('event_id', None)
+        event = request.args.get('event', None)
+        if self._db.check_if_event_is_active(event_id):
+            flash('Event is still active - cannot delete this spawnpoint now.')
+            return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
+        if id is not None:
+            self._db.delete_spawnpoint(id)
+        return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
+
+    @auth_required
+    @logger.catch()
+    def convert_spawn(self):
+        id = request.args.get('id', None)
+        area_id = request.args.get('area_id', None)
+        event_id = request.args.get('event_id', None)
+        event = request.args.get('event', None)
+        if self._db.check_if_event_is_active(event_id):
+            flash('Event is still active - cannot convert this spawnpoint now.')
+            return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
+        if id is not None:
+            self._db.convert_spawnpoint(id)
+        return redirect(url_for('spawn_details', id=area_id, eventid=event_id, event=event), code=302)
+
+    @auth_required
+    @logger.catch()
+    def get_spawnpoints_from_id(self, id, eventid, todayonly=False, olderthanxdays=None, index=0):
+        spawns = []
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=id)
+        fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager,
+                                              str(list(possible_fences[int(id)]['include'].keys())[int(index)]))
+
+        data = json.loads(
+            self._db.download_spawns(
+                fence=str(fence),
+                eventid=int(eventid),
+                todayonly=bool(todayonly),
+                olderthanxdays=olderthanxdays
+            )
+        )
+
+        for spawnid in data:
+            spawns.append(spawnid)
+        return spawns
 
     @auth_required
     def statistics_spawns(self):
         return render_template('statistics/spawn_statistics.html', title="MAD Spawnpoint Statisics",
                                time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
+
+    @auth_required
+    def get_spawn_details(self):
+
+        area_id = request.args.get('area_id', None)
+        event_id = request.args.get('event_id', None)
+        mode = request.args.get('mode', None)
+        index = request.args.get('index', 0)
+        olderthanxdays = None
+        todayonly = False
+
+        if str(mode) == "OLD":
+            olderthanxdays = self.outdatedays
+        elif str(mode) == "ALL":
+            olderthanxdays = None
+            todayonly = False
+        else:
+            todayonly=True
+
+        return jsonify(self.get_spawn_details_helper(areaid=area_id, eventid=event_id, olderthanxdays=olderthanxdays,
+                                                     todayonly=todayonly, index=index))
+
+    def get_spawn_details_helper(self, areaid, eventid, todayonly=False, olderthanxdays=None, sumonly=False, index=0):
+        active_spawns: list = []
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=areaid)
+        fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager,
+                                              str(list(possible_fences[int(areaid)]['include'].keys())[int(index)]))
+        data = json.loads(
+            self._db.download_spawns(
+                fence=str(fence),
+                eventid=int(eventid),
+                todayonly=bool(todayonly),
+                olderthanxdays=olderthanxdays
+            )
+        )
+
+        if sumonly:
+            return len(data)
+        for spawn in data:
+            sp = data[spawn]
+            active_spawns.append({'id': sp['id'], 'lat': sp['lat'], 'lon': sp['lon'],
+                                  'lastscan': sp['lastscan'],
+                                  'lastnonscan': sp['lastnonscan']})
+
+        return active_spawns
+
+    @auth_required
+    def spawn_details(self):
+        area_id = request.args.get('id', None)
+        event_id = request.args.get('eventid', None)
+        event = request.args.get('event', None)
+        mode = request.args.get('mode', "OLD")
+        index = request.args.get('index', 0)
+        return render_template('statistics/spawn_details.html', title="MAD Spawnpoint Details",
+                               time=self._args.madmin_time,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               areaid=area_id, eventid=event_id, event=event, mode=mode,
+                               olderthanxdays=self.outdatedays, index=index)
+
+    @auth_required
+    def delete_unfenced_spawns(self):
+        processed_fences = []
+        spawns = []
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+        for possible_fence in possible_fences:
+            for subfence in possible_fences[possible_fence]['include']:
+                if subfence in processed_fences:
+                    continue
+                processed_fences.append(subfence)
+                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+                data = json.loads(
+                    self._db.download_spawns(
+                        fence=fence
+                    )
+                )
+                for spawnid in data:
+                    spawns.append(spawnid)
+
+        self._db.delete_spawnpoints([x for x in self._db.get_all_spawnpoints() if x not in spawns])
+
+        return jsonify({'status': 'success'})
+
+

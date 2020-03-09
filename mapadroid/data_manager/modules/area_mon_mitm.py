@@ -157,6 +157,14 @@ class AreaMonMITM(Area):
                     "data_source": "monivlist",
                     "uri_source": "api_monivlist"
                 }
+            },
+            "include_event_id": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "Including event (ID) spawns for route calculation",
+                    "expected": int
+                }
             }
         }
     }

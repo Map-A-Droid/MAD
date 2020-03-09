@@ -58,12 +58,13 @@ class WorkerQuests(MITMBase):
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper: DbWrapper,
                  pogo_window_manager: PogoWindows, walker,
-                 mitm_mapper: MitmMapper):
+                 mitm_mapper: MitmMapper, event):
         MITMBase.__init__(self, args, dev_id, id, last_known_state, communicator,
                           mapping_manager=mapping_manager, routemanager_name=routemanager_name,
                           area_id=area_id,
                           db_wrapper=db_wrapper, NoOcr=False,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker)
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker,
+                          event=event)
 
         self.clear_thread = None
         # 0 => None
