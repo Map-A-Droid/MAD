@@ -53,6 +53,9 @@ class PlayerStats(object):
                 player_level = player_stats['level']
                 if int(player_level) > 0:
                     logger.debug('{{gen_player_stats}} saving new playerstats')
+                    if self._level > int(player_level) and self.__application_args.auto_flush_stops:
+                        logger.info("Detecting lower player level - seems to be a new account. Flush visited stops")
+                        self.__mitm_mapper_parent.flush_visited_stops(self._id)
                     self.set_level(int(player_level))
 
                     data = {self._id: []}

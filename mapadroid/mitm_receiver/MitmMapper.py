@@ -46,6 +46,9 @@ class MitmMapper(object):
         self.__playerstats[origin] = PlayerStats(origin, self.__application_args, self)
         self.__playerstats[origin].open_player_stats()
 
+    def flush_visited_stops(self, origin):
+        self._db_stats_submit.auto_flush_visited_stops(origin)
+
     def add_stats_to_process(self, client_id, stats, last_processed_timestamp):
         if self.__application_args.game_stats:
             with self.__playerstats_db_update_mutex:

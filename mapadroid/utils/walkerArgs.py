@@ -246,10 +246,13 @@ def parseArgs():
                         default='configs/geofences')
 
     parser.add_argument('-jtc', '--job_thread_count', type=int, default=2,
-                        help='Amount of threads to work off the device jobs. Default: 2.')
+                        help='Amount of threads to work off the device jobs. (Default: 2)')
 
     parser.add_argument('-ods', '--outdated_spawnpoints', type=int, default=3,
-                        help='Define when a spawnpoint is out of date (in days). Default: 3.')
+                        help='Define when a spawnpoint is out of date (in days). (Default: 3)')
+
+    parser.add_argument('-afs', '--auto_flush_stops', action='store_true', default=False,
+                        help='Flush visited stops if new (lower lvl) account is detected. (Default: false)')
 
     # etc
 

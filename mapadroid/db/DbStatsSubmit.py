@@ -62,3 +62,7 @@ class DbStatsSubmit:
             "DELETE FROM trs_stats_location_raw WHERE period < (UNIX_TIMESTAMP() - 604800)"
         )
         self._db_exec.execute(query, commit=True)
+
+    def auto_flush_visited_stops(self, origin):
+        query = "DELETE FROM trs_visited WHERE origin=%s"
+        self._db_exec.execute(query, (origin,), commit=True)
