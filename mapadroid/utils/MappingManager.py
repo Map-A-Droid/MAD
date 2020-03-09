@@ -409,7 +409,7 @@ class MappingManager:
                                                                  S2level=mode_mapping.get(mode, {}).get(
                                                                      "s2_cell_level", 30),
                                                                  include_event_id=
-                                                                 area['settings'].get("include_event_id", None)
+                                                                 area.get("settings", {}).get("include_event_id", None)
                                                                  )
 
             if mode not in ("iv_mitm", "idle"):
