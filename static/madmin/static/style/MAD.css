@@ -59,6 +59,28 @@
 [data-theme="dark"] .child { background-color: transparent !important; }
 [data-theme="dark"] #info { color: #fff !important; }
 
+[data-theme="dark"] .card-text {
+    color: #fff !important;
+}
+
+[data-theme="dark"] .card.border-secondary {
+    background-color: #000 !important;
+    margin-top: 10px;
+}
+
+[data-theme="dark"] .buttons-html5 {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 1px solid white !important;
+    margin-bottom: 10px;
+}
+
+[data-theme="dark"] input[type="search"] {
+    background-color: #000 !important;
+    color: #fff !important;
+    border: 1px solid #fff;
+}
+
 [data-theme="dark"] #legendContainer {
     background-color: transparent;
     color: #fff;
@@ -123,7 +145,23 @@ body {
 
 .darkmode_check { margin-left: 1.5em; }
 
+.buttons-html5 {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+    margin-bottom: 10px;
+}
+
+input[type="search"] {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000;
+}
+
 ::-webkit-scrollbar { width: 10px; }
 ::-webkit-scrollbar-track { background: #fff; }
 ::-webkit-scrollbar-thumb { background: #888; }
 ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+.card.border-secondary { margin-top: 10px; }
+body { visibility: hidden; }
