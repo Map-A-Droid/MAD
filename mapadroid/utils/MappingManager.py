@@ -503,7 +503,7 @@ class MappingManager:
         return devices
 
     def __fetch_coords(self, mode: str, geofence_helper: GeofenceHelper, coords_spawns_known: bool = False,
-                       init: bool = False, range_init: int = 630, including_stops: bool = False, level: bool = False
+                       init: bool = False, range_init: int = 630, including_stops: bool = False, level: bool = False,
                        include_event_id=None) -> List[ Location]:
 
         coords: List[Location] = []
