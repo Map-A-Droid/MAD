@@ -32,7 +32,7 @@ logging.getLogger('websockets.protocol').addHandler(InterceptHandler())
 
 class WebsocketServer(object):
     def __init__(self, args, mitm_mapper: MitmMapper, db_wrapper: DbWrapper, mapping_manager: MappingManager,
-                 pogo_window_manager: PogoWindows, data_manager: DataManager, enable_configmode: bool = False):
+                 pogo_window_manager: PogoWindows, data_manager: DataManager, event, enable_configmode: bool = False):
         self.__args = args
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__mapping_manager: MappingManager = mapping_manager
@@ -52,7 +52,7 @@ class WebsocketServer(object):
         self.__users_connecting_mutex: Optional[asyncio.Lock] = None
 
         self.__worker_factory: WorkerFactory = WorkerFactory(self.__args, self.__mapping_manager, self.__mitm_mapper,
-                                                             self.__db_wrapper, self.__pogo_window_manager)
+                                                             self.__db_wrapper, self.__pogo_window_manager, event)
 
         # asyncio loop for the entire server
         self.__loop: Optional[asyncio.AbstractEventLoop] = asyncio.new_event_loop()
@@ -300,11 +300,12 @@ class WebsocketServer(object):
     async def __client_message_receiver(self, origin: str, client_entry: WebsocketConnectedClientEntry) -> None:
         if client_entry is None:
             return
+        connection: websockets.WebSocketClientProtocol = client_entry.websocket_client_connection
         logger.info("Consumer handler of {} starting", origin)
-        while client_entry.websocket_client_connection.open:
+        while connection.open:
             message = None
             try:
-                message = await asyncio.wait_for(client_entry.websocket_client_connection.recv(), timeout=4.0)
+                message = await asyncio.wait_for(connection.recv(), timeout=4.0)
             except asyncio.TimeoutError:
                 await asyncio.sleep(0.02)
             except websockets.exceptions.ConnectionClosed as cc:

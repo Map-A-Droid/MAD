@@ -26,12 +26,13 @@ class WalkerConfiguration(NamedTuple):
 
 class WorkerFactory:
     def __init__(self, args, mapping_manager: MappingManager, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
-                 pogo_windows: PogoWindows):
+                 pogo_windows: PogoWindows, event):
         self.__args = args
         self.__mapping_manager: MappingManager = mapping_manager
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self.__db_wrapper: DbWrapper = db_wrapper
         self.__pogo_windows: PogoWindows = pogo_windows
+        self.__event = event
 
     async def __get_walker_index(self, devicesettings, origin):
         walker_index = devicesettings.get('walker_area_index', 0)
@@ -71,7 +72,8 @@ class WorkerFactory:
 
         # preckeck walker setting
         walker_area_name = walker_area_array[walker_index]['walkerarea']
-        while not pre_check_value(walker_settings) and walker_index < len(walker_area_array):
+        while not pre_check_value(walker_settings, self.__event.get_current_event_id()) \
+                and walker_index < len(walker_area_array):
             logger.info(
                 '{} not using area {} - Walkervalue out of range', str(origin),
                 str(self.__mapping_manager.routemanager_get_name(walker_area_name)))
@@ -178,16 +180,17 @@ class WorkerFactory:
             return WorkerMITM(self.__args, dev_id, origin, last_known_state, communicator, area_id=area_id,
                               routemanager_name=walker_area_name, mitm_mapper=self.__mitm_mapper,
                               mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
-                              pogo_window_manager=self.__pogo_windows, walker=walker_settings)
+                              pogo_window_manager=self.__pogo_windows, walker=walker_settings, event=self.__event)
         elif worker_type in [WorkerType.STOPS, WorkerType.STOPS.value]:
             return WorkerQuests(self.__args, dev_id, origin, last_known_state, communicator, area_id=area_id,
                                 routemanager_name=walker_area_name, mitm_mapper=self.__mitm_mapper,
                                 mapping_manager=self.__mapping_manager, db_wrapper=self.__db_wrapper,
-                                pogo_window_manager=self.__pogo_windows, walker=walker_settings)
+                                pogo_window_manager=self.__pogo_windows, walker=walker_settings, event=self.__event)
         elif worker_type in [WorkerType.IDLE, WorkerType.IDLE.value]:
             return WorkerConfigmode(self.__args, dev_id, origin, communicator, walker=walker_settings,
                                     mapping_manager=self.__mapping_manager, mitm_mapper=self.__mitm_mapper,
-                                    db_wrapper=self.__db_wrapper, area_id=area_id, routemanager_name=walker_area_name)
+                                    db_wrapper=self.__db_wrapper, area_id=area_id, routemanager_name=walker_area_name,
+                                    event=self.__event)
         else:
             logger.error("WorkerFactor::get_worker failed to create a worker...")
             return None
@@ -203,6 +206,7 @@ class WorkerFactory:
                                   mitm_mapper=self.__mitm_mapper,
                                   db_wrapper=self.__db_wrapper,
                                   area_id=0,
-                                  routemanager_name=None)
+                                  routemanager_name=None,
+                                  event=self.__event)
         return worker
 

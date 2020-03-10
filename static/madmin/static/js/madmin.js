@@ -1,3 +1,4 @@
+var locinjectPane = null;
 var locInjectBtn = L.easyButton({
     position: "bottomright",
     states: [{
@@ -7,6 +8,8 @@ var locInjectBtn = L.easyButton({
         onClick: function (btn, map) {
             clickToScanActive = true;
             L.DomUtil.addClass(map._container, 'crosshair-cursor-enabled');
+            locInjectPane = map.createPane("locinject")
+            locInjectPane.style.pointerEvents = 'auto';
             btn.state('scanmode-deactivate');
         }
     }, {
@@ -16,6 +19,7 @@ var locInjectBtn = L.easyButton({
         onClick: function (btn, map) {
             clickToScanActive = false;
             L.DomUtil.removeClass(map._container, 'crosshair-cursor-enabled');
+            L.DomUtil.remove(locInjectPane);
             btn.state('scanmode-activate');
         }
     }]
@@ -41,6 +45,7 @@ $(document).on("hidden.bs.modal", "#injectionModal", function (e) {
     locInjectBtn.state("scanmode-activate");
     clickToScanActive = false;
     L.DomUtil.removeClass(map._container, 'crosshair-cursor-enabled');
+    L.DomUtil.remove(locInjectPane);
 });
 
 $(document).on("click", "#sendworker", function () {
@@ -145,12 +150,23 @@ new Vue({
         gyms: {},
         quests: {},
         stops: {},
-        spawns: {},
         mons: {},
+        spawns: {},
         cellupdates: {},
+        fetchers: {
+          workers: false,
+          gyms: false,
+          routes: false,
+          geofences: false,
+          spawns: false,
+          quests: false,
+          stops: false,
+          mons: false,
+          prioroutes: false,
+          cells: false
+        },
         layers: {
             stat: {
-                spawns: false,
                 gyms: false,
                 quests: false,
                 stops: false,
@@ -161,7 +177,8 @@ new Vue({
             dyn: {
                 routes: {},
                 prioroutes: {},
-                geofences: {}
+                geofences: {},
+                spawns: {}
             }
         },
         workers: {},
@@ -224,13 +241,6 @@ new Vue({
             this.changeStaticLayer("raids", oldVal, newVal);
             this.changeStaticLayer("gyms", oldVal, newVal);
         },
-        "layers.stat.spawns": function (newVal, oldVal) {
-            if (newVal && !init) {
-                this.map_fetch_spawns(this.buildUrlFilter(true));
-            }
-
-            this.changeStaticLayer("spawns", oldVal, newVal);
-        },
         "layers.stat.workers": function (newVal, oldVal) {
             if (newVal && !init) {
                 this.map_fetch_workers(this.buildUrlFilter(true));
@@ -266,12 +276,19 @@ new Vue({
 
             this.changeStaticLayer("cellupdates", oldVal, newVal);
         },
+        "layers.dyn.spawns": {
+            deep: true,
+            handler: function () {
+                this.changeDynamicLayers("spawns");
+            }
+        },
         "layers.dyn.geofences": {
             deep: true,
             handler: function () {
                 this.changeDynamicLayers("geofences");
             }
         },
+
         "layers.dyn.routes": {
             deep: true,
             handler: function () {
@@ -338,7 +355,7 @@ new Vue({
             this.map_fetch_gyms(urlFilter);
             this.map_fetch_routes();
             this.map_fetch_geofences();
-            this.map_fetch_spawns(urlFilter);
+            this.map_fetch_spawns();
             this.map_fetch_quests(urlFilter);
             this.map_fetch_stops(urlFilter);
             this.map_fetch_mons(urlFilter);
@@ -350,7 +367,12 @@ new Vue({
         map_fetch_workers() {
             var $this = this;
 
-            axios.get("get_position").then(function (res) {
+            if (this.fetchers.workers == true) {
+              return;
+            }
+
+            this.fetchers.workers = true;
+            axios.get("get_workers").then(function (res) {
                 res.data.forEach(function (worker) {
                     var name = worker["name"];
 
@@ -379,6 +401,8 @@ new Vue({
                         }
                     }
                 });
+            }).finally(function() {
+              $this.fetchers.workers = false;
             });
         },
         map_fetch_gyms(urlFilter) {
@@ -388,6 +412,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.gyms == true) {
+              return;
+            }
+
+            this.fetchers.gyms = true;
             axios.get('get_gymcoords' + urlFilter).then(function (res) {
                 res.data.forEach(function (gym) {
                     switch (gym['team_id']) {
@@ -469,11 +498,18 @@ new Vue({
                         leaflet_data["raids"][gym["id"]].addTo(map);
                     }
                 });
+            }).finally(function() {
+              $this.fetchers.gyms = false;
             });
         },
         map_fetch_routes() {
             var $this = this;
 
+            if (this.fetchers.routes == true) {
+              return;
+            }
+
+            this.fetchers.routes = true;
             axios.get("get_route").then(function (res) {
                 res.data.forEach(function (route) {
                     var group = L.layerGroup();
@@ -499,6 +535,9 @@ new Vue({
                         mode = route.mode;
                     }
 
+                    let stack = []
+                    let processedCells = {};
+
                     route.coordinates.forEach(function (coord) {
                         circle = L.circle(coord, {
                             pane: "routes",
@@ -513,16 +552,59 @@ new Vue({
 
                         circle.addTo(group);
                         coords.push(circle);
-                    });
 
-                    Object.values(route.s2cells).forEach(function (cells) {
-                        L.polygon(cells, {
-                            pane: "routes",
+                        if (mode == "raids") {
+                          // super dirty workaround to get bounds
+                          // of a circle. The getbounds() function
+                          // is only available if it has been added
+                          // to the map.
+                          // See https://github.com/Leaflet/Leaflet/issues/4978
+                          circle.addTo(map);
+                          const bounds = circle.getBounds();
+                          circle.removeFrom(map);
+
+                          const centerCell = S2.S2Cell.FromLatLng(circle.getLatLng(), 15)
+                          processedCells[centerCell.toString()] = true
+                          stack.push(centerCell)
+                          L.polygon(centerCell.getCornerLatLngs(), {
                             color: color,
-                            opacity: 0.3,
+                            opacity: 0.5,
+                            weight: 1,
                             fillOpacity: 0,
-                            weight: 1
-                        }).addTo(group);
+                            interactive: false
+                          }).addTo(group);
+
+                          while (stack.length > 0) {
+                            const cell = stack.pop();
+                            const neighbors = cell.getNeighbors()
+                            neighbors.forEach(function (ncell, index) {
+                              if (processedCells[ncell.toString()] !== true) {
+                                const cornerLatLngs = ncell.getCornerLatLngs();
+
+                                for (let i = 0; i < 4; i++) {
+                                  const item = cornerLatLngs[i];
+                                  const distance = L.latLng(item.lat, item.lng).distanceTo(circle.getLatLng());
+                                  if (item.lat >= bounds.getSouthWest().lat
+                                      && item.lng >= bounds.getSouthWest().lng
+                                      && item.lat <= bounds.getNorthEast().lat
+                                      && item.lng <= bounds.getNorthEast().lng
+                                      && distance <= cradius) {
+                                    processedCells[ncell.toString()] = true;
+                                    stack.push(ncell);
+                                    L.polygon(ncell.getCornerLatLngs(), {
+                                      color: color,
+                                      opacity: 0.5,
+                                      weight: 1,
+                                      fillOpacity: 0,
+                                      interactive: false
+                                    }).addTo(group);
+                                    break
+                                  }
+                                }
+                              }
+                            })
+                          }
+                        }
                     });
 
                     var geojson = {
@@ -550,11 +632,18 @@ new Vue({
 
                     $this.$set($this.layers.dyn.routes, name, settings);
                 });
+            }).finally(function() {
+              $this.fetchers.routes = false;
             });
         },
         map_fetch_prioroutes() {
             var $this = this;
 
+            if (this.fetchers.prioroutes == true) {
+              return;
+            }
+
+            this.fetchers.prioroutes = true;
             axios.get("get_prioroute").then(function (res) {
                 res.data.forEach(function (route) {
                     var group = L.layerGroup();
@@ -638,85 +727,109 @@ new Vue({
 
                     $this.$set($this.layers.dyn.prioroutes, name, settings);
                 });
+            }).finally(function() {
+              $this.fetchers.prioroutes = false;
             });
         },
-        map_fetch_spawns(urlFilter) {
-            var $this = this;
+        map_fetch_spawns() {
+           var $this = this;
 
-            if (!$this.layers.stat.spawns) {
-                return;
+            if (this.fetchers.spawns == true) {
+              return;
             }
 
+            this.fetchers.spawns = true;
             axios.get('get_spawns' + urlFilter).then(function (res) {
-                res.data.forEach(function (spawn) {
-                    if (spawn['endtime'] !== null) {
-                        var endsplit = spawn['endtime'].split(':');
-                        var endMinute = parseInt(endsplit[0]);
-                        var endSecond = parseInt(endsplit[1]);
-                        var despawntime = moment();
-                        var now = moment();
+                res.data.forEach(function (spawns) {
 
-                        if (spawn['spawndef'] == 15) {
-                            var timeshift = 60;
+                    if ($this.layers.dyn.spawns[spawns['EVENT']]) {
+                            return;
+                    }
+
+                    spawns['Coords'].forEach(function (spawn) {
+                        var eventname = spawns['EVENT'];
+
+                        if (spawn['endtime'] !== null) {
+                            var endsplit = spawn['endtime'].split(':');
+                            var endMinute = parseInt(endsplit[0]);
+                            var endSecond = parseInt(endsplit[1]);
+                            var despawntime = moment();
+                            var now = moment();
+
+                            if (spawn['spawndef'] == 15) {
+                                var timeshift = 60;
+                            } else {
+                                var timeshift = 30;
+                            }
+
+                            // setting despawn and spawn time
+                            despawntime.minute(endMinute);
+                            despawntime.second(endSecond);
+                            var spawntime = moment(despawntime);
+                            spawntime.subtract(timeshift, 'm');
+
+                            if (despawntime.isBefore(now)) {
+                                // already despawned. shifting hours
+                                spawntime.add(1, 'h');
+                                despawntime.add(1, 'h');
+                            }
+
+                            timeformat = 'YYYY-MM-DD HH:mm:ss';
+                            if (now.isBetween(spawntime, despawntime)) {
+                                var color = "green";
+                            } else if (spawntime.isAfter(now)) {
+                                var color = "blue";
+                            }
                         } else {
-                            var timeshift = 30;
+                            var color = "red";
                         }
 
-                        // setting despawn and spawn time
-                        despawntime.minute(endMinute);
-                        despawntime.second(endSecond);
-                        var spawntime = moment(despawntime);
-                        spawntime.subtract(timeshift, 'm');
-
-                        if (despawntime.isBefore(now)) {
-                            // already despawned. shifting hours
-                            spawntime.add(1, 'h');
-                            despawntime.add(1, 'h');
+                        var skip = true;
+                        if ($this["spawns"][eventname] && $this["spawns"][eventname][spawn["id"]]) {
+                            // check if we should update an existing spawn
+                            if ($this["spawns"][eventname][spawn["id"]]["endtime"] === null && spawn["endtime"] !== null) {
+                                map.removeLayer(leaflet_data["spawns"][eventname][spawn["id"]]);
+                                delete leaflet_data["spawns"][eventname][spawn["id"]];
+                            } else {
+                                skip = false;
+                            }
                         }
 
-                        timeformat = 'YYYY-MM-DD HH:mm:ss';
-                        if (now.isBetween(spawntime, despawntime)) {
-                            var color = "green";
-                        } else if (spawntime.isAfter(now)) {
-                            var color = "blue";
-                        }
-                    } else {
-                        var color = "red";
-                    }
+                        if (skip) {
+                            // store spawn meta data
+                            if (!$this["spawns"][eventname]) {
+                                $this["spawns"][eventname] = {};
+                            }
 
-                    var skip = true;
-                    if ($this["spawns"][spawn["id"]]) {
-                        // check if we should update an existing spawn
-                        if ($this["spawns"][spawn["id"]]["endtime"] === null && spawn["endtime"] !== null) {
-                            map.removeLayer(leaflet_data["spawns"][spawn["id"]]);
-                            delete leaflet_data["spawns"][spawn["id"]];
-                        } else {
-                            skip = false;
-                        }
-                    }
+                            $this["spawns"][eventname][spawn["id"]] = spawn;
 
-                    if (skip) {
-                        // store spawn meta data
-                        $this["spawns"][spawn["id"]] = spawn;
+                            if (!leaflet_data["spawns"][eventname]) {
+                                leaflet_data["spawns"][eventname] = {};
+                            }
 
-                        leaflet_data["spawns"][spawn["id"]] = L.circle([spawn['lat'], spawn['lon']], {
-                            radius: 2,
-                            color: color,
-                            fillColor: color,
-                            weight: 1,
-                            opacity: 0.7,
-                            fillOpacity: 0.5,
-                            id: spawn["id"]
-                        }).bindPopup($this.build_spawn_popup, {'className': 'spawnpopup'});
+                            leaflet_data["spawns"][eventname][spawn["id"]] = L.circle([spawn['lat'], spawn['lon']], {
+                                radius: 2,
+                                color: color,
+                                fillColor: color,
+                                weight: 1,
+                                opacity: 0.7,
+                                fillOpacity: 0.5,
+                                id: spawn["id"],
+                                event: eventname
+                            }).bindPopup($this.build_spawn_popup, {'className': 'spawnpopup'});
 
-                        $this.addMouseEventPopup(leaflet_data["spawns"][spawn["id"]]);
+                            $this.addMouseEventPopup(leaflet_data["spawns"][eventname][spawn["id"]]);
 
-                        // only add them if they're set to visible
-                        if ($this.layers.stat.spawns) {
-                            leaflet_data["spawns"][spawn["id"]].addTo(map);
-                        }
-                    }
-                });
+                            }
+
+                        });
+                            var settings = {
+                                "show": $this.getStoredSetting("layers-dyn-spawns-" + spawns['EVENT'], false)
+                            };
+                            $this.$set($this.layers.dyn.spawns, spawns['EVENT'], settings);
+                    });
+            }).finally(function() {
+              $this.fetchers.spawns = false;
             });
         },
         map_fetch_quests(urlFilter) {
@@ -726,6 +839,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.quests == true) {
+              return;
+            }
+
+            this.fetchers.quests = true;
             axios.get("get_quests" + urlFilter).then(function (res) {
                 res.data.forEach(function (quest) {
                     if ($this.quests[quest["pokestop_id"]]) {
@@ -746,6 +864,8 @@ new Vue({
                         leaflet_data["quests"][quest["pokestop_id"]].addTo(map);
                     }
                 });
+            }).finally(function() {
+              $this.fetchers.quests = false;
             });
         },
         map_fetch_stops(urlFilter) {
@@ -753,6 +873,12 @@ new Vue({
             if (!$this.layers.stat.stops) {
                 return;
             }
+
+            if (this.fetchers.stops == true) {
+              return;
+            }
+
+            this.fetchers.stops = true;
             axios.get("get_stops" + urlFilter).then(function (res) {
                 res.data.forEach(function (stop) {
                     var stop_id = stop["pokestop_id"];
@@ -775,10 +901,18 @@ new Vue({
                         leaflet_data["stops"][stop_id].addTo(map);
                     }
                 });
+            }).finally(function() {
+              $this.fetchers.stops = false;
             });
         },
         map_fetch_geofences() {
             var $this = this;
+
+            if (this.fetchers.geofences == true) {
+              return;
+            }
+
+            this.fetchers.geofences = true;
             axios.get('get_geofence').then(function (res) {
                 res.data.forEach(function (geofence) {
                     var group = L.layerGroup();
@@ -808,6 +942,8 @@ new Vue({
 
                     $this.$set($this.layers.dyn.geofences, name, settings);
                 });
+            }).finally(function() {
+              $this.fetchers.geofences = false;
             });
         },
         map_fetch_mons(urlFilter) {
@@ -817,6 +953,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.mons == true) {
+              return;
+            }
+
+            this.fetchers.mons = true;
             axios.get('get_map_mons' + urlFilter).then(function (res) {
                 res.data.forEach(function (mon) {
 
@@ -861,6 +1002,8 @@ new Vue({
                         }
                     }
                 });
+            }).finally(function() {
+              $this.fetchers.mons = false;
             });
         },
         map_fetch_cells(urlFilter) {
@@ -870,6 +1013,11 @@ new Vue({
                 return;
             }
 
+            if (this.fetchers.cells == true) {
+              return;
+            }
+
+            this.fetchers.cells = true;
             axios.get('get_cells' + urlFilter).then(function (res) {
                 const now = Math.round((new Date()).getTime() / 1000);
 
@@ -893,6 +1041,8 @@ new Vue({
                             .addTo(map);
                     }
                 })
+            }).finally(function() {
+              $this.fetchers.cells = false;
             });
         },
         changeDynamicLayers(type) {
@@ -900,10 +1050,31 @@ new Vue({
                 tlayer = this.layers.dyn[type][k];
                 this.updateStoredSetting("layers-dyn-" + type + "-" + k, tlayer.show);
 
+
+
                 if (tlayer.show == true && !map.hasLayer(leaflet_data[type][k])) {
-                    map.addLayer(leaflet_data[type][k]);
-                } else if (tlayer.show == false && map.hasLayer(leaflet_data[type][k])) {
-                    map.removeLayer(leaflet_data[type][k]);
+                   if (type=="spawns") {
+                       for (var prop in leaflet_data[type][k]) {
+                           if (typeof(leaflet_data[type][k][prop]) == 'object') {
+                               map.addLayer(leaflet_data[type][k][prop]);
+                           }
+                       }
+                   } else {
+                       map.addLayer(leaflet_data[type][k]);
+                   }
+
+                } else if (tlayer.show == false) {
+                if (type=="spawns") {
+                       for (var prop in leaflet_data[type][k]) {
+                           if (typeof(leaflet_data[type][k][prop]) == 'object') {
+                               map.removeLayer(leaflet_data[type][k][prop]);
+                           }
+                       }
+                   } else {
+                       if (map.hasLayer(leaflet_data[type][k])) {
+                          map.removeLayer(leaflet_data[type][k]);
+                       }
+                   }
                 }
             }
         },
@@ -1159,7 +1330,7 @@ new Vue({
         </div>`;
         },
         build_spawn_popup(marker) {
-            spawn = this.spawns[marker.options.id];
+            spawn = this.spawns[marker.options.event][marker.options.id];
 
             if (spawn['endtime'] !== null) {
                 var timeformat = "YYYY-MM-DD HH:mm:ss";
@@ -1217,6 +1388,7 @@ new Vue({
             <div class="timestamp"><i class="fas fa-eye"></i> <abbr title="This is the time a mon has been seen on this spawnpoint.">Last mon seen</abbr>: <strong>${lastMon}</strong></div>
             <div class="timestamp"><i class="fa fa-clock"></i> <abbr title="The timestamp of the last time this spawnpoint's despawn time has been confirmed.">Last confirmation</abbr>: <strong>${spawn["lastscan"]}</strong></div>
             <div class="spawnType"><i class="fa fa-wrench"></i> Type: <strong>${type || "Unknown despawn time"}</strong></div>
+            <div class="spawnType"><i class="fas fa-calendar-week"></i></i> Event- / Spawntype: <strong>${spawn["event"]}</strong></div>
             <div class="spawnTiming">${spawntiming}</div>
           </div>
         </div>`;

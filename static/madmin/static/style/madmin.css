@@ -19,6 +19,10 @@ div.container[role="main"] {
     z-index: 398;
 }
 
+.leaflet-locinject-pane {
+    z-index: 9000
+}
+
 .spawnpopup .leaflet-popup-content {
     width: 300px !important;
     margin: 13px !important;

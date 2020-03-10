@@ -12,7 +12,8 @@ class WalkerArea(Resource):
         'walkertype': 'algo_type',
         'walkervalue': 'algo_value',
         'walkermax': 'max_walkers',
-        'walkertext': 'name'
+        'walkertext': 'name',
+        'eventid': 'eventid'
     }
     configuration = {
         "fields": {
@@ -61,6 +62,15 @@ class WalkerArea(Resource):
                     "description": "Human-readable description of the walkerarea",
                     "expected": str
                 }
+            },
+            "eventid": {
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "empty": "",
+                    "description": "internal event id",
+                    "expected": int
+                }
             }
         }
     }
@@ -83,9 +93,18 @@ class WalkerArea(Resource):
     def save(self, force_insert: Optional[bool] = False, ignore_issues: Optional[List[str]] = []) -> int:
         self.presave_validation(ignore_issues=ignore_issues)
         try:
-            if self._data['fields']['walkermax'] == '':
+            if self._data['fields']['walkermax'] == '' and self._data['fields']['eventid'] == '':
                 core_data = self.get_resource(backend=True)
                 core_data['walkermax'] = None
+                core_data['eventid'] = None
+                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
+            elif self._data['fields']['walkermax'] == '' and self._data['fields']['eventid'] != '':
+                core_data = self.get_resource(backend=True)
+                core_data['walkermax'] = None
+                return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
+            elif self._data['fields']['walkermax'] != '' and self._data['fields']['eventid'] == '':
+                core_data = self.get_resource(backend=True)
+                core_data['eventid'] = None
                 return super().save(core_data=core_data, force_insert=force_insert, ignore_issues=ignore_issues)
             else:
                 return super().save(force_insert=force_insert, ignore_issues=ignore_issues)

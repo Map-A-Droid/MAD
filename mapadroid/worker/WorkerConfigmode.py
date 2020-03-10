@@ -19,10 +19,11 @@ from mapadroid.worker.AbstractWorker import AbstractWorker
 
 class WorkerConfigmode(AbstractWorker):
     def __init__(self, args, dev_id, origin, communicator: AbstractCommunicator, walker, mapping_manager,
-                 mitm_mapper: MitmMapper, db_wrapper: DbWrapper, area_id: int, routemanager_name: str):
+                 mitm_mapper: MitmMapper, db_wrapper: DbWrapper, area_id: int, routemanager_name: str, event):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
 
         self._args = args
+        self._event = event
         self._stop_worker_event = Event()
         self._dev_id = dev_id
         self._origin = origin
@@ -91,6 +92,11 @@ class WorkerConfigmode(AbstractWorker):
     def check_walker(self):
         if self._walker is None:
             return True
+        walkereventid = self._walker.get('eventid', None)
+        if walkereventid is None: walkereventid = 1
+        if walkereventid != self._event.get_current_event_id():
+            logger.warning("A other Event has started - leaving now")
+            return False
         mode = self._walker['walkertype']
         if mode == "countdown":
             logger.info("Checking walker mode 'countdown'")

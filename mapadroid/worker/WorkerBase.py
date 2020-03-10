@@ -34,13 +34,14 @@ class WorkerBase(AbstractWorker):
                  mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, db_wrapper: DbWrapper, pogoWindowManager: PogoWindows,
                  NoOcr: bool = True,
-                 walker=None):
+                 walker=None, event=None):
         AbstractWorker.__init__(self, origin=origin, communicator=communicator)
         self._mapping_manager: MappingManager = mapping_manager
         self._routemanager_name: str = routemanager_name
         self._area_id = area_id
 
         self._dev_id: int = dev_id
+        self._event = event
         self._origin: str = origin
         self._applicationArgs = args
         self._last_known_state = last_known_state
@@ -477,6 +478,10 @@ class WorkerBase(AbstractWorker):
 
     def check_walker(self):
         mode = self._walker['walkertype']
+        walkereventid = self._walker.get('eventid', None)
+        if walkereventid is not None and walkereventid != self._event.get_current_event_id():
+            logger.warning("A other Event has started - leaving now")
+            return False
         if mode == "countdown":
             logger.info("Checking walker mode 'countdown'")
             countdown = self._walker['walkervalue']
@@ -778,7 +783,7 @@ class WorkerBase(AbstractWorker):
             pogo_topmost = self._communicator.is_pogo_topmost()
 
         if start_result:
-            logger.warning("startPogo: Started pogo successfully...")
+            logger.success("startPogo: Started pogo successfully...")
             self._last_known_state["lastPogoRestart"] = cur_time
 
         self._wait_pogo_start_delay()
@@ -815,6 +820,8 @@ class WorkerBase(AbstractWorker):
                                                    self._routemanager_name),
                                                99)
         self._db_wrapper.save_last_reboot(self._dev_id)
+        self._reboot_count = 0
+        self._restart_count = 0
         self.stop_worker()
         return start_result
 
@@ -830,6 +837,7 @@ class WorkerBase(AbstractWorker):
     def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = self._stop_pogo()
         self._db_wrapper.save_last_restart(self._dev_id)
+        self._restart_count = 0
         logger.debug("restartPogo: stop game resulted in {}",
                      str(successful_stop))
         if successful_stop:

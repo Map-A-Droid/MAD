@@ -113,10 +113,12 @@ def generate_device_screenshot_path(phone_name: str, device_mappings: dict, args
     return os.path.join(args.temp_path, screenshot_filename)
 
 
-def get_geofences(mapping_manager, data_manager, fence_type=None):
+def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=None):
     areas = mapping_manager.get_areas()
     geofences = {}
     for area_id, area in areas.items():
+        if area_id_req is not None and int(area_id) is not int(area_id_req):
+            continue
         geo_include = data_manager.get_resource('geofence', identifier=area["geofence_included"])
         geo_exclude_id = area.get("geofence_excluded", None)
         geo_exclude = None
@@ -143,7 +145,9 @@ def get_geofences(mapping_manager, data_manager, fence_type=None):
                 ])
         geofences[area_id] = {
             'include': include,
-            'exclude': exclude
+            'exclude': exclude,
+            'mode': area['mode'],
+            'area_id': area_id
         }
     return geofences
 

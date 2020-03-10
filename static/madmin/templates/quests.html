@@ -146,7 +146,7 @@ function build_quest_small(quest_reward_type, quest_item_id, quest_pokemon_id, q
 {% if not pub %}
 <h2>Quests</h2>
 {% endif %}
-<div class="p-3 mb-2 bg-secondary text-white">
+<div class="p-1 mb-1 bg-secondary text-white rounded">
         <h5>Select Area</h5><select id=area name=area method="GET" action="/">
     {% for stop_fence in stop_fences %}
          {% if stop_fence == fence %}

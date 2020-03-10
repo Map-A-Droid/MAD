@@ -133,6 +133,8 @@ class WordToScreenMatching(object):
             return ScreenType.GGL, global_dict, diff
         elif "GrantPermissionsActivity" in topmost_app:
             return ScreenType.PERMISSION, global_dict, diff
+        elif "GrantCredentialsWithAclNoTouchActivity" in topmost_app or "GrantCredentials" in topmost_app:
+            return ScreenType.CREDENTIALS, global_dict, diff
         elif "ConsentActivity" in topmost_app:
             return ScreenType.CONSENT, global_dict, diff
         elif "com.nianticlabs.pokemongo" not in topmost_app:
@@ -255,6 +257,8 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.GGL:
             screentype = self.__handle_google_login(screentype)
         elif screentype == ScreenType.PERMISSION:
+            screentype = self.__handle_permissions_screen(screentype)
+        elif screentype == ScreenType.CREDENTIALS:
             screentype = self.__handle_permissions_screen(screentype)
         elif screentype == ScreenType.MARKETING:
             self.__handle_marketing_screen(diff, global_dict)
@@ -457,7 +461,7 @@ class WordToScreenMatching(object):
         if xml is None:
             logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
-        click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER')
+        click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER', 'OK')
         try:
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)

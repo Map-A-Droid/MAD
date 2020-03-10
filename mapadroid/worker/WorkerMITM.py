@@ -20,12 +20,12 @@ from mapadroid.worker.MITMBase import MITMBase, LatestReceivedType
 class WorkerMITM(MITMBase):
     def __init__(self, args, dev_id, id, last_known_state, communicator: AbstractCommunicator, mapping_manager: MappingManager,
                  area_id: int, routemanager_name: str, mitm_mapper: MitmMapper, db_wrapper: DbWrapper,
-                 pogo_window_manager: PogoWindows, walker):
+                 pogo_window_manager: PogoWindows, walker, event):
         MITMBase.__init__(self, args, dev_id, id, last_known_state, communicator,
                           mapping_manager=mapping_manager, area_id=area_id,
                           routemanager_name=routemanager_name,
                           db_wrapper=db_wrapper, NoOcr=True,
-                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker)
+                          mitm_mapper=mitm_mapper, pogoWindowManager=pogo_window_manager, walker=walker, event=event)
 
         # TODO: own InjectionSettings class
         self._injection_settings = {}

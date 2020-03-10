@@ -48,11 +48,11 @@
                     "targets": [5],
                     "render": function (data, type, row) {
                          var redolink = "";
-                         var link = "<img src='static/autojob.png' alt='automatic job' width='30'>";
+                         var link = "<i class='fa fa-car'></i>";
 
                          if(!row.auto) {
-                             link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><img src='static/delete.png' width='30'></a>";
-                             redolink = "<a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><img src='static/restart.png' width='30'></a>";
+                             link = "<a href='delete_log_entry?id=" + row.id + "' class='confirm' title='Do you really want to delete this entry?'><i class='fa fa-trash'></i></a>";
+                             redolink = "<a href='restart_job?id=" + row.id + "&type=" + row.jobtype + "' class='confirm' title='Do you really want to restart this job?'><i class='fas fa-undo'></i></a>";
                          }
 
                          return link + " " + redolink;
@@ -158,7 +158,7 @@
 </p>
 <table id="show-data" class="table" style="width:100%;"></table>
 {% if not withautojobs %}
-<div class="alert alert-warning"><a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a><br>
-<a href="delete_log?only_success=true" class='confirm' title='Do you really want to delete the logs?'>Delete successful Jobs</a></div>
+<i class='fa fa-trash'></i> <a href="delete_log" class='confirm' title='Do you really want to delete the log?'>Delete Job Log</a><br>
+<i class='fa fa-trash'></i> <a href="delete_log?only_success=true" class='confirm' title='Do you really want to delete the logs?'>Delete successful Jobs</a>
 {% endif %}
 {% endblock %}

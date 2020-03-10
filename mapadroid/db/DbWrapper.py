@@ -21,13 +21,15 @@ class DbWrapper:
     def __init__(self, db_exec, args):
         self._db_exec = db_exec
         self.application_args = args
+        self._event_id: int = 1
+        self._event_lure_duration: int = 30
 
         self.sanity_check: DbSanityCheck = DbSanityCheck(db_exec)
         self.sanity_check.check_all()
         self.supports_apks = self.sanity_check.supports_apks
 
         self.schema_updater: DbSchemaUpdater = DbSchemaUpdater(db_exec, args.dbname)
-        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec, args.lure_duration)
+        self.proto_submit: DbPogoProtoSubmit = DbPogoProtoSubmit(db_exec)
         self.stats_submit: DbStatsSubmit = DbStatsSubmit(db_exec)
         self.stats_reader: DbStatsReader = DbStatsReader(db_exec)
         self.webhook_reader: DbWebhookReader = DbWebhookReader(db_exec, self)
@@ -37,6 +39,12 @@ class DbWrapper:
             self.instance_id = None
             logger.warning('Unable to get instance id from the database.  If this is a new instance and the DB is not '
                            'installed, this message is safe to ignore')
+
+    def set_event_id(self, eventid: int):
+        self._event_id = eventid
+
+    def set_event_lure_duration(self, lureduration: int):
+        self._event_lure_duration = lureduration
 
     def close(self, conn, cursor):
         return self._db_exec.close(conn, cursor)
@@ -706,17 +714,24 @@ class DbWrapper:
                                                                           str(longitude))
         self.execute(query, commit=True)
 
-    def get_detected_spawns(self, geofence_helper) -> List[Location]:
+    def get_detected_spawns(self, geofence_helper, include_event_id) -> List[Location]:
         logger.debug("DbWrapper::get_detected_spawns called")
 
         minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        event_ids: list = []
+        #adding default spawns
+        event_ids.append(1)
+
+        if include_event_id is not None:
+            event_ids.append(include_event_id)
 
         query = (
             "SELECT latitude, longitude "
             "FROM trs_spawn "
             "WHERE (latitude >= {} AND longitude >= {} "
-            "AND latitude <= {} AND longitude <= {}) "
-        ).format(minLat, minLon, maxLat, maxLon)
+            "AND latitude <= {} AND longitude <= {}) and "
+            "eventid in ({})"
+        ).format(minLat, minLon, maxLat, maxLon, str(', '.join(str(v) for v in event_ids)))
 
         list_of_coords: List[Location] = []
         logger.debug(
@@ -743,14 +758,26 @@ class DbWrapper:
             #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
-    def get_undetected_spawns(self, geofence_helper):
+    def get_undetected_spawns(self, geofence_helper, include_event_id):
         logger.debug("DbWrapper::get_undetected_spawns called")
+
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        event_ids: list = []
+        # adding default spawns
+        event_ids.append(1)
+
+        if include_event_id is not None:
+            event_ids.append(int(include_event_id))
 
         query = (
             "SELECT latitude, longitude "
             "FROM trs_spawn "
-            "WHERE calc_endminsec is NULL"
-        )
+            "WHERE (latitude >= {} AND longitude >= {} "
+            "AND latitude <= {} AND longitude <= {}) and "
+            "calc_endminsec is NULL and "
+            "eventid in ({})"
+        ).format(minLat, minLon, maxLat, maxLon, str(', '.join(str(v) for v in event_ids)))
+
         list_of_coords: List[Location] = []
         logger.debug(
             "DbWrapper::get_undetected_spawns executing select query")
@@ -776,16 +803,77 @@ class DbWrapper:
             #     to_return[i][1] = list_of_coords[i][1]
             return list_of_coords
 
+    def delete_spawnpoints(self, spawnpoint_ids):
+        logger.debug("dbWrapper::delete_spawnpoints")
+        if len(spawnpoint_ids) == 0:
+            return True
+        query = (
+            "DELETE "
+            "FROM trs_spawn "
+            "WHERE spawnpoint in ({})".format(str(','.join(spawnpoint_ids)))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
+    def convert_spawnpoints(self, spawnpoint_ids):
+        logger.debug("dbWrapper::convert_spawnpoints")
+        query = (
+            "UPDATE trs_spawn "
+            "set eventid = 1 WHERE spawnpoint in ({})".format(str(','.join(spawnpoint_ids)))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
+    def delete_spawnpoint(self, spawnpoint_id):
+        logger.debug("dbWrapper::delete_spawnpoints")
+        query = (
+            "DELETE "
+            "FROM trs_spawn "
+            "WHERE spawnpoint={}".format(str(spawnpoint_id))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
+    def convert_spawnpoint(self, spawnpoint_id):
+        logger.debug("dbWrapper::convert_spawnpoints")
+        query = (
+            "UPDATE trs_spawn "
+            "set eventid = 1 WHERE spawnpoint={}".format(str(spawnpoint_id))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
+    def get_all_spawnpoints(self):
+        logger.debug("dbWrapper::get_all_spawnpoints")
+        spawn = []
+        query = (
+            "SELECT spawnpoint "
+            "FROM `trs_spawn`"
+        )
+        res = self.execute(query)
+
+        for (spawnid, ) in res:
+            spawn.append(spawnid)
+
+        return spawn
+
     def download_spawns(self, neLat=None, neLon=None, swLat=None, swLon=None, oNeLat=None, oNeLon=None,
-                        oSwLat=None, oSwLon=None, timestamp=None, fence=None):
+                        oSwLat=None, oSwLon=None, timestamp=None, fence=None, eventid=None, todayonly=False,
+                        olderthanxdays=None):
         logger.debug("dbWrapper::download_spawns")
         spawn = {}
         query_where = ""
 
         query = (
             "SELECT spawnpoint, latitude, longitude, calc_endminsec, "
-            "spawndef, last_scanned, first_detection, last_non_scanned "
-            "FROM `trs_spawn`"
+            "spawndef, if(last_scanned is not Null,last_scanned, '1970-01-01 00:00:00'), "
+            "first_detection, if(last_non_scanned is not Null,last_non_scanned, '1970-01-01 00:00:00'), "
+            "trs_event.event_name, trs_event.id "
+            "FROM `trs_spawn` inner join trs_event on trs_event.id = trs_spawn.eventid "
         )
 
         if neLat is not None:
@@ -813,11 +901,28 @@ class DbWrapper:
         if fence is not None:
             query_where = query_where + " where ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
                                         "POINT(trs_spawn.latitude, trs_spawn.longitude))".format(str(fence))
+            query = query + query_where
 
-        query = query + query_where
+        if eventid is not None:
+            query_where = " and eventid = {}".format(str(eventid))
+            query = query + query_where
+
+        if todayonly:
+            query_where = " and (DATE(last_scanned) = DATE(NOW()) or DATE(last_non_scanned) = DATE(NOW())) "
+            query = query + query_where
+
+        if olderthanxdays is not None:
+            query_where = " and (DATE(if(last_scanned is not Null,last_scanned, '1970-01-01 00:00:00'))" \
+                          " < DATE(NOW()) - INTERVAL {} DAY and " \
+                          "DATE(if(last_non_scanned is not Null,last_non_scanned, '1970-01-01 00:00:00')) " \
+                          "< DATE(NOW()) - INTERVAL {} DAY)".format(str(olderthanxdays),
+                                                                                              str(olderthanxdays))
+            query = query + query_where
+
         res = self.execute(query)
 
-        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned) in res:
+        for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned, eventname, eventid) \
+                in res:
             spawn[spawnid] = {
                 'id': spawnid,
                 'lat': lat,
@@ -826,7 +931,9 @@ class DbWrapper:
                 'spawndef': spawndef,
                 'lastscan': str(last_scanned),
                 'lastnonscan': str(last_non_scanned),
-                'first_detection': str(first_detection)
+                'first_detection': str(first_detection),
+                'event': eventname,
+                'eventid': eventid
             }
 
         return str(json.dumps(spawn))
@@ -834,6 +941,7 @@ class DbWrapper:
     def retrieve_next_spawns(self, geofence_helper):
         """
         Retrieve the spawnpoints with their respective unixtimestamp that are due in the next 300 seconds
+        Check for Event and select only normal and (if active) current Event Spawns
         :return:
         """
 
@@ -847,7 +955,8 @@ class DbWrapper:
             "FROM trs_spawn "
             "WHERE calc_endminsec IS NOT NULL "
             "AND (latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
-        ).format(minLat, minLon, maxLat, maxLon)
+            "AND eventid in (1, {})"
+        ).format(minLat, minLon, maxLat, maxLon, self._event_id)
 
         res = self.execute(query)
         next_up = []
@@ -992,7 +1101,9 @@ class DbWrapper:
             'instance_id': self.instance_id,
             'device_id': dev_id,
             'lastPogoReboot': 'NOW()',
-            'globalrebootcount': '(globalrebootcount+1)'
+            'globalrebootcount': '(globalrebootcount+1)',
+            'restartCounter': 0,
+            'rebootCounter': 0
         }
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
@@ -1003,11 +1114,11 @@ class DbWrapper:
             'instance_id': self.instance_id,
             'device_id': dev_id,
             'lastPogoRestart': 'NOW()',
-            'globalrestartcount': '(globalrestartcount+1)'
+            'globalrestartcount': '(globalrestartcount+1)',
+            'restartCounter': 0
         }
         self.autoexec_insert('trs_status', data, literals=literals, optype='ON DUPLICATE')
 
-    #def update_trs_status_to_idle(self, dev_id):
     def save_idle_status(self, dev_id, status):
         data = {
             'instance_id': self.instance_id,
@@ -1026,6 +1137,85 @@ class DbWrapper:
               "WHERE `instance_id` = %s"
         workers = self.autofetch_all(sql, args=(self.instance_id,))
         return workers
+
+    def get_events(self, event_id=None):
+        logger.debug("dbWrapper::get_events")
+        eventidstr: str = ""
+        if event_id is not None:
+            eventidstr = "where `id` = " + str(event_id)
+        sql = "select `id`, `event_name`, `event_start`, `event_end`, `event_lure_duration`, " \
+              "IF(`event_name`='DEFAULT',1,0) as locked "\
+              "from trs_event " + eventidstr + " order by id asc"
+        events = self.autofetch_all(sql)
+        return events
+
+    def save_event(self, event_name, event_start, event_end, event_lure_duration=30, id=None):
+        logger.debug("DbWrapper::save_event called")
+        if id is None:
+            query = (
+                "INSERT INTO trs_event (event_name, event_start, event_end, event_lure_duration) "
+                "VALUES (%s, %s, %s, %s) "
+            )
+            vals = (event_name, event_start, event_end, event_lure_duration)
+        else:
+            query = (
+                "UPDATE trs_event set event_name=%s, event_start=%s, event_end=%s, event_lure_duration=%s "
+                "where id=%s"
+            )
+            vals = (event_name, event_start, event_end, event_lure_duration, id)
+
+        self.execute(query, vals, commit=True)
+        return True
+
+    def delete_event(self, id=None):
+        logger.debug("DbWrapper::delete_event called")
+        if id is None:
+            return False
+        else:
+            # delete event
+            query = (
+                "DELETE from trs_event where id=%s"
+            )
+            vals = (id)
+            self.execute(query, vals, commit=True)
+
+            # delete SP with eventid
+            query = (
+                "DELETE from trs_spawn where eventid=%s"
+            )
+            vals = (id)
+            self.execute(query, vals, commit=True)
+        return True
+
+    def get_current_event(self):
+        logger.debug("DbWrapper::get_current_event called")
+        sql = "select `id`, `event_lure_duration` " \
+              "from trs_event "\
+              "where now() between `event_start` and `event_end` and `event_name`<>'DEFAULT'"
+        found = self._db_exec.execute(sql)
+
+        if found and len(found) > 0 and found[0][0]:
+            logger.info("Found an active Event with id {} (Lure Duration: {})".format(str(found[0][0]),
+                                                                                      str(found[0][1])))
+            return found[0][0], found[0][1]
+        else:
+            logger.info("There is no active event - returning default value (1) (Lure Duration: 30)")
+            return 1, 30
+
+    def check_if_event_is_active(self, eventid):
+        logger.debug("DbWrapper::check_if_event_is_active called")
+        if int(eventid) == 1:
+            return False
+        sql = "select * " \
+              "from trs_event " \
+              "where now() between `event_start` and `event_end` and `id`=%s"
+        vals = (eventid)
+        res = self.execute(sql, vals)
+        number_of_rows = len(res)
+        if number_of_rows > 0:
+            return True
+        else:
+            return False
 
     def get_cells_in_rectangle(self, neLat, neLon, swLat, swLon,
                                oNeLat=None, oNeLon=None, oSwLat=None, oSwLon=None, timestamp=None):

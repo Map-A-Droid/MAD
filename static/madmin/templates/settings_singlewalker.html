@@ -85,13 +85,14 @@
         </div>
         <div class="form-group">
             <table class="table table-hover table-striped">
-                <thead class="thead-dark">
+                <thead>
                     <tr>
                         <th></th>
                         <th class="align-middle">Area</th>
                         <th class="align-middle">Walker mode</th>
                         <th class="align-middle">Setting</th>
                         <th class="align-middle">Max devices</th>
+                        <th class="align-middle">Event</th>
                         <th>{% if uri != url_for('api_walker') %}<a href='{{ url_for('settings_walker_area', id=identifier) }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a>{% endif %}</th>
                     </tr>
                 </tbody>
@@ -104,6 +105,7 @@
                             <td class='walkertype' data-save='{{ area.walkertype }}'>{{ area.walkertype }}</td>
                             <td class='walkervalue' data-save='{{ area.walkervalue }}'>{{ area.walkervalue }}</td>
                             <td class='walkermax' data-save='{{ area.walkermax }}'>{{ area.walkermax }}</td>
+                            <td class='eventid' data-save='{{ area.eventid }}'>{{ area.eventid }}</td>
                             <td>
                                 <a href="{{ url_for('settings_walker_area', id=identifier, walkerarea=walkerarea_uri) }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
                                 <button type="button" class="btn btn-danger btn-sm delete" data-identifier="{{ loop.index }}"><i class="fas fa-trash-alt"></i></button>

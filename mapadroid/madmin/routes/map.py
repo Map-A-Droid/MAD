@@ -39,7 +39,7 @@ class map(object):
     def add_route(self):
         routes = [
             ("/map", self.map),
-            ("/get_position", self.get_position),
+            ("/get_workers", self.get_workers),
             ("/get_geofence", self.get_geofence),
             ("/get_route", self.get_route),
             ("/get_prioroute", self.get_prioroute),
@@ -62,7 +62,7 @@ class map(object):
                                setlat=setlat, setlng=setlng)
 
     @auth_required
-    def get_position(self):
+    def get_workers(self):
         positions = []
         devicemappings = self._mapping_manager.get_all_devicemappings()
         for name, values in devicemappings.items():
@@ -150,7 +150,7 @@ class map(object):
         neLat, neLon, swLat, swLon, oNeLat, oNeLon, oSwLat, oSwLon = getBoundParameter(request)
         timestamp = request.args.get("timestamp", None)
 
-        coords = []
+        coords = {}
         data = json.loads(
             self._db.download_spawns(
                 neLat,
@@ -167,7 +167,9 @@ class map(object):
 
         for spawnid in data:
             spawn = data[str(spawnid)]
-            coords.append({
+            if spawn["event"] not in coords:
+                coords[spawn["event"]] = []
+            coords[spawn["event"]].append({
                 "id": spawn["id"],
                 "endtime": spawn["endtime"],
                 "lat": spawn["lat"],
@@ -175,10 +177,15 @@ class map(object):
                 "spawndef": spawn["spawndef"],
                 "lastnonscan": spawn["lastnonscan"],
                 "lastscan": spawn["lastscan"],
-                "first_detection": spawn["first_detection"]
+                "first_detection": spawn["first_detection"],
+                "event": spawn["event"]
             })
 
-        return jsonify(coords)
+        cluster_spawns = []
+        for spawn in coords:
+            cluster_spawns.append({"EVENT": spawn, "Coords": coords[spawn]})
+
+        return jsonify(cluster_spawns)
 
     @auth_required
     def get_gymcoords(self):
@@ -354,18 +361,16 @@ class map(object):
 
 
 def get_routepool_route(name, mode, coords):
-    (parsed_coords, s2cells) = get_routepool_coords(coords, mode)
+    parsed_coords = get_routepool_coords(coords, mode)
     return {
         "name": name,
         "mode": mode,
         "coordinates": parsed_coords,
-        "s2cells": s2cells
     }
 
 
 def get_routepool_coords(coord_list, mode):
     route_serialized = []
-    s2cells = {}
     prepared_coords = coord_list
     if isinstance(coord_list, RoutePoolEntry):
         prepared_coords = coord_list.subroute
@@ -373,8 +378,4 @@ def get_routepool_coords(coord_list, mode):
         route_serialized.append([
             getCoordFloat(location.lat), getCoordFloat(location.lng)
         ])
-        if mode == "raids_mitm":
-            cells = S2Helper.get_S2cells_from_circle(location.lat, location.lng, 490)
-            for cell in cells:
-                s2cells[str(cell.id())] = S2Helper.coords_of_cell(cell.id())
-    return (route_serialized, s2cells)
+    return (route_serialized)
