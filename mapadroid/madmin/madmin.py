@@ -18,8 +18,6 @@ from mapadroid.madmin.routes.statistics import statistics
 from mapadroid.madmin.routes.event import event
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, logger
-from gevent.pywsgi import WSGIServer
-
 
 app = Flask(__name__,
             static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
@@ -54,11 +52,8 @@ def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: Mappin
     event(db_wrapper, args, logger, app, mapping_manager, data_manager)
 
     app.logger.removeHandler(default_handler)
-    logging.basicConfig(handlers=[InterceptHandler()], level=logging.INFO)
-
-    http_server = WSGIServer((args.madmin_ip, int(args.madmin_port)), app, log=logging,
-                             error_log=logging)
-    http_server.serve_forever()
+    logging.basicConfig(handlers=[InterceptHandler()], level=0)
+    app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
 
 
 @app.after_request
