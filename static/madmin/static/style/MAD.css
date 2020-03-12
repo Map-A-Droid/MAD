@@ -146,6 +146,12 @@
     background-size: auto !important;
 }
 
+[data-theme="dark"] select, [data-theme="dark"] input, [data-theme="dark"] textarea {
+    background-color: #000 !important;
+    color: #bbb !important;
+    border: 1px solid #fff !important;
+}
+
 .leaflet-draw-toolbar a {
     background-image: url(/static/leaflet.draw.png) !important;
     background-repeat: no-repeat;
