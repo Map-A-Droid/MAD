@@ -1216,7 +1216,9 @@ class WorkerBase(AbstractWorker):
                                                         float(self.current_location.lat),
                                                         float(self.current_location.lng))
         max_radius = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
-        if distance > max_radius:
+        if not max_radius:
+            return True
+        elif distance > max_radius:
             logger.debug2("Data is too far away!! avg location {}, {} from "
                 "data with self.current_location location {}, {} - that's a "
                 "{}m distance with max_radius {} for mode {}", avg_lat, avg_lng,
