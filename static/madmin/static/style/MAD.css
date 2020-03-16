@@ -38,12 +38,39 @@
     color: #bbb !important;
 }
 
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #111 !important;
+    color: #bbb !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover  {
+    color: #506680 !important;
+    background: #111 !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.disabled { color: #666  !important; }
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    color: #666  !important;
+    background: #111 !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color:# bbb !important;
+    border: 1px solid #979797;
+    background: #585858 !important;
+}
+
+[data-theme="dark"] .flex-sm-fill.text-sm-center.nav-link { color: rgba(255,255,255,.5); }
+[data-theme="dark"] .flex-sm-fill.text-sm-center.nav-link:hover { color: rgba(255,255,255,.75); }
+[data-theme="dark"] .flex-sm-fill.text-sm-center.nav-link.active {
+    background-color: #555 !important;
+    color: #bbb !important;
+}
+
 [data-theme="dark"] #show-data_length { color: #bbb;}
 [data-theme="dark"] #show-data_filter { color: #bbb;}
 [data-theme="dark"] #show-complete_length { color: #bbb;}
 [data-theme="dark"] #show-data_info { color: #bbb;}
-[data-theme="dark"] a#show-data_previous { color: #bbb !important; }
-[data-theme="dark"] a#show-data_next { color: #bbb !important; }
 [data-theme="dark"] .dataTables_info { color: #bbb !important; }
 [data-theme="dark"] .dataTables_filter { color: #bbb !important; }
 [data-theme="dark"] .dataTables_length { color: #bbb !important; }
@@ -51,7 +78,7 @@
 [data-theme="dark"] #show-spawnpoints-stats_next { color: #bbb !important; }
 [data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button { color: #bbb !important; }
 
-[data-theme="dark"] a { color: #bbb; }
+[data-theme="dark"] a { color: #eee; }
 [data-theme="dark"] .card-text { color: #000; }
 [data-theme="dark"] a.dropdown-item { color: #000; }
 [data-theme="dark"] th { border-bottom: 0px !important; }
@@ -70,15 +97,15 @@
 
 [data-theme="dark"] .buttons-html5 {
     background-color: #000 !important;
-    color: #fff !important;
-    border: 1px solid white !important;
+    color: #bbb !important;
+    border: 1px solid #bbb !important;
     margin-bottom: 10px;
 }
 
 [data-theme="dark"] input[type="search"] {
     background-color: #000 !important;
-    color: #fff !important;
-    border: 1px solid #fff;
+    color: #bbb !important;
+    border: 1px solid #bbb;
 }
 
 [data-theme="dark"] #legendContainer {
@@ -116,6 +143,10 @@
     border: 1px solid white !important;
 }
 
+[data-theme="dark"] a:hover {
+    color: rgba(255,255,255,.75) !important;
+}
+
 [data-theme="dark"] .darkmode-label { color: #fff !important; }
 [data-theme="dark"] .darkmode-label:hover { color: #506680 !important; }
 
@@ -149,7 +180,7 @@
 [data-theme="dark"] select, [data-theme="dark"] input, [data-theme="dark"] textarea {
     background-color: #000 !important;
     color: #bbb !important;
-    border: 1px solid #fff !important;
+    border: 1px solid #bbb !important;
 }
 
 .leaflet-draw-toolbar a {
