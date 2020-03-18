@@ -609,7 +609,7 @@ class WorkerBase(AbstractWorker):
             if screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT, ScreenType.CLOSE]:
                 logger.warning('Error getting Gamedata or strange ggl message appears')
                 self._loginerrorcounter += 1
-                if self._loginerrorcounter < 3:
+                if self._loginerrorcounter < 2:
                     self._restart_pogo(True)
             elif screen_type == ScreenType.DISABLED:
                 # Screendetection is disabled
