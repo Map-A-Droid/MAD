@@ -32,7 +32,7 @@ class Communicator(AbstractCommunicator):
         try:
             self.terminate_connection()
         except (WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException):
-            logger.info("Communicator-cleanup of {} resulted in timeout or connection has already been closed")
+            logger.info("Communicator-cleanup of {} resulted in timeout or connection has already been closed", str(self.worker_id))
 
     def __runAndOk(self, command, timeout) -> bool:
         return self.__run_and_ok_bytes(command, timeout)
