@@ -719,16 +719,6 @@ CREATE TABLE `weather` (
     `world_time` smallint(6) DEFAULT NULL,
     `last_updated` datetime DEFAULT NULL,
     PRIMARY KEY (`s2_cell_id`),
-    KEY `weather_cloud_level` (`cloud_level`),
-    KEY `weather_rain_level` (`rain_level`),
-    KEY `weather_wind_level` (`wind_level`),
-    KEY `weather_snow_level` (`snow_level`),
-    KEY `weather_fog_level` (`fog_level`),
-    KEY `weather_wind_direction` (`wind_direction`),
-    KEY `weather_gameplay_weather` (`gameplay_weather`),
-    KEY `weather_severity` (`severity`),
-    KEY `weather_warn_weather` (`warn_weather`),
-    KEY `weather_world_time` (`world_time`),
     KEY `weather_last_updated` (`last_updated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
