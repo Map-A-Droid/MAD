@@ -100,7 +100,7 @@
     var toHHMMSS_mark = (secs) => {
         var sec_test = parseInt(secs, 10);
         if (sec_test <  localStorage['MAD_MAXSECONDS_STATUS']) {
-                return "✔️";
+                return "<i class='fas fa-check' style='color: green !important;'></i>";
         }
         return toHHMMSS(secs);
     }
@@ -142,7 +142,7 @@
 <table id="show-data" class="table"></table>
 <div class="card border-secondary">
   <div class="card-body py-2">
-    <p class="card-text">How many seconds for green tick? <input type="number" id="maxSeconds" /></p>
+    <p class="card-text">How many seconds for <i class="fas fa-check" style="color: green !important;"></i> in Last Updated? <input type="number" id="maxSeconds" /></p>
   </div>
 </div>
 <br />
