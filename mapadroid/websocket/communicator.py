@@ -32,7 +32,7 @@ class Communicator(AbstractCommunicator):
         try:
             self.terminate_connection()
         except (WebsocketWorkerConnectionClosedException, WebsocketWorkerTimeoutException):
-            logger.info("Communicator-cleanup of {} resulted in timeout or connection has already been closed")
+            logger.info("Communicator-cleanup of {} resulted in timeout or connection has already been closed", str(self.worker_id))
 
     def __runAndOk(self, command, timeout) -> bool:
         return self.__run_and_ok_bytes(command, timeout)
@@ -84,11 +84,11 @@ class Communicator(AbstractCommunicator):
     def clear_app_cache(self, package_name: str) -> bool:
         return self.__runAndOk("more cache {}\r\n".format(package_name), self.__command_timeout)
 
-    def magisk_off(self, package_name: str) -> None:
-        self.passthrough("su -c magiskhide --rm {}".format(package_name))
+    def magisk_off(self) -> None:
+        self.passthrough("su -c magiskhide --disable")
 
-    def magisk_on(self, package_name: str) -> None:
-        self.passthrough("su -c magiskhide --add {}".format(package_name))
+    def magisk_on(self) -> None:
+        self.passthrough("su -c magiskhide --enable")
 
     def turn_screen_on(self) -> bool:
         return self.__runAndOk("more screen on\r\n", self.__command_timeout)

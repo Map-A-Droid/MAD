@@ -48,11 +48,11 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
-    def magisk_off(self, package_name: str) -> None:
+    def magisk_off(self) -> None:
         pass
 
     @abstractmethod
-    def magisk_on(self, package_name: str) -> None:
+    def magisk_on(self) -> None:
         pass
 
     @abstractmethod

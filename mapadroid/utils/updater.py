@@ -53,9 +53,14 @@ class deviceUpdater(object):
         self._current_job_id = []
         self._current_job_device = []
         self._returning = returning
-        if os.path.exists('update_log.json'):
-            with open('update_log.json') as logfile:
-                self._log = json.load(logfile)
+        try:
+            if os.path.exists('update_log.json'):
+                with open('update_log.json') as logfile:
+                    self._log = json.load(logfile)
+        except json.decoder.JSONDecodeError:
+            logger.error('Corrupted update_log.json file found. Deleting the '
+            'file. Please check remaining disk space or disk health.')
+            os.remove('update_log.json')
 
         self.init_jobs()
         self.kill_old_jobs()

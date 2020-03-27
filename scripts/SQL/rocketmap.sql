@@ -569,7 +569,7 @@ CREATE TABLE `trs_s2cells` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_spawn` (
-    `spawnpoint` varchar(16) COLLATE utf8mb4_unicode_ci NOT NULL,
+    `spawnpoint` bigint(20) unsigned NOT NULL,
     `latitude` double NOT NULL,
     `longitude` double NOT NULL,
     `spawndef` int(11) NOT NULL DEFAULT '240',
@@ -579,8 +579,8 @@ CREATE TABLE `trs_spawn` (
     `last_non_scanned` datetime DEFAULT NULL,
     `calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `eventid` int NOT NULL DEFAULT 1,
-    UNIQUE KEY `spawnpoint_2` (`spawnpoint`),
-    KEY `spawnpoint` (`spawnpoint`)
+    PRIMARY KEY (`spawnpoint`),
+    KEY `event_lat_long` (`eventid`, latitude`, `longitude`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_spawnsightings` (
@@ -719,16 +719,6 @@ CREATE TABLE `weather` (
     `world_time` smallint(6) DEFAULT NULL,
     `last_updated` datetime DEFAULT NULL,
     PRIMARY KEY (`s2_cell_id`),
-    KEY `weather_cloud_level` (`cloud_level`),
-    KEY `weather_rain_level` (`rain_level`),
-    KEY `weather_wind_level` (`wind_level`),
-    KEY `weather_snow_level` (`snow_level`),
-    KEY `weather_fog_level` (`fog_level`),
-    KEY `weather_wind_direction` (`wind_direction`),
-    KEY `weather_gameplay_weather` (`gameplay_weather`),
-    KEY `weather_severity` (`severity`),
-    KEY `weather_warn_weather` (`warn_weather`),
-    KEY `weather_world_time` (`world_time`),
     KEY `weather_last_updated` (`last_updated`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 

@@ -34,7 +34,7 @@ class DbSanityCheck:
             logger.error("Your MySQL/MariaDB sql_mode settings needs an adjustment.")
             logger.error("Please drop those settings: {}.", ", ".join(detected_wrong_modes))
             logger.error(
-                "More info: https://mad-docs.readthedocs.io/en/latest/common-issues/faq/#sql-mode-error-mysql-strict-mode-mysql-mode")
+                "More info: https://mad-docs.readthedocs.io/en/latest/faq/#sql-mode-error-mysql-strict-mode-mysql-mode")
             self.failing_issues = True
 
     def validate_max_allowed_packet(self):
