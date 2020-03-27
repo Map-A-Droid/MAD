@@ -199,6 +199,20 @@ class WorkerBase(AbstractWorker):
         :return:
         """
 
+    @abstractmethod
+    def _worker_specific_setup_start(self):
+        """
+        Routine preparing the state to scan. E.g. starting specific apps or clearing certain files
+        Returns:
+        """
+
+    @abstractmethod
+    def _worker_specific_setup_stop(self):
+        """
+        Routine destructing the state to scan. E.g. stopping specific apps or clearing certain files
+        Returns:
+        """
+
     def _start_asyncio_loop(self):
         self.loop = asyncio.new_event_loop()
         asyncio.set_event_loop(self.loop)
@@ -648,7 +662,7 @@ class WorkerBase(AbstractWorker):
     def _restart_pogo_safe(self):
         self._stop_pogo()
         time.sleep(1)
-        self._stopPogoDroid()
+        self._worker_specific_setup_start()
         time.sleep(1)
         self._communicator.magisk_off()
         time.sleep(1)
@@ -658,7 +672,7 @@ class WorkerBase(AbstractWorker):
         time.sleep(25)
         self._stop_pogo()
         time.sleep(1)
-        self._start_pogodroid()
+        self._worker_specific_setup_stop()
         time.sleep(1)
         return self._communicator.start_app("com.nianticlabs.pokemongo")
 
@@ -810,15 +824,6 @@ class WorkerBase(AbstractWorker):
         self.stop_worker()
         return start_result
 
-    def _start_pogodroid(self):
-        start_result = self._communicator.start_app("com.mad.pogodroid")
-        time.sleep(5)
-        return start_result
-
-    def _stopPogoDroid(self):
-        stopResult = self._communicator.stop_app("com.mad.pogodroid")
-        return stopResult
-
     def _restart_pogo(self, clear_cache=True, mitm_mapper: Optional[MitmMapper] = None):
         successful_stop = self._stop_pogo()
         self._db_wrapper.save_last_restart(self._dev_id)
@@ -834,17 +839,7 @@ class WorkerBase(AbstractWorker):
                                                    self._mapping_manager.routemanager_get_mode(
                                                        self._routemanager_name),
                                                    99)
-            return self._start_pogo()
-        else:
-            return False
-
-    def _restartPogoDroid(self):
-        successfulStop = self._stopPogoDroid()
-        time.sleep(1)
-        logger.debug(
-            "restartPogoDroid: stop PogoDroid resulted in {}", str(successfulStop))
-        if successfulStop:
-            return self._start_pogodroid()
+            return self._restart_pogo_safe()
         else:
             return False
 
