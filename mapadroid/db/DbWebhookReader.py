@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
+from mapadroid.utils.logging import logger
 
 
 class DbWebhookReader:
