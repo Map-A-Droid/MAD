@@ -199,6 +199,11 @@ class MITMBase(WorkerBase):
             self._communicator.click(int(x), int(y))
             time.sleep(6 + int(delayadd))
 
+        x, y = self._resocalc.get_quest_listview(self)[0], \
+               self._resocalc.get_quest_listview(self)[1]
+        self._communicator.click(int(x), int(y))
+        time.sleep(2 + int(delayadd))
+
         trashcancheck = self._get_trash_positions(full_screen=True)
         if trashcancheck is None:
             logger.error('Could not find any trashcan - abort')
