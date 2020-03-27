@@ -931,7 +931,7 @@ class DbWrapper:
                 'spawndef': spawndef,
                 'lastscan': str(last_scanned),
                 'lastnonscan': str(last_non_scanned),
-                'first_detection': str(first_detection),
+                'first_detection': int(first_detection.timestamp()),
                 'event': eventname,
                 'eventid': eventid
             }
