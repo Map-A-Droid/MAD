@@ -273,7 +273,7 @@ class WebsocketServer(object):
             return None
 
         if not self.__data_manager.is_device_active(origin):
-            logger.warning('Origin %s is currently paused.  Unpause through MADmin to begin working', origin)
+            logger.warning('Origin {} is currently paused. Unpause through MADmin to begin working', origin)
             return None
         logger.info("Client {} registering", str(origin))
         if self.__mapping_manager is None or origin not in self.__mapping_manager.get_all_devicemappings().keys():
