@@ -80,6 +80,8 @@ def parseArgs():
                         help=(
                             'The delay in minutes to wait after an egg has hatched to move to the location of the '
                             'gym. Default: 3.5'))
+    parser.add_argument('--enable_worker_specific_extra_start_stop_handling', default=False,
+                        help='Option to enable/disable extra handling for the start/stop routine of workers')
 
     # job processor
     parser.add_argument('-jobdtwh', '--job_dt_wh', action='store_true', default=False,
