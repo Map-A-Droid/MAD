@@ -662,8 +662,9 @@ class WorkerBase(AbstractWorker):
     def _restart_pogo_safe(self):
         self._stop_pogo()
         time.sleep(1)
-        self._worker_specific_setup_stop()
-        time.sleep(1)
+        if self._applicationArgs.enable_worker_specific_extra_start_stop_handling:
+            self._worker_specific_setup_stop()
+            time.sleep(1)
         self._communicator.magisk_off()
         time.sleep(1)
         self._communicator.magisk_on()
@@ -672,8 +673,9 @@ class WorkerBase(AbstractWorker):
         time.sleep(25)
         self._stop_pogo()
         time.sleep(1)
-        self._worker_specific_setup_start()
-        time.sleep(1)
+        if self._applicationArgs.enable_worker_specific_extra_start_stop_handling:
+            self._worker_specific_setup_start()
+            time.sleep(1)
         return self._communicator.start_app("com.nianticlabs.pokemongo")
 
     def _switch_user(self):
