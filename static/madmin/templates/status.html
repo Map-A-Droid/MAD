@@ -12,7 +12,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
-    var dataTable = $("#show-data").DataTable({
+    var dataTable = $("#show-data-status").DataTable({
             "ajax": {
                 "url": "get_status",
                 "dataSrc": ""
@@ -22,12 +22,6 @@
                     data: 'name', title: 'Origin',
                     "render": function (data, type, oData) {
                         return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
-                    }
-                },
-                {
-                    data: '', title: 'Commands',
-                    "render": function (data, type, oData) {
-                        return "<center><button type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
                     }
                 },
                 {data: 'lastProtoDateTime', title: 'Last Update'},
@@ -50,22 +44,28 @@
                 {data: 'rebootingOption', title: 'Reboot Device'},
                 {data: 'rebootCounter', title: 'Reboot Counter'},
                 {data: 'globalrebootcount', title: 'Total Reboots'},
-                {data: 'lastPogoReboot', title: 'Last Reboot'}            ],
+                {data: 'lastPogoReboot', title: 'Last Reboot'},
+                {
+                    data: '', title: 'Commands',
+                    "render": function (data, type, oData) {
+                        return "<center><button type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
+                    }
+                }            ],
             "columnDefs": [
                 {
-                    "targets": [6, 10],
+                    "targets": [5, 9],
                     "render": function (data, type, row) {
                         return (parseInt(data) == 0 ? "False" : "True");
                     }
                 },
                 {
-                    "targets": [5],
+                    "targets": [4],
                     "render": function (data, type, row) {
                         return row.routePos + "/" + row.routeMax
                     }
                 },
                 {
-                    "targets": [2],
+                    "targets": [1],
                     "render": function (data, type, row) {
                         if (type == "sort") { return data; }
                         var dateToShow = moment.utc(data * 1000);
@@ -76,7 +76,7 @@
                     }
                 },
                 {
-                    "targets": [9, 13],
+                    "targets": [8, 12],
                     "render": function (data, type, row) {
                         if (type == "sort") { return data; }
                         var dateToShow = moment.utc(data * 1000);
@@ -87,7 +87,7 @@
                     }
                 },
                 {
-                    "targets": [3],
+                    "targets": [2],
                     "render": function (data, type, row) {
                         return toHHMMSS(data);
                     }
@@ -97,13 +97,7 @@
             "responsive": {{ responsive }},
             "autoWidth": false,
             "stateSave": true,
-            "stateDuration": 0,
-            "stateSaveCallback": function(settings,data) {
-            localStorage.setItem( 'MAD_status_' + settings.sInstance, JSON.stringify(data) )
-            },
-            "stateLoadCallback": function(settings) {
-            return JSON.parse( localStorage.getItem( 'MAD_status_' + settings.sInstance ) )
-            }
+            "stateDuration": 0
         });
     
     var toHHMMSS_mark = (secs) => {
@@ -138,7 +132,7 @@
         }, 10000);
     });
 
-    $( "#show-data" ).on( "click", 'button.delete', function(e) {
+    $( "#show-data-status" ).on( "click", 'button.delete', function(e) {
         e.stopImmediatePropagation();
         var r = confirm("You really want to delete this entry?");
         if (r != true) {
@@ -178,7 +172,7 @@
 
      });
 
-     $( "#show-data" ).on( "click", 'button.reset', function(e) {
+     $( "#show-data-status" ).on( "click", 'button.reset', function(e) {
         e.stopImmediatePropagation();
         var r = confirm("You really want to reset the count values?");
         if (r != true) {
@@ -228,13 +222,21 @@
 
 {% block content %}
 <h2>Worker Status</h2>
+<div class="dropdown">
+  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
+  <ul class="dropdown-menu dropdown-menu-right">
+      <li class="dropdown-item"><button type='button' class='delete btn btn-danger btn-sm confirm'><i class='fa fa-trash'></i></button> Delete worker from database</li>
+      <li class="dropdown-item"><button type='button' class=' reset btn btn-info btn-sm'><i class='fas fa-undo'></i></i></button> Reset workers stats</li>
+  </ul>
+</div>
+<br>
 <div class="card border-secondary">
   <div class="card-body py-2">
     <p class="card-text">View workers and their current status.  Times are displayed as HH:MM:SS.  HH is only specified if required</p>
   </div>
 </div>
 <br>
-<table id="show-data" class="table"></table>
+<table id="show-data-status" class="table"></table>
 <div class="card border-secondary">
   <div class="card-body py-2">
     <p class="card-text">How many seconds for green tick? <input type="number" id="maxSeconds" /></p>
