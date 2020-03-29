@@ -130,8 +130,20 @@
             }
         };
 
-       loadData("", "");
-
+       var yesterday = new Date();
+       // set it to yesterday
+       yesterday.setDate(yesterday.getDate()-1);
+       // force midnight
+       yesterday.setHours(0);
+       yesterday.setMinutes(0);
+       yesterday.setSeconds(0);
+       yesterday.setMilliseconds(0);
+       // force input format
+       $("input.date.start").val(yesterday.getFullYear()+ "-" + (yesterday.getMonth()+1) + "-" + yesterday.getDate());
+       // generate timestamp using timezoneoffset
+       yesterday_timestamp = ((yesterday.getTime() - yesterday.getTimezoneOffset()*60000)/1000);
+       loadData(yesterday_timestamp, "");
+	
        var previousPoint = null, previousLabel = null;
         $.fn.UseTooltip = function () {
             $(this).bind("plothover", function (event, pos, item) {
