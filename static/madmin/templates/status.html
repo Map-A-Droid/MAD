@@ -24,6 +24,12 @@
                         return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
                     }
                 },
+                {
+                    data: '', title: 'Commands',
+                    "render": function (data, type, oData) {
+                        return "<center><button type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
+                    }
+                },
                 {data: 'lastProtoDateTime', title: 'Last Update'},
                 {data: 'currentSleepTime', title: 'Next Action'},
                 {
@@ -44,25 +50,22 @@
                 {data: 'rebootingOption', title: 'Reboot Device'},
                 {data: 'rebootCounter', title: 'Reboot Counter'},
                 {data: 'globalrebootcount', title: 'Total Reboots'},
-                {data: 'lastPogoReboot', title: 'Last Reboot'},
-                {data: 'currentPos', title: 'Current Pos'},
-                {data: 'lastPos', title: 'Last Pos'}
-            ],
+                {data: 'lastPogoReboot', title: 'Last Reboot'}            ],
             "columnDefs": [
                 {
-                    "targets": [5, 9],
+                    "targets": [6, 10],
                     "render": function (data, type, row) {
                         return (parseInt(data) == 0 ? "False" : "True");
                     }
                 },
                 {
-                    "targets": [4],
+                    "targets": [5],
                     "render": function (data, type, row) {
                         return row.routePos + "/" + row.routeMax
                     }
                 },
                 {
-                    "targets": [1],
+                    "targets": [2],
                     "render": function (data, type, row) {
                         if (type == "sort") { return data; }
                         var dateToShow = moment.utc(data * 1000);
@@ -73,18 +76,18 @@
                     }
                 },
                 {
-                    "targets": [8, 12],
+                    "targets": [9, 13],
                     "render": function (data, type, row) {
                         if (type == "sort") { return data; }
                         var dateToShow = moment.utc(data * 1000);
-                        if (dateToShow.isValid() && data != null && data != undefined) {
+                        if (dateToShow.isValid() && data != null && data != undefined && data > 0) {
                             return toHHMMSS(Math.abs(dateToShow.diff(moment.utc()) / 1000));
                         }
                         return "None";
                     }
                 },
                 {
-                    "targets": [2],
+                    "targets": [3],
                     "render": function (data, type, row) {
                         return toHHMMSS(data);
                     }
@@ -94,7 +97,13 @@
             "responsive": {{ responsive }},
             "autoWidth": false,
             "stateSave": true,
-            "stateDuration": 0,                                    
+            "stateDuration": 0,
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_status_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_status_' + settings.sInstance ) )
+            }
         });
     
     var toHHMMSS_mark = (secs) => {
@@ -123,11 +132,97 @@
         $('input#maxSeconds').on('input', function() {
                 localStorage['MAD_MAXSECONDS_STATUS'] = $(this).val();
         });
+
         setInterval(function () {
                 dataTable.ajax.reload(null, false); //user paging is not reset on reload
         }, 10000);
     });
+
+    $( "#show-data" ).on( "click", 'button.delete', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to delete this entry?");
+        if (r != true) {
+             return;
+        }
+        var delete_div = $(this).find(".delete_div");
+
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+        var deviceid = $(this).data('deviceid');
+
+
+        $.ajax({
+            type: 'GET',
+            url:'delete_status_entry',
+            data:'deviceid='+ deviceid,
+            success: function(msg){
+            if (msg.status == 'success') {
+                 dataTable.ajax.reload(null, false);
+            }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
+     $( "#show-data" ).on( "click", 'button.reset', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to reset the count values?");
+        if (r != true) {
+             return;
+        }
+        var delete_div = $(this).find(".delete_div");
+
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+        var deviceid = $(this).data('deviceid');
+
+
+        $.ajax({
+            type: 'GET',
+            url:'reset_status_entry',
+            data:'deviceid='+ deviceid,
+            success: function(msg){
+            if (msg.status == 'success') {
+                 dataTable.ajax.reload(null, false);
+            }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
 </script>
+<style>
+   table.dataTable tr.odd { background-color: #F8F8F8; }
+   table.dataTable tr.even { background-color: white; }
+</style>
 
 {% endblock %}
 

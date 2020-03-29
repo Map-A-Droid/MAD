@@ -53,6 +53,8 @@ class statistics(object):
             ("/delete_spawn", self.delete_spawn),
             ("/convert_spawn", self.convert_spawn),
             ("/delete_unfenced_spawns", self.delete_unfenced_spawns),
+            ("/delete_status_entry", self.delete_status_entry),
+            ("/reset_status_entry", self.reset_status_entry),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -592,6 +594,28 @@ class statistics(object):
 
         stats = {'spawnpoints': coords}
         return jsonify(stats)
+
+    @auth_required
+    @logger.catch()
+    def delete_status_entry(self):
+        deviceid = request.args.get('deviceid', None)
+        self._db.delete_status_entry(deviceid)
+        return jsonify({'status': 'success'})
+
+    @auth_required
+    @logger.catch()
+    def reset_status_entry(self):
+        deviceid = request.args.get('deviceid', None)
+        save_data = {
+            'device_id': deviceid,
+            'globalrebootcount': 0,
+            'globalrestartcount': 0,
+            'lastPogoRestart': 0,
+            'lastPogoReboot': 0,
+
+        }
+        self._db.save_status(save_data)
+        return jsonify({'status': 'success'})
 
     @auth_required
     @logger.catch()
