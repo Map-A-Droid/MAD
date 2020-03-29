@@ -12,7 +12,7 @@
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.22.2/moment.min.js"></script>
 <script>
-    var dataTable = $("#show-data").DataTable({
+    var dataTable = $("#show-data-status").DataTable({
             "ajax": {
                 "url": "get_status",
                 "dataSrc": ""
@@ -45,9 +45,12 @@
                 {data: 'rebootCounter', title: 'Reboot Counter'},
                 {data: 'globalrebootcount', title: 'Total Reboots'},
                 {data: 'lastPogoReboot', title: 'Last Reboot'},
-                {data: 'currentPos', title: 'Current Pos'},
-                {data: 'lastPos', title: 'Last Pos'}
-            ],
+                {
+                    data: '', title: 'Commands',
+                    "render": function (data, type, oData) {
+                        return "<center><button type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
+                    }
+                }            ],
             "columnDefs": [
                 {
                     "targets": [5, 9],
@@ -77,7 +80,7 @@
                     "render": function (data, type, row) {
                         if (type == "sort") { return data; }
                         var dateToShow = moment.utc(data * 1000);
-                        if (dateToShow.isValid() && data != null && data != undefined) {
+                        if (dateToShow.isValid() && data != null && data != undefined && data > 0) {
                             return toHHMMSS(Math.abs(dateToShow.diff(moment.utc()) / 1000));
                         }
                         return "None";
@@ -94,7 +97,7 @@
             "responsive": {{ responsive }},
             "autoWidth": false,
             "stateSave": true,
-            "stateDuration": 0,                                    
+            "stateDuration": 0
         });
     
     var toHHMMSS_mark = (secs) => {
@@ -123,23 +126,117 @@
         $('input#maxSeconds').on('input', function() {
                 localStorage['MAD_MAXSECONDS_STATUS'] = $(this).val();
         });
+
         setInterval(function () {
                 dataTable.ajax.reload(null, false); //user paging is not reset on reload
         }, 10000);
     });
+
+    $( "#show-data-status" ).on( "click", 'button.delete', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to delete this entry?");
+        if (r != true) {
+             return;
+        }
+        var delete_div = $(this).find(".delete_div");
+
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+        var deviceid = $(this).data('deviceid');
+
+
+        $.ajax({
+            type: 'GET',
+            url:'delete_status_entry',
+            data:'deviceid='+ deviceid,
+            success: function(msg){
+            if (msg.status == 'success') {
+                 dataTable.ajax.reload(null, false);
+            }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
+     $( "#show-data-status" ).on( "click", 'button.reset', function(e) {
+        e.stopImmediatePropagation();
+        var r = confirm("You really want to reset the count values?");
+        if (r != true) {
+             return;
+        }
+        var delete_div = $(this).find(".delete_div");
+
+        delete_div.empty();
+        elem = $(document.createElement("img")).attr({
+                      'src': "{{ url_for('static', filename='loading.gif') }}",
+                      'class': 'convert_disp fa',
+                      'width': '13px',
+                      'heigth': '13px'
+                    });
+        delete_div.append(elem);
+        var deviceid = $(this).data('deviceid');
+
+
+        $.ajax({
+            type: 'GET',
+            url:'reset_status_entry',
+            data:'deviceid='+ deviceid,
+            success: function(msg){
+            if (msg.status == 'success') {
+                 dataTable.ajax.reload(null, false);
+            }
+            },
+            error: function(msg) {
+                alert(msg);
+                delete_div.empty();
+                elem = $(document.createElement("i")).attr({
+                      'class': 'fa fa-minus-circle',
+                });
+                delete_div.append(elem);
+            }
+        });
+
+     });
+
 </script>
+<style>
+   table.dataTable tr.odd { background-color: #F8F8F8; }
+   table.dataTable tr.even { background-color: white; }
+</style>
 
 {% endblock %}
 
 {% block content %}
 <h2>Worker Status</h2>
+<div class="dropdown">
+  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
+  <ul class="dropdown-menu dropdown-menu-right">
+      <li class="dropdown-item"><button type='button' class='delete btn btn-danger btn-sm confirm'><i class='fa fa-trash'></i></button> Delete worker stats from database</li>
+      <li class="dropdown-item"><button type='button' class=' reset btn btn-info btn-sm'><i class='fas fa-undo'></i></i></button> Reset workers stats</li>
+  </ul>
+</div>
+<br>
 <div class="card border-secondary">
   <div class="card-body py-2">
     <p class="card-text">View workers and their current status.  Times are displayed as HH:MM:SS.  HH is only specified if required</p>
   </div>
 </div>
 <br>
-<table id="show-data" class="table"></table>
+<table id="show-data-status" class="table"></table>
 <div class="card border-secondary">
   <div class="card-body py-2">
     <p class="card-text">How many seconds for green tick? <input type="number" id="maxSeconds" /></p>
