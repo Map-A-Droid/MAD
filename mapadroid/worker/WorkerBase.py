@@ -841,7 +841,7 @@ class WorkerBase(AbstractWorker):
                                                    self._mapping_manager.routemanager_get_mode(
                                                        self._routemanager_name),
                                                    99)
-            return self._restart_pogo_safe()
+            return self._start_pogo()
         else:
             return False
 
