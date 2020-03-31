@@ -676,7 +676,7 @@ class WorkerBase(AbstractWorker):
         if self._applicationArgs.enable_worker_specific_extra_start_stop_handling:
             self._worker_specific_setup_start()
             time.sleep(1)
-        return self._communicator.start_app("com.nianticlabs.pokemongo")
+        return self._start_pogo()
 
     def _switch_user(self):
         logger.info('Switching User - please wait ...')
