@@ -76,7 +76,7 @@ class PlayerStats(object):
                 self.set_level(int(data[self._id][0]['level']))
                 self.set_poke_stop_visits(int(data[self._id][0]['poke_stop_visits']))
         except IOError:
-            logger.error('[{}] - no Statsfile found', str(self._id))
+            logger.warning('[{}] - no Statsfile found', str(self._id))
             self.set_level(0)
             return False
         except json.decoder.JSONDecodeError:
