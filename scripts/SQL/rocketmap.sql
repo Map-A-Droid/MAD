@@ -580,7 +580,7 @@ CREATE TABLE `trs_spawn` (
     `calc_endminsec` varchar(5) COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `eventid` int NOT NULL DEFAULT 1,
     PRIMARY KEY (`spawnpoint`),
-    KEY `event_lat_long` (`eventid`, latitude`, `longitude`)
+    KEY `event_lat_long` (`eventid`, `latitude`, `longitude`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 CREATE TABLE `trs_spawnsightings` (

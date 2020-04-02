@@ -816,6 +816,17 @@ class DbWrapper:
         self.execute(query, commit=True)
         return True
 
+    def delete_status_entry(self, deviceid):
+        logger.debug("dbWrapper::delete_status_entry")
+        query = (
+            "DELETE "
+            "FROM trs_status "
+            "WHERE device_id ={}".format(str(deviceid))
+        )
+
+        self.execute(query, commit=True)
+        return True
+
     def convert_spawnpoints(self, spawnpoint_ids):
         logger.debug("dbWrapper::convert_spawnpoints")
         query = (
