@@ -40,7 +40,7 @@
 		"qS_cIwHsLSo": "0x1F5051C",
 		"mP_gIiA": "0x206CD48",
 		"rF_gCo": "0x37A59A4",
-        "mCh_gMOcIo": "0x1F8CDCC"
+		"mCh_gMOcIo": "0x1F8CDCC"
 	},
 	"0.169.3_32": {
 		"gSao": "0x21B1D58",
@@ -83,7 +83,7 @@
 		"qS_cIwHsLSo": "0xF760C8",
 		"mP_gIiA": "0x10C12F0",
 		"rF_gCo": "0x2B58AFC",
-        "mCh_gMOcIo": "0xFBC808"
+		"mCh_gMOcIo": "0xFBC808"
 	},
 	"0.171.0_64": {
 		"gSao": "0x2FF52F8",
@@ -126,7 +126,7 @@
 		"qS_cIwHsLSo": "0x1CFD118",
 		"mP_gIiA": "0x205F440",
 		"rF_gCo": "0x36D3F4C",
-        "mCh_gMOcIo": "0x1CC330C"
+		"mCh_gMOcIo": "0x1CC330C"
 	},
 	"0.171.0_32": {
 		"gSao": "0x21D7628",
@@ -169,7 +169,7 @@
 		"qS_cIwHsLSo": "0xC3A260",
 		"mP_gIiA": "0x1011BD4",
 		"rF_gCo": "0x2998D48",
-        "mCh_gMOcIo": "0xBF74B0"
+		"mCh_gMOcIo": "0xBF74B0"
 	},
 	"0.171.2_32": {
 		"gSao": "0x21D7350",
@@ -212,7 +212,7 @@
 		"qS_cIwHsLSo": "0xC3A248",
 		"mP_gIiA": "0x1011A24",
 		"rF_gCo": "0x2998A70",
-        "mCh_gMOcIo": "0xBF7498"
+		"mCh_gMOcIo": "0xBF7498"
 	},
 	"0.171.2_64": {
 		"gSao": "0x30000AC",
@@ -255,7 +255,7 @@
 		"qS_cIwHsLSo": "0x1D010E8",
 		"mP_gIiA": "0x206429C",
 		"rF_gCo": "0x36E1D00",
-        "mCh_gMOcIo": "0x1CC72DC"
+		"mCh_gMOcIo": "0x1CC72DC"
 	},
 	"0.171.3_64": {
 		"gSao": "0x30030E4",
@@ -298,49 +298,49 @@
 		"qS_cIwHsLSo": "0x1D010E8",
 		"mP_gIiA": "0x206429C",
 		"rF_gCo": "0x36E1D38",
-        "mCh_gMOcIo": "0x1CC72DC"
+		"mCh_gMOcIo": "0x1CC72DC"
 	},
 	"0.171.3_32": {
-        "gSao": "0x21D7398",
-        "gMCo": "0x1E2AD0C",
-        "rF_gIo": "0x28623D0",
-        "cMcP_gWPo": "0x1DC6C2C",
-        "wPp_gEIo": "0x156B6DC",
-        "aRs_gCiSo": "0x2FCFA4C",
-        "wPp_gPo": "0x156B42C",
-        "aR_gMo": "0x2FCEB84",
-        "pP_gPIo": "0x1FE8164",
-        "cIs_sIo": "0x1A876D4",
-        "cIs_rRbSo": "0x1A863EC",
-        "pIs_sSRo": "0x114CA44",
-        "pIs_Io": "0x114C600",
-        "wAp_gSo": "0x1C429E8",
-        "wDcT_gSo": "0x15697F4",
-        "cIs_rRBo": "0x1A87148",
-        "uIwR_gSo": "0x2539084",
-        "wAp_gWWo": "0x1C429F8",
-        "uIwR_gAAo": "0x2539074",
-        "sS_gScSo": "0xE8B1D4",
-        "cIs_rBo": "0x1A87428",
-        "wMp_uDo": "0xE9F62C",
-        "mP_oTo": "0xC0D9B0",
-        "wMp_gPIo": "0xE9F440",
-        "wMp_gEIo": "0xE9F3AC",
-        "sS_sDWo": "0xE8B750",
-        "sS_sDW1o": "0xE8B92C",
-        "wRg_Io": "0x1546578",
-        "wMp_sERo": "0xE9FA58",
-        "iEoP_gRo": "0x2416C1C",
-        "wLs_gIAOo": "0xE81EFC",
-        "aR_oRo": "0x2FCEB94",
-        "wLs_gIWEo": "0xE81F04",
-        "cIs_gIaEo": "0x1A85C60",
-        "cIs_rBsALo": "0x1A873E8",
-        "wGgCf_Co": "0xE815D4",
-        "pDs_rGDo": "0x1426A9C",
-        "qS_cIwHsLSo": "0xC3A248",
-        "mP_gIiA": "0x1011A24",
-        "rF_gCo": "0x2998AB8",
-	    "mCh_gMOcIo": "0xBF7498"
-    }
+		"gSao": "0x21D7398",
+		"gMCo": "0x1E2AD0C",
+		"rF_gIo": "0x28623D0",
+		"cMcP_gWPo": "0x1DC6C2C",
+		"wPp_gEIo": "0x156B6DC",
+		"aRs_gCiSo": "0x2FCFA4C",
+		"wPp_gPo": "0x156B42C",
+		"aR_gMo": "0x2FCEB84",
+		"pP_gPIo": "0x1FE8164",
+		"cIs_sIo": "0x1A876D4",
+		"cIs_rRbSo": "0x1A863EC",
+		"pIs_sSRo": "0x114CA44",
+		"pIs_Io": "0x114C600",
+		"wAp_gSo": "0x1C429E8",
+		"wDcT_gSo": "0x15697F4",
+		"cIs_rRBo": "0x1A87148",
+		"uIwR_gSo": "0x2539084",
+		"wAp_gWWo": "0x1C429F8",
+		"uIwR_gAAo": "0x2539074",
+		"sS_gScSo": "0xE8B1D4",
+		"cIs_rBo": "0x1A87428",
+		"wMp_uDo": "0xE9F62C",
+		"mP_oTo": "0xC0D9B0",
+		"wMp_gPIo": "0xE9F440",
+		"wMp_gEIo": "0xE9F3AC",
+		"sS_sDWo": "0xE8B750",
+		"sS_sDW1o": "0xE8B92C",
+		"wRg_Io": "0x1546578",
+		"wMp_sERo": "0xE9FA58",
+		"iEoP_gRo": "0x2416C1C",
+		"wLs_gIAOo": "0xE81EFC",
+		"aR_oRo": "0x2FCEB94",
+		"wLs_gIWEo": "0xE81F04",
+		"cIs_gIaEo": "0x1A85C60",
+		"cIs_rBsALo": "0x1A873E8",
+		"wGgCf_Co": "0xE815D4",
+		"pDs_rGDo": "0x1426A9C",
+		"qS_cIwHsLSo": "0xC3A248",
+		"mP_gIiA": "0x1011A24",
+		"rF_gCo": "0x2998AB8",
+		"mCh_gMOcIo": "0xBF7498"
+	}
 }
