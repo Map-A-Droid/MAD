@@ -20,6 +20,11 @@ class Resocalculator(object):
         else:
             return click_x, click_y
 
+    def get_quest_listview(self):
+        click_x = int(self._screen_x) / 2
+        click_y = int(self._screen_y) / 5.82
+        return click_x + self._x_offset, click_y + self._y_offset
+
     def get_gym_click_coords(self):
         click_x = int(self._screen_x) / 2
         if float(self._xyratio) >= 2:
