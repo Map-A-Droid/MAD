@@ -241,8 +241,9 @@ class MITMReceiver(Process):
             if 'filename' in apks:
                 versions = apks['version']
             else:
-                for apk_type, apk_info in apks.items():
-                    version[str(apk_type)] = apk_info['version']
+                return Response(status=404, response='Version not specified or invalid')
+        elif status_code == 404:
+            return Response(status=404, response='APK has not been downloaded')
         else:
-            return Response(status=404)
+            return Response(status=404, response='Please specify APK and Architecture')
         return versions
