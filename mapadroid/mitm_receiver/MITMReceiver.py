@@ -243,4 +243,6 @@ class MITMReceiver(Process):
             else:
                 for apk_type, apk_info in apks.items():
                     version[str(apk_type)] = apk_info['version']
+        else:
+            return Response(status=404)
         return versions
