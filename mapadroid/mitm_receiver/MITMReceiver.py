@@ -25,7 +25,7 @@ class EndpointAction(object):
         self.application_args = application_args
         self.mapping_manager: MappingManager = mapping_manager
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         logger.debug3("HTTP Request from {}".format(str(request.remote_addr)))
         origin = request.headers.get('Origin')
         abort = False
@@ -63,11 +63,14 @@ class EndpointAction(object):
                     request_data = json.loads(request.data)
                 else:
                     request_data = {}
-                response_payload = self.action(origin, request_data)
+                response_payload = self.action(origin, request_data, *args, **kwargs)
                 if response_payload is None:
                     response_payload = ""
-                self.response = Response(status=200, headers={"Content-Type": "application/json"})
-                self.response.data = response_payload
+                if type(response_payload) is Response:
+                    self.response = response_payload
+                else:
+                    self.response = Response(status=200, headers={"Content-Type": "application/json"})
+                    self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
                 logger.warning(
                     "Could not get JSON data from request: {}", str(e))
@@ -95,18 +98,22 @@ class MITMReceiver(Process):
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
                           methods_passed=['GET'])
-        self.app.route('/mad_apk/<string:apk_type>',
-                        methods=['GET'],
-                        endpoint='api_madapk_apk_type')(self.mad_apk_info)
-        self.app.route('/mad_apk/<string:apk_type>/<string:apk_arch>',
-                        methods=['GET', 'POST', 'DELETE'],
-                        endpoint='api_madapk_apk_type_arch')(self.mad_apk_info)
-        self.app.route('/mad_apk/<string:apk_type>/download',
-                        methods=['GET'],
-                        endpoint='api_madapk_apk_download_noarch')(self.mad_apk_download)
-        self.app.route('/mad_apk/<string:apk_type>/<string:apk_arch>/download',
-                        methods=['GET'],
-                        endpoint='api_madapk_apk_download_arch')(self.mad_apk_download)
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>',
+                          endpoint_name='mad_apk/info',
+                          handler=self.mad_apk_info,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/<string:apk_arch>',
+                          endpoint_name='mad_apk/arch/info',
+                          handler=self.mad_apk_info,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/download',
+                          endpoint_name='mad_apk/download',
+                          handler=self.mad_apk_download,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/download',
+                          endpoint_name='mad_apk/arch/download',
+                          handler=self.mad_apk_download,
+                          methods_passed=['GET'])
 
         self._data_queue: JoinableQueue = JoinableQueue()
         self._db_wrapper = db_wrapper
