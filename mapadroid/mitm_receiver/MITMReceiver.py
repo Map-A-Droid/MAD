@@ -12,6 +12,7 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.logging import LogLevelChanger, logger
+from mapadroid.utils.apk_util import download_file, convert_to_backend, get_apk_list
 
 app = Flask(__name__)
 
@@ -94,6 +95,18 @@ class MITMReceiver(Process):
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
                           methods_passed=['GET'])
+        self.app.route('/mad_apk/<string:apk_type>',
+                        methods=['GET'],
+                        endpoint='api_madapk_apk_type')(self.mad_apk_info)
+        self.app.route('/mad_apk/<string:apk_type>/<string:apk_arch>',
+                        methods=['GET', 'POST', 'DELETE'],
+                        endpoint='api_madapk_apk_type_arch')(self.mad_apk_info)
+        self.app.route('/mad_apk/<string:apk_type>/download',
+                        methods=['GET'],
+                        endpoint='api_madapk_apk_download_noarch')(self.mad_apk_download)
+        self.app.route('/mad_apk/<string:apk_type>/<string:apk_arch>/download',
+                        methods=['GET'],
+                        endpoint='api_madapk_apk_download_arch')(self.mad_apk_download)
 
         self._data_queue: JoinableQueue = JoinableQueue()
         self._db_wrapper = db_wrapper
@@ -211,3 +224,23 @@ class MITMReceiver(Process):
         data_return['process_status'] = process_return
 
         return json.dumps(data_return)
+
+    def mad_apk_download(self, *args, **kwargs):
+        apk_type = kwargs.get('apk_type', None)
+        apk_arch = kwargs.get('apk_arch', None)
+        apk_type, apk_arch = convert_to_backend(apk_type, apk_arch)
+        return download_file(self._db_wrapper, apk_type, apk_arch)
+
+    def mad_apk_info(self, *args, **kwargs):
+        apk_type = kwargs.get('apk_type', None)
+        apk_arch = kwargs.get('apk_arch', None)
+        apk_type, apk_arch = convert_to_backend(apk_type, apk_arch)
+        versions = {}
+        (apks, status_code) = get_apk_list(self._db_wrapper, apk_type, apk_arch)
+        if status_code == 200:
+            if 'filename' in apks:
+                versions = apks['version']
+            else:
+                for apk_type, apk_info in apks.items():
+                    version[str(apk_type)] = apk_info['version']
+        return versions

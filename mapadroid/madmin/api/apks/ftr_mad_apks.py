@@ -7,9 +7,9 @@ from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.apk_util import (
-    chunk_generator, 
+    get_apk_list, 
     AutoDownloader,
-    get_mad_apks
+    download_file
 )
 from .apkHandler import APKHandler
 
@@ -24,33 +24,8 @@ class APIMadAPK(APKHandler):
         return '.' in filename and filename.rsplit('.', 1)[
             1].lower() in global_variables.MAD_APK_ALLOWED_EXTENSIONS
 
-    def get_apk_list(self, apk_type, apk_arch):
-        apks = get_mad_apks(self.dbc)
-        try:
-            apks[apk_type]
-            try:
-                if apks[apk_type][apk_arch]['version'] != None:
-                    return (apks[apk_type][apk_arch], 200)
-                else:
-                    return ('MAD APK for %s has not been uploaded' % (apk_type,), 404)
-            except:
-                if apk_arch:
-                    return ('Invalid arch_type.  Valid arch_types: %s' % apks[apk_type].keys(), 404)
-                elif len(apks[apk_type]) == 1:
-                    key = list(apks[apk_type].keys())[0]
-                    if apks[apk_type][key]['version'] != None:
-                        return (apks[apk_type][key], 200)
-                    return ('MAD APK for %s has not been uploaded' % (apk_type,), 404)
-                else:
-                    return (apks[apk_type], 200)
-        except:
-            if apk_type:
-                return ('Invalid apk_type.  Valid apk_types: %s' % apks.keys(), 404)
-            else:
-                return (apks, 200)
-
     def get(self, apk_type, apk_arch):
-        apks = self.get_apk_list(apk_type, apk_arch)
+        apks = get_apk_list(self.dbc, apk_type, apk_arch)
         if flask.request.url.split('/')[-1] == 'download':
             try:
                 auths = self._mapping_manager.get_auths()
@@ -60,17 +35,7 @@ class APIMadAPK(APKHandler):
             except KeyError:
                 return flask.make_response('Please login with a valid origin and auth', 401)
             try:
-                if (apks[1]) == 200:
-                    mad_apk = apks[0]
-                    return flask.Response(
-                        flask.stream_with_context(chunk_generator(self.dbc, mad_apk['file_id'])),
-                        content_type=mad_apk['mimetype'],
-                        headers={
-                            'Content-Disposition': f'attachment; filename=%s' % (mad_apk['filename'])
-                        }
-                    )
-                else:
-                    return apks
+                return download_file(self.dbc, apk_type, apk_arch)
             except (KeyError, TypeError):
                 return (None, 404)
             return apks
