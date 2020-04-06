@@ -14,7 +14,7 @@ from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.logging import LogLevelChanger, logger
 from mapadroid.utils.apk_util import download_file, convert_to_backend, get_apk_list
 from threading import RLock
-import mapadroid.utils.data_manager
+import mapadroid.data_manager
 
 app = Flask(__name__)
 
