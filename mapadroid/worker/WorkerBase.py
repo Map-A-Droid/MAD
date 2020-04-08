@@ -28,6 +28,7 @@ from mapadroid.utils.routeutil import check_walker_value_type
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.AbstractWorker import AbstractWorker
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
+from mapadroid.utils.s2Helper import S2Helper
 
 
 class WorkerBase(AbstractWorker):
@@ -1205,11 +1206,24 @@ class WorkerBase(AbstractWorker):
         else:
             data_to_check = "forts"
         lat_sum, lng_sum, counter = 0, 0, 0
-        for cell in data:
-            for element in cell[data_to_check]:
-                counter += 1
-                lat_sum += element["latitude"]
-                lng_sum += element["longitude"]
+
+        if data_to_check == "forts":
+            for cell in data:
+                if cell[data_to_check]:
+                    cell_id = cell["id"]
+                    if cell_id < 0:
+                        cell_id = cell_id + 2 ** 64
+                    lat, lng, alt = S2Helper.get_position_from_cell(cell_id)
+                    counter += 1
+                    lat_sum += lat
+                    lng_sum += lng
+        else:
+            for cell in data:
+                for element in cell[data_to_check]:
+                    counter += 1
+                    lat_sum += element["latitude"]
+                    lng_sum += element["longitude"]
+
         if counter == 0:
             return None
         avg_lat = lat_sum / counter
