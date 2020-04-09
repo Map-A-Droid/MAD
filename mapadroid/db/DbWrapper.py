@@ -370,7 +370,8 @@ class DbWrapper:
         if min_time_left_seconds is None or eligible_mon_ids is None:
             logger.warning(
                 "DbWrapper::get_to_be_encountered: Not returning any encounters since no time left or "
-                "eligible mon IDs specified")
+                "eligible mon IDs specified. Make sure both settings are set in area options: "
+                "min_time_left_seconds and mon_ids_iv ")
             return []
         logger.debug("Getting mons to be encountered")
         query = (
