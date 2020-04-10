@@ -134,10 +134,6 @@ def create_folder(folder):
         logger.info(str(folder) + ' created')
         os.makedirs(folder)
 
-def event_checker(db_wrapper):
-    while True:
-        db_wrapper.get_current_event()
-        time.sleep(60)
 
 def check_dependencies():
     with open("requirements.txt", "r") as f:

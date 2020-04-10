@@ -1121,9 +1121,12 @@ class DbWrapper:
 
     def get_current_event(self):
         logger.debug("DbWrapper::get_current_event called")
-        sql = "select `id`, `event_lure_duration` " \
-              "from trs_event "\
-              "where now() between `event_start` and `event_end` and `event_name`<>'DEFAULT'"
+        sql = (
+            "SELECT id, event_lure_duration "
+            "FROM trs_event "
+            "WHERE NOW() BETWEEN event_start AND event_end AND event_name <> 'DEFAULT'"
+        )
+
         found = self._db_exec.execute(sql)
 
         if found and len(found) > 0 and found[0][0]:

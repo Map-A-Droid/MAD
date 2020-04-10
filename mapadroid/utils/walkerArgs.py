@@ -320,6 +320,9 @@ def parseArgs():
     parser.add_argument('-ahn', '--auto_hatch_number', type=int, default=0,
                         help='Auto hatch of level 5 Pokemon ID')
 
+    parser.add_argument('-nec', '--no_event_checker', action="store_true",
+                        help='Disable event checker task')
+
     verbose = parser.add_mutually_exclusive_group()
     verbose.add_argument('-v', action='count', default=0, dest='verbose',
                          help=("Show debug messages. Has no effect, if"
