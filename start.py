@@ -205,6 +205,8 @@ if __name__ == "__main__":
 
         event = Event(args, db_wrapper)
         event.start_event_checker()
+        # Do not remove this sleep unless you have solved the race condition on boot with the logger
+        time.sleep(.1)
 
         jobstatus: dict = {}
         MitmMapperManager.register('MitmMapper', MitmMapper)
