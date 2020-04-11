@@ -197,17 +197,17 @@ class MITMBase(WorkerBase):
             x, y = self._resocalc.get_coords_quest_menu(self)[0], \
                    self._resocalc.get_coords_quest_menu(self)[1]
             self._communicator.click(int(x), int(y))
-            logger.debug("{_clear_quests} Open menu: {}, {}", str(int(x)), str(int(y)))
+            logger.debug("_clear_quests Open menu: {}, {}", str(int(x)), str(int(y)))
             time.sleep(6 + int(delayadd))
 
         x, y = self._resocalc.get_quest_listview(self)[0], \
                self._resocalc.get_quest_listview(self)[1]
         self._communicator.click(int(x), int(y))
-        logger.debug("{_clear_quests} Open field: {}, {}", str(int(x)), str(int(y)))
+        logger.debug("_clear_quests Open field: {}, {}", str(int(x)), str(int(y)))
         time.sleep(4 + int(delayadd))
 
         trashcancheck = self._get_trash_positions(full_screen=True)
-        logger.debug("{_clear_quests} Found trash: {}", str(trashcancheck))
+        logger.debug("_clear_quests Found trash: {}", str(trashcancheck))
         if trashcancheck is None:
             logger.error('Could not find any trashcan - abort')
             return
