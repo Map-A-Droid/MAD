@@ -22,6 +22,7 @@ from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import logger
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.worker.WorkerType import WorkerType
+from mapadroid.utils.madGlobals import InternalStopWorkerException
 
 args = parseArgs()
 
@@ -830,6 +831,7 @@ class RouteManagerBase(ABC):
                             "Worker {} has not accessed a location in {} seconds, removing from routemanager",
                             origin, timeout)
                         self.unregister_worker(origin)
+                        raise InternalStopWorkerException
 
             i = 0
             while i < 60 and not self._stop_update_thread.is_set():
