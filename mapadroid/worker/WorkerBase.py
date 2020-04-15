@@ -660,6 +660,7 @@ class WorkerBase(AbstractWorker):
         return True
 
     def _restart_pogo_safe(self):
+        logger.warning("WorkerBase::_restart_pogo_safe restarting pogo the long way")
         self._stop_pogo()
         time.sleep(1)
         if self._applicationArgs.enable_worker_specific_extra_start_stop_handling:
