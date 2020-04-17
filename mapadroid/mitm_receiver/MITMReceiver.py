@@ -12,6 +12,9 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.logging import LogLevelChanger, logger
+from mapadroid.utils.apk_util import download_file, convert_to_backend, get_apk_list
+from threading import RLock
+import mapadroid.data_manager
 
 app = Flask(__name__)
 
@@ -24,7 +27,7 @@ class EndpointAction(object):
         self.application_args = application_args
         self.mapping_manager: MappingManager = mapping_manager
 
-    def __call__(self, *args):
+    def __call__(self, *args, **kwargs):
         logger.debug3("HTTP Request from {}".format(str(request.remote_addr)))
         origin = request.headers.get('Origin')
         abort = False
@@ -36,6 +39,14 @@ class EndpointAction(object):
                 abort = True
             else:
                 abort = False
+        elif request.url is not None and str(request.url_rule) == '/origin_generator':
+            auth = request.headers.get('Authorization', None)
+            if auth is None or not check_auth(auth, self.application_args,
+                                              self.mapping_manager.get_auths()):
+                logger.warning(
+                    "Unauthorized attempt to POST from {}", str(request.remote_addr))
+                self.response = Response(status=403, headers={})
+                abort = True
         else:
             if not origin:
                 logger.warning("Missing Origin header in request")
@@ -62,11 +73,14 @@ class EndpointAction(object):
                     request_data = json.loads(request.data)
                 else:
                     request_data = {}
-                response_payload = self.action(origin, request_data)
+                response_payload = self.action(origin, request_data, *args, **kwargs)
                 if response_payload is None:
                     response_payload = ""
-                self.response = Response(status=200, headers={"Content-Type": "application/json"})
-                self.response.data = response_payload
+                if type(response_payload) is Response:
+                    self.response = response_payload
+                else:
+                    self.response = Response(status=200, headers={"Content-Type": "application/json"})
+                    self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
                 logger.warning(
                     "Could not get JSON data from request: {}", str(e))
@@ -76,13 +90,15 @@ class EndpointAction(object):
 
 class MITMReceiver(Process):
     def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
-                 db_wrapper, name=None):
+                 db_wrapper, data_manager, name=None):
         Process.__init__(self, name=name)
         self.__application_args = args_passed
         self.__mapping_manager = mapping_manager
         self.__listen_ip = listen_ip
         self.__listen_port = listen_port
         self.__mitm_mapper: MitmMapper = mitm_mapper
+        self.__data_manager = data_manager
+        self.__hopper_mutex = RLock()
         self.app = Flask("MITMReceiver")
         self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                           methods_passed=['POST'])
@@ -93,6 +109,26 @@ class MITMReceiver(Process):
                           handler=self.get_addresses,
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>',
+                          endpoint_name='mad_apk/info',
+                          handler=self.mad_apk_info,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/<string:apk_arch>',
+                          endpoint_name='mad_apk/arch/info',
+                          handler=self.mad_apk_info,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/download',
+                          endpoint_name='mad_apk/download',
+                          handler=self.mad_apk_download,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/download',
+                          endpoint_name='mad_apk/arch/download',
+                          handler=self.mad_apk_download,
+                          methods_passed=['GET'])
+        self.add_endpoint(endpoint='/origin_generator',
+                          endpoint_name='origin_generator/',
+                          handler=self.origin_generator,
                           methods_passed=['GET'])
 
         self._data_queue: JoinableQueue = JoinableQueue()
@@ -211,3 +247,74 @@ class MITMReceiver(Process):
         data_return['process_status'] = process_return
 
         return json.dumps(data_return)
+
+    def mad_apk_download(self, *args, **kwargs):
+        apk_type = kwargs.get('apk_type', None)
+        apk_arch = kwargs.get('apk_arch', None)
+        apk_type, apk_arch = convert_to_backend(apk_type, apk_arch)
+        return download_file(self._db_wrapper, apk_type, apk_arch)
+
+    def mad_apk_info(self, *args, **kwargs):
+        apk_type = kwargs.get('apk_type', None)
+        apk_arch = kwargs.get('apk_arch', None)
+        apk_type, apk_arch = convert_to_backend(apk_type, apk_arch)
+        versions = {}
+        (apks, status_code) = get_apk_list(self._db_wrapper, apk_type, apk_arch)
+        if status_code == 200:
+            if 'filename' in apks:
+                versions = apks['version']
+            else:
+                return Response(status=400, response='Version not specified or invalid')
+        elif status_code == 404:
+            return Response(status=400, response='APK has not been downloaded')
+        else:
+            return Response(status=400, response='Please specify APK and Architecture')
+        return versions
+
+    def origin_generator(self, *args, **kwargs):
+        origin = request.headers.get('OriginBase', None)
+        walker_id = request.headers.get('walker', None)
+        pool_id = request.headers.get('pool', None)
+        device = mapadroid.data_manager.modules.MAPPINGS['device'](self.__data_manager)
+        if origin is None:
+            return Response(status=400, response='Please specify an Origin Prefix')
+        with self.__hopper_mutex:
+            last_id_sql = "SELECT `last_id` FROM `origin_hopper` WHERE `origin` = %s"
+            last_id = self._db_wrapper.autofetch_value(last_id_sql, (origin,))
+            if last_id is None:
+                last_id = 0
+            walkers = self.__data_manager.get_root_resource('walker')
+            if len(walkers) == 0:
+                    return Response(status=400, response='No walkers configured')
+            if walker_id is not None:
+                try:
+                    walker_id = int(walker_id)
+                    walkers[walker_id]
+                except KeyError:
+                    return Response(404, response='Walker ID not found')
+                except ValueError:
+                    return Response(status=404, response='Walker must be an integer')
+            else:
+                walker_id = next(iter(walkers))
+            device['walker'] = walker_id
+            if pool_id is not None:
+                pools = self.__data_manager.get_root_resource('devicepool')
+                try:
+                    pool_id = int(pool_id)
+                    pools[pool_id]
+                except KeyError:
+                    return Response(404, response='Walker ID not found')
+                except ValueError:
+                    return Response(status=404, response='Walker must be an integer')
+                device['pool'] = pool_id
+            next_id = last_id + 1
+            data = {
+                'origin': origin,
+                'last_id': next_id,
+            }
+            origin = '%s%s' % (origin, next_id,)
+            self._db_wrapper.autoexec_insert('origin_hopper', data, optype="ON DUPLICATE")
+            device['walker'] = walker_id
+            device['origin'] = origin
+            device.save()
+            return origin

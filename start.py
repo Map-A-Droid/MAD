@@ -219,7 +219,8 @@ if __name__ == "__main__":
         pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
 
         mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                             mitm_mapper, args, mapping_manager, db_wrapper)
+                                             mitm_mapper, args, mapping_manager, db_wrapper,
+                                             data_manager)
         mitm_receiver_process.start()
 
         logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
