@@ -37,11 +37,11 @@ def check_time_period(period):
     tmTil = datetime.datetime.now().replace(
         hour=int(sts2[0]), minute=int(sts2[1]), second=0, microsecond=0)
 
-    tmNow = datetime.datetime.now().replace(second=0, microsecond=0)
-
-    if tmFrom >= tmTil:
-        tmTil = tmTil + datetime.timedelta(days=+1)
-
+    tmNow = datetime.datetime.now()
+    if tmFrom > tmTil > tmNow:
+        tmFrom = tmFrom + datetime.timedelta(days=-1)
+    if (tmTil + datetime.timedelta(minutes=3)) < tmFrom:
+        tmTil = tmTil + datetime.timedelta(days=1)
     if tmFrom <= tmNow <= tmTil:
         return True
     else:
