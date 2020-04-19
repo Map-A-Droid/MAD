@@ -20,13 +20,9 @@ def check_walker_value_type(value):
 def check_time_till_end(exittime):
     timer = exittime.split(':')
     tmNow = datetime.datetime.now()
-    tmTil = datetime.datetime.now().replace(
+    tmTil = tmNow.replace(
         hour=int(timer[0]), minute=int(timer[1]), second=0, microsecond=0)
-    if tmNow < (tmTil + datetime.timedelta(minutes=5)):
-        return True
-    else:
-        return False
-
+    return tmNow < tmTil
 
 def check_time_period(period):
     timer = period.split('-')
@@ -42,11 +38,7 @@ def check_time_period(period):
         else:
             tmTil = tmTil + datetime.timedelta(days=+1)
 
-    if tmFrom <= tmNow <= tmTil:
-        return True
-    else:
-        return False
-
+    return tmFrom <= tmNow <= tmTil
 
 def pre_check_value(walker_settings, eventid):
     walkertype = walker_settings['walkertype']
