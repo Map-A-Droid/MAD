@@ -3,10 +3,12 @@ import time
 from abc import abstractmethod
 from datetime import datetime
 from enum import Enum
+from typing import Optional
 
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.utils import MappingManager
+from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
@@ -81,8 +83,24 @@ class MITMBase(WorkerBase):
         while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time()) \
                 and not self._stop_worker_event.is_set():
             latest = self._mitm_mapper.request_latest(self._origin)
-            data_requested = self._wait_data_worker(
-                latest, proto_to_wait_for, timestamp)
+            latest_location: Optional[Location] = latest.get("location", None)
+            check_data = True
+            if latest_location is not None and latest_location.lat != 0.0 and latest_location.lng != 0.0:
+                logger.debug("Checking worker location {} against real data location {}", self.current_location,
+                             latest_location)
+                distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
+                                                                        float(latest_location.lng),
+                                                                        float(self.current_location.lat),
+                                                                        float(self.current_location.lng))
+                max_distance_for_worker = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
+                logger.debug("Distance of worker {} to data location: {}", str(self._origin), str(distance_to_data))
+                if max_distance_for_worker and distance_to_data > max_distance_for_worker:
+                    logger.warning("Real data too far from worker position, waiting...")
+                    check_data = False
+
+            if check_data:
+                data_requested = self._wait_data_worker(
+                    latest, proto_to_wait_for, timestamp)
             if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                     or self._stop_worker_event.is_set():
                 logger.error("Worker {} get killed while sleeping", str(self._origin))

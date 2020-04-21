@@ -11,6 +11,7 @@ from mapadroid.mitm_receiver.MITMDataProcessor import MitmDataProcessor
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
+from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LogLevelChanger, logger
 from mapadroid.utils.apk_util import download_file, convert_to_backend, get_apk_list
 from threading import RLock
@@ -194,9 +195,10 @@ class MITMReceiver(Process):
             return
 
         timestamp: float = data.get("timestamp", int(time.time()))
+        location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         self.__mitm_mapper.update_latest(
             origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
-            values_dict=data)
+            values_dict=data, location=location_of_data)
         logger.debug3("Placing data received by {} to data_queue".format(origin))
         self._data_queue.put(
             (timestamp, data, origin)

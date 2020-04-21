@@ -126,7 +126,7 @@ class MitmMapper(object):
 
     # origin, method, data, timestamp
     def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = None,
-                      timestamp_received_receiver: float = None):
+                      timestamp_received_receiver: float = None, location: Location = None):
         if timestamp_received_raw is None:
             timestamp_received_raw = time.time()
 
@@ -140,11 +140,12 @@ class MitmMapper(object):
                 logger.info("New device detected, {}.  Setting up the device configuration", origin)
                 self.__add_new_device(origin)
             if origin in self.__mapping.keys():
-                logger.debug("Updating timestamp of {} with method {} to {}", str(
-                    origin), str(key), str(timestamp_received_raw))
+                logger.debug("Updating timestamp of {} at {} with method {} to {}", str(
+                    origin), location, str(key), str(timestamp_received_raw))
                 if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
                     del self.__mapping[origin][key]
                 self.__mapping[origin][key] = {}
+                self.__mapping[origin]["location"] = location
                 self.__mapping[origin][key]["timestamp"] = timestamp_received_raw
                 self.__mapping[origin]["timestamp_last_data"] = timestamp_received_raw
                 self.__mapping[origin]["timestamp_receiver"] = timestamp_received_receiver
