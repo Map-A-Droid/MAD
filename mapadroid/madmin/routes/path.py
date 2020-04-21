@@ -28,6 +28,11 @@ class path(object):
             ("/", self.root),
             ("/quests", self.quest),
             ("/quests_pub", self.quest_pub),
+            ("/utilities", self.utilities),
+            ("/utilities/quests", self.util_quests),
+            ("/utilities/stops", self.util_stops),
+            ("/utilities/gyms", self.util_gyms),
+            ("/utilities/pokemon", self.util_pokemon),
             ("/pick_worker", self.pickworker),
             ("/jobstatus", self.jobstatus),
             ('/robots.txt', self.send_static_file)
@@ -82,3 +87,44 @@ class path(object):
 
     def send_static_file(self):
         return send_from_directory(self._app.static_folder, request.path[1:])
+
+    @logger.catch()
+    @auth_required
+    def util_quests(self):
+        fence = request.args.get("fence", None)
+        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
+        return render_template('utilities_quests.html', pub=False,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Quest Maintenance", subtab='quests', fence=fence, stop_fences=stop_fences)
+
+    @logger.catch()
+    @auth_required
+    def util_stops(self):
+        fence = request.args.get("fence", None)
+        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
+        return render_template('utilities_stops.html', pub=False,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Pokestop Maintenance", subtab='stops', fence=fence, stop_fences=stop_fences)
+
+    @logger.catch()
+    @auth_required
+    def util_gyms(self):
+        fence = request.args.get("fence", None)
+        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
+        return render_template('utilities_gyms.html', pub=False,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Gym Maintenance", subtab='gyms', fence=fence, stop_fences=stop_fences)
+
+    @logger.catch()
+    @auth_required
+    def util_pokemon(self):
+        fence = request.args.get("fence", None)
+        stop_fences = get_quest_areas(self._mapping_manager, self._data_manager)
+        return render_template('utilities_pokemon.html', pub=False,
+                               responsive=str(self._args.madmin_noresponsive).lower(),
+                               title="Pokemon Maintenance", subtab='pokemon', fence=fence, stop_fences=stop_fences)
+
+    @logger.catch
+    @auth_required
+    def utilities(self):
+        return redirect(url_for('util_quests'), code=302)
