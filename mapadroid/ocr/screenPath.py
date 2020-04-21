@@ -402,7 +402,7 @@ class WordToScreenMatching(object):
         time.sleep(50)
         return ScreenType.PTC
 
-    def __handle_failure_screen(self, diff, global_dict) -> None:
+    def __handle_failure_screen(self, diff, global_dict) -> ScreenType:
         if self._logintype == LoginType.ptc:
             click_text = 'DIFFERENT,AUTRE,AUTORISER,ANDERES,KONTO,ACCOUNT,VERSUCHEN'
             n_boxes = len(global_dict['level'])
