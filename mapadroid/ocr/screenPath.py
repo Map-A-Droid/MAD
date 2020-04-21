@@ -129,10 +129,7 @@ class WordToScreenMatching(object):
         returntype: ScreenType = ScreenType.UNDEFINED
         global_dict: dict = {}
         diff = 1
-        if "KO: Could not read topmost app. Is screen off?" in topmost_app:
-            logger.error("RGC could not read topmost app. Is screen off?")
-            return ScreenType.ERROR, global_dict, diff
-        elif "AccountPickerActivity" in topmost_app or 'SignInActivity' in topmost_app:
+        if "AccountPickerActivity" in topmost_app or 'SignInActivity' in topmost_app:
             return ScreenType.GGL, global_dict, diff
         elif "GrantPermissionsActivity" in topmost_app:
             return ScreenType.PERMISSION, global_dict, diff
