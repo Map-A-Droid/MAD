@@ -4,6 +4,7 @@
 
 import asyncio
 
+import socket
 import websockets
 from aioconsole import ainput
 
@@ -45,8 +46,9 @@ async def hello(websocket, path):
 
 
 print("Initializing websocket server")
-start_server = websockets.serve(hello, '0.0.0.0', 8080)
+port = 8080
+start_server = websockets.serve(hello, '0.0.0.0', port)
 
-print("Starting to serve")
+print("Starting to serve ws://%s:%s" % (socket.gethostbyname(socket.gethostname()), port))
 asyncio.get_event_loop().run_until_complete(start_server)
 asyncio.get_event_loop().run_forever()
