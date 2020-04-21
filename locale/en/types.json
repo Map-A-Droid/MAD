@@ -121,7 +121,7 @@
   },
   "33": {
     "prototext": "QUEST_BUDDY_FEED",
-    "text": ""
+    "text": "Give your buddy {0} treats"
   },
   "34": {
     "prototext": "QUEST_BUDDY_EARN_AFFECTION_POINTS",
@@ -129,7 +129,7 @@
   },
   "35": {
     "prototext": "QUEST_BUDDY_PET",
-    "text": ""
+    "text": "Play with your buddy"
   },
   "36": {
     "prototext": "QUEST_BUDDY_LEVEL",
