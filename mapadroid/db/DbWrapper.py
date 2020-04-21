@@ -895,42 +895,35 @@ class DbWrapper:
             ).format(swLat, swLon, neLat, neLon)
 
         if oNeLat is not None and oNeLon is not None and oSwLat is not None and oSwLon is not None:
-            oquery_where = (
+            query_where += (
                 " AND NOT (latitude >= {} AND longitude >= {} "
                 " AND latitude <= {} AND longitude <= {}) "
             ).format(oSwLat, oSwLon, oNeLat, oNeLon)
 
-            query_where = query_where + oquery_where
         elif timestamp is not None:
             tsdt = datetime.utcfromtimestamp(int(timestamp)).strftime("%Y-%m-%d %H:%M:%S")
 
-            oquery_where = (
+            query_where += (
                 " AND last_scanned >= '{}' "
             ).format(tsdt)
 
-            query_where = query_where + oquery_where
-
         if fence is not None:
-            query_where = query_where + " where ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
-                                        "POINT(trs_spawn.latitude, trs_spawn.longitude))".format(str(fence))
-            query = query + query_where
+            query_where = " WHERE ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
+                          "POINT(trs_spawn.latitude, trs_spawn.longitude))".format(str(fence))
 
         if eventid is not None:
-            query_where = " and eventid = {}".format(str(eventid))
-            query = query + query_where
+            query_where += " AND eventid = {}".format(str(eventid))
 
         if todayonly:
-            query_where = " and (DATE(last_scanned) = DATE(NOW()) or DATE(last_non_scanned) = DATE(NOW())) "
-            query = query + query_where
+            query_where += " AND (DATE(last_scanned) = DATE(NOW()) OR DATE(last_non_scanned) = DATE(NOW())) "
 
         if olderthanxdays is not None:
-            query_where = " and (DATE(if(last_scanned is not Null,last_scanned, '1970-01-01 00:00:00'))" \
-                          " < DATE(NOW()) - INTERVAL {} DAY and " \
-                          "DATE(if(last_non_scanned is not Null,last_non_scanned, '1970-01-01 00:00:00')) " \
-                          "< DATE(NOW()) - INTERVAL {} DAY)".format(str(olderthanxdays),
-                                                                                              str(olderthanxdays))
-            query = query + query_where
+            query_where += " AND (DATE(IF(last_scanned IS NOT Null,last_scanned, '1970-01-01 00:00:00'))" \
+                           " < DATE(NOW()) - INTERVAL {} DAY AND " \
+                           "DATE(IF(last_non_scanned IS NOT Null,last_non_scanned, '1970-01-01 00:00:00')) " \
+                           "< DATE(NOW()) - INTERVAL {} DAY)".format(str(olderthanxdays), str(olderthanxdays))
 
+        query += query_where
         res = self.execute(query)
 
         for (spawnid, lat, lon, endtime, spawndef, last_scanned, first_detection, last_non_scanned, eventname, eventid) \
