@@ -11,6 +11,7 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import InternalStopWorkerException
+from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.worker.WorkerBase import WorkerBase
 
@@ -52,6 +53,59 @@ class MITMBase(WorkerBase):
                                                  self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_name),
                                                  99)
+
+    def _check_data_distance(self, data):
+        max_radius = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
+        if not max_radius:
+            return True
+        mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+        if mode in ["mon_mitm", "iv_mitm"]:
+            data_to_check = "wild_pokemon"
+        else:
+            data_to_check = "forts"
+        lat_sum, lng_sum, counter = 0, 0, 0
+
+        if data_to_check == "forts":
+            for cell in data:
+                if cell[data_to_check]:
+                    cell_id = cell["id"]
+                    if cell_id < 0:
+                        cell_id = cell_id + 2 ** 64
+                    lat, lng, alt = S2Helper.get_position_from_cell(cell_id)
+                    counter += 1
+                    lat_sum += lat
+                    lng_sum += lng
+        else:
+            for cell in data:
+                for element in cell[data_to_check]:
+                    counter += 1
+                    lat_sum += element["latitude"]
+                    lng_sum += element["longitude"]
+
+        if counter == 0:
+            return None
+        avg_lat = lat_sum / counter
+        avg_lng = lng_sum / counter
+        distance = get_distance_of_two_points_in_meters(float(avg_lat),
+                                                        float(avg_lng),
+                                                        float(self.current_location.lat),
+                                                        float(self.current_location.lng))
+        if distance > max_radius:
+            logger.debug2("Data is too far away!! avg location {}, {} from "
+                "data with self.current_location location {}, {} - that's a "
+                "{}m distance with max_radius {} for mode {}", avg_lat, avg_lng,
+                                                self.current_location.lat,
+                                                self.current_location.lng,
+                                                distance, max_radius, mode)
+            return False
+        else:
+            logger.debug("Data distance is ok! found avg location {}, {} "
+                "from data with self.current_location location {}, {} - that's "
+                "a {}m distance with max_radius {} for mode {}", avg_lat, avg_lng,
+                                                  self.current_location.lat,
+                                                  self.current_location.lng,
+                                                  distance, max_radius, mode)
+            return True
 
     def _wait_for_data(self, timestamp: float = None, proto_to_wait_for=106, timeout=None):
         if timestamp is None:
