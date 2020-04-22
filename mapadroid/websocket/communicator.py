@@ -171,7 +171,7 @@ class Communicator(AbstractCommunicator):
 
     def topmost_app(self) -> Optional[MessageTyping]:
         topmost = self.__run_get_gesponse("more topmost app\r\n")
-        if "KO:" in topmost:
+        if topmost and "KO:" in topmost:
             return None
         return topmost
 
