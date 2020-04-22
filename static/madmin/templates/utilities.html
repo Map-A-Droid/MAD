@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
+
+{% block content %}
+<nav class="nav nav-pills nav-fill mt-3 mb-3 flex-column flex-sm-row">
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "quests" }}" href="{{ url_for('util_quests') }}">Quests</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "stops" }}" href="{{ url_for('util_stops') }}">Stops</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "gyms"}}" href="{{ url_for('util_gyms') }}">Gyms</a>
+    <a class="flex-sm-fill text-sm-center nav-link {{ "active" if subtab == "pokemon" }}" href="{{ url_for('util_pokemon') }}">Pokemon</a>
+</nav>
+{% endblock %}

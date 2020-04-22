@@ -1,0 +1,45 @@
+{% extends "utilities.html" %}
+
+{% block header %}
+<style>
+
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+{% if not pub %}
+
+<h2>Quests</h2>
+<div class="p-1 mb-1 bg-secondary text-white rounded">
+<table>
+  <tr><td>
+  <h5>Select Area</h5>
+  <select id=areaq name=areaq method="GET" action="/">
+    {% for stop_fence in stop_fences %}
+         {% if stop_fence == fence %}
+              <option value= "{{stop_fence}}" SELECTED>{{stop_fence}}</option>"
+         {% else %}
+               <option value= "{{stop_fence}}">{{stop_fence}}</option>"
+         {% endif %}
+    {% endfor %}
+  </select>
+  </td>
+  <td>
+    <h5>Delete Quests Before:</h5>
+    <input id="before-time" type="time" name="before-time" value="08:00">
+  </td></tr>
+</table>
+</div>
+<br /><br />
+
+{% endif %}
+
+{% endblock %}
