@@ -139,7 +139,8 @@ class MITMBase(WorkerBase):
             latest = self._mitm_mapper.request_latest(self._origin)
             latest_location: Optional[Location] = latest.get("location", None)
             check_data = True
-            if latest_location is not None and latest_location.lat != 0.0 and latest_location.lng != 0.0:
+            if (proto_to_wait_for == 106 and latest_location is not None
+                    and latest_location.lat != 0.0 and latest_location.lng != 0.0):
                 logger.debug("Checking worker location {} against real data location {}", self.current_location,
                              latest_location)
                 distance_to_data = get_distance_of_two_points_in_meters(float(latest_location.lat),
