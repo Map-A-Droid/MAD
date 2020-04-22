@@ -231,7 +231,10 @@ class WorkerMITM(MITMBase):
                     for data_extract in latest_data['payload']['cells']:
                         for WP in data_extract['wild_pokemon']:
                             # TODO: teach Prio Q / Clusterer to hold additional data such as mon/encounter IDs
-                            if WP['spawnpoint_id'] and self._check_data_distance(latest_data['payload']['cells']):
+                            # if there's location in latest, the distance has
+                            # already been checked in MITMBase
+                            if WP['spawnpoint_id'] and (latest.get("location", None) or
+                                    self._check_data_distance(latest_data['payload']['cells'])):
                                 data_requested = latest_data
                                 break
                         if data_requested == latest_data: break
@@ -241,7 +244,10 @@ class WorkerMITM(MITMBase):
                 elif mode in ["raids_mitm"]:
                     for data_extract in latest_data['payload']['cells']:
                         for forts in data_extract['forts']:
-                            if forts['id'] and self._check_data_distance(latest_data['payload']['cells']):
+                            # if there's location in latest, the distance has
+                            # already been checked in MITMBase
+                            if forts['id'] and (latest.get("location", None) or
+                                    self._check_data_distance(latest_data['payload']['cells'])):
                                 data_requested = latest_data
                                 break
                         if data_requested == latest_data: break
