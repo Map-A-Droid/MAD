@@ -150,7 +150,7 @@ class MITMBase(WorkerBase):
                 max_distance_for_worker = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
                 logger.debug("Distance of worker {} to data location: {}", str(self._origin), str(distance_to_data))
                 if max_distance_for_worker and distance_to_data > max_distance_for_worker:
-                    logger.warning("Real data too far from worker position, waiting...")
+                    logger.debug("Real data too far from worker position, waiting...")
                     check_data = False
 
             if check_data:
