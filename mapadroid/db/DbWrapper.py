@@ -1258,7 +1258,7 @@ def delete_quests_before_time(self, before_timestamp=None, from_fence=None, dele
             "WHERE GUID in ({})".format(str(','.join(quest_ids)))
         )
         self.execute(query, commit=True)
-        logger.debug("dbWrapper::delete_quests_before_time - deleted {} quest(s)".format(len(quest_ids))
+        logger.info("dbWrapper::delete_quests_before_time - deleted {} quest(s)".format(len(quest_ids)))
 
     # return number of quests matching criteria
     return len(quest_ids)
