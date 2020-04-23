@@ -282,7 +282,7 @@ CREATE TABLE `settings_area_pokestops` (
     `routecalc` int(10) unsigned NOT NULL,
     `init` tinyint(1) NOT NULL,
     `level` tinyint(1) DEFAULT NULL,
-    `route_calc_algorithm` enum('optimized','quick') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+    `route_calc_algorithm` enum('optimized','quick', 'routefree') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
     `speed` float DEFAULT NULL,
     `max_distance` float DEFAULT NULL,
     `ignore_spinned_stops` tinyint(1) DEFAULT NULL,

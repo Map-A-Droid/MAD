@@ -1123,6 +1123,9 @@ class RouteManagerBase(ABC):
     def get_level_mode(self):
         return self._level
 
+    def get_calc_type(self):
+        return self._calctype
+
     def redo_stop(self, worker, lat, lon):
         logger.info('Worker {} redo a unprocessed Stop ({}, {})'.format(str(worker), str(lat), str(lon)))
         if worker in self._routepool:

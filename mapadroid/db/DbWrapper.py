@@ -1007,6 +1007,88 @@ class DbWrapper:
             )
         return next_up
 
+    def get_nearest_stops_from_position(self, geofence_helper, origin: str, lat, lon, limit: int = 20,
+                                        ignore_spinned: bool = True, maxdistance: int = 1):
+        """
+        Retrieve the nearest stops from lat / lon (optional with limit)
+        :return:
+        """
+
+        logger.debug("DbWrapper::get_nearest_stops_from_position called")
+        limitstr: str = ""
+        ignore_spinnedstr: str = ""
+        loopcount: int = 0
+        getlocations: bool = False
+
+        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        if limit > 0:
+            limitstr = "limit {}".format(limit)
+
+        if ignore_spinned:
+            ignore_spinnedstr = "AND trs_visited.origin IS NULL"
+
+        while not getlocations:
+
+            loopcount += 1
+            if loopcount >= 10:
+                logger.error("Not getting any new stop - abort")
+                return []
+
+            query = (
+                "SELECT latitude, longitude, SQRT("
+                "POW(69.1 * (latitude - {}), 2) + "
+                "POW(69.1 * ({} - longitude), 2)) AS distance "
+                "FROM pokestop "
+                "LEFT JOIN trs_visited ON (pokestop.pokestop_id = trs_visited.pokestop_id AND trs_visited.origin='{}') "
+                "where SQRT(POW(69.1 * (latitude - {}), 2) + POW(69.1 * ({} - longitude), 2)) <= {} and "
+                "(latitude >= {} AND longitude >= {} AND latitude <= {} AND longitude <= {}) "
+                "{} ORDER BY distance {} "
+            ).format(lat, lon, origin, lat, lon, maxdistance, minLat, minLon, maxLat, maxLon, ignore_spinnedstr,
+                     limitstr)
+
+            res = self.execute(query)
+
+            # getting 0 new locations - more distance!
+            if len(res) == 0 or len(res) < limit:
+                logger.warning("No location found or getting not enough locations - need more distance")
+                maxdistance += 2
+
+            else:
+                # getting new locations
+                logger.info("Getting enough locations - checking the coords now")
+
+                stops: List[Location] = []
+
+                for (latitude, longitude, distance) in res:
+                    stops.append(Location(latitude, longitude))
+
+                if geofence_helper is not None:
+                    geofenced_coords = geofence_helper.get_geofenced_coordinates(stops)
+                    if len(geofenced_coords) == limit:
+                        return geofenced_coords
+                    logger.warning("The coords are out of the fence - increase distance")
+                    if loopcount >= 5:
+                        # setting middle of fence as new startposition
+                        lat, lon = geofence_helper.get_middle_from_fence()
+                    else:
+                        maxdistance += 3
+                else:
+                    return stops
+
+        logger.error("Not getting any new stop - abort")
+        return []
+
+    def save_last_walker_position(self, origin, lat, lng):
+        logger.debug("dbWrapper::save_last_walker_position")
+
+        query = (
+            "update settings_device set startcoords_of_walker='%s, %s' where instance_id=%s and name=%s"
+        )
+        vals = (
+            lat, lng, self.instance_id, origin
+        )
+        self.execute(query, vals, commit=True)
+
     def insert_usage(self, instance, cpu, mem, garbage, timestamp):
         logger.debug("dbWrapper::insert_usage")
 
