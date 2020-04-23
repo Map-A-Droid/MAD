@@ -7,7 +7,7 @@ class Patch(PatchBase):
 
     def _execute(self):
         origin_sql = """
-            ALTER TABLE `aibling`.`settings_area_pokestops` 
+            ALTER TABLE `settings_area_pokestops` 
             CHANGE COLUMN `route_calc_algorithm` 
             `route_calc_algorithm` ENUM('optimized', 'quick', 'routefree') 
             CHARACTER SET 'utf8mb4' COLLATE 'utf8mb4_unicode_ci' NULL DEFAULT NULL ;
