@@ -22,7 +22,7 @@ from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.logging import logger
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.madGlobals import InternalStopWorkerException
+
 
 args = parseArgs()
 
@@ -87,9 +87,6 @@ class RouteManagerBase(ABC):
         self._workers_registered: Set[str] = set()
         self._workers_registered_mutex = RLock()
 
-        # waiting till routepool is filled up
-        self._workers_fillup_mutex = RLock()
-
         self._last_round_prio = {}
         self._manager_mutex = RLock()
         self._round_started_time = None
@@ -101,9 +98,10 @@ class RouteManagerBase(ABC):
             else:
                 fenced_coords = self.geofence_helper.get_geofenced_coordinates(
                     coords)
-            new_coords = self._route_resource.getJsonRoute(fenced_coords, max_radius,
+            new_coords = self._route_resource.getJsonRoute(fenced_coords, int(max_radius),
                                                            max_coords_within_radius,
-                                                           algorithm=calctype, route_name=self.name)
+                                                           algorithm=calctype, route_name=self.name,
+                                                           in_memory=False)
             for coord in new_coords:
                 self._route.append(Location(coord["lat"], coord["lng"]))
         self._current_index_of_route = 0
@@ -202,7 +200,7 @@ class RouteManagerBase(ABC):
                 return True
 
     def unregister_worker(self, worker_name):
-        with self._workers_registered_mutex:
+        with self._workers_registered_mutex and self._manager_mutex:
             if worker_name in self._workers_registered:
                 logger.info("Worker {} unregistering from routemanager {}", str(
                     worker_name), str(self.name))
@@ -1101,8 +1099,8 @@ class RouteManagerBase(ABC):
     def get_settings(self) -> Optional[dict]:
         return self.settings
 
-    def get_current_route(self) -> Optional[Tuple[List[Location], Dict[str, List[Location]]]]:
-        return (self._route, self._routepool)
+    def get_current_route(self) -> Tuple[list, Dict[str, RoutePoolEntry]]:
+        return self._route, self._routepool
 
     def get_current_prioroute(self) -> List[Location]:
         return self._prio_queue
