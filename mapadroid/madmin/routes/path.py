@@ -1,6 +1,6 @@
 from flask import send_from_directory, render_template, request, jsonify, redirect, url_for
 
-from mapadroid.madmin.functions import auth_required, get_quest_areas
+from mapadroid.madmin.functions import auth_required, get_quest_areas, generate_coords_from_geofence
 from mapadroid.utils import MappingManager
 from mapadroid.utils.functions import generate_path
 from mapadroid.utils.logging import logger
@@ -30,6 +30,7 @@ class path(object):
             ("/quests_pub", self.quest_pub),
             ("/utilities", self.utilities),
             ("/utilities/quests", self.util_quests),
+            ("/utilities/util_q", self.util_q),
             ("/utilities/stops", self.util_stops),
             ("/utilities/gyms", self.util_gyms),
             ("/utilities/pokemon", self.util_pokemon),
@@ -96,6 +97,23 @@ class path(object):
         return render_template('utilities_quests.html', pub=False,
                                responsive=str(self._args.madmin_noresponsive).lower(),
                                title="Quest Maintenance", subtab='quests', fence=fence, stop_fences=stop_fences)
+
+    @logger.catch()
+    @auth_required
+    def util_q(self):
+        user_fence  = request.args.get("fence", "all")
+        timestamp   = request.args.get("beforetime", "none")
+        user_action = request.args.get("action", "count") # default to the counting option
+        bt = None if timestamp == "none" else timestamp
+        dq = True if user_action == "delete" else False
+        if user_fence.lower() == "all":
+            ff = None
+        else:
+            ff = generate_coords_from_geofence(self._mapping_manager, self._data_manager, user_fence)
+
+        res = self._db.delete_quests_before_time(before_timestamp=bt, from_fence=ff, delete_quests=dq)
+
+        return ("Deleted " if dq else "Found ") + str(res) + (" quest" + "s" if res != 1 else "")
 
     @logger.catch()
     @auth_required
