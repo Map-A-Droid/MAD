@@ -344,6 +344,39 @@ class DbWrapper:
 
         return questinfo
 
+    def delete_quests_before_time(self, before_timestamp=None, from_fence=None, delete_quests=False):
+        """
+        Delete all quests before the given timestamp (UTC) from the given fenced in area.
+        Return number of matching (delete_quests=False) or deleted (delete_quests=True) quests.
+         - before_timestamp is a UTC timestamp: 1587414020 (or similar), None means delete all quests from today
+         - from_fence is a string in format: "lat1 lon1, lat2 lon2, lat3 lon3, lat1 lon1", None means delete from all areas
+           note: no comma between lat lon, and first point equals last point
+        """
+
+        quest_info = self.quests_from_db(fence=from_fence)
+
+        quest_ids = []
+        for q in quest_info:
+            if before_timestamp != None:
+                if int(quest_info[q]['quest_timestamp']) < int(before_timestamp):
+                    quest_ids.append( '"' + quest_info[q]['pokestop_id'] + '"')
+            else:
+                quest_ids.append( '"' + quest_info[q]['pokestop_id'] + '"')
+
+        logger.info("dbWrapper::delete_quests_before_time - found {} quest(s)".format(len(quest_ids)))
+
+        if delete_quests and len(quest_ids) > 0:
+            query = (
+                "DELETE "
+                "FROM trs_quest "
+                "WHERE GUID in ({})".format(str(','.join(quest_ids)))
+            )
+            self.execute(query, commit=True)
+            logger.info("dbWrapper::delete_quests_before_time - **DELETED** {} quest(s)".format(len(quest_ids)))
+
+        # return number of quests matching criteria
+        return len(quest_ids)
+
     def get_pokemon_spawns(self, hours):
         """
         Get Pokemon Spawns for dynamic rarity
@@ -1229,37 +1262,3 @@ def adjust_tz_to_utc(column: str, as_name: str = None) -> str:
         except:
             as_name = column
     return "UNIX_TIMESTAMP(%s) + %s AS '%s'" % (column, utc_offset, as_name)
-
-def delete_quests_before_time(self, before_timestamp=None, from_fence=None, delete_quests=False):
-    """
-    Delete all quests before the given timestamp (UTC) from the given fenced in area.
-    Return number of matching (delete_quests=False) or deleted (delete_quests=True) quests.
-     - before_timestamp is a UTC timestamp: 1587414020 (or similar), None means delete all quests from today
-     - from_fence is a string in format: "lat1 lon1, lat2 lon2, lat3 lon3, lat1 lon1", None means delete from all areas
-       note: no comma between lat lon, and first point equals last point
-    """
-
-    quest_info = quests_from_db(fence=from_fence)
-
-    quest_ids = []
-    for q in quest_info:
-        if before_timestamp != None:
-            if q['quest_timestamp'] < before_timestamp:
-                quest_ids.append(q['pokestop_id'])
-        else:
-            quest_ids.append(q['pokestop_id'])
-
-    logger.debug("dbWrapper::delete_quests_before_time")
-
-    if delete_quests and len(quest_ids) > 0:
-        query = (
-            "DELETE "
-            "FROM trs_quest "
-            "WHERE GUID in ({})".format(str(','.join(quest_ids)))
-        )
-        self.execute(query, commit=True)
-        logger.info("dbWrapper::delete_quests_before_time - deleted {} quest(s)".format(len(quest_ids)))
-
-    # return number of quests matching criteria
-    return len(quest_ids)
-
