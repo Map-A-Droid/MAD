@@ -2,13 +2,75 @@
 
 {% block header %}
 <style>
-
+  td {padding: 5px;}
+  input {height:25px; width:100%}
+  select {height:25px; width:100%}
 </style>
 {% endblock %}
 
 {% block scripts %}
 <script>
+{% if not pub %}
+  $(document).ready(function () {
 
+    form = document.getElementById('form');
+    print = document.getElementById('print');
+
+    var alltz = [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -3.5, -2, -1, 0, 1, 2, 3, 3.5, 4, 4.5, 5, 5.5, 5.75, 6, 6.5, 7, 8, 9, 9.5, 10, 11, 12];
+    var d = new Date();
+    var offset = -1*d.getTimezoneOffset()/60.0; // get the users timezone offset
+
+    // set default timezone if detected and available
+    var tzlist = document.getElementById('timezones');
+    if (alltz.indexOf(offset) !== -1) {
+      tzlist.value = offset;
+    }
+
+    form.addEventListener('submit', function(event) {
+      event.preventDefault(); // prevent page reload
+
+      fence = document.getElementById('fence').value; // get user selected fence
+      action = document.getElementById('action').value; // get user selected action
+
+      var local_date = new Date().toISOString().slice(0,11); // extract user local date as string
+      // var tz = d.getTimezoneOffset(); // auto-detect and set local timezone offset for user (in minutes)
+      var tz = Math.floor(document.getElementById('timezones').value*(-60)); // get chosen user timezone (in minutes)
+
+      var sign = tz > 0 ? "-" : "+";
+      var hours = ('0' + Math.floor(Math.abs(tz)/60)).slice(-2);
+      var minutes = ('0' + Math.abs(tz)%60).slice(-2);
+      var tzOffset = sign + hours + ":" + minutes;
+
+      var chosen_time = document.getElementById('time').value; // get chosen user time
+      var ts = local_date + chosen_time + tzOffset;
+
+      var utcTimestamp = Math.floor(new Date(ts).getTime()/1000);
+
+      var qstr = "Counting";
+      if (action === "delete") {
+        qstr = "Deleting";
+      }
+
+      if (confirm('Are you sure you want to ' + action + ' quests?')) {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>' + qstr + ' quests...</h2>' });
+        $.ajax({
+          type: "GET",
+          url: "util_q",
+          data: { // ?fence=x1&action=x2&beforetime=x3
+            fence: fence,
+            action: action,
+            beforetime: utcTimestamp
+          },
+          success: function (result) {
+            print.innerHTML = "<div>" + result + " from before " + ts.replace('T', ' ') + "</div>";
+            //print.innerHTML += "<div>Fence: " + fence + ", Action: " + action + ", Time: " + ts + ", utcTimestamp: " + utcTimestamp + "</div>";
+            $.unblockUI();
+          }
+        });
+      }
+    });
+  });
+{% endif %}
 </script>
 {% endblock %}
 
@@ -18,27 +80,82 @@
 {% if not pub %}
 
 <h2>Quests</h2>
-<div class="p-1 mb-1 bg-secondary text-white rounded">
+
 <table>
-  <tr><td>
-  <h5>Select Area</h5>
-  <select id=areaq name=areaq method="GET" action="/">
-    {% for stop_fence in stop_fences %}
-         {% if stop_fence == fence %}
+  <tr>
+    <td>
+      <div>Select&nbsp;a&nbsp;fence</div>
+      <select id='fence' name='fence'>
+        {% for stop_fence in stop_fences %}
+           {% if stop_fence == fence %}
               <option value= "{{stop_fence}}" SELECTED>{{stop_fence}}</option>"
-         {% else %}
-               <option value= "{{stop_fence}}">{{stop_fence}}</option>"
-         {% endif %}
-    {% endfor %}
-  </select>
-  </td>
-  <td>
-    <h5>Delete Quests Before:</h5>
-    <input id="before-time" type="time" name="before-time" value="08:00">
-  </td></tr>
+           {% else %}
+              <option value= "{{stop_fence}}">{{stop_fence}}</option>"
+           {% endif %}
+        {% endfor %}
+      </select>
+    </td>
+    <td>
+      <div>Select&nbsp;an&nbsp;action</div>
+      <select id='action' name='action'>
+        <option value='count' selected>Count</option>
+        <option value='delete'>Delete</option>
+      </select>
+    </td>
+    <td>
+      <div>Before&nbsp;time</div>
+      <input id="time" type="time" name="time" value="08:00">
+    </td>
+    <td>
+      <div>Timezone</div>
+      <select id="timezones">
+	    <option value="-12">(UTC-12:00)</option>
+	    <option value="-11">(UTC-11:00)</option>
+	    <option value="-10">(UTC-10:00)</option>
+	    <option value="-9">(UTC-09:00)</option>
+	    <option value="-8">(UTC-08:00)</option>
+	    <option value="-7">(UTC-07:00)</option>
+	    <option value="-6">(UTC-06:00)</option>
+	    <option value="-5">(UTC-05:00)</option>
+	    <option value="-4">(UTC-04:00)</option>
+	    <option value="-3.5">(UTC-03:30)</option>
+	    <option value="-3">(UTC-03:00)</option>
+	    <option value="-2">(UTC-02:00)</option>
+	    <option value="-1">(UTC-01:00)</option>
+	    <option value="0" selected>(UTC+00:00)</option>
+	    <option value="1">(UTC+01:00)</option>
+	    <option value="2">(UTC+02:00)</option>
+	    <option value="3">(UTC+03:00)</option>
+	    <option value="3.5">(UTC+03:30)</option>
+	    <option value="4">(UTC+04:00)</option>
+	    <option value="4.5">(UTC+04:30)</option>
+	    <option value="5">(UTC+05:00)</option>
+	    <option value="5.5">(UTC+05:30)</option>
+	    <option value="5.75">(UTC+05:45)</option>
+	    <option value="6">(UTC+06:00)</option>
+	    <option value="6.5">(UTC+06:30)</option>
+	    <option value="7">(UTC+07:00)</option>
+	    <option value="8">(UTC+08:00)</option>
+	    <option value="9">(UTC+09:00)</option>
+	    <option value="9.5">(UTC+09:30)</option>
+	    <option value="10">(UTC+10:00)</option>
+	    <option value="11">(UTC+11:00)</option>
+	    <option value="12">(UTC+12:00)</option>
+	    <option value="13">(UTC+13:00)</option>
+      </select>
+    </td>
+    <td>
+      <div>&nbsp;</div>
+      <form id='form'>
+        <input type='submit' value='Submit' id='submit'>
+      </form>
+    </td>
+    <td>
+      <div>Results:</div>
+      <div id='print'>&nbsp;</div>
+    </td>
+  </tr>
 </table>
-</div>
-<br /><br />
 
 {% endif %}
 
