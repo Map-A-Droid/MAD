@@ -63,7 +63,7 @@ class AreaMonMITM(Area):
                     "type": "option",
                     "require": False,
                     "values": [True, False],
-                    "description": "Scan all spawnpoints or just ones with unknown endtimes (Default: False)",
+                    "description": "Scan all spawnpoints [true] or just ones with unknown endtimes [false] (Default: False)",
                     "expected": bool
                 }
             }
@@ -73,7 +73,7 @@ class AreaMonMITM(Area):
                 "settings": {
                     "type": "text",
                     "require": False,
-                    "description": "Speed of player in kmh.  This value is used in conjunction with max_distance to "
+                    "description": "Speed of player in kmh. This value is used in conjunction with max_distance to "
                                    "determine if the worker should walk or teleport (Default: 0)",
                     "expected": float
                 }
