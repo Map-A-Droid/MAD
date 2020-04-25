@@ -102,13 +102,8 @@ class MITMReceiver(Process):
         self.__hopper_mutex = RLock()
         self._db_wrapper = db_wrapper
         self.app = Flask("MITMReceiver")
-        self.add_endpoint(endpoint='/get_latest_mitm/', endpoint_name='get_latest_mitm/',
-                          handler=self.get_latest,
-                          methods_passed=['GET'])
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
                           handler=self.get_addresses,
-                          methods_passed=['GET'])
-        self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/mad_apk/<string:apk_type>',
                           endpoint_name='mad_apk/info',
@@ -133,6 +128,11 @@ class MITMReceiver(Process):
         if not enable_configmode:
             self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
                               methods_passed=['POST'])
+            self.add_endpoint(endpoint='/get_latest_mitm/', endpoint_name='get_latest_mitm/',
+                              handler=self.get_latest,
+                              methods_passed=['GET'])
+            self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
+                                      methods_passed=['GET'])
             self._data_queue: JoinableQueue = JoinableQueue()
             self.worker_threads = []
             for i in range(self.__application_args.mitmreceiver_data_workers):
