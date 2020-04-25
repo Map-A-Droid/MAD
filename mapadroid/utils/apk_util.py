@@ -435,27 +435,29 @@ def is_newer_version(first_ver: str, second_ver: str) -> bool:
 
 def convert_to_backend(apk_type=None, apk_arch=None):
     if apk_type and isinstance(apk_type, str):
-        if apk_type == 'pogo':
-            apk_type = global_variables.MAD_APK_USAGE_POGO
-        elif apk_type == 'rgc':
-            apk_type = global_variables.MAD_APK_USAGE_RGC
-        elif apk_type == 'pogodroid':
-            apk_type = global_variables.MAD_APK_USAGE_PD
-        else:
-            apk_type = None
+        try:
+            apk_type = int(apk_type)
+        except ValueError:
+            if apk_type == 'pogo':
+                apk_type = global_variables.MAD_APK_USAGE_POGO
+            elif apk_type == 'rgc':
+                apk_type = global_variables.MAD_APK_USAGE_RGC
+            elif apk_type == 'pogodroid':
+                apk_type = global_variables.MAD_APK_USAGE_PD
+            else:
+                apk_type = None
     if apk_arch and isinstance(apk_arch, str):
         try:
             apk_arch = int(apk_arch)
-        except:
-            pass
-        if apk_arch == 'armeabi-v7a':
-            apk_arch = global_variables.MAD_APK_ARCH_ARMEABI_V7A
-        elif apk_arch == 'arm64-v8a':
-            apk_arch = global_variables.MAD_APK_ARCH_ARM64_V8A
-        elif apk_arch == 'noarch':
-            apk_arch = global_variables.MAD_APK_ARCH_NOARCH
-        else:
-            global_variables.MAD_APK_ARCH_NOARCH
+        except ValueError:
+            if apk_arch == 'armeabi-v7a':
+                apk_arch = global_variables.MAD_APK_ARCH_ARMEABI_V7A
+            elif apk_arch == 'arm64-v8a':
+                apk_arch = global_variables.MAD_APK_ARCH_ARM64_V8A
+            elif apk_arch == 'noarch':
+                apk_arch = global_variables.MAD_APK_ARCH_NOARCH
+            else:
+                global_variables.MAD_APK_ARCH_NOARCH
     return (apk_type, apk_arch)
 
 def download_file(dbc, apk_type, apk_arch):

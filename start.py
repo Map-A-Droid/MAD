@@ -218,13 +218,14 @@ if __name__ == "__main__":
         MitmMapperManager.register('MitmMapper', MitmMapper)
         mitm_mapper_manager = MitmMapperManager()
         mitm_mapper_manager.start()
-        logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
         mitm_mapper = mitm_mapper_manager.MitmMapper(mapping_manager, db_wrapper.stats_submit)
-        mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
-                                             mitm_mapper, args, mapping_manager, db_wrapper,
-                                             data_manager)
-        mitm_receiver_process.start()
-        logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
+    logger.info('Starting PogoDroid Receiver server on port {}'.format(str(args.mitmreceiver_port)))
+    mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
+                                         mitm_mapper, args, mapping_manager, db_wrapper,
+                                         data_manager,
+                                         enable_configmode=args.config_mode)
+    mitm_receiver_process.start()
+    logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
     ws_server = WebsocketServer(args=args,
                                 mitm_mapper=mitm_mapper,
                                 db_wrapper=db_wrapper,
