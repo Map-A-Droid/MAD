@@ -107,6 +107,8 @@ def parseArgs():
                         help='Start madmin as instance.')
     parser.add_argument('-or', '--only_routes', action='store_true', default=False,
                         help='Only calculate routes, then exit the program. No scanning.')
+    parser.add_argument('-cm', '--config_mode', action='store_true', default=False,
+                        help='Run in ConfigMode')
 
     # folder
     parser.add_argument('-tmp', '--temp_path', default='temp',
@@ -347,9 +349,5 @@ def parseArgs():
     args.log_filename = strftime(args.log_filename)
     args.log_filename = args.log_filename.replace('<sn>', '<SN>')
     args.log_filename = args.log_filename.replace('<SN>', args.status_name)
-
-    args.config_mode = True
-    if sys.argv[0].split('/')[-1] == 'start.py':
-        args.config_mode = False
 
     return args
