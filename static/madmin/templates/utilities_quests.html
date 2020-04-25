@@ -32,7 +32,8 @@
       fence = document.getElementById('fence').value; // get user selected fence
       action = document.getElementById('action').value; // get user selected action
 
-      var local_date = new Date().toISOString().slice(0,11); // extract user local date as string
+      var ld = new Date(); // extract user local date as string
+      var local_date = "" + ld.getFullYear() + "-" + ('0' + (ld.getMonth()+1)).slice(-2) + "-" + ld.getDate() + "T";
       // var tz = d.getTimezoneOffset(); // auto-detect and set local timezone offset for user (in minutes)
       var tz = Math.floor(document.getElementById('timezones').value*(-60)); // get chosen user timezone (in minutes)
 
