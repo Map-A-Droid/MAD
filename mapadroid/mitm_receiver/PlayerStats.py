@@ -47,7 +47,7 @@ class PlayerStats(object):
             logger.debug('gen_player_stats cannot generate new stats')
             return
         stats = data['inventory_delta'].get("inventory_items", None)
-        if len(stats) > 0:
+        if stats is not None and len(stats) > 0:
             for data_inventory in stats:
                 player_stats = data_inventory['inventory_item_data']['player_stats']
                 player_level = player_stats['level']
