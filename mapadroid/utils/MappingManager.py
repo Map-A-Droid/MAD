@@ -5,7 +5,7 @@ from multiprocessing.managers import SyncManager
 from multiprocessing.pool import ThreadPool
 from queue import Empty, Queue
 from threading import Thread
-from typing import Optional, List, Dict, Tuple
+from typing import Optional, List, Dict, Tuple, Set
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -190,7 +190,7 @@ class MappingManager:
         if routemanager is not None:
             routemanager.stop_routemanager()
 
-    def get_routemanager_name_from_device(self, device_name: str) -> str:
+    def get_routemanager_name_from_device(self, device_name: str) -> Optional[str]:
         routemanagers = self.get_all_routemanager_names()
         for routemanager in routemanagers:
             workers = self.routemanager_get_registered_workers(routemanager)
@@ -234,7 +234,7 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.redo_stop(worker_name, lat, lon) if routemanager is not None else False
 
-    def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[List[str]]:
+    def routemanager_get_registered_workers(self, routemanager_name: str) -> Optional[Set[str]]:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_registered_workers() if routemanager is not None else None
 
