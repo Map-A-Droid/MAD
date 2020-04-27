@@ -77,7 +77,7 @@ class MitmDataProcessor(Process):
                 self.__db_submit.gyms(origin, data["payload"])
                 self.__db_submit.raids(origin, data["payload"], self.__mitm_mapper)
 
-                self.__db_submit.spawnpoints(origin, data["payload"])
+                self.__db_submit.spawnpoints(origin, data["payload"], datetime.fromtimestamp(received_timestamp))
                 mon_ids_iv = self.__mitm_mapper.get_mon_ids_iv(origin)
                 self.__db_submit.mons(origin, data["payload"], mon_ids_iv, self.__mitm_mapper)
                 self.__db_submit.cells(origin, data["payload"])
