@@ -741,11 +741,6 @@ new Vue({
             this.fetchers.spawns = true;
             axios.get('get_spawns' + urlFilter).then(function (res) {
                 res.data.forEach(function (spawns) {
-
-                    if ($this.layers.dyn.spawns[spawns['EVENT']]) {
-                            return;
-                    }
-
                     spawns['Coords'].forEach(function (spawn) {
                         var eventname = spawns['EVENT'];
 
