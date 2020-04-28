@@ -201,7 +201,7 @@ class DbPogoProtoSubmit:
         logger.debug("Done updating mon in DB")
         return True
 
-    def spawnpoints(self, origin: str, map_proto: dict):
+    def spawnpoints(self, origin: str, map_proto: dict, proto_dt: datetime):
         logger.debug(
             "DbPogoProtoSubmit::spawnpoints called with data received by {}", str(origin))
         cells = map_proto.get("cells", None)
@@ -239,8 +239,8 @@ class DbPogoProtoSubmit:
             "last_non_scanned=VALUES(last_non_scanned)"
         )
 
-        now = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-        dt = datetime.now()
+        now = proto_dt.strftime("%Y-%m-%d %H:%M:%S")
+        dt = proto_dt
 
         for cell in cells:
             for wild_mon in cell["wild_pokemon"]:

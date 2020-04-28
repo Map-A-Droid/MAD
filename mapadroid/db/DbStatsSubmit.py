@@ -4,8 +4,9 @@ from mapadroid.utils.logging import logger
 
 class DbStatsSubmit:
 
-    def __init__(self, db_exec: PooledQueryExecutor):
+    def __init__(self, db_exec: PooledQueryExecutor, args):
         self._db_exec: PooledQueryExecutor = db_exec
+        self._args = args
 
     def submit_stats_complete(self, data):
         query_status = (
@@ -62,3 +63,10 @@ class DbStatsSubmit:
             "DELETE FROM trs_stats_location_raw WHERE period < (UNIX_TIMESTAMP() - 604800)"
         )
         self._db_exec.execute(query, commit=True)
+
+        if int(self._args.raw_delete_shiny) > 0:
+            query = (
+                    "DELETE FROM trs_stats_detect_raw WHERE timestamp_scan < "
+                    "(UNIX_TIMESTAMP() - " + str(int(self._args.raw_delete_shiny) * 86400) + ") AND is_shiny = 1"
+            )
+            self._db_exec.execute(query, commit=True)
