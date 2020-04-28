@@ -24,7 +24,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                                     joinqueue=joinqueue
                                     )
 
-    def worker_changed_update_routepools(self):
+    def _worker_changed_update_routepools(self):
         with self._manager_mutex and self._workers_registered_mutex:
             logger.info("Updating all routepools in levelmode for {} origins", len(self._routepool))
             if len(self._workers_registered) == 0:
@@ -116,7 +116,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
                 logger.info('Other worker shutdown route {} - leaving it', str(self.name))
                 return False
 
-            self.worker_changed_update_routepools()
+            self._worker_changed_update_routepools()
             self._start_calc = False
             return True
         finally:
