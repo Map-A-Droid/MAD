@@ -121,7 +121,8 @@ class MitmDataProcessor(Process):
                 self.__db_submit.gym(origin, payload)
                 logger.debug2("Done processing proto 156 of {}".format(origin))
 
-    def raw_decoder(self, data_type, payload):
+    @staticmethod
+    def raw_decoder(data_type, payload):
         data = base64.b64decode(payload)
 
         if data_type == 4:
