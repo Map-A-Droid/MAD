@@ -67,7 +67,7 @@ class MitmDataProcessor(Process):
             logger.debug4("Received data of {}: {}", origin, data)
             if data_type == 106:
                 # process GetMapObject
-                logger.success("Processing GMO received from {}. Received at {}", str(
+                logger.info("Processing GMO received from {}. Received at {}", str(
                     origin), str(datetime.fromtimestamp(received_timestamp)))
 
                 if self.__application_args.weather:
