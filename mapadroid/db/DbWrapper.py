@@ -356,7 +356,8 @@ class DbWrapper:
         quest_info = self.quests_from_db(fence=from_fence)
         
         try:
-            int(before_timestamp)
+            if before_timestamp != None:
+                int(before_timestamp)
         except: # if before_timestamp is not a valid integer, set it to 0 so we don't affect any quests
             logger.info("dbWrapper::delete_quests_before_time - invalid value for beforetime ({}), setting to 0".format(before_timestamp))
             before_timestamp = 0
