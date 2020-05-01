@@ -352,7 +352,7 @@ class RouteManagerBase(ABC):
         with self._workers_registered_mutex:
             connected_worker_count = len(self._workers_registered)
             if connected_worker_count > 0:
-                for worker in self._workers_registered:
+                for worker in self._workers_registered.copy():
                     self.unregister_worker(worker)
             else:
                 self.stop_routemanager()
