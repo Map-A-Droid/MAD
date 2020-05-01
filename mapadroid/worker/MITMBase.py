@@ -173,7 +173,7 @@ class MITMBase(WorkerBase):
             logger.warning("Mappings/Routemanagers have changed, stopping worker to be created again")
             raise InternalStopWorkerException
         if data_requested != LatestReceivedType.UNDEFINED:
-            logger.debug('Got the data requested...')
+            logger.success('Got the data requested')
             self._reboot_count = 0
             self._restart_count = 0
             self._rec_data_time = datetime.now()
