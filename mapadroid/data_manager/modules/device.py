@@ -324,7 +324,7 @@ class Device(Resource):
                     "type": "option",
                     "require": False,
                     "values": [None, False, True],
-                    "description": "Activate enhanced mode for this device",
+                    "description": "Activate enhanced quest mode for this device",
                     "expected": bool
                 }
             }

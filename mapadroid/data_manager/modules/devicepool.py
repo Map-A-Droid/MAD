@@ -226,7 +226,7 @@ class DevicePool(Resource):
                     "type": "option",
                     "require": False,
                     "values": [None, False, True],
-                    "description": "Activate enhanced mode",
+                    "description": "Activate enhanced quest mode",
                     "expected": bool
                 }
             }
