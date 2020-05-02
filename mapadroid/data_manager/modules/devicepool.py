@@ -220,6 +220,15 @@ class DevicePool(Resource):
                     "description": "Reboot (if enabled) device after not injecting for X times in a row (Default: 20)",
                     "expected": int
                 }
+            },
+            "enhanced_mode_quest": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [None, False, True],
+                    "description": "Activate enhanced mode",
+                    "expected": bool
+                }
             }
         }
     }

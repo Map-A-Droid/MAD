@@ -329,7 +329,7 @@ class WorkerQuests(MITMBase):
             delay_used = math.floor(delay_used)
             logger.info("Real sleep time: {} seconds: next action {}",
                         str(delay_used), str(datetime.now() + timedelta(seconds=delay_used)))
-            cleanupbox = False
+            cleanupbox: bool = False
             lastcleanupbox = self.get_devicesettings_value('last_cleanup_time', None)
 
             self._current_sleep_time = delay_used
@@ -344,9 +344,9 @@ class WorkerQuests(MITMBase):
             self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin,
                                                                    delay_used)
             while time.time() <= int(cur_time) + int(delay_used):
-                if delay_used > 200 and cleanupbox:
+                if delay_used > 200 and cleanupbox and not self._enhanced_mode:
                     self.clear_thread_task = ClearThreadTasks.BOX
-                    cleanupbox = False
+                cleanupbox = False
                 if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                         or self._stop_worker_event.is_set():
                     logger.error("Worker {} get killed while sleeping", str(self._origin))
@@ -777,32 +777,35 @@ class WorkerQuests(MITMBase):
                     if self._db_wrapper.check_stop_quest(self.current_location.lat,
                                                          self.current_location.lng):
                         logger.info('Quest is done without us noticing. Getting new Quest...')
-                    self.clear_thread_task = ClearThreadTasks.QUEST
+                    if not self._enhanced_mode:
+                        self.clear_thread_task = ClearThreadTasks.QUEST
                     break
                 elif data_received == FortSearchResultTypes.QUEST:
                     logger.info('Received new Quest')
                     self._latest_quest = math.floor(time.time())
 
-                if not self._always_cleanup:
-                    self._clear_quest_counter += 1
-                    if self._clear_quest_counter == 3:
-                        logger.info('Collected 3 quests - clean them')
+                if not self._enhanced_mode:
+                    if not self._always_cleanup:
+                        self._clear_quest_counter += 1
+                        if self._clear_quest_counter == 3:
+                            logger.info('Collected 3 quests - clean them')
+                            reached_main_menu = self._check_pogo_main_screen(10, True)
+                            if not reached_main_menu:
+                                if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
+                                    # TODO: put in loop, count up for a reboot ;)
+                                    raise InternalStopWorkerException
+                            self.clear_thread_task = ClearThreadTasks.QUEST
+                            self._clear_quest_counter = 0
+                    else:
+                        logger.info('Getting new quest - clean it')
                         reached_main_menu = self._check_pogo_main_screen(10, True)
                         if not reached_main_menu:
                             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
                         self.clear_thread_task = ClearThreadTasks.QUEST
-                        self._clear_quest_counter = 0
-                else:
-                    logger.info('Getting new quest - clean it')
-                    reached_main_menu = self._check_pogo_main_screen(10, True)
-                    if not reached_main_menu:
-                        if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
-                            # TODO: put in loop, count up for a reboot ;)
-                            raise InternalStopWorkerException
-                    self.clear_thread_task = ClearThreadTasks.QUEST
-                break
+                    break
+
             elif (data_received == FortSearchResultTypes.TIME or data_received ==
                   FortSearchResultTypes.OUT_OF_RANGE):
                 logger.warning('Softban - return to main screen and open again...')
@@ -820,7 +823,8 @@ class WorkerQuests(MITMBase):
                     if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                         # TODO: put in loop, count up for a reboot ;)
                         raise InternalStopWorkerException
-                self.clear_thread_task = ClearThreadTasks.QUEST
+                if not self._enhanced_mode:
+                    self.clear_thread_task = ClearThreadTasks.QUEST
                 self._clear_quest_counter = 0
                 break
             else:
@@ -832,7 +836,8 @@ class WorkerQuests(MITMBase):
                 if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat,
                                                                 self.current_location.lng):
                     logger.info('Quest is done without us noticing. Getting new Quest...')
-                    self.clear_thread_task = ClearThreadTasks.QUEST
+                    if not self._enhanced_mode:
+                        self.clear_thread_task = ClearThreadTasks.QUEST
                     break
                 elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(
                         self._origin) > 6800:
