@@ -82,6 +82,7 @@ class RouteManagerBase(ABC):
         self._routepool: Dict[str, RoutePoolEntry] = {}
         self._roundcount: int = 0
         self._joinqueue = joinqueue
+        self._worker_start_position: Dict[str] = {}
 
         # we want to store the workers using the routemanager
         self._workers_registered: Set[str] = set()
@@ -566,7 +567,11 @@ class RouteManagerBase(ABC):
                 logger.debug("No subroute/routepool entry of {} present, creating it", origin)
                 self._routepool[origin] = RoutePoolEntry(time.time(), collections.deque(), [],
                                                          time_added=time.time())
+
+                if origin in self._worker_start_position:
+                    self._routepool[origin].current_pos = self._worker_start_position[origin]
                 if not self._worker_changed_update_routepools():
+
                     logger.info("Failed updating routepools after adding a worker to it")
                     return None
 
@@ -1108,6 +1113,9 @@ class RouteManagerBase(ABC):
     def get_level_mode(self):
         return self._level
 
+    def get_calc_type(self):
+        return self._calctype
+
     def redo_stop(self, worker, lat, lon):
         logger.info('Worker {} redo a unprocessed Stop ({}, {})'.format(str(worker), str(lat), str(lon)))
         if worker in self._routepool:
@@ -1124,3 +1132,10 @@ class RouteManagerBase(ABC):
 
         logger.debug('Open Coords from workers: {}'.format(str(coordlist)))
         return coordlist
+
+    def set_worker_startposition(self, worker, lat, lon):
+        logger.info("Getting startposition for walker {} ({} / {}".format(str(worker), str(lat), str(lon)))
+        if worker not in self._worker_start_position:
+            self._worker_start_position[worker] = Location(0.0, 0.0)
+
+        self._worker_start_position[worker] = Location(lat, lon)

@@ -187,3 +187,15 @@ class GeofenceHelper:
             lat1, lon1 = lat2, lon2
 
         return inside
+
+    def get_middle_from_fence(self):
+        maxLat, minLat, maxLon, minLon = -90, 90, -180, 180
+        if self.geofenced_areas:
+            for va in self.geofenced_areas:
+                for fence in va['polygon']:
+                    maxLat = max(fence['lat'], maxLat)
+                    minLat = min(fence['lat'], minLat)
+                    maxLon = max(fence['lon'], maxLon)
+                    minLon = min(fence['lon'], minLon)
+
+        return minLat + ((maxLat - minLat) / 2), minLon + ((maxLon - minLon) / 2)

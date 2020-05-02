@@ -120,6 +120,9 @@ class WorkerQuests(MITMBase):
 
         if self._level_mode:
             logger.info("Starting Level Mode")
+            if self._mapping_manager.routemanager_get_calc_type == "routefree":
+                logger.info("Sleeping one minute for getting data")
+                time.sleep(60)
         else:
             # initial cleanup old quests
             if not self._init:
@@ -445,6 +448,7 @@ class WorkerQuests(MITMBase):
         stop_inventory_clear = Event()
         stop_screen_clear = Event()
         logger.info('Cleanup Box')
+        self._mapping_manager.routemanager_set_worker_sleeping(self._routemanager_name, self._origin, 300)
         not_allow = ('Gift', 'Geschenk', 'Glücksei', 'Glucks-Ei', 'Glücks-Ei', 'Lucky Egg', 'CEuf Chance',
                      'Cadeau', 'Appareil photo', 'Wunderbox', 'Mystery Box', 'Boîte Mystère', 'Premium',
                      'Raid', 'Teil',

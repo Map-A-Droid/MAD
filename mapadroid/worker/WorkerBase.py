@@ -74,6 +74,9 @@ class WorkerBase(AbstractWorker):
         self._same_screen_count: int = 0
         self._last_screen_type: ScreenType = ScreenType.UNDEFINED
         self._loginerrorcounter: int = 0
+        self._mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
+        self._levelmode = self._mapping_manager.routemanager_get_level(self._routemanager_name)
+        self._geofencehelper = self._mapping_manager.routemanager_get_geofence_helper(self._routemanager_name)
 
         self.current_location = Location(0.0, 0.0)
         self.last_location = self.get_devicesettings_value("last_location", None)
@@ -259,12 +262,43 @@ class WorkerBase(AbstractWorker):
     def _internal_pre_work(self):
         current_thread().name = self._origin
 
-        if self.get_devicesettings_value("startcoords_of_walker", None) is not None:
+        start_position = self.get_devicesettings_value("startcoords_of_walker", None)
+
+        if start_position and (self._levelmode and self._mapping_manager.routemanager_get_calc_type == "routefree"):
             startcoords = self.get_devicesettings_value("startcoords_of_walker").replace(' ', '') \
                 .replace('_', '').split(',')
+
+            if not self._geofencehelper.is_coord_inside_include_geofence(Location(
+                    float(startcoords[0]), float(startcoords[1]))):
+                logger.warning("Startcoords not in geofence - setting middle of fence as startposition")
+                lat, lng = self._geofencehelper.get_middle_from_fence()
+                start_position = str(lat) + "," + str(lng)
+
+        if start_position is None and \
+                (self._levelmode and self._mapping_manager.routemanager_get_calc_type == "routefree"):
+            logger.warning("Starting levelmode without worker start position")
+            # setting coords
+            lat, lng = self._geofencehelper.get_middle_from_fence()
+            start_position = str(lat) + "," + str(lng)
+
+        if start_position is not None:
+            startcoords = start_position.replace(' ', '').replace('_', '').split(',')
+
+            if not self._geofencehelper.is_coord_inside_include_geofence(Location(
+                    float(startcoords[0]), float(startcoords[1]))):
+                logger.warning("Startcoords not in geofence - setting middle of fence as startposition")
+                lat, lng = self._geofencehelper.get_middle_from_fence()
+                start_position = str(lat) + "," + str(lng)
+                startcoords = start_position.replace(' ', '').replace('_', '').split(',')
+
             logger.info('Setting startcoords or walker lat {} / lng {}'.format(str(startcoords[0]),
                                                                                str(startcoords[1])))
             self._communicator.set_location(Location(startcoords[0], startcoords[1]), 0)
+
+            self._mapping_manager.set_worker_startposition(routemanager_name=self._routemanager_name,
+                                                           worker_name=self._origin,
+                                                           lat=float(startcoords[0]),
+                                                           lon=float(startcoords[1]))
 
         with self._work_mutex:
             try:
