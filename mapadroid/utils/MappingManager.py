@@ -254,6 +254,10 @@ class MappingManager:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_level_mode() if routemanager is not None else None
 
+    def routemanager_get_calc_type(self, routemanager_name: str) -> bool:
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        return routemanager.get_calc_type() if routemanager is not None else None
+
     def routemanager_get_mode(self, routemanager_name: str) -> WorkerType:
         routemanager = self.__fetch_routemanager(routemanager_name)
         return routemanager.get_mode() if routemanager is not None else WorkerType.UNDEFINED.value
@@ -286,6 +290,11 @@ class MappingManager:
                                          sleep_duration: float):
         routemanager = self.__fetch_routemanager(routemanager_name)
         routemanager.set_worker_sleeping(worker_name, sleep_duration)
+
+    def set_worker_startposition(self, routemanager_name: str, worker_name: str,
+                                 lat: float, lon: float):
+        routemanager = self.__fetch_routemanager(routemanager_name)
+        routemanager.set_worker_startposition(worker_name, lat, lon)
 
     def routemanager_get_position_type(self, routemanager_name: str, worker_name: str) -> Optional[str]:
         routemanager = self.__fetch_routemanager(routemanager_name)
@@ -415,8 +424,8 @@ class MappingManager:
                                                                  include_event_id=
                                                                  area.get("settings", {}).get("include_event_id", None)
                                                                  )
-
-            if mode not in ("iv_mitm", "idle"):
+            logger.info("Initializing area {}", area["name"])
+            if mode not in ("iv_mitm", "idle") and area.get("route_calc_algorithm", "optimized") not in "routefree":
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),
                                              init=area.get("init", False),
@@ -429,7 +438,7 @@ class MappingManager:
                 max_radius = mode_mapping[area_true.area_type]["range"]
                 max_count_in_radius = mode_mapping[area_true.area_type]["max_count"]
                 if not area.get("init", False):
-                    logger.info("Initializing area {}", area["name"])
+
                     proc = thread_pool.apply_async(route_manager.initial_calculation,
                                                    args=(max_radius, max_count_in_radius,
                                                          0, False))
