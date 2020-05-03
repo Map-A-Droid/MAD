@@ -1,14 +1,28 @@
 import base64
+from dataclasses import dataclass
 from datetime import datetime
 from multiprocessing import Queue, Process
+from typing import List
 
 import humps
 from google.protobuf.json_format import MessageToDict
 
+
+from mapadroid.db import models
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils.logging import logger
+
+
+@dataclass
+class MappedGmo:
+    wild_mons: List[models.Mon]
+    stops: List[models.Stop]
+    gyms: List[models.Gym]
+    raids: List[models.Raid]
+    s2cells: List[models.S2Cell]
+    spawnpoints: List[models.SpawnPoint]
 
 
 class MitmDataProcessor(Process):
@@ -78,6 +92,8 @@ class MitmDataProcessor(Process):
 
             logger.debug4("Received data of {}: {}", origin, data)
             if data_type == 106:
+                print(self.map_gmo_serialized(payload))
+
                 # process GetMapObject
                 logger.info("Processing GMO received from {}. Received at {}", str(
                     origin), str(datetime.fromtimestamp(received_timestamp)))
@@ -120,6 +136,47 @@ class MitmDataProcessor(Process):
                 logger.debug2("Processing proto 156 of {}".format(origin))
                 self.__db_submit.gym(origin, payload)
                 logger.debug2("Done processing proto 156 of {}".format(origin))
+
+    def map_gmo_serialized(self, payload):
+        wild_mons: List[models.Mon] = []
+        stops: List[models.Stop] = []
+        gyms: List[models.Gym] = []
+        raids: List[models.Raid] = []
+        s2cells: List[models.S2Cell] = []
+        spawnpoints: List[models.SpawnPoint] = []
+
+        for cell in payload.cells:
+            s2cells.append(cell)
+
+            for fort in cell.forts:
+                if fort.type == 0:
+                    gyms.append(fort)
+                    raids.append(fort)
+                elif fort.type == 1:
+                    stops.append(fort)
+            for wild_mon in cell.wild_pokemon:
+                wild_mons.append(self.map_gmo_wildmons_serialized(wild_mon))
+                spawnpoints.append(wild_mon)
+
+        return MappedGmo(wild_mons, stops, gyms, raids, s2cells, spawnpoints)
+
+    def map_gmo_wildmons_serialized(self, wildmon: dict):
+        encounter_id = wildmon['encounter_id']
+        if encounter_id < 0:
+            encounter_id = encounter_id + 2 ** 64
+
+        # TODO add despawn time
+        return models.Mon(
+            encounter_id=encounter_id,
+            spawnpoint_id=int(str(wildmon['spawnpoint_id']), 16),
+            pokemon_id=wildmon['pokemon_data']['id'],
+            latitude=wildmon['latitude'],
+            longitude=wildmon['longitude'],
+            costume=wildmon['pokemon_data']['display']['costume_value'],
+            form=wildmon['pokemon_data']['display']['form_value'],
+            weather_boosted_condition=wildmon['pokemon_data']['display']['weather_boosted_value'],
+            gender=wildmon['pokemon_data']['display']['gender_value'],
+        )
 
     @staticmethod
     def raw_decoder(data_type, payload):
