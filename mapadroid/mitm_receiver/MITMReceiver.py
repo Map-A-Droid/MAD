@@ -101,6 +101,8 @@ class MITMReceiver(Process):
         self.__data_manager = data_manager
         self.__hopper_mutex = RLock()
         self._db_wrapper = db_wrapper
+        self._data_queue: JoinableQueue = JoinableQueue()
+        self.worker_threads = []
         self.app = Flask("MITMReceiver")
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
                           handler=self.get_addresses,
@@ -133,8 +135,6 @@ class MITMReceiver(Process):
                               methods_passed=['GET'])
             self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
                                       methods_passed=['GET'])
-            self._data_queue: JoinableQueue = JoinableQueue()
-            self.worker_threads = []
             for i in range(self.__application_args.mitmreceiver_data_workers):
                 data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, self.__application_args,
                                                                       self.__mitm_mapper, db_wrapper,
@@ -145,8 +145,9 @@ class MITMReceiver(Process):
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
         logger.info("Adding None to queue")
-        for i in range(self.__application_args.mitmreceiver_data_workers):
-            self._data_queue.put(None)
+        if self._data_queue:
+            for i in range(self.__application_args.mitmreceiver_data_workers):
+                self._data_queue.put(None)
         logger.info("Trying to join workers...")
         for t in self.worker_threads:
             t.terminate()
