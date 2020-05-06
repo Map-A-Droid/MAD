@@ -61,6 +61,12 @@ var ItemData = [{
    id: 708,
    text: 'Silver Pinap Berry (#708)',
 }, {
+   id: 709,
+   text: 'Poffin (#709)',
+}, {
+   id: 801,
+   text: 'Upgraded Camera (#801)',
+}, {
    id: 901,
    text: 'Egg Incubators (#901)',
 }, {
@@ -97,6 +103,12 @@ var ItemData = [{
    id: 1202,
    text: 'Charged TM (#1202)',
 }, {
+   id: 1203,
+   text: 'Elite Fast TM (#1203)',
+}, {
+   id: 1204,
+   text: 'Elite Charged TM (#1204)',
+}, {
    id: 1301,
    text: 'Rare Candy (#1301)',
 }, {
@@ -111,6 +123,21 @@ var ItemData = [{
 }, {
    id: 1404,
    text: 'Star piece (#1404)',
+}, {
+   id: 1408,
+   text: 'Remote Raid Pass (#1408)',
+}, {
+   id: 1501,
+   text: 'Map Fragment (#1501)',
+}, {
+   id: 1502,
+   text: 'Leader Map Radar (#1502)',
+}, {
+   id: 1503,
+   text: 'Super Leader Map Radar (#1503)',
+}, {
+   id: 1600,
+   text: 'Global Ticket (#1600)',
 }
 
 ];
