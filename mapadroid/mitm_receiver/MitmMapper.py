@@ -108,6 +108,18 @@ class MitmMapper(object):
         else:
             return devicemapping_of_origin.get("mon_ids_iv", [])
 
+    def get_safe_items(self, origin):
+        get_devicesettings_of_origin = self.__mapping_manager.get_devicesettings_of(origin)
+        if get_devicesettings_of_origin is None:
+            return []
+        else:
+            enhanced_mode_quest_safe_items = \
+                get_devicesettings_of_origin.get("enhanced_mode_quest_safe_items", "1301, 1401,1402, 1403, 1106, "
+                                                 "901, 902, 903, 501, 502, 503,"
+                                                 "504, 301").split(",")
+
+            return list(map(int, enhanced_mode_quest_safe_items))
+
     def request_latest(self, origin, key=None):
         logger.debug("Request latest called with origin {}".format(str(origin)))
         with self.__mapping_mutex:
