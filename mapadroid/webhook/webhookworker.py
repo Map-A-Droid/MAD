@@ -7,7 +7,7 @@ import requests
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils import MappingManager
-from mapadroid.utils.gamemechanicutil import calculate_mon_level, get_raid_boss_cp
+from mapadroid.utils.gamemechanicutil import calculate_mon_level
 from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.questGen import generate_quest
@@ -332,9 +332,6 @@ class WebhookWorker:
 
             if raid["move_2"] is not None:
                 raid_payload["move_2"] = raid["move_2"]
-
-            if raid["cp"] is None:
-                raid_payload["cp"] = get_raid_boss_cp(raid["pokemon_id"])
 
             if raid["pokemon_id"] is None:
                 raid_payload["pokemon_id"] = 0
