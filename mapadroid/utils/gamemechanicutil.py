@@ -14,7 +14,7 @@ def calculate_mon_level(cp_multiplier):
     else:
         pokemon_level = 171.0112688 * cp_multiplier - 95.20425243
     return round(pokemon_level) * 2 / 2
-    
+
 def gen_despawn_timestamp(known_despawn):
     despawn_time = datetime.now() + timedelta(seconds=300)
     despawn_time = datetime.utcfromtimestamp(
