@@ -22,7 +22,7 @@ def i8ln(word):
 
     return word
 
-def get_mon_name(id):
+def get_mon_name(mon_id):
     mons_file = open_json_file('pokemon')
     str_id = str(mon_id)
     if str_id in mons_file:
