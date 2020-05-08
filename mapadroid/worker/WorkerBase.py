@@ -263,8 +263,9 @@ class WorkerBase(AbstractWorker):
         current_thread().name = self._origin
 
         start_position = self.get_devicesettings_value("startcoords_of_walker", None)
+        calc_type = self._mapping_manager.routemanager_get_calc_type(self._routemanager_name)
 
-        if start_position and (self._levelmode and self._mapping_manager.routemanager_get_calc_type == "routefree"):
+        if start_position and (self._levelmode and calc_type == "routefree"):
             startcoords = self.get_devicesettings_value("startcoords_of_walker").replace(' ', '') \
                 .replace('_', '').split(',')
 
@@ -275,7 +276,7 @@ class WorkerBase(AbstractWorker):
                 start_position = str(lat) + "," + str(lng)
 
         if start_position is None and \
-                (self._levelmode and self._mapping_manager.routemanager_get_calc_type == "routefree"):
+                (self._levelmode and calc_type == "routefree"):
             logger.warning("Starting levelmode without worker start position")
             # setting coords
             lat, lng = self._geofencehelper.get_middle_from_fence()
