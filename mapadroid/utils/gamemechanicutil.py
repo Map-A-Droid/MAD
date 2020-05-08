@@ -14,14 +14,6 @@ def calculate_mon_level(cp_multiplier):
     else:
         pokemon_level = 171.0112688 * cp_multiplier - 95.20425243
     return round(pokemon_level) * 2 / 2
-
-def get_mon_name(mon_id):
-    mons_file = open_json_file('pokemon')
-    str_id = str(mon_id)
-    if str_id in mons_file:
-        return mons_file[str_id]["name"]
-    else:
-        return "No-name-in-file-please-fix"
     
 def gen_despawn_timestamp(known_despawn):
     despawn_time = datetime.now() + timedelta(seconds=300)
