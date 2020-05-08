@@ -11,7 +11,7 @@ from mapadroid.madmin.functions import (
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.gamemechanicutil import get_raid_boss_cp
+from mapadroid.utils.gamemechanicutil import get_mon_name
 from mapadroid.utils.language import i8ln
 from mapadroid.utils.logging import logger
 from mapadroid.utils.questGen import generate_quest
@@ -280,7 +280,7 @@ class map(object):
                 if str(id) in mons_raw:
                     mon_raw = mons_raw[str(id)]
                 else:
-                    mon_raw = get_raid_boss_cp(id)
+                    mon_raw = get_mon_name(id)
                     mons_raw[str(id)] = mon_raw
 
                 data[i]["encounter_id"] = str(data[i]["encounter_id"])
