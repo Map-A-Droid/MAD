@@ -120,7 +120,7 @@ class WorkerQuests(MITMBase):
 
         if self._level_mode:
             logger.info("Starting Level Mode")
-            if self._mapping_manager.routemanager_get_calc_type == "routefree":
+            if self._mapping_manager.routemanager_get_calc_type(self._routemanager_name) == "routefree":
                 logger.info("Sleeping one minute for getting data")
                 time.sleep(60)
         else:
