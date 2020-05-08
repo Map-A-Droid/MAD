@@ -7,9 +7,9 @@ from flask import (jsonify, render_template, request, redirect, url_for, flash, 
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
-from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_mon_name, form_mapper
+from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv, form_mapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
-from mapadroid.utils.language import i8ln
+from mapadroid.utils.language import i8ln, get_mon_name
 from mapadroid.utils.logging import logger
 
 
