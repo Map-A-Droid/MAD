@@ -11,8 +11,7 @@ from mapadroid.madmin.functions import (
 from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.gamemechanicutil import get_mon_name
-from mapadroid.utils.language import i8ln
+from mapadroid.utils.language import i8ln, get_mon_name
 from mapadroid.utils.logging import logger
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
