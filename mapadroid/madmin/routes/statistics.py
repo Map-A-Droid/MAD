@@ -7,7 +7,7 @@ from flask import (jsonify, render_template, request, redirect, url_for, flash, 
 from mapadroid.db.DbStatsReader import DbStatsReader
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import auth_required, generate_coords_from_geofence, get_geofences
-from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_raid_boss_cp, form_mapper
+from mapadroid.utils.gamemechanicutil import calculate_mon_level, calculate_iv, get_mon_name, form_mapper
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.language import i8ln
 from mapadroid.utils.logging import logger
@@ -214,8 +214,7 @@ class statistics(object):
             for dat in data:
                 mon = "%03d" % dat[1]
                 monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
-                monName_raw = (get_raid_boss_cp(dat[1]))
-                monName = i8ln(monName_raw['name'])
+                monName = get_mon_name(dat[1])
                 if self._args.db_method == "rm":
                     lvl = calculate_mon_level(dat[6])
                 else:
@@ -257,8 +256,7 @@ class statistics(object):
             form_suffix = "%02d" % form_mapper(dat[2], dat[5])
             mon = "%03d" % dat[2]
             monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-            monName_raw = (get_raid_boss_cp(dat[2]))
-            monName = i8ln(monName_raw['name'])
+            monName = get_mon_name(dat[2])
             diff: int = dat[0]
             if diff == 0:
                 logger.warning('No deeper mon stats are possible - not enought data '
@@ -290,8 +288,7 @@ class statistics(object):
                 form_suffix = "%02d" % form_mapper(dat, form_dat)
                 mon = "%03d" % dat
                 monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-                monName_raw = (get_raid_boss_cp(dat))
-                monName = i8ln(monName_raw['name'])
+                monName = get_mon_name(dat)
 
                 total_shiny_encounters = sum(shiny_avg[dat][form_dat]['total_shiny'])
                 total_nonshiny_encounters = sum(shiny_avg[dat][form_dat]['total_nonshiny'])
@@ -340,8 +337,7 @@ class statistics(object):
             form_suffix = "%02d" % form_mapper(dat[0], dat[1])
             mon = "%03d" % dat[0]
             monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
-            monName_raw = (get_raid_boss_cp(dat[0]))
-            monName = i8ln(monName_raw['name'])
+            monName = get_mon_name(dat[0])
             mon_names[dat[0]] = monName
             found_shiny_mon_id.append(
                 mon)  # append everything now, we will set() it later to remove duplicates
