@@ -2,7 +2,7 @@ import json
 import sys
 import time
 from multiprocessing import JoinableQueue, Process
-from typing import Union
+from typing import Union, Optional
 
 from flask import Flask, Response, request
 from gevent.pywsgi import WSGIServer
@@ -91,7 +91,7 @@ class EndpointAction(object):
 
 class MITMReceiver(Process):
     def __init__(self, listen_ip, listen_port, mitm_mapper, args_passed, mapping_manager: MappingManager,
-                 db_wrapper, data_manager, name=None):
+                 db_wrapper, data_manager, name=None, enable_configmode: Optional[bool] = False):
         Process.__init__(self, name=name)
         self.__application_args = args_passed
         self.__mapping_manager = mapping_manager
@@ -100,16 +100,12 @@ class MITMReceiver(Process):
         self.__mitm_mapper: MitmMapper = mitm_mapper
         self.__data_manager = data_manager
         self.__hopper_mutex = RLock()
+        self._db_wrapper = db_wrapper
+        self._data_queue: JoinableQueue = JoinableQueue()
+        self.worker_threads = []
         self.app = Flask("MITMReceiver")
-        self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
-                          methods_passed=['POST'])
-        self.add_endpoint(endpoint='/get_latest_mitm/', endpoint_name='get_latest_mitm/',
-                          handler=self.get_latest,
-                          methods_passed=['GET'])
         self.add_endpoint(endpoint='/get_addresses/', endpoint_name='get_addresses/',
                           handler=self.get_addresses,
-                          methods_passed=['GET'])
-        self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
                           methods_passed=['GET'])
         self.add_endpoint(endpoint='/mad_apk/<string:apk_type>',
                           endpoint_name='mad_apk/info',
@@ -131,22 +127,27 @@ class MITMReceiver(Process):
                           endpoint_name='origin_generator/',
                           handler=self.origin_generator,
                           methods_passed=['GET'])
-
-        self._data_queue: JoinableQueue = JoinableQueue()
-        self._db_wrapper = db_wrapper
-        self.worker_threads = []
-        for i in range(self.__application_args.mitmreceiver_data_workers):
-            data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, self.__application_args,
-                                                                  self.__mitm_mapper, db_wrapper,
-                                                                  name='MITMReceiver-%s' % str(i))
-            data_processor.start()
-            self.worker_threads.append(data_processor)
+        if not enable_configmode:
+            self.add_endpoint(endpoint='/', endpoint_name='receive_protos', handler=self.proto_endpoint,
+                              methods_passed=['POST'])
+            self.add_endpoint(endpoint='/get_latest_mitm/', endpoint_name='get_latest_mitm/',
+                              handler=self.get_latest,
+                              methods_passed=['GET'])
+            self.add_endpoint(endpoint='/status/', endpoint_name='status/', handler=self.status,
+                                      methods_passed=['GET'])
+            for i in range(self.__application_args.mitmreceiver_data_workers):
+                data_processor: MitmDataProcessor = MitmDataProcessor(self._data_queue, self.__application_args,
+                                                                      self.__mitm_mapper, db_wrapper,
+                                                                      name='MITMReceiver-%s' % str(i))
+                data_processor.start()
+                self.worker_threads.append(data_processor)
 
     def shutdown(self):
         logger.info("MITMReceiver stop called...")
         logger.info("Adding None to queue")
-        for i in range(self.__application_args.mitmreceiver_data_workers):
-            self._data_queue.put(None)
+        if self._data_queue:
+            for i in range(self.__application_args.mitmreceiver_data_workers):
+                self._data_queue.put(None)
         logger.info("Trying to join workers...")
         for t in self.worker_threads:
             t.terminate()
