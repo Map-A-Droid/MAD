@@ -283,7 +283,7 @@ class map(object):
                     mons_raw[str(id)] = mon_raw
 
                 data[i]["encounter_id"] = str(data[i]["encounter_id"])
-                data[i]["name"] = i8ln(mon_raw["name"])
+                data[i]["name"] = mon_raw
             except Exception:
                 pass
 
