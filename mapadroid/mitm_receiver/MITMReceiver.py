@@ -208,6 +208,10 @@ class MITMReceiver(Process):
 
         timestamp: float = data.get("timestamp", int(time.time()))
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
+        if (location_of_data.lat > 90 or location_of_data.lat < -90
+                or location_of_data.lng > 180 or location_of_data.lng < -180):
+            logger.warning("Received invalid location in data: %s".format(str(location_of_data)))
+            location_of_data: Location = Location(0, 0)
         self.__mitm_mapper.update_latest(
             origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
             values_dict=data, location=location_of_data)
