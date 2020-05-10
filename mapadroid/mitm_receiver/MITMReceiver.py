@@ -1,6 +1,8 @@
+import gzip
 import json
 import sys
 import time
+import io
 from multiprocessing import JoinableQueue, Process
 from typing import Union, Optional
 
@@ -69,8 +71,17 @@ class EndpointAction(object):
 
         if not abort:
             try:
-                # TODO: use response data
-                if len(request.data) > 0:
+                content_type = request.headers.get('Content-Type', None)
+                if content_type != "application/json":
+                    logger.warning("Content-Type not json: %s", content_type)
+                content_encoding = request.headers.get('Content-Encoding', None)
+                if content_encoding and content_encoding == "gzip":
+                    # we need to unpack the data first
+                    # https://stackoverflow.com/questions/28304515/receiving-gzip-with-flask
+                    compressed_data = io.BytesIO(request.data)
+                    text_data = gzip.GzipFile(fileobj=compressed_data, mode='r')
+                    request_data = json.loads(text_data.read())
+                elif len(request.data) > 0:
                     request_data = json.loads(request.data)
                 else:
                     request_data = {}
