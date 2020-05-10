@@ -116,10 +116,7 @@
             "cache": false,
             "dataType": "json",
             success: function (result) {
-
-                quest = result.quest
                 gym = result.gym
-                stop = result.stop
                 usage = result.usage
                 detection = result.detection
                 detection_empty = result.detection_empty
@@ -229,16 +226,6 @@
                 );
                 $("#flot_usage").UseTooltipFull();
 
-                $.plot($("#flot_quest"), [
-                    {
-                        data: quest,
-                        color: "#5482FF",
-                        label: "Quest / Hour"
-                    }
-                ], options_bars);
-                $("#flot_quest").UseTooltip();
-
-                $.plot($("#flot_stop"), stop, options_pie);
                 $.plot($("#flot_gym"), gym, options_pie);
 
             },
@@ -443,13 +430,6 @@
     </div>
 <div id="legendContainer_usage"></div>
 <div id="flot_usage"></div>
-<br>
-<h2>Today Quest Statistics</h2>
-<div id="legendContainer_quest"></div>
-<div id="flot_quest"></div>
-<br>
-<h2>Stop / Quest Statistics</h2>
-<div id="flot_stop"></div>
 <br>
 <h2>Live Gym Statistics</h2>
 <div id="flot_gym"></div>
