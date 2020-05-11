@@ -127,6 +127,37 @@
             });
         };
 
+    function timeConverter(timestamp, mode) {
+            var a = new Date(timestamp);
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var year = a.getFullYear();
+            var month = months[a.getMonth()];
+            var date = a.getDate();
+            var hour = a.getHours();
+            var hour_till = a.getHours() + 1;
+            var min = a.getMinutes();
+            min = min < 10 ? '0' + min : min;
+            var sec = a.getSeconds();
+            sec = sec < 10 ? '0' + sec : sec;
+
+            {% if time == "12" %}
+            var ampm = hour >= 12 ? 'pm' : 'am';
+            hour = hour % 12;
+            hour = hour ? hour : 12;
+            hour_till = hour_till % 12;
+            hour_till = hour_till ? hour_till : 12;
+            hour_till + ' ' + ampm;
+            sec = sec + ' ' + ampm;
+            {% endif %}
+
+            if (mode == 'hour') {
+                var time = hour + ' - ' + hour_till
+            } else {
+                var time = hour + ':' + min + ':' + sec
+            }
+            return time;
+        }
+
     function showTooltip(x, y, color, contents) {
             $('<div id="tooltip">' + contents + '</div>').css({
                 position: 'absolute',
