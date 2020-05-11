@@ -358,6 +358,7 @@ def get_mad_apks(db) -> dict:
                 'version': None,
                 'file_id': None,
                 'filename': None,
+                'mimetype': None,
                 'arch_disp': 'armeabi-v7a',
                 'usage_disp': 'pogo'
             },
@@ -365,6 +366,7 @@ def get_mad_apks(db) -> dict:
                 'version': None,
                 'file_id': None,
                 'filename': None,
+                'mimetype': None,
                 'arch_disp': 'arm64-v8a',
                 'usage_disp': 'pogo'
             },
@@ -374,6 +376,7 @@ def get_mad_apks(db) -> dict:
                 'version': None,
                 'file_id': None,
                 'filename': None,
+                'mimetype': None,
                 'arch_disp': 'noarch',
                 'usage_disp': 'rgc'
             },
@@ -383,6 +386,7 @@ def get_mad_apks(db) -> dict:
                 'version': None,
                 'file_id': None,
                 'filename': None,
+                'mimetype': None,
                 'arch_disp': 'noarch',
                 'usage_disp': 'pogodroid'
             },
@@ -409,6 +413,7 @@ def get_mad_apks(db) -> dict:
             apk_arch = 'noarch'
         file_data['version'] = apk['version']
         file_data['file_id'] = apk['filestore_id']
+        file_data['mimetype'] = apk['mimetype']
         file_data['arch_disp'] = apk_arch
         file_data['usage_disp'] = apk_name
         apks[apk['usage']][apk['arch']] = file_data

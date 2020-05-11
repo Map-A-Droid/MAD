@@ -557,7 +557,10 @@ class deviceUpdater(object):
                     apk_file = bytes()
                     for chunk in apk_util.chunk_generator(self._db, mad_apk['file_id']):
                         apk_file += chunk
-                    returning = ws_conn.install_apk(300, data=apk_file)
+                    if mad_apk['mimetype'] == 'application/zip':
+                        returning = ws_conn.install_bundle(300, data=apk_file)
+                    else:
+                        returning = ws_conn.install_apk(300, data=apk_file)
                     return returning if not 'RemoteGpsController'.lower() in str(
                         self._log[str(item)]['file']).lower() else True
             elif jobtype == jobType.REBOOT:
