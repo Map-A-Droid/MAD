@@ -2,6 +2,7 @@ import base64
 import io
 import json
 import os
+import re
 from typing import List
 import zipfile
 
@@ -80,6 +81,8 @@ class GPlayConnector(object):
                         del tmp_file
                 if splits:
                     for split in splits:
+                        if re.match(r'config.\w\w$', split['name']):
+                            continue
                         tmp_file = io.BytesIO()
                         for index, chunk in enumerate(split["file"]["data"]):
                             tmp_file.write(chunk)

@@ -413,7 +413,6 @@ def get_mad_apks(db) -> dict:
             apk_arch = 'noarch'
         file_data['version'] = apk['version']
         file_data['file_id'] = apk['filestore_id']
-        file_data['mimetype'] = apk['mimetype']
         file_data['arch_disp'] = apk_arch
         file_data['usage_disp'] = apk_name
         apks[apk['usage']][apk['arch']] = file_data
