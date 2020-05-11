@@ -9,7 +9,7 @@ class Patch(PatchBase):
         if not self._schema_updater.check_column_exists('settings_devicepool', 'enhanced_mode_quest'):
             query = (
                 "ALTER TABLE settings_devicepool "
-                "ADD enhanced_mode_quest TINYINT(1) NULL DEFAULT 0"
+                "ADD enhanced_mode_quest TINYINT(1) DEFAULT NULL"
             )
             try:
                 self._db.execute(query, commit=True)
@@ -21,7 +21,7 @@ class Patch(PatchBase):
         if not self._schema_updater.check_column_exists('settings_device', 'enhanced_mode_quest'):
             query = (
                 "ALTER TABLE settings_device "
-                "ADD enhanced_mode_quest TINYINT(1) NULL DEFAULT 0"
+                "ADD enhanced_mode_quest TINYINT(1) DEFAULT NULL"
             )
             try:
                 self._db.execute(query, commit=True)
