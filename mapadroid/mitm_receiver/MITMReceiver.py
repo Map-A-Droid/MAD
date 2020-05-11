@@ -71,19 +71,21 @@ class EndpointAction(object):
 
         if not abort:
             try:
-                content_type = request.headers.get('Content-Type', None)
                 content_encoding = request.headers.get('Content-Encoding', None)
-                if content_type and content_type == "application/json":
-                    if content_encoding and content_encoding == "gzip":
-                        # we need to unpack the data first
-                        # https://stackoverflow.com/questions/28304515/receiving-gzip-with-flask
-                        compressed_data = io.BytesIO(request.data)
-                        text_data = gzip.GzipFile(fileobj=compressed_data, mode='r')
-                        request_data = json.loads(text_data.read())
-                    else:
-                        request_data = json.loads(request.data)
+                if content_encoding and content_encoding == "gzip":
+                    # we need to unpack the data first
+                    # https://stackoverflow.com/questions/28304515/receiving-gzip-with-flask
+                    compressed_data = io.BytesIO(request.data)
+                    text_data = gzip.GzipFile(fileobj=compressed_data, mode='r')
+                    request_data = json.loads(text_data.read())
                 else:
-                    request_data = {}
+                    request_data = request.data
+
+                content_type = request.headers.get('Content-Type', None)
+                if content_type and content_type == "application/json":
+                    request_data = json.loads(request_data)
+                else:
+                    request_data = request_data
                 response_payload = self.action(origin, request_data, *args, **kwargs)
                 if response_payload is None:
                     response_payload = ""
