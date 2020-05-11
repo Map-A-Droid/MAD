@@ -102,6 +102,8 @@
             }
         };
 
+    var previousPoint = null, previousLabel = null;
+
     $.fn.UseTooltip = function () {
             $(this).bind("plothover", function (event, pos, item) {
                 if (item) {

@@ -590,8 +590,11 @@ class statistics(object):
         stats = {'spawnpoints': coords}
         return jsonify(stats)
 
+    @logger.catch()
+    @auth_required
     def get_stop_quest_stats(self):
         stats = []
+        stats_process = []
         processed_fences = []
         possible_fences = get_geofences(self._mapping_manager, self._data_manager)
         for possible_fence in possible_fences:
@@ -617,7 +620,7 @@ class statistics(object):
 
                 processed: int = quests * 100 / stops
 
-                stats.append({"fence": subfence, 'stops': stops, 'quests': quests,
+                stats_process.append({"fence": str(subfence), 'stops': int(stops), 'quests': int(quests),
                               'processed': str(int(processed)) + " %"})
 
                 subfenceindex += 1
@@ -635,7 +638,7 @@ class statistics(object):
         for dat in data:
             stop.append({'label': dat[0], 'data': dat[1]})
 
-        stats = {'stop_quest_stats': stats, 'quest': quest, 'stop': stop}
+        stats = {'stop_quest_stats': stats_process, 'quest': quest, 'stop': stop}
         return jsonify(stats)
 
     @auth_required
