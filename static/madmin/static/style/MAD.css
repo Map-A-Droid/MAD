@@ -16,6 +16,12 @@
 [data-theme="dark"] table.dataTable tr.odd { background-color: transparent !important; }
 [data-theme="dark"] table.dataTable tr.even { background-color: transparent !important; }
 
+[data-theme="dark"] .select2-selection.select2-selection--multiple {background-color: #000; }
+[data-theme="dark"] .select2-container--default .select2-selection--multiple .select2-selection__rendered li { background-color: #000; }
+[data-theme="dark"] .select2-results { background-color: #000; }
+[data-theme="dark"] .select2-container--default .select2-results__option[aria-selected=true] { color: #000; }
+[data-theme="dark"] input.select2-search__field { border: 0px solid #bbb !important; }
+
 [data-theme="dark"] #show-data-complete_filter, #show-data-detection_raw_length,
 #show-data-detection_raw_filter, #show-data-location_raw_length, #show-data-location_raw_filter { color: #bbb;}
 [data-theme="dark"] thead {

@@ -7,6 +7,8 @@
 {% block scripts %}
 {{ super() }}
 <script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script src="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/js/select2.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/select2@4.0.13/dist/css/select2.min.css" rel="stylesheet" />
 <script>
 $(document).ready(function () {
     $("#submit").click(function() {
@@ -19,6 +21,22 @@ $(document).ready(function () {
             process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
         }
     });
+
+    $(".enhanced_mode_quest_safe_items").select2({
+        data: ItemData,
+        escapeMarkup: function(m) {
+            return m;
+        }
+    });
+
+    var questModeUndeleteableItems = $(".enhanced_mode_quest_safe_items").data('default');
+    if (questModeUndeleteableItems != "") {
+
+        questModeUndeleteableItems = questModeUndeleteableItems.toString().replace(/\s/g, "").split(",")
+        $('.enhanced_mode_quest_safe_items').val(questModeUndeleteableItems);
+        $('.enhanced_mode_quest_safe_items').trigger('change');
+
+    }
 });
 </script>
 {% endblock %}
@@ -44,6 +62,8 @@ $(document).ready(function () {
         <option value="{{ option }}" {% if key in element.settings %}{{ 'selected="selected"' if option|tojson == element.settings[key]|tojson }}{% endif %}>{{ option|lower }}</option>
         {% endfor %}
       </select>
+      {% elif field.settings.type == "select" %}
+      <select class="form-control {{ key }}" data-default="{% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}" name="{{ key }}" setting='true' multiple="multiple"></select>
       {% else %}
       <input type="{{ field.settings.type }}" name="{{ key }}" setting='true' class="form-control" id="{{ key }}" value="{% if element.settings[key] is not none and element.settings[key] != 'None' %}{{ element.settings[key] }}{% endif %}" data-default="{{ element.settings[key] }}">
       {% endif %}

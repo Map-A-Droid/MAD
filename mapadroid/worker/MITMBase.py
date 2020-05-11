@@ -53,6 +53,7 @@ class MITMBase(WorkerBase):
                                                  self._mapping_manager.routemanager_get_mode(
                                                      self._routemanager_name),
                                                  99)
+        self._enhanced_mode = self.get_devicesettings_value('enhanced_mode_quest', False)
 
     def _check_data_distance(self, data):
         max_radius = self._mapping_manager.routemanager_get_max_radius(self._routemanager_name)
@@ -276,6 +277,12 @@ class MITMBase(WorkerBase):
             self._communicator.click(int(x), int(y))
             logger.debug("_clear_quests Open menu: {}, {}", str(int(x)), str(int(y)))
             time.sleep(6 + int(delayadd))
+
+        if self._enhanced_mode:
+            x, y = self._resocalc.get_close_main_button_coords(self)[0], \
+                   self._resocalc.get_close_main_button_coords(self)[1]
+            self._communicator.click(int(x), int(y))
+            return
 
         x, y = self._resocalc.get_quest_listview(self)[0], \
                self._resocalc.get_quest_listview(self)[1]

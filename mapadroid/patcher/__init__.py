@@ -31,6 +31,7 @@ MAD_UPDATES = OrderedDict([
     (27, 'patch_27'),
     (28, 'patch_28'),
     (29, 'patch_29'),
+    (30, 'patch_30'),
 ])
 
 

@@ -318,6 +318,24 @@ class Device(Resource):
                     "description": "Reboot (if enabled) device after not injecting for X times in a row (Default: 20)",
                     "expected": int
                 }
+            },
+            "enhanced_mode_quest": {
+                "settings": {
+                    "type": "option",
+                    "require": False,
+                    "values": [None, False, True],
+                    "description": "Activate enhanced quest mode for this device",
+                    "expected": bool
+                }
+            },
+            "enhanced_mode_quest_safe_items": {
+                "settings": {
+                    "type": "select",
+                    "require": False,
+                    "description": "Undeletable items for enhanced quest mode (Default: 1301, 1401,1402, "
+                                   "1403, 1106, 901, 902, 903, 501, 502, 503, 504, 301)",
+                    "expected": str
+                }
             }
         }
     }
