@@ -499,6 +499,8 @@ class deviceUpdater(object):
                 returning = ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
                 return returning if not 'RemoteGpsController'.lower() in str(file_).lower() else True
             elif jobtype == jobtype.SMART_UPDATE:
+                requires_update: bool = False
+                package_ver: str = None
                 package = self._log[str(item)]['file']
                 version_job = "dumpsys package %s | grep versionName" % (package,)
                 architecture_job = ws_conn.passthrough('getprop ro.product.cpu.abi')
@@ -511,9 +513,13 @@ class deviceUpdater(object):
                 try:
                     package_ver = re.search(r'versionName=([0-9\.]+)', package_ver_job).group(1)
                 except:
-                    logger.warning('Unable to determine version for {}: {}', self._log[str(item)]['file'],
-                                   package_ver_job)
-                    return False
+                    if package_ver_job and package_ver_job.split('\n')[0].strip() == 'OK':
+                        logger.info('No information returned.  Assuming pogo is not installed')
+                        requires_update = True
+                    else:
+                        logger.warning('Unable to determine version for {}: {}', self._log[str(item)]['file'],
+                                       package_ver_job)
+                        return False
                 mad_apk = apk_util.get_mad_apk(self._db,
                                                global_variables.MAD_APK_USAGE[self._log[str(item)]['file']],
                                                architecture=architecture)
@@ -524,7 +530,8 @@ class deviceUpdater(object):
                         arch = 'Unknown'
                     logger.warning('No MAD APK for {} [{}]', package, arch)
                     return False
-                requires_update = apk_util.is_newer_version(package_ver, mad_apk['version'])
+                if not requires_update:
+                    requires_update = apk_util.is_newer_version(package_ver, mad_apk['version'])
                 # Validate it is supported
                 if package == 'com.nianticlabs.pokemongo':
                     if architecture == 'armeabi-v7a':
