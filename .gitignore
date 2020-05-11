@@ -6,6 +6,7 @@ version.json
 *.log
 *.log.*
 configs/config.ini
+configs/*.userconf
 *.calc
 configs/geofences/*
 upload/*

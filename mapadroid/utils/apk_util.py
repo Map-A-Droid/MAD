@@ -3,7 +3,6 @@ import os
 import re
 import time
 from threading import Thread
-import zipfile
 
 import flask
 import apkutils
@@ -13,8 +12,8 @@ from werkzeug.utils import secure_filename
 
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import logger
-from mapadroid.utils.walkerArgs import parseArgs
-from gpapi.googleplay import GooglePlayAPI, LoginError, RequestError
+from mapadroid.utils.gplay_connector import GPlayConnector
+
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -22,89 +21,6 @@ APK_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3',
 }
 
-class GPlayConnector(object):
-    def __init__(self, architecture):
-        logger.debug('Creating new Google Play API connection')
-        args = parseArgs()
-        try:
-            device_codename = global_variables.MAD_APK_SEARCH[architecture]
-        except KeyError:
-            logger.critical('Device architecture not defined')
-            raise
-        self.tmp_folder: str = args.temp_path
-        self.api: GooglePlayAPI = GooglePlayAPI(device_codename=device_codename)
-        self.connect(args.gmail_user, args.gmail_passwd)
-
-    def connect(self, username: str, password: str) -> bool:
-        logger.debug('Attempting GPlay Auth')
-        try:
-            self.api.login(email=username, password=password)
-            logger.debug('GPlay Auth Successful')
-            return True
-        except LoginError as err:
-            logger.warning('Unable to login to GPlay: {}', err)
-            raise
-
-    def download(self, packagename: str) -> io.BytesIO:
-        details = self.api.details(packagename)
-        inmem_zip = io.BytesIO()
-        if details['offer'][0]['checkoutFlowRequired']:
-            method = self.api.delivery
-        else:
-            method = self.api.download
-        try:
-            data_iter = method(packagename, expansion_files=True)
-        except IndexError as exc:
-            logger.error("Error while downloading %s : this package does not exist, "
-                         "try to search it via --search before",
-                         packagename)
-        except Exception as exc:
-            logger.error("Error while downloading %s : %s", packagename, exc)
-        additional_data = data_iter['additionalData']
-        splits = data_iter['splits']
-        total_size = int(data_iter['file']['total_size'])
-        chunk_size = int(data_iter['file']['chunk_size'])
-        try:
-            with zipfile.ZipFile(inmem_zip, "w") as myzip:
-                tmp_file = io.BytesIO()
-                for index, chunk in enumerate(data_iter['file']['data']):
-                    tmp_file.write(chunk)
-                tmp_file.seek(0,0)
-                myzip.writestr('base.apk', tmp_file.read())
-                del tmp_file
-                if additional_data:
-                    for obb_file in additional_data:
-                        obb_filename = "%s.%s.%s.obb" % (obb_file["type"], obb_file["versionCode"], data_iter["docId"])
-                        obb_total_size = int(obb_file['file']['total_size'])
-                        obb_chunk_size = int(obb_file['file']['chunk_size'])
-                        tmp_file = io.BytesIO()
-                        for index, chunk in enumerate(obb_file["file"]["data"]):
-                            tmp_file.write(chunk)
-                        tmp_file.seek(0,0)
-                        myzip.writestr(obb_filename, tmp_file.read())
-                        del tmp_file
-                if splits:
-                    for split in splits:
-                        split_total_size = int(split['file']['total_size'])
-                        split_chunk_size = int(split['file']['chunk_size'])
-                        tmp_file = io.BytesIO()
-                        for index, chunk in enumerate(split["file"]["data"]):
-                            tmp_file.write(chunk)
-                        tmp_file.seek(0,0)
-                        myzip.writestr(split['name'], tmp_file.read())
-                        del tmp_file
-        except IOError as exc:
-            logger.error("Error while writing {} : {}", packagename, exc)
-            return False
-        inmem_zip.seek(0,0)
-        return inmem_zip
-
-    def get_latest_version(self, query: str) -> str:
-        result = self.api.details(query)
-        try:
-            return result['details']['appDetails']['versionString']
-        except:
-            return None
 
 class AutoDownloader(object):
     def __init__(self, dbc):
