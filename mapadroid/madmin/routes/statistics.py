@@ -618,7 +618,9 @@ class statistics(object):
                         fence=fence
                     ))
 
-                processed: int = quests * 100 / stops
+                processed: int = 0
+                if int(stops) > 0:
+                    processed: int = int(quests) * 100 / int(stops)
 
                 stats_process.append({"fence": str(subfence), 'stops': int(stops), 'quests': int(quests),
                               'processed': str(int(processed)) + " %"})
