@@ -527,7 +527,7 @@ class WorkerQuests(MITMBase):
                         logger.error("Did not get any text in inventory")
                         # TODO: could this be running forever?
                         trash += 1
-                        pass
+                        continue
                     logger.info("Found item {}", str(item_text))
                     match_one_item: bool = False
                     for text in not_allow:
