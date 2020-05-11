@@ -1,0 +1,251 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
+<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.pie.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.flash.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
+
+
+<script>
+    function setGrid(tableGridHtmlId, gridData, columns, defs) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "searching": true,
+            "paging": true,
+            "columns": columns,
+            "ordering": true, "order": [],
+            "columnDefs": defs,
+            "responsive": {{ responsive }},
+            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+            dom: 'Blfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf'
+            ],
+            "stripeClasses": [ 'odd', 'even' ],
+            sorting: true,
+            stateSave: true,
+            stateSaveCallback: function(settings,data) {
+            localStorage.setItem( 'DataTables_' + settings.sInstance, JSON.stringify(data) )
+            },
+            stateLoadCallback: function(settings) {
+            return JSON.parse( localStorage.getItem( 'DataTables_' + settings.sInstance ) )
+            }
+        });
+	    }
+
+	var options_pie = {
+            series: {
+                pie: {
+                    show: true,
+                    radius: 1,
+                    tilt: 0.5,
+                    label: {
+                        show: true,
+                        radius: 0.8,
+                        threshold: 0.1
+                    }
+                }
+            },
+            legend: {
+                show: true,
+                labelFormatter: function (label, series) {
+                    return '<div id="legendContainer" style="color:black;">' +
+                        label + ' : ' +
+                        (series.data[0][1]) +
+                        '</div>';
+                }
+            }
+        };
+
+        var options_bars = {
+            xaxis: {
+                mode: "time",
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:00:00 %p",
+                {% else %}
+                timeformat: "%d.%m<br>%H:00:00",
+                {% endif %}
+                minTickSize: [3, "hour"],
+                timezone: "browser"
+            },
+            series: {
+                bars: {
+                    show: true
+                }
+            },
+            bars: {
+                align: "center",
+                barWidth: 60 * 40 * 1000
+            },
+            grid: {
+                hoverable: true,
+                borderWidth: 2,
+                backgroundColor: { colors: ["transparent", "transparent"] }
+            },
+            legend: {
+                container: $("#legendContainer_quest"),
+                noColumns: 0
+            }
+        };
+
+    $.fn.UseTooltip = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                            item.pageY,
+                            color,
+                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: " + timeConverter(x, 'hour') + "</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+
+    $(document).ready(function () {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+        $('body').Aplus();
+        $("#navgyms").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "get_stop_quest_stats",
+            success: function (result) {
+
+                quest_stop_process = result.stop_quest_stats
+                quest = result.quest
+                stop = result.stop
+
+                setTimeout($.unblockUI, 100);
+                setGrid('#show-spawnpoints-stats', quest_stop_process, [
+                    { data: 'fence', title: 'Fence' },
+                    { data: 'stops', title: 'Stops' },
+                    { data: 'quests', title: 'Quests' },
+                    { data: 'processed', title: 'Processed' }
+            ], []);
+
+            $.plot($("#flot_quest"), [
+                    {
+                        data: quest,
+                        color: "#5482FF",
+                        label: "Quest / Hour"
+                    }
+                ], options_bars);
+            $("#flot_quest").UseTooltip();
+
+            $.plot($("#flot_stop"), stop, options_pie);
+
+            }
+        });
+    });
+</script>
+<style>
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
+
+
+
+<style type="text/css">
+    #flot_usage {
+        width: 100%;
+        height: 300px;
+    }
+
+    i.fa {
+        color: white;
+    }
+
+    i.fablack {
+        color: black;
+    }
+
+    #flot_spawn {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_quest {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_gym {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_stop {
+        width: 100%;
+        height: 300px;
+    }
+
+    #legendContainer {
+        background-color: #fff;
+        padding: 2px;
+        margin-bottom: 8px;
+        display: inline-block;
+        margin: 0 auto;
+    }
+
+    #flotcontainer {
+        width: 600px;
+        height: 200px;
+        text-align: left;
+    }
+
+    #selector {
+        font-size: 1.5em;
+        margin: 10px;
+    }
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
+
+
+{% endblock %}
+
+{% block content %}
+<h2>Quest processing</h2>
+
+<p>
+	{% with messages = get_flashed_messages() %}
+	  {% if messages %}
+		{% for message in messages %}
+		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+		{% endfor %}
+	  {% endif %}
+	{% endwith %}
+</p>
+<table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
+<br>
+<h2>Today Quest Statistics</h2>
+<div id="legendContainer_quest"></div>
+<div id="flot_quest"></div>
+<br>
+<h2>Stop / Quest Statistics</h2>
+<div id="flot_stop"></div>
+{% endblock %}

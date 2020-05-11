@@ -249,14 +249,21 @@ class DbWrapper:
 
         return latest, encounter_id_infos
 
-    def stops_from_db(self, geofence_helper):
+    def stops_from_db(self, geofence_helper=None, fence=None):
         """
         Retrieve all the pokestops valid within the area set by geofence_helper
         :return: numpy array with coords
         """
         logger.debug("DbWrapper::stops_from_db called")
 
-        minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+        minLat, minLon, maxLat, maxLon = -90, -180, 90, 180
+        query_where: str = ""
+        if geofence_helper is not None:
+            minLat, minLon, maxLat, maxLon = geofence_helper.get_polygon_from_fence()
+
+        if fence is not None:
+            query_where = " and ST_CONTAINS(ST_GEOMFROMTEXT( 'POLYGON(( {} ))'), " \
+                          "POINT(pokestop.latitude, pokestop.longitude))".format(str(fence))
 
         query = (
             "SELECT latitude, longitude "
@@ -264,6 +271,8 @@ class DbWrapper:
             "WHERE (latitude >= {} AND longitude >= {} "
             "AND latitude <= {} AND longitude <= {}) "
         ).format(minLat, minLon, maxLat, maxLon)
+
+        query = query + str(query_where)
 
         res = self.execute(query)
         list_of_coords: List[Location] = []

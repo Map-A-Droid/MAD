@@ -55,6 +55,8 @@ class statistics(object):
             ("/delete_unfenced_spawns", self.delete_unfenced_spawns),
             ("/delete_status_entry", self.delete_status_entry),
             ("/reset_status_entry", self.reset_status_entry),
+            ("/get_stop_quest_stats", self.get_stop_quest_stats),
+            ("/statistics_stop_quest", self.statistics_stop_quest),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -87,6 +89,12 @@ class statistics(object):
                                time=self._args.madmin_time,
                                responsive=str(self._args.madmin_noresponsive).lower())
 
+    @auth_required
+    def statistics_stop_quest(self):
+        return render_template('statistics/stop_quest_statistics.html', title="MAD Stop/Quest Statistics",
+                               time=self._args.madmin_time,
+                               responsive=str(self._args.madmin_noresponsive).lower())
+
     @logger.catch
     @auth_required
     def game_stats(self):
@@ -112,19 +120,6 @@ class statistics(object):
             detection_empty.append({'lat': str(dat[1]), 'lng': str(dat[2]), 'worker': str(dat[3]),
                                     'count': str(dat[0]), 'type': str(dat[4]), 'lastscan': str(dat[5]),
                                     'countsuccess': str(dat[6])})
-
-        # Stop
-        stop = []
-        data = self._db_stats_reader.get_stop_quest()
-        for dat in data:
-            stop.append({'label': dat[0], 'data': dat[1]})
-
-        # Quest
-        quest: list = []
-        quest_db = self._db_stats_reader.get_quests_count(1)
-        for ts, count in quest_db:
-            quest_raw = (ts * 1000, count)
-            quest.append(quest_raw)
 
         # Usage
         insta = {}
@@ -175,7 +170,7 @@ class statistics(object):
                 text = 'Instinct'
             gym.append({'label': text, 'data': dat[1], 'color': color})
 
-        stats = {'gym': gym, 'detection_empty': detection_empty, 'quest': quest, 'stop': stop, 'usage': usage,
+        stats = {'gym': gym, 'detection_empty': detection_empty, 'usage': usage,
                  'location_info': location_info, 'detection': detection}
         return jsonify(stats)
 
@@ -593,6 +588,54 @@ class statistics(object):
                 subfenceindex += 1
 
         stats = {'spawnpoints': coords}
+        return jsonify(stats)
+
+    def get_stop_quest_stats(self):
+        stats = []
+        processed_fences = []
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+        for possible_fence in possible_fences:
+            mode = possible_fences[possible_fence]['mode']
+            area_id = possible_fences[possible_fence]['area_id']
+            subfenceindex: int = 0
+
+            if mode != "pokestops":
+                continue
+
+            for subfence in possible_fences[possible_fence]['include']:
+                if subfence in processed_fences:
+                    continue
+                processed_fences.append(subfence)
+                fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
+
+                stops = len(self._db.stops_from_db(
+                        fence=fence
+                    ))
+                quests = len(self._db.quests_from_db(
+                        fence=fence
+                    ))
+
+                processed: int = quests * 100 / stops
+
+                stats.append({"fence": subfence, 'stops': stops, 'quests': quests,
+                              'processed': str(int(processed)) + " %"})
+
+                subfenceindex += 1
+
+        # Quest
+        quest: list = []
+        quest_db = self._db_stats_reader.get_quests_count(1)
+        for ts, count in quest_db:
+            quest_raw = (ts * 1000, count)
+            quest.append(quest_raw)
+
+        # Stop
+        stop = []
+        data = self._db_stats_reader.get_stop_quest()
+        for dat in data:
+            stop.append({'label': dat[0], 'data': dat[1]})
+
+        stats = {'stop_quest_stats': stats, 'quest': quest, 'stop': stop}
         return jsonify(stats)
 
     @auth_required
