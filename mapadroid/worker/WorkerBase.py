@@ -661,8 +661,11 @@ class WorkerBase(AbstractWorker):
             if screen_type == ScreenType.BLACK:
                 logger.info("Found Black Loading Screen - waiting ...")
                 time.sleep(20)
-
-            if screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT, ScreenType.CLOSE]:
+            elif screen_type == ScreenType.CLOSE:
+                logger.warning("screendetection found pogo closed, start it...")
+                self._start_pogo()
+                self._loginerrorcounter += 1
+            elif screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT]:
                 logger.warning('Error getting Gamedata or strange ggl message appears')
                 self._loginerrorcounter += 1
                 if self._loginerrorcounter < 2:
