@@ -23,9 +23,13 @@ def memoize(function):
 @memoize
 def parseArgs():
     defaultconfigfiles = []
+    default_tokenfile = None
     if '-cf' not in sys.argv and '--config' not in sys.argv:
         defaultconfigfiles = [os.getenv('MAD_CONFIG', os.path.join(
             mapadroid.MAD_ROOT, 'configs/config.ini'))]
+    if '-td' not in sys.argv and '--token_dispenser' not in sys.argv:
+        default_tokenfile = os.getenv('MAD_CONFIG', os.path.join(
+            mapadroid.MAD_ROOT, 'configs/token-dispensers.ini'))
     parser = configargparse.ArgParser(
         default_config_files=defaultconfigfiles,
         auto_env_var_prefix='THERAIDMAPPER_')
@@ -345,6 +349,17 @@ def parseArgs():
     parser.set_defaults(DEBUG=False)
     parser.add_argument('-ut', '--unit_tests', action='store_true', default=False,
                         help='Run unit tests then quit', dest='unit_tests')
+
+    # MADAPKs
+    parser.add_argument('-td', '--token_dispenser', default=default_tokenfile,
+                        help='Token dispenser config (MAD)')
+    parser.add_argument('-tdu', '--token_dispenser_user', default='',
+                        help='Token dispenser config (User)')
+    parser.add_argument('-gu', '--gmail_user', default='',
+                        help='Google Mail User for interacting with the Google Play Store')
+    parser.add_argument('-gp', '--gmail_passwd', default='',
+                        help='Google Mail Password for interacting with the Google Play Store.  Must be an app'
+                        ' password or 2fa will be triggered (this should be enabled on your account anyways')
 
     args = parser.parse_args()
 
