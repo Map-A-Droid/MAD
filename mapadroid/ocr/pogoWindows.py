@@ -892,8 +892,11 @@ class PogoWindows:
                     frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
                     diff: int = 2
 
-                frame = frame_org.convert('LA')
-                texts = [frame, frame_org]
+                texts = [frame_org]
+                for thresh in [200, 175, 150]:
+                    fn = lambda x : 255 if x > thresh else 0
+                    frame = frame_org.convert('L').point(fn, mode='1')
+                    texts.append(frame)
                 for text in texts:
                     try:
                         globaldict = pytesseract.image_to_data(text, output_type=Output.DICT, timeout=40,
