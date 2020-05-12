@@ -4,7 +4,7 @@ ImageHash~=4.0
 bitstring~=3.1
 dataclasses>=0.6
 geopy~=1.20
-gevent~=1.4
+gevent==1.4.0
 gpxdata~=1.2
 imutils~=0.5
 loguru~=0.4.0
