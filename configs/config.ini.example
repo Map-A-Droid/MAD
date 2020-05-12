@@ -90,6 +90,7 @@
 #game_stats                  # Generate worker stats
 #game_stats_raw              # Generate worker raw stats (only with --game_stats)')
 #raw_delete_shiny:           # Delete shiny mon in raw stats older then x days (0 =  Disable (Default))
+#quest_stats_fences:         # Comma separated list of geofences names for stop/quest statistics (Empty: all)
 
 # MADmin
 ######################

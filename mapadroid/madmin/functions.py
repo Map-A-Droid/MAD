@@ -126,7 +126,7 @@ def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=No
             geo_exclude = data_manager.get_resource('geofence', identifier=geo_exclude_id)
         if fence_type is not None and area['mode'] != fence_type:
             continue
-        area_geofences = GeofenceHelper(geo_include, geo_exclude)
+        area_geofences = GeofenceHelper(geo_include, geo_exclude, area['name'])
         include = {}
         exclude = {}
         for fences in area_geofences.geofenced_areas:

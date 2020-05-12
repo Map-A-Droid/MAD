@@ -15,15 +15,15 @@ except ImportError:
 
 
 class GeofenceHelper:
-    def __init__(self, include_geofence, exclude_geofence):
+    def __init__(self, include_geofence, exclude_geofence, fence_name=None):
         self.geofenced_areas = []
         self.excluded_areas = []
         self.use_matplotlib = 'matplotlib' in sys.modules
         if include_geofence or exclude_geofence:
             self.geofenced_areas = self.parse_geofences_file(
-                include_geofence, excluded=False)
+                include_geofence, excluded=False, fence_fallback=fence_name)
             self.excluded_areas = self.parse_geofences_file(
-                exclude_geofence, excluded=True)
+                exclude_geofence, excluded=True, fence_fallback=fence_name)
             logger.debug2("Loaded {} geofenced and {} excluded areas.", len(
                 self.geofenced_areas), len(self.excluded_areas))
 
@@ -88,7 +88,7 @@ class GeofenceHelper:
         return self.geofenced_areas or self.excluded_areas
 
     @staticmethod
-    def parse_geofences_file(geo_resource, excluded):
+    def parse_geofences_file(geo_resource, excluded, fence_fallback = None):
         geofences = []
         # Read coordinates of excluded areas from file.
         if geo_resource:
@@ -109,10 +109,13 @@ class GeofenceHelper:
                     first_line = False
                 else:  # Coordinate line.
                     if first_line:
+                        fencename = "unnamed"
+                        if fence_fallback is not None:
+                            fencename = fence_fallback
                         # Geofence file with no name
                         geofences.append({
                             'excluded': excluded,
-                            'name': 'unnamed',
+                            'name': fencename,
                             'polygon': []
                         })
                         logger.debug('Found geofence with no name')

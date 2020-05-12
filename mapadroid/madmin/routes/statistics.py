@@ -596,18 +596,23 @@ class statistics(object):
         stats = []
         stats_process = []
         processed_fences = []
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type="pokestops")
+        wanted_fences = []
+        if self._args.quest_stats_fences != "":
+            wanted_fences = [item.lower() for item in self._args.quest_stats_fences.split(",")]
         for possible_fence in possible_fences:
             mode = possible_fences[possible_fence]['mode']
             area_id = possible_fences[possible_fence]['area_id']
             subfenceindex: int = 0
 
-            if mode != "pokestops":
-                continue
-
             for subfence in possible_fences[possible_fence]['include']:
                 if subfence in processed_fences:
                     continue
+
+                if len(wanted_fences) > 0:
+                    if str(subfence).lower() not in wanted_fences:
+                        continue
+
                 processed_fences.append(subfence)
                 fence = generate_coords_from_geofence(self._mapping_manager, self._data_manager, subfence)
 
