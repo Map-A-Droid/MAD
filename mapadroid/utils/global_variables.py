@@ -21,12 +21,10 @@ MAD_APK_ARCH = {
     'armeabi-v7a': MAD_APK_ARCH_ARMEABI_V7A,
     'arm64-v8a': MAD_APK_ARCH_ARM64_V8A,
 }
-# Configured devices can be found @ https://github.com/NoMore201/googleplay-api/blob/664c399f8196e1eb7d2fcda4af34e5dc1fca0f20/gpapi/device.properties
-MAD_APK_SEARCH = {
-    MAD_APK_ARCH_ARMEABI_V7A: 'hammerhead', # Nexus 5
-    MAD_APK_ARCH_ARM64_V8A: 'angler' # Nexus 6p
-}
 MAD_APK_ALLOWED_EXTENSIONS = set(['apk'])
+URL_POGO_APK = 'https://www.apkmirror.com/wp-content/themes/APKMirror/download.php?id=%s'
+URL_POGO_APK_ARMEABI_V7A = 'https://www.apkmirror.com/apk/niantic-inc/pokemon-go/variant-%7B%22arches_slug%22%3A%5B%22armeabi-v7a%22%5D%7D/'
+URL_POGO_APK_ARM64_V8A = 'https://www.apkmirror.com/apk/niantic-inc/pokemon-go/variant-%7B%22arches_slug%22%3A%5B%22arm64-v8a%22%5D%7D/'
 URL_RGC_APK = 'https://raw.githubusercontent.com/Map-A-Droid/MAD/master/APK/RemoteGpsController.apk'
 URL_PD_APK = 'https://www.maddev.de/apk/PogoDroid.apk'
 

@@ -346,13 +346,6 @@ def parseArgs():
     parser.add_argument('-ut', '--unit_tests', action='store_true', default=False,
                         help='Run unit tests then quit', dest='unit_tests')
 
-    # MADAPKs
-    parser.add_argument('-gu', '--gmail_user', default='',
-                        help='Google Mail User for interacting with the Google Play Store')
-    parser.add_argument('-gp', '--gmail_passwd', default='',
-                        help='Google Mail Password for interacting with the Google Play Store.  Must be an app'
-                        ' password or 2fa will be triggered (this should be enabled on your account anyways')
-
     args = parser.parse_args()
 
     # Allow status name and date formatting in log filename.
