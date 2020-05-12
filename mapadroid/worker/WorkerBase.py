@@ -640,14 +640,19 @@ class WorkerBase(AbstractWorker):
                 self._last_screen_type = screen_type
                 logger.debug2("Found pogo or questlog to be open")
                 break
-            elif screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
-                logger.info("Found screen multiple times in a row")
-                if self._same_screen_count < 3:
-                    self._same_screen_count += 1
-                else:
-                    logger.warning('Game froze - restarting device')
-                    self._reboot()
+
+            if screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
+                self._same_screen_count += 1
+                logger.warning("Found {} multiple times in a row ({})",
+                        screen_type, self._same_screen_count)
+                if self._same_screen_count > 3:
+                    logger.warning("Screen is frozen!")
+                    if self._same_screen_count > 4 or not self._restart_pogo():
+                        logger.error("Restarting PoGo failed - reboot device")
+                        self._reboot()
                     break
+            elif self._last_screen_type != screen_type:
+                self._same_screen_count = 0
 
             # now handle all screens that may not have been handled by detect_screentype since that only clicks around
             # so any clearing data whatsoever happens here (for now)
