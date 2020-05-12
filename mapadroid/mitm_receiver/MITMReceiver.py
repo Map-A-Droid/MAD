@@ -131,7 +131,7 @@ class MITMReceiver(Process):
                           endpoint_name='mad_apk/download',
                           handler=self.mad_apk_download,
                           methods_passed=['GET'])
-        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/<string:apk_arch>/download',
+        self.add_endpoint(endpoint='/mad_apk/<string:apk_type>/download',
                           endpoint_name='mad_apk/arch/download',
                           handler=self.mad_apk_download,
                           methods_passed=['GET'])
