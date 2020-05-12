@@ -72,11 +72,29 @@ class AutoDownloader(object):
             logger.warning('Unable to find latest data for PoGo')
         else:
             if current_ver is None or is_newer_version(latest_data['version'], current_ver):
-                filename = 'pogo_%s_%s.apk' % (architecture, latest_data['version'],)
-                download_url = latest_data['url']
-                apk = APKDownloader(self.dbc, download_url, architecture, global_variables.MAD_APK_USAGE_POGO,
-                                    filename=filename)
-                apk.upload_file()
+                where = {
+                    'usage': global_variables.MAD_APK_USAGE_POGO,
+                    'arch': architecture
+                }
+                try:
+                    update_data = {
+                        'download_status': 1
+                    }
+                    self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
+                    self.gpconn = GPlayConnector(architecture)
+                    downloaded_file = self.gpconn.download('com.nianticlabs.pokemongo')
+                    if not downloaded_file:
+                        return False
+                    apk = APKDownloader(self.dbc, None, architecture, global_variables.MAD_APK_USAGE_POGO,
+                                        filename = 'pogo_%s_%s.zip' % (architecture, latest_data['version'],),
+                                        file = downloaded_file,
+                                        content_type = 'application/zip')
+                    apk.upload_file(skip_check = True, version = latest_data['version'])
+                except:
+                    raise
+                finally:
+                    update_data['download_status'] = 0
+                    self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
 
     def download_pd(self, architecture):
         logger.info("Downloading latest PogoDroid")

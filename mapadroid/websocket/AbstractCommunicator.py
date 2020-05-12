@@ -20,6 +20,10 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
+    def install_bundle(self, timeout: float, filepath: str = None, data=None) -> bool:
+        pass
+
+    @abstractmethod
     def start_app(self, package_name: str) -> bool:
         pass
 
