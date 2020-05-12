@@ -638,6 +638,7 @@ class WorkerBase(AbstractWorker):
             screen_type: ScreenType = self._WordToScreenMatching.detect_screentype()
             if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
                 self._last_screen_type = screen_type
+                self._loginerrorcounter = 0
                 logger.debug2("Found pogo or questlog to be open")
                 break
 
@@ -658,7 +659,7 @@ class WorkerBase(AbstractWorker):
             # so any clearing data whatsoever happens here (for now)
             if screen_type == ScreenType.UNDEFINED:
                 logger.error("Undefined screentype!")
-            if screen_type == ScreenType.BLACK:
+            elif screen_type == ScreenType.BLACK:
                 logger.info("Found Black Loading Screen - waiting ...")
                 time.sleep(20)
             elif screen_type == ScreenType.CLOSE:
