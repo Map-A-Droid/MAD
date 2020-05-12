@@ -268,6 +268,8 @@ class WordToScreenMatching(object):
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.UPDATE:
             self._nextscreen = ScreenType.UNDEFINED
+        elif screentype == ScreenType.NOGGL:
+            self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.STRIKE:
             self.__handle_strike_screen(diff, global_dict)
         elif screentype == ScreenType.SUSPENDED:

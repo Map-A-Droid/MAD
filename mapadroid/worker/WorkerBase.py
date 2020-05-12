@@ -673,6 +673,10 @@ class WorkerBase(AbstractWorker):
             elif screen_type in [ScreenType.ERROR, ScreenType.FAILURE]:
                 logger.warning('Something wrong with screendetection or pogo failure screen')
                 self._loginerrorcounter += 1
+            elif screen_type == ScreenType.NOGGL:
+                logger.warning('Detected login select screen missing the Google'
+                    ' button - likely entered an invalid birthdate previously')
+                self._loginerrorcounter += 1
             elif screen_type == ScreenType.GPS:
                 logger.error("Detected GPS error - reboot device")
                 self._reboot()

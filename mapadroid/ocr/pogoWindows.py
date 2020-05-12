@@ -33,7 +33,7 @@ class PogoWindows:
         self._ScreenType: dict = {}
         self._ScreenType[1]: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
         self._ScreenType[2]: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
-        self._ScreenType[3]: list = ['KIDS', 'Google', 'Facebook']
+        self._ScreenType[3]: list = ['Google', 'Facebook']
         self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
         self._ScreenType[5]: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
                                      'connexion.', 'connexion']
@@ -56,6 +56,7 @@ class PogoWindows:
         self._ScreenType[18]: list = ['Termination', 'terminated', 'permanently']
         self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
                                       'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)']
+        self._ScreenType[23]: list = ['CLUB', 'KIDS']
 
     def __most_present_colour(self, filename, max_colours) -> Optional[List[int]]:
         if filename is None or max_colours is None:
