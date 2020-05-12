@@ -674,8 +674,9 @@ class WorkerBase(AbstractWorker):
                 logger.warning('Something wrong with screendetection or pogo failure screen')
                 self._loginerrorcounter += 1
             elif screen_type == ScreenType.GPS:
-                logger.warning("Detected GPS error 11 - rebooting device")
+                logger.error("Detected GPS error - reboot device")
                 self._reboot()
+                break
             elif screen_type == ScreenType.SN:
                 logger.warning('Getting SN Screen - restart PoGo and later PD')
                 self._restart_pogo_safe()

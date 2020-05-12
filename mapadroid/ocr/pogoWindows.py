@@ -55,7 +55,7 @@ class PogoWindows:
         self._ScreenType[17]: list = ['Suspension', 'suspended', 'violating', 'days', ]
         self._ScreenType[18]: list = ['Termination', 'terminated', 'permanently']
         self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
-                                      'found.', 'gefunden.', 'Signal']
+                                      'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)']
 
     def __most_present_colour(self, filename, max_colours) -> Optional[List[int]]:
         if filename is None or max_colours is None:
@@ -911,7 +911,8 @@ class PogoWindows:
                             break
                         if len(globaldict['text'][i]) > 3:
                             for z in self._ScreenType:
-                                if globaldict['top'][i] > height / 4 and globaldict['text'][i] in \
+                                heightlimit = 0 if z == 21 else height / 4
+                                if globaldict['top'][i] > heightlimit and globaldict['text'][i] in \
                                         self._ScreenType[z]:
                                     returntype = ScreenType(z)
                     if returntype != ScreenType.UNDEFINED:
