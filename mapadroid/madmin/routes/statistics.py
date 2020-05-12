@@ -599,7 +599,7 @@ class statistics(object):
         possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type="pokestops")
         wanted_fences = []
         if self._args.quest_stats_fences != "":
-            wanted_fences = [item.lower() for item in self._args.quest_stats_fences.split(",")]
+            wanted_fences = [item.lower().replace(" ", "") for item in self._args.quest_stats_fences.split(",")]
         for possible_fence in possible_fences:
             mode = possible_fences[possible_fence]['mode']
             area_id = possible_fences[possible_fence]['area_id']
