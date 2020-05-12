@@ -194,6 +194,7 @@ class GPlayConnector(object):
                             token_list.append(host.strip())
             except FileNotFoundError:
                 logger.error('Unable to find token file {}', args.token_dispenser)
+        logger.debug('Token Dispensers: {}', token_list)
         return token_list
 
     def retrieve_token(self, host, args, force_new=False):
