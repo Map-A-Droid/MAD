@@ -283,6 +283,9 @@ def parseArgs():
     parser.add_argument('-rds', '--raw_delete_shiny', default=0,
                         help='Delete shiny mon in raw stats older then x days (0 =  Disable (Default))')
 
+    parser.add_argument('--quest_stats_fences', default="",
+                        help="Comma separated list of geofences for stop/quest statistics (Empty: all)")
+
     # adb
     parser.add_argument('-adb', '--use_adb', action='store_true', default=False,
                         help='Use ADB for "device control" (Default: False)')
