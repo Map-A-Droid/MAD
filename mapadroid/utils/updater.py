@@ -499,7 +499,7 @@ class deviceUpdater(object):
                 if str(file_).lower().endswith(".apk"):
                     returning = ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
                 elif str(file_).lower().endswith(".zip"):
-                    returning = ws_conn.install_zip(600, filepath=os.path.join(self._args.upload_path, file_))
+                    returning = ws_conn.install_bundle(600, filepath=os.path.join(self._args.upload_path, file_))
                 else:
                     # unknown filetype
                     returning = False

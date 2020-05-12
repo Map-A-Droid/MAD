@@ -20,7 +20,7 @@ class AbstractCommunicator(ABC):
         pass
 
     @abstractmethod
-    def install_zip(self, timeout: float, filepath: str = None, data=None) -> bool:
+    def install_bundle(self, timeout: float, filepath: str = None, data=None) -> bool:
         pass
 
     @abstractmethod
