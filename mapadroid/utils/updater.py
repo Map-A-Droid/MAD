@@ -496,7 +496,13 @@ class deviceUpdater(object):
             jobtype = jobType[jobtype.split('.')[1]]
             if jobtype == jobType.INSTALLATION:
                 file_ = self._log[str(item)]['file']
-                returning = ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
+                if str(file_).lower().endswith(".apk"):
+                    returning = ws_conn.install_apk(300, filepath=os.path.join(self._args.upload_path, file_))
+                elif str(file_).lower().endswith(".zip"):
+                    returning = ws_conn.install_zip(600, filepath=os.path.join(self._args.upload_path, file_))
+                else:
+                    # unknown filetype
+                    returning = False
                 return returning if not 'RemoteGpsController'.lower() in str(file_).lower() else True
             elif jobtype == jobtype.SMART_UPDATE:
                 requires_update: bool = False

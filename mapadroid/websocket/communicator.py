@@ -55,6 +55,12 @@ class Communicator(AbstractCommunicator):
                 data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
         return self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=1)
 
+    def install_bundle(self, timeout: float, filepath: str = None, data=None) -> bool:
+        if not data:
+            with open(filepath, "rb") as file:  # opening for [r]eading as [b]inary
+                data = file.read()  # if you only wanted to read 512 bytes, do .read(512)
+        return self.__run_and_ok_bytes(message=data, timeout=timeout, byte_command=2)
+
     def start_app(self, package_name: str) -> bool:
         return self.__runAndOk("more start {}\r\n".format(package_name), self.__command_timeout)
 
