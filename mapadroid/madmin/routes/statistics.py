@@ -522,7 +522,12 @@ class statistics(object):
     @auth_required
     @logger.catch()
     def get_spawnpoints_stats(self):
-
+        
+        geofence_type = request.args.get('type', 'mon_mitm')
+        if geofence_type not in ['idle', 'iv_mitm', 'mon_mitm', 'pokestops', 'raids_mitm']:
+            stats = {'spawnpoints': []}
+            return jsonify(stats)
+        
         coords = []
         known = {}
         unknown = {}
@@ -531,7 +536,7 @@ class statistics(object):
         eventidhelper = {}
 
 
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type=geofence_type)
         for possible_fence in possible_fences:
             mode = possible_fences[possible_fence]['mode']
             area_id = possible_fences[possible_fence]['area_id']
