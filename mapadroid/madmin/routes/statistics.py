@@ -636,7 +636,7 @@ class statistics(object):
         quest: list = []
         quest_db = self._db_stats_reader.get_quests_count(1)
         for ts, count in quest_db:
-            quest_raw = (ts * 1000, count)
+            quest_raw = (int(ts * 1000), count)
             quest.append(quest_raw)
 
         # Stop
