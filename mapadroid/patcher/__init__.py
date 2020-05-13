@@ -32,6 +32,7 @@ MAD_UPDATES = OrderedDict([
     (28, 'patch_28'),
     (29, 'patch_29'),
     (30, 'patch_30'),
+    (31, 'trs_status_lastProtoDateTime_fix'),
 ])
 
 
