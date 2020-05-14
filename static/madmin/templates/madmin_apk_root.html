@@ -138,7 +138,11 @@
                     }).bind('click', download_apk).append(fa_img);
                   }
                 } else {
-                    $(this).empty()
+                    if($(this).find('img').data('status') == 2) {
+                        location.reload();
+                    } else {
+                        $(this).empty();
+                    }
                 }
                 if(elem) {
                   $(this).empty().append(elem);
@@ -166,11 +170,10 @@
                 type : 'POST',
                 success: function(data, status, xhr) {
                     if(xhr.status == 204) {
+                      check_apk_status();
                       alert('Downloading APK successfully started');
                     }
                     $.unblockUI();
-                    check_apk_status();
-                    location.reload();
                 },
                 error: function(data, status, xhr) {
                     alert('Unable to start the download.  Please look at server logs');
