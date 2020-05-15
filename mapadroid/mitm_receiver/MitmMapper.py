@@ -108,6 +108,16 @@ class MitmMapper(object):
         else:
             return devicemapping_of_origin.get("mon_ids_iv", [])
 
+    def get_levelmode(self, origin):
+        device_routemananger = self.__mapping_manager.get_routemanager_name_from_device(origin)
+        if device_routemananger is None:
+            return False
+
+        if self.__mapping_manager.routemanager_get_level(device_routemananger):
+            return True
+
+        return False
+
     def get_safe_items(self, origin):
         get_devicesettings_of_origin = self.__mapping_manager.get_devicesettings_of(origin)
         if get_devicesettings_of_origin is None:

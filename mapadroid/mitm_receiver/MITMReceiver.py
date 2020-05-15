@@ -230,13 +230,15 @@ class MITMReceiver(Process):
             ids_iv = ids_iv.get("values", None)
 
         safe_items = self.__mitm_mapper.get_safe_items(origin)
+        level_mode = self.__mitm_mapper.get_levelmode(origin)
 
         ids_encountered = self.__mitm_mapper.request_latest(
             origin, "ids_encountered")
         if ids_encountered is not None:
             ids_encountered = ids_encountered.get("values", None)
         response = {"ids_iv": ids_iv, "injected_settings": injected_settings,
-                    "ids_encountered": ids_encountered, "safe_items": safe_items}
+                    "ids_encountered": ids_encountered, "safe_items": safe_items,
+                    "lvl_mode": level_mode}
         return json.dumps(response)
 
     def get_addresses(self, origin, data):
