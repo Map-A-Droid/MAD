@@ -74,17 +74,17 @@
 	}
 
 	function loadData() {
-	    $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
-        $('body').Aplus();
-        $("#navgyms").addClass("active");
-        $.ajax({
-            type: "GET",
-            url: "get_spawnpoints_stats",
-            success: function (result) {
-                setTimeout($.unblockUI, 100);
-                setGrid('#show-spawnpoints-stats', result.spawnpoints);
-            }
-        });
+	    $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Loading...</h2>' });
+            $('body').Aplus();
+            $("#navgyms").addClass("active");
+            $.ajax({
+                type: "GET",
+                url: "get_spawnpoints_stats" + "?type=" + $("#geofence_type_selector").val(),
+                success: function (result) {
+                    setTimeout($.unblockUI, 100);
+                    setGrid('#show-spawnpoints-stats', result.spawnpoints);
+                }
+            });
 	}
 
 
@@ -93,6 +93,10 @@
 
     $(document).ready(function () {
         loadData();
+        $("#geofence_type_selector").change(function() {
+            $("#show-spawnpoints-stats").DataTable().destroy();
+            loadData();
+        });
     });
 
 
@@ -301,7 +305,14 @@
 {% endblock %}
 
 {% block content %}
-<h2>Spawnpoint Statistics</h2>
+<h2>Spawnpoint Stats (for <select name="geofence_type_selector" id="geofence_type_selector">
+    <option value="mon_mitm" selected="selected">Mons [mon_mitm]</option>
+    <option value="iv_mitm">IVs [iv_mitm]</option>
+    <option value="pokestops">Quests [pokestops]</option>
+    <option value="raids_mitm">Raids [raids_mitm]</option>
+    <option value="idle">Idle [idle]</option>
+</select>
+)</h2>
 <div class="dropdown">
   <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
   <ul class="dropdown-menu dropdown-menu-right">
