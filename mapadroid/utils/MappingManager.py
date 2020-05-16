@@ -20,7 +20,7 @@ mode_mapping = {
     "raids_mitm": {
         "s2_cell_level": 15,
         "range": 490,
-        "range_init": 490,
+        "range_init": 980,
         "max_count": 100000
     },
     "mon_mitm": {
@@ -32,7 +32,7 @@ mode_mapping = {
     "pokestops": {
         "s2_cell_level": 13,
         "range": 0.001,
-        "range_init": 490,
+        "range_init": 980,
         "max_count": 100000
     },
     "iv_mitm": {
@@ -430,14 +430,14 @@ class MappingManager:
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),
                                              init=area.get("init", False),
-                                             range_init=mode_mapping.get(area_true.area_type, {}).get(
+                                             range_init=mode_mapping.get(mode, {}).get(
                                                  "range_init", 630),
                                              including_stops=area.get("including_stops", False),
                                              include_event_id=area.get("settings", {}).get("include_event_id", None))
 
                 route_manager.add_coords_list(coords)
-                max_radius = mode_mapping[area_true.area_type]["range"]
-                max_count_in_radius = mode_mapping[area_true.area_type]["max_count"]
+                max_radius = mode_mapping[mode]["range"]
+                max_count_in_radius = mode_mapping[mode]["max_count"]
                 if not area.get("init", False):
 
                     proc = thread_pool.apply_async(route_manager.initial_calculation,
