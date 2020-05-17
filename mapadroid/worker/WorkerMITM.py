@@ -250,8 +250,8 @@ class WorkerMITM(MITMBase):
                                     self._check_data_distance(latest_data['payload']['cells'])):
                                 data_requested = latest_data
                                 break
-                        if data_requested == latest_data: break
-                    if data_requested is None:
+                        # if data_requested == latest_data: break
+                    if data_requested is None or data_requested == LatestReceivedType.UNDEFINED:
                         logger.debug("No forts in data received")
                         time.sleep(0.5)
                 else:
