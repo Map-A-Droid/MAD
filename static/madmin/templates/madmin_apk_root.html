@@ -237,7 +237,7 @@
                                 <div class='update_status' data-apk_type="{{ apk_type }}" data-apk_arch="{{ architecture }}" style='display:inline;'></div>
                                 <button type="button" data-apk_type="{{ data.usage_disp }}" data-apk_arch="{{ data.arch_disp }}" class="search btn btn-success btn-sm"><i class="fas fa-sync"></i></button>
                                 <button type="button" data-apk_type="{{ data.usage_disp }}" data-apk_arch="{{ data.arch_disp }}" class="upload btn btn-success btn-sm"><i class="fas fa-upload"></i></button>
-                                {% if data.file_id != None %}
+                                {% if data.filename != None %}
                                 <button type="button" data-apk_type="{{ data.usage_disp }}" data-apk_arch="{{ data.arch_disp }}" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
                                 {% endif %}
                             </td>

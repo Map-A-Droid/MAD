@@ -2,6 +2,7 @@ import flask
 
 from mapadroid.madmin.functions import auth_required
 from . import apiResponse, apiRequest, apiException, global_variables
+from mapadroid.mad_apk import AbstractAPKStorage
 
 
 class APIHandler(object):
@@ -16,7 +17,8 @@ class APIHandler(object):
         ws_server (websocketserver): WebSocket server
     """
 
-    def __init__(self, logger, app, api_base, data_manager, mapping_manager, ws_server, config_mode):
+    def __init__(self, logger, app, api_base, data_manager, mapping_manager, ws_server, config_mode,
+                 storage_obj: AbstractAPKStorage):
         self._logger = logger
         self._app = app
         self._base = api_base
@@ -27,6 +29,7 @@ class APIHandler(object):
         self._instance = self._data_manager.instance_id
         self._config_mode = config_mode
         self.api_req = None
+        self.storage_obj = storage_obj
         self.create_routes()
 
     def create_routes(self):

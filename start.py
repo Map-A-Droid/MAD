@@ -35,6 +35,7 @@ from mapadroid.data_manager import DataManager
 from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.madmin.madmin import madmin_start
+from mapadroid.mad_apk import get_storage_obj, StorageSyncManager, AbstractAPKStorage
 
 import unittest
 
@@ -162,6 +163,8 @@ if __name__ == "__main__":
     mitm_mapper_manager: Optional[MitmMapperManager] = None
     mitm_mapper: Optional[MitmMapper] = None
     pogoWindowManager: Optional[PogoWindows] = None
+    storage_elem: Optional[AbstractAPKStorage] = None
+    storage_manager: Optional[StorageSyncManager] = None
     t_whw: Thread = None # Thread for WebHooks
     t_ws: Thread = None # Thread - WebSocket Server
     webhook_worker: Optional[WebhookWorker] = None
@@ -213,6 +216,7 @@ if __name__ == "__main__":
         logger.info("Done calculating routes!")
         # TODO: shutdown managers properly...
         sys.exit(0)
+    (storage_manager, storage_elem) = get_storage_obj(args, db_wrapper)
     if not args.config_mode:
         pogoWindowManager = PogoWindows(args.temp_path, args.ocr_thread_count)
         MitmMapperManager.register('MitmMapper', MitmMapper)
@@ -223,6 +227,7 @@ if __name__ == "__main__":
     mitm_receiver_process = MITMReceiver(args.mitmreceiver_ip, int(args.mitmreceiver_port),
                                          mitm_mapper, args, mapping_manager, db_wrapper,
                                          data_manager,
+                                         storage_elem,
                                          enable_configmode=args.config_mode)
     mitm_receiver_process.start()
     logger.info('Starting websocket server on port {}'.format(str(args.ws_port)))
@@ -237,7 +242,7 @@ if __name__ == "__main__":
     t_ws = Thread(name='scanner', target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()
-    device_Updater = deviceUpdater(ws_server, args, jobstatus, db_wrapper)
+    device_Updater = deviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
     if not args.config_mode:
         if args.webhook:
             rarity = Rarity(args, db_wrapper)
@@ -258,7 +263,7 @@ if __name__ == "__main__":
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
         t_madmin = Thread(name="madmin", target=madmin_start,
                           args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater,
-                                jobstatus))
+                                jobstatus, storage_elem))
         t_madmin.daemon = True
         t_madmin.start()
     logger.info("MAD is now running.....")
@@ -318,6 +323,9 @@ if __name__ == "__main__":
             if mitm_mapper_manager is not None:
                 logger.debug("Calling mitm_mapper shutdown")
                 mitm_mapper_manager.shutdown()
+            if storage_manager is not None:
+                logger.debug('Stopping storage manager')
+                storage_manager.shutdown()
             if db_pool_manager is not None:
                 logger.debug("Calling db_pool_manager shutdown")
                 db_pool_manager.shutdown()

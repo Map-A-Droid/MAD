@@ -11,9 +11,10 @@ from threading import RLock, Thread
 
 import requests
 
-from mapadroid.utils import apk_util
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import logger
+from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APK_Type, file_generator, lookup_apk_enum, \
+     lookup_arch_enum, APK_Package, APK_Arch
 
 
 class jobType(Enum):
@@ -41,11 +42,12 @@ SUCCESS_STATES = [jobReturn.SUCCESS, jobReturn.NOT_REQUIRED, jobReturn.NOT_SUPPO
 
 
 class deviceUpdater(object):
-    def __init__(self, websocket, args, returning, db):
+    def __init__(self, websocket, args, returning, db, storage_obj: AbstractAPKStorage):
         self._websocket = websocket
         self._update_queue = Queue()
         self._update_mutex = RLock()
         self._db = db
+        self._storage_obj = storage_obj
         self._log = {}
         self._args = args
         self._commands: dict = {}
@@ -53,6 +55,7 @@ class deviceUpdater(object):
         self._current_job_id = []
         self._current_job_device = []
         self._returning = returning
+        self.storage_obj: AbstractAPKStorage = storage_obj
         try:
             if os.path.exists('update_log.json'):
                 with open('update_log.json') as logfile:
@@ -507,12 +510,12 @@ class deviceUpdater(object):
             elif jobtype == jobtype.SMART_UPDATE:
                 requires_update: bool = False
                 package_ver: str = None
-                package = self._log[str(item)]['file']
-                version_job = "dumpsys package %s | grep versionName" % (package,)
+                package_raw = self._log[str(item)]['file']
+                version_job = "dumpsys package %s | grep versionName" % (package_raw,)
                 architecture_job = ws_conn.passthrough('getprop ro.product.cpu.abi')
                 package_ver_job = ws_conn.passthrough(version_job)
                 try:
-                    architecture = re.search(r'\[(\S+)\]', architecture_job).group(1)
+                    architecture_raw = re.search(r'\[(\S+)\]', architecture_job).group(1)
                 except:
                     logger.warning('Unable to determine the architecture of the device')
                     return False
@@ -520,26 +523,28 @@ class deviceUpdater(object):
                     package_ver = re.search(r'versionName=([0-9\.]+)', package_ver_job).group(1)
                 except:
                     if package_ver_job and package_ver_job.split('\n')[0].strip() == 'OK':
-                        logger.info('No information returned.  Assuming pogo is not installed')
+                        logger.info('No information returned.  Assuming package is not installed')
                         requires_update = True
                     else:
                         logger.warning('Unable to determine version for {}: {}', self._log[str(item)]['file'],
                                        package_ver_job)
                         return False
-                mad_apk = apk_util.get_mad_apk(self._db,
-                                               global_variables.MAD_APK_USAGE[self._log[str(item)]['file']],
-                                               architecture=architecture)
-                if not mad_apk or mad_apk['file_id'] is None:
-                    try:
-                        arch = architecture
-                    except:
-                        arch = 'Unknown'
-                    logger.warning('No MAD APK for {} [{}]', package, arch)
+                package = getattr(APK_Type, APK_Package(package_raw).name)
+                architecture = lookup_arch_enum(architecture_raw)
+                package_all = self._storage_obj.get_current_package_info(package)
+                try:
+                    mad_apk = package_all[str(architecture.value)]
+                except KeyError:
+                    architecture = APK_Arch.noarch
+                    mad_apk = package_all[str(architecture.noarch.value)]
+
+                if not mad_apk or mad_apk['filename'] is None:
+                    logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                     return False
                 if not requires_update:
-                    requires_update = apk_util.is_newer_version(package_ver, mad_apk['version'])
+                    requires_update = is_newer_version(mad_apk['version'], package_ver)
                 # Validate it is supported
-                if package == 'com.nianticlabs.pokemongo':
+                if package == APK_Type.pogo:
                     if architecture == 'armeabi-v7a':
                         bits = '32'
                     else:
@@ -568,7 +573,8 @@ class deviceUpdater(object):
                     logger.info('Smart Update APK Installation for {} to {}', package,
                                 self._log[str(item)]['origin'])
                     apk_file = bytes()
-                    for chunk in apk_util.chunk_generator(self._db, mad_apk['file_id']):
+                    gen = file_generator(self._db, self._storage_obj, package, architecture)
+                    for chunk in file_generator(self._db, self._storage_obj, package, architecture):
                         apk_file += chunk
                     if mad_apk['mimetype'] == 'application/zip':
                         returning = ws_conn.install_bundle(300, data=apk_file)
@@ -596,6 +602,8 @@ class deviceUpdater(object):
         except Exception as e:
             logger.error('Error while getting response from device - Reason: {}'
                          .format(str(e)))
+            import traceback
+            traceback.print_exc()
         return False
 
     def delete_log(self, onlysuccess=False):

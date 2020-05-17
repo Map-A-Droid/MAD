@@ -7,6 +7,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 
 import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.mad_apk import AbstractAPKStorage
 from mapadroid.madmin.api import APIEntry
 from mapadroid.madmin.reverseproxy import ReverseProxied
 from mapadroid.madmin.routes.apks import apk_manager
@@ -18,6 +19,7 @@ from mapadroid.madmin.routes.statistics import statistics
 from mapadroid.madmin.routes.event import event
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, logger
+
 
 app = Flask(__name__,
             static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
@@ -37,7 +39,7 @@ def internal_error(exception):
 
 
 def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
-                 deviceUpdater, jobstatus):
+                 deviceUpdater, jobstatus, storage_obj: AbstractAPKStorage):
     # load routes
     if args.madmin_base_path:
         app.wsgi_app = ReverseProxied(app.wsgi_app, script_name=args.madmin_base_path)
@@ -45,10 +47,10 @@ def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: Mappin
     statistics(db_wrapper, args, app, mapping_manager, data_manager)
     control(db_wrapper, args, mapping_manager, ws_server, logger, app, deviceUpdater)
     map(db_wrapper, args, mapping_manager, app, data_manager)
-    APIEntry(logger, app, data_manager, mapping_manager, ws_server, args.config_mode)
+    APIEntry(logger, app, data_manager, mapping_manager, ws_server, args.config_mode, storage_obj)
     config(db_wrapper, args, logger, app, mapping_manager, data_manager)
     path(db_wrapper, args, app, mapping_manager, jobstatus, data_manager)
-    apk_manager(db_wrapper, args, app, mapping_manager, jobstatus)
+    apk_manager(db_wrapper, args, app, mapping_manager, jobstatus, storage_obj)
     event(db_wrapper, args, logger, app, mapping_manager, data_manager)
 
     app.logger.removeHandler(default_handler)

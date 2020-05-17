@@ -1,22 +1,22 @@
-import json
-
-import werkzeug.exceptions
 from flask import (render_template, request, redirect, url_for, flash, Response)
-
+import io
+import json
+import werkzeug.exceptions
+from mapadroid.mad_apk import AbstractAPKStorage, get_apk_status, PackageImporter, parse_frontend, is_newer_version
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import MappingManager
-from mapadroid.utils import apk_util
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import logger
 
 
 class apk_manager(object):
-    def __init__(self, db, args, app, mapping_manager: MappingManager, deviceUpdater):
+    def __init__(self, db, args, app, mapping_manager: MappingManager, deviceUpdater, storage_obj: AbstractAPKStorage):
         self._db = db
         self._args = args
         self._app = app
         self._mapping_manager = mapping_manager
         self._deviceUpdater = deviceUpdater
+        self.storage_obj = storage_obj
         self.add_route()
 
     def add_route(self):
@@ -42,21 +42,21 @@ class apk_manager(object):
         sql = "SELECT `usage`, `arch`, `version`, `download_status`, `last_checked`\n" \
               "FROM `mad_apk_autosearch`"
         autosearch_data = self._db.autofetch_all(sql)
+        apk_info = get_apk_status(self.storage_obj)
         for row in autosearch_data:
             composite_key = '%s_%s' % (row['usage'], row['arch'])
             update_info[composite_key] = {}
-            sql = "SELECT ma.`version`, fm.`size`\n" \
-                  "FROM `mad_apks` ma\n" \
-                  "INNER JOIN `filestore_meta` fm ON fm.`filestore_id` = ma.`filestore_id`\n" \
-                  "WHERE ma.`usage` = %s AND ma.`arch` = %s"
-            curr_info = self._db.autofetch_row(sql, args=(row['usage'], row['arch']))
             if row['download_status'] != 0:
                 update_info[composite_key]['download_status'] = row['download_status']
+            try:
+                curr_info = apk_info[str(row['usage'])][str(row['arch'])]
+            except KeyError:
+                curr_info = None
             if row['usage'] == global_variables.MAD_APK_USAGE_POGO:
-                if not curr_info or apk_util.is_newer_version(row['version'], curr_info['version']):
+                if not curr_info or is_newer_version(row['version'], curr_info['version']):
                     update_info[composite_key]['update'] = 1
             else:
-                if not curr_info or int(curr_info['size']) != int(row['version']):
+                if curr_info is None or int(curr_info['size']) != int(row['version']):
                     update_info[composite_key]['update'] = 1
             if not update_info[composite_key]:
                 del update_info[composite_key]
@@ -64,8 +64,7 @@ class apk_manager(object):
 
     @auth_required
     def mad_apks(self):
-        apks = apk_util.get_mad_apks(self._db)
-        return render_template('madmin_apk_root.html', apks=apks)
+        return render_template('madmin_apk_root.html', apks=get_apk_status(self.storage_obj))
 
     @auth_required
     def upload_file(self):
@@ -81,16 +80,22 @@ class apk_manager(object):
                 if not self.allowed_file(apk_upload.filename):
                     flash('File extension not allowed')
                     return redirect(url_for('mad_apks'))
-                if apk_upload and self.allowed_file(apk_upload.filename):
-                    apk_type = global_variables.MAD_APK_USAGE[request.form['apk_type']]
-                    apk_arch = global_variables.MAD_APK_ARCH[request.form['apk_arch']]
-                    apk_util.MADAPKImporter(self._db, apk_upload.filename, apk_upload,
-                                            apk_upload.content_type,
-                                            apk_type=apk_type, architecture=apk_arch, mad_apk=True)
+                if apk_upload:
+                    parsed = parse_frontend(**request.form)
+                    if type(parsed) == Response:
+                        return parsed
+                    apk_type, apk_arch = parsed
+                    mimetype = 'application/zip'
+                    if apk_upload.filename.rsplit('.', 1)[1] == 'apk':
+                        mimetype = 'application/vnd.android.package-archive'
+                    # TODO - Probably a better way to handle this.  However it does not like the incoming type,
+                    # io.BufferedRandom
+                    apk = io.BytesIO(apk_upload.stream.read())
+                    PackageImporter(apk_type, apk_arch, self.storage_obj, apk, mimetype)
                     return redirect(url_for('mad_apks'))
             except werkzeug.exceptions.RequestEntityTooLarge:
                 flash('File too large.  Please use a a smaller file')
                 return redirect(url_for('mad_apks'))
             except:
-                logger.exception('Unhandled exception occurred with the MAD APK', exc_info=True)
+                logger.exception('Unhanded exception occurred with the MAD APK', exc_info=True)
         return redirect(url_for('mad_apks'))
