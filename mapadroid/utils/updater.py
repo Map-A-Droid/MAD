@@ -14,7 +14,7 @@ import requests
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import logger
 from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APK_Type, file_generator, lookup_apk_enum, \
-     lookup_arch_enum, APK_Package, APK_Arch
+     lookup_arch_enum, APK_Package, APK_Arch, supported_pogo_version
 
 
 class jobType(Enum):
@@ -541,34 +541,15 @@ class deviceUpdater(object):
                 if not mad_apk or mad_apk['filename'] is None:
                     logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                     return False
-                if not requires_update:
-                    requires_update = is_newer_version(mad_apk['version'], package_ver)
                 # Validate it is supported
                 if package == APK_Type.pogo:
-                    if architecture == 'armeabi-v7a':
-                        bits = '32'
-                    else:
-                        bits = '64'
-                    try:
-                        with open('configs/addresses.json') as fh:
-                            address_object = json.load(fh)
-                            composite_key = '%s_%s' % (mad_apk['version'], bits,)
-                            address_object[composite_key]
-                    except KeyError:
-                        try:
-                            requests.get(global_variables.ADDRESSES_GITHUB).json()[composite_key]
-                        except KeyError:
-                            logger.info('Unable to install APK since {} is not supported', composite_key)
-                            self.write_status_log(str(item), field='status', value='not supported')
-                            return True
-                    logger.debug('Supported PoGo version detected')
-                if requires_update is None:
+                    if not supported_pogo_version(architecture, mad_apk['version']):
+                        self.write_status_log(str(item), field='status', value='not supported')
+                        return True
+                if not is_newer_version(mad_apk['version'], package_ver):
                     logger.info('Both versions are the same.  No update required')
                     self.write_status_log(str(item), field='status', value='not required')
                     return True
-                elif requires_update is False:
-                    logger.warning('MAD APK for {} is out of date', package)
-                    return False
                 else:
                     logger.info('Smart Update APK Installation for {} to {}', package,
                                 self._log[str(item)]['origin'])

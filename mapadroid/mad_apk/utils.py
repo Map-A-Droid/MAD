@@ -1,9 +1,12 @@
 from distutils.version import LooseVersion
 from flask import Response, stream_with_context
-from typing import Tuple, Union
+import json
+import requests
+from typing import Tuple, Union, Generator
 from .apk_enums import APK_Arch, APK_Type, APK_Package  # noqa: F401
 from .abstract_apk_storage import AbstractAPKStorage
-from mapadroid.utils.global_variables import CHUNK_MAX_SIZE
+from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, ADDRESSES_GITHUB
+from mapadroid.utils.logging import logger
 
 
 def convert_to_backend(req_type: str, req_arch: str) -> Tuple[APK_Type, APK_Arch]:
@@ -23,7 +26,7 @@ def convert_to_backend(req_type: str, req_arch: str) -> Tuple[APK_Type, APK_Arch
     return (backend_type, backend_arch)
 
 
-def file_generator(db, storage_obj, apk_type: APK_Type, apk_arch: APK_Arch):
+def file_generator(db, storage_obj, apk_type: APK_Type, apk_arch: APK_Arch) -> Generator:
     package_info = lookup_package_info(storage_obj, apk_type, apk_arch)
     if package_info[1] == 404:
         return Response(status=404, response=package_info[0])
@@ -144,7 +147,11 @@ def lookup_package_info(storage_obj: AbstractAPKStorage, apk_type: APK_Type,
         return (package_info, 200)
     else:
         try:
-            return (package_info[str(apk_arch.value)], 200)
+            status_code: int = 200
+            fileinfo = package_info[str(apk_arch.value)]
+            if apk_type == APK_Type.pogo and not supported_pogo_version(apk_arch, fileinfo['version']):
+                status_code = 410
+            return (package_info[str(apk_arch.value)], status_code)
         except KeyError:
             return (None, 404)
 
@@ -172,3 +179,26 @@ def stream_package(db, storage_obj, apk_type: APK_Type, apk_arch: APK_Arch) -> R
             'Content-Disposition': f'attachment; filename=%s' % (package_info['filename'])
         }
     )
+
+
+def supported_pogo_version(apk_arch: APK_Arch, version: str) -> bool:
+    valid: bool = False
+    if apk_arch == APK_Arch.armeabi_v7a:
+        bits = '32'
+    else:
+        bits = '64'
+    try:
+        with open('configs/addresses.json') as fh:
+            address_object = json.load(fh)
+            composite_key = '%s_%s' % (version, bits,)
+            address_object[composite_key]
+            valid = True
+    except KeyError:
+        try:
+            requests.get(ADDRESSES_GITHUB).json()[composite_key]
+            valid = True
+        except KeyError:
+            pass
+    if not valid:
+        logger.info('Current version of POGO [{}] is not supported', composite_key)
+    return valid

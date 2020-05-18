@@ -2,11 +2,11 @@ import apkutils
 import io
 import requests
 from threading import Thread
-from typing import NoReturn
+from typing import NoReturn, Optional
 import urllib3
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APK_Arch, APK_Type, APK_Package
-from .utils import lookup_package_info, is_newer_version
+from .utils import lookup_package_info, is_newer_version, supported_pogo_version
 from mapadroid.utils import global_variables
 from mapadroid.utils.gplay_connector import GPlayConnector
 from mapadroid.utils.logging import logger
@@ -32,17 +32,17 @@ class APKWizard(object):
         self.apk_all_search()
         self.apk_all_download()
 
-    def apk_all_download(self):
+    def apk_all_download(self) -> NoReturn:
         t = Thread(target=self.apk_nonblocking_download)
         t.start()
 
-    def apk_all_search(self):
+    def apk_all_search(self) -> NoReturn:
         self.find_latest_pogo(APK_Arch.armeabi_v7a)
         self.find_latest_pogo(APK_Arch.arm64_v8a)
         self.find_latest_rgc(APK_Arch.noarch)
         self.find_latest_pd(APK_Arch.noarch)
 
-    def apk_download(self, package: APK_Type, architecture: APK_Arch):
+    def apk_download(self, package: APK_Type, architecture: APK_Arch) -> NoReturn:
         if package == APK_Type.pogo:
             self.download_pogo(architecture)
         elif package == APK_Type.rgc:
@@ -50,13 +50,13 @@ class APKWizard(object):
         elif package == APK_Type.pd:
             self.download_pd(architecture)
 
-    def apk_nonblocking_download(self, ):
+    def apk_nonblocking_download(self) -> NoReturn:
         self.download_pogo(APK_Arch.armeabi_v7a)
         self.download_pogo(APK_Arch.arm64_v8a)
         self.download_rgc(APK_Arch.noarch)
         self.download_pd(APK_Arch.noarch)
 
-    def apk_search(self, package: APK_Type, architecture: APK_Arch):
+    def apk_search(self, package: APK_Type, architecture: APK_Arch) -> NoReturn:
         if package == APK_Type.pogo:
             self.find_latest_pogo(architecture)
         elif package == APK_Type.rgc:
@@ -68,8 +68,7 @@ class APKWizard(object):
         latest_version = self.find_latest_pogo(architecture)
         if latest_version is None:
             logger.warning('Unable to find latest data for PoGo.  Try again later')
-            return
-        else:
+        elif supported_pogo_version(architecture, latest_version):
             current_version = self.storage.get_current_version(APK_Type.pogo, architecture)
             if type(current_version) is not str:
                 current_version = None
@@ -103,11 +102,11 @@ class APKWizard(object):
                     update_data['download_status'] = 0
                     self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
 
-    def download_pd(self, architecture: APK_Arch):
+    def download_pd(self, architecture: APK_Arch) -> NoReturn:
         logger.info("Downloading latest PogoDroid")
         self.__download_simple(APK_Type.pd, architecture)
 
-    def __download_simple(self, package: APK_Type, architecture: APK_Arch):
+    def __download_simple(self, package: APK_Type, architecture: APK_Arch) -> NoReturn:
         latest_data = self.get_latest(package, architecture)
         current_version = self.storage.get_current_version(package, architecture)
         if type(current_version) is not str:
@@ -149,11 +148,11 @@ class APKWizard(object):
                 update_data['download_status'] = 0
                 self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
 
-    def download_rgc(self, architecture: APK_Arch):
+    def download_rgc(self, architecture: APK_Arch) -> NoReturn:
         logger.info("Downloading latest RGC")
         self.__download_simple(APK_Type.rgc, architecture)
 
-    def __find_latest_head(self, apk_type, arch, url):
+    def __find_latest_head(self, apk_type, arch, url) -> NoReturn:
         (curr_info, status) = lookup_package_info(self.storage, apk_type)
         installed_size = None
         if curr_info:
@@ -166,11 +165,11 @@ class APKWizard(object):
             logger.info('No newer version found')
         self.set_last_searched(apk_type, arch, version=mirror_size, url=url)
 
-    def find_latest_pd(self, architecture: APK_Arch):
+    def find_latest_pd(self, architecture: APK_Arch) -> Optional[str]:
         logger.info('Searching for a new version of PD [{}]', architecture.name)
         self.__find_latest_head(APK_Type.pd, architecture, global_variables.URL_PD_APK)
 
-    def find_latest_pogo(self, architecture: APK_Arch) -> str:
+    def find_latest_pogo(self, architecture: APK_Arch) -> Optional[str]:
         latest = None
         logger.info('Searching for a new version of PoGo [{}]', architecture.name)
         self.gpconn = GPlayConnector(architecture)
@@ -181,8 +180,9 @@ class APKWizard(object):
             if type(current_version) is not str:
                 current_version = None
             if current_version is None or is_newer_version(latest, current_version):
-                logger.info('Newer version found on the Play Store: {}', latest)
-                download_url = True
+                if supported_pogo_version(architecture, latest):
+                    logger.info('Newer version found on the Play Store: {}', latest)
+                    download_url = True
             else:
                 logger.info('No newer version found')
             self.set_last_searched(APK_Type.pogo, architecture, version=latest, url=download_url)
@@ -190,15 +190,16 @@ class APKWizard(object):
             logger.opt(exception=True).critical(err)
         return latest
 
-    def find_latest_rgc(self, architecture: APK_Arch) -> str:
+    def find_latest_rgc(self, architecture: APK_Arch) -> Optional[str]:
         logger.info('Searching for a new version of RGC [{}]', architecture.name)
         self.__find_latest_head(APK_Type.rgc, architecture, global_variables.URL_RGC_APK)
 
-    def get_latest(self, package: APK_Type, architecture: APK_Arch):
+    def get_latest(self, package: APK_Type, architecture: APK_Arch) -> dict:
         sql = "SELECT `version`, `url` FROM `mad_apk_autosearch` WHERE `usage` = %s AND `arch` = %s"
         return self.dbc.autofetch_row(sql, args=(package.value, architecture.value))
 
-    def set_last_searched(self, package: APK_Type, architecture: APK_Arch, version: str = None, url: str = None):
+    def set_last_searched(self, package: APK_Type, architecture: APK_Arch, version: str = None,
+                          url: str = None) -> NoReturn:
         data = {
             'usage': package.value,
             'arch': architecture.value,

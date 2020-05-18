@@ -15,7 +15,7 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LogLevelChanger, logger
-from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info
+from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version
 from threading import RLock
 import mapadroid.data_manager
 
@@ -281,13 +281,16 @@ class MITMReceiver(Process):
         apk_type, apk_arch = parsed
         return stream_package(self._db_wrapper, self.__storage_obj, apk_type, apk_arch)
 
-    def mad_apk_info(self, *args, **kwargs):
+    def mad_apk_info(self, *args, **kwargs) -> Response:
         parsed = parse_frontend(**kwargs)
         if type(parsed) == Response:
             return parsed
         apk_type, apk_arch = parsed
         (msg, status_code) = lookup_package_info(self.__storage_obj, apk_type, apk_arch)
-        return Response(status=status_code, response=msg['version'])
+        if msg and supported_pogo_version(apk_arch, msg['version']):
+            return Response(status=status_code, response=msg['version'])
+        else:
+            return Response(status=status_code)
 
     def origin_generator(self, *args, **kwargs):
         origin = request.headers.get('OriginBase', None)
