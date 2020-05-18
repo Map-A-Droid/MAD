@@ -132,17 +132,17 @@
                 success: function (result) {
 		    var tmp_fences = Object.keys(result.fences).map(k => result.fences[k]);
 		    var mon_mitm_fences_count = tmp_fences.filter(fence => fence.mode === "mon_mitm").length
-		    // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
 		    console.log("e*s*m = " + result.events.length * result.spawnpoints_count * mon_mitm_fences_count);
+                    tmp_fences.sort(function (a, b) {
+                        return a["name"].toLowerCase() > b["name"].toLowerCase() ? 1 : -1;
+                    });
+                    $("select#geofence_type_selector_overkill").append($('<option>', {value: -1, text: "-- select geofence --"}));
+                        for (fence in tmp_fences) {
+                            $("select#geofence_type_selector_overkill").append($('<option>', {value: tmp_fences[fence].area_id, text: tmp_fences[fence].name + " [" + tmp_fences[fence].mode + "]"}));
+                    }		    
+		    // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
                     if (result.events.length * result.spawnpoints_count * mon_mitm_fences_count > 1500000) {
                         // Enable overkill mode aka single area selector. Better than loading for 10 minutes.
-                        $("select#geofence_type_selector_overkill").append($('<option>', {value: -1, text: "-- select geofence --"}));
-                        tmp_fences.sort(function (a, b) {
-                            return a["name"].toLowerCase() > b["name"].toLowerCase() ? 1 : -1;
-                        });
-                        for (fence in tmp_fences) {
-                               $("select#geofence_type_selector_overkill").append($('<option>', {value: tmp_fences[fence].area_id, text: tmp_fences[fence].name + " [" + tmp_fences[fence].mode + "]"}));
-                        }
                         $.unblockUI();
                         enableOverkillMode();
                     } else {
