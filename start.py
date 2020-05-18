@@ -178,6 +178,7 @@ if __name__ == "__main__":
     install_thread_excepthook()
     create_folder(args.file_path)
     create_folder(args.upload_path)
+    create_folder(args.temp_path)
     if args.config_mode and args.only_routes:
         logger.error('Unable to run with config_mode and only_routes.  Only use one option')
         sys.exit(1)
