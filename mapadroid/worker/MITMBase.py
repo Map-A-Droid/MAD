@@ -319,7 +319,7 @@ class MITMBase(WorkerBase):
             self.set_devicesettings_value('last_questclear_time', time.time())
             logger.info("Delete old quest {}", int(trash) + 1)
             self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
-            time.sleep(1 + int(delayadd))
+            time.sleep(2.5 + int(delayadd))
             self._communicator.click(int(x), int(y))
             time.sleep(1 + int(delayadd))
 
