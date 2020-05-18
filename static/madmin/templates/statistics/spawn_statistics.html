@@ -86,19 +86,76 @@
                 }
             });
 	}
+	
+        function loadDataByFence() {
+            $.blockUI({ message: '<img src="static/loading.gif" width="100px" /><br /><h2>Loading...</h2>' });
+            $('body').Aplus();
+            $("#navgyms").addClass("active");
+            $.ajax({
+                type: "GET",
+                url: "get_spawnpoints_stats" + "?fence=" + $("select#geofence_type_selector_overkill").val(),
+                success: function (result) {
+		    setTimeout($.unblockUI, 100);
+                    setGrid('#show-spawnpoints-stats', result.spawnpoints);
+                }
+            });
+        }
 
+        function enableOverkillMode() {
+                $("#geofence_type_selector_span").hide();
+                $("div#geofence_type_selector_overkill").show();
+                $("select#geofence_type_selector_overkill").change(function() {
+                        if ($.fn.DataTable.isDataTable("#show-spawnpoints-stats")) {
+                                $("#show-spawnpoints-stats").DataTable().destroy();
+                        }
+                        loadDataByFence();
+                });
+        }
 
+        function enableNormalMode() {
+                $("div#geofence_type_selector_overkill").hide();
+                $("#geofence_type_selector_span").show();
+                $("#geofence_type_selector").change(function() {
+                        if ($.fn.DataTable.isDataTable("#show-spawnpoints-stats")) {
+                                $("#show-spawnpoints-stats").DataTable().destroy();
+                        }
+                        loadData();
+                });
+                loadData();
+        }
 
-
+        function loadSummary() {
+            $.blockUI({ message: '<img src="static/loading.gif" width="100px" /><br /><h2>Quick check, please wait.</h2>' });
+            $('body').Aplus();
+            $("#navgyms").addClass("active");
+            $.ajax({
+                type: "GET",
+                url: "get_spawnpoints_stats_summary",
+                success: function (result) {
+                    var mon_mitm_fences_count = Object.keys(result.fences).map(k => result.fences[k]).filter(fence => fence.mode === "mon_mitm").length
+                    if (result.events.length * result.spawnpoints_count * mon_mitm_fences_count > 2000) {
+                        // Enable overkill mode aka single area selector. Better than loading for 10 minutes.
+                        $("select#geofence_type_selector_overkill").append($('<option>', {value: -1, text: "-- select geofence --"}));
+                        var sorted_fences = Object.keys(result.fences).map(k => result.fences[k]);
+                        sorted_fences.sort(function (a, b) {
+                            // let's just assume there are no two geofences with the same name
+                            return a["name"].toLowerCase() > b["name"].toLowerCase() ? 1 : -1;
+                        });
+                        for (fence in sorted_fences) {
+                               $("select#geofence_type_selector_overkill").append($('<option>', {value: sorted_fences[fence].area_id, text: sorted_fences[fence].name + " [" + sorted_fences[fence].mode + "]"}));
+                        }
+                        $.unblockUI();
+                        enableOverkillMode();
+                    } else {
+                        enableNormalMode();
+                    }
+                }
+            });
+        }
 
     $(document).ready(function () {
-        loadData();
-        $("#geofence_type_selector").change(function() {
-            $("#show-spawnpoints-stats").DataTable().destroy();
-            loadData();
-        });
+	    loadSummary();
     });
-
 
     $( "#show-spawnpoints-stats" ).on( "click", '.convert', function(e) {
         e.stopImmediatePropagation();
@@ -305,14 +362,15 @@
 {% endblock %}
 
 {% block content %}
-<h2>Spawnpoint Stats (for <select name="geofence_type_selector" id="geofence_type_selector">
+<h2>Spawnpoint Stats <span id="geofence_type_selector_span">(for <select name="geofence_type_selector" id="geofence_type_selector">
     <option value="mon_mitm" selected="selected">Mons [mon_mitm]</option>
     <option value="iv_mitm">IVs [iv_mitm]</option>
     <option value="pokestops">Quests [pokestops]</option>
     <option value="raids_mitm">Raids [raids_mitm]</option>
     <option value="idle">Idle [idle]</option>
 </select>
-)</h2>
+)</span></h2>
+<div id="geofence_type_selector_overkill" style="display:none;">OK mode: <select name="geofence_type_selector_overkill" id="geofence_type_selector_overkill"></select></div>
 <div class="dropdown">
   <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
   <ul class="dropdown-menu dropdown-menu-right">
