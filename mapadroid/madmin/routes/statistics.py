@@ -43,6 +43,7 @@ class statistics(object):
             ("/status", self.status),
             ("/get_status", self.get_status),
             ("/get_spawnpoints_stats", self.get_spawnpoints_stats),
+            ("/get_spawnpoints_stats_summary", self.get_spawnpoints_stats_summary),
             ("/statistics_spawns", self.statistics_spawns),
             ("/shiny_stats", self.statistics_shiny),
             ("/shiny_stats_data", self.shiny_stats_data),
@@ -522,12 +523,13 @@ class statistics(object):
     @auth_required
     @logger.catch()
     def get_spawnpoints_stats(self):
-        
+
         geofence_type = request.args.get('type', 'mon_mitm')
+        geofence_id = int(request.args.get('fence', -1))
         if geofence_type not in ['idle', 'iv_mitm', 'mon_mitm', 'pokestops', 'raids_mitm']:
             stats = {'spawnpoints': []}
             return jsonify(stats)
-        
+
         coords = []
         known = {}
         unknown = {}
@@ -535,8 +537,11 @@ class statistics(object):
         events = []
         eventidhelper = {}
 
+        if geofence_id != -1:
+            possible_fences = get_geofences(self._mapping_manager, self._data_manager, area_id_req=geofence_id)
+        else:
+            possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type=geofence_type)
 
-        possible_fences = get_geofences(self._mapping_manager, self._data_manager, fence_type=geofence_type)
         for possible_fence in possible_fences:
             mode = possible_fences[possible_fence]['mode']
             area_id = possible_fences[possible_fence]['area_id']
@@ -847,5 +852,14 @@ class statistics(object):
         self._db.delete_spawnpoints([x for x in self._db.get_all_spawnpoints() if x not in spawns])
 
         return jsonify({'status': 'success'})
+    
+    @auth_required
+    @logger.catch()
+    def get_spawnpoints_stats_summary(self):
+        possible_fences = get_geofences(self._mapping_manager, self._data_manager)
+        events = self._db.get_events()
+        spawnpoints_total = self._db_stats_reader.get_all_spawnpoints_count()
+        stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}
+        return jsonify(stats)
 
 
