@@ -373,5 +373,5 @@ class DbStatsReader:
             "SELECT count(*) "
             "FROM `trs_spawn`"
         )
-        count = self.autofetch_value(query)
+        count = self._db_exec.autofetch_value(query)
         return count
