@@ -16,6 +16,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 APK_HEADERS = {
     'User-Agent': 'Mozilla/5.0 (Windows; U; Windows NT 5.1; de; rv:1.9.2.3) Gecko/20100401 Firefox/3.6.3',
 }
+MAX_RETRIES: int = 3  # Number of attempts for downloading on failure
 
 
 class APKWizard(object):
@@ -82,10 +83,20 @@ class APKWizard(object):
                         'download_status': 1
                     }
                     self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
-                    self.gpconn = GPlayConnector(architecture)
-                    downloaded_file = self.gpconn.download(APK_Package.pogo.value)
-                    PackageImporter(APK_Type.pogo, architecture, self.storage, downloaded_file, 'application/zip',
-                                    version=latest_version)
+                    retries: int = 0
+                    successful: bool = False
+                    while retries < MAX_RETRIES and not successful:
+                        self.gpconn = GPlayConnector(architecture)
+                        downloaded_file = self.gpconn.download(APK_Package.pogo.value)
+                        if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
+                            PackageImporter(APK_Type.pogo, architecture, self.storage, downloaded_file,
+                                            'application/zip', version=latest_version)
+                            successful = True
+                        else:
+                            logger.info("Issue downloading apk")
+                            retries += 1
+                            if retries < MAX_RETRIES:
+                                logger.warning('Unable to successfully download the APK')
                 except:  # noqa: E722
                     raise
                 finally:
@@ -118,10 +129,20 @@ class APKWizard(object):
             }
             self.dbc.autoexec_update('mad_apk_autosearch', update_data, where_keyvals=where)
             try:
-                r = requests.get(latest_data['url'], verify=False, headers=APK_HEADERS)
-                downloaded_file = io.BytesIO(r.content)
-                PackageImporter(package, architecture, self.storage, downloaded_file,
-                                'application/vnd.android.package-archive')
+                retries: int = 0
+                successful: bool = False
+                while retries < MAX_RETRIES and not successful:
+                    r = requests.get(latest_data['url'], verify=False, headers=APK_HEADERS)
+                    downloaded_file = io.BytesIO(r.content)
+                    if downloaded_file and downloaded_file.getbuffer().nbytes > 0:
+                        PackageImporter(package, architecture, self.storage, downloaded_file,
+                                        'application/vnd.android.package-archive')
+                        successful = True
+                    else:
+                        logger.info("Issue downloading apk")
+                        retries += 1
+                        if retries < MAX_RETRIES:
+                            logger.warning('Unable to successfully download the APK')
             except:  # noqa: E722
                 logger.warning('Unable to download the file @ {}', latest_data['url'])
             finally:
