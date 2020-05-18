@@ -157,12 +157,12 @@
         loadSummary();
         $("a#overkill_mode").click(function() {
             enableOverkillMode();
-        }
+        });
         $("a#normal_mode").click(function() {
           if (confirm("We detected you have a lot of spawns*events*geofences, switching to normal mode can take a long time and provide no more functionality than current mode. Just shows more geofences at the same time. Do you really want to switch?")) {
               enableNormalMode();
 	  }
-	}
+	});
     });
 
     $( "#show-spawnpoints-stats" ).on( "click", '.convert', function(e) {
