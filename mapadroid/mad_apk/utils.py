@@ -163,7 +163,7 @@ def parse_frontend(**kwargs) -> Union[Tuple[APK_Type, APK_Arch], Response]:
 
 
 def stream_package(db, storage_obj, apk_type: APK_Type, apk_arch: APK_Arch) -> Response:
-    package_info = lookup_package_info(storage_obj, apk_type, apk_arch)
+    package_info = lookup_package_info(storage_obj, apk_type, apk_arch)[0]
     gen_func = file_generator(db, storage_obj, apk_type, apk_arch)
     return Response(
         stream_with_context(gen_func),
