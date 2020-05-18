@@ -365,3 +365,13 @@ class DbStatsReader:
         else:
             logger.debug('Pokestop not visited till now')
             return False
+        
+    def get_all_spawnpoints_count(self):
+        logger.debug("dbWrapper::get_all_spawnpoints_count")
+        spawn = []
+        query = (
+            "SELECT count(*) "
+            "FROM `trs_spawn`"
+        )
+        count = self.autofetch_value(query)
+        return count
