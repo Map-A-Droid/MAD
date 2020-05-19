@@ -38,7 +38,8 @@ DEFAULT_OBJECTS = {
         'payload': {
             'devicepool': 'UnitTest Pool - %s',
             'settings': {
-                'screenshot_type': 'jpeg'
+                'screenshot_type': 'jpeg',
+                'enhanced_mode_quest': False
             }
         }
     },

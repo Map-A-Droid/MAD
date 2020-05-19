@@ -1,7 +1,6 @@
 import copy
-
-from . import api_base
-from . import global_variables
+from mapadroid.tests import api_base
+from mapadroid.tests import test_variables as global_variables
 
 
 class APIDevice(api_base.APITestBase):

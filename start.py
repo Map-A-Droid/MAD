@@ -19,7 +19,6 @@ from threading import Thread, active_count
 import psutil
 
 from mapadroid.utils.MappingManager import MappingManager, MappingManagerManager
-from mapadroid.utils.local_api import LocalAPI
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
@@ -271,6 +270,7 @@ if __name__ == "__main__":
     exit_code = 0
     try:
         if args.unit_tests:
+            from mapadroid.tests.local_api import LocalAPI
             api_ready = False
             api = LocalAPI()
             logger.info('Checking API status')

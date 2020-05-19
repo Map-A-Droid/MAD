@@ -1,7 +1,6 @@
 import copy
-
-from . import api_base
-from . import global_variables
+from mapadroid.tests import api_base
+from mapadroid.tests import test_variables as global_variables
 
 
 class APIDevicePool(api_base.APITestBase):
@@ -51,7 +50,7 @@ class APIDevicePool(api_base.APITestBase):
             }
         }
         result = copy.copy(self.base_payload)
-        result.update(payload)
+        result['settings']['screenshot_type'] = 'png'
         self.valid_patch(payload, result)
         self.remove_resources()
 

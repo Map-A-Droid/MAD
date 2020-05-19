@@ -1,8 +1,7 @@
 import copy
 from unittest import TestCase
-
-from mapadroid.utils.local_api import LocalAPI
-from . import global_variables
+from mapadroid.tests.local_api import LocalAPI
+import test_variables as global_variables
 
 
 class APITestBase(TestCase):
