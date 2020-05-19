@@ -5,6 +5,7 @@ import requests
 from typing import Tuple, Union, Generator
 from .apk_enums import APK_Arch, APK_Type, APK_Package  # noqa: F401
 from .abstract_apk_storage import AbstractAPKStorage
+from .custom_types import MAD_APKS, MAD_Package, MAD_Packages
 from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, ADDRESSES_GITHUB
 from mapadroid.utils.logging import logger
 
@@ -27,18 +28,18 @@ def convert_to_backend(req_type: str, req_arch: str) -> Tuple[APK_Type, APK_Arch
 
 
 def file_generator(db, storage_obj, apk_type: APK_Type, apk_arch: APK_Arch) -> Generator:
-    package_info = lookup_package_info(storage_obj, apk_type, apk_arch)
+    package_info: Tuple[str, int] = lookup_package_info(storage_obj, apk_type, apk_arch)
     if package_info[1] == 404:
         return Response(status=404, response=package_info[0])
     file_info = package_info[0]
     if storage_obj.get_storage_type() == 'fs':
-        gen_func = generator_from_filesystem(storage_obj.get_package_path(file_info['filename']))
+        gen_func = generator_from_filesystem(storage_obj.get_package_path(file_info.filename))
     else:
         gen_func = generator_from_db(db, apk_type, apk_arch)
     return gen_func
 
 
-def generator_from_db(dbc, package: APK_Type, architecture: APK_Arch):
+def generator_from_db(dbc, package: APK_Type, architecture: APK_Arch) -> Generator:
     filestore_id_sql = "SELECT `filestore_id` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
     filestore_id = dbc.autofetch_value(filestore_id_sql,
                                        args=(package.value, architecture.value,))
@@ -49,7 +50,7 @@ def generator_from_db(dbc, package: APK_Type, architecture: APK_Arch):
         yield dbc.autofetch_value(data_sql, args=(chunk_id))
 
 
-def generator_from_filesystem(full_path):
+def generator_from_filesystem(full_path) -> Generator:
     with open(full_path, 'rb') as fh:
         while True:
             data = fh.read(CHUNK_MAX_SIZE)
@@ -58,34 +59,22 @@ def generator_from_filesystem(full_path):
             yield data
 
 
-def get_apk_status(storage_obj: AbstractAPKStorage) -> dict:
-    data = {}
+def get_apk_status(storage_obj: AbstractAPKStorage) -> MAD_APKS:
+    data = MAD_APKS()
     for package in APK_Type:
-        data[str(package.value)] = {}
+        data[package] = MAD_Packages()
         if package == APK_Type.pogo:
             for arch in [APK_Arch.armeabi_v7a, APK_Arch.arm64_v8a]:
                 (package_info, status_code) = lookup_package_info(storage_obj, package, arch)
                 if package_info is None:
-                    package_info = get_base_element(package, arch)
-                data[str(package.value)][str(arch.value)] = package_info
+                    package_info = MAD_Package(package, arch)
+                data[package][arch] = package_info
         if package in [APK_Type.pd, APK_Type.rgc]:
             (package_info, status_code) = lookup_package_info(storage_obj, package, APK_Arch.noarch)
             if package_info is None:
-                package_info = get_base_element(package, APK_Arch.noarch)
-            data[str(package.value)][str(APK_Arch.noarch.value)] = package_info
+                package_info = MAD_Package(package, APK_Arch.noarch)
+            data[package][APK_Arch.noarch] = package_info
     return data
-
-
-def get_base_element(package: APK_Type, architecture: APK_Arch) -> dict:
-    return {
-        'version': None,
-        'file_id': None,
-        'filename': None,
-        'mimetype': None,
-        'size': 0,
-        'arch_disp': APK_Arch(architecture).name,
-        'usage_disp': APK_Type(package).name
-    }
 
 
 def generate_filename(package: APK_Type, architecture: APK_Arch, version: str, mimetype: str) -> str:
@@ -107,7 +96,7 @@ def is_newer_version(first_ver: str, second_ver: str) -> bool:
 
 def lookup_apk_enum(name: str) -> APK_Type:
     try:
-        if name.isdigit():
+        if type(name) is int or name.isdigit():
             return APK_Type(int(name))
         else:
             return getattr(APK_Type, APK_Package(name).name)
@@ -139,8 +128,8 @@ def lookup_arch_enum(name: str) -> APK_Arch:
 
 
 def lookup_package_info(storage_obj: AbstractAPKStorage, apk_type: APK_Type,
-                        apk_arch: APK_Arch = None) -> Tuple[str, int]:
-    package_info = storage_obj.get_current_package_info(apk_type)
+                        apk_arch: APK_Arch = None) -> Union[MAD_Package, MAD_Packages]:
+    package_info: MAD_Packages = storage_obj.get_current_package_info(apk_type)
     if package_info is None:
         return (None, 404)
     if apk_arch is None:
@@ -148,10 +137,10 @@ def lookup_package_info(storage_obj: AbstractAPKStorage, apk_type: APK_Type,
     else:
         try:
             status_code: int = 200
-            fileinfo = package_info[str(apk_arch.value)]
-            if apk_type == APK_Type.pogo and not supported_pogo_version(apk_arch, fileinfo['version']):
+            fileinfo = package_info[apk_arch]
+            if apk_type == APK_Type.pogo and not supported_pogo_version(apk_arch, fileinfo.version):
                 status_code = 410
-            return (package_info[str(apk_arch.value)], status_code)
+            return (fileinfo, status_code)
         except KeyError:
             return (None, 404)
 
@@ -170,13 +159,13 @@ def parse_frontend(**kwargs) -> Union[Tuple[APK_Type, APK_Arch], Response]:
 
 
 def stream_package(db, storage_obj, apk_type: APK_Type, apk_arch: APK_Arch) -> Response:
-    package_info = lookup_package_info(storage_obj, apk_type, apk_arch)[0]
-    gen_func = file_generator(db, storage_obj, apk_type, apk_arch)
+    package_info: MAD_Package = lookup_package_info(storage_obj, apk_type, apk_arch)[0]
+    gen_func: Generator = file_generator(db, storage_obj, apk_type, apk_arch)
     return Response(
         stream_with_context(gen_func),
-        content_type=package_info['mimetype'],
+        content_type=package_info.mimetype,
         headers={
-            'Content-Disposition': f'attachment; filename=%s' % (package_info['filename'])
+            'Content-Disposition': f'attachment; filename=%s' % (package_info.filename)
         }
     )
 

@@ -24,8 +24,7 @@ class APIMadAPK(APKHandler):
         if flask.request.url.split('/')[-1] == 'download':
             return stream_package(self.dbc, self.storage_obj, apk_type, apk_arch)
         else:
-            (package_info, status_code) = lookup_package_info(self.storage_obj, apk_type, apk_arch)
-            return flask.Response(status=status_code, response=json.dumps(package_info))
+            return lookup_package_info(self.storage_obj, apk_type, apk_arch)
 
     @auth_required
     def post(self, apk_type: APK_Type, apk_arch: APK_Arch):

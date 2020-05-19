@@ -287,8 +287,8 @@ class MITMReceiver(Process):
             return parsed
         apk_type, apk_arch = parsed
         (msg, status_code) = lookup_package_info(self.__storage_obj, apk_type, apk_arch)
-        if msg and supported_pogo_version(apk_arch, msg['version']):
-            return Response(status=status_code, response=msg['version'])
+        if msg and supported_pogo_version(apk_arch, msg.version):
+            return Response(status=status_code, response=msg.version)
         else:
             return Response(status=status_code)
 

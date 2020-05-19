@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 from io import BytesIO
-from typing import Optional, NoReturn
+from typing import Dict, Optional, NoReturn
 from .apk_enums import APK_Arch, APK_Type
+from .custom_types import MAD_Packages
 
 
 class AbstractAPKStorage(ABC):
@@ -14,7 +15,7 @@ class AbstractAPKStorage(ABC):
         pass
 
     @abstractmethod
-    def get_current_package_info(self, package: APK_Type) -> Optional[dict]:
+    def get_current_package_info(self, package: APK_Type) -> Optional[MAD_Packages]:
         pass
 
     @abstractmethod

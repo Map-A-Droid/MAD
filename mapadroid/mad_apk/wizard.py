@@ -116,7 +116,7 @@ class APKWizard(object):
             latest_data = self.get_latest(package, architecture)
         if not latest_data:
             logger.warning('Unable to find latest data')
-        elif current_version and 'size' in current_version and current_version['size'] == int(latest_data['version']):
+        elif current_version and 'size' in current_version and current_version.size == int(latest_data['version']):
             logger.info('Latest version already installed')
         else:
             update_data = {

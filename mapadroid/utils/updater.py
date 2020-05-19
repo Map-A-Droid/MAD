@@ -531,12 +531,12 @@ class deviceUpdater(object):
                         return False
                 package = getattr(APK_Type, APK_Package(package_raw).name)
                 architecture = lookup_arch_enum(architecture_raw)
-                package_all = self._storage_obj.get_current_package_info(package)
+                package_all: Package_Info = self._storage_obj.get_current_package_info(package)
                 try:
-                    mad_apk = package_all[str(architecture.value)]
+                    mad_apk = package_all[architecture]
                 except KeyError:
                     architecture = APK_Arch.noarch
-                    mad_apk = package_all[str(architecture.noarch.value)]
+                    mad_apk = package_all[architecture.noarch]
 
                 if not mad_apk or mad_apk['filename'] is None:
                     logger.warning('No MAD APK for {} [{}]', package, architecture.name)

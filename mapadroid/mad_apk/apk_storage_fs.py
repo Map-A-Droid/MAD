@@ -5,10 +5,12 @@ from io import BytesIO
 import json
 import os
 import re
-from typing import Any, ClassVar, NoReturn, Optional
-from .utils import lookup_apk_enum, lookup_arch_enum, generate_filename
+from typing import Any, ClassVar, Dict, NamedTuple, NoReturn, Optional
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APK_Arch, APK_Type
+from .utils import lookup_apk_enum, lookup_arch_enum, generate_filename
+from .custom_types import MAD_APKS, MAD_Package, MAD_Packages
+from mapadroid.utils.json_encoder import MAD_Encoder
 from mapadroid.utils.logging import logger
 from threading import RLock
 
@@ -48,17 +50,17 @@ def ensure_config_file(func) -> Any:
 
 class APKStorageFilesystem(AbstractAPKStorage):
     config_apks: ClassVar[str] = 'mad_apk'
-    apks: dict
+    apks: MAD_APKS
     config_apk_dir: str
     config_filepath: str
     file_lock: RLock
 
-    def __init__(self, application_args):
+    def __init__(self, application_args: NamedTuple):
         logger.debug('Initializing FileSystem storage')
         self.file_lock: RLock = RLock()
         self.config_apk_dir: str = application_args.temp_path + '/' + APKStorageFilesystem.config_apks
         self.config_filepath: str = '{}/config.json'.format(self.config_apk_dir)
-        self.apks = {}
+        self.apks = MAD_APKS()
         with self.file_lock:
             self.create_structure()
             self.create_config(delete_config=True)
@@ -71,7 +73,6 @@ class APKStorageFilesystem(AbstractAPKStorage):
                     os.unlink(self.config_filepath)
                 except FileNotFoundError:
                     pass
-            config = {}
             if not os.path.isfile(self.config_filepath) or delete_config:
                 # Attempt to rebuild the config if it was corrupted in some way
                 mad_filematch = re.compile(r'(\S+)__(\S+)__(\S+)\.(.*)$')
@@ -85,24 +86,21 @@ class APKStorageFilesystem(AbstractAPKStorage):
                             mimetype = 'application/zip'
                         else:
                             mimetype = 'application/vnd.android.package-archive'
-                        arch = lookup_arch_enum(architecture).value
-                        apktype = lookup_apk_enum(packagename).value
+                        arch = lookup_arch_enum(architecture)
+                        apktype = lookup_apk_enum(packagename)
                         fullpath = '{}/{}'.format(self.config_apk_dir, filename)
-                        package = {
+                        package: dict = {
                             'version': version,
                             'file_id': None,
                             'filename': filename,
                             'mimetype': mimetype,
                             'size': os.stat(fullpath).st_size,
-                            'arch_disp': APK_Arch(arch).name,
-                            'usage_disp': APK_Type(apktype).name
                         }
-                        if str(apktype) not in config:
-                            config[str(apktype)] = {}
-                        config[str(apktype)][str(arch)] = package
+                        if apktype not in self.apks:
+                            self.apks[apktype] = MAD_Packages()
+                        self.apks[apktype][arch] = MAD_Package(apktype, arch, **package)
                     except ValueError:
                         continue
-                self.apks = config
                 self.save_configuration()
             else:
                 updated: bool = False
@@ -111,12 +109,12 @@ class APKStorageFilesystem(AbstractAPKStorage):
                     for apk_family, apks in conf.items():
                         for arch, apk_info in apks.items():
                             if not os.path.isfile(self.get_package_path(apk_info['filename'])):
-                                logger.info('APK {} no longer exists.  Removing the file', apk_info['filename'])
+                                logger.info('APK {} no longer exists.  Removing the file', apk_info.filename)
                                 updated = True
                             else:
                                 if apk_family not in self.apks:
-                                    self.apks[apk_family] = {}
-                                self.apks[apk_family][arch] = apk_info
+                                    self.apks[apk_family] = MAD_Packages()
+                                self.apks[apk_family][arch]: MAD_Package(apk_family, arch, **apk_info)
                 if updated:
                     self.save_configuration()
 
@@ -129,9 +127,9 @@ class APKStorageFilesystem(AbstractAPKStorage):
     @ensure_config_file
     @ensure_exists
     def delete_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
-        apk_info = self.apks[str(package.value)][str(architecture.value)]
-        os.unlink(self.get_package_path(apk_info['filename']))
-        del self.apks[str(package.value)][str(architecture.value)]
+        apk_info: MAD_Package = self.apks[package][architecture]
+        os.unlink(self.get_package_path(apk_info.filename))
+        del self.apks[package][architecture]
         self.save_configuration()
         return True
 
@@ -141,36 +139,36 @@ class APKStorageFilesystem(AbstractAPKStorage):
     @ensure_config_file
     @ensure_exists
     def get_current_version(self, package: APK_Type, architecture: APK_Arch) -> Optional[str]:
-        apk_info = self.apks[str(package.value)][str(architecture.value)]
-        version = apk_info['version']
+        apk_info: MAD_Package = self.apks[package][architecture]
+        version = apk_info.version
         return version
 
     @ensure_config_file
-    def get_current_package_info(self, package: APK_Type) -> Optional[dict]:
+    def get_current_package_info(self, package: APK_Type) -> Optional[MAD_Packages]:
         data = None
         with self.file_lock:
             try:
-                data = copy(self.apks[str(package.value)])
+                data = copy(self.apks[package])
                 for arch, apk_info in data.items():
-                    self.validate_file(package, APK_Arch(int(arch)))
+                    self.validate_file(package, arch)
             except KeyError:
                 logger.debug('Package has not been downloaded')
         try:
-            if self.apks[str(package.value)]:
-                return self.apks[str(package.value)]
+            if self.apks[package]:
+                return self.apks[package]
             else:
                 return None
         except KeyError:
             logger.debug('Package has not been downloaded')
             return None
 
-    def get_storage_type(self):
+    def get_storage_type(self) -> str:
         return 'fs'
 
-    def save_configuration(self):
+    def save_configuration(self) -> NoReturn:
         with self.file_lock:
             with open(self.config_filepath, 'w+') as fh:
-                json.dump(self.apks, fh, indent=2)
+                json.dump(self.apks, fh, indent=2, cls=MAD_Encoder)
 
     @ensure_config_file
     def shutdown(self) -> NoReturn:
@@ -199,12 +197,10 @@ class APKStorageFilesystem(AbstractAPKStorage):
                         'filename': filename,
                         'mimetype': mimetype,
                         'size': os.stat(self.get_package_path(filename)).st_size,
-                        'arch_disp': APK_Arch(architecture).name,
-                        'usage_disp': APK_Type(package).name
                     }
-                    if str(package.value) not in self.apks:
-                        self.apks[str(package.value)] = {}
-                    self.apks[str(package.value)][str(architecture.value)] = info
+                    if package not in self.apks:
+                        self.apks[package] = {}
+                    self.apks[package][architecture] = MAD_Package(package, architecture, **info)
                     self.save_configuration()
                     logger.info('Successfully saved {} to the disk', filename)
         except:  # noqa: E722
@@ -212,10 +208,10 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     def validate_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
         try:
-            apk_info = self.apks[str(package.value)][str(architecture.value)]
-            package_path = self.get_package_path(apk_info['filename'])
+            apk_info: MAD_Package = self.apks[package][architecture]
+            package_path = self.get_package_path(apk_info.filename)
             if not os.path.isfile(package_path):
-                del self.apks[str(package.value)][str(architecture.value)]
+                del self.apks[package][architecture]
                 self.save_configuration()
                 raise FileNotFoundError(package_path)
             return True
