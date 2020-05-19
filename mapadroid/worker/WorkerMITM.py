@@ -245,12 +245,14 @@ class WorkerMITM(MITMBase):
                         logger.debug("No spawnpoints in data requested")
                         time.sleep(1)
                 elif mode in ["raids_mitm"]:
+                    logger.debug("Checking raids_mitm data")
                     for data_extract in latest_data['payload']['cells']:
                         for forts in data_extract['forts']:
                             # if there's location in latest, the distance has
                             # already been checked in MITMBase
                             if forts['id'] and (latest.get("location", None) or
-                                    self._check_data_distance(latest_data['payload']['cells'])):
+                                                self._check_data_distance(latest_data['payload']['cells'])):
+                                logger.debug("Got proper fort data for raids")
                                 data_requested = latest_data
                                 break
                         if data_requested != LatestReceivedType.UNDEFINED:
