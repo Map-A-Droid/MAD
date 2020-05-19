@@ -1,6 +1,7 @@
 import math
 import time
 from datetime import datetime
+from typing import Union
 
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
@@ -202,7 +203,7 @@ class WorkerMITM(MITMBase):
         self._mitm_mapper.update_latest(origin=self._origin, key="injected_settings", values_dict=injected_settings)
 
     def _wait_data_worker(self, latest, proto_to_wait_for, timestamp):
-        data_requested = LatestReceivedType.UNDEFINED
+        data_requested: Union[LatestReceivedType, dict] = LatestReceivedType.UNDEFINED
         if latest is None:
             logger.debug(
                 "Nothing received from {} since MAD started", str(self._origin))
@@ -218,11 +219,12 @@ class WorkerMITM(MITMBase):
 
             mode = self._mapping_manager.routemanager_get_mode(self._routemanager_name)
             latest_timestamp = latest_proto.get("timestamp", 0)
-            logger.debug("Latest timestamp: {} vs. timestamp waited for: {}",
-                         datetime.fromtimestamp(latest_timestamp), datetime.fromtimestamp(timestamp))
+            logger.debug("Latest timestamp: {} vs. timestamp waited for: {} of proto {}",
+                         datetime.fromtimestamp(latest_timestamp), datetime.fromtimestamp(timestamp),
+                         str(proto_to_wait_for))
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
-                latest_data = latest_proto.get("values", None)
+                latest_data: dict = latest_proto.get("values", None)
                 if latest_data is None:
                     time.sleep(0.5)
                     return LatestReceivedType.UNDEFINED
@@ -234,10 +236,11 @@ class WorkerMITM(MITMBase):
                             # if there's location in latest, the distance has
                             # already been checked in MITMBase
                             if WP['spawnpoint_id'] and (latest.get("location", None) or
-                                    self._check_data_distance(latest_data['payload']['cells'])):
+                                                        self._check_data_distance(latest_data['payload']['cells'])):
                                 data_requested = latest_data
                                 break
-                        if data_requested == latest_data: break
+                        if data_requested != LatestReceivedType.UNDEFINED:
+                            break
                     if data_requested is None or data_requested == LatestReceivedType.UNDEFINED:
                         logger.debug("No spawnpoints in data requested")
                         time.sleep(1)
@@ -250,10 +253,13 @@ class WorkerMITM(MITMBase):
                                     self._check_data_distance(latest_data['payload']['cells'])):
                                 data_requested = latest_data
                                 break
-                        # if data_requested == latest_data: break
+                        if data_requested != LatestReceivedType.UNDEFINED:
+                            break
                     if data_requested is None or data_requested == LatestReceivedType.UNDEFINED:
-                        logger.debug("No forts in data received")
+                        logger.debug("No forts in data received: {}", latest_data)
                         time.sleep(0.5)
+                    else:
+                        logger.debug("Got data requested: {}", data_requested)
                 else:
                     logger.warning(
                         "No mode specified to wait for - this should not even happen...")
