@@ -638,26 +638,35 @@ class WorkerBase(AbstractWorker):
             screen_type: ScreenType = self._WordToScreenMatching.detect_screentype()
             if screen_type in [ScreenType.POGO, ScreenType.QUEST]:
                 self._last_screen_type = screen_type
+                self._loginerrorcounter = 0
                 logger.debug2("Found pogo or questlog to be open")
                 break
-            elif screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
-                logger.info("Found screen multiple times in a row")
-                if self._same_screen_count < 3:
-                    self._same_screen_count += 1
-                else:
-                    logger.warning('Game froze - restarting device')
-                    self._reboot()
+
+            if screen_type != ScreenType.ERROR and self._last_screen_type == screen_type:
+                self._same_screen_count += 1
+                logger.warning("Found {} multiple times in a row ({})",
+                        screen_type, self._same_screen_count)
+                if self._same_screen_count > 3:
+                    logger.warning("Screen is frozen!")
+                    if self._same_screen_count > 4 or not self._restart_pogo():
+                        logger.error("Restarting PoGo failed - reboot device")
+                        self._reboot()
                     break
+            elif self._last_screen_type != screen_type:
+                self._same_screen_count = 0
 
             # now handle all screens that may not have been handled by detect_screentype since that only clicks around
             # so any clearing data whatsoever happens here (for now)
             if screen_type == ScreenType.UNDEFINED:
                 logger.error("Undefined screentype!")
-            if screen_type == ScreenType.BLACK:
+            elif screen_type == ScreenType.BLACK:
                 logger.info("Found Black Loading Screen - waiting ...")
                 time.sleep(20)
-
-            if screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT, ScreenType.CLOSE]:
+            elif screen_type == ScreenType.CLOSE:
+                logger.warning("screendetection found pogo closed, start it...")
+                self._start_pogo()
+                self._loginerrorcounter += 1
+            elif screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT]:
                 logger.warning('Error getting Gamedata or strange ggl message appears')
                 self._loginerrorcounter += 1
                 if self._loginerrorcounter < 2:
@@ -673,9 +682,14 @@ class WorkerBase(AbstractWorker):
             elif screen_type in [ScreenType.ERROR, ScreenType.FAILURE]:
                 logger.warning('Something wrong with screendetection or pogo failure screen')
                 self._loginerrorcounter += 1
+            elif screen_type == ScreenType.NOGGL:
+                logger.warning('Detected login select screen missing the Google'
+                    ' button - likely entered an invalid birthdate previously')
+                self._loginerrorcounter += 1
             elif screen_type == ScreenType.GPS:
-                logger.warning("Detected GPS error 11 - rebooting device")
+                logger.error("Detected GPS error - reboot device")
                 self._reboot()
+                break
             elif screen_type == ScreenType.SN:
                 logger.warning('Getting SN Screen - restart PoGo and later PD')
                 self._restart_pogo_safe()

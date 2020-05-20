@@ -33,7 +33,7 @@ class PogoWindows:
         self._ScreenType: dict = {}
         self._ScreenType[1]: list = ['Geburtdatum', 'birth.', 'naissance.', 'date']
         self._ScreenType[2]: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
-        self._ScreenType[3]: list = ['KIDS', 'Google', 'Facebook']
+        self._ScreenType[3]: list = ['Google', 'Facebook']
         self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
         self._ScreenType[5]: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
                                      'connexion.', 'connexion']
@@ -55,7 +55,8 @@ class PogoWindows:
         self._ScreenType[17]: list = ['Suspension', 'suspended', 'violating', 'days', ]
         self._ScreenType[18]: list = ['Termination', 'terminated', 'permanently']
         self._ScreenType[21]: list = ['GPS', 'signal', 'GPS-Signal', '(11)', 'introuvable.',
-                                      'found.', 'gefunden.', 'Signal']
+                                      'found.', 'gefunden.', 'Signal', 'geortet', 'detect', '(12)']
+        self._ScreenType[23]: list = ['CLUB', 'KIDS']
 
     def __most_present_colour(self, filename, max_colours) -> Optional[List[int]]:
         if filename is None or max_colours is None:
@@ -891,8 +892,11 @@ class PogoWindows:
                     frame_org = frame_org.resize([int(2 * s) for s in frame_org.size], Image.ANTIALIAS)
                     diff: int = 2
 
-                frame = frame_org.convert('LA')
-                texts = [frame, frame_org]
+                texts = [frame_org]
+                for thresh in [200, 175, 150]:
+                    fn = lambda x : 255 if x > thresh else 0
+                    frame = frame_org.convert('L').point(fn, mode='1')
+                    texts.append(frame)
                 for text in texts:
                     try:
                         globaldict = pytesseract.image_to_data(text, output_type=Output.DICT, timeout=40,
@@ -911,7 +915,8 @@ class PogoWindows:
                             break
                         if len(globaldict['text'][i]) > 3:
                             for z in self._ScreenType:
-                                if globaldict['top'][i] > height / 4 and globaldict['text'][i] in \
+                                heightlimit = 0 if z == 21 else height / 4
+                                if globaldict['top'][i] > heightlimit and globaldict['text'][i] in \
                                         self._ScreenType[z]:
                                     returntype = ScreenType(z)
                     if returntype != ScreenType.UNDEFINED:

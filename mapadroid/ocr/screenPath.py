@@ -138,6 +138,7 @@ class WordToScreenMatching(object):
         elif "ConsentActivity" in topmost_app:
             return ScreenType.CONSENT, global_dict, diff
         elif "com.nianticlabs.pokemongo" not in topmost_app:
+            logger.warning("PoGo ist not opened! Current topmost app: {}", topmost_app)
             return ScreenType.CLOSE, global_dict, diff
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
@@ -267,6 +268,8 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.SN:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.UPDATE:
+            self._nextscreen = ScreenType.UNDEFINED
+        elif screentype == ScreenType.NOGGL:
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.STRIKE:
             self.__handle_strike_screen(diff, global_dict)
@@ -427,6 +430,7 @@ class WordToScreenMatching(object):
     def detect_screentype(self) -> ScreenType:
         topmostapp = self._communicator.topmost_app()
         if not topmostapp:
+            logger.warning("Failed getting the topmost app!")
             return ScreenType.ERROR
 
         screentype, global_dict, diff = self.__evaluate_topmost_app(topmost_app=topmostapp)
