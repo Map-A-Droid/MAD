@@ -1,5 +1,5 @@
 from io import BytesIO
-from typing import Dict, NoReturn, Optional
+from typing import NoReturn, Optional
 from .abstract_apk_storage import AbstractAPKStorage
 from .custom_types import MAD_Package, MAD_Packages
 from .apk_enums import APK_Arch, APK_Type

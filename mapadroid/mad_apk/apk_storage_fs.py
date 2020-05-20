@@ -5,7 +5,7 @@ from io import BytesIO
 import json
 import os
 import re
-from typing import Any, ClassVar, Dict, NamedTuple, NoReturn, Optional
+from typing import Any, ClassVar, NamedTuple, NoReturn, Optional
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APK_Arch, APK_Type
 from .utils import lookup_apk_enum, lookup_arch_enum, generate_filename
@@ -23,7 +23,7 @@ def ensure_exists(func) -> Any:
             return func(self, *args, **kwargs)
         except FileNotFoundError:
             msg = 'Attempted to access a non-existent file for {} [{}]'.format(args[0].name, args[1].name)
-            logger.warning(msg)
+            logger.debug(msg)
             return Response(status=404, response=json.dumps(msg))
     return decorated
 
@@ -87,7 +87,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                         else:
                             mimetype = 'application/vnd.android.package-archive'
                         arch = lookup_arch_enum(architecture)
-                        apktype = lookup_apk_enum(packagename)
+                        apk_family = lookup_apk_enum(packagename)
                         fullpath = '{}/{}'.format(self.config_apk_dir, filename)
                         package: dict = {
                             'version': version,
@@ -96,9 +96,9 @@ class APKStorageFilesystem(AbstractAPKStorage):
                             'mimetype': mimetype,
                             'size': os.stat(fullpath).st_size,
                         }
-                        if apktype not in self.apks:
-                            self.apks[apktype] = MAD_Packages()
-                        self.apks[apktype][arch] = MAD_Package(apktype, arch, **package)
+                        if apk_family not in self.apks:
+                            self.apks[apk_family] = MAD_Packages()
+                        self.apks[apk_family][arch] = MAD_Package(apk_family, arch, **package)
                     except ValueError:
                         continue
                 self.save_configuration()
@@ -180,16 +180,22 @@ class APKStorageFilesystem(AbstractAPKStorage):
         try:
             filename = generate_filename(package, architecture, version, mimetype)
             with self.file_lock:
-                self.delete_file(package, architecture)
+                try:
+                    self.delete_file(package, architecture)
+                    logger.debug('Successfully removed the previous version')
+                except (FileNotFoundError, KeyError):
+                    pass
+                try:
+                    self.delete_file(package, architecture)
+                except (TypeError, KeyError):
+                    pass
                 try:
                     with open(self.get_package_path(filename), 'wb+') as fh:
                         fh.write(data.getbuffer())
                 except FileNotFoundError:
                     if retry:
                         self.create_structure()
-                        self.save_file(package, architecture, version, mimetype, data)
-                    else:
-                        logger.warning('Unable to save {} to disk', filename)
+                        return self.save_file(package, architecture, version, mimetype, data)
                 else:
                     info = {
                         'version': version,
@@ -199,12 +205,14 @@ class APKStorageFilesystem(AbstractAPKStorage):
                         'size': os.stat(self.get_package_path(filename)).st_size,
                     }
                     if package not in self.apks:
-                        self.apks[package] = {}
+                        self.apks[package] = MAD_Packages()
                     self.apks[package][architecture] = MAD_Package(package, architecture, **info)
                     self.save_configuration()
                     logger.info('Successfully saved {} to the disk', filename)
+                    return True
         except:  # noqa: E722
             logger.opt(exception=True).critical('Unable to upload APK')
+        return False
 
     def validate_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
         try:
@@ -217,3 +225,4 @@ class APKStorageFilesystem(AbstractAPKStorage):
             return True
         except KeyError:
             raise FileNotFoundError
+        return False
