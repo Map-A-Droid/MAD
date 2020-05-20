@@ -1,9745 +1,2672 @@
 {
   "1": {
-    "name": "Bulbasaur",
-    "rarity": "Uncommon",
-    "level": 1,
-    "cp": 3757,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Bulbasaur"
   },
   "2": {
-    "name": "Ivysaur",
-    "rarity": "Rare",
-    "level": 1,
-    "cp": 5238,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Ivysaur"
   },
   "3": {
-    "name": "Venusaur",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 26921,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Venusaur"
   },
   "4": {
-    "name": "Charmander",
-    "rarity": "Rare",
-    "level": 1,
-    "cp": 3380,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Charmander"
   },
   "5": {
-    "name": "Charmeleon",
-    "rarity": "Very Rare",
-    "level": 1,
-    "cp": 5085,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Charmeleon"
   },
   "6": {
-    "name": "Charizard",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 28485,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Charizard"
   },
   "7": {
-    "name": "Squirtle",
-    "rarity": "Uncommon",
-    "level": 1,
-    "cp": 3125,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Squirtle"
   },
   "8": {
-    "name": "Wartortle",
-    "rarity": "Rare",
-    "level": 1,
-    "cp": 4503,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Wartortle"
   },
   "9": {
-    "name": "Blastoise",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 24162,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Blastoise"
   },
   "10": {
-    "name": "Caterpie",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
+    "name": "Caterpie"
   },
   "11": {
-    "name": "Metapod",
-    "rarity": "Rare",
-    "level": 1,
-    "cp": 1534,
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
+    "name": "Metapod"
   },
   "12": {
-    "name": "Butterfree",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Butterfree"
   },
   "13": {
-    "name": "Weedle",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Weedle"
   },
   "14": {
-    "name": "Kakuna",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Kakuna"
   },
   "15": {
-    "name": "Beedrill",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Beedrill"
   },
   "16": {
-    "name": "Pidgey",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Pidgey"
   },
   "17": {
-    "name": "Pidgeotto",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Pidgeotto"
   },
   "18": {
-    "name": "Pidgeot",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Pidgeot"
   },
   "19": {
-    "name": "Rattata",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Rattata"
   },
   "20": {
-    "name": "Raticate",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Raticate"
   },
   "21": {
-    "name": "Spearow",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Spearow"
   },
   "22": {
-    "name": "Fearow",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Fearow"
   },
   "23": {
-    "name": "Ekans",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Ekans"
   },
   "24": {
-    "name": "Arbok",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Arbok"
   },
   "25": {
-    "name": "Pikachu",
-    "rarity": "Uncommon",
-    "level": 4,
-    "cp": 11845,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Pikachu"
   },
   "26": {
-    "name": "Raichu",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 16178,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Raichu"
   },
   "27": {
-    "name": "Sandshrew",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Sandshrew"
   },
   "28": {
-    "name": "Sandslash",
-    "rarity": "Ultra Rare",
-    "level": 2,
-    "cp": 12312,
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Sandslash"
   },
   "29": {
-    "name": "Nidoran♀",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Nidoran♀"
   },
   "30": {
-    "name": "Nidorina",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Nidorina"
   },
   "31": {
-    "name": "Nidoqueen",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 23216,
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Nidoqueen"
   },
   "32": {
-    "name": "Nidoran♂",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Nidoran♂"
   },
   "33": {
-    "name": "Nidorino",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Nidorino"
   },
   "34": {
-    "name": "Nidoking",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 24873,
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Nidoking"
   },
   "35": {
-    "name": "Clefairy",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Clefairy"
   },
   "36": {
-    "name": "Clefable",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Clefable"
   },
   "37": {
-    "name": "Vulpix",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Vulpix"
   },
   "38": {
-    "name": "Ninetales",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 14914,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Ninetales"
   },
   "39": {
-    "name": "Jigglypuff",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Jigglypuff"
   },
   "40": {
-    "name": "Wigglytuff",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Wigglytuff"
   },
   "41": {
-    "name": "Zubat",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Zubat"
   },
   "42": {
-    "name": "Golbat",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Golbat"
   },
   "43": {
-    "name": "Oddish",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Oddish"
   },
   "44": {
-    "name": "Gloom",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Gloom"
   },
   "45": {
-    "name": "Vileplume",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Vileplume"
   },
   "46": {
-    "name": "Paras",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Paras"
   },
   "47": {
-    "name": "Parasect",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Parasect"
   },
   "48": {
-    "name": "Venonat",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Venonat"
   },
   "49": {
-    "name": "Venomoth",
-    "rarity": "Rare",
-    "level": 2,
-    "cp": 10572,
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Venomoth"
   },
   "50": {
-    "name": "Diglett",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Diglett"
   },
   "51": {
-    "name": "Dugtrio",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Dugtrio"
   },
   "52": {
-    "name": "Meowth",
-    "rarity": "Rare",
-    "level": 4,
-    "cp": 9079,
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Meowth"
   },
   "53": {
-    "name": "Persian",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Persian"
   },
   "54": {
-    "name": "Psyduck",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Psyduck"
   },
   "55": {
-    "name": "Golduck",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Golduck"
   },
   "56": {
-    "name": "Mankey",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Mankey"
   },
   "57": {
-    "name": "Primeape",
-    "rarity": "Very Rare",
-    "level": 2,
-    "cp": 11876,
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Primeape"
   },
   "58": {
-    "name": "Growlithe",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Growlithe"
   },
   "59": {
-    "name": "Arcanine",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Arcanine"
   },
   "60": {
-    "name": "Poliwag",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Poliwag"
   },
   "61": {
-    "name": "Poliwhirl",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Poliwhirl"
   },
   "62": {
-    "name": "Poliwrath",
-    "rarity": "Ultra Rare",
-    "level": 4,
-    "cp": 24247,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Poliwrath"
   },
   "63": {
-    "name": "Abra",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Abra"
   },
   "64": {
-    "name": "Kadabra",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Kadabra"
   },
   "65": {
-    "name": "Alakazam",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 22646,
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Alakazam"
   },
   "66": {
-    "name": "Machop",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Machop"
   },
   "67": {
-    "name": "Machoke",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Machoke"
   },
   "68": {
-    "name": "Machamp",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 18144,
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Machamp"
   },
   "69": {
-    "name": "Bellsprout",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Bellsprout"
   },
   "70": {
-    "name": "Weepinbell",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Weepinbell"
   },
   "71": {
-    "name": "Victreebel",
-    "rarity": "Ultra Rare",
-    "level": 4,
-    "cp": 23780,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Victreebel"
   },
   "72": {
-    "name": "Tentacool",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Tentacool"
   },
   "73": {
-    "name": "Tentacruel",
-    "rarity": "Very Rare",
-    "level": 2,
-    "cp": 12190,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Tentacruel"
   },
   "74": {
-    "name": "Geodude",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Geodude"
   },
   "75": {
-    "name": "Graveler",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Graveler"
   },
   "76": {
-    "name": "Golem",
-    "rarity": "Ultra Rare",
-    "level": 4,
-    "cp": 30572,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Golem"
   },
   "77": {
-    "name": "Ponyta",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Ponyta"
   },
   "78": {
-    "name": "Rapidash",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Rapidash"
   },
   "79": {
-    "name": "Slowpoke",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Slowpoke"
   },
   "80": {
-    "name": "Slowbro",
-    "rarity": "Very Rare",
-    "level": 2,
-    "cp": 11776,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Slowbro"
   },
   "81": {
-    "name": "Magnemite",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
+    "name": "Magnemite"
   },
   "82": {
-    "name": "Magneton",
-    "rarity": "Ultra Rare",
-    "level": 2,
-    "cp": 14172,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
+    "name": "Magneton"
   },
   "83": {
-    "name": "Farfetch'd",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Farfetch'd"
   },
   "84": {
-    "name": "Doduo",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Doduo"
   },
   "85": {
-    "name": "Dodrio",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Dodrio"
   },
   "86": {
-    "name": "Seel",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Seel"
   },
   "87": {
-    "name": "Dewgong",
-    "rarity": "Ultra Rare",
-    "level": 2,
-    "cp": 9216,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
+    "name": "Dewgong"
   },
   "88": {
-    "name": "Grimer",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Grimer"
   },
   "89": {
-    "name": "Muk",
-    "rarity": "Ultra Rare",
-    "level": 2,
-    "cp": 12269,
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Muk"
   },
   "90": {
-    "name": "Shellder",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Shellder"
   },
   "91": {
-    "name": "Cloyster",
-    "rarity": "Ultra Rare",
-    "level": 2,
-    "cp": 15678,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
+    "name": "Cloyster"
   },
   "92": {
-    "name": "Gastly",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Gastly"
   },
   "93": {
-    "name": "Haunter",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Haunter"
   },
   "94": {
-    "name": "Gengar",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 19768,
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Gengar"
   },
   "95": {
-    "name": "Onix",
-    "rarity": "Rare",
-    "level": 3,
-    "cp": 9534,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Onix"
   },
   "96": {
-    "name": "Drowzee",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Drowzee"
   },
   "97": {
-    "name": "Hypno",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Hypno"
   },
   "98": {
-    "name": "Krabby",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Krabby"
   },
   "99": {
-    "name": "Kingler",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Kingler"
   },
   "100": {
-    "name": "Voltorb",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Voltorb"
   },
   "101": {
-    "name": "Electrode",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Electrode"
   },
   "102": {
-    "name": "Exeggcute",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Exeggcute"
   },
   "103": {
-    "name": "Exeggutor",
-    "rarity": "Very Rare",
-    "level": 2,
-    "cp": 13839,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Exeggutor"
   },
   "104": {
-    "name": "Cubone",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Cubone"
   },
   "105": {
-    "name": "Marowak",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 20190,
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Marowak"
   },
   "106": {
-    "name": "Hitmonlee",
-    "rarity": "Very Rare",
-    "level": 3,
-    "cp": 19679,
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Hitmonlee"
   },
   "107": {
-    "name": "Hitmonchan",
-    "rarity": "Rare",
-    "level": 3,
-    "cp": 17164,
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Hitmonchan"
   },
   "108": {
-    "name": "Lickitung",
-    "rarity": "Rare",
-    "level": 2,
-    "cp": 6433,
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Lickitung"
   },
   "109": {
-    "name": "Koffing",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Koffing"
   },
   "110": {
-    "name": "Weezing",
-    "rarity": "Very Rare",
-    "level": 2,
-    "cp": 12318,
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Weezing"
   },
   "111": {
-    "name": "Rhyhorn",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
+    "name": "Rhyhorn"
   },
   "112": {
-    "name": "Rhydon",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 30512,
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
+    "name": "Rhydon"
   },
   "113": {
-    "name": "Chansey",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Chansey"
   },
   "114": {
-    "name": "Tangela",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Tangela"
   },
   "115": {
-    "name": "Kangaskhan",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Kangaskhan"
   },
   "116": {
-    "name": "Horsea",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Horsea"
   },
   "117": {
-    "name": "Seadra",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Seadra"
   },
   "118": {
-    "name": "Goldeen",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Goldeen"
   },
   "119": {
-    "name": "Seaking",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Seaking"
   },
   "120": {
-    "name": "Staryu",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Staryu"
   },
   "121": {
-    "name": "Starmie",
-    "rarity": "Very Rare",
-    "level": 3,
-    "cp": 17384,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Starmie"
   },
   "122": {
-    "name": "Mr. Mime",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Mr. Mime"
   },
   "123": {
-    "name": "Scyther",
-    "rarity": "Rare",
-    "level": 3,
-    "cp": 17358,
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Scyther"
   },
   "124": {
-    "name": "Jynx",
-    "rarity": "Rare",
-    "level": 3,
-    "cp": 18296,
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Jynx"
   },
   "125": {
-    "name": "Electabuzz",
-    "rarity": "Rare",
-    "level": 2,
-    "cp": 12390,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Electabuzz"
   },
   "126": {
-    "name": "Magmar",
-    "rarity": "Rare",
-    "level": 2,
-    "cp": 12718,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Magmar"
   },
   "127": {
-    "name": "Pinsir",
-    "rarity": "Uncommon",
-    "level": 3,
-    "cp": 20176,
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
+    "name": "Pinsir"
   },
   "128": {
-    "name": "Tauros",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Tauros"
   },
   "129": {
-    "name": "Magikarp",
-    "rarity": "Uncommon",
-    "level": 1,
-    "cp": 1165,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Magikarp"
   },
   "130": {
-    "name": "Gyarados",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Gyarados"
   },
   "131": {
-    "name": "Lapras",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 21768,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
+    "name": "Lapras"
   },
   "132": {
-    "name": "Ditto",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Ditto"
   },
   "133": {
-    "name": "Eevee",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Eevee"
   },
   "134": {
-    "name": "Vaporeon",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Vaporeon"
   },
   "135": {
-    "name": "Jolteon",
-    "rarity": "Very Rare",
-    "level": 3,
-    "cp": 19883,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Jolteon"
   },
   "136": {
-    "name": "Flareon",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 21155,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Flareon"
   },
   "137": {
-    "name": "Porygon",
-    "rarity": "Very Rare",
-    "level": 3,
-    "cp": 11419,
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Porygon"
   },
   "138": {
-    "name": "Omanyte",
-    "rarity": "Rare",
-    "level": 1,
-    "cp": 5724,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Omanyte"
   },
   "139": {
-    "name": "Omastar",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 18915,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Omastar"
   },
   "140": {
-    "name": "Kabuto",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Kabuto"
   },
   "141": {
-    "name": "Kabutops",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 19004,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Kabutops"
   },
   "142": {
-    "name": "Aerodactyl",
-    "rarity": "Very Rare",
-    "level": 3,
-    "cp": 17294,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Aerodactyl"
   },
   "143": {
-    "name": "Snorlax",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 25419,
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Snorlax"
   },
   "144": {
-    "name": "Articuno",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 37603,
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Articuno"
   },
   "145": {
-    "name": "Zapdos",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 42691,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Zapdos"
   },
   "146": {
-    "name": "Moltres",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 41953,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Moltres"
   },
   "147": {
-    "name": "Dratini",
-    "rarity": "Uncommon",
-    "cp":"3426",
-    "level":1,
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
+    "name": "Dratini"
   },
   "148": {
-    "name": "Dragonair",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
+    "name": "Dragonair"
   },
   "149": {
-    "name": "Dragonite",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 35383,
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Dragonite"
   },
   "150": {
-    "name": "Mewtwo",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 60540,
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Mewtwo"
   },
   "151": {
-    "name": "Mew",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 37733,
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Mew"
   },
   "152": {
-    "name": "Chikorita",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Chikorita"
   },
   "153": {
-    "name": "Bayleef",
-    "rarity": "Rare",
-    "level": 1,
-    "cp": 4375,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Bayleef"
   },
   "154": {
-    "name": "Meganium",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Meganium"
   },
   "155": {
-    "name": "Cyndaquil",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Cyndaquil"
   },
   "156": {
-    "name": "Quilava",
-    "rarity": "Very Rare",
-    "level": 1,
-    "cp": 5085,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Quilava"
   },
   "157": {
-    "name": "Typhlosion",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Typhlosion"
   },
   "158": {
-    "name": "Totodile",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Totodile"
   },
   "159": {
-    "name": "Croconaw",
-    "rarity": "Rare",
-    "level": 1,
-    "cp": 5207,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Croconaw"
   },
   "160": {
-    "name": "Feraligatr",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 27740,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Feraligatr"
   },
   "161": {
-    "name": "Sentret",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Sentret"
   },
   "162": {
-    "name": "Furret",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Furret"
   },
   "163": {
-    "name": "Hoothoot",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Hoothoot"
   },
   "164": {
-    "name": "Noctowl",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Noctowl"
   },
   "165": {
-    "name": "Ledyba",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Ledyba"
   },
   "166": {
-    "name": "Ledian",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Ledian"
   },
   "167": {
-    "name": "Spinarak",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Spinarak"
   },
   "168": {
-    "name": "Ariados",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Ariados"
   },
   "169": {
-    "name": "Crobat",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Crobat"
   },
   "170": {
-    "name": "Chinchou",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Chinchou"
   },
   "171": {
-    "name": "Lanturn",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Lanturn"
   },
   "172": {
-    "name": "Pichu",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Pichu"
   },
   "173": {
-    "name": "Cleffa",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Cleffa"
   },
   "174": {
-    "name": "Igglybuff",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Igglybuff"
   },
   "175": {
-    "name": "Togepi",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Togepi"
   },
   "176": {
-    "name": "Togetic",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Togetic"
   },
   "177": {
-    "name": "Natu",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Natu"
   },
   "178": {
-    "name": "Xatu",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Xatu"
   },
   "179": {
-    "name": "Mareep",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Mareep"
   },
   "180": {
-    "name": "Flaaffy",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Flaaffy"
   },
   "181": {
-    "name": "Ampharos",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Ampharos"
   },
   "182": {
-    "name": "Bellossom",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Bellossom"
   },
   "183": {
-    "name": "Marill",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Marill"
   },
   "184": {
-    "name": "Azumarill",
-    "rarity": "Rare",
-    "level": 3,
-    "cp": 8989,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Azumarill"
   },
   "185": {
-    "name": "Sudowoodo",
-    "rarity": "Uncommon",
-    "level": 2,
-    "cp": 11269,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
+    "name": "Sudowoodo"
   },
   "186": {
-    "name": "Politoed",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Politoed"
   },
   "187": {
-    "name": "Hoppip",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Hoppip"
   },
   "188": {
-    "name": "Skiploom",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Skiploom"
   },
   "189": {
-    "name": "Jumpluff",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Jumpluff"
   },
   "190": {
-    "name": "Aipom",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Aipom"
   },
   "191": {
-    "name": "Sunkern",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Sunkern"
   },
   "192": {
-    "name": "Sunflora",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
+    "name": "Sunflora"
   },
   "193": {
-    "name": "Yanma",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Yanma"
   },
   "194": {
-    "name": "Wooper",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Wooper"
   },
   "195": {
-    "name": "Quagsire",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Quagsire"
   },
   "196": {
-    "name": "Espeon",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Espeon"
   },
   "197": {
-    "name": "Umbreon",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
+    "name": "Umbreon"
   },
   "198": {
-    "name": "Murkrow",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Murkrow"
   },
   "199": {
-    "name": "Slowking",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Slowking"
   },
   "200": {
-    "name": "Misdreavus",
-    "rarity": "Rare",
-    "level": 2,
-    "cp": 10417,
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
+    "name": "Misdreavus"
   },
   "201": {
-    "name": "Unown",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Unown"
   },
   "202": {
-    "name": "Wobbuffet",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 7144,
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Wobbuffet"
   },
   "203": {
-    "name": "Girafarig",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Girafarig"
   },
   "204": {
-    "name": "Pineco",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
+    "name": "Pineco"
   },
   "205": {
-    "name": "Forretress",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
+    "name": "Forretress"
   },
   "206": {
-    "name": "Dunsparce",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Dunsparce"
   },
   "207": {
-    "name": "Gligar",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Gligar"
   },
   "208": {
-    "name": "Steelix",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Steelix"
   },
   "209": {
-    "name": "Snubbull",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Snubbull"
   },
   "210": {
-    "name": "Granbull",
-    "rarity": "Rare",
-    "level": 3,
-    "cp": 15328,
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Granbull"
   },
   "211": {
-    "name": "Qwilfish",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
+    "name": "Qwilfish"
   },
   "212": {
-    "name": "Scizor",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
+    "name": "Scizor"
   },
   "213": {
-    "name": "Shuckle",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
+    "name": "Shuckle"
   },
   "214": {
-    "name": "Heracross",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Heracross"
   },
   "215": {
-    "name": "Sneasel",
-    "rarity": "Rare",
-    "level": 2,
-    "cp": 11350,
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
+    "name": "Sneasel"
   },
   "216": {
-    "name": "Teddiursa",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Teddiursa"
   },
   "217": {
-    "name": "Ursaring",
-    "rarity": "Rare",
-    "level": 4,
-    "cp": 27409,
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Ursaring"
   },
   "218": {
-    "name": "Slugma",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Slugma"
   },
   "219": {
-    "name": "Magcargo",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
+    "name": "Magcargo"
   },
   "220": {
-    "name": "Swinub",
-    "rarity": "Common",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Swinub"
   },
   "221": {
-    "name": "Piloswine",
-    "rarity": "Ultra Rare",
-    "level": 3,
-    "cp": 13663,
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Piloswine"
   },
   "222": {
-    "name": "Corsola",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
+    "name": "Corsola"
   },
   "223": {
-    "name": "Remoraid",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Remoraid"
   },
   "224": {
-    "name": "Octillery",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Octillery"
   },
   "225": {
-    "name": "Delibird",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Delibird"
   },
   "226": {
-    "name": "Mantine",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Mantine"
   },
   "227": {
-    "name": "Skarmory",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Skarmory"
   },
   "228": {
-    "name": "Houndour",
-    "rarity": "Uncommon",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Houndour"
   },
   "229": {
-    "name": "Houndoom",
-    "rarity": "Very Rare",
-    "level": 4,
-    "cp": 27302,
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Houndoom"
   },
   "230": {
-    "name": "Kingdra",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
+    "name": "Kingdra"
   },
   "231": {
-    "name": "Phanpy",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Phanpy"
   },
   "232": {
-    "name": "Donphan",
-    "rarity": "Very Rare",
-    "level": 3,
-    "cp": 18980,
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Donphan"
   },
   "233": {
-    "name": "Porygon2",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Porygon2"
   },
   "234": {
-    "name": "Stantler",
-    "rarity": "Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Stantler"
   },
   "235": {
-    "name": "Smeargle",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Smeargle"
   },
   "236": {
-    "name": "Tyrogue",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Tyrogue"
   },
   "237": {
-    "name": "Hitmontop",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
+    "name": "Hitmontop"
   },
   "238": {
-    "name": "Smoochum",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
+    "name": "Smoochum"
   },
   "239": {
-    "name": "Elekid",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Elekid"
   },
   "240": {
-    "name": "Magby",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Magby"
   },
   "241": {
-    "name": "Miltank",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Miltank"
   },
   "242": {
-    "name": "Blissey",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Blissey"
   },
   "243": {
-    "name": "Raikou",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 42932,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
+    "name": "Raikou"
   },
   "244": {
-    "name": "Entei",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 38628,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
+    "name": "Entei"
   },
   "245": {
-    "name": "Suicune",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 34471,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
+    "name": "Suicune"
   },
   "246": {
-    "name": "Larvitar",
-    "rarity": "Very Rare",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Larvitar"
   },
   "247": {
-    "name": "Pupitar",
-    "rarity": "Ultra Rare",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
+    "name": "Pupitar"
   },
   "248": {
-    "name": "Tyranitar",
-    "rarity": "Ultra Rare",
-    "level": 4,
-    "cp": 34707,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
+    "name": "Tyranitar"
   },
   "249": {
-    "name": "Lugia",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 42753,
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Lugia"
   },
   "250": {
-    "name": "Ho-Oh",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 48276,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
+    "name": "Ho-Oh"
   },
   "251": {
-    "name": "Celebi",
-    "rarity": "Ultra Rare",
-    "level": 5,
-    "cp": 37726,
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "252":{
-    "name": "Treecko",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "253":{
-    "name": "Grovyle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "254":{
-    "name": "Sceptile",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "255":{
-    "name": "Torchic",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "256":{
-    "name": "Combusken",
-    "rarity":"",
-    "level": 2,
-    "cp": 8610,
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "257":{
-    "name": "Blaziken",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "258":{
-    "name": "Mudkip",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "259":{
-    "name": "Marshtomp",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "260":{
-    "name": "Swampert",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "261":{
-    "name": "Poochyena",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "262":{
-    "name": "Mightyena",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "263":{
-    "name": "Zigzagoon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "264":{
-    "name": "Linoone",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "265":{
-    "name": "Wurmple",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "266":{
-    "name": "Silcoon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "267":{
-    "name": "Beautifly",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "268":{
-    "name": "Cascoon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "269":{
-    "name": "Dustox",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "270":{
-    "name": "Lotad",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "271":{
-    "name": "Lombre",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "272":{
-    "name": "Ludicolo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "273":{
-    "name": "Seedot",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "274":{
-    "name": "Nuzleaf",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "275":{
-    "name": "Shiftry",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "276":{
-    "name": "Taillow",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "277":{
-    "name": "Swellow",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "278":{
-    "name": "Wingull",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "279":{
-    "name": "Pelipper",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "280":{
-    "name": "Ralts",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "281":{
-    "name": "Kirlia",
-    "rarity":"",
-    "level": 2,
-    "cp": 6005,
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "282":{
-    "name": "Gardevoir",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "283":{
-    "name": "Surskit",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "284":{
-    "name": "Masquerain",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "285":{
-    "name": "Shroomish",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "286":{
-    "name": "Breloom",
-    "rarity":"",
-    "level": 3,
-    "cp": 18174,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "287":{
-    "name": "Slakoth",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "288":{
-    "name": "Vigoroth",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "289":{
-    "name": "Slaking",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "290":{
-    "name": "Nincada",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "291":{
-    "name": "Ninjask",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "292":{
-    "name": "Shedinja",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "293":{
-    "name": "Whismur",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "294":{
-    "name": "Loudred",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "295":{
-    "name": "Exploud",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "296":{
-    "name": "Makuhita",
-    "rarity":"",
-    "level": 1,
-    "cp": 2319,
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "297":{
-    "name": "Hariyama",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "298":{
-    "name": "Azurill",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "299":{
-    "name": "Nosepass",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "300":{
-    "name": "Skitty",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "301":{
-    "name": "Delcatty",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "302":{
-    "name": "Sableye",
-    "rarity":"",
-    "level": 2,
-    "cp": 8266,
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "303":{
-    "name": "Mawile",
-    "rarity":"",
-    "level": 2,
-    "cp": 9403,
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "304":{
-    "name": "Aron",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "305":{
-    "name": "Lairon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "306":{
-    "name": "Aggron",
-    "rarity":"",
-    "level": 4,
-    "cp": 33458,
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "307":{
-    "name": "Meditite",
-    "rarity":"",
-    "level": 1,
-    "cp": 2516,
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "308":{
-    "name": "Medicham",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "309":{
-    "name": "Electrike",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "310":{
-    "name": "Manectric",
-    "rarity":"",
-    "level": 2,
-    "cp": 11628,
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "311":{
-    "name": "Plusle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "312":{
-    "name": "Minun",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "313":{
-    "name": "Volbeat",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "314":{
-    "name": "Illumise",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "315":{
-    "name": "Roselia",
-    "rarity":"",
-    "cp":10887,
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "316":{
-    "name": "Gulpin",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "317":{
-    "name": "Swalot",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "318":{
-    "name": "Carvanha",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "319":{
-    "name": "Sharpedo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "320":{
-    "name": "Wailmer",
-    "rarity":"",
-    "level": 1,
-    "cp": 3369,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "321":{
-    "name": "Wailord",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "322":{
-    "name": "Numel",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "323":{
-    "name": "Camerupt",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "324":{
-    "name": "Torkoal",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "325":{
-    "name": "Spoink",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "326":{
-    "name": "Grumpig",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "327":{
-    "name": "Spinda",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "328":{
-    "name": "Trapinch",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "329":{
-    "name": "Vibrava",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "330":{
-    "name": "Flygon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "331":{
-    "name": "Cacnea",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "332":{
-    "name": "Cacturne",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "333":{
-    "name": "Swablu",
-    "rarity":"",
-    "level": 1,
-    "cp": 2766,
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "334":{
-    "name": "Altaria",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "335":{
-    "name": "Zangoose",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "336":{
-    "name": "Seviper",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "337":{
-    "name": "Lunatone",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "338":{
-    "name": "Solrock",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "339":{
-    "name": "Barboach",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "340":{
-    "name": "Whiscash",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "341":{
-    "name": "Corphish",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "342":{
-    "name": "Crawdaunt",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "343":{
-    "name": "Baltoy",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "344":{
-    "name": "Claydol",
-    "rarity":"",
-    "level": 3,
-    "cp": 13450,
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "345":{
-    "name": "Lileep",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "346":{
-    "name": "Cradily",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "347":{
-    "name": "Anorith",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "348":{
-    "name": "Armaldo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "349":{
-    "name": "Feebas",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "350":{
-    "name": "Milotic",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "351":{
-    "name": "Castform",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "352":{
-    "name": "Kecleon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "353":{
-    "name": "Shuppet",
-    "rarity":"",
-    "level": 1,
-    "cp": 3372,
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "354":{
-    "name": "Banette",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "355":{
-    "name": "Duskull",
-    "rarity":"",
-    "level": 1,
-    "cp": 2770,
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "356":{
-    "name": "Dusclops",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "357":{
-    "name": "Tropius",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "358":{
-    "name": "Chimecho",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "359":{
-    "name": "Absol",
-    "rarity":"",
-    "level": 4,
-    "cp": 26262,
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "360":{
-    "name": "Wynaut",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "361":{
-    "name": "Snorunt",
-    "rarity":"",
-    "level": 1,
-    "cp": 2825,
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "362":{
-    "name": "Glalie",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "363":{
-    "name": "Spheal",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "364":{
-    "name": "Sealeo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "365":{
-    "name": "Walrein",
-    "rarity":"",
-    "level": 4,
-    "cp": 23578,
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "366":{
-    "name": "Clamperl",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "367":{
-    "name": "Huntail",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "368":{
-    "name": "Gorebyss",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "369":{
-    "name": "Relicanth",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "370":{
-    "name": "Luvdisc",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "371":{
-    "name": "Bagon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "372":{
-    "name": "Shelgon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "373":{
-    "name": "Salamence",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "374":{
-    "name": "Beldum",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "375":{
-    "name": "Metang",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "376":{
-    "name": "Metagross",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "377":{
-    "name": "Regirock",
-    "rarity":"",
-    "level": 5,
-    "cp": 41777,
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "378":{
-    "name": "Regice",
-    "rarity":"",
-    "level": 5,
-    "cp": 41777,
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "379":{
-    "name": "Registeel",
-    "rarity":"",
-    "level": 5,
-    "cp": 30596,
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "380":{
-    "name": "Latias",
-    "rarity":"",
-    "level": 5,
-    "cp": 45704,
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "381":{
-    "name": "Latios",
-    "rarity":"",
-    "level": 5,
-    "cp": 49322,
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "382":{
-    "name": "Kyogre",
-    "rarity":"",
-    "level": 5,
-    "cp": 51968,
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "383":{
-    "name": "Groudon",
-    "rarity":"",
-    "level": 5,
-    "cp": 51968,
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "384":{
-    "name": "Rayquaza",
-    "rarity":"",
-    "level": 5,
-    "cp": 45468,
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "385":{
-    "name": "Jirachi",
-    "rarity":"",
-    "level": 5,
-    "cp": 37733,
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "386":{
-    "name": "Deoxys",
-    "rarity":"",
-    "level": 5,
-    "cp": "",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "387":{
-    "name": "Turtwig",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "388":{
-    "name": "Grotle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "389":{
-    "name": "Torterra",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "390":{
-    "name": "Chimchar",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "391":{
-    "name": "Monferno",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "392":{
-    "name": "Infernape",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "393":{
-    "name": "Piplup",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "394":{
-    "name": "Prinplup",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "395":{
-    "name": "Empoleon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "396":{
-    "name": "Starly",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "397":{
-    "name": "Staravia",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "398":{
-    "name": "Staraptor",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "399":{
-    "name": "Bidoof",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "400":{
-    "name": "Bibarel",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "401":{
-    "name": "Kricketot",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "402":{
-    "name": "Kricketune",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "403":{
-    "name": "Shinx",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "404":{
-    "name": "Luxio",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "405":{
-    "name": "Luxray",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "406":{
-    "name": "Budew",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "407":{
-    "name": "Roserade",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "408":{
-    "name": "Cranidos",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "409":{
-    "name": "Rampardos",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "410":{
-    "name": "Shieldon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "411":{
-    "name": "Bastiodon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "412":{
-    "name": "Burmy",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "414":{
-    "name": "Mothim",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "415":{
-    "name": "Combee",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "416":{
-    "name": "Vespiquen",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "417":{
-    "name": "Pachirisu",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "418":{
-    "name": "Buizel",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "419":{
-    "name": "Floatzel",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "420":{
-    "name": "Cherubi",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "421":{
-    "name": "Cherrim",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "422":{
-    "name": "Shellos",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "423":{
-    "name": "Gastrodon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "424":{
-    "name": "Ambipom",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "425":{
-    "name": "Drifloon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "426":{
-    "name": "Drifblim",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "427":{
-    "name": "Buneary",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "428":{
-    "name": "Lopunny",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "429":{
-    "name": "Mismagius",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "430":{
-    "name": "Honchkrow",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "431":{
-    "name": "Glameow",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "432":{
-    "name": "Purugly",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "433":{
-    "name": "Chingling",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "434":{
-    "name": "Stunky",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "435":{
-    "name": "Skuntank",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "436":{
-    "name": "Bronzor",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "437":{
-    "name": "Bronzong",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "438":{
-    "name": "Bonsly",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "439":{
-    "name": "Mime Jr.",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "440":{
-    "name": "Happiny",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "441":{
-    "name": "Chatot",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "442":{
-    "name": "Spiritomb",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "443":{
-    "name": "Gible",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "444":{
-    "name": "Gabite",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "445":{
-    "name": "Garchomp",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "446":{
-    "name": "Munchlax",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "447":{
-    "name": "Riolu",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "448":{
-    "name": "Lucario",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "449":{
-    "name": "Hippopotas",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "450":{
-    "name": "Hippowdon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "451":{
-    "name": "Skorupi",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "452":{
-    "name": "Drapion",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "453":{
-    "name": "Croagunk",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "454":{
-    "name": "Toxicroak",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "455":{
-    "name": "Carnivine",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "456":{
-    "name": "Finneon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "457":{
-    "name": "Lumineon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "458":{
-    "name": "Mantyke",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "459":{
-    "name": "Snover",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "460":{
-    "name": "Abomasnow",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "461":{
-    "name": "Weavile",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "462":{
-    "name": "Magnezone",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "463":{
-    "name": "Lickilicky",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "464":{
-    "name": "Rhyperior",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "465":{
-    "name": "Tangrowth",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "466":{
-    "name": "Electivire",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "467":{
-    "name": "Magmortar",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "468":{
-    "name": "Togekiss",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "469":{
-    "name": "Yanmega",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "470":{
-    "name": "Leafeon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "471":{
-    "name": "Glaceon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "472":{
-    "name": "Gliscor",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "473":{
-    "name": "Mamoswine",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "474":{
-    "name": "Porygon-Z",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "475":{
-    "name": "Gallade",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "476":{
-    "name": "Probopass",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "477":{
-    "name": "Dusknoir",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "478":{
-    "name": "Froslass",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "479":{
-    "name": "Rotom",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "480":{
-    "name": "Uxie",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "481":{
-    "name": "Mesprit",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "482":{
-    "name": "Azelf",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "483":{
-    "name": "Dialga",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "484":{
-    "name": "Palkia",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "485":{
-    "name": "Heatran",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "486":{
-    "name": "Regigigas",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
+    "name": "Celebi"
+  },
+  "252": {
+    "name": "Treecko"
+  },
+  "253": {
+    "name": "Grovyle"
+  },
+  "254": {
+    "name": "Sceptile"
+  },
+  "255": {
+    "name": "Torchic"
+  },
+  "256": {
+    "name": "Combusken"
+  },
+  "257": {
+    "name": "Blaziken"
+  },
+  "258": {
+    "name": "Mudkip"
+  },
+  "259": {
+    "name": "Marshtomp"
+  },
+  "260": {
+    "name": "Swampert"
+  },
+  "261": {
+    "name": "Poochyena"
+  },
+  "262": {
+    "name": "Mightyena"
+  },
+  "263": {
+    "name": "Zigzagoon"
+  },
+  "264": {
+    "name": "Linoone"
+  },
+  "265": {
+    "name": "Wurmple"
+  },
+  "266": {
+    "name": "Silcoon"
+  },
+  "267": {
+    "name": "Beautifly"
+  },
+  "268": {
+    "name": "Cascoon"
+  },
+  "269": {
+    "name": "Dustox"
+  },
+  "270": {
+    "name": "Lotad"
+  },
+  "271": {
+    "name": "Lombre"
+  },
+  "272": {
+    "name": "Ludicolo"
+  },
+  "273": {
+    "name": "Seedot"
+  },
+  "274": {
+    "name": "Nuzleaf"
+  },
+  "275": {
+    "name": "Shiftry"
+  },
+  "276": {
+    "name": "Taillow"
+  },
+  "277": {
+    "name": "Swellow"
+  },
+  "278": {
+    "name": "Wingull"
+  },
+  "279": {
+    "name": "Pelipper"
+  },
+  "280": {
+    "name": "Ralts"
+  },
+  "281": {
+    "name": "Kirlia"
+  },
+  "282": {
+    "name": "Gardevoir"
+  },
+  "283": {
+    "name": "Surskit"
+  },
+  "284": {
+    "name": "Masquerain"
+  },
+  "285": {
+    "name": "Shroomish"
+  },
+  "286": {
+    "name": "Breloom"
+  },
+  "287": {
+    "name": "Slakoth"
+  },
+  "288": {
+    "name": "Vigoroth"
+  },
+  "289": {
+    "name": "Slaking"
+  },
+  "290": {
+    "name": "Nincada"
+  },
+  "291": {
+    "name": "Ninjask"
+  },
+  "292": {
+    "name": "Shedinja"
+  },
+  "293": {
+    "name": "Whismur"
+  },
+  "294": {
+    "name": "Loudred"
+  },
+  "295": {
+    "name": "Exploud"
+  },
+  "296": {
+    "name": "Makuhita"
+  },
+  "297": {
+    "name": "Hariyama"
+  },
+  "298": {
+    "name": "Azurill"
+  },
+  "299": {
+    "name": "Nosepass"
+  },
+  "300": {
+    "name": "Skitty"
+  },
+  "301": {
+    "name": "Delcatty"
+  },
+  "302": {
+    "name": "Sableye"
+  },
+  "303": {
+    "name": "Mawile"
+  },
+  "304": {
+    "name": "Aron"
+  },
+  "305": {
+    "name": "Lairon"
+  },
+  "306": {
+    "name": "Aggron"
+  },
+  "307": {
+    "name": "Meditite"
+  },
+  "308": {
+    "name": "Medicham"
+  },
+  "309": {
+    "name": "Electrike"
+  },
+  "310": {
+    "name": "Manectric"
+  },
+  "311": {
+    "name": "Plusle"
+  },
+  "312": {
+    "name": "Minun"
+  },
+  "313": {
+    "name": "Volbeat"
+  },
+  "314": {
+    "name": "Illumise"
+  },
+  "315": {
+    "name": "Roselia"
+  },
+  "316": {
+    "name": "Gulpin"
+  },
+  "317": {
+    "name": "Swalot"
+  },
+  "318": {
+    "name": "Carvanha"
+  },
+  "319": {
+    "name": "Sharpedo"
+  },
+  "320": {
+    "name": "Wailmer"
+  },
+  "321": {
+    "name": "Wailord"
+  },
+  "322": {
+    "name": "Numel"
+  },
+  "323": {
+    "name": "Camerupt"
+  },
+  "324": {
+    "name": "Torkoal"
+  },
+  "325": {
+    "name": "Spoink"
+  },
+  "326": {
+    "name": "Grumpig"
+  },
+  "327": {
+    "name": "Spinda"
+  },
+  "328": {
+    "name": "Trapinch"
+  },
+  "329": {
+    "name": "Vibrava"
+  },
+  "330": {
+    "name": "Flygon"
+  },
+  "331": {
+    "name": "Cacnea"
+  },
+  "332": {
+    "name": "Cacturne"
+  },
+  "333": {
+    "name": "Swablu"
+  },
+  "334": {
+    "name": "Altaria"
+  },
+  "335": {
+    "name": "Zangoose"
+  },
+  "336": {
+    "name": "Seviper"
+  },
+  "337": {
+    "name": "Lunatone"
+  },
+  "338": {
+    "name": "Solrock"
+  },
+  "339": {
+    "name": "Barboach"
+  },
+  "340": {
+    "name": "Whiscash"
+  },
+  "341": {
+    "name": "Corphish"
+  },
+  "342": {
+    "name": "Crawdaunt"
+  },
+  "343": {
+    "name": "Baltoy"
+  },
+  "344": {
+    "name": "Claydol"
+  },
+  "345": {
+    "name": "Lileep"
+  },
+  "346": {
+    "name": "Cradily"
+  },
+  "347": {
+    "name": "Anorith"
+  },
+  "348": {
+    "name": "Armaldo"
+  },
+  "349": {
+    "name": "Feebas"
+  },
+  "350": {
+    "name": "Milotic"
+  },
+  "351": {
+    "name": "Castform"
+  },
+  "352": {
+    "name": "Kecleon"
+  },
+  "353": {
+    "name": "Shuppet"
+  },
+  "354": {
+    "name": "Banette"
+  },
+  "355": {
+    "name": "Duskull"
+  },
+  "356": {
+    "name": "Dusclops"
+  },
+  "357": {
+    "name": "Tropius"
+  },
+  "358": {
+    "name": "Chimecho"
+  },
+  "359": {
+    "name": "Absol"
+  },
+  "360": {
+    "name": "Wynaut"
+  },
+  "361": {
+    "name": "Snorunt"
+  },
+  "362": {
+    "name": "Glalie"
+  },
+  "363": {
+    "name": "Spheal"
+  },
+  "364": {
+    "name": "Sealeo"
+  },
+  "365": {
+    "name": "Walrein"
+  },
+  "366": {
+    "name": "Clamperl"
+  },
+  "367": {
+    "name": "Huntail"
+  },
+  "368": {
+    "name": "Gorebyss"
+  },
+  "369": {
+    "name": "Relicanth"
+  },
+  "370": {
+    "name": "Luvdisc"
+  },
+  "371": {
+    "name": "Bagon"
+  },
+  "372": {
+    "name": "Shelgon"
+  },
+  "373": {
+    "name": "Salamence"
+  },
+  "374": {
+    "name": "Beldum"
+  },
+  "375": {
+    "name": "Metang"
+  },
+  "376": {
+    "name": "Metagross"
+  },
+  "377": {
+    "name": "Regirock"
+  },
+  "378": {
+    "name": "Regice"
+  },
+  "379": {
+    "name": "Registeel"
+  },
+  "380": {
+    "name": "Latias"
+  },
+  "381": {
+    "name": "Latios"
+  },
+  "382": {
+    "name": "Kyogre"
+  },
+  "383": {
+    "name": "Groudon"
+  },
+  "384": {
+    "name": "Rayquaza"
+  },
+  "385": {
+    "name": "Jirachi"
+  },
+  "386": {
+    "name": "Deoxys"
+  },
+  "387": {
+    "name": "Turtwig"
+  },
+  "388": {
+    "name": "Grotle"
+  },
+  "389": {
+    "name": "Torterra"
+  },
+  "390": {
+    "name": "Chimchar"
+  },
+  "391": {
+    "name": "Monferno"
+  },
+  "392": {
+    "name": "Infernape"
+  },
+  "393": {
+    "name": "Piplup"
+  },
+  "394": {
+    "name": "Prinplup"
+  },
+  "395": {
+    "name": "Empoleon"
+  },
+  "396": {
+    "name": "Starly"
+  },
+  "397": {
+    "name": "Staravia"
+  },
+  "398": {
+    "name": "Staraptor"
+  },
+  "399": {
+    "name": "Bidoof"
+  },
+  "400": {
+    "name": "Bibarel"
+  },
+  "401": {
+    "name": "Kricketot"
+  },
+  "402": {
+    "name": "Kricketune"
+  },
+  "403": {
+    "name": "Shinx"
+  },
+  "404": {
+    "name": "Luxio"
+  },
+  "405": {
+    "name": "Luxray"
+  },
+  "406": {
+    "name": "Budew"
+  },
+  "407": {
+    "name": "Roserade"
+  },
+  "408": {
+    "name": "Cranidos"
+  },
+  "409": {
+    "name": "Rampardos"
+  },
+  "410": {
+    "name": "Shieldon"
+  },
+  "411": {
+    "name": "Bastiodon"
+  },
+  "412": {
+    "name": "Burmy"
+  },
+  "413": {
+    "name": "Wormadam"
+  },
+  "414": {
+    "name": "Mothim"
+  },
+  "415": {
+    "name": "Combee"
+  },
+  "416": {
+    "name": "Vespiquen"
+  },
+  "417": {
+    "name": "Pachirisu"
+  },
+  "418": {
+    "name": "Buizel"
+  },
+  "419": {
+    "name": "Floatzel"
+  },
+  "420": {
+    "name": "Cherubi"
+  },
+  "421": {
+    "name": "Cherrim"
+  },
+  "422": {
+    "name": "Shellos"
+  },
+  "423": {
+    "name": "Gastrodon"
+  },
+  "424": {
+    "name": "Ambipom"
+  },
+  "425": {
+    "name": "Drifloon"
+  },
+  "426": {
+    "name": "Drifblim"
+  },
+  "427": {
+    "name": "Buneary"
+  },
+  "428": {
+    "name": "Lopunny"
+  },
+  "429": {
+    "name": "Mismagius"
+  },
+  "430": {
+    "name": "Honchkrow"
+  },
+  "431": {
+    "name": "Glameow"
+  },
+  "432": {
+    "name": "Purugly"
+  },
+  "433": {
+    "name": "Chingling"
+  },
+  "434": {
+    "name": "Stunky"
+  },
+  "435": {
+    "name": "Skuntank"
+  },
+  "436": {
+    "name": "Bronzor"
+  },
+  "437": {
+    "name": "Bronzong"
+  },
+  "438": {
+    "name": "Bonsly"
+  },
+  "439": {
+    "name": "Mime Jr."
+  },
+  "440": {
+    "name": "Happiny"
+  },
+  "441": {
+    "name": "Chatot"
+  },
+  "442": {
+    "name": "Spiritomb"
+  },
+  "443": {
+    "name": "Gible"
+  },
+  "444": {
+    "name": "Gabite"
+  },
+  "445": {
+    "name": "Garchomp"
+  },
+  "446": {
+    "name": "Munchlax"
+  },
+  "447": {
+    "name": "Riolu"
+  },
+  "448": {
+    "name": "Lucario"
+  },
+  "449": {
+    "name": "Hippopotas"
+  },
+  "450": {
+    "name": "Hippowdon"
+  },
+  "451": {
+    "name": "Skorupi"
+  },
+  "452": {
+    "name": "Drapion"
+  },
+  "453": {
+    "name": "Croagunk"
+  },
+  "454": {
+    "name": "Toxicroak"
+  },
+  "455": {
+    "name": "Carnivine"
+  },
+  "456": {
+    "name": "Finneon"
+  },
+  "457": {
+    "name": "Lumineon"
+  },
+  "458": {
+    "name": "Mantyke"
+  },
+  "459": {
+    "name": "Snover"
+  },
+  "460": {
+    "name": "Abomasnow"
+  },
+  "461": {
+    "name": "Weavile"
+  },
+  "462": {
+    "name": "Magnezone"
+  },
+  "463": {
+    "name": "Lickilicky"
+  },
+  "464": {
+    "name": "Rhyperior"
+  },
+  "465": {
+    "name": "Tangrowth"
+  },
+  "466": {
+    "name": "Electivire"
+  },
+  "467": {
+    "name": "Magmortar"
+  },
+  "468": {
+    "name": "Togekiss"
+  },
+  "469": {
+    "name": "Yanmega"
+  },
+  "470": {
+    "name": "Leafeon"
+  },
+  "471": {
+    "name": "Glaceon"
+  },
+  "472": {
+    "name": "Gliscor"
+  },
+  "473": {
+    "name": "Mamoswine"
+  },
+  "474": {
+    "name": "Porygon-Z"
+  },
+  "475": {
+    "name": "Gallade"
+  },
+  "476": {
+    "name": "Probopass"
+  },
+  "477": {
+    "name": "Dusknoir"
+  },
+  "478": {
+    "name": "Froslass"
+  },
+  "479": {
+    "name": "Rotom"
+  },
+  "480": {
+    "name": "Uxie"
+  },
+  "481": {
+    "name": "Mesprit"
+  },
+  "482": {
+    "name": "Azelf"
+  },
+  "483": {
+    "name": "Dialga"
+  },
+  "484": {
+    "name": "Palkia"
+  },
+  "485": {
+    "name": "Heatran"
+  },
+  "486": {
+    "name": "Regigigas"
   },
   "487": {
-    "types": [
-      {
-      "type": "Ghost",
-      "color": "#705898"
-      }
-    ],
-    "name": "Giratina",
-    "rarity":"Ultra Rare",
-    "level": 5,
-    "cp": 34987
-  },
-  "488":{
-    "name": "Cresselia",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "489":{
-    "name": "Phione",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "490":{
-    "name": "Manaphy",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "491":{
-    "name": "Darkrai",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "493":{
-    "name": "Arceus",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "494":{
-    "name": "Victini",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "495":{
-    "name": "Snivy",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "496":{
-    "name": "Servine",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "497":{
-    "name": "Serperior",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "498":{
-    "name": "Tepig",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "499":{
-    "name": "Pignite",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "500":{
-    "name": "Emboar",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "501":{
-    "name": "Oshawott",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "502":{
-    "name": "Dewott",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "503":{
-    "name": "Samurott",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "504":{
-    "name": "Patrat",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "505":{
-    "name": "Watchog",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "506":{
-    "name": "Lillipup",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "507":{
-    "name": "Herdier",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "508":{
-    "name": "Stoutland",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "509":{
-    "name": "Purrloin",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "510":{
-    "name": "Liepard",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "511":{
-    "name": "Pansage",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "512":{
-    "name": "Simisage",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "513":{
-    "name": "Pansear",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "514":{
-    "name": "Simisear",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "515":{
-    "name": "Panpour",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "516":{
-    "name": "Simipour",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "517":{
-    "name": "Munna",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "518":{
-    "name": "Musharna",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "519":{
-    "name": "Pidove",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "520":{
-    "name": "Tranquill",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "521":{
-    "name": "Unfezant",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "522":{
-    "name": "Blitzle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "523":{
-    "name": "Zebstrika",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "524":{
-    "name": "Roggenrola",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "525":{
-    "name": "Boldore",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "526":{
-    "name": "Gigalith",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "527":{
-    "name": "Woobat",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "528":{
-    "name": "Swoobat",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "529":{
-    "name": "Drilbur",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "530":{
-    "name": "Excadrill",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "531":{
-    "name": "Audino",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "532":{
-    "name": "Timburr",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "533":{
-    "name": "Gurdurr",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "534":{
-    "name": "Conkeldurr",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "535":{
-    "name": "Tympole",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "536":{
-    "name": "Palpitoad",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "537":{
-    "name": "Seismitoad",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "538":{
-    "name": "Throh",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "539":{
-    "name": "Sawk",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "540":{
-    "name": "Sewaddle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "541":{
-    "name": "Swadloon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "542":{
-    "name": "Leavanny",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "543":{
-    "name": "Venipede",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "544":{
-    "name": "Whirlipede",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "545":{
-    "name": "Scolipede",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "546":{
-    "name": "Cottonee",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "547":{
-    "name": "Whimsicott",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "548":{
-    "name": "Petilil",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "549":{
-    "name": "Lilligant",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "550":{
-    "name": "Basculin",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "551":{
-    "name": "Sandile",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "552":{
-    "name": "Krokorok",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "553":{
-    "name": "Krookodile",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "554":{
-    "name": "Darumaka",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "555":{
-    "name": "Darmanitan",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "556":{
-    "name": "Maractus",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "557":{
-    "name": "Dwebble",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "558":{
-    "name": "Crustle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "559":{
-    "name": "Scraggy",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "560":{
-    "name": "Scrafty",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "561":{
-    "name": "Sigilyph",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "562":{
-    "name": "Yamask",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "563":{
-    "name": "Cofagrigus",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "564":{
-    "name": "Tirtouga",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "565":{
-    "name": "Carracosta",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "566":{
-    "name": "Archen",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "567":{
-    "name": "Archeops",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "568":{
-    "name": "Trubbish",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "569":{
-    "name": "Garbodor",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "570":{
-    "name": "Zorua",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "571":{
-    "name": "Zoroark",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "572":{
-    "name": "Minccino",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "573":{
-    "name": "Cinccino",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "574":{
-    "name": "Gothita",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "575":{
-    "name": "Gothorita",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "576":{
-    "name": "Gothitelle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "577":{
-    "name": "Solosis",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "578":{
-    "name": "Duosion",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "579":{
-    "name": "Reuniclus",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "580":{
-    "name": "Ducklett",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "581":{
-    "name": "Swanna",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "582":{
-    "name": "Vanillite",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "583":{
-    "name": "Vanillish",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "584":{
-    "name": "Vanilluxe",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "585":{
-    "name": "Deerling",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "586":{
-    "name": "Sawsbuck",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "587":{
-    "name": "Emolga",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "588":{
-    "name": "Karrablast",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "589":{
-    "name": "Escavalier",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "590":{
-    "name": "Foongus",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "591":{
-    "name": "Amoonguss",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "592":{
-    "name": "Frillish",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "593":{
-    "name": "Jellicent",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "594":{
-    "name": "Alomomola",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "595":{
-    "name": "Joltik",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "596":{
-    "name": "Galvantula",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "597":{
-    "name": "Ferroseed",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "598":{
-    "name": "Ferrothorn",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "599":{
-    "name": "Klink",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "600":{
-    "name": "Klang",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "601":{
-    "name": "Klinklang",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "602":{
-    "name": "Tynamo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "603":{
-    "name": "Eelektrik",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "604":{
-    "name": "Eelektross",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "605":{
-    "name": "Elgyem",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "606":{
-    "name": "Beheeyem",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "607":{
-    "name": "Litwick",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "608":{
-    "name": "Lampent",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "609":{
-    "name": "Chandelure",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "610":{
-    "name": "Axew",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "611":{
-    "name": "Fraxure",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "612":{
-    "name": "Haxorus",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "613":{
-    "name": "Cubchoo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "614":{
-    "name": "Beartic",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "615":{
-    "name": "Cryogonal",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "616":{
-    "name": "Shelmet",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "617":{
-    "name": "Accelgor",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "618":{
-    "name": "Stunfisk",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "619":{
-    "name": "Mienfoo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "620":{
-    "name": "Mienshao",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "621":{
-    "name": "Druddigon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "622":{
-    "name": "Golett",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "623":{
-    "name": "Golurk",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "624":{
-    "name": "Pawniard",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "625":{
-    "name": "Bisharp",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "626":{
-    "name": "Bouffalant",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "627":{
-    "name": "Rufflet",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "628":{
-    "name": "Braviary",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "629":{
-    "name": "Vullaby",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "630":{
-    "name": "Mandibuzz",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "631":{
-    "name": "Heatmor",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "632":{
-    "name": "Durant",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "633":{
-    "name": "Deino",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "634":{
-    "name": "Zweilous",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "635":{
-    "name": "Hydreigon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "636":{
-    "name": "Larvesta",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "637":{
-    "name": "Volcarona",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "638":{
-    "name": "Cobalion",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "639":{
-    "name": "Terrakion",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "640":{
-    "name": "Virizion",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "643":{
-    "name": "Reshiram",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "644":{
-    "name": "Zekrom",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "646":{
-    "name": "Kyurem",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "647":{
-    "name": "Keldeo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "649":{
-    "name": "Genesect",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "650":{
-    "name": "Chespin",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "651":{
-    "name": "Quilladin",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "652":{
-    "name": "Chesnaught",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "653":{
-    "name": "Fennekin",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "654":{
-    "name": "Braixen",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "655":{
-    "name": "Delphox",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "656":{
-    "name": "Froakie",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "657":{
-    "name": "Frogadier",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "658":{
-    "name": "Greninja",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "659":{
-    "name": "Bunnelby",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "660":{
-    "name": "Diggersby",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "661":{
-    "name": "Fletchling",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "662":{
-    "name": "Fletchinder",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "663":{
-    "name": "Talonflame",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "664":{
-    "name": "Scatterbug",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "665":{
-    "name": "Spewpa",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "666":{
-    "name": "Vivillon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "667":{
-    "name": "Litleo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "668":{
-    "name": "Pyroar",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "669":{
-    "name": "Flabébé",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "670":{
-    "name": "Floette",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "671":{
-    "name": "Florges",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "672":{
-    "name": "Skiddo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "673":{
-    "name": "Gogoat",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "674":{
-    "name": "Pancham",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "675":{
-    "name": "Pangoro",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "676":{
-    "name": "Furfrou",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "677":{
-    "name": "Espurr",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "678":{
-    "name": "Meowstic",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "679":{
-    "name": "Honedge",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "680":{
-    "name": "Doublade",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "682":{
-    "name": "Spritzee",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "683":{
-    "name": "Aromatisse",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "684":{
-    "name": "Swirlix",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "685":{
-    "name": "Slurpuff",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "686":{
-    "name": "Inkay",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "687":{
-    "name": "Malamar",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "688":{
-    "name": "Binacle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "689":{
-    "name": "Barbaracle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "690":{
-    "name": "Skrelp",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "691":{
-    "name": "Dragalge",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "692":{
-    "name": "Clauncher",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "693":{
-    "name": "Clawitzer",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "694":{
-    "name": "Helioptile",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "695":{
-    "name": "Heliolisk",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "696":{
-    "name": "Tyrunt",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "697":{
-    "name": "Tyrantrum",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "698":{
-    "name": "Amaura",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "699":{
-    "name": "Aurorus",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "700":{
-    "name": "Sylveon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "701":{
-    "name": "Hawlucha",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "702":{
-    "name": "Dedenne",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "703":{
-    "name": "Carbink",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "704":{
-    "name": "Goomy",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "705":{
-    "name": "Sliggoo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "706":{
-    "name": "Goodra",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "707":{
-    "name": "Klefki",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "708":{
-    "name": "Phantump",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "709":{
-    "name": "Trevenant",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "710":{
-    "name": "Pumpkaboo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "711":{
-    "name": "Gourgeist",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "712":{
-    "name": "Bergmite",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "713":{
-    "name": "Avalugg",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "714":{
-    "name": "Noibat",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "715":{
-    "name": "Noivern",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "716":{
-    "name": "Xerneas",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "717":{
-    "name": "Yveltal",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "718":{
-    "name": "Zygarde",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "719":{
-    "name": "Diancie",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "721":{
-    "name": "Volcanion",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "722":{
-    "name": "Rowlet",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "723":{
-    "name": "Dartrix",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "724":{
-    "name": "Decidueye",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "725":{
-    "name": "Litten",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "726":{
-    "name": "Torracat",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "727":{
-    "name": "Incineroar",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Dark",
-        "color": "#707070"
-      }
-    ]
-  },
-  "728":{
-    "name": "Popplio",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "729":{
-    "name": "Brionne",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "730":{
-    "name": "Primarina",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "731":{
-    "name": "Pikipek",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "732":{
-    "name": "Trumbeak",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "733":{
-    "name": "Toucannon",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "734":{
-    "name": "Yungoos",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "735":{
-    "name": "Gumshoos",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "736":{
-    "name": "Grubbin",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "737":{
-    "name": "Charjabug",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "738":{
-    "name": "Vikavolt",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "739":{
-    "name": "Crabrawler",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "740":{
-    "name": "Crabominable",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      },
-      {
-        "type": "Ice",
-        "color": "#98d8d8"
-      }
-    ]
-  },
-  "741":{
-    "name": "Oricorio",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "742":{
-    "name": "Cutiefly",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "743":{
-    "name": "Ribombee",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "744":{
-    "name": "Rockruff",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "745":{
-    "name": "Lycanroc",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      }
-    ]
-  },
-  "746":{
-    "name": "Wishiwashi",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "747":{
-    "name": "Mareanie",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "748":{
-    "name": "Toxapex",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "749":{
-    "name": "Mudbray",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "750":{
-    "name": "Mudsdale",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "751":{
-    "name": "Dewpider",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "752":{
-    "name": "Araquanid",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      }
-    ]
-  },
-  "753":{
-    "name": "Fomantis",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "754":{
-    "name": "Lurantis",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "755":{
-    "name": "Morelull",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "756":{
-    "name": "Shiinotic",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "757":{
-    "name": "Salandit",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "758":{
-    "name": "Salazzle",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      },
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      }
-    ]
-  },
-  "759":{
-    "name": "Stufful",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "760":{
-    "name": "Bewear",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "761":{
-    "name": "Bounsweet",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "762":{
-    "name": "Steenee",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "763":{
-    "name": "Tsareena",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "764":{
-    "name": "Comfey",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "765":{
-    "name": "Oranguru",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "766":{
-    "name": "Passimian",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "767":{
-    "name": "Wimpod",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "768":{
-    "name": "Golisopod",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "769":{
-    "name": "Sandygast",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "770":{
-    "name": "Palossand",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Ground",
-        "color": "#e0c068"
-      }
-    ]
-  },
-  "771":{
-    "name": "Pyukumuku",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      }
-    ]
-  },
-  "772":{
-    "name": "Type: Null",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "773":{
-    "name": "Silvally",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "774":{
-    "name": "Minior (Core)",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "775":{
-    "name": "Komala",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      }
-    ]
-  },
-  "776":{
-    "name": "Turtonator",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Fire",
-        "color": "#f08030"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "777":{
-    "name": "Togedemaru",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "778":{
-    "name": "Mimikyu",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "779":{
-    "name": "Bruxish",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "780":{
-    "name": "Drampa",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Normal",
-        "color": "#8a8a59"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "781":{
-    "name": "Dhelmise",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      },
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      }
-    ]
-  },
-  "782":{
-    "name": "Jangmo-o",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "783":{
-    "name": "Hakamo-o",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "784":{
-    "name": "Kommo-o",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "785":{
-    "name": "Tapu Koko",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "786":{
-    "name": "Tapu Lele",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "787":{
-    "name": "Tapu Bulu",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "788":{
-    "name": "Tapu Fini",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Water",
-        "color": "#6890f0"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
-  },
-  "789":{
-    "name": "Cosmog",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "790":{
-    "name": "Cosmoem",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "791":{
-    "name": "Solgaleo",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "792":{
-    "name": "Lunala",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
-  },
-  "793":{
-    "name": "Nihilego",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Rock",
-        "color": "#b8a038"
-      },
-      {
-        "type": "Poison",
-        "color": "#a040a0"
-      }
-    ]
-  },
-  "794":{
-    "name": "Buzzwole",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "795":{
-    "name": "Pheromosa",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Bug",
-        "color": "#a8b820"
-      },
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      }
-    ]
-  },
-  "796":{
-    "name": "Xurkitree",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Electric",
-        "color": "#f8d030"
-      }
-    ]
-  },
-  "797":{
-    "name": "Celesteela",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Flying",
-        "color": "#a890f0"
-      }
-    ]
-  },
-  "798":{
-    "name": "Kartana",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Grass",
-        "color": "#78c850"
-      },
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      }
-    ]
-  },
-  "799":{
-    "name": "Guzzlord",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Dark",
-        "color": "#707070"
-      },
-      {
-        "type": "Dragon",
-        "color": "#7038f8"
-      }
-    ]
-  },
-  "800":{
-    "name": "Necrozma",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Psychic",
-        "color": "#f85888"
-      }
-    ]
-  },
-  "801":{
-    "name": "Magearna",
-    "rarity":"",
-    "types": [
-      {
-        "type": "Steel",
-        "color": "#b8b8d0"
-      },
-      {
-        "type": "Fairy",
-        "color": "#e898e8"
-      }
-    ]
+    "name": "Giratina"
+  },
+  "488": {
+    "name": "Cresselia"
+  },
+  "489": {
+    "name": "Phione"
+  },
+  "490": {
+    "name": "Manaphy"
+  },
+  "491": {
+    "name": "Darkrai"
+  },
+  "492": {
+    "name": "Shaymin"
+  },
+  "493": {
+    "name": "Arceus"
+  },
+  "494": {
+    "name": "Victini"
+  },
+  "495": {
+    "name": "Snivy"
+  },
+  "496": {
+    "name": "Servine"
+  },
+  "497": {
+    "name": "Serperior"
+  },
+  "498": {
+    "name": "Tepig"
+  },
+  "499": {
+    "name": "Pignite"
+  },
+  "500": {
+    "name": "Emboar"
+  },
+  "501": {
+    "name": "Oshawott"
+  },
+  "502": {
+    "name": "Dewott"
+  },
+  "503": {
+    "name": "Samurott"
+  },
+  "504": {
+    "name": "Patrat"
+  },
+  "505": {
+    "name": "Watchog"
+  },
+  "506": {
+    "name": "Lillipup"
+  },
+  "507": {
+    "name": "Herdier"
+  },
+  "508": {
+    "name": "Stoutland"
+  },
+  "509": {
+    "name": "Purrloin"
+  },
+  "510": {
+    "name": "Liepard"
+  },
+  "511": {
+    "name": "Pansage"
+  },
+  "512": {
+    "name": "Simisage"
+  },
+  "513": {
+    "name": "Pansear"
+  },
+  "514": {
+    "name": "Simisear"
+  },
+  "515": {
+    "name": "Panpour"
+  },
+  "516": {
+    "name": "Simipour"
+  },
+  "517": {
+    "name": "Munna"
+  },
+  "518": {
+    "name": "Musharna"
+  },
+  "519": {
+    "name": "Pidove"
+  },
+  "520": {
+    "name": "Tranquill"
+  },
+  "521": {
+    "name": "Unfezant"
+  },
+  "522": {
+    "name": "Blitzle"
+  },
+  "523": {
+    "name": "Zebstrika"
+  },
+  "524": {
+    "name": "Roggenrola"
+  },
+  "525": {
+    "name": "Boldore"
+  },
+  "526": {
+    "name": "Gigalith"
+  },
+  "527": {
+    "name": "Woobat"
+  },
+  "528": {
+    "name": "Swoobat"
+  },
+  "529": {
+    "name": "Drilbur"
+  },
+  "530": {
+    "name": "Excadrill"
+  },
+  "531": {
+    "name": "Audino"
+  },
+  "532": {
+    "name": "Timburr"
+  },
+  "533": {
+    "name": "Gurdurr"
+  },
+  "534": {
+    "name": "Conkeldurr"
+  },
+  "535": {
+    "name": "Tympole"
+  },
+  "536": {
+    "name": "Palpitoad"
+  },
+  "537": {
+    "name": "Seismitoad"
+  },
+  "538": {
+    "name": "Throh"
+  },
+  "539": {
+    "name": "Sawk"
+  },
+  "540": {
+    "name": "Sewaddle"
+  },
+  "541": {
+    "name": "Swadloon"
+  },
+  "542": {
+    "name": "Leavanny"
+  },
+  "543": {
+    "name": "Venipede"
+  },
+  "544": {
+    "name": "Whirlipede"
+  },
+  "545": {
+    "name": "Scolipede"
+  },
+  "546": {
+    "name": "Cottonee"
+  },
+  "547": {
+    "name": "Whimsicott"
+  },
+  "548": {
+    "name": "Petilil"
+  },
+  "549": {
+    "name": "Lilligant"
+  },
+  "550": {
+    "name": "Basculin"
+  },
+  "551": {
+    "name": "Sandile"
+  },
+  "552": {
+    "name": "Krokorok"
+  },
+  "553": {
+    "name": "Krookodile"
+  },
+  "554": {
+    "name": "Darumaka"
+  },
+  "555": {
+    "name": "Darmanitan"
+  },
+  "556": {
+    "name": "Maractus"
+  },
+  "557": {
+    "name": "Dwebble"
+  },
+  "558": {
+    "name": "Crustle"
+  },
+  "559": {
+    "name": "Scraggy"
+  },
+  "560": {
+    "name": "Scrafty"
+  },
+  "561": {
+    "name": "Sigilyph"
+  },
+  "562": {
+    "name": "Yamask"
+  },
+  "563": {
+    "name": "Cofagrigus"
+  },
+  "564": {
+    "name": "Tirtouga"
+  },
+  "565": {
+    "name": "Carracosta"
+  },
+  "566": {
+    "name": "Archen"
+  },
+  "567": {
+    "name": "Archeops"
+  },
+  "568": {
+    "name": "Trubbish"
+  },
+  "569": {
+    "name": "Garbodor"
+  },
+  "570": {
+    "name": "Zorua"
+  },
+  "571": {
+    "name": "Zoroark"
+  },
+  "572": {
+    "name": "Minccino"
+  },
+  "573": {
+    "name": "Cinccino"
+  },
+  "574": {
+    "name": "Gothita"
+  },
+  "575": {
+    "name": "Gothorita"
+  },
+  "576": {
+    "name": "Gothitelle"
+  },
+  "577": {
+    "name": "Solosis"
+  },
+  "578": {
+    "name": "Duosion"
+  },
+  "579": {
+    "name": "Reuniclus"
+  },
+  "580": {
+    "name": "Ducklett"
+  },
+  "581": {
+    "name": "Swanna"
+  },
+  "582": {
+    "name": "Vanillite"
+  },
+  "583": {
+    "name": "Vanillish"
+  },
+  "584": {
+    "name": "Vanilluxe"
+  },
+  "585": {
+    "name": "Deerling"
+  },
+  "586": {
+    "name": "Sawsbuck"
+  },
+  "587": {
+    "name": "Emolga"
+  },
+  "588": {
+    "name": "Karrablast"
+  },
+  "589": {
+    "name": "Escavalier"
+  },
+  "590": {
+    "name": "Foongus"
+  },
+  "591": {
+    "name": "Amoonguss"
+  },
+  "592": {
+    "name": "Frillish"
+  },
+  "593": {
+    "name": "Jellicent"
+  },
+  "594": {
+    "name": "Alomomola"
+  },
+  "595": {
+    "name": "Joltik"
+  },
+  "596": {
+    "name": "Galvantula"
+  },
+  "597": {
+    "name": "Ferroseed"
+  },
+  "598": {
+    "name": "Ferrothorn"
+  },
+  "599": {
+    "name": "Klink"
+  },
+  "600": {
+    "name": "Klang"
+  },
+  "601": {
+    "name": "Klinklang"
+  },
+  "602": {
+    "name": "Tynamo"
+  },
+  "603": {
+    "name": "Eelektrik"
+  },
+  "604": {
+    "name": "Eelektross"
+  },
+  "605": {
+    "name": "Elgyem"
+  },
+  "606": {
+    "name": "Beheeyem"
+  },
+  "607": {
+    "name": "Litwick"
+  },
+  "608": {
+    "name": "Lampent"
+  },
+  "609": {
+    "name": "Chandelure"
+  },
+  "610": {
+    "name": "Axew"
+  },
+  "611": {
+    "name": "Fraxure"
+  },
+  "612": {
+    "name": "Haxorus"
+  },
+  "613": {
+    "name": "Cubchoo"
+  },
+  "614": {
+    "name": "Beartic"
+  },
+  "615": {
+    "name": "Cryogonal"
+  },
+  "616": {
+    "name": "Shelmet"
+  },
+  "617": {
+    "name": "Accelgor"
+  },
+  "618": {
+    "name": "Stunfisk"
+  },
+  "619": {
+    "name": "Mienfoo"
+  },
+  "620": {
+    "name": "Mienshao"
+  },
+  "621": {
+    "name": "Druddigon"
+  },
+  "622": {
+    "name": "Golett"
+  },
+  "623": {
+    "name": "Golurk"
+  },
+  "624": {
+    "name": "Pawniard"
+  },
+  "625": {
+    "name": "Bisharp"
+  },
+  "626": {
+    "name": "Bouffalant"
+  },
+  "627": {
+    "name": "Rufflet"
+  },
+  "628": {
+    "name": "Braviary"
+  },
+  "629": {
+    "name": "Vullaby"
+  },
+  "630": {
+    "name": "Mandibuzz"
+  },
+  "631": {
+    "name": "Heatmor"
+  },
+  "632": {
+    "name": "Durant"
+  },
+  "633": {
+    "name": "Deino"
+  },
+  "634": {
+    "name": "Zweilous"
+  },
+  "635": {
+    "name": "Hydreigon"
+  },
+  "636": {
+    "name": "Larvesta"
+  },
+  "637": {
+    "name": "Volcarona"
+  },
+  "638": {
+    "name": "Cobalion"
+  },
+  "639": {
+    "name": "Terrakion"
+  },
+  "640": {
+    "name": "Virizion"
+  },
+  "641": {
+    "name": "Tornadus"
+  },
+  "642": {
+    "name": "Thundurus"
+  },
+  "643": {
+    "name": "Reshiram"
+  },
+  "644": {
+    "name": "Zekrom"
+  },
+  "645": {
+    "name": "Landorus"
+  },
+  "646": {
+    "name": "Kyurem"
+  },
+  "647": {
+    "name": "Keldeo"
+  },
+  "648": {
+    "name": "Meloetta"
+  },
+  "649": {
+    "name": "Genesect"
+  },
+  "650": {
+    "name": "Chespin"
+  },
+  "651": {
+    "name": "Quilladin"
+  },
+  "652": {
+    "name": "Chesnaught"
+  },
+  "653": {
+    "name": "Fennekin"
+  },
+  "654": {
+    "name": "Braixen"
+  },
+  "655": {
+    "name": "Delphox"
+  },
+  "656": {
+    "name": "Froakie"
+  },
+  "657": {
+    "name": "Frogadier"
+  },
+  "658": {
+    "name": "Greninja"
+  },
+  "659": {
+    "name": "Bunnelby"
+  },
+  "660": {
+    "name": "Diggersby"
+  },
+  "661": {
+    "name": "Fletchling"
+  },
+  "662": {
+    "name": "Fletchinder"
+  },
+  "663": {
+    "name": "Talonflame"
+  },
+  "664": {
+    "name": "Scatterbug"
+  },
+  "665": {
+    "name": "Spewpa"
+  },
+  "666": {
+    "name": "Vivillon"
+  },
+  "667": {
+    "name": "Litleo"
+  },
+  "668": {
+    "name": "Pyroar"
+  },
+  "669": {
+    "name": "Flabébé"
+  },
+  "670": {
+    "name": "Floette"
+  },
+  "671": {
+    "name": "Florges"
+  },
+  "672": {
+    "name": "Skiddo"
+  },
+  "673": {
+    "name": "Gogoat"
+  },
+  "674": {
+    "name": "Pancham"
+  },
+  "675": {
+    "name": "Pangoro"
+  },
+  "676": {
+    "name": "Furfrou"
+  },
+  "677": {
+    "name": "Espurr"
+  },
+  "678": {
+    "name": "Meowstic"
+  },
+  "679": {
+    "name": "Honedge"
+  },
+  "680": {
+    "name": "Doublade"
+  },
+  "681": {
+    "name": "Aegislash"
+  },
+  "682": {
+    "name": "Spritzee"
+  },
+  "683": {
+    "name": "Aromatisse"
+  },
+  "684": {
+    "name": "Swirlix"
+  },
+  "685": {
+    "name": "Slurpuff"
+  },
+  "686": {
+    "name": "Inkay"
+  },
+  "687": {
+    "name": "Malamar"
+  },
+  "688": {
+    "name": "Binacle"
+  },
+  "689": {
+    "name": "Barbaracle"
+  },
+  "690": {
+    "name": "Skrelp"
+  },
+  "691": {
+    "name": "Dragalge"
+  },
+  "692": {
+    "name": "Clauncher"
+  },
+  "693": {
+    "name": "Clawitzer"
+  },
+  "694": {
+    "name": "Helioptile"
+  },
+  "695": {
+    "name": "Heliolisk"
+  },
+  "696": {
+    "name": "Tyrunt"
+  },
+  "697": {
+    "name": "Tyrantrum"
+  },
+  "698": {
+    "name": "Amaura"
+  },
+  "699": {
+    "name": "Aurorus"
+  },
+  "700": {
+    "name": "Sylveon"
+  },
+  "701": {
+    "name": "Hawlucha"
+  },
+  "702": {
+    "name": "Dedenne"
+  },
+  "703": {
+    "name": "Carbink"
+  },
+  "704": {
+    "name": "Goomy"
+  },
+  "705": {
+    "name": "Sliggoo"
+  },
+  "706": {
+    "name": "Goodra"
+  },
+  "707": {
+    "name": "Klefki"
+  },
+  "708": {
+    "name": "Phantump"
+  },
+  "709": {
+    "name": "Trevenant"
+  },
+  "710": {
+    "name": "Pumpkaboo"
+  },
+  "711": {
+    "name": "Gourgeist"
+  },
+  "712": {
+    "name": "Bergmite"
+  },
+  "713": {
+    "name": "Avalugg"
+  },
+  "714": {
+    "name": "Noibat"
+  },
+  "715": {
+    "name": "Noivern"
+  },
+  "716": {
+    "name": "Xerneas"
+  },
+  "717": {
+    "name": "Yveltal"
+  },
+  "718": {
+    "name": "Zygarde"
+  },
+  "719": {
+    "name": "Diancie"
+  },
+  "720": {
+    "name": "Hoopa"
+  },
+  "721": {
+    "name": "Volcanion"
+  },
+  "722": {
+    "name": "Rowlet"
+  },
+  "723": {
+    "name": "Dartrix"
+  },
+  "724": {
+    "name": "Decidueye"
+  },
+  "725": {
+    "name": "Litten"
+  },
+  "726": {
+    "name": "Torracat"
+  },
+  "727": {
+    "name": "Incineroar"
+  },
+  "728": {
+    "name": "Popplio"
+  },
+  "729": {
+    "name": "Brionne"
+  },
+  "730": {
+    "name": "Primarina"
+  },
+  "731": {
+    "name": "Pikipek"
+  },
+  "732": {
+    "name": "Trumbeak"
+  },
+  "733": {
+    "name": "Toucannon"
+  },
+  "734": {
+    "name": "Yungoos"
+  },
+  "735": {
+    "name": "Gumshoos"
+  },
+  "736": {
+    "name": "Grubbin"
+  },
+  "737": {
+    "name": "Charjabug"
+  },
+  "738": {
+    "name": "Vikavolt"
+  },
+  "739": {
+    "name": "Crabrawler"
+  },
+  "740": {
+    "name": "Crabominable"
+  },
+  "741": {
+    "name": "Oricorio"
+  },
+  "742": {
+    "name": "Cutiefly"
+  },
+  "743": {
+    "name": "Ribombee"
+  },
+  "744": {
+    "name": "Rockruff"
+  },
+  "745": {
+    "name": "Lycanroc"
+  },
+  "746": {
+    "name": "Wishiwashi"
+  },
+  "747": {
+    "name": "Mareanie"
+  },
+  "748": {
+    "name": "Toxapex"
+  },
+  "749": {
+    "name": "Mudbray"
+  },
+  "750": {
+    "name": "Mudsdale"
+  },
+  "751": {
+    "name": "Dewpider"
+  },
+  "752": {
+    "name": "Araquanid"
+  },
+  "753": {
+    "name": "Fomantis"
+  },
+  "754": {
+    "name": "Lurantis"
+  },
+  "755": {
+    "name": "Morelull"
+  },
+  "756": {
+    "name": "Shiinotic"
+  },
+  "757": {
+    "name": "Salandit"
+  },
+  "758": {
+    "name": "Salazzle"
+  },
+  "759": {
+    "name": "Stufful"
+  },
+  "760": {
+    "name": "Bewear"
+  },
+  "761": {
+    "name": "Bounsweet"
+  },
+  "762": {
+    "name": "Steenee"
+  },
+  "763": {
+    "name": "Tsareena"
+  },
+  "764": {
+    "name": "Comfey"
+  },
+  "765": {
+    "name": "Oranguru"
+  },
+  "766": {
+    "name": "Passimian"
+  },
+  "767": {
+    "name": "Wimpod"
+  },
+  "768": {
+    "name": "Golisopod"
+  },
+  "769": {
+    "name": "Sandygast"
+  },
+  "770": {
+    "name": "Palossand"
+  },
+  "771": {
+    "name": "Pyukumuku"
+  },
+  "772": {
+    "name": "Type: Null"
+  },
+  "773": {
+    "name": "Silvally"
+  },
+  "774": {
+    "name": "Minior"
+  },
+  "775": {
+    "name": "Komala"
+  },
+  "776": {
+    "name": "Turtonator"
+  },
+  "777": {
+    "name": "Togedemaru"
+  },
+  "778": {
+    "name": "Mimikyu"
+  },
+  "779": {
+    "name": "Bruxish"
+  },
+  "780": {
+    "name": "Drampa"
+  },
+  "781": {
+    "name": "Dhelmise"
+  },
+  "782": {
+    "name": "Jangmo-o"
+  },
+  "783": {
+    "name": "Hakamo-o"
+  },
+  "784": {
+    "name": "Kommo-o"
+  },
+  "785": {
+    "name": "Tapu Koko"
+  },
+  "786": {
+    "name": "Tapu Lele"
+  },
+  "787": {
+    "name": "Tapu Bulu"
+  },
+  "788": {
+    "name": "Tapu Fini"
+  },
+  "789": {
+    "name": "Cosmog"
+  },
+  "790": {
+    "name": "Cosmoem"
+  },
+  "791": {
+    "name": "Solgaleo"
+  },
+  "792": {
+    "name": "Lunala"
+  },
+  "793": {
+    "name": "Nihilego"
+  },
+  "794": {
+    "name": "Buzzwole"
+  },
+  "795": {
+    "name": "Pheromosa"
+  },
+  "796": {
+    "name": "Xurkitree"
+  },
+  "797": {
+    "name": "Celesteela"
+  },
+  "798": {
+    "name": "Kartana"
+  },
+  "799": {
+    "name": "Guzzlord"
+  },
+  "800": {
+    "name": "Necrozma"
+  },
+  "801": {
+    "name": "Magearna"
   },
   "802": {
-    "name": "Marshadow",
-    "rarity": "",
-    "types": [
-      {
-        "type": "Fighting",
-        "color": "#c03028"
-      },
-      {
-        "type": "Ghost",
-        "color": "#705898"
-      }
-    ]
+    "name": "Marshadow"
+  },
+  "803": {
+    "name": "Poipole"
+  },
+  "804": {
+    "name": "Naganadel"
+  },
+  "805": {
+    "name": "Stakataka"
+  },
+  "806": {
+    "name": "Blacephalon"
+  },
+  "807": {
+    "name": "Zeraora"
+  },
+  "808": {
+    "name": "Meltan"
+  },
+  "809": {
+    "name": "Melmetal"
+  },
+  "810": {
+    "name": "Grookey"
+  },
+  "811": {
+    "name": "Thwackey"
+  },
+  "812": {
+    "name": "Rillaboom"
+  },
+  "813": {
+    "name": "Scorbunny"
+  },
+  "814": {
+    "name": "Raboot"
+  },
+  "815": {
+    "name": "Cinderace"
+  },
+  "816": {
+    "name": "Sobble"
+  },
+  "817": {
+    "name": "Drizzile"
+  },
+  "818": {
+    "name": "Inteleon"
+  },
+  "819": {
+    "name": "Skwovet"
+  },
+  "820": {
+    "name": "Greedent"
+  },
+  "821": {
+    "name": "Rookidee"
+  },
+  "822": {
+    "name": "Corvisquire"
+  },
+  "823": {
+    "name": "Corviknight"
+  },
+  "824": {
+    "name": "Blipbug"
+  },
+  "825": {
+    "name": "Dottler"
+  },
+  "826": {
+    "name": "Orbeetle"
+  },
+  "827": {
+    "name": "Nickit"
+  },
+  "828": {
+    "name": "Thievul"
+  },
+  "829": {
+    "name": "Gossifleur"
+  },
+  "830": {
+    "name": "Eldegoss"
+  },
+  "831": {
+    "name": "Wooloo"
+  },
+  "832": {
+    "name": "Dubwool"
+  },
+  "833": {
+    "name": "Chewtle"
+  },
+  "834": {
+    "name": "Drednaw"
+  },
+  "835": {
+    "name": "Yamper"
+  },
+  "836": {
+    "name": "Boltund"
+  },
+  "837": {
+    "name": "Rolycoly"
+  },
+  "838": {
+    "name": "Carkol"
+  },
+  "839": {
+    "name": "Coalossal"
+  },
+  "840": {
+    "name": "Applin"
+  },
+  "841": {
+    "name": "Flapple"
+  },
+  "842": {
+    "name": "Appletun"
+  },
+  "843": {
+    "name": "Silicobra"
+  },
+  "844": {
+    "name": "Sandaconda"
+  },
+  "845": {
+    "name": "Cramorant"
+  },
+  "846": {
+    "name": "Arrokuda"
+  },
+  "847": {
+    "name": "Barraskewda"
+  },
+  "848": {
+    "name": "Toxel"
+  },
+  "849": {
+    "name": "Toxtricity"
+  },
+  "850": {
+    "name": "Sizzlipede"
+  },
+  "851": {
+    "name": "Centiskorch"
+  },
+  "852": {
+    "name": "Clobbopus"
+  },
+  "853": {
+    "name": "Grapploct"
+  },
+  "854": {
+    "name": "Sinistea"
+  },
+  "855": {
+    "name": "Polteageist"
+  },
+  "856": {
+    "name": "Hatenna"
+  },
+  "857": {
+    "name": "Hattrem"
+  },
+  "858": {
+    "name": "Hatterene"
+  },
+  "859": {
+    "name": "Impidimp"
+  },
+  "860": {
+    "name": "Morgrem"
+  },
+  "861": {
+    "name": "Grimmsnarl"
+  },
+  "862": {
+    "name": "Obstagoon"
+  },
+  "863": {
+    "name": "Perrserker"
+  },
+  "864": {
+    "name": "Cursola"
+  },
+  "865": {
+    "name": "Sirfetch'd"
+  },
+  "866": {
+    "name": "Mr. Rime"
+  },
+  "867": {
+    "name": "Runerigus"
+  },
+  "868": {
+    "name": "Milcery"
+  },
+  "869": {
+    "name": "Alcremie"
+  },
+  "870": {
+    "name": "Falinks"
+  },
+  "871": {
+    "name": "Pincurchin"
+  },
+  "872": {
+    "name": "Snom"
+  },
+  "873": {
+    "name": "Frosmoth"
+  },
+  "874": {
+    "name": "Stonjourner"
+  },
+  "875": {
+    "name": "Eiscue"
+  },
+  "876": {
+    "name": "Indeedee"
+  },
+  "877": {
+    "name": "Morpeko"
+  },
+  "878": {
+    "name": "Cufant"
+  },
+  "879": {
+    "name": "Copperajah"
+  },
+  "880": {
+    "name": "Dracozolt"
+  },
+  "881": {
+    "name": "Arctozolt"
+  },
+  "882": {
+    "name": "Dracovish"
+  },
+  "883": {
+    "name": "Arctovish"
+  },
+  "884": {
+    "name": "Duraludon"
+  },
+  "885": {
+    "name": "Dreepy"
+  },
+  "886": {
+    "name": "Drakloak"
+  },
+  "887": {
+    "name": "Dragapult"
+  },
+  "888": {
+    "name": "Zacian"
+  },
+  "889": {
+    "name": "Zamazenta"
+  },
+  "890": {
+    "name": "Eternatus"
   }
 }
