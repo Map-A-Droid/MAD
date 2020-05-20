@@ -147,7 +147,8 @@ def get_geofences(mapping_manager, data_manager, fence_type=None, area_id_req=No
             'include': include,
             'exclude': exclude,
             'mode': area['mode'],
-            'area_id': area_id
+            'area_id': area_id,
+            'name': area['name']
         }
     return geofences
 
