@@ -137,8 +137,11 @@ class MITMBase(WorkerBase):
                     datetime.fromtimestamp(timestamp))
         data_requested = LatestReceivedType.UNDEFINED
 
+        failover_timestamp: int = time.time()
+
         while data_requested == LatestReceivedType.UNDEFINED and timestamp + timeout >= int(time.time()) \
-                and not self._stop_worker_event.is_set():
+                and not self._stop_worker_event.is_set()\
+                and int(failover_timestamp) + timeout >= int(time.time()):
             latest = self._mitm_mapper.request_latest(self._origin)
             latest_location: Optional[Location] = latest.get("location", None)
             check_data = True
