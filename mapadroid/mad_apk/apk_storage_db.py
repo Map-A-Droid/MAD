@@ -72,14 +72,13 @@ class APKStorageDatabase(AbstractAPKStorage):
             }
             self.dbc.autoexec_insert('mad_apks', insert_data, optype='ON DUPLICATE')
             logger.info('Starting upload of APK')
-            while True:
-                chunked_data: bytes = data.read(global_variables.CHUNK_MAX_SIZE)
-                if not chunked_data:
-                    break
+            n = global_variables.CHUNK_MAX_SIZE
+            for chunked_data in [data.getbuffer()[i * n:(i + 1) * n] for i in \
+                                range((len(data.getbuffer()) + n - 1) // n )]:
                 insert_data = {
                     'filestore_id': new_id,
                     'size': len(chunked_data),
-                    'data': chunked_data
+                    'data': chunked_data.tobytes()
                 }
                 self.dbc.autoexec_insert('filestore_chunks', insert_data)
             logger.info('Finished upload of APK')
