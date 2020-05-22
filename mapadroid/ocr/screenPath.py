@@ -319,7 +319,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.BLACK:
             logger.warning("Screen is black, sleeping a couple seconds for another check...")
         elif screentype == ScreenType.CLOSE:
-            logger.warning("Detected pogo not open")
+            logger.debug("Detected pogo not open")
         elif screentype == ScreenType.DISABLED:
             logger.warning("Screendetection disabled")
         elif screentype == ScreenType.ERROR:
