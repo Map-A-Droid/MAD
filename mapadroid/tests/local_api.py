@@ -11,12 +11,18 @@ class LocalAPI(requests.Session):
     def __init__(self, **kwargs):
         super(LocalAPI, self).__init__()
         self.__logger = kwargs.get('logger', None)
-        self.__hostname = mapping_args.madmin_ip
-        self.__port = mapping_args.madmin_port
         self.__retries = kwargs.get('retries', 1)
         self.__timeout = kwargs.get('timeout', 1)
         self.__protocol = 'http'  # madmin only runs on http unless behind a proxy so we can force http
-        self.auth = (mapping_args.madmin_user, mapping_args.madmin_password)
+        api_type = kwargs.get('api_type', None)
+        if api_type in [None, 'api']:
+            self.__hostname = mapping_args.madmin_ip
+            self.__port = mapping_args.madmin_port
+            self.auth = (mapping_args.madmin_user, mapping_args.madmin_password)
+        elif api_type == 'mitm':
+            self.__hostname = mapping_args.mitmreceiver_ip
+            self.__port = mapping_args.mitmreceiver_port
+            self.auth = (None, None)
 
     def prepare_request(self, request):
         """ Override the class function to create the URL with the URI and any other processing required """

@@ -2,6 +2,7 @@ import os
 import shutil
 from mapadroid.mad_apk import APKStorageFilesystem, APK_Type, APK_Arch, generate_filename
 from mapadroid.tests.mad_apk.base_storage import StorageBase
+from mapadroid.tests.test_utils import mimetype
 from mapadroid.utils.walkerArgs import parseArgs
 
 
@@ -42,7 +43,7 @@ class StorageFS(StorageBase):
         version: str = '0.1'
         super().package_upgrade_check(version)
         relative_path = StorageFS.storage_path + '/' + generate_filename(APK_Type.rgc,
-                                                                         APK_Arch.noarch, version, StorageFS.mimetype)
+                                                                         APK_Arch.noarch, version, mimetype)
         self.assertFalse(os.path.exists(relative_path))
 
     def test_version_check(self):

@@ -30,9 +30,9 @@ class APIResponse(object):
         beautify = self.headers.get('X-Beautify')
         if self.mimetype == 'application/json':
             try:
+                indent=None
                 if beautify and beautify.isdigit() and int(beautify) == 1:
-                    return json.dumps(content, indent=4, cls=MAD_Encoder)
-                else:
-                    return json.dumps(content, cls=MAD_Encoder)
+                    indent = 4
+                return json.dumps(content, indent=indent, cls=MAD_Encoder)
             except Exception as err:
                 raise apiException.FormattingError(500, err)
