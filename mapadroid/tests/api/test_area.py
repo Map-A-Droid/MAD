@@ -24,11 +24,11 @@ class APIArea(api_base.APITestBase):
         self.assertTrue(len(json_data['resource']['fields']) > 0)
         if 'settings' in json_data['resource']:
             self.assertTrue(len(json_data['resource']['settings']) > 0)
-        self.remove_resources()
+        self.creator.remove_resources()
 
     def test_invalid_uri(self):
         super().invalid_uri()
-        self.remove_resources()
+        self.creator.remove_resources()
 
     def test_get_modes(self):
         # Create an idle area
@@ -36,12 +36,12 @@ class APIArea(api_base.APITestBase):
         # perform a get against /api/area?mode=raids_mitm and verify it does not come back
         # perform a get against /api/area/<created_elem> and validate the mode is returned
         payload = {
-            "name": "Idle Area - %s",
+            "name": "%s - Idle Area - %s",
         }
         headers = {
             'X-Mode': 'idle'
         }
-        area = self.create_valid_resource('area', payload=payload, headers=headers)
+        area, resp = self.creator.create_valid_resource('area', payload=payload, headers=headers)
         area_uri = area['uri']
         res = self.api.get(self.uri)
         resource_resp = 'Please specify a mode for resource information Valid modes: idle,iv_mitm,mon_mitm,pokestops,'\
@@ -58,7 +58,7 @@ class APIArea(api_base.APITestBase):
         }
         res = self.api.get(self.uri, params=params)
         self.assertFalse(area_uri in res.json()['results'])
-        self.remove_resources()
+        self.creator.remove_resources()
 
     def test_invalid_post_mode(self):
         payload = {}
@@ -74,7 +74,7 @@ class APIArea(api_base.APITestBase):
         errors = {
             'error': 'Invalid mode specified [fake-mode].  Valid modes: idle,iv_mitm,mon_mitm,pokestops,raids_mitm'}
         super().invalid_post(payload, errors, error_code=400, headers=headers)
-        self.remove_resources()
+        self.creator.remove_resources()
 
     def test_invalid_post(self):
         payload = {

@@ -1,115 +1,46 @@
-import copy
 from unittest import TestCase
 from mapadroid.tests.local_api import LocalAPI
-import test_variables as global_variables
+from mapadroid.tests.test_utils import ResourceCreator
 
 
-class APITestBase(TestCase):
+class APITestBase(TestCase, object):
     generated_uris = []
     index = 0
 
     def setUp(self):
         self.api = LocalAPI()
+        self.creator = ResourceCreator(self.api)
 
     def tearDown(self):
-        self.remove_resources()
+        self.creator.remove_resources()
         self.api.close()
 
-    def remove_resources(self):
-        if self.generated_uris:
-            for uri in reversed(self.generated_uris):
-                self.delete_resource(uri)
-
-    def add_created_resource(self, uri):
-        if uri not in self.generated_uris:
-            self.generated_uris.append(uri)
-
     def create_resource(self, uri, payload, **kwargs):
-        response = self.api.post(uri, json=payload, **kwargs)
+        response = self.creator.create_resource(uri, payload, **kwargs)
         self.assertEqual(response.status_code, 201)
-        created_uri = response.headers['X-Uri']
-        self.add_created_resource(created_uri)
-        self.index += 1
         return response
 
     def delete_resource(self, uri):
-        response = self.api.delete(uri)
-        if response.status_code in [202, 404] and uri in self.generated_uris:
-            self.generated_uris.remove(uri)
-        return response
+        return self.creator.delete_resource(uri)
 
     def create_valid(self, payload, uri=None, **kwargs):
         uri = uri if uri else self.uri
         return self.create_resource(uri, payload, **kwargs)
 
+    def remove_resources(self):
+        self.creator.remove_resources()
+
     # ===========================
     # ===== Basic Resources =====
     # ===========================
     def create_valid_resource(self, resource, **kwargs):
-        uri, payload, headers, elem = self.get_valid_resource(resource, **kwargs)
-        response = self.create_resource(uri, payload, headers=headers)
+        elem, response = self.creator.create_valid_resource(resource, **kwargs)
         self.assertEqual(response.status_code, 201)
         elem['uri'] = response.headers['X-Uri']
         return elem
 
     def get_valid_resource(self, resource, **kwargs):
-        resource_def = global_variables.DEFAULT_OBJECTS[resource]
-        try:
-            payload = kwargs['payload']
-            del kwargs['payload']
-        except:  # noqa: E722
-            payload = kwargs.get('payload', copy.copy(resource_def['payload']))
-        headers = kwargs.get('headers', {})
-        elem = {
-            'uri': None,
-            'resources': {}
-        }
-        name_elem = None
-        if resource == 'area':
-            elem['resources']['geofence_included'] = self.create_valid_resource('geofence')
-            elem['resources']['routecalc'] = self.create_valid_resource('routecalc')
-            payload['geofence_included'] = elem['resources']['geofence_included']['uri']
-            payload['routecalc'] = elem['resources']['routecalc']['uri']
-            payload['name'] %= self.index
-            try:
-                headers['X-Mode']
-            except:  # noqa: E722
-                headers['X-Mode'] = 'raids_mitm'
-        elif resource == 'auth':
-            name_elem = 'username'
-        elif resource == 'device':
-            elem['resources']['walker'] = self.create_valid_resource('walker')
-            elem['resources']['pool'] = self.create_valid_resource('devicesetting')
-            payload['walker'] = elem['resources']['walker']['uri']
-            payload['pool'] = elem['resources']['pool']['uri']
-            payload['origin'] %= self.index
-        elif resource == 'devicesetting':
-            name_elem = 'devicepool'
-        elif resource == 'geofence':
-            name_elem = 'name'
-        elif resource == 'monivlist':
-            name_elem = 'monlist'
-        elif resource == 'walker':
-            elem['resources']['walkerarea'] = self.create_valid_resource('walkerarea')
-            payload['setup'] = [elem['resources']['walkerarea']['uri']]
-            name_elem = 'walkername'
-        elif resource == 'walkerarea':
-            elem['resources']['area'] = self.create_valid_resource('area')
-            payload['walkerarea'] = elem['resources']['area']['uri']
-        payload = self.recursive_update(payload, kwargs)
-        if name_elem and '%s' in payload[name_elem]:
-            payload[name_elem] %= self.index
-        return (resource_def['uri'], payload, headers, elem)
-
-    def recursive_update(self, payload, elems):
-        for key, val in elems.items():
-            if key == 'headers':
-                continue
-            elif type(val) == dict:
-                payload[key] = self.recursive_update(payload, val)
-            else:
-                payload[key] = val
-        return payload
+        return self.creator.get_valid_resource(resource, **kwargs)
 
     # ===========================
     # ========== Tests ==========

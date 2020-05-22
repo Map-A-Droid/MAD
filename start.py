@@ -268,12 +268,19 @@ if __name__ == "__main__":
         t_madmin.start()
     logger.info("MAD is now running.....")
     exit_code = 0
+    device_creator = None
     try:
         if args.unit_tests:
             from mapadroid.tests.local_api import LocalAPI
             api_ready = False
             api = LocalAPI()
             logger.info('Checking API status')
+            if not data_manager.get_root_resource('device').keys():
+                from mapadroid.tests.test_utils import ResourceCreator
+                logger.info('Creating a device')
+                device_creator = ResourceCreator(api, prefix='MADCore')
+                res = device_creator.create_valid_resource('device')[0]
+                print(res)
             while not api_ready:
                 try:
                     api.get('/api')
@@ -297,6 +304,8 @@ if __name__ == "__main__":
         try:
             db_wrapper = None
             logger.success("Stop called")
+            if device_creator:
+                device_creator.remove_resources()
             terminate_mad.set()
             # now cleanup all threads...
             # TODO: check against args or init variables to None...
