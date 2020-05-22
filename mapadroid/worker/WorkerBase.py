@@ -663,7 +663,7 @@ class WorkerBase(AbstractWorker):
                 logger.info("Found Black Loading Screen - waiting ...")
                 time.sleep(20)
             elif screen_type == ScreenType.CLOSE:
-                logger.warning("screendetection found pogo closed, start it...")
+                logger.debug("screendetection found pogo closed, start it...")
                 self._start_pogo()
                 self._loginerrorcounter += 1
             elif screen_type in [ScreenType.GAMEDATA, ScreenType.CONSENT]:
