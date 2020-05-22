@@ -5,7 +5,7 @@ import io
 from threading import Thread
 from .apkHandler import APKHandler
 from mapadroid.mad_apk import APK_Arch, APK_Type, stream_package, lookup_package_info, APKWizard,\
-    supported_pogo_version, get_apk_status, MAD_APKS, PackageImporter, InvalidVersion
+    supported_pogo_version, get_apk_status, MAD_APKS, PackageImporter, InvalidVersion, MAD_Package
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
 from mapadroid.utils.authHelper import check_auth
@@ -27,10 +27,14 @@ class APIMadAPK(APKHandler):
         if flask.request.url.split('/')[-1] == 'download':
             return stream_package(self.dbc, self.storage_obj, apk_type, apk_arch)
         else:
+            data = get_apk_status(self.storage_obj)
             if apk_type is None and apk_arch is APK_Arch.noarch:
                 return (get_apk_status(self.storage_obj), 200)
             else:
-                return lookup_package_info(self.storage_obj, apk_type, apk_arch)
+                try:
+                    return (data[apk_type][apk_arch], 200)
+                except KeyError:
+                    return (data[apk_type], 200)
 
     @auth_required
     def post(self, apk_type: APK_Type, apk_arch: APK_Arch):

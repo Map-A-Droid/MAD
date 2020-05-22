@@ -15,7 +15,7 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.collections import Location
 from mapadroid.utils.logging import LogLevelChanger, logger
-from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version
+from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version, APK_Type
 from threading import RLock
 import mapadroid.data_manager
 
@@ -287,7 +287,9 @@ class MITMReceiver(Process):
             return parsed
         apk_type, apk_arch = parsed
         (msg, status_code) = lookup_package_info(self.__storage_obj, apk_type, apk_arch)
-        if msg and supported_pogo_version(apk_arch, msg.version):
+        if msg:
+            if apk_type == APK_Type.pogo and not supported_pogo_version(apk_arch, msg.version):
+                return Response(status=406, response='Supported version not installed')
             return Response(status=status_code, response=msg.version)
         else:
             return Response(status=status_code)
