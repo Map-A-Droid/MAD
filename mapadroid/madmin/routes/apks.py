@@ -23,7 +23,6 @@ class apk_manager(object):
     def add_route(self):
         routes = [
             ("/apk", self.mad_apks),
-            ("/apk_upload", self.upload_file, ['POST']),
             ("/apk_update_status", self.apk_update_status),
         ]
         for route_def in routes:
@@ -72,37 +71,3 @@ class apk_manager(object):
     @auth_required
     def mad_apks(self):
         return render_template('madmin_apk_root.html', apks=get_apk_status(self.storage_obj))
-
-    @auth_required
-    def upload_file(self):
-        if request.method == 'POST':
-            try:
-                if len(request.files) == 0:
-                    flash('No selected file')
-                    return redirect(url_for('mad_apks'))
-                apk_upload = request.files['apk']
-                if apk_upload.filename == '':
-                    flash('No selected file')
-                    return redirect(url_for('mad_apks'))
-                if not self.allowed_file(apk_upload.filename):
-                    flash('File extension not allowed')
-                    return redirect(url_for('mad_apks'))
-                if apk_upload:
-                    parsed = parse_frontend(**request.form)
-                    if type(parsed) == Response:
-                        return parsed
-                    apk_type, apk_arch = parsed
-                    mimetype = 'application/zip'
-                    if apk_upload.filename.rsplit('.', 1)[1] == 'apk':
-                        mimetype = 'application/vnd.android.package-archive'
-                    # TODO - Probably a better way to handle this.  However it does not like the incoming type,
-                    # io.BufferedRandom
-                    apk = io.BytesIO(apk_upload.stream.read())
-                    PackageImporter(apk_type, apk_arch, self.storage_obj, apk, mimetype)
-                    return redirect(url_for('mad_apks'))
-            except werkzeug.exceptions.RequestEntityTooLarge:
-                flash('File too large.  Please use a a smaller file')
-                return redirect(url_for('mad_apks'))
-            except:
-                logger.exception('Unhanded exception occurred with the MAD APK', exc_info=True)
-        return redirect(url_for('mad_apks'))

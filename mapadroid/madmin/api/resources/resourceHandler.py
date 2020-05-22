@@ -48,12 +48,10 @@ class ResourceHandler(apiHandler.APIHandler):
     def get_resource_data_root(self, resource_def, resource_info):
         try:
             fetch_all = int(self.api_req.params.get('fetch_all'))
-            del self.api_req.params['fetch_all']
         except:
             fetch_all = 0
         try:
             hide_resource = int(self.api_req.params.get('hide_resource', 0))
-            del self.api_req.params['hide_resource']
         except:
             hide_resource = 0
         link_disp_field = self.api_req.params.get('link_disp_field', self.default_sort)

@@ -19,6 +19,9 @@ APK_HEADERS = {
 MAX_RETRIES: int = 3  # Number of attempts for downloading on failure
 
 
+class InvalidVersion(Exception):
+    pass
+
 class APKWizard(object):
     gpconn: GPlayConnector
     storage: AbstractAPKStorage
@@ -231,4 +234,6 @@ class PackageImporter(object):
                 logger.info(log_msg, *args)
                 storage_obj.save_file(package, architecture, version, mimetype, downloaded_file, True)
         else:
+            if version is None:
+                raise InvalidVersion()
             storage_obj.save_file(package, architecture, version, mimetype, downloaded_file, True)
