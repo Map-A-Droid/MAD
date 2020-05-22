@@ -312,12 +312,18 @@ class WebsocketServer(object):
                 # TODO: cleanup needed here? better suited for the handler
                 logger.warning(
                     "Connection to {} was closed, stopping receiver. Exception: ", origin, cc)
+                entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
+                if entry is not None:
+                    entry.worker_instance.stop_worker()
                 return
 
             if message is not None:
                 await self.__on_message(client_entry, message)
         logger.warning(
             "Connection of {} closed in __client_message_receiver", str(origin))
+        entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
+        if entry is not None:
+            entry.worker_instance.stop_worker()
 
     @staticmethod
     async def __on_message(client_entry: WebsocketConnectedClientEntry, message: MessageTyping) -> None:
