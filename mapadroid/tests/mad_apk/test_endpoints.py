@@ -1,25 +1,32 @@
 import os
 from mapadroid.mad_apk import APK_Arch, APK_Type
 from mapadroid.tests.apk_base import APKTestBase
-from mapadroid.tests.test_utils import filepath_rgc, upload_rgc, get_storage, get_rgc_bytes
+from mapadroid.tests.test_utils import filepath_rgc, get_rgc_bytes
 
 
 class EndpointTests(APKTestBase):
-    def test_upload(self):
+    def web_upload_rgc(self, method: str = 'octet'):
+        r = None
         uri = '/api/mad_apk/{}/{}'.format(APK_Type.rgc.name, APK_Arch.noarch.name)
         with open(filepath_rgc, 'rb') as fh:
             filename = filepath_rgc.rsplit(os.sep, 1)[1]
-            headers = {
-                'Content-Type': 'application/octet-stream',
-                'filename': filename
-            }
-            data = fh
-            r = self.api.post(uri, data=data, headers=headers)
-            fh.seek(0, 0)
-            self.assertTrue(r.status_code == 201)
-            files = {'file': (filename, fh)}
-            r = self.api.post(uri, data={'filename': filename}, files=files)
-            self.assertTrue(r.status_code == 201)
+            if method == 'octet':
+                headers = {
+                    'Content-Type': 'application/octet-stream',
+                    'filename': filename
+                }
+                data = fh
+                r = self.api.post(uri, data=data, headers=headers)
+            else:
+                files = {'file': (filename, fh)}
+                r = self.api.post(uri, data={'filename': filename}, files=files)
+        return r
+
+    def test_upload(self):
+        r = self.web_upload_rgc()
+        self.assertTrue(r.status_code == 201)
+        r = self.web_upload_rgc(method='form')
+        self.assertTrue(r.status_code == 201)
 
     def test_valid_api_endpoints(self):
         r = self.api.get('/api/mad_apk')
@@ -50,21 +57,20 @@ class EndpointTests(APKTestBase):
         self.assertEqual(required_keys, r.json().keys())
 
     def test_valid_mitm_endpoints(self):
-        with get_storage() as storage_elem:
-            storage_elem.delete_file(APK_Type.rgc, APK_Arch.noarch)
-            r = self.mitm.get('mad_apk/rgc', headers={'Origin': 'notanoriginplz'})
-            self.assertTrue(r.status_code == 403)
-            upload_rgc(storage_elem)
-            r = self.mitm.get('mad_apk/rgc/noarch')
-            self.assertTrue(r.status_code == 200)
-            self.assertTrue(str(r.content) is not None)
+        self.api.delete('api/mad_apk/rgc/noarch')
+        r = self.mitm.get('mad_apk/rgc', headers={'Origin': 'notanoriginplz'})
+        self.assertTrue(r.status_code == 403)
+        r = self.mitm.get('mad_apk/rgc/noarch')
+        self.assertTrue(r.status_code == 404)
+        self.web_upload_rgc()
+        r = self.mitm.get('mad_apk/rgc/noarch')
+        self.assertTrue(r.status_code == 200)
+        self.assertTrue(str(r.content) is not None)
 
     def test_download(self):
-        with get_storage() as storage_elem:
-            storage_elem.delete_file(APK_Type.rgc, APK_Arch.noarch)
-            rgc_size = get_rgc_bytes().getbuffer().nbytes
-            upload_rgc(storage_elem)
-            r = self.mitm.get('mad_apk/rgc/noarch/download')
-            self.assertTrue(len(r.content) == rgc_size)
-            r = self.api.get('api/mad_apk/rgc/noarch/download')
-            self.assertTrue(len(r.content) == rgc_size)
+        self.web_upload_rgc()
+        rgc_size = get_rgc_bytes().getbuffer().nbytes
+        r = self.mitm.get('mad_apk/rgc/noarch/download')
+        self.assertTrue(len(r.content) == rgc_size)
+        r = self.api.get('api/mad_apk/rgc/noarch/download')
+        self.assertTrue(len(r.content) == rgc_size)
