@@ -280,7 +280,7 @@ if __name__ == "__main__":
                 logger.info('Creating a device')
                 device_creator = ResourceCreator(api, prefix='MADCore')
                 res = device_creator.create_valid_resource('device')[0]
-                print(res)
+                mapping_manager.update()
             while not api_ready:
                 try:
                     api.get('/api')

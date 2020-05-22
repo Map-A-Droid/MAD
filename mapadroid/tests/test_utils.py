@@ -20,8 +20,8 @@ class ResourceCreator():
 
     def __init__(self, api, prefix=prefix):
         self.api = api
-        self.index = 0
         self.prefix = prefix
+        self.generated_uris = []
 
     def remove_resources(self):
         if self.generated_uris:
@@ -34,14 +34,9 @@ class ResourceCreator():
 
     def create_resource(self, uri, payload, **kwargs):
         response = self.api.post(uri, json=payload, **kwargs)
-        try:
-            created_uri = response.headers['X-Uri']
-            self.add_created_resource(created_uri)
-            self.index += 1
-        except:
-            print(response)
-            print(response.headers)
-            print(response.json())
+        created_uri = response.headers['X-Uri']
+        self.add_created_resource(created_uri)
+        ResourceCreator.index += 1
         return response
 
     def delete_resource(self, uri):
@@ -74,7 +69,7 @@ class ResourceCreator():
             elem['resources']['routecalc'] = self.create_valid_resource('routecalc')[0]
             payload['geofence_included'] = elem['resources']['geofence_included']['uri']
             payload['routecalc'] = elem['resources']['routecalc']['uri']
-            payload['name'] %= (self.prefix, self.index)
+            payload['name'] %= (self.prefix, ResourceCreator.index)
             try:
                 headers['X-Mode']
             except:  # noqa: E722
@@ -86,7 +81,7 @@ class ResourceCreator():
             elem['resources']['pool'] = self.create_valid_resource('devicesetting')[0]
             payload['walker'] = elem['resources']['walker']['uri']
             payload['pool'] = elem['resources']['pool']['uri']
-            payload['origin'] %= (self.prefix, self.index)
+            payload['origin'] %= (self.prefix, ResourceCreator.index)
         elif resource == 'devicesetting':
             name_elem = 'devicepool'
         elif resource == 'geofence':
@@ -102,7 +97,7 @@ class ResourceCreator():
             payload['walkerarea'] = elem['resources']['area']['uri']
         payload = self.recursive_update(payload, kwargs)
         if name_elem and '%s' in payload[name_elem]:
-            payload[name_elem] %= (self.prefix, self.index)
+            payload[name_elem] %= (self.prefix, ResourceCreator.index)
         return (resource_def['uri'], payload, headers, elem)
 
     def recursive_update(self, payload, elems):
