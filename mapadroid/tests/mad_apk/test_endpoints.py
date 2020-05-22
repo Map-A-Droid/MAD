@@ -15,7 +15,7 @@ class EndpointTests(APKTestBase):
             }
             data = fh
             r = self.api.post(uri, data=data, headers=headers)
-            fh.seek(0,0)
+            fh.seek(0, 0)
             self.assertTrue(r.status_code == 201)
             files = {'file': (filename, fh)}
             r = self.api.post(uri, data={'filename': filename}, files=files)

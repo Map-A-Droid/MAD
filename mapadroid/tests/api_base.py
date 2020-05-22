@@ -18,7 +18,7 @@ class APITestBase(TestCase):
     def remove_resources(self):
         if self.generated_uris:
             for uri in reversed(self.generated_uris):
-                res = self.delete_resource(uri)
+                self.delete_resource(uri)
 
     def add_created_resource(self, uri):
         if uri not in self.generated_uris:
@@ -57,7 +57,7 @@ class APITestBase(TestCase):
         try:
             payload = kwargs['payload']
             del kwargs['payload']
-        except:
+        except:  # noqa: E722
             payload = kwargs.get('payload', copy.copy(resource_def['payload']))
         headers = kwargs.get('headers', {})
         elem = {
@@ -73,7 +73,7 @@ class APITestBase(TestCase):
             payload['name'] %= self.index
             try:
                 headers['X-Mode']
-            except:
+            except:  # noqa: E722
                 headers['X-Mode'] = 'raids_mitm'
         elif resource == 'auth':
             name_elem = 'username'

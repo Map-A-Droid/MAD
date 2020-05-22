@@ -1,9 +1,9 @@
-from . import test_area
-from . import test_auth
-from . import test_device
-from . import test_devicesetting
-from . import test_geofences
-from . import test_monlist
-from . import test_routecalc
-from . import test_walker
-from . import test_walkerarea
+from . import test_area  # noqa: F401
+from . import test_auth  # noqa: F401
+from . import test_device  # noqa: F401
+from . import test_devicesetting  # noqa: F401
+from . import test_geofences  # noqa: F401
+from . import test_monlist  # noqa: F401
+from . import test_routecalc  # noqa: F401
+from . import test_walker  # noqa: F401
+from . import test_walkerarea  # noqa: F401

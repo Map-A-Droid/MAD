@@ -70,6 +70,7 @@ def get_rgc_bytes() -> io.BytesIO:
         data.write(fh.read())
     return data
 
+
 def upload_rgc(storage_elem, version: str = None) -> NoReturn:
     data = get_rgc_bytes()
     if version is None:

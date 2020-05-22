@@ -1,6 +1,5 @@
 import io
 import os
-from typing import NoReturn
 from unittest import TestCase
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.tests.test_utils import upload_rgc, mimetype, filepath_rgc

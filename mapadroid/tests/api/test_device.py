@@ -14,7 +14,6 @@ class APIDevice(api_base.APITestBase):
         super().invalid_uri()
 
     def test_invalid_post(self):
-        payload = copy.copy(self.base_payload)
         errors = {
             "missing": ["walker"]
         }

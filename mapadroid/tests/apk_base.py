@@ -1,5 +1,5 @@
 from unittest import TestCase
-from mapadroid.tests.test_utils import upload_rgc, get_connection_api, get_connection_mitm
+from mapadroid.tests.test_utils import get_connection_api, get_connection_mitm
 
 
 class APKTestBase(TestCase):

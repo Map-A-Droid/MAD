@@ -44,7 +44,8 @@ class APIArea(api_base.APITestBase):
         area = self.create_valid_resource('area', payload=payload, headers=headers)
         area_uri = area['uri']
         res = self.api.get(self.uri)
-        resource_resp = 'Please specify a mode for resource information Valid modes: idle,iv_mitm,mon_mitm,pokestops,raids_mitm'
+        resource_resp = 'Please specify a mode for resource information Valid modes: idle,iv_mitm,mon_mitm,pokestops,'\
+                        'raids_mitm'
         self.assertEqual(res.json()['resource'], resource_resp)
         self.assertTrue(area_uri in res.json()['results'])
         params = {
@@ -61,8 +62,11 @@ class APIArea(api_base.APITestBase):
 
     def test_invalid_post_mode(self):
         payload = {}
+        err = 'Please specify a mode for resource information.  Valid modes: idle,iv_mitm,mon_mitm,pokestops,'\
+              'raids_mitm'
         errors = {
-            'error': 'Please specify a mode for resource information.  Valid modes: idle,iv_mitm,mon_mitm,pokestops,raids_mitm'}
+            'error': err
+        }
         super().invalid_post(payload, errors, error_code=400)
         headers = {
             'X-Mode': 'fake-mode'
