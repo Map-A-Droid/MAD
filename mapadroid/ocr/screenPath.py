@@ -189,41 +189,67 @@ class WordToScreenMatching(object):
             # french ...
             if 'DRESSEURS' in (global_dict['text'][i]):
                 temp_dict['CLUB'] = global_dict['top'][i] / diff
+            if 'Google' in (global_dict['text'][i]):
+                temp_dict['Google'] = global_dict['top'][i] / diff
 
             if self.get_devicesettings_value('logintype', 'google') == 'ptc':
                 self._nextscreen = ScreenType.PTC
                 if 'CLUB' in (global_dict['text'][i]):
                     self._click_center_button(diff, global_dict, i)
                     time.sleep(5)
+                    return
+
+                # alternative select - calculate down from Facebook button
+                elif 'Facebook' in temp_dict:
+                    click_x = self._width / 2
+                    click_y = (temp_dict['Facebook'] + 2 * self._height / 10.11)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                    self._communicator.click(click_x, click_y)
+                    time.sleep(5)
+                    return
+
+                # alternative select - calculate down from Google button
+                elif 'Google' in temp_dict:
+                    click_x = self._width / 2
+                    click_y = (temp_dict['Google'] + self._height / 10.11)
+                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
+                    self._communicator.click(click_x, click_y)
+                    time.sleep(5)
+                    return
+
             else:
                 self._nextscreen = ScreenType.UNDEFINED
                 if 'Google' in (global_dict['text'][i]):
                     self._click_center_button(diff, global_dict, i)
                     time.sleep(5)
+                    return
 
                 # alternative select
-                if 'Facebook' in temp_dict and 'TRAINER' in temp_dict:
+                elif 'Facebook' in temp_dict and 'CLUB' in temp_dict:
                     click_x = self._width / 2
-                    click_y = (temp_dict['Facebook'] + ((temp_dict['TRAINER'] - temp_dict['Facebook']) / 2))
+                    click_y = (temp_dict['Facebook'] + ((temp_dict['CLUB'] - temp_dict['Facebook']) / 2))
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
+                    return
 
                 # alternative select
-                if 'Facebook' in temp_dict:
+                elif 'Facebook' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + self._height / 10.11)
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
+                    return
 
                 # alternative select
-                if 'CLUB' in temp_dict:
+                elif 'CLUB' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['CLUB'] - self._height / 10.11)
                     logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
+                    return
 
     def _click_center_button(self, diff, global_dict, i) -> None:
         (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
