@@ -239,18 +239,23 @@ class MITMBase(WorkerBase):
 
     def _wait_for_injection(self):
         self._not_injected_count = 0
-        injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
+        reboot = self.get_devicesettings_value('reboot', False)
+        injection_thresh_reboot = 'Unlimited'
+        if reboot:
+            injection_thresh_reboot = int(self.get_devicesettings_value("injection_thresh_reboot", 20))
+        window_check_frequency = 3
         while not self._mitm_mapper.get_injection_status(self._origin):
 
             self._check_for_mad_job()
-
-            if self._not_injected_count >= injection_thresh_reboot:
-                logger.error("Worker {} not injected in time - reboot", str(self._origin))
-                self._reboot(self._mitm_mapper)
-                return False
+            if reboot:
+                if self._not_injected_count >= injection_thresh_reboot:
+                    logger.error("Worker {} not injected in time - reboot", str(self._origin))
+                    self._reboot(self._mitm_mapper)
+                    return False
             logger.info("PogoDroid on worker {} didn't connect yet. Probably not injected? (Count: {}/{})",
                         str(self._origin), str(self._not_injected_count), str(injection_thresh_reboot))
-            if self._not_injected_count in [3, 6, 9, 15, 18] and not self._stop_worker_event.is_set():
+            if (self._not_injected_count != 0 and self._not_injected_count % window_check_frequency == 0) \
+                and not self._stop_worker_event.is_set():
                 logger.info("Worker {} will retry check_windows while waiting for injection at count {}",
                             str(self._origin), str(self._not_injected_count))
                 self._ensure_pogo_topmost()
