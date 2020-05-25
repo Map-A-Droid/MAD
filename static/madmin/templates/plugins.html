@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+{% endblock %}
+
+{% block content %}
+<h2>Select Plugin</h2>
+<p>
+	<ul>
+	{% for item in plugin_hotlinks %}
+	<li>[{{item.0}}] - <a href="{{item.2}}">{{item.1}}</a> ({{item.3}})</li>
+    {% endfor %}
+	</ul>
+</p>
+
+
+{% endblock %}

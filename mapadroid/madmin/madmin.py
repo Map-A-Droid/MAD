@@ -19,44 +19,16 @@ from mapadroid.madmin.routes.statistics import statistics
 from mapadroid.madmin.routes.event import event
 from mapadroid.utils import MappingManager
 from mapadroid.utils.logging import InterceptHandler, get_logger, LoggerEnums
-
+from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 logger = get_logger(LoggerEnums.madmin)
 app = Flask(__name__,
-            static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
-            template_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates'))
+                static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
+                template_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates'))
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
-
 app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.secret_key = "8bc96865945be733f3973ba21d3c5949"
-
-
-@app.errorhandler(500)
-def internal_error(exception):
-    logger.opt(exception=True).critical("An unhanded exception occurred!")
-    return render_template('500.html'), 500
-
-
-def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
-                 deviceUpdater, jobstatus, storage_obj: AbstractAPKStorage):
-    # load routes
-    if args.madmin_base_path:
-        app.wsgi_app = ReverseProxied(app.wsgi_app, script_name=args.madmin_base_path)
-
-    statistics(db_wrapper, args, app, mapping_manager, data_manager)
-    control(db_wrapper, args, mapping_manager, ws_server, logger, app, deviceUpdater)
-    map(db_wrapper, args, mapping_manager, app, data_manager)
-    APIEntry(logger, app, data_manager, mapping_manager, ws_server, args.config_mode, storage_obj)
-    config(db_wrapper, args, logger, app, mapping_manager, data_manager)
-    path(db_wrapper, args, app, mapping_manager, jobstatus, data_manager)
-    apk_manager(db_wrapper, args, app, mapping_manager, jobstatus, storage_obj)
-    event(db_wrapper, args, logger, app, mapping_manager, data_manager)
-
-    log = logging.getLogger('werkzeug')
-    handler = InterceptHandler(log_section=LoggerEnums.madmin)
-    log.addHandler(handler)
-    app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
 
 
 @app.after_request
@@ -67,3 +39,65 @@ def after_request(response):
     response.headers.add('Access-Control-Allow-Methods',
                          'GET,PUT,POST,DELETE,OPTIONS')
     return response
+
+
+@app.errorhandler(500)
+def internal_error(self, exception):
+    logger.opt(exception=True).critical("An unhanded exception occurred!")
+    return render_template('500.html'), 500
+
+
+class madmin(object):
+    def __init__(self, args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
+                     deviceUpdater, jobstatus, storage_elem):
+
+        self._db_wrapper: DbWrapper = db_wrapper
+        self._args = args
+        self._app = app
+        self._mapping_manager: MappingManager = mapping_manager
+        self._storage_obj = storage_obj
+        self._device_updater = deviceUpdater
+        self._ws_server: WebsocketServer = ws_server
+        self._data_manager = data_manager
+        self._jobstatus = jobstatus
+        self._plugin_hotlink: list = []
+
+    @logger.catch()
+    def madmin_start(self):
+        # load routes
+        if self._args.madmin_base_path:
+            self._app.wsgi_app = ReverseProxied(self._app.wsgi_app, script_name=self._args.madmin_base_path)
+
+        statistics(self._db_wrapper, self._args, app, self._mapping_manager, self._data_manager)
+        control(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger, self._app,
+                self._device_updater)
+        map(self._db_wrapper, self._args, self._mapping_manager, self._app, self._data_manager)
+        APIEntry(logger, self._app, self._data_manager, self._mapping_manager, self._ws_server, self._args.config_mode, 
+                 self._storage_obj)
+        config(self._db_wrapper, self._args, logger, self._app, self._mapping_manager, self._data_manager)
+        path(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus, self._data_manager,
+             self._plugin_hotlink)
+        apk_manager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus, self._storage_obj )
+        event(self._db_wrapper, self._args, logger, self._app, self._mapping_manager, self._data_manager)
+
+        log = logging.getLogger('werkzeug')
+        handler = InterceptHandler(log_section=LoggerEnums.madmin)
+        log.addHandler(handler)
+        self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
+
+    def start_app(self):
+        self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
+
+    def add_route(self, routes):
+        for route, view_func in routes:
+            self._app.route(route, methods=['GET', 'POST'])(view_func)
+
+    def get_routepath(self):
+        routepath = app.root_path
+        return routepath
+
+    def register_plugin(self, pluginname):
+        app.register_blueprint(pluginname)
+
+    def add_plugin_hotlink(self, name, url, plugin, description):
+        self._plugin_hotlink.append((plugin, name, url, description))
