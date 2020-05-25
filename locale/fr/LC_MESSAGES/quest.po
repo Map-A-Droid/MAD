@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-05-25 13:24+0200\n"
-"PO-Revision-Date: 2020-05-25 13:35+0200\n"
+"PO-Revision-Date: 2020-05-25 20:37+0200\n"
 "Last-Translator: \n"
 "Language-Team: \n"
 "Language: fr\n"
@@ -239,12 +239,12 @@ msgstr "Combats {0} fois contre un autre Dresseur"
 #: mapadroid/utils/questGen.py:307
 #, python-brace-format
 msgid "Win in the GO Battle League {0} times"
-msgstr "Combats {0} fois contre un autre Dresseur"
+msgstr "Gagne {0} fois combat de ligue"
 
 #: mapadroid/utils/questGen.py:309
 #, python-brace-format
 msgid "Battle in the GO Battle League {0} times"
-msgstr "Combats {0} fois contre un autre Dresseur"
+msgstr "Participe à {0} fois combat de ligue"
 
 #: mapadroid/utils/questGen.py:313
 #, python-brace-format

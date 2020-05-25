@@ -7,7 +7,7 @@ msgstr ""
 "Project-Id-Version: \n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2020-05-25 13:24+0200\n"
-"PO-Revision-Date: 2020-05-25 13:34+0200\n"
+"PO-Revision-Date: 2020-05-25 20:32+0200\n"
 "Last-Translator: Isdor\n"
 "Language-Team: discord\n"
 "Language: de_DE\n"
@@ -237,17 +237,17 @@ msgstr "Gewinne {0} mal gegen einen anderen Trainer"
 #: mapadroid/utils/questGen.py:296
 #, python-brace-format
 msgid "Battle another Trainer {0} times"
-msgstr "Besiegen {0} mal gegen einen anderen Trainer"
+msgstr "Kämpfe {0} mal gegen einen anderen Trainer"
 
 #: mapadroid/utils/questGen.py:307
 #, python-brace-format
 msgid "Win in the GO Battle League {0} times"
-msgstr "Gewinne {0} mal gegen einen anderen Trainer"
+msgstr "Gewinne {0} mal in der GO-Kampfliga"
 
 #: mapadroid/utils/questGen.py:309
 #, python-brace-format
 msgid "Battle in the GO Battle League {0} times"
-msgstr "Besiegen {0} mal gegen einen anderen Trainer"
+msgstr "Kämpfe {0} mal in der GO-Kampfliga"
 
 #: mapadroid/utils/questGen.py:313
 #, python-brace-format
