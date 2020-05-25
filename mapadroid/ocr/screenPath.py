@@ -56,8 +56,9 @@ class WordToScreenMatching(object):
             temp_accounts = temp_accounts.replace(' ', '').split('|')
             for account in temp_accounts:
                 ptc_temp = account.split(',')
-                if 2 < len(ptc_temp) > 2:
+                if len(ptc_temp) != 2:
                     logger.warning('Cannot use this account (Wrong format!): {}'.format(str(account)))
+                    continue
                 username = ptc_temp[0]
                 password = ptc_temp[1]
                 self._PTC_accounts.append(Login_PTC(username, password))
