@@ -49,6 +49,18 @@ def ensure_config_file(func) -> Any:
 
 
 class APKStorageFilesystem(AbstractAPKStorage):
+    """ Storage interface for using the filesystem.  Implements AbstractAPKStorage for ease-of-use between different
+        storage mediums
+
+    Args:
+        application_args (NamedTuple): Arguments used at startup
+
+    Attributes:
+        apks (MAD_APKS): All APKs known to the storage system
+        config_apk_dir (str): Root storage directory for packages
+        config_filepath (str): Path to the configuration file
+        file_lock (RLock): RLock to allow updates to be thread-safe
+    """
     config_apks: ClassVar[str] = 'mad_apk'
     apks: MAD_APKS
     config_apk_dir: str
@@ -67,6 +79,13 @@ class APKStorageFilesystem(AbstractAPKStorage):
 
     @ensure_config_file
     def create_config(self, delete_config: bool = False) -> NoReturn:
+        """ Creates and saves the configuration
+
+        Examines the contents from self.config_apk_dir and builds out the configuration based off each available file.
+
+        Args:
+            delete_config (bool): If the current configuration file should be removed and re-created
+        """
         with self.file_lock:
             if delete_config:
                 try:
@@ -119,6 +138,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
                     self.save_configuration()
 
     def create_structure(self) -> NoReturn:
+        "Creates the filestructure required for saving packages and configuration"
         with self.file_lock:
             if not os.path.isdir(self.config_apk_dir):
                 logger.debug('Creating APK directory')
@@ -127,6 +147,12 @@ class APKStorageFilesystem(AbstractAPKStorage):
     @ensure_config_file
     @ensure_exists
     def delete_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
+        """ Remove the package and update the configuration
+
+        Args:
+            package (APK_Type): Package to lookup
+            architecture (APK_Arch): Architecture of the package to lookup
+        """
         apk_info: MAD_Package = self.apks[package][architecture]
         os.unlink(self.get_package_path(apk_info.filename))
         del self.apks[package][architecture]
@@ -134,17 +160,28 @@ class APKStorageFilesystem(AbstractAPKStorage):
         return True
 
     def get_package_path(self, filename: str):
+        "Generate the packpage path based off the filename"
         return'{}/{}'.format(self.config_apk_dir, filename)
 
     @ensure_config_file
     @ensure_exists
     def get_current_version(self, package: APK_Type, architecture: APK_Arch) -> Optional[str]:
+        "Get the currently installed version of the package / architecture"
         apk_info: MAD_Package = self.apks[package][architecture]
         version = apk_info.version
         return version
 
     @ensure_config_file
     def get_current_package_info(self, package: APK_Type) -> Optional[MAD_Packages]:
+        """ Get the current information for a given package.  If the package exists in the configuration but not the
+            filesystem it will be removed from the configuration
+
+        Args:
+            package (APK_Type): Package to lookup
+
+        Returns:
+            None if no package is found.  MAD_Packages if the package lookup is successful
+        """
         data = None
         with self.file_lock:
             try:
@@ -166,17 +203,32 @@ class APKStorageFilesystem(AbstractAPKStorage):
         return 'fs'
 
     def save_configuration(self) -> NoReturn:
+        "Save the current configuration to the filesystem with human-readable indentation"
         with self.file_lock:
             with open(self.config_filepath, 'w+') as fh:
                 json.dump(self.apks, fh, indent=2, cls=MAD_Encoder)
 
     @ensure_config_file
     def shutdown(self) -> NoReturn:
+        "Save the configuration prior to shutdown"
         self.save_configuration()
 
     @ensure_config_file
     def save_file(self, package: APK_Type, architecture: APK_Arch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
+        """ Save the package to the filesystem.  Remove the old version if it existed
+
+        Args:
+            package (APK_Type): Package to save
+            architecture (APK_Arch): Architecture of the package to save
+            version (str): Version of the package
+            mimetype (str): Mimetype of the package
+            data (io.BytesIO): binary contents to be saved
+            retry (bool): Attempt to re-save the file if an issue occurs
+
+        Returns (bool):
+            Save was successful
+        """
         try:
             filename = generate_filename(package, architecture, version, mimetype)
             with self.file_lock:
@@ -215,6 +267,15 @@ class APKStorageFilesystem(AbstractAPKStorage):
         return False
 
     def validate_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
+        """ Validate that the file exists on the filesystem.  Remove from the config if it does not exist
+
+        Args:
+            package (APK_Type): Package to save
+            architecture (APK_Arch): Architecture of the package to save
+
+        Return (bool):
+            Package / Architecture is value
+        """
         try:
             apk_info: MAD_Package = self.apks[package][architecture]
             package_path = self.get_package_path(apk_info.filename)

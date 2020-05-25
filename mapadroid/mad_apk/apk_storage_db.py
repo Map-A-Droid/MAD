@@ -10,13 +10,28 @@ from threading import RLock
 
 
 class APKStorageDatabase(AbstractAPKStorage):
+    """ Storage interface for using the database.  Implements AbstractAPKStorage for ease-of-use between different
+        storage mediums
 
+    Args:
+        dbc: Database wrapper
+
+    Attributes:
+        dbc: Database wrapper
+        file_lock (RLock): RLock to allow updates to be thread-safe
+    """
     def __init__(self, dbc):
         logger.debug('Initializing Database storage')
         self.file_lock: RLock = RLock()
         self.dbc = dbc
 
     def delete_file(self, package: APK_Type, architecture: APK_Arch) -> bool:
+        """ Remove the package and update the configuration
+
+        Args:
+            package (APK_Type): Package to lookup
+            architecture (APK_Arch): Architecture of the package to lookup
+        """
         filestore_id_sql: str = "SELECT `filestore_id` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
         filestore_id: Optional[int] = self.dbc.autofetch_value(filestore_id_sql,
                                                                args=(package.value, architecture.value,))
@@ -29,10 +44,20 @@ class APKStorageDatabase(AbstractAPKStorage):
         return False
 
     def get_current_version(self, package: APK_Type, architecture: APK_Arch) -> Optional[str]:
+        "Get the currently installed version of the package / architecture"
         sql: str = "SELECT `version` FROM `mad_apks` WHERE `usage` = %s AND `arch` = %s"
         return self.dbc.autofetch_value(sql, (package.value, architecture.value))
 
     def get_current_package_info(self, package: APK_Type) -> Optional[MAD_Packages]:
+        """ Get the current information for a given package.  If the package exists in the configuration but not the
+            filesystem it will be removed from the configuration
+
+        Args:
+            package (APK_Type): Package to lookup
+
+        Returns:
+            None if no package is found.  MAD_Packages if the package lookup is successful
+        """
         data = MAD_Packages()
         sql = "SELECT ma.`version`, ma.`arch`, fm.`filename`, fm.`size`, fm.`mimetype`\n"\
               "FROM `mad_apks` ma\n"\
@@ -52,9 +77,20 @@ class APKStorageDatabase(AbstractAPKStorage):
 
     def save_file(self, package: APK_Type, architecture: APK_Arch, version: str, mimetype: str, data: BytesIO,
                   retry: bool = False) -> bool:
+        """ Save the package to the database.  Remove the old version if it existed
+
+        Args:
+            package (APK_Type): Package to save
+            architecture (APK_Arch): Architecture of the package to save
+            version (str): Version of the package
+            mimetype (str): Mimetype of the package
+            data (io.BytesIO): binary contents to be saved
+            retry (bool): Not used
+
+        Returns (bool):
+            Save was successful
+        """
         try:
-            # Determine if we already have this file-type uploaded.  If so, remove it once the new one is
-            # completed and update the id
             self.delete_file(package, architecture)
             file_length: int = data.getbuffer().nbytes
             filename: str = generate_filename(package, architecture, version, mimetype)
@@ -73,8 +109,8 @@ class APKStorageDatabase(AbstractAPKStorage):
             self.dbc.autoexec_insert('mad_apks', insert_data, optype='ON DUPLICATE')
             logger.info('Starting upload of APK')
             n = global_variables.CHUNK_MAX_SIZE
-            for chunked_data in [data.getbuffer()[i * n:(i + 1) * n] for i in \
-                                range((len(data.getbuffer()) + n - 1) // n )]:
+            for chunked_data in [data.getbuffer()[i * n:(i + 1) * n] for i in
+                                 range((len(data.getbuffer()) + n - 1) // n)]:
                 insert_data = {
                     'filestore_id': new_id,
                     'size': len(chunked_data),

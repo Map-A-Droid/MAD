@@ -3,6 +3,20 @@ from .apk_enums import APK_Arch, APK_Type
 
 
 class MAD_Package(object):
+    """ Package definition for MAD
+
+    Args:
+        package (APK_Type): Package
+        architecture (APK_Arch): Architecture of the package
+
+    Attributes:
+        file_id (int): ID from filestore_meta if saved to the database
+        filename (str): User-Friendly filename
+        mimetype (str): Mimetype of the package
+        size (int): Size in bytes of the package
+        version (str): Version of the package
+    """
+
     file_id: Optional[int] = None
     filename: Optional[str] = None
     mimetype: Optional[str] = None
