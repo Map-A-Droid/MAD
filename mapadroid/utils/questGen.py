@@ -283,11 +283,30 @@ def questtask(typeid, condition, target, quest_template):
     elif typeid == 24:
         text = _('Send {0} gifts to friends')
     elif typeid == 27:
-        # PVP against trainer or team leader.
-        if re.search(r'"type": 22', condition) is not None:
-            text = _('Battle a Team Leader {0} times')
-        elif re.search(r'"type": 23', condition) is not None:
-            text = _('Battle another Trainer {0} times')
+        for con in condition_dict:
+            if con.get('type', 0) == 22:
+                # PVP against team leader.
+                text = _('Battle a Team Leader {0} times')
+            elif con.get('type') == 23:
+                gotta_win = con.get('with_pvp_combat', {}).get('requires_win') == True
+
+                if gotta_win:
+                    text = _('Win a battle against another Trainer {0} times')
+                else:
+                    text = _('Battle another Trainer {0} times')
+
+                in_go_battle_league = any(
+                    x in con.get('with_pvp_combat', {}).get('combat_league_template_id', []) for x in
+                    ["COMBAT_LEAGUE_VS_SEEKER_GREAT", "COMBAT_LEAGUE_VS_SEEKER_ULTRA",
+                     "COMBAT_LEAGUE_VS_SEEKER_MASTER"])
+                vs_player = any(
+                    x in con.get('with_pvp_combat', {}).get('combat_league_template_id', []) for x in
+                    ["COMBAT_LEAGUE_DEFAULT_GREAT", "COMBAT_LEAGUE_DEFAULT_ULTRA",
+                     "COMBAT_LEAGUE_DEFAULT_MASTER"])
+                if not vs_player and in_go_battle_league and gotta_win:
+                    text = _('Win in the GO Battle League {0} times')
+                elif in_go_battle_league and not vs_player:
+                    text = _('Battle in the GO Battle League {0} times')
     elif typeid == 28:
         # Take snapshots quest
         if re.search(r'"type": 28', condition) is not None:
@@ -329,7 +348,6 @@ def questtask(typeid, condition, target, quest_template):
                         cur += 1
     elif typeid == 29:
         # QUEST_BATTLE_TEAM_ROCKET Team Go rucket grunt batles.
-        # Condition type 27 means against a grunt leader WITH_INVASION_CHARACTER= 1
         if int(target) == int(1):
             text = _('Battle a Team Rocket Grunt')
 
