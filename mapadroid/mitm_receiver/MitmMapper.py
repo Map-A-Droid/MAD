@@ -193,7 +193,7 @@ class MitmMapper(object):
 
     def collect_location_stats(self, origin: str, location: Location, datarec, start_timestamp: float, type,
                                rec_timestamp: float, walker, transporttype):
-        if self.__playerstats.get(origin, None) is not None:
+        if self.__playerstats.get(origin, None) is not None and location is not None:
             self.__playerstats.get(origin).stats_collect_location_data(location, datarec, start_timestamp,
                                                                        type,
                                                                        rec_timestamp, walker, transporttype)
