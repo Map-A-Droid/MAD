@@ -130,15 +130,31 @@ class DbSchemaUpdater:
                      )
         },
         {
-            "table": "trs_stats_detect_raw",
+            "table": "trs_stats_detect_mon_raw",
             "spec": ("`id` int(11) AUTO_INCREMENT, "
                      "`worker` varchar(100) NOT NULL, "
-                     "`type_id` varchar(100) NOT NULL, "
+                     "`encounter_id` bigint(20) unsigned NOT NULL, "
+                     "`type` varchar(10) NOT NULL, "
+                     "`count` int(11) NOT NULL, "
+                     "`is_shiny` tinyint(1) NOT NULL DEFAULT 0, "
+                     "`timestamp_scan` int(11) NOT NULL, "
+                     "PRIMARY KEY (`id`), "
+                     "KEY `worker` (`worker`), "
+                     "KEY `encounter_id` (`encounter_id`), "
+                     "KEY `is_shiny` (`is_shiny`)"
+                     )
+        },
+        {
+            "table": "trs_stats_detect_fort_raw",
+            "spec": ("`id` int(11) AUTO_INCREMENT, "
+                     "`worker` varchar(100) NOT NULL, "
+                     "`guid` varchar(50) NOT NULL, "
                      "`type` varchar(10) NOT NULL, "
                      "`count` int(11) NOT NULL, "
                      "`timestamp_scan` int(11) NOT NULL, "
                      "PRIMARY KEY (`id`), "
-                     "KEY `worker` (`worker`)"
+                     "KEY `worker` (`worker`), "
+                     "KEY `guid` (`guid`)"
                      )
         },
         {

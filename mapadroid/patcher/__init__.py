@@ -34,7 +34,8 @@ MAD_UPDATES = OrderedDict([
     (30, 'patch_30'),
     (31, 'trs_status_lastProtoDateTime_fix'),
     (32, 'reset_routecalc_algo'),
-    (33, 'routecalc_rename')
+    (33, 'routecalc_rename'),
+    (34, 'trs_stats_detect_raw_split')
 ])
 
 

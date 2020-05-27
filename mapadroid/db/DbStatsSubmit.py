@@ -16,12 +16,20 @@ class DbStatsSubmit:
         self._db_exec.executemany(query_status, data, commit=True)
         return True
 
-    def submit_stats_detections_raw(self, data):
-        query_status = (
-            "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "
+    def submit_stats_detections_raw(self, data) -> bool:
+        query_status_mon = (
+            "INSERT IGNORE INTO trs_stats_detect_mon_raw (worker, encounter_id, type, count, is_shiny, timestamp_scan) "
             "VALUES (%s, %s, %s, %s, %s, %s) "
         )
-        self._db_exec.executemany(query_status, data, commit=True)
+        query_status_fort = (
+            "INSERT IGNORE INTO trs_stats_detect_fort_raw (worker, guid, type, count, timestamp_scan) "
+            "VALUES (%s, %s, %s, %s, %s) "
+        )
+        mons = filter(lambda x: x[2] == 'mon' or x[2] == 'mon_iv', data)
+        forts = [(d[0], d[1], d[3], d[4], d[5]) for d in data if (d[2] == 'quest' or d[2] == 'raid')]
+
+        self._db_exec.executemany(query_status_mon, mons, commit=True)
+        self._db_exec.executemany(query_status_fort, forts, commit=True)
         return True
 
     def submit_stats_locations(self, data):
@@ -50,7 +58,12 @@ class DbStatsSubmit:
 
         # stop deleting shiny entries. For science, please (-:
         query = (
-            "DELETE FROM trs_stats_detect_raw WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800) AND is_shiny = 0"
+            "DELETE FROM trs_stats_detect_mon_raw WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800) AND is_shiny = 0"
+        )
+        self._db_exec.execute(query, commit=True)
+
+        query = (
+            "DELETE FROM trs_stats_detect_fort_raw WHERE timestamp_scan < (UNIX_TIMESTAMP() - 604800)"
         )
         self._db_exec.execute(query, commit=True)
 
@@ -66,7 +79,7 @@ class DbStatsSubmit:
 
         if int(self._args.raw_delete_shiny) > 0:
             query = (
-                    "DELETE FROM trs_stats_detect_raw WHERE timestamp_scan < "
+                    "DELETE FROM trs_stats_detect_mon_raw WHERE timestamp_scan < "
                     "(UNIX_TIMESTAMP() - " + str(int(self._args.raw_delete_shiny) * 86400) + ") AND is_shiny = 1"
             )
             self._db_exec.execute(query, commit=True)
