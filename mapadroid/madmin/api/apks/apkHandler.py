@@ -51,7 +51,5 @@ class APKHandler(apiHandler.APIHandler):
             elif flask.request.method == 'POST':
                 data = self.post(apk_type=apk_type, apk_arch=apk_arch)
                 return data
-        except:
-            import traceback
-            traceback.print_exc()
+        except:  # noqa: E722
             return (None, 404)

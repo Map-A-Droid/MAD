@@ -1,15 +1,12 @@
 from apkutils.apkfile import BadZipFile, LargeZipFile
 import flask
-import json
 import io
 from threading import Thread
 from .apkHandler import APKHandler
-from mapadroid.mad_apk import APK_Arch, APK_Type, stream_package, lookup_package_info, APKWizard,\
-    supported_pogo_version, get_apk_status, MAD_APKS, PackageImporter, MAD_Package, WizardError
+from mapadroid.mad_apk import APK_Arch, APK_Type, stream_package, APKWizard, get_apk_status, MAD_APKS, \
+    PackageImporter, WizardError
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
-from mapadroid.utils.authHelper import check_auth
-
 
 
 class APIMadAPK(APKHandler):
@@ -83,7 +80,6 @@ class APIMadAPK(APKHandler):
         else:
             try:
                 call = self.api_req.data['call']
-                args = self.api_req.data.get('args', {})
                 wizard = APKWizard(self.dbc, self.storage_obj)
                 if call == 'import':
                     thread_args = (apk_type, apk_arch)
@@ -108,7 +104,6 @@ class APIMadAPK(APKHandler):
 
         return (None, 500)
 
-
     @auth_required
     def delete(self, apk_type: APK_Type, apk_arch: APK_Arch):
         if apk_type is None:
@@ -119,12 +114,3 @@ class APIMadAPK(APKHandler):
         if resp:
             return (None, 202)
         return (None, 404)
-        # # try:
-        # #     file_data = self.get(apk_type, apk_arch)[0]
-        # #     del_data = {
-        # #         'filestore_id': file_data['file_id']
-        # #     }
-        # #     self.dbc.autoexec_delete('filestore_meta', del_data)
-        # #     return (None, 202)
-        # except KeyError:
-        #     return (None, 404)
