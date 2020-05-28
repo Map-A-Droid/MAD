@@ -538,26 +538,26 @@ class deviceUpdater(object):
                     architecture = APK_Arch.noarch
                     mad_apk = package_all[architecture.noarch]
 
-                if not mad_apk or mad_apk['filename'] is None:
+                if not mad_apk or mad_apk.filename is None:
                     logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                     return False
                 # Validate it is supported
                 if package == APK_Type.pogo:
-                    if not supported_pogo_version(architecture, mad_apk['version']):
+                    if not supported_pogo_version(architecture, mad_apk.version):
                         self.write_status_log(str(item), field='status', value='not supported')
                         return True
-                if not is_newer_version(mad_apk['version'], package_ver):
+                if not is_newer_version(mad_apk.version, package_ver):
                     logger.info('Both versions are the same.  No update required')
                     self.write_status_log(str(item), field='status', value='not required')
                     return True
                 else:
-                    logger.info('Smart Update APK Installation for {} to {}', package,
+                    logger.info('Smart Update APK Installation for {} to {}', package.name,
                                 self._log[str(item)]['origin'])
                     apk_file = bytes()
                     gen = file_generator(self._db, self._storage_obj, package, architecture)
                     for chunk in file_generator(self._db, self._storage_obj, package, architecture):
                         apk_file += chunk
-                    if mad_apk['mimetype'] == 'application/zip':
+                    if mad_apk.mimetype == 'application/zip':
                         returning = ws_conn.install_bundle(300, data=apk_file)
                     else:
                         returning = ws_conn.install_apk(300, data=apk_file)
@@ -583,8 +583,6 @@ class deviceUpdater(object):
         except Exception as e:
             logger.error('Error while getting response from device - Reason: {}'
                          .format(str(e)))
-            import traceback
-            traceback.print_exc()
         return False
 
     def delete_log(self, onlysuccess=False):
