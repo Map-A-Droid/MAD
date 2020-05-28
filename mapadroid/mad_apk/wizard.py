@@ -1,8 +1,10 @@
 import apkutils
+from apkutils.apkfile import BadZipFile, LargeZipFile
 import io
 import requests
+import zipfile
 from threading import Thread
-from typing import NoReturn, Optional
+from typing import NoReturn, Optional, Tuple
 import urllib3
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APK_Arch, APK_Type, APK_Package
@@ -19,7 +21,15 @@ APK_HEADERS = {
 MAX_RETRIES: int = 3  # Number of attempts for downloading on failure
 
 
-class InvalidVersion(Exception):
+class WizardError(Exception):
+    pass
+
+
+class InvalidFile(WizardError):
+    pass
+
+
+class InvalidVersion(WizardError):
     pass
 
 
@@ -320,24 +330,48 @@ class PackageImporter(object):
         mimetype (str): Mimetype of the package
         version (str): Version of the package
     """
-    def __init__(self, package: APK_Type, architecture: APK_Arch, storage_obj: AbstractAPKStorage, downloaded_file,
-                 mimetype: str, version: str = None):
+    def __init__(self, package: APK_Type, architecture: APK_Arch, storage_obj: AbstractAPKStorage,
+                 downloaded_file: io.BytesIO, mimetype: str, version: str = None):
+        version_from_apk: str = None
+        package_from_apk: str = None
         if mimetype == 'application/vnd.android.package-archive':
-            try:
-                apk = apkutils.APK(downloaded_file)
-            except:  # noqa: E722
-                logger.warning('Unable to parse APK file')
-            else:
-                version = apk.get_manifest()['@android:versionName']
-                log_msg = 'New APK uploaded for {}'
-                args = [package.name]
-                if architecture:
-                    log_msg += ' {}'
-                    args.append(architecture.name)
-                args.append(version)
-                logger.info(log_msg, *args)
-                storage_obj.save_file(package, architecture, version, mimetype, downloaded_file, True)
+            (version_from_apk, package_from_apk) = self.get_apk_info(downloaded_file)
         else:
-            if version is None:
-                raise InvalidVersion()
+            (version_from_apk, package_from_apk) = self.get_compressed_info(downloaded_file)
+            mimetype = 'application/zip'
+        if version_from_apk:
+            if not version:
+                version = version_from_apk
+            try:
+                pkg = APK_Package(package_from_apk)
+            except ValueError:
+                raise InvalidFile('Unknown package %s' % (package_from_apk))
+            if pkg.name != package.name:
+                raise WizardError('Attempted to upload %s as %s' % (pkg.name, package.name))
             storage_obj.save_file(package, architecture, version, mimetype, downloaded_file, True)
+            log_msg = 'New APK uploaded for {} [{}]'
+            logger.info(log_msg, package.name, version)
+
+    def get_apk_info(self, downloaded_file: io.BytesIO) -> Tuple[str, str]:
+        try:
+            apk = apkutils.APK(downloaded_file)
+        except:  # noqa: E722
+            logger.warning('Unable to parse APK file')
+        else:
+            manifest = apk.get_manifest()
+            return (manifest['@android:versionName'], manifest['@package'])
+        return InvalidFile('Unable to parse the APK file')
+
+    def get_compressed_info(self, downloaded_file: io.BytesIO) -> Tuple[str, str]:
+        zip_data = zipfile.ZipFile(downloaded_file)
+        for fname in zip_data.namelist():
+            try:
+                with zip_data.open(fname, 'r') as fh:
+                    apk = apkutils.APK(io.BytesIO(fh.read()))
+                    manifest = apk.get_manifest()
+                    return (manifest['@android:versionName'], manifest['@package'])
+            except (BadZipFile, LargeZipFile):
+                continue
+            except KeyError:
+                continue
+        raise InvalidFile('Unable to extract information from file')

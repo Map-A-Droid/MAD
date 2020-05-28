@@ -19,7 +19,11 @@ class StorageBase(TestCase):
     def setUp(self):
         self.storage_init()
         self.db_wrapper, self.db_pool_manager = DbFactory.get_wrapper(args)
-        if self.storage_type == 'fs':
+        try:
+            storage_type = self.storage_type
+        except AttributeError:
+            storage_type = 'fs'
+        if storage_type == 'fs':
             args.sdb = False
         else:
             args.sdb = True

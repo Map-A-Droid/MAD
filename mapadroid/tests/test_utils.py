@@ -171,9 +171,9 @@ def get_rgc_bytes() -> io.BytesIO:
     return data
 
 
-def upload_rgc(storage_elem, version: str = None) -> NoReturn:
+def upload_rgc(storage_elem, version: str = None, apk_type: APK_Type = APK_Type.rgc) -> NoReturn:
     data = get_rgc_bytes()
     if version is None:
-        PackageImporter(APK_Type.rgc, APK_Arch.noarch, storage_elem, data, mimetype)
+        PackageImporter(apk_type, APK_Arch.noarch, storage_elem, data, mimetype)
     else:
-        storage_elem.save_file(APK_Type.rgc, APK_Arch.noarch, version, mimetype, data)
+        storage_elem.save_file(apk_type, APK_Arch.noarch, version, mimetype, data)

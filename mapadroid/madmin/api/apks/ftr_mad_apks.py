@@ -5,7 +5,7 @@ import io
 from threading import Thread
 from .apkHandler import APKHandler
 from mapadroid.mad_apk import APK_Arch, APK_Type, stream_package, lookup_package_info, APKWizard,\
-    supported_pogo_version, get_apk_status, MAD_APKS, PackageImporter, InvalidVersion, MAD_Package
+    supported_pogo_version, get_apk_status, MAD_APKS, PackageImporter, MAD_Package, WizardError
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
 from mapadroid.utils.authHelper import check_auth
@@ -40,7 +40,6 @@ class APIMadAPK(APKHandler):
     def post(self, apk_type: APK_Type, apk_arch: APK_Arch):
         is_upload: bool = False
         apk: io.BytesIO = None
-        version: str = None
         filename: str = None
         if 'multipart/form-data' in self.api_req.content_type:
             filename = self.api_req.data['data'].get('filename', None)
@@ -62,22 +61,21 @@ class APIMadAPK(APKHandler):
             except KeyError:
                 return ('Non-supported Type / Architecture', 406)
             filename_split = filename.rsplit('.', 1)
-            if filename_split[1] == 'zip':
+            if filename_split[1] in ['zip', 'apks']:
                 mimetype = 'application/zip'
-                try:
-                    version = filename_split[0].split('_')[1]
-                except IndexError:
-                    return ('ZIP must be uploaded as <name>_<version>.zip', 406)
             elif filename_split[1] == 'apk':
                 mimetype = 'application/vnd.android.package-archive'
             else:
                 return ('Unsupported extension', 406)
             try:
-                PackageImporter(apk_type, apk_arch, self.storage_obj, apk, mimetype, version=version)
+                PackageImporter(apk_type, apk_arch, self.storage_obj, apk, mimetype)
                 if 'multipart/form-data' in self.api_req.content_type:
                     return flask.redirect(None, code=201)
                 return (None, 201)
             except (BadZipFile, LargeZipFile) as err:
+                return (str(err), 406)
+            except WizardError as err:
+                self._logger.warning(str(err))
                 return (str(err), 406)
             except Exception:
                 self._logger.opt(exception=True).critical("An unhanded exception occurred!")
