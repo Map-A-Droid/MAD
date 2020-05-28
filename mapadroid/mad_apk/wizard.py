@@ -4,7 +4,7 @@ import io
 import requests
 import zipfile
 from threading import Thread
-from typing import NoReturn, Optional, Tuple
+from typing import List, NoReturn, Optional, Tuple
 import urllib3
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APK_Arch, APK_Type, APK_Package
@@ -334,6 +334,8 @@ class PackageImporter(object):
                  downloaded_file: io.BytesIO, mimetype: str, version: str = None):
         version_from_apk: str = None
         package_from_apk: str = None
+        self.files_to_prune: List[str] = []
+        self._data: io.BytesIO = downloaded_file
         if mimetype == 'application/vnd.android.package-archive':
             (version_from_apk, package_from_apk) = self.get_apk_info(downloaded_file)
         else:
@@ -348,7 +350,9 @@ class PackageImporter(object):
                 raise InvalidFile('Unknown package %s' % (package_from_apk))
             if pkg.name != package.name:
                 raise WizardError('Attempted to upload %s as %s' % (pkg.name, package.name))
-            storage_obj.save_file(package, architecture, version, mimetype, downloaded_file, True)
+            if self.files_to_prune:
+                self.prune_zip()
+            storage_obj.save_file(package, architecture, version, mimetype, self._data, True)
             log_msg = 'New APK uploaded for {} [{}]'
             logger.info(log_msg, package.name, version)
 
@@ -363,15 +367,28 @@ class PackageImporter(object):
         return InvalidFile('Unable to parse the APK file')
 
     def get_compressed_info(self, downloaded_file: io.BytesIO) -> Tuple[str, str]:
-        zip_data = zipfile.ZipFile(downloaded_file)
-        for fname in zip_data.namelist():
-            try:
-                with zip_data.open(fname, 'r') as fh:
-                    apk = apkutils.APK(io.BytesIO(fh.read()))
-                    manifest = apk.get_manifest()
-                    return (manifest['@android:versionName'], manifest['@package'])
-            except (BadZipFile, LargeZipFile):
-                continue
-            except KeyError:
-                continue
+        with zipfile.ZipFile(downloaded_file) as zip_data:
+            for fname in zip_data.namelist():
+                try:
+                    with zip_data.open(fname, 'r') as fh:
+                        apk = apkutils.APK(io.BytesIO(fh.read()))
+                        manifest = apk.get_manifest()
+                        return (manifest['@android:versionName'], manifest['@package'])
+                except (BadZipFile, LargeZipFile):
+                    self.files_to_prune.append(fname)
+                    continue
+                except KeyError:
+                    continue
         raise InvalidFile('Unable to extract information from file')
+
+    def prune_zip(self) -> NoReturn:
+        pruned_zip = io.BytesIO()
+        zin = zipfile.ZipFile(self._data, 'r')
+        zout = zipfile.ZipFile(pruned_zip, 'w')
+        for item in zin.infolist():
+            if item.filename in self.files_to_prune:
+                continue
+            zout.writestr(item, zin.read(item.filename))
+        zout.close()
+        zin.close()
+        self._data = pruned_zip
