@@ -301,7 +301,7 @@ class deviceUpdater(object):
 
                         temp_comm = self._websocket.get_origin_communicator(origin)
 
-                        if temp_comm is None:
+                        if temp_comm is None or temp_comm is False:
                             errorcount += 1
                             logger.error(
                                 'Cannot start job {} on device {} - File/Job: {} - Device not connected (ID: {})'
@@ -532,13 +532,16 @@ class deviceUpdater(object):
                 package = getattr(APK_Type, APK_Package(package_raw).name)
                 architecture = lookup_arch_enum(architecture_raw)
                 package_all: Package_Info = self._storage_obj.get_current_package_info(package)
+                if package_all is None:
+                        logger.warning('No MAD APK for {} [{}]', package, architecture.name)
+                        return False
                 try:
                     mad_apk = package_all[architecture]
                 except KeyError:
                     architecture = APK_Arch.noarch
                     mad_apk = package_all[architecture.noarch]
 
-                if not mad_apk or mad_apk.filename is None:
+                if mad_apk.filename is None:
                     logger.warning('No MAD APK for {} [{}]', package, architecture.name)
                     return False
                 # Validate it is supported
