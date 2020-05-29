@@ -359,15 +359,17 @@ class PackageImporter(object):
         else:
             logger.warning('Unable to determine apk information')
 
-    def get_apk_info(self, downloaded_file: io.BytesIO) -> Tuple[str, str]:
+    def get_apk_info(self, downloaded_file: io.BytesIO) -> NoReturn:
         try:
             apk = apkutils.APK(downloaded_file)
         except:  # noqa: E722
             logger.warning('Unable to parse APK file')
         else:
             manifest = apk.get_manifest()
-            self.package_version, self.package_name = (manifest['@android:versionName'], manifest['@package'])
-        return InvalidFile('Unable to parse the APK file')
+            try:
+                self.package_version, self.package_name = (manifest['@android:versionName'], manifest['@package'])
+            except KeyError:
+                raise InvalidFile('Unable to parse the APK file')
 
     def normalize_package(self) -> NoReturn:
         """ Normalize the package
