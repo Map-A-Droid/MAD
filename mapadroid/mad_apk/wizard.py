@@ -4,11 +4,11 @@ import io
 import requests
 import zipfile
 from threading import Thread
-from typing import List, NoReturn, Optional, Tuple
+from typing import NoReturn, Optional, Tuple
 import urllib3
 from .abstract_apk_storage import AbstractAPKStorage
 from .apk_enums import APK_Arch, APK_Type, APK_Package
-from .utils import lookup_package_info, is_newer_version, supported_pogo_version
+from .utils import lookup_package_info, is_newer_version, supported_pogo_version, lookup_arch_enum
 from mapadroid.utils import global_variables
 from mapadroid.utils.gplay_connector import GPlayConnector
 from mapadroid.utils.logging import logger
@@ -332,29 +332,32 @@ class PackageImporter(object):
     """
     def __init__(self, package: APK_Type, architecture: APK_Arch, storage_obj: AbstractAPKStorage,
                  downloaded_file: io.BytesIO, mimetype: str, version: str = None):
-        version_from_apk: str = None
-        package_from_apk: str = None
-        self.files_to_prune: List[str] = []
+        self.package_version: str = None
+        self.package_name: str = None
+        self.package_arch: APK_Arch = None
         self._data: io.BytesIO = downloaded_file
         if mimetype == 'application/vnd.android.package-archive':
-            (version_from_apk, package_from_apk) = self.get_apk_info(downloaded_file)
+            self.get_apk_info(downloaded_file)
         else:
-            (version_from_apk, package_from_apk) = self.get_compressed_info(downloaded_file)
+            self.normalize_package()
             mimetype = 'application/zip'
-        if version_from_apk:
+        if self.package_version:
             if not version:
-                version = version_from_apk
+                version = self.package_version
             try:
-                pkg = APK_Package(package_from_apk)
+                pkg = APK_Package(self.package_name)
             except ValueError:
-                raise InvalidFile('Unknown package %s' % (package_from_apk))
+                raise InvalidFile('Unknown package %s' % (self.package_name))
             if pkg.name != package.name:
                 raise WizardError('Attempted to upload %s as %s' % (pkg.name, package.name))
-            if self.files_to_prune:
-                self.prune_zip()
+            if self.package_arch and self.package_arch != architecture and architecture != APK_Arch.noarch:
+                msg = 'Attempted to upload {} as an invalid architecture.  Expected {} but received {}'
+                raise WizardError(msg.format(pkg.name, architecture.name, self.package_arch.name))
             storage_obj.save_file(package, architecture, version, mimetype, self._data, True)
             log_msg = 'New APK uploaded for {} [{}]'
             logger.info(log_msg, package.name, version)
+        else:
+            logger.warning('Unable to determine apk information')
 
     def get_apk_info(self, downloaded_file: io.BytesIO) -> Tuple[str, str]:
         try:
@@ -363,32 +366,46 @@ class PackageImporter(object):
             logger.warning('Unable to parse APK file')
         else:
             manifest = apk.get_manifest()
-            return (manifest['@android:versionName'], manifest['@package'])
+            self.package_version, self.package_name = (manifest['@android:versionName'], manifest['@package'])
         return InvalidFile('Unable to parse the APK file')
 
-    def get_compressed_info(self, downloaded_file: io.BytesIO) -> Tuple[str, str]:
-        with zipfile.ZipFile(downloaded_file) as zip_data:
-            for fname in zip_data.namelist():
+    def normalize_package(self) -> NoReturn:
+        """ Normalize the package
+
+        Validate that only valid APK files are present within the package and have the correct extension.  Exclude the
+        DPI APK as it is not relevant to the installation
+        """
+        pruned_zip = io.BytesIO()
+        zout = zipfile.ZipFile(pruned_zip, 'w')
+        with zipfile.ZipFile(self._data) as zip_data:
+            for item in zip_data.infolist():
                 try:
-                    with zip_data.open(fname, 'r') as fh:
+                    with zip_data.open(item, 'r') as fh:
                         apk = apkutils.APK(io.BytesIO(fh.read()))
                         manifest = apk.get_manifest()
-                        return (manifest['@android:versionName'], manifest['@package'])
+                        try:
+                            self.package_version = manifest['@android:versionName']
+                            self.package_name = manifest['@package']
+                        except KeyError:
+                            pass
+                    try:
+                        filename = manifest['@split']
+                        if filename[-3:] == 'dpi':
+                            continue
+                    except KeyError:
+                        filename = item.filename
+                    else:
+                        try:
+                            # The architectures use dash but we are required to use underscores
+                            self.package_arch = lookup_arch_enum(filename.rsplit('.', 1)[1].replace('-', '_'))
+                        except (IndexError, KeyError, ValueError):
+                            pass
+                    if filename[-3:] != 'apk':
+                        filename += '.apk'
+                    zout.writestr(filename, zip_data.read(item.filename))
                 except (BadZipFile, LargeZipFile):
-                    self.files_to_prune.append(fname)
                     continue
-                except KeyError:
-                    continue
-        raise InvalidFile('Unable to extract information from file')
-
-    def prune_zip(self) -> NoReturn:
-        pruned_zip = io.BytesIO()
-        zin = zipfile.ZipFile(self._data, 'r')
-        zout = zipfile.ZipFile(pruned_zip, 'w')
-        for item in zin.infolist():
-            if item.filename in self.files_to_prune:
-                continue
-            zout.writestr(item, zin.read(item.filename))
         zout.close()
-        zin.close()
+        if not self.package_version:
+            raise InvalidFile('Unable to extract information from file')
         self._data = pruned_zip
