@@ -321,6 +321,11 @@ class MITMBase(WorkerBase):
             self._clear_quests_failcount = 0
             self.set_devicesettings_value('last_questclear_time', time.time())
             logger.info("Delete old quest {}", int(trash) + 1)
+            for i in range(3):
+                logger.debug("repeated trash click #{}", i + 1)
+                self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
+                time.sleep(0.3 + int(delayadd))
+            logger.debug("final trash click ...")
             self._communicator.click(int(trashcancheck[0].x), int(trashcancheck[0].y))
             time.sleep(2.5 + int(delayadd))
             self._communicator.click(int(x), int(y))
