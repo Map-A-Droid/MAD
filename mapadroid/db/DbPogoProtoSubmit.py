@@ -23,7 +23,7 @@ class DbPogoProtoSubmit:
     def __init__(self, db_exec: PooledQueryExecutor):
         self._db_exec: PooledQueryExecutor = db_exec
 
-    def mons(self, origin: str, map_proto: dict, mon_ids_iv: Optional[List[int]], mitm_mapper):
+    def mons(self, origin: str, map_proto: dict, mitm_mapper):
         """
         Update/Insert mons from a map_proto dict
         """
