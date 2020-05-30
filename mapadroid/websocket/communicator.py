@@ -176,7 +176,10 @@ class Communicator(AbstractCommunicator):
         return "com.nianticlabs.pokemongo" in topmost
 
     def topmost_app(self) -> Optional[MessageTyping]:
-        return self.__run_get_gesponse("more topmost app\r\n")
+        topmost = self.__run_get_gesponse("more topmost app\r\n")
+        if topmost and "KO:" in topmost:
+            return None
+        return topmost
 
     def set_location(self, location: Location, altitude: float) -> Optional[MessageTyping]:
         return self.__run_get_gesponse("geo fix {} {} {}\r\n".format(location.lat, location.lng, altitude))
