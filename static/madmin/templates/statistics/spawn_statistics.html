@@ -25,7 +25,7 @@
                 {
                     "targets": [6],
                     "render": function (data, type, row) {
-                        var all = "<button type='button' class='btn btn-primary btn-sm'><a href='spawn_details?id=" + row.area_id + "&eventid=" + row.eventid + "&index=" + row.index + "&event=" + row.event +"&mode=ALL' title='Show all Spawnpoints ( " + row.sum + " )'><i class='fa fa-eye'></i></a></button>";
+                        var all = "<button type='button' class='btn btn-primary btn-sm'><a href='spawn_details?id=" + row.area_id + "&eventid=" + row.eventid + "&index=" + row.index + "&event=" + row.event + "&mode=ALL' title='Show all Spawnpoints ( " + row.sum + " )'><i class='fa fa-eye'></i></a></button>";
                         var del = "<button type='button' class='delete btn btn-danger btn-sm confirm' data-areaid='" + row.area_id + "' data-index='" + row.index + "' data-eventid='" + row.eventid + "' title='Do you really want to delete these spawnpoints?'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>";
                         var conv = "";
                         var activetoday = "";
@@ -33,19 +33,19 @@
 
                         if (row.event == "DEFAULT") {
                             outdated = "<button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i></button>";
-                            if(row.outdatedspawns > 0) {
-                                var outdated = "<button type='button' class='outdated btn btn-dark btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event +"&mode=OLD' title='Show outdated Spawnpoints ( " + row.outdatedspawns + " )'><i class='fa fa-history'></i></a></button>";
+                            if (row.outdatedspawns > 0) {
+                                outdated = "<button type='button' class='outdated btn btn-dark btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event + "&mode=OLD' title='Show outdated Spawnpoints ( " + row.outdatedspawns + " )'><i class='fa fa-history'></i></a></button>";
                             }
                         }
 
                         if (row.event != "DEFAULT") {
-                            var conv = "<button type='button' class='convert delete btn btn-info btn-sm' data-areaid='" + row.area_id + "' data-index='" + row.index + "' data-eventid='" + row.eventid + "'> <div class='convert_div' style='display:inline;'><i class='fa fa-exchange-alt'></i></div></button>";
-                            var activetoday = "<button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i></button>";
-                            if(row.todayspawns > 0) {
-                                var activetoday = "<button type='button' class='activetoday btn btn-success btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event +"&mode=ACTIVE' title='Check still active event spawnpoints ( " + row.todayspawns + " )'><i class='fa fa-clock'></i></a></button>";
+                            conv = "<button type='button' class='convert delete btn btn-info btn-sm' data-areaid='" + row.area_id + "' data-index='" + row.index + "' data-eventid='" + row.eventid + "'> <div class='convert_div' style='display:inline;'><i class='fa fa-exchange-alt'></i></div></button>";
+                            activetoday = "<button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i></button>";
+                            if (row.todayspawns > 0) {
+                                activetoday = "<button type='button' class='activetoday btn btn-success btn-sm'><a href='spawn_details?id=" + row.area_id + "&index=" + row.index + "&eventid=" + row.eventid + "&event=" + row.event + "&mode=ACTIVE' title='Check still active event spawnpoints ( " + row.todayspawns + " )'><i class='fa fa-clock'></i></a></button>";
                             }
                         }
-                             return all + " " + del + " " + activetoday + " " + outdated + " " + conv
+                        return all + " " + del + " " + activetoday + " " + outdated + " " + conv
                     }
                 }
             ],
@@ -58,12 +58,11 @@
             "stateSave": true,
             "stateDuration": 0,
             "stateSaveCallback": function(settings,data) {
-            localStorage.setItem( 'MAD_aeSP_' + settings.sInstance, JSON.stringify(data) )
+                localStorage.setItem( 'MAD_aeSP_' + settings.sInstance, JSON.stringify(data) )
             },
             "stateLoadCallback": function(settings) {
-            return JSON.parse( localStorage.getItem( 'MAD_aeSP_' + settings.sInstance ) )
+                return JSON.parse( localStorage.getItem( 'MAD_aeSP_' + settings.sInstance ) )
             }
-
         });
 	}
 
@@ -80,7 +79,7 @@
                 }
             });
 	}
-	
+
         function loadDataByFence() {
             $.blockUI({ message: '<img src="static/loading.gif" width="100px" /><br /><h2>Loading...</h2>' });
             $('body').Aplus();
@@ -139,7 +138,7 @@
                     $("select#geofence_type_selector_overkill").append($('<option>', {value: -1, text: "-- select geofence --"}));
                         for (fence in tmp_fences) {
                             $("select#geofence_type_selector_overkill").append($('<option>', {value: tmp_fences[fence].area_id, text: tmp_fences[fence].name + " [" + tmp_fences[fence].mode + "]"}));
-                    }		    
+                    }
 		    // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
                     if (result.events.length * result.spawnpoints_count * mon_mitm_fences_count > 1500000) {
                         // Enable overkill mode aka single area selector. Better than loading for 10 minutes.
