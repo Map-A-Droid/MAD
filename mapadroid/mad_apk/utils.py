@@ -36,7 +36,7 @@ def convert_to_backend(req_type: str, req_arch: str) -> Tuple[APK_Type, APK_Arch
     return (backend_type, backend_arch)
 
 
-def file_generator(db, storage_obj, package: APK_Type, architecture: APK_Arch) -> Generator:
+def file_generator(db, storage_obj, package: APK_Type, architecture: APK_Arch) -> Union[Generator, Response]:
     """ Create a generator for retrieving the stored package
 
     Args:
@@ -249,6 +249,8 @@ def stream_package(db, storage_obj, package: APK_Type, architecture: APK_Arch) -
     """
     package_info: MAD_Package = lookup_package_info(storage_obj, package, architecture)[0]
     gen_func: Generator = file_generator(db, storage_obj, package, architecture)
+    if isinstance(gen_func, Response):
+        return gen_func
     return Response(
         stream_with_context(gen_func),
         content_type=package_info.mimetype,

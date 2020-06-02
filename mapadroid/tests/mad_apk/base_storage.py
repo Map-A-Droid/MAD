@@ -1,3 +1,4 @@
+from flask import Response
 import io
 import os
 from unittest import TestCase
@@ -29,6 +30,7 @@ class StorageBase(TestCase):
             args.sdb = True
         (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
         self.db_purge()
+        self.storage_elem.delete_file(APK_Type.rgc, APK_Arch.noarch)
 
     def tearDown(self):
         self.db_purge()
@@ -103,3 +105,8 @@ class StorageBase(TestCase):
         version = '0.1'
         upload_rgc(self.storage_elem, version=version)
         self.assertTrue(self.storage_elem.get_current_version(APK_Type.rgc, APK_Arch.noarch) == version)
+
+    def test_check_invalid(self):
+        gen = file_generator(self.db_wrapper, self.storage_elem, APK_Type.rgc, APK_Arch.noarch)
+        self.assertTrue(isinstance(gen, Response))
+        self.assertTrue(gen.status_code == 404)
