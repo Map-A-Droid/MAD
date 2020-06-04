@@ -417,7 +417,7 @@ class MappingManager:
                                                                      "coords_spawns_known", False),
                                                                  routefile=route_resource,
                                                                  calctype=area.get("route_calc_algorithm",
-                                                                                   "optimized"),
+                                                                                   "route"),
                                                                  joinqueue=self.join_routes_queue,
                                                                  S2level=mode_mapping.get(mode, {}).get(
                                                                      "s2_cell_level", 30),
@@ -425,7 +425,7 @@ class MappingManager:
                                                                  area.get("settings", {}).get("include_event_id", None)
                                                                  )
             logger.info("Initializing area {}", area["name"])
-            if mode not in ("iv_mitm", "idle") and str(area.get("route_calc_algorithm", "optimized"))\
+            if mode not in ("iv_mitm", "idle") and str(area.get("route_calc_algorithm", "route"))\
                     not in "routefree":
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),

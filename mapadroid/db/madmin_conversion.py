@@ -221,7 +221,7 @@ TABLES = [
         `routecalc` int UNSIGNED NOT NULL,
         `init` boolean NOT NULL,
         `level` boolean NULL,
-        `route_calc_algorithm` enum('optimized','quick') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
+        `route_calc_algorithm` enum('route') COLLATE utf8mb4_unicode_ci DEFAULT NULL,
         `speed` float DEFAULT NULL,
         `max_distance` float DEFAULT NULL,
         `ignore_spinned_stops` boolean DEFAULT NULL,

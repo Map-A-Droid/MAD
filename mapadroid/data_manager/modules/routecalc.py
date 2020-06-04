@@ -120,7 +120,7 @@ class RouteCalc(Resource):
         return new_route
 
     def getJsonRoute(self, coords: List[Tuple[str, str]], max_radius: int, max_coords_within_radius: int,
-                     in_memory: bool, num_processes: int = 1, algorithm: str = 'optimized', useS2: bool = False,
+                     in_memory: bool, num_processes: int = 1, algorithm: str = 'route', useS2: bool = False,
                      S2level: int = 15, route_name: str = 'Unknown') -> List[Dict[str, float]]:
         export_data = []
         if useS2:

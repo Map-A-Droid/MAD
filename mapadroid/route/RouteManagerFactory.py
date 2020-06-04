@@ -16,7 +16,7 @@ class RouteManagerFactory:
                          mode: WorkerType = WorkerType.UNDEFINED,
                          init: bool = False, name: str = "unknown", settings=None,
                          coords_spawns_known: bool = False,
-                         level: bool = False, calctype: str = "optimized", useS2: bool = False,
+                         level: bool = False, calctype: str = "route", useS2: bool = False,
                          S2level: int = 15, joinqueue=None, include_event_id=None):
 
         if mode == WorkerType.RAID_MITM.value:
@@ -50,7 +50,7 @@ class RouteManagerFactory:
                                               joinqueue=joinqueue
                                               )
         elif mode == WorkerType.STOPS.value:
-            if level and calctype in ('optimized', 'quick'):
+            if level and calctype in ('route'):
                 route_manager = RouteManagerLeveling(db_wrapper, dbm, area_id, coords, max_radius,
                                                      max_coords_within_radius,
                                                      path_to_include_geofence, path_to_exclude_geofence,

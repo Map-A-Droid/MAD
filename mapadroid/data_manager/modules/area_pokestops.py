@@ -70,9 +70,9 @@ class AreaPokestops(Area):
             "route_calc_algorithm": {
                 "settings": {
                     "type": "option",
-                    "values": ['optimized', 'quick', 'routefree'],
+                    "values": ['route', 'routefree'],
                     "require": False,
-                    "description": "Method of calculation for routes. (Default optimized)",
+                    "description": "Method of calculation for routes. (Default route)",
                     "expected": str
                 }
             }

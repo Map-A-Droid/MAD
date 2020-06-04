@@ -51,7 +51,7 @@ class RouteManagerBase(ABC):
                  path_to_exclude_geofence: GeoFence,
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown",
                  settings: dict = None,
-                 level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15,
+                 level: bool = False, calctype: str = "route", useS2: bool = False, S2level: int = 15,
                  joinqueue=None):
         self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
