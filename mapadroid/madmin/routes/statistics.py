@@ -62,6 +62,23 @@ class statistics(object):
         for route, view_func in routes:
             self._app.route(route)(view_func)
 
+    def generate_mon_icon_url(self, id, form=None, costume=None, shiny=False):
+        base_path = 'https://raw.githubusercontent.com/whitewillem/PogoAssets/resized/no_border'
+
+        form_str = '_00'
+        if form is not None and str(form) != '0':
+            form_str = '_' + str(form)
+
+        costume_str = ''
+        if costume is not None and str(costume) != '0':
+            costume_str = '_' + str(costume)
+
+        shiny_str = ''
+        if shiny:
+            shiny_str = '_shiny'
+
+        return "{}/pokemon_icon_{:03d}{}{}{}.png".format(base_path, id, form_str, costume_str, shiny_str)
+
     @auth_required
     def statistics(self):
         minutes_usage = request.args.get('minutes_usage')
@@ -208,8 +225,7 @@ class statistics(object):
         data = self._db_stats_reader.get_best_pokemon_spawns()
         if data is not None:
             for dat in data:
-                mon = "%03d" % dat[1]
-                monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_00.png'
+                monPic = self.generate_mon_icon_url(dat[1], dat[8], dat[9])
                 monName = get_mon_name(dat[1])
                 if self._args.db_method == "rm":
                     lvl = calculate_mon_level(dat[6])
@@ -252,6 +268,7 @@ class statistics(object):
             form_suffix = "%02d" % form_mapper(dat[2], dat[5])
             mon = "%03d" % dat[2]
             monPic = 'asset/pokemon_icons/pokemon_icon_' + mon + '_' + form_suffix + '_shiny.png'
+            monPic = self.generate_mon_icon_url(dat[2], dat[8], dat[9])
             monName = get_mon_name(dat[2])
             diff: int = dat[0]
             if diff == 0:
@@ -848,7 +865,7 @@ class statistics(object):
         self._db.delete_spawnpoints([x for x in self._db.get_all_spawnpoints() if x not in spawns])
 
         return jsonify({'status': 'success'})
-    
+
     @auth_required
     @logger.catch()
     def get_spawnpoints_stats_summary(self):
@@ -857,5 +874,3 @@ class statistics(object):
         spawnpoints_total = self._db_stats_reader.get_all_spawnpoints_count()
         stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}
         return jsonify(stats)
-
-

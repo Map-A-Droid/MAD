@@ -33,118 +33,115 @@
                 lines: {
                     show: true,
                     color: '#ffa500'
-                },
-                points: {
-                    show: true
-                }
-            },
-            grid: {
-                hoverable: true,
-                borderWidth: 1,
-                backgroundColor: { colors: ["transparent", "transparent"] }
-            },
-            legend: {
-                container: $("#legendContainer_spawn"),
-                noColumns: 0
-            }
-        };
+              },
+              points: {
+                  show: true
+              }
+          },
+          grid: {
+              hoverable: true,
+              borderWidth: 1,
+              backgroundColor: { colors: ["transparent", "transparent"] }
+          },
+          legend: {
+              container: $("#legendContainer_spawn"),
+              noColumns: 0
+          }
+      };
 
-        var options_bars = {
-            xaxis: {
-                mode: "time",
-            {% if time == "12" %}
-                timeformat: "%I:00 %p",
-            {% else %}
-                timeformat: "%H:00",
-            {% endif %}
-                timezone: "browser"
-            },
-            series: {
-                bars: {
-                    show: true
-                }
-            },
-            bars: {
-                align: "center",
-                barWidth: 60 * 40 * 1000
-            },
-            grid: {
-                hoverable: true,
-                borderWidth: 2,
-                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
-            }
-        };
+      var options_bars = {
+          xaxis: {
+              mode: "time",
+          {% if time == "12" %}
+              timeformat: "%I:00 %p",
+          {% else %}
+              timeformat: "%H:00",
+          {% endif %}
+              timezone: "browser"
+          },
+          series: {
+              bars: {
+                  show: true
+              }
+          },
+          bars: {
+              align: "center",
+              barWidth: 60 * 40 * 1000
+          },
+          grid: {
+              hoverable: true,
+              borderWidth: 2,
+              backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+          }
+      };
 
-        var options_pie = {
-            series: {
-                pie: {
-                    show: true,
-                    radius: 1,
-                    tilt: 0.5,
-                    label: {
-                        show: true,
-                        radius: 0.8,
-                        threshold: 0.1
-                    }
-                }
-            },
-            legend: {
-                show: true,
-                labelFormatter: function (label, series) {
-                    return '<div id="legendContainer" style="color:black;">' +
-                        label + ' : ' +
-                        (series.data[0][1]) +
-                        '</div>';
-                }
-            }
-        };
+      var options_pie = {
+          series: {
+              pie: {
+                  show: true,
+                  radius: 1,
+                  tilt: 0.5,
+                  label: {
+                      show: true,
+                      radius: 0.8,
+                      threshold: 0.1
+                  }
+              }
+          },
+          legend: {
+              show: true,
+              labelFormatter: function (label, series) {
+                  return '<div id="legendContainer" style="color:black;">' +
+                      label + ' : ' +
+                      (series.data[0][1]) +
+                      '</div>';
+              }
+          }
+      };
 
-        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+      $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
 
-        $.ajax({
-            "url": "get_game_stats_mon?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
-            "type": "GET",
-            "cache": false,
-            "dataType": "json",
-            success: function (result) {
-                spawn = result.spawn
-                good_spawns = result.good_spawns
-                detection = result.detection
+      $.ajax({
+          "url": "get_game_stats_mon?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
+          "type": "GET",
+          "cache": false,
+          "dataType": "json",
+          success: function (result) {
+              spawn = result.spawn
+              good_spawns = result.good_spawns
+              detection = result.detection
 
-                setGrid('#show-data-good-pokemon', good_spawns, [
-                    { data: 'id', title: 'Mon-ID' },
-                    { data: 'name', title: 'Name' },
-                    { data: null, title: 'Pic' },
-                    { data: 'iv', title: 'IV' },
-                    { data: 'lvl', title: 'Level' },
-                    { data: 'cp', title: 'CP' },
-                    { data: 'periode', title: 'Scantime' }
-                ], [
+              setGrid('#show-data-good-pokemon', good_spawns, [
+                  { data: 'id', title: 'Mon-ID' },
+                  { data: null, title: 'Mon' },
+                  { data: 'lvl', title: 'Level' },
+                  { data: 'cp', title: 'CP' },
+                  { data: 'periode', title: 'Scantime' }
+              ],
+              [
                 {
-                    "targets": [2],
-                    "render": function (data, type, row) {
-                        return "<img src=" + row.img + " width=100>";
-                    }
+                  "targets": [1],
+                  "render": function (data, type, row) {
+                    return `<div class="media"><img class="mr-3" src="${row.img}" width="50"><div class="media-body">${row.name}</div></div>`
+                  }
                 }
-                ]);
+              ]);
 
-                $.plot($("#flot_spawn"), [
-                    {
-                        data: spawn.iv,
-                        label: "IV Spawns / Hour"
-                    },
-                    {
-                        data: spawn.noniv,
-                        label: "NonIV Spawns / Hour"
-                    },
-                    {
-                        data: spawn.sum,
-                        label: "Sum Spawns / Hour"
-                    }
-                ], options_dots);
-                $("#flot_spawn").UseTooltip();
-
-
+              $.plot($("#flot_spawn"), [
+                  {
+                      data: spawn.iv,
+                      label: "IV Spawns / Hour"
+                  },
+                  {
+                      data: spawn.noniv,
+                      label: "NonIV Spawns / Hour"
+                  },
+                  {
+                      data: spawn.sum,
+                      label: "Sum Spawns / Hour"
+                  }
+              ], options_dots);
+              $("#flot_spawn").UseTooltip();
             },
             complete: function () {
                 setTimeout($.unblockUI, 100);
@@ -265,18 +262,14 @@
             sorting: true,
             stateSave: true,
             stateSaveCallback: function(settings,data) {
-            localStorage.setItem( 'DataTables_' + settings.sInstance, JSON.stringify(data) )
+              localStorage.setItem( 'DataTables_' + settings.sInstance, JSON.stringify(data) )
             },
             stateLoadCallback: function(settings) {
-            return JSON.parse( localStorage.getItem( 'DataTables_' + settings.sInstance ) )
+              return JSON.parse( localStorage.getItem( 'DataTables_' + settings.sInstance ) )
             }
         });
 	    }
-
-
-
     });
-
 </script>
 
 <style type="text/css">
@@ -344,6 +337,6 @@
 <div id="legendContainer_spawn"></div>
 <div id="flot_spawn"></div>
 <br>
-<h2>Last 300 Perfect Pokemon</h2>
+<h2>Recent IV 100 mon</h2>
 <table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
 {% endblock %}

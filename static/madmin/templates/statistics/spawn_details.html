@@ -4,11 +4,6 @@
 {% endblock %}
 
 {% block scripts %}
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
-<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
-
-
 <script>
     function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
@@ -17,8 +12,8 @@
                     { data: 'id', title: 'Id' },
                     { data: 'lat', title: 'Latitude' },
                     { data: 'lon', title: 'Longitude' },
-                    { data: '', title: 'Last scanned' },
-                    { data: '', title: 'Actions' }
+                    { data: null, title: 'Last scanned' },
+                    { data: null, title: 'Actions' }
             ],
             "columnDefs": [
             {

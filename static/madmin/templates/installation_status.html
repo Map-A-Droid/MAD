@@ -4,9 +4,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
-<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
-
 <script>
     function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
@@ -15,9 +12,9 @@
                 { data: 'origin', title: 'Device' },
                 { data: 'jobname', title: 'File / Command' },
                 { data: 'status', title: 'Status' },
-                { data: '', title: 'Init Date/Time' },
-                { data: '', title: 'Date/Time' },
-                { data: '', title: 'Action' }
+                { data: null, title: 'Init Date/Time' },
+                { data: null, title: 'Date/Time' },
+                { data: null, title: 'Action' }
             ],
             "columnDefs": [
                 {
@@ -146,7 +143,7 @@
 {% endblock %}
 
 {% block content %}
-<h2>Jobstatus</h2>
+<h2>Job status</h2>
 <p>
 	{% with messages = get_flashed_messages() %}
 	  {% if messages %}

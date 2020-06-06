@@ -285,7 +285,8 @@ class DbStatsReader:
         logger.debug('Fetching best pokemon spawns from db')
         query = (
             "SELECT encounter_id, pokemon_id, unix_timestamp(last_modified), "
-            "individual_attack, individual_defense, individual_stamina, cp_multiplier, cp "
+            "individual_attack, individual_defense, individual_stamina, cp_multiplier, "
+            "cp, form, costume "
             "FROM pokemon "
             "WHERE individual_attack = 15 and individual_defense = 15 and individual_stamina = 15 "
             "ORDER BY last_modified DESC LIMIT 300"
