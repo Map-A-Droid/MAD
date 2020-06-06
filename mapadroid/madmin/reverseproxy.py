@@ -1,6 +1,10 @@
+from threading import current_thread
+
+
 class ReverseProxied(object):
 
     def __init__(self, app, script_name=None, scheme=None, server=None):
+        current_thread().name = 'madmin'
         self.app = app
         self.script_name = script_name
         self.scheme = scheme

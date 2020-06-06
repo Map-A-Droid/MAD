@@ -88,8 +88,7 @@ class WorkerQuests(MITMBase):
     def _pre_work_loop(self):
         if self.clear_thread is not None:
             return
-        self.clear_thread = Thread(name="clear_thread_%s" % str(
-            self._origin), target=self._clear_thread)
+        self.clear_thread = Thread(name=self._origin, target=self._clear_thread)
         self.clear_thread.daemon = True
         self.clear_thread.start()
 

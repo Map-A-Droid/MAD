@@ -239,7 +239,7 @@ if __name__ == "__main__":
                                 data_manager=data_manager,
                                 event=event,
                                 enable_configmode=args.config_mode)
-    t_ws = Thread(name='scanner', target=ws_server.start_server)
+    t_ws = Thread(name='system', target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()
     device_Updater = deviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
@@ -249,7 +249,7 @@ if __name__ == "__main__":
             rarity.start_dynamic_rarity()
             webhook_worker = WebhookWorker(
                 args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
-            t_whw = Thread(name="webhook_worker",
+            t_whw = Thread(name="system",
                            target=webhook_worker.run_worker)
             t_whw.daemon = True
             t_whw.start()
@@ -261,7 +261,7 @@ if __name__ == "__main__":
             t_usage.start()
     if args.with_madmin or args.config_mode:
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
-        t_madmin = Thread(name="madmin", target=madmin_start,
+        t_madmin = Thread(name="system", target=madmin_start,
                           args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater,
                                 jobstatus, storage_elem))
         t_madmin.daemon = True

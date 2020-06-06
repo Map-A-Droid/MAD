@@ -238,7 +238,9 @@ class WorkerBase(AbstractWorker):
 
     def start_worker(self):
         # async_result = self.thread_pool.apply_async(self._main_work_thread, ())
-        t_main_work = Thread(target=self._main_work_thread)
+        t_main_work = Thread(
+                             name=self._origin,
+                             target=self._main_work_thread)
         t_main_work.daemon = True
         t_main_work.start()
         # do some other stuff in the main process
@@ -315,7 +317,7 @@ class WorkerBase(AbstractWorker):
                 self._stop_worker_event.set()
                 return
 
-        self._async_io_looper_thread = Thread(name=str(self._origin) + '_asyncio_' + self._origin,
+        self._async_io_looper_thread = Thread(name=self._origin,
                                               target=self._start_asyncio_loop)
         self._async_io_looper_thread.daemon = True
         self._async_io_looper_thread.start()

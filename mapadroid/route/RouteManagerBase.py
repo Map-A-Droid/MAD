@@ -139,7 +139,7 @@ class RouteManagerBase(ABC):
         return self._max_radius
 
     def _start_check_routepools(self):
-        self._check_routepools_thread = Thread(name="_check_routepools_" + self.name,
+        self._check_routepools_thread = Thread(name=self.name + " - _check_routepools",
                                                target=self._check_routepools)
         self._check_routepools_thread.daemon = True
         self._check_routepools_thread.start()
@@ -261,7 +261,7 @@ class RouteManagerBase(ABC):
                 self.clustering_helper = ClusteringHelper(self._max_radius,
                                                           max_clustering,
                                                           self._cluster_priority_queue_criteria())
-            self._update_prio_queue_thread = Thread(name="prio_queue_update_" + self.name,
+            self._update_prio_queue_thread = Thread(name=self.name + "- prio_queue_update",
                                                     target=self._update_priority_queue_loop)
             self._update_prio_queue_thread.daemon = True
             self._update_prio_queue_thread.start()

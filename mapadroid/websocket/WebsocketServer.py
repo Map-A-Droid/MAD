@@ -59,7 +59,7 @@ class WebsocketServer(object):
         self.__loop_tid: int = -1
         self.__loop_mutex = Lock()
         self.__worker_shutdown_queue: queue.Queue[Thread] = queue.Queue()
-        self.__internal_worker_join_thread: Thread = Thread(name='worker_join_thread',
+        self.__internal_worker_join_thread: Thread = Thread(name='system',
                                                             target=self.__internal_worker_join)
         self.__internal_worker_join_thread.daemon = True
 
@@ -246,8 +246,7 @@ class WebsocketServer(object):
             return False
         # to break circular dependencies, we need to set the worker ref >.<
         communicator.worker_instance_ref = worker
-        new_worker_thread = Thread(
-            name='worker_%s' % origin, target=worker.start_worker)
+        new_worker_thread = Thread(name=origin, target=worker.start_worker)
         new_worker_thread.daemon = True
         entry.worker_thread = new_worker_thread
         entry.worker_instance = worker

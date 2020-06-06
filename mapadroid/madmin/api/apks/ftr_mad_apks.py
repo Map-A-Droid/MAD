@@ -83,7 +83,9 @@ class APIMadAPK(APKHandler):
                 wizard = APKWizard(self.dbc, self.storage_obj)
                 if call == 'import':
                     thread_args = (apk_type, apk_arch)
-                    t = Thread(target=wizard.apk_download, args=thread_args)
+                    t = Thread(name='PackageWizard',
+                               target=wizard.apk_download,
+                               args=thread_args)
                     t.start()
                     return (None, 204)
                 elif call == 'search':
