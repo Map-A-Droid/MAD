@@ -4,6 +4,7 @@ import json
 import os
 import re
 from typing import List
+import warnings
 import zipfile
 
 from gpapi.googleplay import GooglePlayAPI, LoginError
@@ -50,19 +51,21 @@ class GPlayConnector(object):
     def download(self, packagename: str) -> io.BytesIO:
         details = self.api.details(packagename)
         inmem_zip = io.BytesIO()
-        if details['offer'][0]['checkoutFlowRequired']:
-            method = self.api.delivery
-        else:
-            method = self.api.download
-        logger.info('Starting download for {}', packagename)
-        try:
-            data_iter = method(packagename, expansion_files=True)
-        except IndexError:
-            logger.error("Unable to find the package.  Maybe it no longer a supported device?")
-            return False
-        except Exception as exc:
-            logger.error("Error while downloading {} : {}", packagename, exc)
-            return False
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            if details['offer'][0]['checkoutFlowRequired']:
+                method = self.api.delivery
+            else:
+                method = self.api.download
+            logger.info('Starting download for {}', packagename)
+            try:
+                data_iter = method(packagename, expansion_files=True)
+            except IndexError:
+                logger.error("Unable to find the package.  Maybe it no longer a supported device?")
+                return False
+            except Exception as exc:
+                logger.error("Error while downloading {} : {}", packagename, exc)
+                return False
         additional_data = data_iter['additionalData']
         splits = data_iter['splits']
         try:
