@@ -25,9 +25,9 @@ class StorageBase(TestCase):
         except AttributeError:
             storage_type = 'fs'
         if storage_type == 'fs':
-            args.sdb = False
+            args.apk_storage_interface = 'fs'
         else:
-            args.sdb = True
+            args.apk_storage_interface = 'db'
         (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
         self.db_purge()
         self.storage_elem.delete_file(APK_Type.rgc, APK_Arch.noarch)

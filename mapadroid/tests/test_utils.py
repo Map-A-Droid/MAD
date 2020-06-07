@@ -121,7 +121,7 @@ class get_storage(object):
 
     def __enter__(self):
         self.db_wrapper, self.db_pool_manager = DbFactory.get_wrapper(args)
-        args.sdb = False
+        args.apk_storage_interface = 'fs'
         (self.storage_manager, self.storage_elem) = get_storage_obj(args, self.db_wrapper)
         self.db_purge()
         return self.storage_elem

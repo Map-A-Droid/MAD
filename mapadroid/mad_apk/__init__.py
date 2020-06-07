@@ -15,7 +15,7 @@ class StorageSyncManager(SyncManager):
 def get_storage_obj(application_args, dbc):
     manager: StorageSyncManager
     storage_obj: StorageSyncManager = None
-    if application_args.sdb:
+    if application_args.apk_storage_interface == 'db':
         StorageSyncManager.register('APKStorageDatabase', APKStorageDatabase)
         manager = StorageSyncManager()
         manager.start()
