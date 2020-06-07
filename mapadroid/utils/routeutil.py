@@ -1,7 +1,9 @@
 import datetime
 import re
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
-from mapadroid.utils.logging import logger
+
+logger = get_logger(LoggerEnums.utils)
 
 
 def check_walker_value_type(value):

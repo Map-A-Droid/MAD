@@ -7,7 +7,6 @@ from mapadroid.mad_apk import AbstractAPKStorage, get_apk_status, PackageImporte
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import MappingManager
 from mapadroid.utils import global_variables
-from mapadroid.utils.logging import logger
 
 
 class apk_manager(object):

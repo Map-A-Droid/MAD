@@ -1,11 +1,13 @@
+from enum import IntEnum
 import logging
 import os
 import sys
-
 from loguru import logger
+from functools import wraps
 
 
 def initLogging(args):
+    global logger
     log_level_label, log_level = logLevel(args.log_level, args.verbose)
     _, log_file_level = logLevel(args.log_file_level, args.verbose)
     log_trace = log_level <= 10
@@ -22,7 +24,7 @@ def initLogging(args):
         "handlers": [
             {
                 "sink": sys.stdout,
-                "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
+                "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{extra[name]: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
                 "colorize": colorize,
                 "level": log_level,
                 "enqueue": True,
@@ -30,7 +32,7 @@ def initLogging(args):
             },
             {
                 "sink": sys.stderr,
-                "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{thread.name: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
+                "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{extra[name]: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
 
                 "colorize": colorize,
                 "level": "ERROR",
@@ -38,13 +40,14 @@ def initLogging(args):
                 "backtrace": True,
                 "enqueue": True
             }
-        ]
+        ],
+        "extra": {"name": "Unknown"},
     }
 
     if not args.no_file_logs:
         file_logs = {
             "sink": os.path.join(args.log_path, args.log_filename),
-            "format": "[{time:MM-DD HH:mm:ss.SS}] [{thread.name: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
+            "format": "[{time:MM-DD HH:mm:ss.SS}] [{extra[name]: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
             "level": log_file_level,
             "backtrace": True,
             "diagnose": log_file_trace,
@@ -63,6 +66,7 @@ def initLogging(args):
 
     try:
         logger.configure(**logconfig)
+        init_custom(logger)
     except ValueError:
         logger.error("Logging parameters/configuration is invalid.")
         sys.exit(1)
@@ -132,22 +136,98 @@ def errorFilter(record):
     return record["level"] != "ERROR"
 
 
+def apply_custom(func):
+    @wraps(func)
+    def decorated(self, *args, **kwargs):
+        log = func(self, *args, **kwargs)
+        init_custom(log)
+        return log
+    return decorated
+
+
+def init_custom(log_out):
+    log_out.level("DEBUG2", no=9)
+    log_out.level("DEBUG3", no=8)
+    log_out.level("DEBUG4", no=7)
+    log_out.level("DEBUG5", no=6)
+    log_out.debug2 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG2", message, *args, **kwargs)
+    log_out.debug3 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG3", message, *args, **kwargs)
+    log_out.debug4 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG4", message, *args, **kwargs)
+    log_out.debug5 = lambda message, *args, **kwargs: log_out.opt(depth=1).log("DEBUG5", message, *args, **kwargs)
+
+
+class LoggerEnums(IntEnum):
+    unknown: int = 0
+    system: int =  1
+    database: int =  2
+    madmin: int = 3
+    data_manager: int = 4
+    patcher: int = 5
+    websocket: int = 6
+    webhook: int = 7
+    ocr: int = 8
+    routemanager: int = 9
+    mitm: int = 10
+    worker: int = 11
+    utils: int = 12
+
+
+@apply_custom
+def get_logger(logger_type: LoggerEnums, name: str = None) -> logger:
+    try:
+        if isinstance(logger_type, LoggerEnums):
+            log_id = logger_type
+        elif logger_type.isdigit():
+            log_id = LoggerEnums(logger_type)
+        else:
+            log_id = LoggerEnums.unknown
+    except ValueError:
+        log_id = LoggerEnums.unknown
+    parsed_name = get_bind_name(log_id, name)
+    return logger.bind(name=parsed_name)
+
+
+def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
+    if name:
+        if logger_type == LoggerEnums.routemanager:
+            name = 'Area - {}'.format(name)
+    elif logger_type == LoggerEnums.madmin:
+        name = 'madmin'
+    elif logger_type == LoggerEnums.websocket:
+        name = 'websocket'
+    elif logger_type != LoggerEnums.unknown:
+        name = 'system'
+    else:
+        name = 'Unknown'
+    return name
+
+
 # this is being used to change log level for gevent/Flask/Werkzeug
 class LogLevelChanger:
+    logger = get_logger(LoggerEnums.mitm)
     def log(level, msg):
         if level >= 40:
-            logger.log(level, msg)
+            LogLevelChanger.logger.log(level, msg)
         else:
-            logger.opt(depth=6).log("DEBUG5", msg)
+            LogLevelChanger.logger.opt(depth=6).log("DEBUG5", msg)
 
 
 # this is being used to intercept standard python logging to loguru
 class InterceptHandler(logging.Handler):
+    def __init__(self, *args, **kwargs):
+        try:
+            self.log_section = kwargs['log_section']
+            del kwargs['log_section']
+        except KeyError:
+            self.log_section = LoggerEnums.unknown
+        try:
+            self.log_identifier = kwargs['log_identifier']
+            del kwargs['log_identifier']
+        except KeyError:
+            self.log_identifier = LoggerEnums.unknown
+        super().__init__(*args, **kwargs)
+        self.log_identifier = get_bind_name(self.log_section, self.log_identifier)
+
     def emit(self, record):
-        logger.opt(depth=6, exception=record.exc_info).log("DEBUG5", record.getMessage())
-
-
-logger.debug2 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG2", message, *args, **kwargs)
-logger.debug3 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG3", message, *args, **kwargs)
-logger.debug4 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG4", message, *args, **kwargs)
-logger.debug5 = lambda message, *args, **kwargs: logger.opt(depth=1).log("DEBUG5", message, *args, **kwargs)
+        with logger.contextualize(name=self.log_identifier):
+            logger.opt(depth=6, exception=record.exc_info).log("DEBUG5", record.getMessage())

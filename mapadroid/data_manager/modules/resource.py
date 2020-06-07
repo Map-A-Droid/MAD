@@ -2,7 +2,10 @@ import copy
 from collections import UserDict
 import mysql
 from ..dm_exceptions import DependencyError, SaveIssue, UnknownIdentifier, UpdateIssue
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import  get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.data_manager)
 
 
 USER_READABLE_ERRORS = {

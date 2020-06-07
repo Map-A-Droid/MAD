@@ -1,8 +1,10 @@
 import datetime
 import time
 from threading import Event, Thread
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
-from mapadroid.utils.logging import logger
+
+logger = get_logger(LoggerEnums.utils)
 
 
 class Timer(object):

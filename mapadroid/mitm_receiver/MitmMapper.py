@@ -4,14 +4,15 @@ from multiprocessing.managers import SyncManager
 from queue import Empty
 from threading import Thread, Event
 from typing import Dict
-
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import logger
 from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
+
+logger = get_logger(LoggerEnums.mitm)
 args = parseArgs()
 
 

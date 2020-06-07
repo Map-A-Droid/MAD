@@ -1,9 +1,11 @@
 import math
 import multiprocessing
 import secrets
-
-from mapadroid.utils.logging import logger
 from .util import *
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.routemanager)
 
 
 def route_calc_impl(lessCoordinates, route_name, num_processes):

@@ -1,11 +1,9 @@
 import datetime
 import os
 import time
-
 from PIL import Image
 from flask import (render_template, request, redirect, flash, jsonify, url_for)
 from werkzeug.utils import secure_filename
-
 import mapadroid
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import (
@@ -15,10 +13,13 @@ from mapadroid.utils import MappingManager
 from mapadroid.utils.adb import ADBConnect
 from mapadroid.utils.collections import Location
 from mapadroid.utils.functions import (creation_date, generate_phones, image_resize)
-from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import ScreenshotType
 from mapadroid.utils.updater import jobType
 from mapadroid.websocket.WebsocketServer import WebsocketServer
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.madmin)
 
 
 class control(object):

@@ -5,9 +5,11 @@ import time
 from math import floor
 from multiprocessing import Lock
 from pathlib import Path
-
 from mapadroid.mitm_receiver import MitmMapper
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.mitm)
 
 
 class PlayerStats(object):

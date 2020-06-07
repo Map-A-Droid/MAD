@@ -1,6 +1,9 @@
 import requests
 import time
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.utils)
 
 
 class TokenDispenser(requests.Session):

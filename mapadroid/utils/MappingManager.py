@@ -6,15 +6,17 @@ from multiprocessing.pool import ThreadPool
 from queue import Empty, Queue
 from threading import Thread
 from typing import Optional, List, Dict, Tuple, Set
-
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerIV, RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import logger
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.utils)
 
 mode_mapping = {
     "raids_mitm": {

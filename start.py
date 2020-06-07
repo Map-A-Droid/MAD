@@ -7,7 +7,6 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
     sys.exit(1)
 from multiprocessing import Process
 from typing import Optional
-
 import calendar
 import datetime
 import gc
@@ -15,14 +14,11 @@ import os
 import pkg_resources
 import time
 from threading import Thread, active_count
-
 import psutil
-
 from mapadroid.utils.MappingManager import MappingManager, MappingManagerManager
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
-from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.event import Event
@@ -35,12 +31,14 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.madmin.madmin import madmin_start
 from mapadroid.mad_apk import get_storage_obj, StorageSyncManager, AbstractAPKStorage
-
 import unittest
+from mapadroid.utils.logging import initLogging, get_logger, LoggerEnums
+
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
 initLogging(args)
+logger = get_logger(LoggerEnums.database)
 
 
 # Patch to make exceptions in threads cause an exception.

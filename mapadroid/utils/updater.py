@@ -8,13 +8,14 @@ from enum import Enum
 from multiprocessing import Queue, Event
 from queue import Empty
 from threading import RLock, Thread
-
 import requests
-
 from mapadroid.utils import global_variables
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
 from mapadroid.mad_apk import AbstractAPKStorage, is_newer_version, APK_Type, file_generator, lookup_apk_enum, \
      lookup_arch_enum, APK_Package, APK_Arch, supported_pogo_version
+
+
+logger = get_logger(LoggerEnums.utils)
 
 
 class jobType(Enum):

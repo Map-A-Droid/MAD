@@ -4,10 +4,8 @@ import time
 from threading import Thread, current_thread, Lock, Event
 from typing import Dict, Optional, Set, KeysView, Coroutine, List
 import random as rand
-
 import websockets
 import asyncio
-
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -15,9 +13,8 @@ from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.data_manager import DataManager
-from mapadroid.utils.logging import logger, InterceptHandler
+from mapadroid.utils.logging import InterceptHandler, get_logger, LoggerEnums
 import logging
-
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
@@ -26,8 +23,11 @@ from mapadroid.worker.WorkerFactory import WorkerFactory
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
-logging.getLogger('websockets.server').addHandler(InterceptHandler())
-logging.getLogger('websockets.protocol').addHandler(InterceptHandler())
+logging.getLogger('websockets.server').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
+logging.getLogger('websockets.protocol').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
+
+
+logger = get_logger(LoggerEnums.websocket)
 
 
 class WebsocketServer(object):

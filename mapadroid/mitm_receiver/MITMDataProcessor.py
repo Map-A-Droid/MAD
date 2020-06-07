@@ -1,10 +1,12 @@
 from datetime import datetime
 from multiprocessing import Queue, Process
-
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.mitm)
 
 
 class MitmDataProcessor(Process):

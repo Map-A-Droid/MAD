@@ -1,9 +1,7 @@
 import json
 from typing import List, Optional
-
 from flask import (jsonify, render_template, request, redirect, url_for)
 from flask_caching import Cache
-
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import (
     auth_required, getCoordFloat, getBoundParameter, get_geofences, generate_coords_from_geofence
@@ -12,10 +10,12 @@ from mapadroid.route.RouteManagerBase import RoutePoolEntry
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.language import i8ln, get_mon_name
-from mapadroid.utils.logging import logger
 from mapadroid.utils.questGen import generate_quest
 from mapadroid.utils.s2Helper import S2Helper
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
+
+logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 

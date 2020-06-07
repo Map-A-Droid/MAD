@@ -1,11 +1,11 @@
 from multiprocessing import Lock, Semaphore
 from multiprocessing.managers import SyncManager
-
 import mysql
 from mysql.connector.pooling import MySQLConnectionPool
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
-from mapadroid.utils.logging import logger
 
+logger = get_logger(LoggerEnums.database)
 
 class PooledQuerySyncManager(SyncManager):
     pass
