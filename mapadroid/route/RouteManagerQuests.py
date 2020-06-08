@@ -13,7 +13,7 @@ class RouteManagerQuests(RouteManagerBase):
     def __init__(self, db_wrapper: DbWrapper, dbm, area_id, coords: List[Location], max_radius: float,
                  max_coords_within_radius: int, path_to_include_geofence: str, path_to_exclude_geofence: str,
                  routefile: str, mode=None, init: bool = False, name: str = "unknown", settings: dict = None,
-                 level: bool = False, calctype: str = "quick", joinqueue=None):
+                 level: bool = False, calctype: str = "route", joinqueue=None):
         RouteManagerBase.__init__(self, db_wrapper=db_wrapper, dbm=dbm, area_id=area_id, coords=coords,
                                   max_radius=max_radius,
                                   max_coords_within_radius=max_coords_within_radius,
@@ -63,7 +63,6 @@ class RouteManagerQuests(RouteManagerBase):
     def _get_coords_after_finish_route(self) -> bool:
         self._manager_mutex.acquire()
         try:
-
             if self._shutdown_route:
                 logger.info('Other worker shutdown route {} - leaving it', str(self.name))
                 return False
@@ -83,7 +82,7 @@ class RouteManagerQuests(RouteManagerBase):
             # remove coords to be ignored from coords
             coords = [coord for coord in coords if coord not in self._coords_to_be_ignored]
             if len(coords) > 0:
-                logger.info("Getting new coords - recalc quick route")
+                logger.info("Getting new coords - recalculating route")
                 self._recalc_stop_route(coords)
                 self._start_calc = False
             else:

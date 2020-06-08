@@ -105,7 +105,7 @@ class RouteCalc(Resource):
                             overwrite_calculation: bool = False, in_memory: bool = False, route_name: str = 'Unknown'
                             ) -> List[Dict[str, float]]:
         if overwrite_calculation:
-            calc_type = 'quick'
+            calc_type = 'route'
         self.set_recalc_status(True)
         if in_memory is False:
             if delete_old_route:
