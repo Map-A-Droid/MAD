@@ -170,6 +170,8 @@ class LoggerEnums(IntEnum):
     mitm: int = 10
     worker: int = 11
     utils: int = 12
+    storage: int = 13
+    package_mgr: int = 14
 
 
 @apply_custom
