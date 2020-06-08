@@ -4,9 +4,11 @@ import json
 import os
 import re
 from typing import List
+import warnings
 import zipfile
 
 from gpapi.googleplay import GooglePlayAPI, LoginError
+from mapadroid.mad_apk import APK_Arch, Device_Codename
 from mapadroid.utils import global_variables
 from mapadroid.utils.logging import logger
 from mapadroid.utils.token_dispenser import TokenDispenser
@@ -14,7 +16,7 @@ from mapadroid.utils.walkerArgs import parseArgs
 
 
 class GPlayConnector(object):
-    def __init__(self, architecture):
+    def __init__(self, architecture: APK_Arch):
         logger.debug('Creating new Google Play API connection')
         args = parseArgs()
         self.token_list = []
@@ -23,8 +25,8 @@ class GPlayConnector(object):
         self.email = None
         self.valid = False
         try:
-            device_codename = global_variables.MAD_APK_SEARCH[architecture]
-        except KeyError:
+            device_codename = getattr(Device_Codename, architecture.name).value
+        except ValueError:
             logger.critical('Device architecture not defined')
             raise
         self.tmp_folder: str = args.temp_path
@@ -49,19 +51,21 @@ class GPlayConnector(object):
     def download(self, packagename: str) -> io.BytesIO:
         details = self.api.details(packagename)
         inmem_zip = io.BytesIO()
-        if details['offer'][0]['checkoutFlowRequired']:
-            method = self.api.delivery
-        else:
-            method = self.api.download
-        logger.info('Starting download for {}', packagename)
-        try:
-            data_iter = method(packagename, expansion_files=True)
-        except IndexError:
-            logger.error("Unable to find the package.  Maybe it no longer a supported device?")
-            return False
-        except Exception as exc:
-            logger.error("Error while downloading {} : {}", packagename, exc)
-            return False
+        with warnings.catch_warnings():
+            warnings.simplefilter('ignore', RuntimeWarning)
+            if details['offer'][0]['checkoutFlowRequired']:
+                method = self.api.delivery
+            else:
+                method = self.api.download
+            logger.info('Starting download for {}', packagename)
+            try:
+                data_iter = method(packagename, expansion_files=True)
+            except IndexError:
+                logger.error("Unable to find the package.  Maybe it no longer a supported device?")
+                return False
+            except Exception as exc:
+                logger.error("Error while downloading {} : {}", packagename, exc)
+                return False
         additional_data = data_iter['additionalData']
         splits = data_iter['splits']
         try:

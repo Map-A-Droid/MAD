@@ -4,10 +4,6 @@
 {% endblock %}
 
 {% block scripts %}
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
-<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
-
 <script>
     function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
@@ -19,7 +15,7 @@
                     { data: 'sum', title: 'Spawnpoints' },
                     { data: 'known', title: 'known' },
                     { data: 'unknown', title: 'unknown' },
-                    { data: '', title: 'Actions' }
+                    { data: null, title: 'Actions', orderable: false }
             ],
             "columnDefs": [
                 {
@@ -54,7 +50,6 @@
             },
             "responsive": {{ responsive }},
             "order": [[ 0, "asc" ]],
-            "ordering": false,
             "stateSave": true,
             "stateDuration": 0,
             "stateSaveCallback": function(settings,data) {

@@ -13,10 +13,35 @@
             $('#file-input').trigger('click');
         }
     });
+
     $('#file-input').on('change', function () {
-        $("#upload_form").submit();
+        url = '{{ url_for('api_madapk') }}/'+ $("#apk_type").val() + '/'+ $("#apk_arch").val();
+        var fd = new FormData();
+        fd.append('file', $('#file-input')[0].files[0]);
+        fd.append('filename', $('#file-input')[0].files[0].name);
         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Uploading APK...</h2>' });
+        $.ajax({
+            url: url,
+            type: 'POST',
+            data: fd,
+            success:function(data, status, xhr){
+                if(xhr.status == 201) {
+                    $.unblockUI();
+                    alert('Successfully uploaded the file');
+                    location.reload();
+                }
+                $.unblockUI();
+            },
+            error:function(data, status, xhr) {
+                alert(data.responseText);
+                $.unblockUI();
+            },
+            cache: false,
+            contentType: false,
+            processData: false
+        });
     });
+
 
     $(".search").click(function() {
         if(confirm('Are you sure you want to search for an updated APK?  Currently no locks so dont spam it :)')) {
@@ -39,7 +64,7 @@
                 },
                 error: function(data, status, xhr) {
                     alert('Unable to start the search.  Please look at server logs');
-                    $.unblockUI();
+                    
                     location.reload();
                 }
             });
@@ -230,15 +255,15 @@
                 {% for apk_type, architectures in apks.items()|sort %}
                     {% for architecture, data in architectures.items() %}
                         <tr>
-                            <td class="align-middle">{{ data.usage_disp }}</td>
+                            <td class="align-middle">{{ data.package.name }}</td>
                             <td class="align-middle">{{ data.version }}</td>
-                            <td class="align-middle">{{ data.arch_disp }}</td>
+                            <td class="align-middle">{{ data.architecture.name }}</td>
                             <td align="right">
-                                <div class='update_status' data-apk_type="{{ apk_type }}" data-apk_arch="{{ architecture }}" style='display:inline;'></div>
-                                <button type="button" data-apk_type="{{ data.usage_disp }}" data-apk_arch="{{ data.arch_disp }}" class="search btn btn-success btn-sm"><i class="fas fa-sync"></i></button>
-                                <button type="button" data-apk_type="{{ data.usage_disp }}" data-apk_arch="{{ data.arch_disp }}" class="upload btn btn-success btn-sm"><i class="fas fa-upload"></i></button>
-                                {% if data.file_id != None %}
-                                <button type="button" data-apk_type="{{ data.usage_disp }}" data-apk_arch="{{ data.arch_disp }}" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
+                                <div class='update_status' data-apk_type="{{ apk_type.value }}" data-apk_arch="{{ architecture.value }}" style='display:inline;'></div>
+                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="search btn btn-success btn-sm"><i class="fas fa-sync"></i></button>
+                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="upload btn btn-success btn-sm"><i class="fas fa-upload"></i></button>
+                                {% if data.filename != None %}
+                                <button type="button" data-apk_type="{{ data.package.name }}" data-apk_arch="{{ data.architecture.name }}" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
                                 {% endif %}
                             </td>
                         </tr>
@@ -252,7 +277,7 @@
     </div>
 </div>
 <div style='display: none;'>
-    <form id='upload_form' action="{{ url_for('upload_file') }}" method="post" enctype="multipart/form-data">
+    <form id='upload_form' action="" method="post" enctype="multipart/form-data">
         <input id="file-input" type="file" name="apk" style="display: none;" />
         <input type='text' id="apk_type" name="apk_type"/>
         <input type='text' id="apk_arch" name="apk_arch"/>

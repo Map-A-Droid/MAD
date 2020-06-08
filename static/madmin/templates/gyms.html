@@ -4,8 +4,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
-
 <script>
     function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
@@ -18,7 +16,7 @@
                 { data: 'count', title: 'Matchcount' },
                 { data: 'modify', title: 'Last Modify', type: 'date' },
                 { data: 'creation', title: 'Creation Date', type: 'date' },
-                { data: '', title: 'Actions' }
+                { data: null, title: 'Actions' }
             ],
             "columnDefs": [
                 {

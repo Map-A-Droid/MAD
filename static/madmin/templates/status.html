@@ -59,7 +59,7 @@
                 {data: 'globalrebootcount', title: 'Total Reboots'},
                 {data: 'lastPogoReboot', title: 'Last Reboot'},
                 {
-                    data: '', title: 'Commands',
+                    data: null, title: 'Commands',
                     "render": function (data, type, oData) {
                         return "<center><button type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
                     }

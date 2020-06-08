@@ -4,9 +4,6 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jquery.lazyload/1.9.1/jquery.lazyload.js"></script>
-<script type="text/javascript" src="static/js/jquery.Aplus.min.js"></script>
-
 <script>
     function setGrid(tableGridHtmlId, gridData) {
         $(tableGridHtmlId).DataTable({
@@ -17,7 +14,7 @@
                 { data: 'event_start', title: 'Start' },
                 { data: 'event_end', title: 'End' },
                 { data: 'event_lure_duration', title: 'Lure Duration' },
-                { data: '', title: 'Actions' }
+                { data: null, title: 'Actions' }
             ],
             "columnDefs": [
                 {

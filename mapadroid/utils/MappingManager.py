@@ -620,7 +620,7 @@ class MappingManager:
                     devicemappings_tmp[dev]['settings']["account_rotation_started"] = \
                         self._devicemappings[dev]['settings']["account_rotation_started"]
 
-            logger.info("Acquiring lock to update mappings")
+            logger.debug("Acquiring lock to update mappings")
             with self.__mappings_mutex:
                 self._areas = areas_tmp
                 self._devicemappings = devicemappings_tmp
@@ -628,7 +628,7 @@ class MappingManager:
                 self._auths = auths_tmp
 
         else:
-            logger.info("Acquiring lock to update mappings,full")
+            logger.debug("Acquiring lock to update mappings,full")
             with self.__mappings_mutex:
                 self._monlists = self.__get_latest_monlists()
                 self._routemanagers = self.__get_latest_routemanagers()

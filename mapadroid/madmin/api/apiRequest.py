@@ -26,8 +26,8 @@ class APIRequest(object):
         self.content_type = None
         self.accept = None
         self.data = None
-        self.params = dict(request.args)
-        self.headers = dict(request.headers)
+        self.params = request.args
+        self.headers = request.headers
 
     def __call__(self):
         self.process_request()
@@ -52,6 +52,13 @@ class APIRequest(object):
                 raise apiException.FormattingError('Invalid RPC definition')
         elif self.content_type == 'application/octet-stream':
             self.data = data
+        elif 'multipart/form-data' in self.content_type:
+            self.data = {
+                'files': self._request.files,
+                'data': self._request.form
+            }
+        else:
+            raise apiException.ContentException(415)
 
     def process_request(self):
         # Determine the content-type of the request and convert accordingly
@@ -60,8 +67,6 @@ class APIRequest(object):
             content_type = global_variables.DEFAULT_FORMAT.lower()
         else:
             content_type = content_type.lower()
-        if content_type not in global_variables.SUPPORTED_FORMATS:
-            raise apiException.ContentException(415)
         self.content_type = content_type
         self._logger.debug4('Requested content-type: {}', self.content_type)
         # Determine the requested response from the accept header.  Use the first valid one that is returned
