@@ -39,6 +39,7 @@ def parseArgs():
                         default=os.getenv('MAD_CONFIG', os.path.join(mapadroid.MAD_ROOT,
                                                                      'configs/mappings.json')),
                         help='Set mappings file')
+    parser.add_argument('-asi', '--apk_storage_interface', default='fs', help='APK Storage Interface')
 
     # MySQL
     parser.add_argument('-dbm', '--db_method', required=False, default="rm",

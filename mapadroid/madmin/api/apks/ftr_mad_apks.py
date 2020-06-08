@@ -1,17 +1,12 @@
-# TODO - Move POST / PUT from routes/apk to here
-from threading import Thread
-
+from apkutils.apkfile import BadZipFile, LargeZipFile
 import flask
-
+import io
+from threading import Thread
+from .apkHandler import APKHandler
+from mapadroid.mad_apk import APK_Arch, APK_Type, stream_package, APKWizard, get_apk_status, MAD_APKS, \
+    PackageImporter, WizardError
 from mapadroid.madmin.functions import auth_required
 from mapadroid.utils import global_variables
-from mapadroid.utils.authHelper import check_auth
-from mapadroid.utils.apk_util import (
-    get_apk_list, 
-    AutoDownloader,
-    download_file
-)
-from .apkHandler import APKHandler
 
 
 class APIMadAPK(APKHandler):
@@ -24,69 +19,98 @@ class APIMadAPK(APKHandler):
         return '.' in filename and filename.rsplit('.', 1)[
             1].lower() in global_variables.MAD_APK_ALLOWED_EXTENSIONS
 
-    def get(self, apk_type, apk_arch):
-        apks = get_apk_list(self.dbc, apk_type, apk_arch)
+    @auth_required
+    def get(self, apk_type: APK_Type, apk_arch: APK_Arch):
         if flask.request.url.split('/')[-1] == 'download':
-            try:
-                auths = self._mapping_manager.get_auths()
-                authBase64 = self.api_req.headers['Authorization']
-                if auths and authBase64 and not check_auth(authBase64, None, auths):
-                    return flask.make_response('Please login with a valid origin and auth', 401)
-            except KeyError:
-                return flask.make_response('Please login with a valid origin and auth', 401)
-            try:
-                return download_file(self.dbc, apk_type, apk_arch)
-            except (KeyError, TypeError):
-                return (None, 404)
-            return apks
+            return stream_package(self.dbc, self.storage_obj, apk_type, apk_arch)
         else:
-            return apks
+            data = get_apk_status(self.storage_obj)
+            if apk_type is None and apk_arch is APK_Arch.noarch:
+                return (get_apk_status(self.storage_obj), 200)
+            else:
+                try:
+                    return (data[apk_type][apk_arch], 200)
+                except KeyError:
+                    return (data[apk_type], 200)
 
     @auth_required
-    def post(self, apk_type, apk_arch):
-        try:
-            call = self.api_req.data['call']
-            args = self.api_req.data.get('args', {})
-            if call == 'import':
-                downloader = AutoDownloader(self.dbc)
-                try:
-                    args = (int(apk_type), int(apk_arch))
-                    t = Thread(target=downloader.apk_download, args=args)
+    def post(self, apk_type: APK_Type, apk_arch: APK_Arch):
+        is_upload: bool = False
+        apk: io.BytesIO = None
+        filename: str = None
+        if 'multipart/form-data' in self.api_req.content_type:
+            filename = self.api_req.data['data'].get('filename', None)
+            try:
+                apk = io.BytesIO(self.api_req.data['files'].get('file').read())
+            except AttributeError:
+                return ('No file present', 406)
+            is_upload = True
+        if self.api_req.content_type == 'application/octet-stream':
+            filename = self.api_req.headers.get('filename', None)
+            apk = io.BytesIO(self.api_req.data)
+            is_upload = True
+        if is_upload:
+            if filename is None:
+                return ('filename must be specified', 406)
+            elems: MAD_APKS = get_apk_status(self.storage_obj)
+            try:
+                elems[apk_type][apk_arch]
+            except KeyError:
+                return ('Non-supported Type / Architecture', 406)
+            filename_split = filename.rsplit('.', 1)
+            if filename_split[1] in ['zip', 'apks']:
+                mimetype = 'application/zip'
+            elif filename_split[1] == 'apk':
+                mimetype = 'application/vnd.android.package-archive'
+            else:
+                return ('Unsupported extension', 406)
+            try:
+                PackageImporter(apk_type, apk_arch, self.storage_obj, apk, mimetype)
+                if 'multipart/form-data' in self.api_req.content_type:
+                    return flask.redirect(None, code=201)
+                return (None, 201)
+            except (BadZipFile, LargeZipFile) as err:
+                return (str(err), 406)
+            except WizardError as err:
+                self._logger.warning(str(err))
+                return (str(err), 406)
+            except Exception:
+                self._logger.opt(exception=True).critical("An unhanded exception occurred!")
+                return (None, 500)
+        else:
+            try:
+                call = self.api_req.data['call']
+                wizard = APKWizard(self.dbc, self.storage_obj)
+                if call == 'import':
+                    thread_args = (apk_type, apk_arch)
+                    t = Thread(target=wizard.apk_download, args=thread_args)
                     t.start()
                     return (None, 204)
-                except TypeError:
-                    return (None, 404)
-            elif call == 'search':
-                downloader = AutoDownloader(self.dbc)
-                try:
-                    downloader.apk_search(int(apk_type), int(apk_arch))
+                elif call == 'search':
+                    wizard.apk_search(apk_type, apk_arch)
                     return (None, 204)
-                except TypeError:
-                    return (None, 404)
-            elif call == 'search_download':
-                downloader = AutoDownloader(self.dbc)
-                try:
-                    downloader.apk_all_actions()
-                    return (None, 204)
-                except TypeError:
-                    return (None, 404)
-            else:
-                # RPC not implemented
+                elif call == 'search_download':
+                    try:
+                        wizard.apk_all_actions()
+                        return (None, 204)
+                    except TypeError:
+                        return (None, 404)
+                else:
+                    return (call, 501)
+            except KeyError:
+                import traceback
+                traceback.print_exc()
                 return (call, 501)
-        except KeyError:
-            return (call, 501)
+
         return (None, 500)
 
     @auth_required
-    def delete(self, apk_type, apk_arch):
+    def delete(self, apk_type: APK_Type, apk_arch: APK_Arch):
         if apk_type is None:
             return (None, 404)
-        try:
-            file_data = self.get(apk_type, apk_arch)[0]
-            del_data = {
-                'filestore_id': file_data['file_id']
-            }
-            self.dbc.autoexec_delete('filestore_meta', del_data)
+        resp = self.storage_obj.delete_file(apk_type, apk_arch)
+        if type(resp) == flask.Response:
+            return resp
+        if resp:
             return (None, 202)
-        except KeyError:
-            return (None, 404)
+        return (None, 404)
