@@ -14,6 +14,17 @@ def initLogging(args):
     log_file_trace = log_file_level <= 10
     colorize = not args.no_log_colors
 
+    log_fmt_time    = "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>]"
+    log_fmt_id      = "[<cyan>{extra[name]: >17}</cyan>]"
+    log_fmt_module  = "[<cyan>{module: >19}:{line: <4}</cyan>]"
+    log_fmt_level   = "[<lvl>{level: >1.1}</lvl>]"
+    log_fmt_msg     = "<level>{message}</level>"
+
+    log_format_all = [log_fmt_time, log_fmt_id, log_fmt_module, log_fmt_level, log_fmt_msg]
+    fs_log_format = ' '.join(log_format_all)
+    if not log_trace and not args.no_file_logs:
+        log_format_all.remove(log_fmt_module)
+    log_format_console = ' '.join(log_format_all)
     logconfig = {
         "levels": [
             {"name": "DEBUG2", "no": 9, "color": "<blue>"},
@@ -24,7 +35,7 @@ def initLogging(args):
         "handlers": [
             {
                 "sink": sys.stdout,
-                "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{extra[name]: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
+                "format": log_format_console,
                 "colorize": colorize,
                 "level": log_level,
                 "enqueue": True,
@@ -32,8 +43,7 @@ def initLogging(args):
             },
             {
                 "sink": sys.stderr,
-                "format": "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>] [<cyan>{extra[name]: >17}</cyan>] [<cyan>{module: >19}:{line: <4}</cyan>] [<lvl>{level: >8}</lvl>] <level>{message}</level>",
-
+                "format": log_format_console,
                 "colorize": colorize,
                 "level": "ERROR",
                 "diagnose": log_trace,
@@ -47,7 +57,7 @@ def initLogging(args):
     if not args.no_file_logs:
         file_logs = {
             "sink": os.path.join(args.log_path, args.log_filename),
-            "format": "[{time:MM-DD HH:mm:ss.SS}] [{extra[name]: >17}] [{module: >19}:{line: <4}] [{level: >8}] {message}",
+            "format": fs_log_format,
             "level": log_file_level,
             "backtrace": True,
             "diagnose": log_file_trace,
@@ -191,8 +201,7 @@ def get_logger(logger_type: LoggerEnums, name: str = None) -> logger:
 
 def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
     if name:
-        if logger_type == LoggerEnums.routemanager:
-            name = 'Area - {}'.format(name)
+        pass
     elif logger_type == LoggerEnums.madmin:
         name = 'madmin'
     elif logger_type == LoggerEnums.websocket:
