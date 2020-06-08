@@ -26,11 +26,11 @@ def tsp(data):
     min_span_tree = minimum_spanning_tree(graph_data)
 
     # find odd vertexes
-    logger.info("Finidng odd vertexes...")
+    logger.info("Finding odd vertexes...")
     odd_vertexes = find_odd_vertexes(min_span_tree)
 
     # add minimum weight matching edges to MST
-    logger.info("Adding minimum weight mathcing edges to MST...")
+    logger.info("Adding minimum weight matching edges to MST...")
     minimum_weight_matching(min_span_tree, graph_data, odd_vertexes)
 
     # find an eulerian tour
