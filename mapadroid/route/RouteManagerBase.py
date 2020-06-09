@@ -310,9 +310,14 @@ class RouteManagerBase(ABC):
         if not self._route_resource['routefile']:
             self.recalc_route(max_radius, max_coords_within_radius, num_procs,
                               delete_old_route=delete_old_route,
-                              in_memory=True, calctype='route')
+                              in_memory=True,
+                              calctype='quick')
+            # Route has not previously been calculated.  Recalculate a quick route then calculate the optimized route
             args = (self._max_radius, self._max_coords_within_radius)
-            t = Thread(target=self.recalc_route_adhoc, args=args, kwargs={'num_procs': 0})
+            kwargs = {
+                'num_procs': 0
+            }
+            t = Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs)
             t.start()
         else:
             self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
@@ -333,7 +338,7 @@ class RouteManagerBase(ABC):
         return new_route
 
     def recalc_route_adhoc(self, max_radius: float, max_coords_within_radius: int, num_procs: int = 1,
-                           active: bool = False, calctype: bool = None):
+                           active: bool = False, calctype: str = 'route'):
         self._clear_coords()
         coords = self._get_coords_post_init()
         self.add_coords_list(coords)

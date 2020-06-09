@@ -94,7 +94,7 @@ def route_calc_all(lessCoordinates, route_name, num_processes, algorithm):
 
     # check to see if we can use OR-Tools to perform our routecalc
     import platform
-    if platform.architecture()[0] == "64bit":  # OR-Tools is only available for 64bit python
+    if platform.architecture()[0] == "64bit" and algorithm == 'route':  # OR-Tools is only available for 64bit python
         logger.debug("64-bit python detected, checking if we can use OR-Tools")
         try:
             pywrapcp
@@ -104,8 +104,7 @@ def route_calc_all(lessCoordinates, route_name, num_processes, algorithm):
         else:
             logger.debug("Using OR-Tools for routecalc")
             return route_calc_ortools(lessCoordinates, route_name)
-
-    logger.debug("Using MAD quick routecalc")
-    from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
-
-    return route_calc_impl(lessCoordinates, route_name, num_processes)
+    else:
+        logger.debug("Using MAD quick routecalc")
+        from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
+        return route_calc_impl(lessCoordinates, route_name, num_processes)
