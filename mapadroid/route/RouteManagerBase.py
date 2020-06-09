@@ -51,7 +51,7 @@ class RouteManagerBase(ABC):
                  path_to_exclude_geofence: GeoFence,
                  routefile: RouteCalc, mode=None, init: bool = False, name: str = "unknown",
                  settings: dict = None,
-                 level: bool = False, calctype: str = "optimized", useS2: bool = False, S2level: int = 15,
+                 level: bool = False, calctype: str = "route", useS2: bool = False, S2level: int = 15,
                  joinqueue=None):
         self.db_wrapper: DbWrapper = db_wrapper
         self.init: bool = init
@@ -311,14 +311,7 @@ class RouteManagerBase(ABC):
             self.recalc_route(max_radius, max_coords_within_radius, num_procs,
                               delete_old_route=delete_old_route,
                               in_memory=True,
-                              calctype='quick')
-            if self._calctype != 'quick':
-                args = (self._max_radius, self._max_coords_within_radius)
-                kwargs = {
-                    'num_procs': 0
-                }
-                t = Thread(target=self.recalc_route_adhoc, args=args, kwargs=kwargs)
-                t.start()
+                              calctype='route')
         else:
             self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
 
@@ -571,7 +564,6 @@ class RouteManagerBase(ABC):
                 if origin in self._worker_start_position:
                     self._routepool[origin].current_pos = self._worker_start_position[origin]
                 if not self._worker_changed_update_routepools():
-
                     logger.info("Failed updating routepools after adding a worker to it")
                     return None
 

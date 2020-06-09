@@ -105,7 +105,7 @@ class RouteCalc(Resource):
                             overwrite_calculation: bool = False, in_memory: bool = False, route_name: str = 'Unknown'
                             ) -> List[Dict[str, float]]:
         if overwrite_calculation:
-            calc_type = 'quick'
+            calc_type = 'route'
         self.set_recalc_status(True)
         if in_memory is False:
             if delete_old_route:
@@ -120,7 +120,7 @@ class RouteCalc(Resource):
         return new_route
 
     def getJsonRoute(self, coords: List[Tuple[str, str]], max_radius: int, max_coords_within_radius: int,
-                     in_memory: bool, num_processes: int = 1, algorithm: str = 'optimized', useS2: bool = False,
+                     in_memory: bool, num_processes: int = 1, algorithm: str = 'route', useS2: bool = False,
                      S2level: int = 15, route_name: str = 'Unknown') -> List[Dict[str, float]]:
         export_data = []
         if useS2:
@@ -159,13 +159,18 @@ class RouteCalc(Resource):
             logger.info("Calculating a short route through all those coords. Might take a while")
             from timeit import default_timer as timer
             start = timer()
-            if algorithm == 'quick':
-                from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
-            else:
-                from mapadroid.route.routecalc.calculate_route_optimized import route_calc_impl
-            sol_best = route_calc_impl(lessCoordinates, route_name, num_processes)
+            from mapadroid.route.routecalc.calculate_route_all import route_calc_all
+            sol_best = route_calc_all(lessCoordinates, route_name, num_processes, algorithm)
             end = timer()
-            logger.info("Calculated route in {} minutes", str((end - start) / 60))
+
+            calc_dur = (end - start) / 60
+            time_unit = 'minutes'
+            if calc_dur < 1:
+                calc_dur = int(calc_dur * 60)
+                time_unit = 'seconds'
+
+            logger.info("Calculated route in {} {}", str(calc_dur), time_unit)
+
             for i in range(len(sol_best)):
                 export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),
                                     'lng': lessCoordinates[int(sol_best[i])][1].item()})

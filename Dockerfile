@@ -8,8 +8,8 @@ WORKDIR /usr/src/app
 # copy requirements only, to reduce image size and improve cache usage
 COPY requirements.txt /usr/src/app/
 
-# Install required system packages + python requirements + cleanup in one layer (yields smaller docker image). 
-# If you try to debug the build you should split into single RUN commands ;)
+# Install required system packages + python requirements + cleanup in one layer (yields smaller docker image).
+# If you try to debug the build you should split into single RUN commands
 RUN export DEBIAN_FRONTEND=noninteractive && apt-get update \
 && apt-get install -y --no-install-recommends \
 build-essential \
@@ -25,7 +25,7 @@ wget \
 && mkdir /usr/local/share/tessdata/ \
 && mv -v eng.traineddata /usr/local/share/tessdata/ \
 # python reqs
-&& python3 -m pip install --no-cache-dir -r requirements.txt \
+&& python3 -m pip install --no-cache-dir -r requirements.txt ortools \
 # cleanup
 && apt-get remove -y wget \
 && apt-get remove -y build-essential \

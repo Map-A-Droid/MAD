@@ -1,2 +1,8 @@
 # Files and directories not required in a docker build
-APK/RemoteGpsController.apk
+APK/
+venv/
+logs/
+temp/
+files/
+upload/
+update_log.json

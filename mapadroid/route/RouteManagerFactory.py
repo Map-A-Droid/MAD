@@ -16,7 +16,7 @@ class RouteManagerFactory:
                          mode: WorkerType = WorkerType.UNDEFINED,
                          init: bool = False, name: str = "unknown", settings=None,
                          coords_spawns_known: bool = False,
-                         level: bool = False, calctype: str = "optimized", useS2: bool = False,
+                         level: bool = False, calctype: str = "route", useS2: bool = False,
                          S2level: int = 15, joinqueue=None, include_event_id=None):
 
         if mode == WorkerType.RAID_MITM.value:
@@ -50,16 +50,7 @@ class RouteManagerFactory:
                                               joinqueue=joinqueue
                                               )
         elif mode == WorkerType.STOPS.value:
-            if level and calctype in ('optimized', 'quick'):
-                route_manager = RouteManagerLeveling(db_wrapper, dbm, area_id, coords, max_radius,
-                                                     max_coords_within_radius,
-                                                     path_to_include_geofence, path_to_exclude_geofence,
-                                                     routefile,
-                                                     mode=mode, settings=settings, init=init, name=name,
-                                                     level=True,
-                                                     calctype=calctype, joinqueue=joinqueue
-                                                     )
-            elif level and calctype == 'routefree':
+            if level and calctype == 'routefree':
                 route_manager = RouteManagerLevelingRoutefree(db_wrapper, dbm, area_id, coords, max_radius,
                                                               max_coords_within_radius,
                                                               path_to_include_geofence, path_to_exclude_geofence,
@@ -68,6 +59,15 @@ class RouteManagerFactory:
                                                               level=True,
                                                               calctype=calctype, joinqueue=joinqueue
                                                               )
+            elif level:
+                route_manager = RouteManagerLeveling(db_wrapper, dbm, area_id, coords, max_radius,
+                                                     max_coords_within_radius,
+                                                     path_to_include_geofence, path_to_exclude_geofence,
+                                                     routefile,
+                                                     mode=mode, settings=settings, init=init, name=name,
+                                                     level=True,
+                                                     calctype=calctype, joinqueue=joinqueue
+                                                     )
             else:
                 route_manager = RouteManagerQuests(db_wrapper, dbm, area_id, coords, max_radius,
                                                    max_coords_within_radius,

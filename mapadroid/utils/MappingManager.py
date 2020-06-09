@@ -401,6 +401,7 @@ class MappingManager:
                     self.get_monlist(area['settings'].get('mon_ids_iv', None), area.get("name", "unknown"))
             route_resource = self.__data_manager.get_resource('routecalc', identifier=area["routecalc"])
 
+            calc_type: str = area.get("route_calc_algorithm", "route")
             route_manager = RouteManagerFactory.get_routemanager(self.__db_wrapper, self.__data_manager,
                                                                  area_id, None,
                                                                  mode_mapping.get(mode, {}).get("range", 0),
@@ -416,22 +417,19 @@ class MappingManager:
                                                                  coords_spawns_known=area.get(
                                                                      "coords_spawns_known", False),
                                                                  routefile=route_resource,
-                                                                 calctype=area.get("route_calc_algorithm",
-                                                                                   "optimized"),
+                                                                 calctype=calc_type,
                                                                  joinqueue=self.join_routes_queue,
                                                                  S2level=mode_mapping.get(mode, {}).get(
                                                                      "s2_cell_level", 30),
-                                                                 include_event_id=
-                                                                 area.get("settings", {}).get("include_event_id", None)
+                                                                 include_event_id=area.get(
+                                                                     "settings", {}).get("include_event_id", None)
                                                                  )
             logger.info("Initializing area {}", area["name"])
-            if mode not in ("iv_mitm", "idle") and str(area.get("route_calc_algorithm", "optimized"))\
-                    not in "routefree":
+            if mode not in ("iv_mitm", "idle") and calc_type != "routefree":
                 coords = self.__fetch_coords(mode, geofence_helper,
                                              coords_spawns_known=area.get("coords_spawns_known", False),
                                              init=area.get("init", False),
-                                             range_init=mode_mapping.get(mode, {}).get(
-                                                 "range_init", 630),
+                                             range_init=mode_mapping.get(mode, {}).get("range_init", 630),
                                              including_stops=area.get("including_stops", False),
                                              include_event_id=area.get("settings", {}).get("include_event_id", None))
 
