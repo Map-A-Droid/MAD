@@ -50,16 +50,7 @@ class RouteManagerFactory:
                                               joinqueue=joinqueue
                                               )
         elif mode == WorkerType.STOPS.value:
-            if level and calctype in ('route'):
-                route_manager = RouteManagerLeveling(db_wrapper, dbm, area_id, coords, max_radius,
-                                                     max_coords_within_radius,
-                                                     path_to_include_geofence, path_to_exclude_geofence,
-                                                     routefile,
-                                                     mode=mode, settings=settings, init=init, name=name,
-                                                     level=True,
-                                                     calctype=calctype, joinqueue=joinqueue
-                                                     )
-            elif level and calctype == 'routefree':
+            if level and calctype == 'routefree':
                 route_manager = RouteManagerLevelingRoutefree(db_wrapper, dbm, area_id, coords, max_radius,
                                                               max_coords_within_radius,
                                                               path_to_include_geofence, path_to_exclude_geofence,
@@ -68,6 +59,15 @@ class RouteManagerFactory:
                                                               level=True,
                                                               calctype=calctype, joinqueue=joinqueue
                                                               )
+            elif level:
+                route_manager = RouteManagerLeveling(db_wrapper, dbm, area_id, coords, max_radius,
+                                                     max_coords_within_radius,
+                                                     path_to_include_geofence, path_to_exclude_geofence,
+                                                     routefile,
+                                                     mode=mode, settings=settings, init=init, name=name,
+                                                     level=True,
+                                                     calctype=calctype, joinqueue=joinqueue
+                                                     )
             else:
                 route_manager = RouteManagerQuests(db_wrapper, dbm, area_id, coords, max_radius,
                                                    max_coords_within_radius,
