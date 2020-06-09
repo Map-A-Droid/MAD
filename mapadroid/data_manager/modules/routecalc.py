@@ -162,7 +162,15 @@ class RouteCalc(Resource):
             from mapadroid.route.routecalc.calculate_route_all import route_calc_all
             sol_best = route_calc_all(lessCoordinates, route_name, num_processes, algorithm)
             end = timer()
-            logger.info("Calculated route in {} minutes", str((end - start) / 60))
+
+            calc_dur = (end - start) / 60
+            time_unit = 'minutes'
+            if calc_dur < 1:
+                calc_dur = int(calc_dur * 60)
+                time_unit = 'seconds'
+
+            logger.info("Calculated route in {} {}", str(calc_dur), time_unit)
+
             for i in range(len(sol_best)):
                 export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),
                                     'lng': lessCoordinates[int(sol_best[i])][1].item()})
