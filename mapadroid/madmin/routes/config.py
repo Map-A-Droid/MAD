@@ -189,6 +189,24 @@ class config(object):
         raw_fences = self._data_manager.get_root_resource('geofence')
         for fence_id, fence_data in raw_fences.items():
             fences[fence_id] = fence_data['name']
+
+        # check if we can use ortools and if it's installed
+        ortools_info = False
+
+        try:
+            from ortools.constraint_solver import routing_enums_pb2
+            from ortools.constraint_solver import pywrapcp
+        except Exception:
+            pass
+        import platform
+
+        if platform.architecture()[0] == "64bit":
+            try:
+                pywrapcp
+                routing_enums_pb2
+            except Exception:
+                ortools_info = True
+
         required_data = {
             'identifier': 'id',
             'base_uri': 'api_area',
@@ -203,6 +221,7 @@ class config(object):
             },
             'passthrough': {
                 'config_mode': self._args.config_mode,
+                'ortools_info': ortools_info,
                 'fences': fences
             },
             'mode_required': True
