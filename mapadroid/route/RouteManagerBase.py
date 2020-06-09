@@ -310,8 +310,10 @@ class RouteManagerBase(ABC):
         if not self._route_resource['routefile']:
             self.recalc_route(max_radius, max_coords_within_radius, num_procs,
                               delete_old_route=delete_old_route,
-                              in_memory=True,
-                              calctype='route')
+                              in_memory=True, calctype='route')
+            args = (self._max_radius, self._max_coords_within_radius)
+            t = Thread(target=self.recalc_route_adhoc, args=args, kwargs={'num_procs': 0})
+            t.start()
         else:
             self.recalc_route(max_radius, max_coords_within_radius, num_procs=0, delete_old_route=False)
 
