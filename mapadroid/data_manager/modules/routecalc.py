@@ -172,7 +172,7 @@ class RouteCalc(Resource):
                 calc_dur = int(calc_dur * 60)
                 time_unit = 'seconds'
 
-            logger.info("Calculated route in {} {}", str(calc_dur), time_unit)
+            logger.info("Calculated route for {} in {} {}", route_name, str(calc_dur), time_unit)
 
             for i in range(len(sol_best)):
                 export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),
