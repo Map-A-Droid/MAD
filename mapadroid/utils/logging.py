@@ -17,17 +17,21 @@ def initLogging(args):
     log_fmt_time_c  = "[<cyan>{time:HH:mm:ss.SS}</cyan>]"
     log_fmt_time_fs = "[<cyan>{time:MM-DD HH:mm:ss.SS}</cyan>]"
     log_fmt_id      = "[<cyan>{extra[name]: >17}</cyan>]"
-    log_fmt_module  = "[<cyan>{module: >19}:{line: <4}</cyan>]"
+    log_fmt_mod_c   = "[<cyan>{module: >19.19}:{line: <4}</cyan>]"
+    log_fmt_mod_fs  = "[<cyan>{module: >19}:{line: <4}</cyan>]"
     log_fmt_level   = "[<lvl>{level: >1.1}</lvl>]"
     log_fmt_msg     = "<level>{message}</level>"
 
-    log_format_c = [log_fmt_time_c, log_fmt_id, log_fmt_module, log_fmt_level, log_fmt_msg]
-    log_format_fs = [log_fmt_time_fs, log_fmt_id, log_fmt_module, log_fmt_level, log_fmt_msg]
+    log_format_c = [log_fmt_time_c, log_fmt_id, log_fmt_mod_c, log_fmt_level, log_fmt_msg]
+    log_format_fs = [log_fmt_time_fs, log_fmt_id, log_fmt_mod_fs, log_fmt_level, log_fmt_msg]
+    # Alter the logging capabilities based off the MAD launch settings
+    if not args.no_file_logs:
+        log_format_c[log_format_c.index(log_fmt_time_c)] = log_fmt_time_fs
+        if not log_trace:
+            log_format_c.remove(log_fmt_mod_c)
+        else:
+            log_format_c[log_format_c.index(log_fmt_mod_c)] = log_fmt_mod_fs
     fs_log_format = ' '.join(log_format_fs)
-    if not log_trace and not args.no_file_logs:
-        log_format_c.remove(log_fmt_module)
-    if args.no_file_logs:
-        log_format_c[0] = log_fmt_time_fs
     log_format_console = ' '.join(log_format_c)
     logconfig = {
         "levels": [
