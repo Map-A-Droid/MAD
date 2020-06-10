@@ -709,7 +709,7 @@ class RouteManagerBase(ABC):
 
                 if len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) == 0:
                     self.logger.info("Subroute-update won't help or queue and subroute are empty, "
-                                "signalling worker to reconnect")
+                                     "signalling worker to reconnect")
                     self._routepool[origin].last_access = time.time()
                     return None
                 elif len(self._routepool[origin].queue) == 0 and len(self._routepool[origin].subroute) > 0:
@@ -722,8 +722,8 @@ class RouteManagerBase(ABC):
 
             if len(self._routepool[origin].queue) == 0:
                 self.logger.warning("Having updated routepools and checked lengths of queue and subroute, "
-                               "{}'s queue is still empty, signalling worker to stop whatever he is doing",
-                               self.name)
+                                    "{}'s queue is still empty, signalling worker to stop whatever he is doing",
+                                    self.name)
                 self._routepool[origin].last_access = time.time()
                 return None
 
@@ -733,8 +733,9 @@ class RouteManagerBase(ABC):
                 if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
                         and not self.init:
                     self._current_route_round_coords.remove(next_coord)
-                self.logger.info("{}: Moving on with location {} [{} coords left (Workerpool)]",
-                            str(self.name), str(next_coord), str(len(self._routepool[origin].queue) + 1))
+                self.logger.info("{}: Moving on with location {}, {} [{} coords left (Workerpool)]",
+                                 str(self.name), next_coord.lat, next_coord.lng,
+                                 str(len(self._routepool[origin].queue) + 1))
 
                 self._last_round_prio[origin] = False
                 self._routepool[origin].last_round_prio_event = False

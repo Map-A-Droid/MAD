@@ -663,24 +663,25 @@ class WorkerQuests(MITMBase):
                                               fort.get('pokestop_displays')[0].get('incident_start_ms', 0)
                 if fort.get('pokestop_display', {}).get('incident_start_ms', 0) > 0 or \
                         (0 < rocket_incident_diff_ms <= 3600000):
-                    self.logger.info("Stop {}, {} is rocketized - who cares :)"
-                                .format(str(latitude), str(longitude)))
                     self._rocket = True
                 else:
                     self._rocket = False
 
                 visited: bool = fort.get("visited", False)
                 if self._level_mode and self._ignore_spinned_stops and visited:
-                    self.logger.info("Levelmode: Stop already visited - skipping it")
+                    self.logger.info("Level mode: Stop already visited - skipping it")
                     self._db_wrapper.submit_pokestop_visited(self._origin, latitude, longitude)
                     return False, True
 
                 enabled: bool = fort.get("enabled", True)
-                if not enabled: self.logger.warning("Can't spin the stop - it is disabled")
+                if not enabled:
+                    self.logger.warning("Can't spin the stop - it is disabled")
                 closed: bool = fort.get("closed", False)
-                if closed: self.logger.warning("Can't spin the stop - it is closed")
+                if closed:
+                    self.logger.warning("Can't spin the stop - it is closed")
                 cooldown: int = fort.get("cooldown_complete_ms", 0)
-                if not cooldown == 0: self.logger.warning("Can't spin the stop - it has cooldown")
+                if not cooldown == 0:
+                    self.logger.warning("Can't spin the stop - it has cooldown")
                 return fort_type == 1 and enabled and not closed and cooldown == 0, False
         # by now we should've found the stop in the GMO
         # TODO: consider counter in DB for stop and delete if N reached, reset when updating with GMO
@@ -702,8 +703,8 @@ class WorkerQuests(MITMBase):
                     spinnable_stop, _ = self._current_position_has_spinnable_stop(timestamp)
                     if not spinnable_stop:
                         self.logger.info("Stop {}, {} "
-                                    "considered to be ignored in the next round due to failed spinnable check",
-                                    str(self.current_location.lat), str(self.current_location.lng))
+                                         "considered to be ignored in the next round due to failed spinnable check",
+                                         str(self.current_location.lat), str(self.current_location.lng))
                         self._mapping_manager.routemanager_add_coords_to_be_removed(self._routemanager_name,
                                                                                     self.current_location.lat,
                                                                                     self.current_location.lng)
@@ -833,7 +834,7 @@ class WorkerQuests(MITMBase):
             else:
                 if data_received == LatestReceivedType.MON:
                     self.logger.info("Got MON data after opening stop. This does not"
-                                " make sense - just retry...")
+                                     " make sense - just retry...")
                 else:
                     self.logger.info("Brief speed lock or we already spun it, trying again")
                 if to > 2 and self._db_wrapper.check_stop_quest(self.current_location.lat,
@@ -845,7 +846,7 @@ class WorkerQuests(MITMBase):
                 elif to > 2 and self._level_mode and self._mitm_mapper.get_poke_stop_visits(
                         self._origin) > 6800:
                     self.logger.warning("Might have hit a spin limit for worker! We have spun: {} stops",
-                                   self._mitm_mapper.get_poke_stop_visits(self._origin))
+                                        self._mitm_mapper.get_poke_stop_visits(self._origin))
 
                 # self._close_gym(self._delay_add)
 

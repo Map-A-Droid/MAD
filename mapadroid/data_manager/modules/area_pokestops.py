@@ -101,7 +101,7 @@ class AreaPokestops(Area):
                     "type": "option",
                     "values": [None, True, False],
                     "require": False,
-                    "description": "Do not spin stops that have been spun in the past (for levelmode) (Default: True)",
+                    "description": "Do not spin stops that have been spun in the past (for level mode) (Default: True)",
                     "expected": bool
                 }
             },

@@ -88,7 +88,6 @@ class WorkerBase(AbstractWorker):
         if self.get_devicesettings_value('last_mode', None) is not None and \
                 self.get_devicesettings_value('last_mode') in ("raids_mitm", "mon_mitm", "iv_mitm"):
             # Reset last_location - no useless waiting delays (otherwise stop mode)
-            self.logger.info('{}: last Mode not pokestop - reset saved location', str(self._origin))
             self.last_location = Location(0.0, 0.0)
 
         self.set_devicesettings_value("last_mode",
@@ -274,13 +273,13 @@ class WorkerBase(AbstractWorker):
 
             if not self._geofencehelper.is_coord_inside_include_geofence(Location(
                     float(startcoords[0]), float(startcoords[1]))):
-                self.logger.warning("Startcoords not in geofence - setting middle of fence as startposition")
+                self.logger.warning("Startcoords not in geofence - setting middle of fence as starting position")
                 lat, lng = self._geofencehelper.get_middle_from_fence()
                 start_position = str(lat) + "," + str(lng)
 
         if start_position is None and \
                 (self._levelmode and calc_type == "routefree"):
-            self.logger.warning("Starting levelmode without worker start position")
+            self.logger.warning("Starting level mode without worker start position")
             # setting coords
             lat, lng = self._geofencehelper.get_middle_from_fence()
             start_position = str(lat) + "," + str(lng)

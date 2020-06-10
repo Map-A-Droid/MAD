@@ -87,8 +87,8 @@ class MitmDataProcessor(Process):
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
-                    logger.info("Processing Encounter received from {} at {}", str(origin),
-                                str(received_timestamp))
+                    logger.debug("Processing encounter received from {} at {}", str(origin),
+                                 str(datetime.fromtimestamp(received_timestamp)))
                     self.__db_submit.mon_iv(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     logger.debug2("Done processing encounter of {}".format(origin))
                 else:

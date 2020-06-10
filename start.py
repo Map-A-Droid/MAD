@@ -117,7 +117,7 @@ def get_system_infos(db_wrapper):
 
         memoryUse = py.memory_info()[0] / 2. ** 30
         cpuUse = py.cpu_percent()
-        logger.info('Instance Name: "{}" - Memory usage: {} - CPU usage: {}',
+        logger.info('Instance name: "{}" - Memory usage: {.:3f} GB - CPU usage: {}',
                     str(args.status_name), str(memoryUse), str(cpuUse))
         collected = None
         if args.stat_gc:
