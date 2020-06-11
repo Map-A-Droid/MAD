@@ -243,10 +243,7 @@ class RouteManagerBase(ABC):
         return self._is_started
 
     def _start_priority_queue(self):
-        self.logger.info("Try to activate PrioQ thread for route {}".format(str(self.name)))
-        if (
-                self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
-            self.logger.info("PrioQ thread for route {} could be activate".format(str(self.name)))
+        if (self.delay_after_timestamp_prio is not None or self.mode == "iv_mitm") and not self.mode == "pokestops":
             if self._stop_update_thread.is_set():
                 self._stop_update_thread.clear()
             self._prio_queue = []
@@ -265,8 +262,7 @@ class RouteManagerBase(ABC):
                                                     target=self._update_priority_queue_loop)
             self._update_prio_queue_thread.daemon = True
             self._update_prio_queue_thread.start()
-        else:
-            self.logger.info("Cannot activate Prio Q - maybe wrong mode or delay_after_prio_event is null")
+            self.logger.info("Started PrioQ for area {}".format(str(self.name)))
 
     # list_coords is a numpy array of arrays!
     def add_coords_numpy(self, list_coords: np.ndarray):
@@ -775,7 +771,7 @@ class RouteManagerBase(ABC):
         return unprocessed_coords
 
     def _other_worker_closer_to_prioq(self, prioqcoord, origin):
-        self.logger.debug('Check distances from worker to prioQ coord')
+        self.logger.debug('Check distances from worker to PrioQ coord')
         closer_worker = None
         with self._workers_registered_mutex:
             if len(self._workers_registered) == 1:
