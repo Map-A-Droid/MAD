@@ -159,7 +159,7 @@ class deviceUpdater(object):
 
     @logger.catch()
     def process_update_queue(self, threadnumber):
-        logger.info("Starting Device Job processor thread No {}".format(str(threadnumber)))
+        logger.info("Starting device job processor thread No {}".format(str(threadnumber)))
         time.sleep(10)
         while not self._stop_updater_threads.is_set():
             try:
