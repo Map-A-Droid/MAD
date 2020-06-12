@@ -1,5 +1,8 @@
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.routemanager)
 
 class RouteManagerMon(RouteManagerBase):
     def __init__(self, db_wrapper, dbm, area_id, coords, max_radius, max_coords_within_radius,
@@ -34,11 +37,11 @@ class RouteManagerMon(RouteManagerBase):
 
     def _get_coords_post_init(self):
         if self.coords_spawns_known:
-            logger.info("Reading known Spawnpoints from DB")
+            self.logger.info("Reading known Spawnpoints from DB")
             coords = self.db_wrapper.get_detected_spawns(
                 self.geofence_helper, self.include_event_id)
         else:
-            logger.info("Reading unknown Spawnpoints from DB")
+            self.logger.info("Reading unknown Spawnpoints from DB")
             coords = self.db_wrapper.get_undetected_spawns(
                 self.geofence_helper, self.include_event_id)
         self._start_priority_queue()
@@ -55,7 +58,7 @@ class RouteManagerMon(RouteManagerBase):
         try:
             if not self._is_started:
                 self._is_started = True
-                logger.info("Starting routemanager {}", str(self.name))
+                self.logger.info("Starting routemanager {}", str(self.name))
                 if not self.init: self._start_priority_queue()
                 self._start_check_routepools()
                 self._init_route_queue()
@@ -68,7 +71,7 @@ class RouteManagerMon(RouteManagerBase):
         return False
 
     def _quit_route(self):
-        logger.info('Shutdown Route {}', str(self.name))
+        self.logger.info('Shutdown Route {}', str(self.name))
         self._is_started = False
         self._round_started_time = None
 

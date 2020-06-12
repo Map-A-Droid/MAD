@@ -1,5 +1,8 @@
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerRaids(RouteManagerBase):
@@ -42,7 +45,7 @@ class RouteManagerRaids(RouteManagerBase):
         coords = self.db_wrapper.gyms_from_db(self.geofence_helper)
         including_stops = self._data_manager.get_resource('area', self.area_id).get('including_stops', False)
         if including_stops:
-            logger.info("Include stops in coords list too!")
+            self.logger.info("Include stops in coords list too!")
             coords.extend(self.db_wrapper.stops_from_db(self.geofence_helper))
 
         return coords
@@ -58,7 +61,7 @@ class RouteManagerRaids(RouteManagerBase):
         try:
             if not self._is_started:
                 self._is_started = True
-                logger.info("Starting routemanager {}", str(self.name))
+                self.logger.info("Starting routemanager {}", str(self.name))
                 if self.mode != "idle":
                     self._start_priority_queue()
                     self._start_check_routepools()
@@ -71,7 +74,7 @@ class RouteManagerRaids(RouteManagerBase):
         return True
 
     def _quit_route(self):
-        logger.info("Shutdown Route {}", str(self.name))
+        self.logger.info("Shutdown Route {}", str(self.name))
         self._is_started = False
         self._round_started_time = None
 

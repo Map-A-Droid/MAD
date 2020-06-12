@@ -14,7 +14,10 @@ from mapadroid.worker.WorkerConfigmode import WorkerConfigmode
 from mapadroid.worker.WorkerMITM import WorkerMITM
 from mapadroid.worker.WorkerQuests import WorkerQuests
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.worker)
 
 
 class WalkerConfiguration(NamedTuple):

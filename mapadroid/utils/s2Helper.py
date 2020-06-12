@@ -1,11 +1,9 @@
 import math
 import multiprocessing
 from typing import List
-
 import gpxdata
 import s2sphere
 from geopy import Point
-
 # from utils.collections import Location
 # from utils.geo import get_middle_of_coord_list, get_distance_of_two_points_in_meters
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
@@ -14,7 +12,10 @@ from mapadroid.utils.geo import (
     get_distance_of_two_points_in_meters,
     get_middle_of_coord_list
 )
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.utils)
 
 
 class S2Helper:

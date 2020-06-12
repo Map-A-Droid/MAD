@@ -6,15 +6,17 @@ from multiprocessing.pool import ThreadPool
 from queue import Empty, Queue
 from threading import Thread
 from typing import Optional, List, Dict, Tuple, Set
-
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.route import RouteManagerIV, RouteManagerBase
 from mapadroid.route.RouteManagerFactory import RouteManagerFactory
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import logger
 from mapadroid.utils.s2Helper import S2Helper
 from mapadroid.worker.WorkerType import WorkerType
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.utils)
 
 mode_mapping = {
     "raids_mitm": {
@@ -48,8 +50,7 @@ class JoinQueue(object):
         self._joinqueue: Queue = Queue()
         self.__shutdown_event = stop_trigger
         self._mapping_mananger = mapping_manager
-        self.__route_join_thread: Thread = Thread(name='route_joiner',
-                                                  target=self.__route_join, )
+        self.__route_join_thread: Thread = Thread(name='system', target=self.__route_join)
         self.__route_join_thread.daemon = True
         self.__route_join_thread.start()
 
@@ -98,7 +99,7 @@ class MappingManager:
         self.update(full_lock=True)
 
         self.__devicesettings_setter_queue: Queue = Queue()
-        self.__devicesettings_setter_consumer_thread: Thread = Thread(name='devicesettings_setter_consumer',
+        self.__devicesettings_setter_consumer_thread: Thread = Thread(name='system',
                                                                       target=self.__devicesettings_setter_consumer, )
         self.__devicesettings_setter_consumer_thread.daemon = True
         self.__devicesettings_setter_consumer_thread.start()
@@ -323,7 +324,10 @@ class MappingManager:
                 'num_procs': 0,
                 'active': active
             }
-            t = Thread(target=routemanager.recalc_route_adhoc, args=args, kwargs=kwargs)
+            t = Thread(name=routemanager.name,
+                       target=routemanager.recalc_route_adhoc,
+                       args=args,
+                       kwargs=kwargs)
             t.start()
         except Exception as e:
             import traceback

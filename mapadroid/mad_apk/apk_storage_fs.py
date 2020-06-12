@@ -11,8 +11,11 @@ from .apk_enums import APK_Arch, APK_Type
 from .utils import lookup_apk_enum, lookup_arch_enum, generate_filename
 from .custom_types import MAD_APKS, MAD_Package, MAD_Packages
 from mapadroid.utils.json_encoder import MAD_Encoder
-from mapadroid.utils.logging import logger
 from threading import RLock
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.storage)
 
 
 def ensure_exists(func) -> Any:

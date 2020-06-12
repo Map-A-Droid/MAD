@@ -3,7 +3,10 @@ from flask import send_from_directory, render_template, request, jsonify, redire
 from mapadroid.madmin.functions import auth_required, get_quest_areas
 from mapadroid.utils import MappingManager
 from mapadroid.utils.functions import generate_path
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.madmin)
 
 
 class path(object):

@@ -1,10 +1,14 @@
 from abc import ABC, abstractmethod
-
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.worker)
 
 
 class AbstractWorker(ABC):
     def __init__(self, origin: str, communicator: AbstractCommunicator):
+        self.logger = get_logger(LoggerEnums.worker, name=str(origin))
         self._origin: str = origin
         self._communicator: AbstractCommunicator = communicator
 

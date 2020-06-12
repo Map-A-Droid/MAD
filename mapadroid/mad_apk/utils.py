@@ -7,7 +7,10 @@ from .apk_enums import APK_Arch, APK_Type, APK_Package
 from .abstract_apk_storage import AbstractAPKStorage
 from .custom_types import MAD_APKS, MAD_Package, MAD_Packages
 from mapadroid.utils.global_variables import CHUNK_MAX_SIZE, ADDRESSES_GITHUB
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.package_mgr)
 
 
 def convert_to_backend(req_type: str, req_arch: str) -> Tuple[APK_Type, APK_Arch]:

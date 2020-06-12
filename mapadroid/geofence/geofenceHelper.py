@@ -1,6 +1,8 @@
 import sys
+from mapadroid.utils.logging import  get_logger, LoggerEnums
 
-from mapadroid.utils.logging import logger
+
+logger = get_logger(LoggerEnums.system)
 
 # Most of the code is from RocketMap
 # https://github.com/RocketMap/RocketMap

@@ -14,11 +14,13 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LogLevelChanger, logger
+from mapadroid.utils.logging import LogLevelChanger, logger, get_logger, LoggerEnums
 from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version, APK_Type
 from threading import RLock
 import mapadroid.data_manager
 
+
+logger = get_logger(LoggerEnums.mitm)
 app = Flask(__name__)
 
 

@@ -4,7 +4,6 @@ import time
 from datetime import datetime, timedelta, timezone
 from functools import reduce
 from typing import List, Optional
-
 from mapadroid.db.DbSchemaUpdater import DbSchemaUpdater
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbSanityCheck import DbSanityCheck
@@ -13,8 +12,11 @@ from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.db.DbWebhookReader import DbWebhookReader
 from mapadroid.geofence.geofenceHelper import GeofenceHelper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import logger
 from mapadroid.utils.s2Helper import S2Helper
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.database)
 
 
 class DbWrapper:

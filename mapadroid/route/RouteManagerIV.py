@@ -1,8 +1,10 @@
 import heapq
 from typing import List
-
 from mapadroid.route.RouteManagerBase import RouteManagerBase
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.routemanager)
 
 
 class RouteManagerIV(RouteManagerBase):
@@ -73,14 +75,14 @@ class RouteManagerIV(RouteManagerBase):
         try:
             if not self._is_started:
                 self._is_started = True
-                logger.info("Starting routemanager {}", str(self.name))
+                self.logger.info("Starting routemanager {}", str(self.name))
                 self._start_priority_queue()
         finally:
             self._manager_mutex.release()
         return True
 
     def _quit_route(self):
-        logger.info('Shutdown Route {}', str(self.name))
+        self.logger.info('Shutdown Route {}', str(self.name))
         self._is_started = False
         self._round_started_time = None
 

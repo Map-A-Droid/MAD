@@ -4,10 +4,8 @@ import time
 from threading import Thread, current_thread, Lock, Event
 from typing import Dict, Optional, Set, KeysView, Coroutine, List
 import random as rand
-
 import websockets
 import asyncio
-
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.ocr.pogoWindows import PogoWindows
@@ -15,9 +13,8 @@ from mapadroid.utils.CustomTypes import MessageTyping
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.data_manager import DataManager
-from mapadroid.utils.logging import logger, InterceptHandler
+from mapadroid.utils.logging import InterceptHandler, get_logger, LoggerEnums
 import logging
-
 from mapadroid.websocket.AbstractCommunicator import AbstractCommunicator
 from mapadroid.websocket.WebsocketConnectedClientEntry import WebsocketConnectedClientEntry
 from mapadroid.websocket.communicator import Communicator
@@ -26,8 +23,11 @@ from mapadroid.worker.WorkerFactory import WorkerFactory
 
 logging.getLogger('websockets.server').setLevel(logging.DEBUG)
 logging.getLogger('websockets.protocol').setLevel(logging.DEBUG)
-logging.getLogger('websockets.server').addHandler(InterceptHandler())
-logging.getLogger('websockets.protocol').addHandler(InterceptHandler())
+logging.getLogger('websockets.server').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
+logging.getLogger('websockets.protocol').addHandler(InterceptHandler(log_section=LoggerEnums.websocket))
+
+
+logger = get_logger(LoggerEnums.websocket)
 
 
 class WebsocketServer(object):
@@ -59,7 +59,7 @@ class WebsocketServer(object):
         self.__loop_tid: int = -1
         self.__loop_mutex = Lock()
         self.__worker_shutdown_queue: queue.Queue[Thread] = queue.Queue()
-        self.__internal_worker_join_thread: Thread = Thread(name='worker_join_thread',
+        self.__internal_worker_join_thread: Thread = Thread(name='system',
                                                             target=self.__internal_worker_join)
         self.__internal_worker_join_thread.daemon = True
 
@@ -246,8 +246,7 @@ class WebsocketServer(object):
             return False
         # to break circular dependencies, we need to set the worker ref >.<
         communicator.worker_instance_ref = worker
-        new_worker_thread = Thread(
-            name='worker_%s' % origin, target=worker.start_worker)
+        new_worker_thread = Thread(name=origin, target=worker.start_worker)
         new_worker_thread.daemon = True
         entry.worker_thread = new_worker_thread
         entry.worker_instance = worker

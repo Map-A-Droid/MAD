@@ -18,9 +18,10 @@ from mapadroid.madmin.routes.path import path
 from mapadroid.madmin.routes.statistics import statistics
 from mapadroid.madmin.routes.event import event
 from mapadroid.utils import MappingManager
-from mapadroid.utils.logging import InterceptHandler, logger
+from mapadroid.utils.logging import InterceptHandler, get_logger, LoggerEnums
 
 
+logger = get_logger(LoggerEnums.madmin)
 app = Flask(__name__,
             static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
             template_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates'))
@@ -29,7 +30,6 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.secret_key = "8bc96865945be733f3973ba21d3c5949"
-log = logger
 
 
 @app.errorhandler(500)
@@ -53,8 +53,9 @@ def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: Mappin
     apk_manager(db_wrapper, args, app, mapping_manager, jobstatus, storage_obj)
     event(db_wrapper, args, logger, app, mapping_manager, data_manager)
 
-    app.logger.removeHandler(default_handler)
-    logging.basicConfig(handlers=[InterceptHandler()], level=0)
+    log = logging.getLogger('werkzeug')
+    handler = InterceptHandler(log_section=LoggerEnums.madmin)
+    log.addHandler(handler)
     app.run(host=args.madmin_ip, port=int(args.madmin_port), threaded=True)
 
 

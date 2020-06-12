@@ -5,7 +5,10 @@ from .resource import Resource
 from ..dm_exceptions import UnknownIdentifier
 from mapadroid.route.routecalc.ClusteringHelper import ClusteringHelper
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import  get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.data_manager)
 
 
 class RouteCalc(Resource):
@@ -169,7 +172,7 @@ class RouteCalc(Resource):
                 calc_dur = int(calc_dur * 60)
                 time_unit = 'seconds'
 
-            logger.info("Calculated route in {} {}", str(calc_dur), time_unit)
+            logger.info("Calculated route for {} in {} {}", route_name, str(calc_dur), time_unit)
 
             for i in range(len(sol_best)):
                 export_data.append({'lat': lessCoordinates[int(sol_best[i])][0].item(),

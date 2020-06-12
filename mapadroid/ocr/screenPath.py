@@ -4,14 +4,15 @@ import time
 import xml.etree.ElementTree as ET
 from enum import Enum
 from typing import Optional, List, Tuple
-
 import numpy as np
-
 from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Login_PTC, Login_GGL
-from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import ScreenshotType
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.ocr)
 
 
 class LoginType(Enum):

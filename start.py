@@ -7,7 +7,6 @@ if py_version.major < 3 or (py_version.major == 3 and py_version.minor < 6):
     sys.exit(1)
 from multiprocessing import Process
 from typing import Optional
-
 import calendar
 import datetime
 import gc
@@ -15,14 +14,11 @@ import os
 import pkg_resources
 import time
 from threading import Thread, active_count
-
 import psutil
-
 from mapadroid.utils.MappingManager import MappingManager, MappingManagerManager
 from mapadroid.db.DbFactory import DbFactory
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper, MitmMapperManager
 from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
-from mapadroid.utils.logging import initLogging, logger
 from mapadroid.utils.madGlobals import terminate_mad
 from mapadroid.utils.rarity import Rarity
 from mapadroid.utils.event import Event
@@ -35,12 +31,14 @@ from mapadroid.ocr.pogoWindows import PogoWindows
 from mapadroid.webhook.webhookworker import WebhookWorker
 from mapadroid.madmin.madmin import madmin_start
 from mapadroid.mad_apk import get_storage_obj, StorageSyncManager, AbstractAPKStorage
-
 import unittest
+from mapadroid.utils.logging import initLogging, get_logger, LoggerEnums
+
 
 args = parseArgs()
 os.environ['LANGUAGE'] = args.language
 initLogging(args)
+logger = get_logger(LoggerEnums.database)
 
 
 # Patch to make exceptions in threads cause an exception.
@@ -119,8 +117,8 @@ def get_system_infos(db_wrapper):
 
         memoryUse = py.memory_info()[0] / 2. ** 30
         cpuUse = py.cpu_percent()
-        logger.info('Instance Name: "{}" - Memory usage: {} - CPU usage: {}',
-                    str(args.status_name), str(memoryUse), str(cpuUse))
+        logger.info('Instance name: "{}" - Memory usage: {:.3f} GB - CPU usage: {}',
+                    str(args.status_name), memoryUse, str(cpuUse))
         collected = None
         if args.stat_gc:
             collected = gc.collect()
@@ -239,7 +237,7 @@ if __name__ == "__main__":
                                 data_manager=data_manager,
                                 event=event,
                                 enable_configmode=args.config_mode)
-    t_ws = Thread(name='scanner', target=ws_server.start_server)
+    t_ws = Thread(name='system', target=ws_server.start_server)
     t_ws.daemon = False
     t_ws.start()
     device_Updater = deviceUpdater(ws_server, args, jobstatus, db_wrapper, storage_elem)
@@ -249,7 +247,7 @@ if __name__ == "__main__":
             rarity.start_dynamic_rarity()
             webhook_worker = WebhookWorker(
                 args, data_manager, mapping_manager, rarity, db_wrapper.webhook_reader)
-            t_whw = Thread(name="webhook_worker",
+            t_whw = Thread(name="system",
                            target=webhook_worker.run_worker)
             t_whw.daemon = True
             t_whw.start()
@@ -261,7 +259,7 @@ if __name__ == "__main__":
             t_usage.start()
     if args.with_madmin or args.config_mode:
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
-        t_madmin = Thread(name="madmin", target=madmin_start,
+        t_madmin = Thread(name="system", target=madmin_start,
                           args=(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater,
                                 jobstatus, storage_elem))
         t_madmin.daemon = True

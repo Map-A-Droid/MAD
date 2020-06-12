@@ -4,14 +4,15 @@ from multiprocessing.managers import SyncManager
 from queue import Empty
 from threading import Thread, Event
 from typing import Dict
-
 from mapadroid.db.DbStatsSubmit import DbStatsSubmit
 from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import logger
 from mapadroid.utils.walkerArgs import parseArgs
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
+
+logger = get_logger(LoggerEnums.mitm)
 args = parseArgs()
 
 
@@ -33,8 +34,11 @@ class MitmMapper(object):
         self.__playerstats_db_update_stop: Event = Event()
         self.__playerstats_db_update_queue: Queue = Queue()
         self.__playerstats_db_update_mutex: Lock = Lock()
-        self.__playerstats_db_update_consumer: Thread = Thread(
-            name="playerstats_update_consumer", target=self.__internal_playerstats_db_update_consumer)
+        pstat_args = {
+            'name': 'system',
+            'target': self.__internal_playerstats_db_update_consumer
+        }
+        self.__playerstats_db_update_consumer: Thread = Thread(**pstat_args)
         if self.__mapping_manager is not None:
             for origin in self.__mapping_manager.get_all_devicemappings().keys():
                 self.__add_new_device(origin)

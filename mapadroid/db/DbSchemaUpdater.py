@@ -1,8 +1,10 @@
 import sys
-
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
-from mapadroid.utils.logging import logger
 from . import madmin_conversion
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.database)
 
 
 class DbSchemaUpdater:

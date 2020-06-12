@@ -1,10 +1,12 @@
 from datetime import datetime
 from multiprocessing import Queue, Process
-
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.mitm)
 
 
 class MitmDataProcessor(Process):
@@ -85,8 +87,8 @@ class MitmDataProcessor(Process):
             elif data_type == 102:
                 playerlevel = self.__mitm_mapper.get_playerlevel(origin)
                 if playerlevel >= 30:
-                    logger.info("Processing Encounter received from {} at {}", str(origin),
-                                str(received_timestamp))
+                    logger.debug("Processing encounter received from {} at {}", str(origin),
+                                 str(datetime.fromtimestamp(received_timestamp)))
                     self.__db_submit.mon_iv(origin, received_timestamp, data["payload"], self.__mitm_mapper)
                     logger.debug2("Done processing encounter of {}".format(origin))
                 else:

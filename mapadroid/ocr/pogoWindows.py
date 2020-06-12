@@ -5,17 +5,17 @@ import os.path
 import time
 from multiprocessing.pool import ThreadPool
 from typing import Optional, List, Tuple
-
 import cv2
 import numpy as np
 import pytesseract
 from PIL import Image
 from pytesseract import Output
-
 from mapadroid.ocr.matching_trash import trash_image_matching
 from mapadroid.ocr.screen_type import ScreenType
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
+
+logger = get_logger(LoggerEnums.ocr)
 Coordinate = collections.namedtuple("Coordinate", ['x', 'y'])
 Bounds = collections.namedtuple("Bounds", ['top', 'bottom', 'left', 'right'])
 

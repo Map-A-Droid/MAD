@@ -4,14 +4,12 @@ import queue
 import time
 from threading import Thread
 from typing import Optional, Dict
-
 import websockets
-
 from mapadroid.utils.CustomTypes import MessageTyping
-from mapadroid.utils.logging import logger
 from mapadroid.utils.madGlobals import WebsocketWorkerRemovedException, WebsocketWorkerTimeoutException, \
     WebsocketWorkerConnectionClosedException
 from mapadroid.worker.AbstractWorker import AbstractWorker
+from mapadroid.utils.logging import  get_logger, LoggerEnums
 
 
 class ReceivedMessageEntry:
@@ -36,6 +34,7 @@ class WebsocketConnectedClientEntry:
         self.received_mutex: asyncio.Lock = asyncio.Lock()
         self.message_id_counter: int = 0
         self.message_id_mutex: asyncio.Lock = asyncio.Lock()
+        self.logger = get_logger(LoggerEnums.websocket, name=origin)
         # store a timestamp in order to cleanup (soft-states)
         self.last_message_received_at: float = 0
 
@@ -69,53 +68,53 @@ class WebsocketConnectedClientEntry:
             self.received_messages[message_id] = new_entry
 
         if isinstance(message, bytes):
-            logger.debug("{} sending binary: {}", self.origin, str(message[:10]))
+            self.logger.debug("{} sending binary: {}", self.origin, str(message[:10]))
         else:
-            logger.debug("{} sending command: {}", self.origin, message.strip())
+            self.logger.debug("{} sending command: {}", self.origin, message.strip())
         # send message
         await self.__send_message(message_id, message, byte_command)
 
         # wait for it to trigger...
-        logger.debug("Timeout towards {}: {}", self.origin, str(timeout))
+        self.logger.debug("Timeout towards {}: {}", self.origin, str(timeout))
         response = None
         try:
             event_triggered = await asyncio.wait_for(new_entry.message_received_event.wait(), timeout=timeout)
             if event_triggered:
-                logger.debug("Received answer from {} in time, popping response", self.origin)
+                self.logger.debug("Received answer from {} in time, popping response", self.origin)
                 self.fail_counter = 0
                 if isinstance(new_entry.message, str):
-                    logger.debug("Response to {}: {}",
+                    self.logger.debug("Response to {}: {}",
                                  self.origin, str(new_entry.message.strip()))
                 else:
-                    logger.debug("Received binary data to {}, starting with {}", self.origin,
+                    self.logger.debug("Received binary data to {}, starting with {}", self.origin,
                                  str(new_entry.message[:10]))
                 response = new_entry.message
         except asyncio.TimeoutError:
-            logger.warning("Timeout, increasing timeout-counter of {}", self.origin)
+            self.logger.warning("Timeout, increasing timeout-counter of {}", self.origin)
             self.fail_counter += 1
             if self.fail_counter > 5:
-                logger.error("5 consecutive timeouts to {} or origin is not longer connected, cleanup",
+                self.logger.error("5 consecutive timeouts to {} or origin is not longer connected, cleanup",
                              self.origin)
                 raise WebsocketWorkerTimeoutException
         finally:
-            logger.debug("Cleaning up received messaged of {}.", self.origin)
+            self.logger.debug("Cleaning up received messaged of {}.", self.origin)
             async with self.received_mutex:
                 self.received_messages.pop(message_id)
-        logger.debug("Done sending command to {}.", self.origin)
+        self.logger.debug("Done sending command to {}.", self.origin)
         return response
 
     async def __send_message(self, message_id: int, message: MessageTyping,
                              byte_command: Optional[int] = None) -> None:
         if isinstance(message, str):
             to_be_sent: str = u"%s;%s" % (str(message_id), message)
-            logger.debug("To be sent to {}: {}", self.origin, to_be_sent.strip())
+            self.logger.debug("To be sent to {}: {}", self.origin, to_be_sent.strip())
         elif byte_command is not None:
             to_be_sent: bytes = (int(message_id)).to_bytes(4, byteorder='big')
             to_be_sent += (int(byte_command)).to_bytes(4, byteorder='big')
             to_be_sent += message
-            logger.debug("To be sent to {} (message ID: {}): {}", self.origin, message_id, str(to_be_sent[:10]))
+            self.logger.debug("To be sent to {} (message ID: {}): {}", self.origin, message_id, str(to_be_sent[:10]))
         else:
-            logger.error("Tried to send invalid message (bytes without byte command or no byte/str passed)")
+            self.logger.error("Tried to send invalid message (bytes without byte command or no byte/str passed)")
             return
         await self.websocket_client_connection.send(to_be_sent)
 
