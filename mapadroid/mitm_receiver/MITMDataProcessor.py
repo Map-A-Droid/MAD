@@ -4,15 +4,15 @@ from datetime import datetime
 from multiprocessing import Queue, Process
 from typing import List
 
-import humps
 from google.protobuf.json_format import MessageToDict
-
 
 from mapadroid.db import models
 from mapadroid.db.DbPogoProtoSubmit import DbPogoProtoSubmit
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils.logging import logger
+
+from mapadroid.pogoprotos.map.pokemon.wild_pokemon_pb2 import WildPokemon
 
 
 @dataclass
@@ -90,17 +90,18 @@ class MitmDataProcessor(Process):
             if self.__application_args.game_stats:
                 self.__mitm_mapper.run_stats_collector(origin)
 
+            if data_type == 106:
+                self.map_gmo(payload)
+
+            return
+
             logger.debug4("Received data of {}: {}", origin, data)
             if data_type == 106:
-                print(self.map_gmo_serialized(payload))
-
                 # process GetMapObject
                 logger.info("Processing GMO received from {}. Received at {}", str(
                     origin), str(datetime.fromtimestamp(received_timestamp)))
 
-                if self.__application_args.weather:
-                    self.__db_submit.weather(origin, payload, received_timestamp)
-
+                self.__db_submit.weather(origin, payload, received_timestamp)
                 self.__db_submit.stops(origin, payload)
                 self.__db_submit.gyms(origin, payload)
                 self.__db_submit.raids(origin, payload, self.__mitm_mapper)
@@ -137,7 +138,7 @@ class MitmDataProcessor(Process):
                 self.__db_submit.gym(origin, payload)
                 logger.debug2("Done processing proto 156 of {}".format(origin))
 
-    def map_gmo_serialized(self, payload):
+    def map_gmo(self, payload):
         wild_mons: List[models.Mon] = []
         stops: List[models.Stop] = []
         gyms: List[models.Gym] = []
@@ -145,37 +146,27 @@ class MitmDataProcessor(Process):
         s2cells: List[models.S2Cell] = []
         spawnpoints: List[models.SpawnPoint] = []
 
-        for cell in payload.cells:
-            s2cells.append(cell)
-
-            for fort in cell.forts:
-                if fort.type == 0:
-                    gyms.append(fort)
-                    raids.append(fort)
-                elif fort.type == 1:
-                    stops.append(fort)
-            for wild_mon in cell.wild_pokemon:
-                wild_mons.append(self.map_gmo_wildmons_serialized(wild_mon))
-                spawnpoints.append(wild_mon)
+        for cell in payload.map_cells:
+            for wild_mon in cell.wild_pokemons:
+                wild_mons.append(self.map_gmo_wildmons(wild_mon))
 
         return MappedGmo(wild_mons, stops, gyms, raids, s2cells, spawnpoints)
 
-    def map_gmo_wildmons_serialized(self, wildmon: dict):
-        encounter_id = wildmon['encounter_id']
+    def map_gmo_wildmons(self, wildmon: WildPokemon) -> models.Mon:
+        encounter_id = wildmon.encounter_id
         if encounter_id < 0:
             encounter_id = encounter_id + 2 ** 64
 
-        # TODO add despawn time
         return models.Mon(
             encounter_id=encounter_id,
-            spawnpoint_id=int(str(wildmon['spawnpoint_id']), 16),
-            pokemon_id=wildmon['pokemon_data']['id'],
-            latitude=wildmon['latitude'],
-            longitude=wildmon['longitude'],
-            costume=wildmon['pokemon_data']['display']['costume_value'],
-            form=wildmon['pokemon_data']['display']['form_value'],
-            weather_boosted_condition=wildmon['pokemon_data']['display']['weather_boosted_value'],
-            gender=wildmon['pokemon_data']['display']['gender_value'],
+            spawnpoint_id=int(wildmon.spawn_point_id, 16),
+            pokemon_id=wildmon.pokemon_data.pokemon_id,
+            latitude=wildmon.latitude,
+            longitude=wildmon.longitude,
+            costume=wildmon.pokemon_data.pokemon_display.costume,
+            form=wildmon.pokemon_data.pokemon_display.form,
+            weather_boosted_condition=wildmon.pokemon_data.pokemon_display.weather_boosted_condition,
+            gender=wildmon.pokemon_data.pokemon_display.gender,
         )
 
     @staticmethod
@@ -209,4 +200,4 @@ class MitmDataProcessor(Process):
         else:
             return None
 
-        return humps.decamelize(MessageToDict(obj))
+        return obj
