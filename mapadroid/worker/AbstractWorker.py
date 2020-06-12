@@ -32,6 +32,10 @@ class AbstractWorker(ABC):
     def communicator(self) -> AbstractCommunicator:
         return self._communicator
 
+    @abstractmethod
+    def screenmatching(self):
+        pass
+
     @communicator.setter
     def communicator(self, value: AbstractCommunicator) -> None:
         raise RuntimeError("Replacing communicator is not supported")

@@ -360,6 +360,12 @@ class WebsocketServer(object):
             self.__loop)
         return future.result()
 
+    def get_screenmatching(self, origin: str):
+        entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
+        return (entry.worker_instance.screenmatching
+                if entry is not None and entry.worker_instance is not None
+                else False)
+
     def get_origin_communicator(self, origin: str) -> Optional[AbstractCommunicator]:
         # TODO: this should probably lock?
         entry: Optional[WebsocketConnectedClientEntry] = self.__current_users.get(origin, None)
