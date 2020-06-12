@@ -483,8 +483,10 @@ class statistics(object):
 
         # raw detection data
         detections_raw = []
-        data = self._db_stats_reader.get_detection_raw(minutes=minutes, worker=worker)
+        data, data2 = self._db_stats_reader.get_detection_raw(minutes=minutes, worker=worker)
         for dat in data:
+            detections_raw.append({'type': dat[1], 'id': dat[2], 'count': dat[3]})
+        for dat in data2:
             detections_raw.append({'type': dat[1], 'id': dat[2], 'count': dat[3]})
 
         # location raw

@@ -1,3 +1,5 @@
+from typing import Optional, List
+
 from datetime import datetime, timedelta
 
 from mapadroid.db.PooledQueryExecutor import PooledQueryExecutor
@@ -12,11 +14,13 @@ class DbStatsReader:
     def get_shiny_stats(self):
         logger.debug('Fetching shiny pokemon stats from db')
         query = (
-            "SELECT (select count(DISTINCT encounter_id) from pokemon inner join trs_stats_detect_raw on "
-            "CAST(trs_stats_detect_raw.type_id as unsigned int)=pokemon.encounter_id where pokemon.pokemon_id=a.pokemon_id and "
-            "trs_stats_detect_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT encounter_id), a.pokemon_id,"
-            "b.worker, GROUP_CONCAT(DISTINCT encounter_id ORDER BY encounter_id DESC SEPARATOR '<br>'), a.form, b.timestamp_scan "
-            "FROM pokemon a left join trs_stats_detect_raw b on a.encounter_id=CAST(b.type_id as unsigned int) where b.is_shiny=1 group by "
+            "SELECT (select count(DISTINCT pokemon.encounter_id) from pokemon inner join trs_stats_detect_mon_raw on "
+            "trs_stats_detect_mon_raw.encounter_id=pokemon.encounter_id where pokemon.pokemon_id=a.pokemon_id and "
+            "trs_stats_detect_mon_raw.worker=b.worker and pokemon.form=a.form), count(DISTINCT a.encounter_id), "
+            "a.pokemon_id, b.worker, GROUP_CONCAT(DISTINCT a.encounter_id "
+            "ORDER BY a.encounter_id DESC SEPARATOR '<br>'), a.form, b.timestamp_scan "
+            "FROM pokemon a left join trs_stats_detect_mon_raw b on a.encounter_id=b.encounter_id "
+            "WHERE b.is_shiny=1 group by "
             "b.is_shiny, a.pokemon_id, a.form, b.worker order by b.timestamp_scan DESC "
         )
         res = self._db_exec.execute(query)
@@ -29,9 +33,10 @@ class DbStatsReader:
         data = ()
 
         query = (
-            "SELECT pokemon.pokemon_id, pokemon.form, pokemon.latitude, pokemon.longitude, pokemon.gender, pokemon.costume, "
-            "tr.count, tr.timestamp_scan, tr.worker, pokemon.encounter_id FROM pokemon "
-            "JOIN trs_stats_detect_raw tr on CAST(tr.type_id as unsigned int)=pokemon.encounter_id "
+            "SELECT pokemon.pokemon_id, pokemon.form, pokemon.latitude, pokemon.longitude, pokemon.gender, "
+            "pokemon.costume, tr.count, tr.timestamp_scan, tr.worker, pokemon.encounter_id "
+            "FROM pokemon "
+            "JOIN trs_stats_detect_mon_raw tr on tr.encounter_id=pokemon.encounter_id "
             "WHERE tr.is_shiny=1 "
         )
 
@@ -99,10 +104,10 @@ class DbStatsReader:
     def get_shiny_stats_hour(self):
         logger.debug('Fetching shiny pokemon stats from db')
         query = (
-            "SELECT hour(FROM_UNIXTIME(timestamp_scan)) AS hour, type_id "
-            "FROM trs_stats_detect_raw "
+            "SELECT hour(FROM_UNIXTIME(timestamp_scan)) AS hour, encounter_id as type_id "
+            "FROM trs_stats_detect_mon_raw "
             "WHERE is_shiny = 1 "
-            "GROUP BY type_id, hour ORDER BY hour ASC"
+            "GROUP BY encounter_id, hour ORDER BY hour ASC"
         )
         res = self._db_exec.execute(query)
         return res
@@ -199,11 +204,11 @@ class DbStatsReader:
             "from trs_stats_location_raw c where c.lat=b.lat and c.lng=b.lng and c.success=1) as successcount from "
             "trs_stats_location_raw b where success=0 group by lat, lng HAVING Count > 5 and successcount=0 "
             "ORDER BY count(id) DESC"
-            )
+        )
         res = self._db_exec.execute(query)
         return res
 
-    def get_detection_raw(self, minutes=False, worker=False):
+    def get_detection_raw(self, minutes=False, worker=False) -> (Optional[List[dict]], Optional[List[dict]]):
         logger.debug('Fetching detetion raw data from db')
         query_where = ""
         worker_where = ""
@@ -219,12 +224,17 @@ class DbStatsReader:
         query_date = "unix_timestamp(DATE_FORMAT(FROM_UNIXTIME(timestamp_scan), '%y-%m-%d %k:00:00'))"
 
         query = (
-                "SELECT %s, type, type_id, count FROM trs_stats_detect_raw %s %s order by id asc" %
+                "SELECT %s, type, encounter_id as type_id, count FROM trs_stats_detect_mon_raw %s %s order by id asc" %
+                (str(query_date), (query_where), str(worker_where))
+        )
+        query2 = (
+                "SELECT %s, type, guid as type_id, count FROM trs_stats_detect_fort_raw %s %s order by id asc" %
                 (str(query_date), (query_where), str(worker_where))
         )
 
         res = self._db_exec.execute(query)
-        return res
+        res2 = self._db_exec.execute(query2)
+        return res, res2
 
     def get_location_raw(self, minutes=False, worker=False):
         logger.debug('Fetching locations raw data from db')
@@ -352,9 +362,10 @@ class DbStatsReader:
     def check_stop_quest_level(self, worker, latitude, longitude):
         logger.debug("DbWrapper::check_stop_quest_level called")
         query = (
-            "SELECT trs_stats_detect_raw.type_id "
-            "FROM trs_stats_detect_raw INNER JOIN pokestop ON pokestop.pokestop_id = trs_stats_detect_raw.type_id "
-            "WHERE pokestop.latitude=%s AND pokestop.longitude=%s AND trs_stats_detect_raw.worker=%s"
+            "SELECT trs_stats_detect_fort_raw.guid "
+            "FROM trs_stats_detect_fort_raw "
+            "INNER JOIN pokestop ON pokestop.pokestop_id = trs_stats_detect_fort_raw.guid "
+            "WHERE pokestop.latitude=%s AND pokestop.longitude=%s AND trs_stats_detect_fort_raw.worker=%s LIMIT 1"
         )
         data = (latitude, longitude, worker)
 
@@ -366,7 +377,7 @@ class DbStatsReader:
         else:
             logger.debug('Pokestop not visited till now')
             return False
-        
+
     def get_all_spawnpoints_count(self):
         logger.debug("dbWrapper::get_all_spawnpoints_count")
         spawn = []
