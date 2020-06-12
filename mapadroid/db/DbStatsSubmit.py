@@ -28,9 +28,8 @@ class DbStatsSubmit:
             "INSERT IGNORE INTO trs_stats_detect_fort_raw (worker, guid, type, count, timestamp_scan) "
             "VALUES (%s, %s, %s, %s, %s) "
         )
-        mons = filter(lambda x: x[2] == 'mon' or x[2] == 'mon_iv', data)
+        mons = [mon for mon in data if (mon[2] in ['mon', 'mon_iv'])]
         forts = [(d[0], d[1], d[3], d[4], d[5]) for d in data if (d[2] == 'quest' or d[2] == 'raid')]
-
         self._db_exec.executemany(query_status_mon, mons, commit=True)
         self._db_exec.executemany(query_status_fort, forts, commit=True)
         return True
