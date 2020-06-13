@@ -5,7 +5,7 @@ from mapadroid.utils.functions import pngtojpg
 from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
-log = get_logger(LoggerEnums.utils)
+logger = get_logger(LoggerEnums.utils)
 
 
 class ADBConnect(object):
