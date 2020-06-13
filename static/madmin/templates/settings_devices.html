@@ -134,10 +134,8 @@ $(document).ready(function () {
 {{ super() }}
 <div class="row">
   <div class="col">
-    <div class="card border-secondary">
-      <div class="card-body py-2">
-        <p class="card-text">Here you can configure devices. Devices need to exist here before they can actually send data to MAD. The device "Origin" is its own unique name. The same name needs to be entered in PogoDroid and RemoteGPSController to identify the device.</p>
-      </div>
+    <div class="alert alert-primary">
+      Here you can configure devices. Devices need to exist here before they can actually send data to MAD. The device "Origin" must be <strong>unique</strong>. The same name needs to be entered in PogoDroid and RemoteGPSController to identify the device.
     </div>
   </div>
 </div>
@@ -159,6 +157,7 @@ $(document).ready(function () {
       {% for dev_uri, device in device.items() %}
         <tr>
           <td class="align-middle">
+            <input type="checkbox" class="bulk_sel" data-identifier="{{ dev_uri }}">
             <a href="{{ url_for('settings_devices', id=dev_uri) }}">{{ device.origin }}</a>
           </td>
           <td class="align-middle d-none d-lg-table-cell">
@@ -178,35 +177,34 @@ $(document).ready(function () {
             </select>
           </td>
           <td class="text-right align-middle">
-            <a href="{{ redirect }}?id={{ dev_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
+            <a href="{{ redirect }}?id={{ dev_uri }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}" data-toggle="tooltip" title="Edit worker"><i class="far fa-edit"></i></button></a>
             {% if device.state == 1 %}
-              <button data-identifier='{{ dev_uri }}' type="button" data-state="0" class="dev_state btn btn-info btn-sm"><i class="fas fa-pause"></i></button>
+              <button data-identifier='{{ dev_uri }}' type="button" data-state="0" class="dev_state btn btn-info btn-sm" data-toggle="tooltip" title="Pause worker"><i class="fas fa-pause"></i></button>
             {% else %}
-              <button data-identifier='{{ dev_uri }}' type="button" data-state="1" class="dev_state btn btn-info btn-sm"><i class="fas fa-play"></i></button>
+              <button data-identifier='{{ dev_uri }}' type="button" data-state="1" class="dev_state btn btn-info btn-sm" data-toggle="tooltip" title="Start paused worker"><i class="fas fa-play"></i></button>
             {% endif %}
-            <button data-identifier='{{ dev_uri }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button>
-            <input type="checkbox" class="bulk_sel" data-identifier="{{ dev_uri }}">
+            <button data-identifier='{{ dev_uri }}' type="button" class="delete btn btn-danger btn-sm" data-toggle="tooltip" title="Delete worker"><i class="fas fa-trash-alt"></i></button>
           </td>
         </tr>
       {% endfor %}
-      <tr>
-        <td>Bulk Update</td>
-        <td colspan=3 class='text-right'>
-          <select class='bulk_update'>
-            <option value="None">None</option>
-            {% for walker_id, walker in walkers.items() %}
-             <option value="{{ url_for('api_walker') + '/'+ walker_id|string }}">Set walker to {{ walker.walkername }}</option>
-            {% endfor %}
-            {% for pool_id, pool in pools.items() %}
-             <option value="{{ url_for('api_devicepool') + '/'+ pool_id|string }}">Set devicepool to {{ pool.devicepool }}</option>
-            {% endfor %}
-            <option value='flush_level'>Clear levelup data</option>
-          </select>
-        </td>
-      </tr>
       </tbody>
       {% endif %}
     </table>
+  </div>
+</div>
+<div class="row">
+  <div class="col">
+    Bulk update selected workers
+    <select class='bulk_update'>
+      <option value="None">None</option>
+      {% for walker_id, walker in walkers.items() %}
+       <option value="{{ url_for('api_walker') + '/'+ walker_id|string }}">Set walker to {{ walker.walkername }}</option>
+      {% endfor %}
+      {% for pool_id, pool in pools.items() %}
+       <option value="{{ url_for('api_devicepool') + '/'+ pool_id|string }}">Set devicepool to {{ pool.devicepool }}</option>
+      {% endfor %}
+      <option value='flush_level'>Clear levelup data</option>
+    </select>
   </div>
 </div>
 {% endblock %}

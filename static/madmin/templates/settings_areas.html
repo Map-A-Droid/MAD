@@ -132,25 +132,10 @@ $(document).ready(function () {
 {% block content %}
 {{ super() }}
 
-<div class="dropdown">
-  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
-  <ul class="dropdown-menu dropdown-menu-right">
-      <li class="dropdown-item"><button type="button" class="btn btn-success btn-sm"><i class="fas fa-route"></i></button> Edit Route calc</li>
-    {% if config_mode == False %}
-      <li class="dropdown-item"><button type="button" class="btn btn-info btn-sm"><i class="fa fa-sync"></i></button> Recalculate route</li>
-      <li class="dropdown-item"><img src="{{ url_for('static', filename='loading.gif') }}" width="32px" height="32px"/> Route recalculation in progress</li>
-    {% endif %}
-      <li class="dropdown-item"><button type="button" class="btn btn-success btn-sm"><i class="far fa-edit"></i></button> Edit area</li>
-      <li class="dropdown-item"><button type="button" class="btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i></button> Delete area</li>
-  </ul>
-</div>
-<br>
 <div class="row">
   <div class="col">
-    <div class="card border-secondary">
-      <div class="card-body py-2">
-        <p class="card-text">Areas define zones where scanning should happen. Areas can be assigned to Walkers and Walkers must be assigned to Devices. Every area requires a file containing one or more geofences. MAD will build a route based on these areas and the elements within them.</p>
-      </div>
+    <div class="alert alert-primary">
+      Areas define zones where scanning should happen. Areas can be assigned to Walkers and Walkers must be assigned to Devices. Every area requires a file containing one or more geofences. MAD will build a route based on these areas and the elements within them.</p>
     </div>
   </div>
 </div>
@@ -217,14 +202,14 @@ $(document).ready(function () {
             </p>
           </td>
           <td class="text-right align-middle">
-            <a href="{{ url_for('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit"><i class="fas fa-route"></i></button></a>
+            <a href="{{ url_for('settings_routecalc') }}?id={{ area.routecalc }}&area_id={{ area_id }}"><button type="button" class="btn btn-success btn-sm edit" data-toggle="tooltip" title="Edit calculated route"><i class="fas fa-route"></i></button></a>
             {% if config_mode == False %}
               {% if area.area_type not in ['idle', 'iv_mitm'] %}
-                <div class='recalc_div' style='display:inline;'></div>
+                <div class='recalc_div' style='display:inline;' data-toggle="tooltip" title="Recalculate route"></div>
               {% endif %}
             {% endif %}
-            <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.area_type }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}"><i class="far fa-edit"></i></button></a>
-            <button data-identifier='{{ area_id }}' type="button" class="delete btn btn-danger btn-sm"><i class="fas fa-trash-alt"></i>
+            <a href="{{ redirect }}?id={{ area_id }}&mode={{ area.area_type }}"><button type="button" class="btn btn-success btn-sm edit" data-identifier="{{ loop.index }}" data-toggle="tooltip" title="Edit area"><i class="far fa-edit"></i></button></a>
+            <button data-identifier='{{ area_id }}' type="button" class="delete btn btn-danger btn-sm" data-toggle="tooltip" title="Delete area"><i class="fas fa-trash-alt"></i>
           </td>
         </tr>
         {% endfor %}

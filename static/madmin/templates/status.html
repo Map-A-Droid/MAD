@@ -59,9 +59,9 @@
                 {data: 'globalrebootcount', title: 'Total Reboots'},
                 {data: 'lastPogoReboot', title: 'Last Reboot'},
                 {
-                    data: null, title: 'Commands',
+                    data: null, orderable: false,
                     "render": function (data, type, oData) {
-                        return "<center><button type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
+                        return "<center><button data-toggle='tooltip' title='Delete worker stats from database' type='button' class='delete btn btn-danger btn-sm confirm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fa fa-trash'></i></div></button> <button type='button' data-toggle='tooltip' title='Reset workers stats' class=' reset btn btn-info btn-sm' data-deviceid='" + oData.device_id + "'><div class='delete_div' style='display:inline;'><i class='fas fa-undo'></i></i></div></button></center>";
                     }
                 }            ],
             "columnDefs": [
@@ -112,7 +112,7 @@
             "stateSave": true,
             "stateDuration": 0
         });
-    
+
     var toHHMMSS_mark = (secs) => {
         var sec_test = parseInt(secs, 10);
         if (sec_test <  localStorage['MAD_MAXSECONDS_STATUS']) {
@@ -120,7 +120,7 @@
         }
         return toHHMMSS(secs);
     }
-    
+
     var toHHMMSS = (secs) => {
         var sec_num = parseInt(secs, 10)
         var hours   = Math.floor(sec_num / 3600)
@@ -132,7 +132,7 @@
             .filter((v,i) => v !== "00" || i > 0)
             .join(":")
     }
-    
+
     $(document).ready(function () {
         $("#navstatus").addClass("active");
         $('input#maxSeconds').val(localStorage["MAD_MAXSECONDS_STATUS"]);
@@ -235,25 +235,24 @@
 
 {% block content %}
 <h2>Worker Status</h2>
-<div class="dropdown">
-  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
-  <ul class="dropdown-menu dropdown-menu-right">
-      <li class="dropdown-item"><button type='button' class='delete btn btn-danger btn-sm confirm'><i class='fa fa-trash'></i></button> Delete worker stats from database</li>
-      <li class="dropdown-item"><button type='button' class=' reset btn btn-info btn-sm'><i class='fas fa-undo'></i></i></button> Reset workers stats</li>
-  </ul>
-</div>
-<br>
-<div class="card border-secondary">
-  <div class="card-body py-2">
-    <p class="card-text">View workers and their current status.  Times are displayed as HH:MM:SS.  HH is only specified if required</p>
+
+<div class="row">
+  <div class="col">
+    <div class="alert alert-primary">
+      View workers and their current status. Times are displayed as (HH:)MM:SS.
+    </div>
   </div>
 </div>
-<br>
-<table id="show-data-status" class="table"></table>
-<div class="card border-secondary">
-  <div class="card-body py-2">
-    <p class="card-text">How many seconds for <i class="fas fa-check" style="color: green !important;"></i> in Last Updated? <input type="number" id="maxSeconds" /></p>
+
+<div class="row">
+  <div class="col">
+    <table id="show-data-status" class="table"></table>
   </div>
 </div>
-<br />
+
+<div class="row">
+  <div class="col">
+    Set maximum time in seconds to display "Last update" as <i class="fas fa-check" style="color: green !important;"></i> for an easier overview <input type="number" id="maxSeconds" />
+  </div>
+</div>
 {% endblock %}
