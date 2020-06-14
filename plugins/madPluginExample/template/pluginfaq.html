@@ -1,0 +1,195 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<style>
+    code {
+    background: #f4f4f4;
+    border: 1px solid #ddd;
+    border-left: 3px solid #f36d33;
+    color: #666;
+    page-break-inside: avoid;
+    font-family: 'Courier New';
+    line-height: 1.6;
+    max-width: 100%;
+    overflow: auto;
+    padding: 1em 1.5em;
+    display: block;
+    word-wrap: break-word;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<h2>MAD plugin</h2>
+<strong>Legend</strong><br>
+<ul>
+    <li><a href="#folderstructure">Folder structure</a></li>
+    <li><a href="#files">Plugin Files</a></li>
+    <li><a href="#objecthandling">Object handling</a></li>
+    <li><a href="#examples">Examples</a></li>
+</ul>
+To create a own MAD plugin, create a new folder below <code> plugins </code> of your MAD root directory.<br><br>
+<h3 id="folderstructure">Folder structure</h3>
+<code>
+    mad root<br>
+    &nbsp;-plugins<br>
+    &nbsp;&nbsp;-pluginfolder<br>
+    &nbsp;&nbsp;&nbsp;-[static] (needed for static files if you want to create a new MADmin endpoint)<br>
+    &nbsp;&nbsp;&nbsp;-[template] (needed for templates if you want to create a new MADmin endpoint)<br>
+    &nbsp;&nbsp;&nbsp;-pluginname.py (plugin base file)<br>
+    &nbsp;&nbsp;&nbsp;-plugin.ini (plugin configuration)
+</code><br>
+<h3 id="files">Files</h3>
+<h5>plugin.ini(.example)</h5>
+This file is required to define global settings in the plugin. The following content is required at least.<br>
+<code>
+    [plugin]<br>
+    pluginname = Name of plugin<br>
+    description = Short plugin description<br>
+    author = your name<br>
+    url = URL if available<br>
+    version = 1.0 <br>
+    active = activate this plugin (true/false)<br>
+</code>
+You could add as many new sections and arguments how you want.<br><br>
+<h5>pluginname.py</h5>
+Use this <a href="{{url_for('.static', filename='madPluginExample.txt')}}" target="_new">file</a> as template for your plugins. You need to adjust the file with every new plugin:
+<code>class <strong>MadPluginExample</strong>(mapadroid.utils.pluginBase.Plugin):</code>
+Define a unique classname for your plugin.<br><br>
+<code>
+    self._routes = [<br>
+        ("/pluginfaq", self.example_route),<br>
+    ]
+</code>
+Add MADmin endpoints - if you want it. (/Endpoint, function)<br><br>
+
+<code>
+    self._hotlink = [<br>
+        ("Plugin faq", "/pluginfaq", "Description"),<br>
+    ]
+</code>
+Add information for MADmin plugin page. (name, URL, description)<br><br>
+
+<h3 id="objecthandling">MAD object handling</h3>
+MAD based on a few object. You could access them via the dictionary
+<code>this._mad</code><br>
+MAD Objects in this dictionary:
+<code>
+    db_wrapper = Database functions<br>
+    args = MAD global arguments<br>
+    madmin = MADmin<br>
+    logger = logger<br>
+    data_mananger = data manager<br>
+    mapping_manager = mapping manager<br>
+    jobstatus = MAD global job status (json)<br>
+    device_Updater = device updater<br>
+    ws_server = websocket server<br>
+    webhook_worker = webhook<br>
+    mitm_receiver_process = MITM data receiver<br>
+    mitm_mapper = mitm mapper<br>
+    event = MAD event system
+</code><br><br>
+
+<h3 id="examples">Examples</h3>
+<h4>Accessing own settings from plugin.ini</h4>
+<strong>Build-in object</strong>
+<code>
+    self._pluginconfig
+</code>
+<strong>config.ini</strong>
+<code>
+    [example]<br>
+    timer=100<br>
+    use=False<br>
+</code>
+<strong>plugin.py</strong>
+<code>
+    timer = self._pluginconfig.get("example", "timer", fallback=100)<br>
+    use = self._pluginconfig.getboolean("example", "use", fallback=False)
+</code><br>
+
+<h4>Replace exiting MAD function</h4>
+<strong>Example function</strong>
+<code>
+    DbStatsSubmit.py<br><br>
+        def submit_stats_detections_raw(self, data):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;query_status = (<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"VALUES (%s, %s, %s, %s, %s, %s) "<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;self._db_exec.executemany(query_status, data, commit=True)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return True<br>
+</code>
+<strong>plugin.py</strong>
+<code>
+    def perform_operation(self): <br>
+    &nbsp;&nbsp;&nbsp;&nbsp;....<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;self._mad['db_wrapper'].DbStatsSubmit.submit_stats_detections_raw = submit_stats_detections_raw_plugin<br><br>
+    <br>
+    def submit_stats_detections_raw_plugin(self, data):<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;query_status = (<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"INSERT IGNORE INTO own_table (worker, type_id, type, count, is_shiny, timestamp_scan) "<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"VALUES (%s, %s, %s, %s, %s, %s) "<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;self._db_exec.executemany(query_status, data, commit=True)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;return True<br>
+</code>
+This example store the raw stats in a own table.<br><br>
+
+<h4>Restart all failed / cancelled jobs</h4>
+<strong>plugin.py</strong>
+<code>
+    def __init__(self, mad):<br>
+    ...<br>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;self._routes = [<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("/restartallcanceledjobs", self.restartcanceledjobs),<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("/restartallfailedjobs", self.restartfailedjobs),<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;]<br><br>
+
+    &nbsp;&nbsp;&nbsp;&nbsp;self._hotlink = [<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("Restart all canceled jobs", "/restartallcanceledjobs", "Requeue all canceled jobs"),<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("Restart all failed jobs", "/restartallfailedjobs", "Requeue all failed jobs),<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;]<br><br>
+
+    Add at end of file:<br>
+
+    def restartcanceledjobs(self):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;jobLog = self._mad['device_Updater'].get_log(withautojobs=False)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ids = (self.getting_job_ids(jobLog, status='cancelled'))<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;for id in ids:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['logger'].info("Restarting cancelled job " + str(id))<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['device_Updater'].restart_job(str(id))<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;flash("Requeued " + str(len(ids)) + " canceled job(s)")<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return redirect(url_for('plugins'), code=302)<br>
+<br>
+    def restartfailedjobs(self):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;jobLog = self._mad['device_Updater'].get_log(withautojobs=False)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ids = (self.getting_job_ids(jobLog, status='failed'))<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;for id in ids:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['logger'].info("Restarting failed job " + str(id))<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['device_Updater'].restart_job(str(id))<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;flash("Requeued " + str(len(ids)) + " failed job(s)")<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return redirect(url_for('plugins'), code=302)<br>
+<br>
+    def getting_job_ids(self, jobLog, status: str= None):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ids: list = []<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;for job in jobLog.copy():<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    if str(job['status']) == str(status):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        ids.append(job['id'])<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;return ids<br><br>
+</code>
+That´s a easy way to restart all failed or cancelled jobs - without clicking x times in normal job view.
+<br><br>
+<h4>Accessing static file from template</h4>
+<strong>your template file</strong>
+<code>
+    {{url_for('.static', filename='filename')}}
+</code>
+That´s the easierst way to access static files from your template.
+
+
+{% endblock %}

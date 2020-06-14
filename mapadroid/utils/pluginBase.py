@@ -1,18 +1,22 @@
 import inspect
 import os
 import pkgutil
-
+import configparser
+import zipfile
 
 class Plugin(object):
     """Base class that each plugin must inherit from. within this class
     you must define the methods that all of your plugins must implement
     """
 
-    def __init__(self):
-        self.description = 'UNKNOWN'
+    def __init__(self, mad):
 
-    def perform_operation(self, db_wrapper, args, madmin, logger, data_manager,
-                                   mapping_manager, jobstatus, device_Updater, ws_server):
+        self.description = 'UNKNOWN'
+        self.pluginname = 'UNKNOWN'
+        self._pluginconfig = configparser.ConfigParser()
+        self._versionconfig = configparser.ConfigParser()
+
+    def perform_operation(self):
         """The method that we expect all plugins to implement. This is the
         method that our framework will call
         """
@@ -24,21 +28,13 @@ class PluginCollection(object):
     that contain a class definition that is inheriting from the Plugin class
     """
 
-    def __init__(self, plugin_package, db_wrapper, args, madmin, logger, data_manager,
-                                   mapping_manager, jobstatus, device_Updater, ws_server):
+    def __init__(self, plugin_package, mad):
         """Constructor that initiates the reading of all available plugins
         when an instance of the PluginCollection object is created
         """
         self.plugin_package = plugin_package
-        self._db = db_wrapper
-        self._args = args
-        self._madmin = madmin
-        self._logger = logger
-        self._data_manager = data_manager
-        self._mapping_manager = mapping_manager
-        self._jobstatus = jobstatus
-        self._device_Updater = device_Updater
-        self._ws_server = ws_server
+        self._mad = mad
+        self._logger = mad['logger']
         self.reload_plugins()
 
     def reload_plugins(self):
@@ -54,26 +50,24 @@ class PluginCollection(object):
     def apply_all_plugins_on_value(self):
         """Apply all of the plugins on the argument supplied to this function
         """
-        print()
-        self._logger.info(f'Applying all plugins:')
         for plugin in self.plugins:
-            self._logger.info(f'Applying {plugin.description} '
-                              f'{plugin.perform_operation(self._db , self._args, self._madmin, self._logger, self._data_manager, self._mapping_manager, self._jobstatus, self._device_Updater, self._ws_server)}')
+            self._logger.info(f'Applying {plugin.pluginname}: '
+                              f'{plugin.perform_operation()}')
 
     def walk_package(self, package):
         """Recursively walk the supplied package to retrieve all plugins
         """
-        imported_package = __import__(package, fromlist=['blah'])
+        imported_package = __import__(package, fromlist=['MAD'])
 
         for _, pluginname, ispkg in pkgutil.iter_modules(imported_package.__path__, imported_package.__name__ + '.'):
             if not ispkg:
-                plugin_module = __import__(pluginname, fromlist=['blah'])
+                plugin_module = __import__(pluginname, fromlist=['MAD'])
                 clsmembers = inspect.getmembers(plugin_module, inspect.isclass)
                 for (_, c) in clsmembers:
                     # Only add classes that are a sub class of Plugin, but NOT Plugin itself
                     if issubclass(c, Plugin) & (c is not Plugin):
                         self._logger.info(f'Found plugin class: {c.__name__}')
-                        self.plugins.append(c())
+                        self.plugins.append(c(self._mad))
 
 
         # Now that we have looked at all the modules in the current package, start looking
@@ -94,3 +88,15 @@ class PluginCollection(object):
                 # For each sub directory, apply the walk_package method recursively
                 for child_pkg in child_pkgs:
                     self.walk_package(package + '.' + child_pkg)
+
+    def zip_plugin(self, zip_file, target_dir):
+        zipobj = zipfile.ZipFile(os.path.join(self._mad['args'].temp_path, str(zip_file) + '.mpl'), 'w',
+                                 zipfile.ZIP_DEFLATED)
+        rootlen = len(target_dir) + 1
+        for base, dirs, files in os.walk(target_dir):
+            for file in files:
+                if file != "config.ini":
+                    fn = os.path.join(base, file)
+                    zipobj.write(fn, fn[rootlen:])
+
+        return True
