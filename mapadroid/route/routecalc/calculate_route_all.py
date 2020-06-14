@@ -104,7 +104,7 @@ def route_calc_all(lessCoordinates, route_name, num_processes, algorithm):
         else:
             logger.debug("Using OR-Tools for routecalc")
             return route_calc_ortools(lessCoordinates, route_name)
-    else:
-        logger.debug("Using MAD quick routecalc")
-        from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
-        return route_calc_impl(lessCoordinates, route_name, num_processes)
+
+    logger.debug("Using MAD quick routecalc")
+    from mapadroid.route.routecalc.calculate_route_quick import route_calc_impl
+    return route_calc_impl(lessCoordinates, route_name, num_processes)
