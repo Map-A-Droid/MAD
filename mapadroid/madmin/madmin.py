@@ -23,8 +23,8 @@ from mapadroid.websocket.WebsocketServer import WebsocketServer
 
 logger = get_logger(LoggerEnums.madmin)
 app = Flask(__name__,
-                static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
-                template_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates'))
+            static_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/static'),
+            template_folder=os.path.join(mapadroid.MAD_ROOT, 'static/madmin/templates'))
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1)
 app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
@@ -68,7 +68,7 @@ class madmin(object):
         self.control = control(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
                                self._app, self._device_updater)
         self.APIEntry = APIEntry(logger, self._app, self._data_manager, self._mapping_manager, self._ws_server,
-                                  self._args.config_mode, self._storage_obj)
+                                 self._args.config_mode, self._storage_obj)
         self.config = config(self._db_wrapper, self._args, logger, self._app, self._mapping_manager,
                              self._data_manager)
         self.apk_manager = apk_manager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
