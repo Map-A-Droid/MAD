@@ -34,8 +34,6 @@ class config(object):
         cache.init_app(self._app)
         self._mapping_mananger = mapping_manager
 
-        self.add_route()
-
     def add_route(self):
         routes = [
             ("/settings", self.settings),
@@ -54,6 +52,9 @@ class config(object):
         ]
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
+
+    def start_modul(self):
+        self.add_route()
 
     def get_pokemon(self):
         mondata = open_json_file('pokemon')

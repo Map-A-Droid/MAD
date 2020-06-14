@@ -48,7 +48,7 @@ def internal_error(self, exception):
 
 class madmin(object):
     def __init__(self, args, db_wrapper: DbWrapper, ws_server, mapping_manager: MappingManager, data_manager,
-                     deviceUpdater, jobstatus, storage_elem):
+                     deviceUpdater, jobstatus, storage_obj):
 
         self._db_wrapper: DbWrapper = db_wrapper
         self._args = args
@@ -61,36 +61,52 @@ class madmin(object):
         self._jobstatus = jobstatus
         self._plugin_hotlink: list = []
 
+        self.path = path(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
+                         self._data_manager, self._plugin_hotlink)
+        self.map = map(self._db_wrapper, self._args, self._mapping_manager, self._app, self._data_manager)
+        self.statistics = statistics(self._db_wrapper, self._args, app, self._mapping_manager, self._data_manager)
+        self.control = control(self._db_wrapper, self._args, self._mapping_manager, self._ws_server, logger,
+                               self._app, self._device_updater)
+        self.APIEntry = APIEntry(logger, self._app, self._data_manager, self._mapping_manager, self._ws_server,
+                                  self._args.config_mode, self._storage_obj)
+        self.config = config(self._db_wrapper, self._args, logger, self._app, self._mapping_manager,
+                             self._data_manager)
+        self.apk_manager = apk_manager(self._db_wrapper, self._args, self._app, self._mapping_manager, self._jobstatus,
+                                       self._storage_obj)
+        self.event = event(self._db_wrapper, self._args, logger, self._app, self._mapping_manager, self._data_manager)
+
     @logger.catch()
     def madmin_start(self):
-        # load routes
-        if self._args.madmin_base_path:
-            self._app.wsgi_app = ReverseProxied(self._app.wsgi_app, script_name=self._args.madmin_base_path)
-
-        # start modules
-        self.path.start_modul()
-        self.map.start_modul()
-        self.statistics.start_modul()
-        self.config.start_modul()
-        self.apk_manager.start_modul()
-        self.event.start_modul()
-        self.control.start_modul()
-
-        log = logging.getLogger('werkzeug')
-        handler = InterceptHandler(log_section=LoggerEnums.madmin)
-        log.addHandler(handler)
-        app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
+        try:
+            # load routes
+            if self._args.madmin_base_path:
+                self._app.wsgi_app = ReverseProxied(self._app.wsgi_app, script_name=self._args.madmin_base_path)
+            # start modules
+            self.path.start_modul()
+            self.map.start_modul()
+            self.statistics.start_modul()
+            self.config.start_modul()
+            self.apk_manager.start_modul()
+            self.event.start_modul()
+            self.control.start_modul()
+            log = logging.getLogger('werkzeug')
+            handler = InterceptHandler(log_section=LoggerEnums.madmin)
+            log.addHandler(handler)
+            self._app.run(host=self._args.madmin_ip, port=int(self._args.madmin_port), threaded=True)
+        except:
+            logger.opt(exception=True).critical('Unable to load MADmin component')
+        logger.info('Finished madmin')
 
     def add_route(self, routes):
         for route, view_func in routes:
             self._app.route(route, methods=['GET', 'POST'])(view_func)
 
     def get_routepath(self):
-        routepath = app.root_path
+        routepath = self._app.root_path
         return routepath
 
     def register_plugin(self, pluginname):
-        app.register_blueprint(pluginname)
+        self._app.register_blueprint(pluginname)
 
     def add_plugin_hotlink(self, name, link, plugin, description, author, url, linkdescription, version):
         self._plugin_hotlink.append({"Plugin": plugin, "linkname": name, "linkurl": link,

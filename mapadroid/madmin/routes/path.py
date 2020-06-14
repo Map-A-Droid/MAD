@@ -22,7 +22,6 @@ class path(object):
         self._mapping_manager = mapping_manager
         self._data_manager = data_manager
         self._plugin_hotlink = plugin_hotlink
-        self.add_route()
 
     def add_route(self):
         routes = [
@@ -39,6 +38,9 @@ class path(object):
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
+
+    def start_modul(self):
+        self.add_route()
 
     @auth_required
     def pushscreens(self, path):
@@ -90,6 +92,19 @@ class path(object):
 
     @auth_required
     def plugins(self):
+        plugins = {}
+        for plugin in self._plugin_hotlink:
+            if plugin['author'] not in plugins:
+                plugins[plugin['author']] = {}
+                plugins[plugin['author']][plugin['Plugin']] = {}
+                plugins[plugin['author']][plugin['Plugin']]['links'] = []
+
+            plugins[plugin['author']][plugin['Plugin']]['authorurl'] = plugin['authorurl']
+            plugins[plugin['author']][plugin['Plugin']]['version'] = plugin['version']
+            plugins[plugin['author']][plugin['Plugin']]['description'] = plugin['description']
+            plugins[plugin['author']][plugin['Plugin']]['links'].append({'linkname': plugin['linkname'],
+                                                                         'linkurl': plugin['linkurl'],
+                                                                         'description': plugin['linkdescription']})
         return render_template('plugins.html',
                                responsive=str(self._args.madmin_noresponsive).lower(),
-                               title="Select Plugin", plugin_hotlinks=self._plugin_hotlink)
+                               title="Select Plugin", plugin_hotlinks=plugins)

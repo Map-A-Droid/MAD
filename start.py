@@ -260,16 +260,21 @@ if __name__ == "__main__":
             t_usage.start()
 
     madmin = madmin(args, db_wrapper, ws_server, mapping_manager, data_manager, device_Updater,
-                          jobstatus)
+                          jobstatus, storage_elem)
 
     # starting plugin system
-    mad_plugins = PluginCollection('plugins', db_wrapper, args, madmin, logger, data_manager,
-                                   mapping_manager, jobstatus, device_Updater, ws_server, storage_elem)
+    plugin_parts={'db_wrapper': db_wrapper, 'args': args, 'madmin': madmin, 'data_mananger': data_manager,
+                  'mapping_manager': mapping_manager, 'jobstatus': jobstatus, 'device_Updater': device_Updater,
+                  'ws_server': ws_server, 'webhook_worker': webhook_worker,
+                  'mitm_receiver_process': mitm_receiver_process, 'mitm_mapper': mitm_mapper, 'event': event,
+                  'logger': logger, 'storage_elem': storage_elem
+                  }
+    mad_plugins = PluginCollection('plugins', plugin_parts)
     mad_plugins.apply_all_plugins_on_value()
 
     if args.with_madmin or args.config_mode:
         logger.info("Starting Madmin on port {}", str(args.madmin_port))
-        t_madmin = Thread(name="madmin", target=madmin.madmin_start(), args=(args,))
+        t_madmin = Thread(name="madmin", target=madmin.madmin_start)
         t_madmin.daemon = True
         t_madmin.start()
 
