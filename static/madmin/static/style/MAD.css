@@ -191,6 +191,8 @@
     border: 1px solid #bbb !important;
 }
 
+[data-theme="dark"] .leaflet-popup-content i.fas, .leaflet-popup-content i.fa { color: #333 !important; }
+
 .leaflet-draw-toolbar a {
     background-image: url(/static/leaflet.draw.png) !important;
     background-repeat: no-repeat;
