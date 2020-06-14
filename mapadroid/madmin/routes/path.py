@@ -93,9 +93,12 @@ class path(object):
     @auth_required
     def plugins(self):
         plugins = {}
+
         for plugin in self._plugin_hotlink:
             if plugin['author'] not in plugins:
                 plugins[plugin['author']] = {}
+
+            if plugin['Plugin'] not in plugins[plugin['author']]:
                 plugins[plugin['author']][plugin['Plugin']] = {}
                 plugins[plugin['author']][plugin['Plugin']]['links'] = []
 
