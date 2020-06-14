@@ -30,7 +30,6 @@ app.config['UPLOAD_FOLDER'] = 'temp'
 app.config['MAX_CONTENT_LENGTH'] = 200 * 1024 * 1024
 app.secret_key = "8bc96865945be733f3973ba21d3c5949"
 
-
 @app.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')
