@@ -164,6 +164,7 @@ class RouteCalc(Resource):
             start = timer()
             from mapadroid.route.routecalc.calculate_route_all import route_calc_all
             sol_best = route_calc_all(lessCoordinates, route_name, num_processes, algorithm)
+
             end = timer()
 
             calc_dur = (end - start) / 60
