@@ -1130,7 +1130,7 @@ class RouteManagerBase(ABC):
         return coordlist
 
     def set_worker_startposition(self, worker, lat, lon):
-        self.logger.info("Getting startposition for walker {} ({} / {}".format(str(worker), str(lat), str(lon)))
+        self.logger.info("Getting startposition for walker {} ({} / {})".format(str(worker), str(lat), str(lon)))
         if worker not in self._worker_start_position:
             self._worker_start_position[worker] = Location(0.0, 0.0)
 
