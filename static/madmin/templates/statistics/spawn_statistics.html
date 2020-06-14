@@ -59,10 +59,10 @@
                 return JSON.parse( localStorage.getItem( 'MAD_aeSP_' + settings.sInstance ) )
             }
         });
-	}
+  }
 
-	function loadData() {
-	    $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Loading...</h2>' });
+  function loadData() {
+      $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Loading...</h2>' });
             $('body').Aplus();
             $("#navgyms").addClass("active");
             $.ajax({
@@ -73,7 +73,7 @@
                     setGrid('#show-spawnpoints-stats', result.spawnpoints);
                 }
             });
-	}
+  }
 
         function loadDataByFence() {
             $.blockUI({ message: '<img src="static/loading.gif" width="100px" /><br /><h2>Loading...</h2>' });
@@ -83,38 +83,38 @@
                 type: "GET",
                 url: "get_spawnpoints_stats" + "?fence=" + $("select#geofence_type_selector_overkill").val(),
                 success: function (result) {
-		    setTimeout($.unblockUI, 100);
+        setTimeout($.unblockUI, 100);
                     setGrid('#show-spawnpoints-stats', result.spawnpoints);
                 }
             });
         }
 
         function enableOverkillMode() {
-		destroyDatatable("#show-spawnpoints-stats");
+    destroyDatatable("#show-spawnpoints-stats");
                 $("#geofence_type_selector_span").hide();
                 $("div#geofence_type_selector_overkill").show();
                 $("select#geofence_type_selector_overkill").change(function() {
-			destroyDatatable("#show-spawnpoints-stats");
+      destroyDatatable("#show-spawnpoints-stats");
                         loadDataByFence();
                 });
         }
 
         function enableNormalMode() {
-		destroyDatatable("#show-spawnpoints-stats");
+    destroyDatatable("#show-spawnpoints-stats");
                 $("div#geofence_type_selector_overkill").hide();
                 $("#geofence_type_selector_span").show();
                 $("#geofence_type_selector").change(function() {
-			destroyDatatable("#show-spawnpoints-stats");
+      destroyDatatable("#show-spawnpoints-stats");
                         loadData();
                 });
                 loadData();
         }
 
-	function destroyDatatable(selector) {
-		if ($.fn.DataTable.isDataTable(selector)) {
-			$(selector).DataTable().destroy();
-		}
-	}
+  function destroyDatatable(selector) {
+    if ($.fn.DataTable.isDataTable(selector)) {
+      $(selector).DataTable().destroy();
+    }
+  }
 
         function loadSummary() {
             $.blockUI({ message: '<img src="static/loading.gif" width="100px" /><br /><h2>Quick check, please wait.</h2>' });
@@ -124,9 +124,9 @@
                 type: "GET",
                 url: "get_spawnpoints_stats_summary",
                 success: function (result) {
-		    var tmp_fences = Object.keys(result.fences).map(k => result.fences[k]);
-		    var mon_mitm_fences_count = tmp_fences.filter(fence => fence.mode === "mon_mitm").length
-		    console.log("e*s*m = " + result.events.length * result.spawnpoints_count * mon_mitm_fences_count);
+        var tmp_fences = Object.keys(result.fences).map(k => result.fences[k]);
+        var mon_mitm_fences_count = tmp_fences.filter(fence => fence.mode === "mon_mitm").length
+        console.log("e*s*m = " + result.events.length * result.spawnpoints_count * mon_mitm_fences_count);
                     tmp_fences.sort(function (a, b) {
                         return a["name"].toLowerCase() > b["name"].toLowerCase() ? 1 : -1;
                     });
@@ -134,7 +134,7 @@
                         for (fence in tmp_fences) {
                             $("select#geofence_type_selector_overkill").append($('<option>', {value: tmp_fences[fence].area_id, text: tmp_fences[fence].name + " [" + tmp_fences[fence].mode + "]"}));
                     }
-		    // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
+        // 1500000 is totally arbitrary number, it all depends from database, number of events, etc.
                     if (result.events.length * result.spawnpoints_count * mon_mitm_fences_count > 1500000) {
                         // Enable overkill mode aka single area selector. Better than loading for 10 minutes.
                         $.unblockUI();
@@ -155,8 +155,8 @@
         $("a#normal_mode").click(function() {
           if (confirm("We detected you have a lot of spawns*events*geofences, switching to normal mode can take a long time and provide no more functionality than current mode. Just shows more geofences at the same time. Do you really want to switch?")) {
               enableNormalMode();
-	  }
-	});
+    }
+  });
     });
 
     $( "#show-spawnpoints-stats" ).on( "click", '.convert', function(e) {
@@ -359,51 +359,49 @@
     table.dataTable tr.odd { background-color: #F8F8F8; }
     table.dataTable tr.even { background-color: white; }
 </style>
-
-
 {% endblock %}
 
 {% block content %}
 <h2>Spawnpoint Stats</h2>
-<div id="geofence_type_selector_span" style="display:none;">
-        Normal mode:
-        <select name="geofence_type_selector" id="geofence_type_selector">
-            <option value="mon_mitm" selected="selected">Mons [mon_mitm]</option>
-            <option value="iv_mitm">IVs [iv_mitm]</option>
-            <option value="pokestops">Quests [pokestops]</option>
-            <option value="raids_mitm">Raids [raids_mitm]</option>
-            <option value="idle">Idle [idle]</option>
-        </select>
-        <br /><a href="#" id="overkill_mode" class="badge badge-secondary">Switch to overkill mode</a></span>
-</div>
-<div id="geofence_type_selector_overkill" style="display:none;">
-        OK mode: <select name="geofence_type_selector_overkill" id="geofence_type_selector_overkill"></select>
-        <br /><a href="#" id="normal_mode" class="badge badge-warning">Switch to normal mode</a></span>
-</div>
-<div class="dropdown">
-  <button type="button" class="btn btn-secondary dropdown-toggle float-right btn-sm" data-toggle="dropdown">Legend</button>
-  <ul class="dropdown-menu dropdown-menu-right">
-      <li class="dropdown-item"><button type='button' class='btn btn-primary btn-sm'><i class='fa fa-eye'></i></button> Show all Spawnpoints</li>
-      <li class="dropdown-item"><button type='button' class='delete btn btn-danger btn-sm confirm'><i class='fa fa-trash'></i></button> Delete all spawnpoints</li>
-	  <li class="dropdown-item"><button type='button' class='btn btn-success btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-clock'></i></button> No / still active event spawnpoints</li>
-	  <li class="dropdown-item"><button type='button' class='btn btn-dark btn-sm'><i class='fa fa-minus-circle'></i> / <i class='fa fa-history'></i></button> No / outdated spawnpoints</li>
-	  <li class="dropdown-item"><button type='button' class='convert delete btn btn-info btn-sm'><i class='fa fa-exchange-alt'></i></button> Convert event spawnpoints</li>
-  </ul>
-</div>
-<p>
-	{% with messages = get_flashed_messages() %}
-	  {% if messages %}
-		{% for message in messages %}
-		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-		{% endfor %}
-	  {% endif %}
-	{% endwith %}
-</p>
-<table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
-<div class="p-1 mb-1 bg-success text-white">
-	<div id="delete_unfenced_coords">
-		<button type='button' class='delete btn btn-danger btn-sm'><div class='delete_all_div' style='display:inline;'><i class='fa fa-trash'></i></div></button>  Delete all unfenced spawnpoints.
+<div class="row">
+  <div class="col">
+    <div id="geofence_type_selector_span" style="display:none;">
+      Modes:
+      <select name="geofence_type_selector" id="geofence_type_selector">
+        <option value="mon_mitm" selected="selected">Mons [mon_mitm]</option>
+        <option value="iv_mitm">IVs [iv_mitm]</option>
+        <option value="pokestops">Quests [pokestops]</option>
+        <option value="raids_mitm">Raids [raids_mitm]</option>
+        <option value="idle">Idle [idle]</option>
+      </select>
+      <a href="#" id="overkill_mode" class="btn btn-primary btn-sm">Show geofences</a></span>
     </div>
+    <div id="geofence_type_selector_overkill" style="display:none;">
+      Geofences: <select name="geofence_type_selector_overkill" id="geofence_type_selector_overkill"></select>
+      <a href="#" id="normal_mode" class="btn btn-primary btn-sm">Show modes</a></span>
+    </div>
+  </div>
+</div>
 
+<p>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+      <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+  {% endwith %}
+</p>
+
+<table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
+
+<div class="row">
+  <div class="col">
+    <div id="delete_unfenced_coords">
+      <button type='button' class='delete btn btn-danger btn-sm'>
+        <div class='delete_all_div' style='display:inline;'><i class='fa fa-trash'></i> Delete all unfenced spawnpoints</div>
+      </button>
+    </div>
+  </div>
 </div>
 {% endblock %}
