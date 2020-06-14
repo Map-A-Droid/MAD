@@ -44,7 +44,14 @@ To create a own MAD plugin, create a new folder below <code> plugins </code> of 
 </code><br>
 <h3 id="files">Files</h3>
 <h5>plugin.ini(.example)</h5>
-This file is required to define global settings in the plugin. The following content is required at least.<br>
+This file is required to define global settings in the plugin. (The following content is required at least)<br>
+<code>
+    [plugin]<br>
+    active = activate this plugin (true/false)<br>
+</code>
+You could add as many new sections and arguments how you want.<br><br>
+<h5>version.mpl</h5>
+This file is required to define plugin information. (The following content is required at least)<br>
 <code>
     [plugin]<br>
     pluginname = Name of plugin<br>
@@ -52,9 +59,7 @@ This file is required to define global settings in the plugin. The following con
     author = your name<br>
     url = URL if available<br>
     version = 1.0 <br>
-    active = activate this plugin (true/false)<br>
-</code>
-You could add as many new sections and arguments how you want.<br><br>
+</code><br><br>
 <h5>pluginname.py</h5>
 Use this <a href="{{url_for('.static', filename='madPluginExample.txt')}}" target="_new">file</a> as template for your plugins. You need to adjust the file with every new plugin:
 <code>class <strong>MadPluginExample</strong>(mapadroid.utils.pluginBase.Plugin):</code>

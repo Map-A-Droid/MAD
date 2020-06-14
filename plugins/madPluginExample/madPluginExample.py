@@ -1,7 +1,6 @@
 import mapadroid.utils.pluginBase
 from flask import render_template, Blueprint
 from mapadroid.madmin.functions import auth_required
-from mapadroid.mitm_receiver.MITMReceiver import MITMReceiver
 import os
 
 
@@ -17,11 +16,11 @@ class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
 
         self._pluginconfig.read(self._rootdir + "/plugin.ini")
         self._versionconfig.read(self._rootdir + "/version.mpl")
-        self.author = self._pluginconfig.get("plugin", "author", fallback="unknown")
-        self.url = self._pluginconfig.get("plugin", "url", fallback="https://www.maddev.eu")
-        self.description = self._pluginconfig.get("plugin", "description", fallback="unknown")
-        self.version = self._versionconfig.get("version", "version", fallback="unknown")
-        self.pluginname = self._pluginconfig.get("plugin", "pluginname", fallback="https://www.maddev.eu")
+        self.author = self._versionconfig.get("plugin", "author", fallback="unknown")
+        self.url = self._versionconfig.get("plugin", "url", fallback="https://www.maddev.eu")
+        self.description = self._versionconfig.get("plugin", "description", fallback="unknown")
+        self.version = self._versionconfig.get("plugin", "version", fallback="unknown")
+        self.pluginname = self._versionconfig.get("plugin", "pluginname", fallback="https://www.maddev.eu")
         self.staticpath = self._rootdir + "/static/"
         self.templatepath = self._rootdir + "/template/"
 
