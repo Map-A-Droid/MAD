@@ -27,6 +27,13 @@ function flush_level(uri, data) {
   });
 }
 $(document).ready(function () {
+    $("#selectAll").change(function() {
+      sel = this.checked
+      $(".bulk_sel").each(function() {
+        $(this).prop('checked', sel);
+      });
+    });
+
     $(".walker_sel_single").change(function() {
         var uri = '{{ base_uri }}/'+ $(this).data('identifier');
         var walker_uri = $(this).children("option:selected").attr('name');
@@ -126,7 +133,7 @@ $(document).ready(function () {
     } else {
         $('#no-configured-elements').hide();
     }
-}
+  }
 </script>
 {% endblock %}
 
@@ -144,7 +151,7 @@ $(document).ready(function () {
     <table class="table table-striped table-hover table-sm">
       <thead>
         <tr>
-          <th style="width: 30%" class="align-middle">Origin</th>
+          <th style="width: 30%" class="align-middle"><input type="checkbox" id="selectAll"> Origin</th>
           <th style="width: 20%" class="align-middle d-none d-lg-table-cell">Settings</th>
           <th style="width: 30%" class="align-middle">Walker <i class="fas fa-info-circle" data-toggle="tooltip" title="Changing a walker for a device is saved automatically"></i></th>
           <th style="width: 20%" class="text-right align-middle"><a href='{{ url_for('settings_devices', id='new') }}'><button type="button" class="btn btn-sm btn-success"><i class="fas fa-plus"></i></button></a></th>
