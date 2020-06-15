@@ -193,6 +193,7 @@ if __name__ == "__main__":
     data_manager = DataManager(db_wrapper, instance_id)
     MADPatcher(args, data_manager)
     data_manager.clear_on_boot()
+    data_manager.fix_routecalc_on_boot()
     event = Event(args, db_wrapper)
     event.start_event_checker()
     # Do not remove this sleep unless you have solved the race condition on boot with the logger
