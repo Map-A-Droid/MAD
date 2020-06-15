@@ -1,97 +1,105 @@
 {% extends "base.html" %}
 
 {% block header %}
-{% endblock %}
-
-{% block scripts %}
 <link type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.min.css" rel="stylesheet" />
 <link type="text/css" href="https://cdn.datatables.net/select/1.3.0/css/select.dataTables.min.css" rel="stylesheet" />
-<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.0/js/dataTables.select.min.js"></script>
-<script>
-    var table;
-    function setGrid(tableGridHtmlId, gridData) {
-        table = $(tableGridHtmlId).DataTable({
-            "data": gridData,
-            "columns": [
-                { data: 'worker', title: 'Worker' },
-            ],
-
-            'columnDefs': [
-            {
-                'targets': 0,
-                'data': 'worker'
-
-            }
-            ],
-            'select': {
-                'style': 'multi'
-            },
-
-                "responsive": {{ responsive }},
-                "stateSave": true,
-                "stripeClasses": [ 'odd', 'even' ],
-                "stateSaveCallback": function(settings,data) {
-                    localStorage.setItem( 'MAD_WORKER_SELECT_' + settings.sInstance, JSON.stringify(data) )
-                },
-                "stateLoadCallback": function(settings) {
-                     return JSON.parse( localStorage.getItem( 'MAD_WORKER_SELECT_' + settings.sInstance ) )
-                }
-            });
-	 }
-
-    $(document).ready(function () {
-        $('body').Aplus();
-        $("#navgyms").addClass("active");
-        $.ajax({
-            type: "GET",
-            url: "get_all_workers",
-            success: function (result) {
-                setGrid('#show-data', result);
-            }
-        });
-
-    $('#workerselect').on('submit', function(e){
-      var form = this;
-
-      var rows_selected = table.rows('.selected').data();
-
-      // Iterate over all selected checkboxes
-      $.each(rows_selected, function(index, rowId){
-
-         // Create a hidden element
-         $(form).append(
-             $('<input>')
-                .attr('type', 'hidden')
-                .attr('name', 'device[]')
-                .val(rowId.worker)
-         );
-      });
-   });
-
-
-    });
-</script>
 <style>
     table.dataTable tr.odd { background-color: #F8F8F8; }
     table.dataTable tr.even { background-color: white; }
 </style>
 {% endblock %}
 
+{% block scripts %}
+<script type="text/javascript" src="https://cdn.datatables.net/select/1.3.0/js/dataTables.select.min.js"></script>
+<script>
+    var table;
+    var selected = false;
+    function setGrid(tableGridHtmlId, gridData) {
+        table = $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+              { data: 'worker', title: 'Worker' },
+            ],
+            'columnDefs': [
+              {
+                'targets': 0,
+                'data': 'worker',
+                'orderable': false
+              }
+            ],
+            'select': {
+                'style': 'os'
+            },
+            "ordering": false,
+            "responsive": {{ responsive }},
+            "stateSave": true,
+            "stripeClasses": [ 'odd', 'even' ],
+            "stateSaveCallback": function(settings, data) {
+              localStorage.setItem( 'MAD_WORKER_SELECT_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+              return JSON.parse( localStorage.getItem( 'MAD_WORKER_SELECT_' + settings.sInstance ) )
+            },
+            "headerCallback": function(thead, data, start, end, display) {
+
+            }
+        });
+   }
+
+    $(document).ready(function () {
+      $('body').Aplus();
+      $("#navgyms").addClass("active");
+      $.ajax({
+        type: "GET",
+        url: "get_all_workers",
+        success: function (result) {
+          setGrid('#show-data', result);
+        }
+      });
+
+      $('#workerselect').on('submit', function(e){
+        var form = this;
+        var rows_selected = table.rows('.selected').data();
+
+        // Iterate over all selected checkboxes
+        $.each(rows_selected, function(index, rowId){
+          // Create a hidden element
+          $(form).append($('<input>')
+            .attr('type', 'hidden')
+            .attr('name', 'device[]')
+            .val(rowId.worker));
+        });
+     });
+
+    $('#selectAll').click(function() {
+      if (selected) {
+        table.rows().deselect();
+        selected = false;
+      } else {
+        table.rows().select();
+        selected = true;
+      }
+    });
+  });
+</script>
+{% endblock %}
+
 {% block content %}
 <h2>Select Worker</h2>
 <p>
-	{% with messages = get_flashed_messages() %}
-	  {% if messages %}
-		{% for message in messages %}
-		  <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
-		{% endfor %}
-	  {% endif %}
-	{% endwith %}
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+      <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+  {% endwith %}
 </p>
 <form name="workerselect" id="workerselect" action="job_for_worker">
-	<input type="hidden" name="jobname" value="{{jobname}}">
-	<input type="hidden" name="type" value="{{type}}">
-    <table id="show-data" class="table" style="width:100%;"></table>
-	<button type="submit" class="btn btn-primary">Submit</button>
+  <input type="hidden" name="jobname" value="{{jobname}}">
+  <input type="hidden" name="type" value="{{type}}">
+  <table id="show-data" class="table" style="width:100%;"></table>
+  <button type="submit" class="btn btn-primary">Execute job</button>
+  <button type="button" class="btn btn-secondary" id="selectAll">De-/select all</button>
 </form>
 {% endblock %}
