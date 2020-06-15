@@ -10,6 +10,10 @@ from .dm_exceptions import (
 )
 from .modules.resource import Resource
 from mapadroid.db.DbWrapper import DbWrapper
+from mapadroid.utils.logging import get_logger, LoggerEnums
+
+
+logger = get_logger(LoggerEnums.data_manager)
 
 
 # This is still known as the data manager but its more of a Resource Factory.  Its sole purpose is to produce a
@@ -27,9 +31,38 @@ class DataManager(object):
         if self.instance_id:
             clear_recalcs = {
                 'recalc_status': 0,
+            }
+            where = {
                 'instance_id': self.instance_id
             }
-            self.dbc.autoexec_update('settings_routecalc', clear_recalcs)
+            self.dbc.autoexec_update('settings_routecalc', clear_recalcs, where_keyvals=where)
+
+    def fix_routecalc_on_boot(self) -> None:
+        rc_sql = "IFNULL(id.`routecalc`, IFNULL(iv.`routecalc`, IFNULL(mon.`routecalc`, " \
+                 "IFNULL(ps.`routecalc`, ra.`routecalc`))))"
+        sql = "SELECT a.`area_id`, a.`instance_id` AS 'ain', rc.`routecalc_id`, rc.`instance_id` AS 'rcin'\n"\
+              "FROM (\n"\
+              " SELECT sa.`area_id`, sa.`instance_id`, %s AS 'routecalc'\n"\
+              " FROM `settings_area` sa\n"\
+              " LEFT JOIN `settings_area_idle` id ON id.`area_id` = sa.`area_id`\n"\
+              " LEFT JOIN `settings_area_iv_mitm` iv ON iv.`area_id` = sa.`area_id`\n"\
+              " LEFT JOIN `settings_area_mon_mitm` mon ON mon.`area_id` = sa.`area_id`\n"\
+              " LEFT JOIN `settings_area_pokestops` ps ON ps.`area_id` = sa.`area_id`\n"\
+              " LEFT JOIN `settings_area_raids_mitm` ra ON ra.`area_id` = sa.`area_id`\n"\
+              ") a\n"\
+              "INNER JOIN `settings_routecalc` rc ON rc.`routecalc_id` = a.`routecalc`\n"\
+              "WHERE a.`instance_id` != rc.`instance_id`" % (rc_sql,)
+        bad_entries = self.dbc.autofetch_all(sql)
+        if bad_entries:
+            logger.info('Routecalcs with mis-matched IDs present. {}', bad_entries)
+            for entry in bad_entries:
+                update = {
+                    'instance_id': entry['ain']
+                }
+                where = {
+                    'routecalc_id': entry['routecalc_id']
+                }
+                self.dbc.autoexec_update('settings_routecalc', update, where_keyvals=where)
 
     def get_resource(self, section: str, identifier: Optional[int] = None, **kwargs) -> Resource:
         if section == 'area':
