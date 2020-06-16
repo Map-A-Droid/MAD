@@ -274,7 +274,7 @@ class WordToScreenMatching(object):
         elif screentype == ScreenType.PTC:
             return self.__handle_ptc_login()
         elif screentype == ScreenType.FAILURE:
-            self.__handle_failure_screen(diff, global_dict)
+            self.__handle_failure_screen()
         elif screentype == ScreenType.RETRY:
             self.__handle_retry_screen(diff, global_dict)
         elif screentype == ScreenType.WRONG:
@@ -433,7 +433,7 @@ class WordToScreenMatching(object):
         time.sleep(50)
         return ScreenType.PTC
 
-    def __handle_failure_screen(self, diff, global_dict) -> None:
+    def __handle_failure_screen(self) -> None:
         self.__handle_returning_player_or_wrong_credentials()
 
     def __handle_returning_player_or_wrong_credentials(self) -> None:
