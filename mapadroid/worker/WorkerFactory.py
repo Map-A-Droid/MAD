@@ -82,7 +82,7 @@ class WorkerFactory:
                 str(self.__mapping_manager.routemanager_get_name(walker_area_name)))
             if walker_index >= len(walker_area_array) - 1:
                 logger.error(
-                    'Could not find any working area at this time - check your mappings for device: {}',
+                    'Can NOT find any active area defined for current time. Check Walker entries for device: {}',
                     str(origin))
                 walker_index = 0
                 self.__mapping_manager.set_devicesetting_value_of(origin, 'walker_area_index',
