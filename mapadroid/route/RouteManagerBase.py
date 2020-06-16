@@ -634,7 +634,7 @@ class RouteManagerBase(ABC):
                 self._last_round_prio[origin] = True
                 self._positiontyp[origin] = 1
                 self.logger.info("{} on route {} is moving to {}, {} for a priority event scheduled for {}",
-                            self.name, next_coord.lat, next_coord.lng, next_readableTime)
+                            origin, self.name, next_coord.lat, next_coord.lng, next_readableTime)
                 next_coord = self._check_coord_and_maybe_del(next_coord, origin)
                 if next_coord is None:
                     # Coord was not ok, lets recurse
