@@ -7,8 +7,8 @@ class ScreenType(Enum):
     RETURNING = 2  # returning player screen
     LOGINSELECT = 3  # login selection regarding OAUTH
     PTC = 4  # PTC login
-    FAILURE = 5  # login failure
-    RETRY = 6  # auth failed, retry screen
+    FAILURE = 5  # Unable to authenticate. Please try again. One green button: OK
+    RETRY = 6  # Failed to log in. Green button on top: RETRY - no background button below: TRY A DIFFERENT ACCOUNT
     WRONG = 7  # incorrect credentials?
     GAMEDATA = 8  # game data could not be fetched from server
     GGL = 10  # Google account picker
