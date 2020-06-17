@@ -37,8 +37,8 @@ class PogoWindows:
         self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
         self._ScreenType[5]: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
                                      'Authentification', 'Essaye']
-        self._ScreenType[6]: list = ['RETRY', 'TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung',
-                                     'fehlgeschlagen', 'ANDERES', 'KONTO', 'VERSUCHEN',
+        self._ScreenType[6]: list = ['RETRY', 'TRY', 'DIFFERENT', 'ACCOUNT',
+                                     'ANDERES', 'KONTO', 'VERSUCHEN',
                                      'AUTRE', 'AUTORISER']
         self._ScreenType[7]: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
         self._ScreenType[8]: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
