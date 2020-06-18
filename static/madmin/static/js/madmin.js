@@ -458,7 +458,7 @@ new Vue({
                             weight: 2,
                             opacity: 1.0,
                             fillOpacity: 0.8,
-                        }).bindPopup($this.build_gym_popup, {'className': 'gympopup'});
+                        }).bindPopup($this.build_gym_popup, {'className': 'gympopup', autoPan: false});
 
                         $this.addMouseEventPopup(leaflet_data["gyms"][gym["id"]]);
 
@@ -710,7 +710,6 @@ new Vue({
 
                     // add route to layergroup
                     L.geoJSON(geojson, {
-                        //pane: "routes",
                         style: {
                             "color": "#000000",
                             "weight": 2,
@@ -1517,6 +1516,10 @@ new Vue({
             }
         },
         addMouseEventPopup(marker) {
+            if (L.Browser.touch) {
+              return;
+            }
+
             marker.on("mouseover", function (e) {
                 marker.keepPopupOpen = false;
                 marker.openPopup();
