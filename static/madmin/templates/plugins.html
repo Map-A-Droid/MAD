@@ -89,7 +89,7 @@
 
 <p>
     <h3>Upload new plugin or updating existing one</h3>
-    <form method="post" action="upload_plugin" enctype="multipart/form-data">
+    <form method="post" action="{{ url_for("MAD_Plugin_Controller.upload_plugin") }}" enctype="multipart/form-data">
   <dl>
     <p>
       <input type="file" name="file" autocomplete="off" required>
