@@ -488,26 +488,26 @@ class WorkerQuests(MITMBase):
                     if success_counter == 0:
                         self._clear_box_failcount += 1
                         if self._clear_box_failcount < 3:
-                            self.logger.warning("Failed clearing box {} time(s) in "
-                                    "a row, retry later...",
-                                    self._clear_box_failcount)
+                            self.logger.warning("Failed clearing box {} times in "
+                                                "a row, retry later...",
+                                                self._clear_box_failcount)
                         else:
                             self.logger.error("Unable to delete any items 3 times in"
-                                " a row - restart pogo ...")
+                                              " a row - restart pogo ...")
                             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
                     continue
-                self.logger.warning('Find no item to delete - scrolling ({} times)', str(error_counter))
+                self.logger.info('Found no item to delete. Scrolling down ({} times)', str(error_counter))
                 self._communicator.touch_and_hold(int(200), int(600), int(200), int(100))
                 time.sleep(5)
 
             trashcancheck = self._get_trash_positions()
 
             if trashcancheck is None:
-                self.logger.error('Could not find any trashcan - abort')
+                self.logger.error('Could not find any trashcans - abort')
                 return
-            self.logger.info("Found {} trashcan(s) on screen", len(trashcancheck))
+            self.logger.info("Found {} trashcans on screen", len(trashcancheck))
             first_round = False
             delete_allowed = False
             stop_screen_clear.clear()
@@ -527,17 +527,17 @@ class WorkerQuests(MITMBase):
                         # TODO: could this be running forever?
                         trash += 1
                         continue
-                    self.logger.info("Found item {}", str(item_text))
+                    self.logger.debug("Found item {}", str(item_text))
                     match_one_item: bool = False
                     for text in not_allow:
                         if self.similar(text, item_text) > 0.6:
                             match_one_item = True
                             break
                     if match_one_item:
-                        self.logger.info('Could not delete this item - check next one')
+                        self.logger.debug('Not allowed to delete item. Skipping: {}', str(item_text))
                         trash += 1
                     else:
-                        self.logger.info('Could delete this item')
+                        self.logger.info('Going to delete item: {}', str(item_text))
                         self._communicator.click(int(trashcancheck[trash].x), int(trashcancheck[trash].y))
                         time.sleep(1 + int(delayadd))
 
@@ -562,12 +562,11 @@ class WorkerQuests(MITMBase):
                                 stop_screen_clear.set()
                                 delete_allowed = True
                         else:
-                            self.logger.error('Unknown error clearing out {}', str(item_text))
+                            self.logger.error('Unknown error while deleting item: {}', str(item_text))
                             stop_screen_clear.set()
                             stop_inventory_clear.set()
-
-                except UnicodeEncodeError as e:
-                    self.logger.warning('Found some text that was not unicode!')
+                except UnicodeEncodeError:
+                    self.logger.warning('Unable to identify item while ')
                     stop_inventory_clear.set()
                     stop_screen_clear.set()
                     pass
