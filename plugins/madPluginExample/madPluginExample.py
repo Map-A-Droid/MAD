@@ -30,8 +30,8 @@ class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
         ]
 
         self._hotlink = [
-            ("Plugin faq", "/pluginfaq", "Create own plugin - faq"),
-            ("Plugin Example", "/example", "Testpage"),
+            ("Plugin faq", "pluginfaq", "Create own plugin"),
+            ("Plugin Example", "example", "Testpage"),
         ]
 
         if self._pluginconfig.getboolean("plugin", "active", fallback=False):
@@ -39,11 +39,12 @@ class MadPluginExample(mapadroid.utils.pluginBase.Plugin):
                                      template_folder=self.templatepath)
 
             for route, view_func in self._routes:
-                self._plugin.route(route, methods=['GET', 'POST'])(view_func)
+                self._plugin.add_url_rule(route, route.replace("/", ""), view_func=view_func)
 
             for name, link, description in self._hotlink:
-                self._mad['madmin'].add_plugin_hotlink(name, link, self.pluginname, self.description, self.author,
-                                                       self.url, description, self.version)
+                self._mad['madmin'].add_plugin_hotlink(name, self._plugin.name+"."+link.replace("/", ""),
+                                                       self.pluginname, self.description, self.author, self.url,
+                                                       description, self.version)
 
     def perform_operation(self):
         """The actual implementation of the identity plugin is to just return the
