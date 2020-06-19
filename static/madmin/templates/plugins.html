@@ -7,8 +7,7 @@
 <style>
     .plugin_group {
         width: 100%;
-        border: 1px solid;
-        padding: 10px;
+        margin-bottom: 10px;
     }
 
     .plugin_author {
@@ -68,7 +67,6 @@
     {% endwith %}
 </p>
 <p>
-    <ul>
      {% for item in plugin_hotlinks %}
         <div class="plugin_group">
             <div class="plugin_author">{{item}}</div>
@@ -84,6 +82,22 @@
                 {% endfor %}
             {% endfor %}
     </div>
+    <hr>
     {% endfor %}
+</p>
+
+
+<p>
+    <h3>Upload new plugin or updating existing one</h3>
+    <form method="post" action="upload_plugin" enctype="multipart/form-data">
+  <dl>
+    <p>
+      <input type="file" name="file" autocomplete="off" required>
+    </p>
+  </dl>
+  <p>
+    <input type="submit" value="Upload">
+  </p>
+</form>
 </p>
 {% endblock %}

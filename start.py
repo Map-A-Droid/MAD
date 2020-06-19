@@ -270,6 +270,12 @@ if __name__ == "__main__":
                   'logger': logger, 'storage_elem': storage_elem
                   }
     mad_plugins = PluginCollection('plugins', plugin_parts)
+    if args.mad_plugin_export is not None:
+        export_plugin = mad_plugins.zip_plugin(args.mad_plugin_export)
+        if export_plugin is not None:
+            logger.info("Successfully export plugin: " + str(export_plugin))
+            logger.info("Manually kill MAD now")
+            sys.exit(1)
     mad_plugins.apply_all_plugins_on_value()
 
     if args.with_madmin or args.config_mode:

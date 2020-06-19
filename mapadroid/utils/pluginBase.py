@@ -4,6 +4,10 @@ import pkgutil
 import configparser
 import zipfile
 
+from werkzeug.utils import secure_filename
+from flask import Blueprint, request, flash, redirect, url_for
+from mapadroid.madmin.functions import auth_required
+
 class Plugin(object):
     """Base class that each plugin must inherit from. within this class
     you must define the methods that all of your plugins must implement
@@ -32,9 +36,21 @@ class PluginCollection(object):
         """Constructor that initiates the reading of all available plugins
         when an instance of the PluginCollection object is created
         """
+
+        self._routes = [
+            ("/upload_plugin", self.upload_plugin)
+        ]
+
         self.plugin_package = plugin_package
         self._mad = mad
         self._logger = mad['logger']
+        self._controller = Blueprint(str("MAD_Plugin_Controller"), __name__)
+
+        for route, view_func in self._routes:
+            self._controller.route(route, methods=['GET', 'POST'])(view_func)
+
+        self._mad['madmin'].register_plugin(self._controller)
+
         self.reload_plugins()
 
     def reload_plugins(self):
@@ -89,14 +105,53 @@ class PluginCollection(object):
                 for child_pkg in child_pkgs:
                     self.walk_package(package + '.' + child_pkg)
 
-    def zip_plugin(self, zip_file, target_dir):
-        zipobj = zipfile.ZipFile(os.path.join(self._mad['args'].temp_path, str(zip_file) + '.mpl'), 'w',
-                                 zipfile.ZIP_DEFLATED)
-        rootlen = len(target_dir) + 1
-        for base, dirs, files in os.walk(target_dir):
-            for file in files:
-                if file != "config.ini":
-                    fn = os.path.join(base, file)
-                    zipobj.write(fn, fn[rootlen:])
+    def zip_plugin(self, plugin_name):
+        plugin_file = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.mpl')
+        plugin_filepath = os.path.join(self.plugin_package, str(plugin_name))
 
+        if not os.path.isdir(plugin_filepath):
+            self._logger.error("Plugin folder does not exists - abort")
+            return None
+
+        zipobj = zipfile.ZipFile(plugin_file, 'w', zipfile.ZIP_DEFLATED)
+        rootlen = len(plugin_filepath) + 1
+        for base, dirs, files in os.walk(plugin_filepath):
+            if "__pycache__" not in base:
+                for file in files:
+                    if file != "plugin.ini":
+                        fn = os.path.join(base, file)
+                        zipobj.write(fn, fn[rootlen:])
+
+        return plugin_file
+
+    def unzip_plugin(self, mpl_file):
+        base = os.path.basename(mpl_file)
+        try:
+            with zipfile.ZipFile(mpl_file, 'r') as zip_ref:
+                zip_ref.extractall(os.path.join(self.plugin_package, str(os.path.splitext(base)[0])))
+        except:
+            self._logger.error("Cannot install new plugin: " + str(mpl_file))
+            return False
         return True
+
+    @auth_required
+    def upload_plugin(self):
+        if request.method == 'POST':
+            # check if the post request has the file part
+            if 'file' not in request.files:
+                flash('No file part')
+                return redirect(url_for('plugins'), code=302)
+            file = request.files['file']
+            if file.filename == '':
+                flash('No file selected for uploading')
+                return redirect(url_for('plugins'), code=302)
+            if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ['mpl']:
+                filename = secure_filename(file.filename)
+                file.save(os.path.join(self._mad['args'].temp_path, filename))
+                if self.unzip_plugin(os.path.join(self._mad['args'].temp_path, filename)):
+                    flash('Plugin uploaded successfully - check plugin.ini and restart MAD now!')
+                return redirect(url_for('plugins'), code=302)
+            else:
+                flash('Allowed file type is mpl only!')
+                return redirect(url_for('plugins'), code=302)
+

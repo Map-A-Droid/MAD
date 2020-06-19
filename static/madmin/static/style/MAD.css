@@ -177,6 +177,8 @@
     border: 1px solid #fff;
 }
 
+[data-theme="dark"] hr { background-color: #eee; }
+
 [data-theme="dark"] .leaflet-control-zoom-in, [data-theme="dark"] .leaflet-control-zoom-out {
     background-color: #000;
     color: #fff;
