@@ -31,9 +31,8 @@
     }
 
     .plugin_header {
-        border-bottom: black 1px solid;
         padding-top: 5px;
-        margin-bottom: 5px;
+        margin-bottom: 15px;
         font-weight: bolder;
     }
 
@@ -82,11 +81,11 @@
                 {% endfor %}
             {% endfor %}
     </div>
-    <hr>
+
     {% endfor %}
 </p>
 
-
+<hr>
 <p>
     <h3>Upload new plugin or updating existing one</h3>
     <form method="post" action="{{ url_for("MAD_Plugin_Controller.upload_plugin") }}" enctype="multipart/form-data">

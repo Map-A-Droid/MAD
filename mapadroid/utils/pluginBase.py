@@ -132,6 +132,15 @@ class PluginCollection(object):
         try:
             with zipfile.ZipFile(mpl_file, 'r') as zip_ref:
                 zip_ref.extractall(os.path.join(self.plugin_package, str(os.path.splitext(base)[0])))
+
+            #check for plugin.ini.example
+            if not os.path.isfile(
+                    os.path.join(self.plugin_package, str(os.path.splitext(base)[0]), "plugin.ini.example")):
+                with open(os.path.join(self.plugin_package, str(os.path.splitext(base)[0]),
+                                       "plugin.ini.example"), 'w') \
+                        as pluginini:
+                    pluginini.write('[plugin]\n')
+                    pluginini.write('active = false\n')
         except:
             self._logger.error("Cannot install new plugin: " + str(mpl_file))
             return False
