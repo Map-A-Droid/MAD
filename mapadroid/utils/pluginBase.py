@@ -5,8 +5,9 @@ import configparser
 import zipfile
 
 from werkzeug.utils import secure_filename
-from flask import Blueprint, request, flash, redirect, url_for
+from flask import Blueprint, request, flash, redirect, url_for, send_from_directory, send_file
 from mapadroid.madmin.functions import auth_required
+from mapadroid.utils.functions import generate_path
 
 class Plugin(object):
     """Base class that each plugin must inherit from. within this class
@@ -38,7 +39,8 @@ class PluginCollection(object):
         """
 
         self._routes = [
-            ("/upload_plugin", self.upload_plugin)
+            ("/upload_plugin", self.upload_plugin),
+            ("/download_plugin", self.download_plugin),
         ]
 
         self.plugin_package = plugin_package
@@ -67,8 +69,10 @@ class PluginCollection(object):
         """Apply all of the plugins on the argument supplied to this function
         """
         for plugin in self.plugins:
-            self._logger.info(f'Applying {plugin.pluginname}: '
-                              f'{plugin.perform_operation()}')
+            self._logger.info(f'Applying {plugin["plugin"].pluginname}: '
+                              f'{plugin["plugin"].perform_operation()}')
+            plugin["name"] = plugin["plugin"].pluginname
+
 
     def walk_package(self, package):
         """Recursively walk the supplied package to retrieve all plugins
@@ -83,8 +87,8 @@ class PluginCollection(object):
                     # Only add classes that are a sub class of Plugin, but NOT Plugin itself
                     if issubclass(c, Plugin) & (c is not Plugin):
                         self._logger.info(f'Found plugin class: {c.__name__}')
-                        self.plugins.append(c(self._mad))
-
+                        self.plugins.append({"plugin": c(self._mad),
+                                             "path": [x for x in imported_package.__path__][0]})
 
         # Now that we have looked at all the modules in the current package, start looking
         # recursively for additional modules in sub packages
@@ -105,17 +109,16 @@ class PluginCollection(object):
                 for child_pkg in child_pkgs:
                     self.walk_package(package + '.' + child_pkg)
 
-    def zip_plugin(self, plugin_name):
-        plugin_file = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.mpl')
+    def zip_plugin(self, plugin_name, folder):
+        plugin_file = os.path.join(self._mad['args'].temp_path, str(plugin_name) + '.mp')
         plugin_filepath = os.path.join(self.plugin_package, str(plugin_name))
-
-        if not os.path.isdir(plugin_filepath):
+        if not os.path.isdir(folder):
             self._logger.error("Plugin folder does not exists - abort")
             return None
 
         zipobj = zipfile.ZipFile(plugin_file, 'w', zipfile.ZIP_DEFLATED)
-        rootlen = len(plugin_filepath) + 1
-        for base, dirs, files in os.walk(plugin_filepath):
+        rootlen = len(folder) + 1
+        for base, dirs, files in os.walk(folder):
             if "__pycache__" not in base:
                 for file in files:
                     if file != "plugin.ini":
@@ -145,7 +148,7 @@ class PluginCollection(object):
             if file.filename == '':
                 flash('No file selected for uploading')
                 return redirect(url_for('plugins'), code=302)
-            if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ['mpl']:
+            if file and '.' in file.filename and file.filename.rsplit('.', 1)[1].lower() in ['mp']:
                 filename = secure_filename(file.filename)
                 file.save(os.path.join(self._mad['args'].temp_path, filename))
                 if self.unzip_plugin(os.path.join(self._mad['args'].temp_path, filename)):
@@ -154,4 +157,23 @@ class PluginCollection(object):
             else:
                 flash('Allowed file type is mpl only!')
                 return redirect(url_for('plugins'), code=302)
+
+    @auth_required
+    def download_plugin(self):
+        plugin = request.args.get("plugin", None)
+        if plugin is None:
+            return redirect(url_for('plugins'), code=302)
+
+        mad_plugin = next((item for item in self.plugins if item["name"] == plugin), None)
+        if mad_plugin is None:
+            return redirect(url_for('plugins'), code=302)
+
+        mp_file = self.zip_plugin(plugin, mad_plugin['path'])
+        if mp_file is None:
+            flash('Dont know this plugin!')
+            return redirect(url_for('plugins'), code=302)
+
+        return send_file(generate_path(self._mad['args'].temp_path) + "/" + plugin + ".mp",
+                         as_attachment=True, attachment_filename=plugin + ".mp")
+
 

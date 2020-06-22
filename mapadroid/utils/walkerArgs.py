@@ -164,9 +164,6 @@ def parseArgs():
     parser.add_argument('-mspass', '--mitm_status_password', default='',
                         help='Header Authorization password for MITM /status/ page')
 
-    parser.add_argument('-mpexport', '--mad_plugin_export', default=None,
-                        help='Plugin folder name for export')
-
     # Cleanup Hash Database
     parser.add_argument('-chd', '--clean_hash_database', action='store_true', default=False,
                         help='Cleanup the hashing database.')
