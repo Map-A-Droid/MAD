@@ -263,7 +263,7 @@ if __name__ == "__main__":
                           jobstatus, storage_elem)
 
     # starting plugin system
-    plugin_parts={'db_wrapper': db_wrapper, 'args': args, 'madmin': madmin, 'data_mananger': data_manager,
+    plugin_parts={'db_wrapper': db_wrapper, 'args': args, 'madmin': madmin, 'data_manager': data_manager,
                   'mapping_manager': mapping_manager, 'jobstatus': jobstatus, 'device_Updater': device_Updater,
                   'ws_server': ws_server, 'webhook_worker': webhook_worker,
                   'mitm_receiver_process': mitm_receiver_process, 'mitm_mapper': mitm_mapper, 'event': event,
