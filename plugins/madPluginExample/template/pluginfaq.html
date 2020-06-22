@@ -126,7 +126,7 @@ MAD Objects in this dictionary:
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "<br>
         &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"VALUES (%s, %s, %s, %s, %s, %s) "<br>
         &nbsp;&nbsp;&nbsp;&nbsp;)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;self._db_exec.executemany(query_status, data, commit=True)<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;self._mad['db_wrapper'].executemany(query_status, data, commit=True)<br>
         &nbsp;&nbsp;&nbsp;&nbsp;return True<br>
 </code>
 <strong>plugin.py</strong>
@@ -140,7 +140,7 @@ MAD Objects in this dictionary:
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"INSERT IGNORE INTO own_table (worker, type_id, type, count, is_shiny, timestamp_scan) "<br>
     &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"VALUES (%s, %s, %s, %s, %s, %s) "<br>
     &nbsp;&nbsp;&nbsp;&nbsp;)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;self._db_exec.executemany(query_status, data, commit=True)<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;self._mad['db_wrapper'].executemany(query_status, data, commit=True)<br>
     &nbsp;&nbsp;&nbsp;&nbsp;return True<br>
 </code>
 This example store the raw stats in a own table.<br><br>
