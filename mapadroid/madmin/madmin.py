@@ -45,7 +45,7 @@ def madmin_start(args, db_wrapper: DbWrapper, ws_server, mapping_manager: Mappin
         app.wsgi_app = ReverseProxied(app.wsgi_app, script_name=args.madmin_base_path)
 
     statistics(db_wrapper, args, app, mapping_manager, data_manager)
-    control(db_wrapper, args, mapping_manager, ws_server, logger, app, deviceUpdater, self._data_manager)
+    control(db_wrapper, args, mapping_manager, ws_server, logger, app, deviceUpdater, data_manager)
     map(db_wrapper, args, mapping_manager, app, data_manager)
     APIEntry(logger, app, data_manager, mapping_manager, ws_server, args.config_mode, storage_obj)
     config(db_wrapper, args, logger, app, mapping_manager, data_manager)
