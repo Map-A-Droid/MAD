@@ -57,6 +57,15 @@ class Device(Resource):
                     "description": "ADB devicename",
                     "expected": str
                 }
+            },
+            "note": {
+                "name": "note",
+                "settings": {
+                    "type": "text",
+                    "require": False,
+                    "description": "Short note for this device",
+                    "expected": str
+                }
             }
         },
         "settings": {

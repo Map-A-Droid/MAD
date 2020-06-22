@@ -34,7 +34,11 @@
                 {
                     data: 'name', title: 'Origin',
                     "render": function (data, type, oData) {
-                        return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
+                        if (oData.device_note) {
+                            return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a> <i id='device_note' class='far fa-sticky-note' style='cursor: pointer;' onclick='click_device_notes(\"" + oData.device_id +"\")'></i>";
+                        } else {
+                            return "<a href='{{ url_for('settings_devices') }}?id=" + oData.device_id + "'>" + oData.name + "</a>";
+                        }
                     }
                 },
                 {data: 'lastProtoDateTime', title: 'Last Update'},
@@ -230,7 +234,7 @@
    table.dataTable tr.odd { background-color: #F8F8F8; }
    table.dataTable tr.even { background-color: white; }
 </style>
-
+<script src="/static/js/get_device_note.js?ver=45"></script>
 {% endblock %}
 
 {% block content %}

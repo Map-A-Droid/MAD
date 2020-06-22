@@ -5,6 +5,7 @@ from PIL import Image
 from flask import (render_template, request, redirect, flash, jsonify, url_for)
 from werkzeug.utils import secure_filename
 import mapadroid
+from mapadroid.data_manager import DataManager
 from mapadroid.db.DbWrapper import DbWrapper
 from mapadroid.madmin.functions import (
     auth_required, generate_device_screenshot_path, nocache, allowed_file, uploaded_files
@@ -24,7 +25,7 @@ logger = get_logger(LoggerEnums.madmin)
 
 class control(object):
     def __init__(self, db_wrapper: DbWrapper, args, mapping_manager: MappingManager, websocket: WebsocketServer, logger, app,
-                 deviceUpdater):
+                 deviceUpdater, data_manager: DataManager):
         self._db: DbWrapper = db_wrapper
         self._args = args
         if self._args.madmin_time == "12":
@@ -35,6 +36,7 @@ class control(object):
         self._device_updater = deviceUpdater
 
         self._mapping_manager: MappingManager = mapping_manager
+        self._data_manager: DataManager = data_manager
 
         self._ws_server: WebsocketServer = websocket
         self._ws_connected_phones: list = []
@@ -94,10 +96,16 @@ class control(object):
             add_text = ""
             adb_option = False
             adb = devicemappings.get(phonename, {}).get('adb', False)
+
+            deviceid = devicemappings.get(phonename, {}).get('device_id', -1)
+            note = self._data_manager.get_resource('device', identifier=deviceid).get('note', None)
+            if note is not None and len(note) > 1:
+                add_text += '<i class="device_note far fa-sticky-note" style="cursor: pointer;" data-deviceid="' + str(deviceid) + '"></i>'
+
             if adb is not None and self._adb_connect.check_adb_status(adb) is not None:
                 self._ws_connected_phones.append(adb)
                 adb_option = True
-                add_text = '<b>ADB</b>'
+                add_text += '<b>ADB</b>'
             else:
                 self._ws_connected_phones.append(adb)
 

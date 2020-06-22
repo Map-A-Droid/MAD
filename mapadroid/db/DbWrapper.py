@@ -1151,7 +1151,7 @@ class DbWrapper:
         sql = "SELECT `device_id`, `name`, `routePos`, `routeMax`, `area_id`, `rmname`, `mode`, `rebootCounter`,\n"\
               "`init`, `currentSleepTime`, `rebootingOption`, `restartCounter`, `globalrebootcount`,\n"\
               "`globalrestartcount`, `lastPogoRestart`, `lastProtoDateTime`, `currentPos`, `lastPos`,\n"\
-              "`lastPogoReboot`\n"\
+              "`lastPogoReboot`, `device_note`\n"\
               "FROM `v_trs_status`\n"\
               "WHERE `instance_id` = %s"
         workers = self.autofetch_all(sql, args=(self.instance_id,))

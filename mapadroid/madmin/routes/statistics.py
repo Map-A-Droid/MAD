@@ -33,10 +33,8 @@ class statistics(object):
         routes = [
             ("/statistics", self.statistics),
             ("/statistics_mon", self.statistics_mon),
-
             ("/statistics_shiny", self.statistics_shiny),
             ("/get_game_stats_shiny", self.game_stats_shiny_v2),
-
             ("/get_game_stats", self.game_stats),
             ("/get_game_stats_mon", self.game_stats_mon),
             ("/statistics_detection_worker_data", self.statistics_detection_worker_data),
@@ -59,6 +57,7 @@ class statistics(object):
             ("/reset_status_entry", self.reset_status_entry),
             ("/get_stop_quest_stats", self.get_stop_quest_stats),
             ("/statistics_stop_quest", self.statistics_stop_quest),
+            ("/get_device_note", self.get_device_note),
         ]
         for route, view_func in routes:
             self._app.route(route)(view_func)
@@ -877,3 +876,14 @@ class statistics(object):
         spawnpoints_total = self._db_stats_reader.get_all_spawnpoints_count()
         stats = {'fences': possible_fences, 'events': events, 'spawnpoints_count': spawnpoints_total}
         return jsonify(stats)
+
+    @logger.catch()
+    @auth_required
+    def get_device_note(self):
+        deviceid = request.args.get('deviceid')
+        data = self._data_manager.get_resource('device', identifier=deviceid)
+        note = data.get('note', None)
+        if note is not None:
+            return jsonify({"error": False, "text": note})
+        else:
+            return jsonify({"error": True, "text": "No note"})

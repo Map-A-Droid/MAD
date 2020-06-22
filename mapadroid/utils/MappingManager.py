@@ -492,6 +492,7 @@ class MappingManager:
             device_dict['device_id'] = device_id
             walker = int(device["walker"])
             device_dict["adb"] = device.get("adbname", None)
+            device_dict["note"] = device.get("note", None)
             pool = device.get("pool", None)
             settings = device.get("settings", None)
             try:

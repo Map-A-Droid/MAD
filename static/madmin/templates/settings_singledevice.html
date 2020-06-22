@@ -126,6 +126,11 @@ $(document).ready(function () {
       <input type="input" class="form-control" id="adbname" name="adbname" value="{{ element.adbname if element.adbname else '' }}" data-default="{{ element.adbname }}">
       <small class="form-text text-muted">ADB device name</small>
     </div>
+    <div class="form-group">
+      <label for="note">note</label>
+      <input type="input" class="form-control" id="note" name="note" value="{{ element.note if element.note else '' }}" data-default="{{ element.note }}">
+      <small class="form-text text-muted">Short note for device, also displayed in Status and Devicecontrol</small>
+    </div>
     <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
     <button type="button" id="clearLevelup" class="btn btn-danger btn-lg btn-block">Clear levelup data</button>
   </div>
