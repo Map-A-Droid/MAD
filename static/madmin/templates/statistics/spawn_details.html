@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                    { data: 'id', title: 'Id' },
+                    { data: 'lat', title: 'Latitude' },
+                    { data: 'lon', title: 'Longitude' },
+                    { data: null, title: 'Last scanned' },
+                    { data: null, orderable: false, className: 'text-nowrap' }
+            ],
+            "columnDefs": [
+            {
+                "targets": [3],
+
+                "render": function (data, type, row) {
+                    var lastscan = new Date(Date.parse(row.lastscan));
+                    var lastnonscan = new Date(Date.parse(row.lastnonscan));
+                    if (lastscan > new Date(Date.parse('1970-01-01 00:00:00'))) {
+                        return "<i class='fa fa-check fablack' title='Known despawn time'></i></a></li> " + lastscan.getFullYear() + "-" + ("0"+(lastscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastscan.getDate()).slice(-2) + " " + ("0" + lastscan.getHours()).slice(-2) + ":" + ("0" + lastscan.getMinutes()).slice(-2) + ":" + ("0" + lastscan.getSeconds()).slice(-2)
+                    } else {
+                        return "<i class='fa fa-ban fablack' title='Unknown despawn time'></i></a></li> " + lastnonscan.getFullYear() + "-" + ("0"+(lastnonscan.getMonth()+1)).slice(-2) + "-" + ("0" + lastnonscan.getDate()).slice(-2) + " " + ("0" + lastnonscan.getHours()).slice(-2) + ":" + ("0" + lastnonscan.getMinutes()).slice(-2) + ":" + ("0" + lastnonscan.getSeconds()).slice(-2);
+                    }
+                }
+            },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+                        var conv = "";
+                        var del = "<button type='button' class='delete btn btn-danger btn-sm'><a href='delete_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}' class='confirm' title='Delete spawnpoint'><i class='fa fa-trash'></i></a></button>";
+                        {% if event != 'DEFAULT' %}
+                            conv = "<button type='button' class='delete btn btn-info btn-sm'><a href='convert_spawn?id=" + row.id + "&area_id={{areaid}}&event_id={{eventid}}&event={{event}}&mode={{mode}}' class='confirm' title='Convert event spawnpoint to non-event spawnpoint'><i class='fa fa-exchange-alt'></i></a></button>";
+                        {% endif %}
+                        var map = "<button type='button' class='delete btn btn-success btn-sm'><a href='map?lat=" + row.lat + "&lng=" + row.lon + "' title='Show on Madmin map' target=_new> <i class='fa fa-map-marker'></i></a></button>";
+
+                        return del + " " + conv + " " + map
+
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "responsive": {{ responsive }},
+            "order": [[ 0, "asc" ]],
+            "ordering": true,
+            "stateSave": true,
+            "stateDuration": 0,
+            "stateSaveCallback": function(settings,data) {
+            localStorage.setItem( 'MAD_SP_' + settings.sInstance, JSON.stringify(data) )
+            },
+            "stateLoadCallback": function(settings) {
+            return JSON.parse( localStorage.getItem( 'MAD_SP_' + settings.sInstance ) )
+            }
+
+        });
+  }
+
+    $(document).ready(function () {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Load...</h2>' });
+        $('body').Aplus();
+        $("#navgyms").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "get_spawn_details?area_id={{areaid}}&event_id={{eventid}}&mode={{mode}}&index={{index}}",
+            success: function (result) {
+                setTimeout($.unblockUI, 100);
+                setGrid('#show-spawnpoints-stats', result);
+            }
+        });
+    });
+</script>
+<style>
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
+
+
+
+<style type="text/css">
+    #flot_usage {
+        width: 100%;
+        height: 300px;
+    }
+
+    i.fa {
+        color: white;
+    }
+
+    i.fablack {
+        color: black;
+    }
+
+    #flot_spawn {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_quest {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_gym {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_stop {
+        width: 100%;
+        height: 300px;
+    }
+
+    #legendContainer {
+        background-color: #fff;
+        padding: 2px;
+        margin-bottom: 8px;
+        display: inline-block;
+        margin: 0 auto;
+    }
+
+    #flotcontainer {
+        width: 600px;
+        height: 200px;
+        text-align: left;
+    }
+
+    #selector {
+        font-size: 1.5em;
+        margin: 10px;
+    }
+    table.dataTable tr.odd { background-color: #F8F8F8; }
+    table.dataTable tr.even { background-color: white; }
+</style>
+
+
+{% endblock %}
+
+{% block content %}
+{% if mode == 'OLD' %}
+    <h2>Outdated spawnpoints (Event: {{event}})</h2>
+{% elif mode == 'ACTIVE' %}
+    <h2>Still active event spawnpoints (Event: {{event}})</h2>
+{% elif mode == 'ALL' %}
+    <h2>All Spawnpoints (Event: {{event}})</h2>
+{% endif %}
+
+<p>
+  {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+      <div class="p-3 mb-2 bg-secondary text-white">{{ message }}</div>
+    {% endfor %}
+    {% endif %}
+  {% endwith %}
+</p>
+<table id="show-spawnpoints-stats" class="table" style="width:100%;"></table>
+{% if mode == 'OLD' %}
+    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-danger btn-sm confirm'><a href='delete_spawns?id={{areaid}}&eventid={{eventid}}&olderthanxdays={{olderthanxdays}}&index={{index}}'><i class='fa fa-trash'></i></a></button> Delete all outdated spawnpoints</div>
+{% elif mode == 'ACTIVE' %}
+    <div class="p-1 mb-1 bg-success text-white"><button type='button' class='btn btn-info btn-sm confirm'><a href='convert_spawns?id={{areaid}}&eventid={{eventid}}&todayonly=True&index={{index}}'><i class='fa fa-exchange-alt'></i></a></button> Convert all active event spawnpoints</div>
+{% endif %}
+{% endblock %}

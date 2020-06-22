@@ -1,18 +1,67 @@
 {
-	"Readout RGC Version":
-	[
-		{
-			"TYPE": "jobType.PASSTHROUGH",
-		    "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName",
-			"FIELDNAME": "RGC_Version"
-	    }
+    "Readout RGC Version":
+    [
+        {
+            "TYPE": "jobType.PASSTHROUGH",
+            "SYNTAX": "dumpsys package de.grennith.rgc.remotegpscontroller | grep versionName",
+            "FIELDNAME": "RGC_Version"
+        }
     ],
-	"Readout Pogodroid Version":
-	[
-		{
-			"TYPE": "jobType.PASSTHROUGH",
-		    "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName",
-			"FIELDNAME": "POGODROID_Version"
-	    }
+    "Readout Pogodroid Version":
+    [
+        {
+            "TYPE": "jobType.PASSTHROUGH",
+            "SYNTAX": "dumpsys package com.mad.pogodroid | grep versionName",
+            "FIELDNAME": "POGODROID_Version"
+        }
+    ],
+    "Smart Update - PoGo":
+    [
+        {
+            "TYPE": "jobType.SMART_UPDATE",
+            "SYNTAX": "com.nianticlabs.pokemongo"
+        }
+    ],
+    "Smart Update - PogoDroid":
+    [
+        {
+            "TYPE": "jobType.SMART_UPDATE",
+            "SYNTAX": "com.mad.pogodroid"
+        }
+    ],
+    "Smart Update - RGC":
+    [
+        {
+            "TYPE": "jobType.SMART_UPDATE",
+            "SYNTAX": "de.grennith.rgc.remotegpscontroller"
+        }
+    ],
+    "Reboot-Device":
+    [
+        {
+            "TYPE": "jobType.REBOOT",
+            "SYNTAX": ""
+        }
+    ],
+    "Restart-Pogo":
+    [
+        {
+            "TYPE": "jobType.RESTART",
+            "SYNTAX": ""
+        }
+    ],
+    "Stop-Pogo":
+    [
+        {
+            "TYPE": "jobType.STOP",
+            "SYNTAX": ""
+        }
+    ],
+    "Start-Pogo":
+    [
+        {
+            "TYPE": "jobType.START",
+            "SYNTAX": ""
+        }
     ]
 }

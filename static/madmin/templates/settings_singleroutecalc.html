@@ -1,0 +1,52 @@
+{% extends "settings.html" %}
+
+{% block header %}
+{{ super() }}
+{% endblock %}
+
+{% block scripts %}
+{{ super() }}
+<script type="text/javascript" src="{{ url_for('static', filename='js/madmin_settings.js') }}"></script>
+<script>
+$(document).ready(function () {
+    $("#submit").click(function() {
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Saving {{ subtab }}...</h2>' });
+        save_data = get_save_data();
+        if(isEmptyObj(save_data) != false) {
+            alert('No changes have been made');
+            window.location.replace('{{ redirect }}');
+        } else {
+            process_api_request("{{ uri }}", "{{ method }}", "{{ redirect }}");
+        }
+    });
+});
+
+function get_routefile_definition() {
+  var routefile = [];
+  $.each($("#routefile").val().trim().split("\n"), function() {
+      if(this.length > 0) {
+        routefile.push(this);
+      }
+  });
+  return routefile;
+}
+
+</script>
+{% endblock %}
+
+{% block content %}
+{{ super() }}
+
+<h1 class="display-4">Routecalc for {{ areaname }}</h1>
+<div class="row">
+  <div class="col-sm">
+    <div class="form-group">
+      <label for="routefile">routefile</label>
+      <textarea data-callback='get_routefile_definition' rows=20 class="form-control" id="routefile" name="routefile" value="{{ element.routefile }}" data-default="{{ element.routefile }}">{{ element.routefile|join('\n') }}</textarea>
+      <small class="form-text text-muted">Route stops</small>
+    </div>
+    <button type="button" id="submit" class="btn btn-success btn-lg btn-block">Save</button>
+  </div>
+</div>
+{% endblock %}
+

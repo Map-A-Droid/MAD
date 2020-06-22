@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+
+{% block header %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/css/bootstrap-datepicker.standalone.min.css"/>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/timepicker@1.11.15/jquery.timepicker.min.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.3.4/dist/leaflet.css" integrity="sha512-puBpdR0798OZvTTbP4A8Ix/l+A4dHDD0DGqYW6RQ+9jxkRFclaxxQb/SJAWZfWAkuyeQUytO7+7N4QKrDh+drA==" crossorigin="" />
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.pie.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/dataTables.buttons.min.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.flash.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script type="text/javascript" src="https://cdn.datatables.net/buttons/1.5.6/js/buttons.html5.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-datepicker/1.9.0/js/bootstrap-datepicker.min.js"></script>
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/timepicker@1.11.15/jquery.timepicker.min.js"></script>
+<script src="https://unpkg.com/leaflet@1.3.4/dist/leaflet.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.heat/0.2.0/leaflet-heat.js"></script>
+
+<script>
+	// initialize input widgets first
+	$('#datepair .time').timepicker({
+                'closeOnWindowScroll': true,
+                'disableTextInput': true,
+                'step': 60,
+		'showDuration': true,
+		'timeFormat': 'H:i'
+	});
+
+	$('#datepair .date').datepicker({
+		'format': 'yyyy-mm-dd',
+		'autoclose': true
+	});
+
+</script>
+<script>
+    $(function () {
+
+        // get madmin map stored center coords. Do NOT overwrite them.
+        // Don't really want to include whole madmin.js, copy-paste.
+        const storedCenter = getStoredCenter();
+        var map = L.map('heatmap').setView(storedCenter.split(','), 12);
+        var tiles = L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/light_all/{z}/{x}/{y}.png').addTo(map);
+         var heat = L.heatLayer([]).addTo(map);
+
+        var options_dots = {
+            xaxis: {
+                mode: "time",
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:00 %p - ",
+                {% else %}
+                timeformat: "%d.%m<br>%H:00 - ",
+                {% endif %}
+                minTickSize: [1, "hour"],
+                timezone: "browser"
+            },
+            series: {
+                lines: {
+                    show: true,
+                    color: '#ffa500'
+                },
+                points: {
+                    show: true
+                }
+            },
+            grid: {
+                hoverable: true,
+                borderWidth: 1,
+                backgroundColor: { colors: ["transparent", "transparent"] }
+            },
+            legend: {
+                container: $("#legendContainer_spawn"),
+                noColumns: 0
+            }
+        };
+
+        var options_bars = {
+            yaxis: {
+                tickDecimals: 0,
+            },
+            xaxis: {
+                tickDecimals: 0,
+                tickLength: 0,
+		autoscaleMargin: 0.02,
+                ticks: [[-0.5, ""], [0, "0:00"], [1, "1:00"], [2, "2:00"],[3, "3:00"], [4, "4:00"], [5, "5:00"], [6, "6:00"], [7, "7:00"], [8, "8:00"], [9, "9:00"], [10, "10:00"], [11, "11:00"], [12, "12:00"], [13, "13:00"], [14, "14:00"], [15, "15:00"], [16, "16:00"], [17, "17:00"], [18, "18:00"], [19, "19:00"], [20, "20:00"], [21, "21:00"], [22, "22:00"], [23, "23:00"], [23.5, ""]],
+		alignTicksWithAxis: 1
+            },
+            series: {
+                bars: {
+                    show: true
+                }
+            },
+            bars: {
+                align: "center",
+            },
+            grid: {
+                hoverable: true,
+                borderWidth: 2,
+                backgroundColor: { colors: ["transparent", "transparent"] }
+            }
+        };
+
+        var options_pie = {
+            series: {
+                pie: {
+                    show: true,
+                    radius: 1,
+                    tilt: 0.5,
+                    label: {
+                        show: true,
+                        radius: 0.8,
+                        threshold: 0.1
+                    }
+                }
+            },
+            legend: {
+                show: true,
+                labelFormatter: function (label, series) {
+                    return '<div id="legendContainer" style="color:black;">' +
+                        label + ' : ' +
+                        (series.data[0][1]) +
+                        '</div>';
+                }
+            }
+        };
+
+       var yesterday = new Date();
+       // set it to yesterday
+       yesterday.setDate(yesterday.getDate()-1);
+       // force midnight
+       yesterday.setHours(0);
+       yesterday.setMinutes(0);
+       yesterday.setSeconds(0);
+       yesterday.setMilliseconds(0);
+       // force input format
+       $("input.date.start").val(yesterday.getFullYear()+ "-" + (yesterday.getMonth()+1) + "-" + yesterday.getDate());
+       // generate timestamp using timezoneoffset
+       yesterday_timestamp = ((yesterday.getTime() - yesterday.getTimezoneOffset()*60000)/1000);
+       loadData(yesterday_timestamp, "");
+	
+       var previousPoint = null, previousLabel = null;
+        $.fn.UseTooltip = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                            item.pageY,
+                            color,
+                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: " + x + ":00 - " + (x+1) + ":00</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+
+    $("button.filter_dates" ).click(function(event) {
+         event.preventDefault();
+         start_date = $("input.date.start").val();
+         start_hour = $("input.time.start").val();
+         end_date = $("input.date.end").val();
+         end_hour = $("input.time.end").val();
+         timestamp_from = "";
+         timestamp_to = "";
+
+         if (start_date) {
+            if (start_hour) {
+               timestamp_from = new Date(start_date + " " + start_hour).getTime() / 1000;
+            } else {
+               timestamp_from = new Date(start_date + " 00:00:00").getTime() / 1000;
+            }
+         }
+
+         if (end_date) {
+             if (end_hour) {
+                  timestamp_to = new Date(end_date + " " + end_hour).getTime() / 1000;
+             } else {
+                  timestamp_to = new Date(end_date + " 23:59:59").getTime() / 1000;
+             }
+         }
+
+         if (timestamp_to && timestamp_from) {
+             if (timestamp_from > timestamp_to) {
+                  // mate it's the other way around
+                  tmp = timestamp_from;
+                  timestamp_from = timestamp_to;
+                  timestamp_to = tmp;
+             }
+         }
+         if (timestamp_to || timestamp_from) {
+              loadData(timestamp_from, timestamp_to);
+         }
+    });
+
+     function buildheatmap(shiny_statistics) {
+          return shiny_statistics.map(function (p) { return [p.lat, p.lng]; });
+     }
+
+     function getStoredCenter() {
+         var val = localStorage.getItem("settings");
+         if (val == null) {
+             return "52.521374,13.411201";
+         }
+         var settings = JSON.parse(val);
+         if (settings["center"] === undefined) {
+             return "52.521374,13.411201";
+         }
+         return settings["center"];
+     }
+
+     function drawHeatMap(points) {
+         heat.setLatLngs(points);
+         //heat.redraw();
+     }
+
+     function loadData(timestamp_from, timestamp_to) {
+         console.log("Loading data for from: " + timestamp_from + " to: " + timestamp_to);
+         $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif').lstrip('/') }}" width="100px" /><br /><h2>Loading...</h2>' });
+         $.ajax({
+            "url": "get_game_stats_shiny?from="+timestamp_from+"&to="+timestamp_to,
+            "type": "GET",
+            "cache": false,
+            "dataType": "json",
+            success: function (result) {
+                empty = result.empty
+                if (empty) {
+                  alert("No shiny found for this time frame. Please change your params (or make sure you have game_stats_raw enabled in config.ini)");
+                  return;
+                }
+                shiny_statistics = result.shiny_statistics
+                global_shiny_statistics = result.global_shiny_statistics
+                shiny_perworker = result.per_worker
+                shiny_perhour = result.per_hour
+                shiny_heatmap = buildheatmap(shiny_statistics)
+
+                drawHeatMap(shiny_heatmap);
+
+                setGridAndDestroyIfNeeded('#show-data-shiny-stats-per-worker', shiny_perworker, [
+                    { data: 'name', title: 'Worker' },
+                    { data: 'count', title: 'Nº Shiny' }
+                ]);
+
+                setGridAndDestroyIfNeeded('#show-data-shiny-stats', shiny_statistics, [
+                    { data: null, title: 'Pic' },
+                    { data: 'name', title: 'Name' },
+                    { data: 'worker', title: 'Worker' },
+                    { data: 'timestamp', title: 'Found' },
+                    { data: null, title: 'Where' },
+                    { data: 'encounter_id', title: 'Encounter ID' }
+                ], [
+                {
+                    "targets": [0],
+                    "className":"mon_img",
+                    "width": "80px",
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " height='64px'>";
+                    }
+                },
+                {
+                    "targets": [4],
+                    "render": function (data, type, row) {
+                        return "<a href=map?lat=" + row.lat + "&lng=" + row.lng + " target=_new>" + row.lat_5 + "<br />" + row.lng_5 + "</a>";
+                    },
+                }
+                ]);
+                setGridAndDestroyIfNeeded('#show-data-shiny-stats-per-mon-and-form', global_shiny_statistics, [
+                    { data: null, title: 'Pic' },
+                    { data: 'name', title: 'Name' },
+                    { data: 'form', title: 'Form /d/' },
+                    { data: 'shiny', title: 'Nº Shiny' },
+                    { data: 'count', title: 'Nº Encounters' },
+                    { data: 'odds', title: 'Odds (1 in X)' }
+
+                ], [
+                {
+                    "targets": [0],
+                    "className":"mon_img",
+                    "width": "80px",
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " height='64px'>";
+                    }
+                }
+                ]);
+                $.plot($("#flot_shiny_hour"), [
+                    {
+                        data: shiny_perhour,
+                        label: "Shiny / Hour of day",
+                    }
+                ], options_bars);
+                $("#flot_shiny_hour").UseTooltip();
+
+
+            },
+            complete: function () {
+                setTimeout($.unblockUI, 100);
+            }
+
+         });
+     }
+
+
+
+        function showTooltip(x, y, color, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css({
+                position: 'absolute',
+                display: 'none',
+                top: y - 40,
+                left: x - 120,
+                border: '2px solid ' + color,
+                padding: '3px',
+                'font-size': '9px',
+                'border-radius': '5px',
+                'background-color': '#fff',
+                'font-family': 'Verdana, Arial, Helvetica, Tahoma, sans-serif',
+                opacity: 0.9
+            }).appendTo("body").fadeIn(200);
+        }
+
+        function setGridAndDestroyIfNeeded(tableGridHtmlId, gridData, columns, defs) {
+        if ($.fn.dataTable.isDataTable(tableGridHtmlId)) {
+            $(tableGridHtmlId).DataTable().destroy();
+        }
+
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "searching": true,
+            "paging": true,
+            "columns": columns,
+            "ordering": true, "order": [],
+            "columnDefs": defs,
+            "responsive": {{ responsive }},
+            "lengthMenu": [ [10, 25, 50, 100, -1], [10, 25, 50, 100, "All"] ],
+            dom: 'Blfrtip',
+            buttons: [
+                'copy', 'csv', 'excel', 'pdf'
+            ],
+            sorting: true,
+            stateSave: true,
+            stateSaveCallback: function(settings,data) {
+            localStorage.setItem( 'DataTables_' + settings.sInstance, JSON.stringify(data) )
+            },
+            stateLoadCallback: function(settings) {
+            return JSON.parse( localStorage.getItem( 'DataTables_' + settings.sInstance ) )
+            }
+        });
+	    }
+    });
+
+</script>
+
+<style type="text/css">
+    #flot_usage {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_spawn {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_quest {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_gym {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_shiny_hour {
+        width: 100%;
+        height: 300px;
+    }
+
+    #legendContainer {
+        background-color: #fff;
+        padding: 2px;
+        margin-bottom: 8px;
+        display: inline-block;
+        margin: 0 auto;
+    }
+
+    #flotcontainer {
+        width: 600px;
+        height: 200px;
+        text-align: left;
+    }
+
+    #selector {
+        font-size: 1.5em;
+        margin: 10px;
+    }
+    table.dataTable tr td { vertical-align:middle; }
+    table.dataTable tr td.mon_img { padding:0px; }
+    p#datepair input.date { width: 120px; }
+    p#datepair input.time { width: 50px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<h1>Global time filter</h1>
+<div>
+<p id="datepair">
+	From: <input type="text" class="date start" /><input type="text" class="time start" />
+	To: <input type="text" class="date end" /><input type="text" class="time end" />
+	<br />
+        <button class="filter_dates">Filter</button>
+</p>
+</div>
+<hr />
+<h2>Recent Shiny</h2>
+<table id="show-data-shiny-stats" class="table display compact" style="width:100%;"></table>
+<br />
+<h2>Shiny Stats Per Mon And Form</h2>
+<table id="show-data-shiny-stats-per-mon-and-form" class="table display" style="width:100%;"></table>
+<br />
+<h2>Lucky Workers</h2>
+<table id="show-data-shiny-stats-per-worker" class="table display" style="width:100%;"></table>
+<h2>Detected Shiny / Hour</h2>
+<div id="flot_shiny_hour"></div>
+<h2>Heatmap of Shiny Encounters</h2>
+<div id="heatmap" style="width:100%; height:600px;"></div>
+{% endblock %}

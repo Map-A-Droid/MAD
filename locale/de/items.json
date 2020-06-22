@@ -13,7 +13,7 @@
   },
   "4": {
     "protoname": "ITEM_MASTER_BALL",
-    "name": "Masterball"
+    "name": "Meisterball"
   },
   "5": {
     "protoname": "ITEM_PREMIER_BALL",
@@ -45,7 +45,7 @@
   },
   "301": {
     "protoname": "ITEM_LUCKY_EGG",
-    "name": "Glücksei"
+    "name": "Glücks-Ei"
   },
   "401": {
     "protoname": "ITEM_INCENSE_ORDINARY",
@@ -66,6 +66,18 @@
   "501": {
     "protoname": "ITEM_TROY_DISK",
     "name": "Lockmodul"
+  },
+  "502": {
+    "protoname": "ITEM_TROY_DISK_GLACIAL",
+    "name": "Gletscher-Lockmodul"
+  },
+  "503": {
+    "protoname": "ITEM_TROY_DISK_MOSSY",
+    "name": "Moos-Lockmodul"
+  },
+  "504": {
+    "protoname": "ITEM_TROY_DISK_MAGNETIC",
+    "name": "Magnet-Lockmodul"
   },
   "602": {
     "protoname": "ITEM_X_ATTACK",
@@ -101,11 +113,11 @@
   },
   "706": {
     "protoname": "ITEM_GOLDEN_RAZZ_BERRY",
-    "name": "Golden Razz"
+    "name": "Goldene Himmihbeere"
   },
   "707": {
     "protoname": "ITEM_GOLDEN_NANAB_BERRY",
-    "name": "Golden Pinap"
+    "name": "Goldene Nanabbeere"
   },
   "708": {
     "protoname": "ITEM_GOLDEN_PINAP_BERRY",
@@ -113,7 +125,7 @@
   },
   "801": {
     "protoname": "ITEM_SPECIAL_CAMERA",
-    "name": "Camera"
+    "name": "Kamera"
   },
   "901": {
     "protoname": "ITEM_INCUBATOR_BASIC_UNLIMITED",
@@ -153,11 +165,15 @@
   },
   "1105": {
     "protoname": "ITEM_UP_GRADE",
-    "name": "Item Upgrade"
+    "name": "Up-Grade"
   },
   "1106": {
     "protoname": "ITEM_GEN4_EVOLUTION_STONE",
     "name": "Sinnoh-Stein"
+  },
+  "1107": {
+    "protoname": "ITEM_GEN5_EVOLUTION_STONE",
+    "name": "Einall-Stein"
   },
   "1201": {
     "protoname": "ITEM_MOVE_REROLL_FAST_ATTACK",

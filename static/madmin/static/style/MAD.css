@@ -1,0 +1,396 @@
+[data-theme="dark"] {
+  background-color: #111 !important;
+  color: #bbb;
+}
+
+[data-theme="dark"] .bg-light { background-color: #333 !important; }
+[data-theme="dark"] .bg-white { background-color: #000 !important; }
+[data-theme="dark"] .bg-black { background-color: #eee !important; }
+
+[data-theme="dark"] .leaflet-sidebar-content { background-color: #111 !important;}
+[data-theme="dark"] .leaflet-sidebar-tabs { background-color: #111 !important;}
+[data-theme="dark"] li.list-group-item.layer-item.d-flex { background-color: transparent; }
+[data-theme="dark"] .svg-inline--fa { color: #fff !important }
+[data-theme="dark"] .leaflet-sidebar-header.bg-dark { background-color: #506680!important; }
+
+[data-theme="dark"] table.dataTable tr.odd { background-color: transparent !important; }
+[data-theme="dark"] table.dataTable tr.even { background-color: transparent !important; }
+
+[data-theme="dark"] .select2-selection.select2-selection--multiple {background-color: #000; }
+[data-theme="dark"] .select2-container--default .select2-selection--multiple .select2-selection__rendered li { background-color: #000; }
+[data-theme="dark"] .select2-results { background-color: #000; }
+[data-theme="dark"] .select2-container--default .select2-results__option[aria-selected=true] { color: #000; }
+[data-theme="dark"] input.select2-search__field { border: 0px solid #bbb !important; }
+[data-theme="dark"] tbody { color: #ccc; }
+[data-theme="dark"] .table-hover tbody tr:hover { color: #ccc !important; }
+
+[data-theme="dark"] #show-data-complete_filter, #show-data-detection_raw_length,
+#show-data-detection_raw_filter, #show-data-location_raw_length, #show-data-location_raw_filter { color: #bbb;}
+[data-theme="dark"] thead {
+    background-color: #506680;
+    color: #bbb;
+}
+
+[data-theme="dark"] table.dataTable tbody>tr.selected, table.dataTable tbody>tr>.selected {
+    background-color: #B0BED9 !important;
+    color: #000;
+}
+
+[data-theme="dark"] .phonename {
+    background-color: #506680;
+    color: #000 !important;
+}
+
+[data-theme="dark"] #button {
+    background-color: #000 !important;
+    color: #bbb !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #111 !important;
+    color: #bbb !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.current:hover  {
+    color: #506680 !important;
+    background: #111 !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.disabled { color: #666  !important; }
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button.disabled:hover {
+    color: #666  !important;
+    background: #111 !important;
+}
+
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
+    color:# bbb !important;
+    border: 1px solid #979797;
+    background: #585858 !important;
+}
+
+[data-theme="dark"] .flex-sm-fill.text-sm-center.nav-link { color: rgba(255,255,255,.5); }
+[data-theme="dark"] .flex-sm-fill.text-sm-center.nav-link:hover { color: rgba(255,255,255,.75); }
+[data-theme="dark"] .flex-sm-fill.text-sm-center.nav-link.active {
+    background-color: #555 !important;
+    color: #bbb !important;
+}
+
+[data-theme="dark"] #show-data_length { color: #bbb;}
+[data-theme="dark"] #show-data_filter { color: #bbb;}
+[data-theme="dark"] #show-complete_length { color: #bbb;}
+[data-theme="dark"] #show-data_info { color: #bbb;}
+[data-theme="dark"] .dataTables_info { color: #bbb !important; }
+[data-theme="dark"] .dataTables_filter { color: #bbb !important; }
+[data-theme="dark"] .dataTables_length { color: #bbb !important; }
+[data-theme="dark"] #show-spawnpoints-stats_previous { color: #bbb !important; }
+[data-theme="dark"] #show-spawnpoints-stats_next { color: #bbb !important; }
+[data-theme="dark"] .dataTables_wrapper .dataTables_paginate .paginate_button { color: #bbb !important; }
+
+[data-theme="dark"] a { color: #eee; }
+[data-theme="dark"] .card-text { color: #000; }
+[data-theme="dark"] a.dropdown-item { color: #000; }
+[data-theme="dark"] th { border-bottom: 0px !important; }
+[data-theme="dark"] .sorting_1 { background-color: transparent !important; }
+[data-theme="dark"] .child { background-color: transparent !important; }
+[data-theme="dark"] #info { color: #bbb !important; }
+
+[data-theme="dark"] .card-text {
+    color: #bbb !important;
+}
+
+[data-theme="dark"] .card.border-secondary {
+    background-color: #000 !important;
+    margin-top: 10px;
+}
+
+[data-theme="dark"] .buttons-html5 {
+    background-color: #000 !important;
+    color: #bbb !important;
+    border: 1px solid #bbb !important;
+    margin-bottom: 10px;
+}
+
+[data-theme="dark"] input[type="search"] {
+    background-color: #000 !important;
+    color: #bbb !important;
+    border: 1px solid #bbb;
+}
+
+[data-theme="dark"] #legendContainer {
+    background-color: transparent;
+    color: #bbb;
+    padding: 2px;
+    margin-bottom: 8px;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+[data-theme="dark"] #legendContainer { color: #bbb !important; }
+[data-theme="dark"] #flot_gym > div.legend > table { background-color: #111; }
+[data-theme="dark"] #flot_stop > div.legend > table { background-color: #111; }
+[data-theme="dark"] #flot_ratio > div.legend > table { background-color: #111; }
+[data-theme="dark"] #tooltip { background-color: #000 !important; }
+[data-theme="dark"] .fas, [data-theme="dark"] .fa { color: #fff !important; }
+
+[data-theme="dark"] .blockMsg {
+    border: 1px solid white !important;
+    background-color: #000 !important;
+    color: #bbb !important;
+    cursor: default !important;
+}
+
+[data-theme="dark"] .dropdown-item {
+    color: #bbb !important;
+    background-color: #000 !important;
+}
+
+[data-theme="dark"] .dropdown-item:hover { color: #506680 !important; }
+
+[data-theme="dark"] .dropdown-menu {
+    background-color: #000 !important;
+    border: 1px solid white !important;
+}
+
+[data-theme="dark"] a:hover {
+    color: rgba(255,255,255,.75) !important;
+}
+
+[data-theme="dark"] .darkmode-label { color: #fff !important; }
+[data-theme="dark"] .darkmode-label:hover { color: #506680 !important; }
+
+[data-theme="dark"] ::-webkit-scrollbar { width: 10px; }
+[data-theme="dark"] ::-webkit-scrollbar-track { background: #f1f1f1; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: #888; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+[data-theme="dark"] .fa-satellite-dish.fa-w-16 { color: #fff !important; }
+[data-theme="dark"] button.close { color: #fff !important; }
+[data-theme="dark"] .easy-button-button {  background-color: #000 !important; }
+[data-theme="dark"] .leaflet-draw-edit-edit.leaflet-disabled, [data-theme="dark"] .leaflet-draw-edit-edit {  background-color: #000; }
+[data-theme="dark"] .leaflet-draw-draw-polygon { background-color: #000; }
+
+[data-theme="dark"] .modal-content {
+    background-color: #000 !important;
+    border: 1px solid #fff;
+}
+
+[data-theme="dark"] .leaflet-control-zoom-in, [data-theme="dark"] .leaflet-control-zoom-out {
+    background-color: #000;
+    color: #fff;
+}
+
+[data-theme="dark"] .leaflet-draw-toolbar a {
+    background-image: url(/static/leaflet.draw.white.png) !important;
+    background-repeat: no-repeat;
+    background-size: auto !important;
+}
+
+[data-theme="dark"] select, [data-theme="dark"] input, [data-theme="dark"] textarea {
+    background-color: #000 !important;
+    color: #bbb !important;
+    border: 1px solid #bbb !important;
+}
+
+[data-theme="dark"] .leaflet-popup-content i.fas, .leaflet-popup-content i.fa { color: #333 !important; }
+
+.leaflet-draw-toolbar a {
+    background-image: url(/static/leaflet.draw.png) !important;
+    background-repeat: no-repeat;
+    background-size: auto !important;
+}
+
+thead {
+    background-color: #000;
+    color: #fff;
+}
+
+#legendContainer {
+    background-color: #fff;
+    padding: 2px;
+    margin-bottom: 8px;
+    display: inline-block;
+    margin: 0 auto;
+}
+
+body {
+    font-family: 'Roboto', sans-serif !important;
+}
+
+.darkmode_check { margin-left: 1.5em; }
+
+.buttons-html5 {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000 !important;
+    margin-bottom: 10px;
+}
+
+input[type="search"] {
+    background-color: #fff !important;
+    color: #000 !important;
+    border: 1px solid #000;
+}
+
+::-webkit-scrollbar { width: 10px; }
+::-webkit-scrollbar-track { background: #fff; }
+::-webkit-scrollbar-thumb { background: #888; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
+
+.card.border-secondary { margin-top: 10px; }
+body { visibility: hidden; }
+
+
+
+
+/*
+ * Data tables header icons
+ */
+
+table.dataTable thead th {
+  position: relative;
+  background-image: none !important; /* Remove the DataTables bootstrap integration styling */
+}
+
+table.dataTable thead th.sorting:after,
+table.dataTable thead th.sorting_asc:after,
+table.dataTable thead th.sorting_desc:after {
+  position: absolute;
+  top: 12px;
+  right: 8px;
+  display: block;
+  font-family: "Font Awesome 5 Free";
+}
+
+table.dataTable thead th.sorting:after {
+  content: "\f0dc";
+  color: #ddd;
+  font-size: 0.8em;
+  padding-top: 0.12em;
+}
+table.dataTable thead th.sorting_asc:after {
+  content: "\f0de";
+}
+table.dataTable thead th.sorting_desc:after {
+  content: "\f0dd";
+}
+
+div.dataTables_scrollBody table.dataTable thead th.sorting:after,
+div.dataTables_scrollBody table.dataTable thead th.sorting_asc:after,
+div.dataTables_scrollBody table.dataTable thead th.sorting_desc:after {
+  content: "";
+}
+
+/* In Bootstrap and Foundation the padding top is a little different from the DataTables stylesheet */
+table.table thead th.sorting:after,
+table.table thead th.sorting_asc:after,
+table.table thead th.sorting_desc:after {
+  top: 8px;
+}
+
+/*
+ * DataTables style pagination controls
+ */
+div.dataTables_paginate a.paginate_button.first,
+div.dataTables_paginate a.paginate_button.previous {
+  position: relative;
+  padding-left: 24px;
+}
+
+div.dataTables_paginate a.paginate_button.next,
+div.dataTables_paginate a.paginate_button.last {
+  position: relative;
+  padding-right: 24px;
+}
+
+div.dataTables_paginate a.first:before,
+div.dataTables_paginate a.previous:before {
+  position: absolute;
+  top: 8px;
+  left: 10px;
+  display: block;
+  font-weight: 700;
+  font-family: "Font Awesome 5 Free";
+}
+
+div.dataTables_paginate a.next:after,
+div.dataTables_paginate a.last:after {
+  position: absolute;
+  top: 8px;
+  right: 10px;
+  display: block;
+  font-weight: 700;
+  font-family: "Font Awesome 5 Free";
+}
+
+div.dataTables_paginate a.first:before {
+  content: "\f100";
+}
+
+div.dataTables_paginate a.previous:before {
+  content: "\f104";
+}
+
+div.dataTables_paginate a.next:after {
+  content: "\f105";
+}
+
+div.dataTables_paginate a.last:after {
+  content: "\f101";
+}
+
+/*
+ * Bootstrap and foundation style pagination controls
+ */
+div.dataTables_paginate li.first > a,
+div.dataTables_paginate li.previous > a {
+  position: relative;
+  padding-left: 24px;
+}
+
+div.dataTables_paginate li.next > a,
+div.dataTables_paginate li.last > a {
+  position: relative;
+  padding-right: 24px;
+}
+
+div.dataTables_paginate li.first a:before,
+div.dataTables_paginate li.previous a:before {
+  position: absolute;
+  top: 6px;
+  left: 10px;
+  display: block;
+  font-family: "Font Awesome 5 Free";
+}
+
+div.dataTables_paginate li.next a:after,
+div.dataTables_paginate li.last a:after {
+  position: absolute;
+  top: 6px;
+  right: 10px;
+  display: block;
+  font-family: "Font Awesome 5 Free";
+}
+
+div.dataTables_paginate li.first a:before {
+  content: "\f100";
+}
+
+div.dataTables_paginate li.previous a:before {
+  content: "\f104";
+}
+
+div.dataTables_paginate li.next a:after {
+  content: "\f105";
+}
+
+div.dataTables_paginate li.last a:after {
+  content: "\f101";
+}
+
+/* In Foundation we don't want the padding like in bootstrap */
+div.columns div.dataTables_paginate li.first a:before,
+div.columns div.dataTables_paginate li.previous a:before,
+div.columns div.dataTables_paginate li.next a:after,
+div.columns div.dataTables_paginate li.last a:after {
+  top: 0;
+}

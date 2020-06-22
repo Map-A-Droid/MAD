@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.selection.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.time.min.js"></script>
+<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/flot/0.8.3/jquery.flot.pie.min.js"></script>
+<script type="text/javascript" src="static/js/jquery.flot.axislabels.js"></script>
+
+<script>
+
+
+
+
+    $(function () {
+
+        var options_dots = {
+            xaxis: {
+                mode: "time",
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:00 %p - ",
+                {% else %}
+                timeformat: "%d.%m<br>%H:00 - ",
+                {% endif %}
+                minTickSize: [1, "hour"],
+                timezone: "browser"
+            },
+            series: {
+                lines: {
+                    show: true,
+                    color: '#ffa500'
+                },
+                points: {
+                    show: true
+                }
+            },
+            grid: {
+                hoverable: true,
+                borderWidth: 1,
+                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            },
+            legend: {
+                container: $("#legendContainer_spawn"),
+                noColumns: 0
+            }
+        };
+
+        var options_bars = {
+            xaxis: {
+                mode: "time",
+                {% if time == "12" %}
+                timeformat: "%d.%m<br>%I:00:00 %p",
+                {% else %}
+                timeformat: "%d.%m<br>%H:00:00",
+                {% endif %}
+                minTickSize: [3, "hour"],
+                timezone: "browser"
+            },
+            series: {
+                bars: {
+                    show: true
+                }
+            },
+            bars: {
+                align: "center",
+                barWidth: 60 * 40 * 1000
+            },
+            grid: {
+                hoverable: true,
+                borderWidth: 2,
+                backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+            },
+            legend: {
+                container: $("#legendContainer_quest"),
+                noColumns: 0
+            }
+        };
+
+        var options_pie = {
+            series: {
+                pie: {
+                    show: true,
+                    radius: 1,
+                    tilt: 0.5,
+                    label: {
+                        show: true,
+                        radius: 0.8,
+                        threshold: 0.1
+                    },
+                    legend: {
+                        show: true,
+                        labelBoxBorderColor: 'green'
+                    }
+                }
+            },
+            legend: {
+                show: false,
+                labelBoxBorderColor: 'green',
+                labelFormatter: function (label, series) {
+                     return "12311232" + label + ' : ' +(series.data[0][1]);
+                },
+                container: '.flc-bar',
+
+
+            }
+        };
+
+        $.blockUI({ message: '<img src="{{ url_for('static', filename='loading.gif') }}" width="100px" /><br /><h2>Load...</h2>' });
+
+        $.ajax({
+            "url": "get_game_stats?minutes_spawn={{ minutes_spawn }}&minutes_usage={{ minutes_usage }}",
+            "type": "GET",
+            "cache": false,
+            "dataType": "json",
+            success: function (result) {
+                spawn = result.spawn
+                quest = result.quest
+                gym = result.gym
+                stop = result.stop
+                usage = result.usage
+                good_spawns = result.good_spawns
+                detection = result.detection
+                detection_empty = result.detection_empty
+                location_info = result.location_info
+                shiny = result.shiny
+
+
+
+                setGrid('#show-data-good-pokemon', good_spawns, [
+                    { data: 'id', title: 'Mon-ID' },
+                    { data: 'name', title: 'Name' },
+                    { data: null, title: 'Pic' },
+                    { data: 'iv', title: 'IV' },
+                    { data: 'lvl', title: 'Level' },
+                    { data: 'cp', title: 'CP' },
+                    { data: 'periode', title: 'Scantime' }
+                ], [
+                {
+                    "targets": [2],
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " width=100>";
+                    }
+                }
+                ]);
+
+                setGrid('#show-data-shiny', shiny, [
+                    { data: 'sum', title: 'Sum of all' },
+                    { data: 'shiny', title: 'Shiny' },
+                    { data: 'name', title: 'Name' },
+                    { data: null, title: 'Pic' },
+                    { data: 'ratio', title: 'Ratio' },
+                    { data: 'worker', title: 'Worker' }
+
+                ], [
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        return "<img src=" + row.img + " width=100>";
+                    }
+                }
+                ]);
+
+                setGrid('#show-data-detection', detection, [
+                    { data: null, title: 'Worker' },
+                    { data: 'mons', title: 'Mons' },
+                    { data: 'mons_iv', title: 'Mons IV' },
+                    { data: 'raids', title: 'Raids' },
+                    { data: 'quests', title: 'Quests' }
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=statistics_detection_worker?worker=" + row.worker + ">" + row.worker + "</a>";
+                    }
+                }
+
+                ]);
+
+                setGrid('#show-data-location-info', location_info, [
+                    { data: null, title: 'Worker' },
+                    { data: 'locations', title: 'Locations' },
+                    { data: 'locationsok', title: 'Locations OK' },
+                    { data: 'locationsnok', title: 'Locations NOK' },
+                    { data: 'ratio', title: 'NOK Ratio' }
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=statistics_detection_worker?worker=" + row.worker + ">" + row.worker + "</a>";
+                    }
+                }
+
+                ]);
+
+                setGrid('#show-data-detection_empty', detection_empty, [
+                    { data: null, title: 'MAP' },
+                    { data: 'lat', title: 'Lat' },
+                    { data: 'lng', title: 'Lng' },
+                    { data: 'worker', title: 'Worker' },
+                    { data: 'count', title: 'Count' },
+                    { data: 'type', title: 'Type' },
+                    { data: 'lastscan', title: 'Last Scan' },
+                    { data: 'countsuccess', title: 'Count Success' },
+                ], [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return "<a href=map?lat=" + row.lat + "&lng=" + row.lng + " target=_new>[MAP]</a>";
+                    }
+                }
+
+                ]);
+
+
+                $.plot($("#flot_spawn"), [
+                    {
+                        data: spawn.iv,
+                        label: "IV Spawns / Hour"
+                    },
+                    {
+                        data: spawn.noniv,
+                        label: "NonIV Spawns / Hour"
+                    },
+                    {
+                        data: spawn.sum,
+                        label: "Sum Spawns / Hour"
+                    }
+                ], options_dots);
+                $("#flot_spawn").UseTooltip();
+
+                $.plot($("#flot_usage"), usage,
+                    {
+                        grid: {
+                            hoverable: true,
+                            borderWidth: 2,
+                            backgroundColor: { colors: ["#ffffff", "#EDF5FF"] }
+                        },
+                        xaxis: {
+                            mode: "time",
+                            //{% if time == "12" %}
+                            timeformat: "%d.%m<br>%I:%M %p",
+                            //{% else %}
+                            timeformat: "%d.%m<br>%H:%M",
+                            //{% endif %}
+                            tickSize: [3, "hour"],
+                            timezone: "browser"
+                        },
+                        yaxes: [
+                            {
+                                //[First axis]
+                                axisLabel: "CPU",
+                                color: "black",
+                                axisLabelUseCanvas: true,
+                                axisLabelFontSizePixels: 12,
+                                axisLabelFontFamily: 'Verdana, Arial',
+                                axisLabelPadding: 3
+                            }, {
+                                position: "right",
+                                axisLabel: "Memory",
+                                color: "black",
+                                axisLabelUseCanvas: true,
+                                axisLabelFontSizePixels: 12,
+                                axisLabelFontFamily: 'Verdana, Arial',
+                                axisLabelPadding: 3
+                            }, {
+                                position: "right",
+                                axisLabel: "Collected Objects",
+                                color: "black",
+                                axisLabelUseCanvas: true,
+                                axisLabelFontSizePixels: 12,
+                                axisLabelFontFamily: 'Verdana, Arial',
+                                axisLabelPadding: 3,
+                                min: 1
+                            }
+                        ],
+
+                        legend: {
+                            container: $("#legendContainer_usage"),
+                            noColumns: 0
+                        }
+                    }
+                );
+                $("#flot_usage").UseTooltipFull();
+
+                $.plot($("#flot_quest"), [
+                    {
+                        data: quest,
+                        color: "#5482FF",
+                        label: "Quest / Hour"
+                    }
+                ], options_bars);
+                $("#flot_quest").UseTooltip();
+
+                $.plot($("#flot_stop"), stop, options_pie);
+                $.plot($("#flot_gym"), gym, options_pie);
+
+            },
+            complete: function () {
+                setTimeout($.unblockUI, 100);
+            }
+
+        });
+
+        var previousPoint = null, previousLabel = null;
+
+        $.fn.UseTooltip = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                            item.pageY,
+                            color,
+                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Hour</strong>: " + timeConverter(x, 'hour') + "</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+        $.fn.UseTooltipFull = function () {
+            $(this).bind("plothover", function (event, pos, item) {
+                if (item) {
+                    if ((previousLabel != item.series.label) || (previousPoint != item.dataIndex)) {
+                        previousPoint = item.dataIndex;
+                        previousLabel = item.series.label;
+                        $("#tooltip").remove();
+
+                        var x = item.datapoint[0];
+                        var y = item.datapoint[1];
+                        var color = item.series.color;
+                        showTooltip(item.pageX,
+                            item.pageY,
+                            color,
+                            "<strong>" + item.series.label + "</strong><br><strong>Amount:</strong> " + y + "<br><strong>Time</strong>: " + timeConverter(x, 'full') + "</strong>");
+                    }
+                } else {
+                    $("#tooltip").remove();
+                    previousPoint = null;
+                }
+            });
+        };
+
+        function timeConverter(timestamp, mode) {
+            var a = new Date(timestamp);
+            var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            var year = a.getFullYear();
+            var month = months[a.getMonth()];
+            var date = a.getDate();
+            var hour = a.getHours();
+            var hour_till = a.getHours() + 1;
+            var min = a.getMinutes();
+            min = min < 10 ? '0' + min : min;
+            var sec = a.getSeconds();
+            sec = sec < 10 ? '0' + sec : sec;
+
+            {% if time == "12" %}
+            var ampm = hour >= 12 ? 'pm' : 'am';
+            hour = hour % 12;
+            hour = hour ? hour : 12;
+            hour_till = hour_till % 12;
+            hour_till = hour_till ? hour_till : 12;
+            hour_till + ' ' + ampm;
+            sec = sec + ' ' + ampm;
+            {% endif %}
+
+            if (mode == 'hour') {
+                var time = hour + ' - ' + hour_till
+            } else {
+                var time = hour + ':' + min + ':' + sec
+            }
+            return time;
+        }
+
+        function showTooltip(x, y, color, contents) {
+            $('<div id="tooltip">' + contents + '</div>').css({
+                position: 'absolute',
+                display: 'none',
+                top: y - 40,
+                left: x - 120,
+                border: '2px solid ' + color,
+                padding: '3px',
+                'font-size': '9px',
+                'border-radius': '5px',
+                'background-color': '#fff',
+                'font-family': 'Verdana, Arial, Helvetica, Tahoma, sans-serif',
+                opacity: 0.9
+            }).appendTo("body").fadeIn(200);
+        }
+
+        function setGrid(tableGridHtmlId, gridData, columns, defs) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "searching": true,
+            "paging": true,
+            "columns": columns,
+            "ordering": false,
+            "columnDefs": defs,
+            "responsive": {{ responsive }}
+        });
+	    }
+
+
+
+    });
+
+</script>
+
+<style type="text/css">
+    #flot_usage {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_spawn {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_quest {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_gym {
+        width: 100%;
+        height: 300px;
+    }
+
+    #flot_stop {
+        width: 100%;
+        height: 300px;
+    }
+
+
+
+    #flotcontainer {
+        width: 600px;
+        height: 200px;
+        text-align: left;
+    }
+
+    #selector {
+        font-size: 1.5em;
+        margin: 10px;
+    }
+</style>
+
+
+{% endblock %}
+
+{% block content %}
+<h2>Global detection Count</h2>
+<table id="show-data-detection" class="table" style="width:100%;"></table>
+<br>
+<h2>CPU / Memory Usage</h2>
+<div id="selector">
+    View {{ minutes_usage }} minutes <br>Set:
+    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=10">10</a>
+    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=60">60</a>
+    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=120">120</a>
+    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=240">240</a>
+    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=480">480</a>
+    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=1440">1440</a>
+    <a href="statistics?minutes_spawn={{ minutes_spawn }}&amp;minutes_usage=10080">One Week</a>
+    </div>
+<div id="legendContainer_usage"></div>
+<div id="flot_usage"></div>
+<br>
+<h2>Spawn Statistics last day</h2>
+<div id="selector">
+    View {{ minutes_spawn }} minutes <br>Set:
+    <a href="statistics?minutes_spawn=10&amp;minutes_usage={{ minutes_usage }}">10</a>
+    <a href="statistics?minutes_spawn=60&amp;minutes_usage={{ minutes_usage }}">60</a>
+    <a href="statistics?minutes_spawn=120&amp;minutes_usage={{ minutes_usage }}">120</a>
+    <a href="statistics?minutes_spawn=240&amp;minutes_usage={{ minutes_usage }}">240</a>
+    <a href="statistics?minutes_spawn=480&amp;minutes_usage={{ minutes_usage }}">480</a>
+    <a href="statistics?minutes_spawn=1440&amp;minutes_usage={{ minutes_usage }}">1440</a>
+    <a href="statistics?minutes_spawn=10080&amp;minutes_usage={{ minutes_usage }}">One Week</a>
+    </div>
+<div id="legendContainer_spawn"></div>
+<div id="flot_spawn"></div>
+<br>
+<h2>Today Quest Statistics</h2>
+<div id="legendContainer_quest"></div>
+<div id="flot_quest"></div>
+<br>
+<h2>Stop / Quest Statistics</h2>
+<div id="flot_stop"></div>
+<br>
+<h2>Live Gym Statistics</h2>
+<div id="flot_gym"></div>
+<br>
+<h2>Empty Scans > 5</h2>
+<table id="show-data-detection_empty" class="table" style="width:100%;"></table>
+<br>
+<h2>Location Statistics</h2>
+<table id="show-data-location-info" class="table" style="width:100%;"></table>
+<br>
+<h2>Recent Perfect Pokemon</h2>
+<table id="show-data-good-pokemon" class="table" style="width:100%;"></table>
+<br>
+<h2>Shiny Stats</h2>
+<table id="show-data-shiny" class="table" style="width:100%;"></table>
+{% endblock %}

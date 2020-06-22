@@ -1,0 +1,5 @@
+dbip=localhost
+dbusername=mad
+dbpassword=mad
+dbname=mad
+dbport=3306

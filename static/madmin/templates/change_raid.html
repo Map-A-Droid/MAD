@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+
+{% block header %}
+{% endblock %}
+
+{% block scripts %}
+<script>
+    function setGrid(tableGridHtmlId, gridData) {
+        $(tableGridHtmlId).DataTable({
+            "data": gridData,
+            "columns": [
+                { data: 'name', title: 'Name' },
+                { data: 'filename', title: 'Hashpic' },
+                { data: 'dist', title: 'Distance' },
+                { data: 'id', title: 'Match' }
+            ],
+            "columnDefs": [
+                {
+                    "targets": [0],
+                    "render": function (data, type, row) {
+                        return data + "<br /><br />Gym-ID: " + row.id;
+                    }
+                },
+                {
+                    "targets": [1],
+                    "render": function (data, type, row) {
+                        return "<img class='lazy' data-original='" + data + "' width=100>";
+                    }
+                },
+                {
+                    "targets": [3],
+                    "render": function (data, type, row) {
+                        return "<a href='modify_raid_gym?hash={{ hash }}&id=" + data + "&mon={{ mon }}&lvl={{ lvl }}'>Match to this Gym</a>";
+                    }
+                }
+            ],
+            "drawCallback": function () {
+                $("img.lazy").lazyload();
+            },
+            "order": [[2, "desc"]],
+            "responsive": {{ responsive }},
+            "autoWidth": true
+        });
+	}
+
+    $(document).ready(function () {
+        $("#navraids").addClass("active");
+        $.ajax({
+            type: "GET",
+            url: "near_gym?lat={{ lat }}&lon={{ lon }}",
+            success: function (result) {
+                setGrid('#show-data', result);
+            }
+        });
+    });
+</script>
+{% endblock %}
+
+{% block content %}
+<h2>Modify existing Raid</h2>
+<h4><a href="raids">Back to Raids</a></h4>
+<table id="show-data" class="table"></table>
+{% endblock %}

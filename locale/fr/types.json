@@ -1,0 +1,146 @@
+{
+  "0": {
+    "prototext": "QUEST_UNKNOWN_TYPE",
+    "text": "Unknown quest type"
+  },
+  "1": {
+    "prototext": "QUEST_FIRST_CATCH_OF_THE_DAY",
+    "text": "Première prise du jour"
+  },
+  "2": {
+    "prototext": "QUEST_FIRST_POKESTOP_OF_THE_DAY",
+    "text": "Premier PokéStop du jour"
+  },
+  "3": {
+    "prototext": "QUEST_MULTI_PART",
+    "text": "Multi part"
+  },
+  "4": {
+    "prototext": "QUEST_CATCH_POKEMON",
+    "text": "Attrape {0} Pokémon"
+  },
+  "5": {
+    "prototext": "QUEST_SPIN_POKESTOP",
+    "text": "Fais tourner {0} PokéStops ou Arènes"
+  },
+  "6": {
+    "prototext": "QUEST_HATCH_EGG",
+    "text": "Fais éclore {0} Œufs"
+  },
+  "7": {
+    "prototext": "QUEST_COMPLETE_GYM_BATTLE",
+    "text": "Combats {0} fois dans une Arène"
+  },
+  "8": {
+    "prototext": "QUEST_COMPLETE_RAID_BATTLE",
+    "text": "Combats dans {0} Raids"
+  },
+  "9": {
+    "prototext": "QUEST_COMPLETE_QUEST",
+    "text": "Complete {0} quest(s)"
+  },
+  "10": {
+    "prototext": "QUEST_TRANSFER_POKEMON",
+    "text": "Transfère {0} Pokémon"
+  },
+  "11": {
+    "prototext": "QUEST_FAVORITE_POKEMON",
+    "text": "Favorite {0} pokémon"
+  },
+  "12": {
+    "prototext": "QUEST_AUTOCOMPLETE",
+    "text": "Autocomplete"
+  },
+  "13": {
+    "prototext": "QUEST_USE_BERRY_IN_ENCOUNTER",
+    "text": "Utilise {0} Baies pour t’aider à attraper des Pokémon"
+  },
+  "14": {
+    "prototext": "QUEST_UPGRADE_POKEMON",
+    "text": "Recharge un Pokémon {0} fois"
+  },
+  "15": {
+    "prototext": "QUEST_EVOLVE_POKEMON",
+    "text": "Fais évoluer {0} Pokémon"
+  },
+  "16": {
+    "prototext": "QUEST_LAND_TROW",
+    "text": "Fais {0} lancers"
+  },
+  "17": {
+    "prototext": "QUEST_GET_BUDDY_CANDY",
+    "text": "Gagne {0} Bonbons en marchant avec ton copain"
+  },
+  "18": {
+    "prototext": "QUEST_BADGE_RANK",
+    "text": "Collect {0} badge(s)"
+  },
+  "19": {
+    "prototext": "QUEST_PLAYER_LEVEL",
+    "text": "Atteindre le niveau {0}"
+  },
+  "20": {
+    "prototext": "QUEST_JOIN_RAID",
+    "text": "Participer à {0} combats de Raid"
+  },
+  "21": {
+    "prototext": "QUEST_COMPLETE_BATTLE",
+    "text": "Combats dans {0} Raids"
+  },
+  "22": {
+    "prototext": "QUEST_ADD_FRIEND",
+    "text": "Ajouter {0} nouveaux amis"
+  },
+  "23": {
+    "prototext": "QUEST_TRADE_POKEMON",
+    "text": "Échanger {0} Pokémon"
+  },
+  "24": {
+    "prototext": "QUEST_SEND_GIFT",
+    "text": "Envoie {0} Cadeaux à des amis"
+  },
+  "25": {
+    "prototext": "QUEST_EVOLVE_INTO_POKEMON",
+    "text": "Faire évoluer {0} Pokémon en"
+  },
+  "27": {
+    "prototext": "QUEST_COMPLETE_COMBAT",
+    "text": "Combat {0} fois contre un autre Dresseur"
+  },
+  "28": {
+    "prototext": "QUEST_TAKE_SNAPSHOT",
+    "text": "Prends {0} photos"
+  },
+  "29": {
+    "prototext": "QUEST_BATTLE_TEAM_ROCKET",
+    "text": "Bats {0} Sbires de la Team GO Rocket"
+  },
+  "30": {
+    "prototext": "QUEST_PURIFY_POKEMON",
+    "text": "Purifie {0} Pokémon Obscurs"
+  },
+  "33": {
+    "prototext": "QUEST_BUDDY_FEED",
+    "text": ""
+  },
+  "34": {
+    "prototext": "QUEST_BUDDY_EARN_AFFECTION_POINTS",
+    "text": "Gagne {0} cœurs avec ton copain"
+  },
+  "35": {
+    "prototext": "QUEST_BUDDY_PET",
+    "text": ""
+  },
+  "36": {
+    "prototext": "QUEST_BUDDY_LEVEL",
+    "text": ""
+  },
+  "37": {
+    "prototext": "QUEST_BUDDY_WALK",
+    "text": ""
+  },
+  "38": {
+    "prototext": "QUEST_BUDDY_YATTA",
+    "text": ""
+  }
+}
