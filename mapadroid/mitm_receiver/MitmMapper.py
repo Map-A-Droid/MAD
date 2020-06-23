@@ -9,7 +9,7 @@ from mapadroid.mitm_receiver.PlayerStats import PlayerStats
 from mapadroid.utils.MappingManager import MappingManager
 from mapadroid.utils.collections import Location
 from mapadroid.utils.walkerArgs import parseArgs
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.mitm)
@@ -69,14 +69,15 @@ class MitmMapper(object):
                     continue
                 if next_item is not None:
                     client_id, stats, last_processed_timestamp = next_item
-                    logger.info("Running stats processing on {}".format(str(client_id)))
+                    logger.info("Running stats processing on {}", str(client_id))
                     self.__process_stats(stats, client_id, last_processed_timestamp)
         except Exception as e:
-            logger.error("Playerstats consumer stopping because of {}".format(str(e)))
+            logger.error("Playerstats consumer stopping because of {}", str(e))
         logger.info("Shutting down Playerstats update consumer")
 
     def __process_stats(self, stats, client_id: int, last_processed_timestamp: float):
-        logger.info('Submitting stats for origin {}', str(client_id))
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.info('Submitting stats')
         data_send_stats = []
         data_send_location = []
 
@@ -135,7 +136,8 @@ class MitmMapper(object):
             return list(map(int, enhanced_mode_quest_safe_items))
 
     def request_latest(self, origin, key=None):
-        logger.debug("Request latest called with origin {}".format(str(origin)))
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug2("Request latest called", str(origin))
         with self.__mapping_mutex:
             result = None
             retrieved = self.__mapping.get(origin, None)
@@ -147,12 +149,13 @@ class MitmMapper(object):
                 result = retrieved
             elif retrieved is not None:
                 result = retrieved.get(key, None)
-        logger.debug("Request latest done with origin {}".format(str(origin)))
+        origin_logger.debug2("Request latest done with", str(origin))
         return result
 
     # origin, method, data, timestamp
     def update_latest(self, origin: str, key: str, values_dict, timestamp_received_raw: float = None,
                       timestamp_received_receiver: float = None, location: Location = None):
+        origin_logger = get_origin_logger(logger, origin=origin)
         if timestamp_received_raw is None:
             timestamp_received_raw = time.time()
 
@@ -160,14 +163,14 @@ class MitmMapper(object):
             timestamp_received_receiver = time.time()
 
         updated = False
-        logger.debug3("Trying to acquire lock and update proto {} received by {}".format(origin, key))
+        origin_logger.debug2("Trying to acquire lock and update proto {}", key)
         with self.__mapping_mutex:
             if origin not in self.__mapping.keys() and origin in self.__mapping_manager.get_all_devicemappings().keys():
-                logger.info("New device detected, {}.  Setting up the device configuration", origin)
+                origin_logger.info("New device detected.  Setting up the device configuration")
                 self.__add_new_device(origin)
             if origin in self.__mapping.keys():
-                logger.debug("Updating timestamp of {} at {} with method {} to {}", str(
-                    origin), location, str(key), str(timestamp_received_raw))
+                origin_logger.debug2("Updating timestamp at {} with method {} to {}", location, str(key),
+                                    str(timestamp_received_raw))
                 if self.__mapping.get(origin) is not None and self.__mapping[origin].get(key) is not None:
                     del self.__mapping[origin][key]
                 self.__mapping[origin][key] = {}
@@ -178,14 +181,15 @@ class MitmMapper(object):
                 self.__mapping[origin][key]["values"] = values_dict
                 updated = True
             else:
-                logger.warning(
-                    "Not updating timestamp of {} since origin is unknown", str(origin))
-        logger.debug3("Done updating proto {} of {}".format(key, origin))
+                origin_logger.warning(
+                    "Not updating timestamp since origin is unknown")
+        origin_logger.debug2("Done updating proto {}", key)
         return updated
 
     def set_injection_status(self, origin, status=True):
+        origin_logger = get_origin_logger(logger, origin=origin)
         if origin not in self.__injected or not self.__injected[origin] and status is True:
-            logger.info("Worker {} is injected now", str(origin))
+            origin_logger.info("Worker is injected now")
         self.__injected[origin] = status
 
     def get_injection_status(self, origin):
@@ -235,7 +239,8 @@ class MitmMapper(object):
             self.__playerstats.get(origin).gen_player_stats(inventory_proto)
 
     def submit_gmo_for_location(self, origin, payload):
-        logger.debug4("submit_gmo_for_location of {}", origin)
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug4("submit_gmo_for_location")
         cells = payload.get("cells", None)
 
         if cells is None:
@@ -250,7 +255,7 @@ class MitmMapper(object):
         else:
             self.__last_cellsid[origin] = current_cells_id
             self.__last_possibly_moved[origin] = time.time()
-        logger.debug4("Done submit_gmo_for_location of {} with {}", origin, current_cells_id)
+        origin_logger.debug4("Done submit_gmo_for_location with {}", current_cells_id)
 
     def get_last_timestamp_possible_moved(self, origin):
         return self.__last_possibly_moved.get(origin, None)

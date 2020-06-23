@@ -9,7 +9,7 @@ from mapadroid.ocr.screen_type import ScreenType
 from mapadroid.utils import MappingManager
 from mapadroid.utils.collections import Login_PTC, Login_GGL
 from mapadroid.utils.madGlobals import ScreenshotType
-from mapadroid.utils.logging import get_logger, LoggerEnums
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger
 
 
 logger = get_logger(LoggerEnums.ocr)
@@ -24,6 +24,7 @@ class LoginType(Enum):
 class WordToScreenMatching(object):
     def __init__(self, communicator, pogoWindowManager, id, resocalc, mapping_mananger: MappingManager, args):
         self._id = id
+        self._logger = get_origin_logger(logger, origin=id)
         self._applicationArgs = args
         self._mapping_manager = mapping_mananger
         self._ratio: float = 0.0
@@ -39,18 +40,18 @@ class WordToScreenMatching(object):
         self._pogoWindowManager = pogoWindowManager
         self._communicator = communicator
         self._resocalc = resocalc
-        logger.info("Starting Screendetector")
+        self._logger.info("Starting Screendetector")
         self._width: int = 0
         self._height: int = 0
         self.get_login_accounts()
 
     def get_login_accounts(self):
         self._logintype = LoginType[self.get_devicesettings_value('logintype', 'google')]
-        logger.info("Set logintype: {}".format(self._logintype))
+        self._logger.info("Set logintype: {}", self._logintype)
         if self._logintype == LoginType.ptc:
             temp_accounts = self.get_devicesettings_value('ptc_login', False)
             if not temp_accounts:
-                logger.warning('No PTC Accounts are set - hope we are login and never logout!')
+                self._logger.warning('No PTC Accounts are set - hope we are login and never logout!')
                 self._accountcount = 0
                 return
 
@@ -58,7 +59,7 @@ class WordToScreenMatching(object):
             for account in temp_accounts:
                 ptc_temp = account.split(',')
                 if len(ptc_temp) != 2:
-                    logger.warning('Cannot use this account (Wrong format!): {}'.format(str(account)))
+                    self._logger.warning('Cannot use this account (Wrong format!): {}', str(account))
                     continue
                 username = ptc_temp[0]
                 password = ptc_temp[1]
@@ -67,37 +68,36 @@ class WordToScreenMatching(object):
         else:
             temp_accounts = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
             if not temp_accounts:
-                logger.warning('No GGL Accounts are set - using first @gmail.com Account')
+                self._logger.warning('No GGL Accounts are set - using first @gmail.com Account')
             temp_accounts = temp_accounts.replace(' ', '').split('|')
 
             for account in temp_accounts:
                 self._GGL_accounts.append(Login_GGL(account))
             self._accountcount = len(self._GGL_accounts)
 
-        logger.info('Added {} account(s) to memory'.format(str(self._accountcount)))
+        self._logger.info('Added {} account(s) to memory', str(self._accountcount))
         return
 
     def get_next_account(self):
         if self._accountcount == 0:
-            logger.info('Cannot return new account - no one is set')
+            self._logger.info('Cannot return new account - no one is set')
             return None
         if self._accountindex <= self._accountcount - 1:
-            logger.info('Request next Account - Using Nr. {}'.format(self._accountindex + 1))
+            self._logger.info('Request next Account - Using Nr. {}', self._accountindex + 1)
             self._accountindex += 1
         elif self._accountindex > self._accountcount - 1:
-            logger.info('Request next Account - Restarting with Nr. 1')
+            self._logger.info('Request next Account - Restarting with Nr. 1')
             self._accountindex = 0
 
         self.set_devicesettings_value('accountindex', self._accountindex)
 
         if self._logintype == LoginType.ptc:
-            logger.info('Using PTC Account: {}'.format
-                        (self.censor_account(self._PTC_accounts[self._accountindex - 1].username,
-                                             isPTC=True)))
+            self._logger.info('Using PTC Account: {}',
+                              self.censor_account(self._PTC_accounts[self._accountindex - 1].username, isPTC=True))
             return self._PTC_accounts[self._accountindex - 1]
         else:
-            logger.info('Using GGL Account: {}'.format
-                        (self.censor_account(self._GGL_accounts[self._accountindex - 1].username)))
+            self._logger.info('Using GGL Account: {}',
+                              self.censor_account(self._GGL_accounts[self._accountindex - 1].username))
             return self._GGL_accounts[self._accountindex - 1]
 
     def return_memory_account_count(self):
@@ -140,39 +140,39 @@ class WordToScreenMatching(object):
         elif "ConsentActivity" in topmost_app:
             return ScreenType.CONSENT, global_dict, diff
         elif "com.nianticlabs.pokemongo" not in topmost_app:
-            logger.warning("PoGo is not opened! Current topmost app: {}", topmost_app)
+            self._logger.warning("PoGo is not opened! Current topmost app: {}", topmost_app)
             return ScreenType.CLOSE, global_dict, diff
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
             return self._nextscreen, global_dict, diff
         elif not self.get_devicesettings_value('screendetection', False):
-            logger.info('Screen detection is disabled')
+            self._logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
                                         delayAfter=2):
-                logger.error("_check_windows: Failed getting screenshot")
+                self._logger.error("_check_windows: Failed getting screenshot")
                 return ScreenType.ERROR, global_dict, diff
 
             screenpath = self.get_screenshot_path()
 
             result = self._pogoWindowManager.screendetection_get_type_by_screen_analysis(screenpath, self._id)
             if result is None:
-                logger.error("Failed analysing screen")
+                self._logger.error("Failed analyzing screen")
                 return ScreenType.ERROR, global_dict, diff
             else:
                 returntype, global_dict, self._width, self._height, diff = result
             if not global_dict:
                 self._nextscreen = ScreenType.UNDEFINED
-                logger.warning('Could not understand any text on screen - starting next round...')
+                self._logger.warning('Could not understand any text on screen - starting next round...')
                 return ScreenType.ERROR, global_dict, diff
 
             self._ratio = self._height / self._width
 
-            logger.debug("Screenratio of origin {}: {}".format(str(self._id), str(self._ratio)))
+            self._logger.debug("Screenratio: {}", str(self._ratio))
 
             if 'text' not in global_dict:
-                logger.error('Error while text detection')
+                self._logger.error('Error while text detection')
                 return ScreenType.ERROR, global_dict, diff
             elif returntype == ScreenType.UNDEFINED and "com.nianticlabs.pokemongo" in topmost_app:
                 return ScreenType.POGO, global_dict, diff
@@ -182,7 +182,7 @@ class WordToScreenMatching(object):
     def __handle_login_screen(self, global_dict: dict, diff: int) -> None:
         temp_dict: dict = {}
         n_boxes = len(global_dict['level'])
-        logger.debug("Selecting login with: {}", global_dict)
+        self._logger.debug("Selecting login with: {}", global_dict)
         for i in range(n_boxes):
             if 'Facebook' in (global_dict['text'][i]):
                 temp_dict['Facebook'] = global_dict['top'][i] / diff
@@ -205,7 +205,6 @@ class WordToScreenMatching(object):
                 elif 'Facebook' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + 2 * self._height / 10.11)
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -214,7 +213,6 @@ class WordToScreenMatching(object):
                 elif 'Google' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Google'] + self._height / 10.11)
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -230,7 +228,6 @@ class WordToScreenMatching(object):
                 elif 'Facebook' in temp_dict and 'CLUB' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + ((temp_dict['CLUB'] - temp_dict['Facebook']) / 2))
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -239,7 +236,6 @@ class WordToScreenMatching(object):
                 elif 'Facebook' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['Facebook'] + self._height / 10.11)
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -248,7 +244,6 @@ class WordToScreenMatching(object):
                 elif 'CLUB' in temp_dict:
                     click_x = self._width / 2
                     click_y = (temp_dict['CLUB'] - self._height / 10.11)
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(5)
                     return
@@ -256,15 +251,14 @@ class WordToScreenMatching(object):
     def _click_center_button(self, diff, global_dict, i) -> None:
         (x, y, w, h) = (global_dict['left'][i], global_dict['top'][i],
                         global_dict['width'][i], global_dict['height'][i])
-        logger.debug("Diff: {}", diff)
+        self._logger.debug("Diff: {}", diff)
         click_x, click_y = (x + w / 2) / diff, (y + h / 2) / diff
-        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
         self._communicator.click(click_x, click_y)
 
     def __handle_screentype(self, screentype: ScreenType,
                             global_dict: Optional[dict] = None, diff: int = -1) -> ScreenType:
         if screentype == ScreenType.UNDEFINED:
-            logger.warning("Undefined screentype, abandon ship...")
+            self._logger.warning("Undefined screentype, abandon ship...")
         elif screentype == ScreenType.BIRTHDATE:
             self.__handle_birthday_screen()
         elif screentype == ScreenType.RETURNING:
@@ -302,29 +296,29 @@ class WordToScreenMatching(object):
             self.__handle_strike_screen(diff, global_dict)
         elif screentype == ScreenType.SUSPENDED:
             self._nextscreen = ScreenType.UNDEFINED
-            logger.warning('Account temporarily banned!')
+            self._logger.warning('Account temporarily banned!')
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.TERMINATED:
             self._nextscreen = ScreenType.UNDEFINED
-            logger.error('Account permabanned!')
+            self._logger.error('Account permabanned!')
             screentype = ScreenType.ERROR
         elif screentype == ScreenType.POGO:
             screentype = self.__check_pogo_screen_ban_or_loading(screentype)
         elif screentype == ScreenType.QUEST:
-            logger.warning("Already on quest screen")
+            self._logger.warning("Already on quest screen")
             # TODO: consider closing quest window?
             self._nextscreen = ScreenType.UNDEFINED
         elif screentype == ScreenType.GPS:
             self._nextscreen = ScreenType.UNDEFINED
-            logger.warning("Ingame error detected")
+            self._logger.warning("In game error detected")
         elif screentype == ScreenType.BLACK:
-            logger.warning("Screen is black, sleeping a couple seconds for another check...")
+            self._logger.warning("Screen is black, sleeping a couple seconds for another check...")
         elif screentype == ScreenType.CLOSE:
-            logger.debug("Detected pogo not open")
+            self._logger.debug("Detected pogo not open")
         elif screentype == ScreenType.DISABLED:
-            logger.warning("Screendetection disabled")
+            self._logger.warning("Screendetection disabled")
         elif screentype == ScreenType.ERROR:
-            logger.error("Error during screentype detection")
+            self._logger.error("Error during screentype detection")
 
         return screentype
 
@@ -346,7 +340,7 @@ class WordToScreenMatching(object):
 
     def __handle_strike_screen(self, diff, global_dict) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        logger.warning('Got a black strike warning!')
+        self._logger.warning('Got a black strike warning!')
         click_text = 'GOT IT,ALLES KLAR'
         n_boxes = len(global_dict['level'])
         for i in range(n_boxes):
@@ -373,13 +367,13 @@ class WordToScreenMatching(object):
     def __handle_google_login(self, screentype) -> ScreenType:
         self._nextscreen = ScreenType.UNDEFINED
         if self._logintype == LoginType.ptc:
-            logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
+            self._logger.warning('Really dont know how i get there ... using first @ggl address ... :)')
             username = self.get_devicesettings_value('ggl_login_mail', '@gmail.com')
         else:
             ggl_login = self.get_next_account()
             username = ggl_login.username
         if self.parse_ggl(self._communicator.uiautomator(), username):
-            logger.info("Sleeping 50 seconds - please wait!")
+            self._logger.info("Sleeping 50 seconds - please wait!")
             time.sleep(50)
         else:
             screentype = ScreenType.ERROR
@@ -398,7 +392,7 @@ class WordToScreenMatching(object):
         self._nextscreen = ScreenType.UNDEFINED
         ptc = self.get_next_account()
         if not ptc:
-            logger.error('No PTC Username and Password is set')
+            self._logger.error('No PTC Username and Password is set')
             return ScreenType.ERROR
         if float(self._ratio) >= 2:
             username_y = self._height / 2.5 + self._screenshot_y_offset
@@ -413,7 +407,7 @@ class WordToScreenMatching(object):
             password_y = self._height / 1.875 + self._screenshot_y_offset
             button_y = self._height / 1.58285243198681 + self._screenshot_y_offset
         else:
-            logger.error("Unhandled ratio, unlikely to be the case. Do open a github issue ;)")
+            self._logger.error("Unhandled ratio, unlikely to be the case. Do open a github issue ;)")
             return ScreenType.ERROR
         # username
         self._communicator.click(self._width / 2, username_y)
@@ -429,7 +423,7 @@ class WordToScreenMatching(object):
         time.sleep(2)
         # button
         self._communicator.click(self._width / 2, button_y)
-        logger.info("Sleeping 50 seconds - please wait!")
+        self._logger.info("Sleeping 50 seconds - please wait!")
         time.sleep(50)
         return ScreenType.PTC
 
@@ -446,7 +440,6 @@ class WordToScreenMatching(object):
         self._nextscreen = ScreenType.RETURNING
         click_x = (self._width / 2) + (self._width / 4)
         click_y = (self._height / 1.69) + self._screenshot_y_offset
-        logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
         self._communicator.click(click_x, click_y)
         self._communicator.touch_and_hold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
         time.sleep(1)
@@ -462,16 +455,16 @@ class WordToScreenMatching(object):
     def detect_screentype(self) -> ScreenType:
         topmostapp = self._communicator.topmost_app()
         if not topmostapp:
-            logger.warning("Failed getting the topmost app!")
+            self._logger.warning("Failed getting the topmost app!")
             return ScreenType.ERROR
 
         screentype, global_dict, diff = self.__evaluate_topmost_app(topmost_app=topmostapp)
-        logger.info("Processing Screen: {}", str(ScreenType(screentype)))
+        self._logger.info("Processing Screen: {}", str(ScreenType(screentype)))
         return self.__handle_screentype(screentype=screentype, global_dict=global_dict, diff=diff)
 
     def checkQuest(self, screenpath: str) -> ScreenType:
         if screenpath is None or len(screenpath) == 0:
-            logger.error("Invalid screen path: {}", screenpath)
+            self._logger.error("Invalid screen path: {}", screenpath)
             return ScreenType.ERROR
         globaldict = self._pogoWindowManager.get_screen_text(screenpath, self._id)
         frame = None
@@ -483,11 +476,11 @@ class WordToScreenMatching(object):
         n_boxes = len(globaldict['level'])
         for i in range(n_boxes):
             if any(elem in (globaldict['text'][i]) for elem in click_text.split(",")):
-                logger.info('Found research menu')
+                self._logger.info('Found research menu')
                 self._communicator.click(100, 100)
                 return ScreenType.QUEST
 
-        logger.info('Listening to Dr. blabla - please wait')
+        self._logger.info('Listening to Dr. blabla - please wait')
 
         self._communicator.back_button()
         time.sleep(3)
@@ -495,7 +488,7 @@ class WordToScreenMatching(object):
 
     def parse_permission(self, xml) -> bool:
         if xml is None:
-            logger.warning('Something wrong with processing - getting None Type from Websocket...')
+            self._logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
         click_text = ('ZULASSEN', 'ALLOW', 'AUTORISER', 'OK')
         try:
@@ -504,63 +497,61 @@ class WordToScreenMatching(object):
             bounds: str = ""
             for item in xmlroot.iter('node'):
                 if str(item.attrib['text']).upper() in click_text:
-                    logger.debug("Found text {}", str(item.attrib['text']))
+                    self._logger.debug("Found text {}", str(item.attrib['text']))
                     bounds = item.attrib['bounds']
-                    logger.debug("Bounds {}", str(item.attrib['bounds']))
+                    self._logger.debug("Bounds {}", str(item.attrib['bounds']))
 
                     match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
 
                     click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
                     click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(2)
                     return True
         except Exception as e:
-            logger.error('Something wrong while parsing xml: {}'.format(str(e)))
+            self._logger.error('Something wrong while parsing xml: {}', str(e))
             return False
 
         time.sleep(2)
-        logger.warning('Dont find any button...')
+        self._logger.warning('Dont find any button...')
         return False
 
     def parse_ggl(self, xml, mail: str) -> bool:
         if xml is None:
-            logger.warning('Something wrong with processing - getting None Type from Websocket...')
+            self._logger.warning('Something wrong with processing - getting None Type from Websocket...')
             return False
         try:
             parser = ET.XMLParser(encoding="utf-8")
             xmlroot = ET.fromstring(xml, parser=parser)
             for item in xmlroot.iter('node'):
                 if mail.lower() in str(item.attrib['text']).lower():
-                    logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
+                    self._logger.info("Found mail {}", self.censor_account(str(item.attrib['text'])))
                     bounds = item.attrib['bounds']
-                    logger.debug("Bounds {}", str(item.attrib['bounds']))
+                    self._logger.debug("Bounds {}", str(item.attrib['bounds']))
                     match = re.search(r'^\[(\d+),(\d+)\]\[(\d+),(\d+)\]$', bounds)
                     click_x = int(match.group(1)) + ((int(match.group(3)) - int(match.group(1))) / 2)
                     click_y = int(match.group(2)) + ((int(match.group(4)) - int(match.group(2))) / 2)
-                    logger.debug('Click ' + str(click_x) + ' / ' + str(click_y))
                     self._communicator.click(click_x, click_y)
                     time.sleep(2)
                     return True
         except Exception as e:
-            logger.error('Something wrong while parsing xml: {}'.format(str(e)))
+            self._logger.error('Something wrong while parsing xml: {}', str(e))
             return False
 
         time.sleep(2)
-        logger.warning('Dont find any mailaddress...')
+        self._logger.warning('Dont find any mailaddress...')
         return False
 
     def set_devicesettings_value(self, key: str, value) -> None:
         self._mapping_manager.set_devicesetting_value_of(self._id, key, value)
 
     def get_devicesettings_value(self, key: str, default_value: object = None):
-        logger.debug2("Fetching devicemappings of {}".format(self._id))
+        self._logger.debug2("Fetching devicemappings")
         try:
             devicemappings: Optional[dict] = self._mapping_manager.get_devicemappings_of(self._id)
         except (EOFError, FileNotFoundError) as e:
-            logger.warning("Failed fetching devicemappings in worker {} with description: {}. Stopping worker"
-                           .format(str(self._id), str(e)))
+            self._logger.warning("Failed fetching devicemappings in worker with description: {}. Stopping worker",
+                                 str(e))
             return None
         if devicemappings is None:
             return default_value
@@ -597,13 +588,13 @@ class WordToScreenMatching(object):
         screenshot_filename = "screenshot_{}{}{}".format(str(self._id), str(addon), screenshot_ending)
 
         if fileaddon:
-            logger.info("Creating debugscreen: {}".format(screenshot_filename))
+            self._logger.info("Creating debugscreen: {}", (screenshot_filename))
 
         return os.path.join(
             self._applicationArgs.temp_path, screenshot_filename)
 
     def _takeScreenshot(self, delayAfter=0.0, delayBefore=0.0, errorscreen: bool = False):
-        logger.debug("Taking screenshot...")
+        self._logger.debug("Taking screenshot...")
         time.sleep(delayBefore)
 
         # TODO: area settings for jpg/png and quality?
@@ -617,11 +608,11 @@ class WordToScreenMatching(object):
                                                             screenshot_quality, screenshot_type)
 
         if not take_screenshot:
-            logger.error("takeScreenshot: Failed retrieving screenshot")
-            logger.debug("Failed retrieving screenshot")
+            self._logger.error("takeScreenshot: Failed retrieving screenshot")
+            self._logger.debug("Failed retrieving screenshot")
             return False
         else:
-            logger.debug("Success retrieving screenshot")
+            self._logger.debug("Success retrieving screenshot")
             self._lastScreenshotTaken = time.time()
             time.sleep(delayAfter)
             return True

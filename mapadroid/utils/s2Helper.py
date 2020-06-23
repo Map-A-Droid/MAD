@@ -60,7 +60,7 @@ class S2Helper:
         cell_ids = region.get_covering(
             s2sphere.LatLngRect.from_point_pair(p1, p2))
         logger.debug('Detecting ' + str(len(cell_ids)) +
-                     ' L{} Cells in Area'.format(str(cell_size)))
+                     ' L{} Cells in Area', str(cell_size))
         for cell_id in cell_ids:
             split_cell_id = str(cell_id).split(' ')
             position = S2Helper.get_position_from_cell(
@@ -97,7 +97,7 @@ class S2Helper:
             position = S2Helper.middle_of_cell(int(split_cell_id[1], 16))
             calc_route_data.append([position[0], position[1]])
         logger.debug('Detecting ' + str(len(calc_route_data)) +
-                     ' L{} Cells in Area'.format(str(cell_size)))
+                     ' L{} Cells in Area', str(cell_size))
 
         return calc_route_data
 

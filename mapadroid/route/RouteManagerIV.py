@@ -75,14 +75,14 @@ class RouteManagerIV(RouteManagerBase):
         try:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager {}", str(self.name))
+                self.logger.info("Starting routemanager")
                 self._start_priority_queue()
         finally:
             self._manager_mutex.release()
         return True
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route {}', str(self.name))
+        self.logger.info('Shutdown Route')
         self._is_started = False
         self._round_started_time = None
 

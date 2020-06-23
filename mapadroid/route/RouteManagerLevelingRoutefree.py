@@ -114,7 +114,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         try:
 
             if self._shutdown_route:
-                self.logger.info('Other worker shutdown route {} - leaving it', str(self.name))
+                self.logger.info('Other worker shutdown route - leaving it')
                 return False
 
             self._worker_changed_update_routepools()
@@ -138,10 +138,10 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         try:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager {}", str(self.name))
+                self.logger.info("Starting routemanager")
 
                 if self._shutdown_route:
-                    self.logger.info('Other worker shutdown route {} - leaving it', str(self.name))
+                    self.logger.info('Other worker shutdown route - leaving it')
                     return False
 
                 self._prio_queue = None
@@ -168,7 +168,7 @@ class RouteManagerLevelingRoutefree(RouteManagerQuests):
         return False
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route {}', str(self.name))
+        self.logger.info('Shutdown Route')
         if self._is_started:
             self._is_started = False
             self._round_started_time = None

@@ -11,9 +11,10 @@ from mapadroid.data_manager.dm_exceptions import (
     ModeNotSpecified,
     ModeUnknown
 )
-from mapadroid.utils.logging import logger
+from mapadroid.utils.logging import get_logger, LoggerEnums
 
 
+logger = get_logger(LoggerEnums.madmin)
 cache = Cache(config={'CACHE_TYPE': 'simple'})
 
 

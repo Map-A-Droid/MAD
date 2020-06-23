@@ -62,7 +62,7 @@ class WebhookWorker:
 
     def __send_webhook(self, payload):
         if len(payload) == 0:
-            logger.debug("Payload empty. Skip sending to webhook.")
+            logger.debug2("Payload empty. Skip sending to webhook.")
             return
 
         # get list of urls
@@ -89,12 +89,12 @@ class WebhookWorker:
                 payloadToSend = payload
 
             if len(payloadToSend) == 0:
-                logger.debug(
+                logger.debug2(
                     "Payload empty. Skip sending to: {} (Filter: {})", url, subTypes
                 )
                 continue
             else:
-                logger.debug("Sending to webhook url: {} (Filter: {})", url, subTypes)
+                logger.debug2("Sending to webhook url: {} (Filter: {})", url, subTypes)
 
             payload_list = self.__payload_chunk(
                 payloadToSend, self.__args.webhook_max_payload_size
@@ -103,7 +103,7 @@ class WebhookWorker:
             current_pl_num = 1
             for payload_chunk in payload_list:
                 logger.debug4("Python data for payload: {}", str(payload_chunk))
-                logger.debug3("Payload: {}", str(json.dumps(payload_chunk)))
+                logger.debug4("Payload: {}", str(json.dumps(payload_chunk)))
 
                 try:
                     response = requests.post(
@@ -607,7 +607,7 @@ class WebhookWorker:
         except Exception:
             logger.exception("Error while creating webhook payload")
 
-        logger.debug2("Done fetching data + building payload")
+        logger.debug("Done fetching data + building payload")
 
         return full_payload
 

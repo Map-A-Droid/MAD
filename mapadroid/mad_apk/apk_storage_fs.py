@@ -26,7 +26,7 @@ def ensure_exists(func) -> Any:
             return func(self, *args, **kwargs)
         except FileNotFoundError:
             msg = 'Attempted to access a non-existent file for {} [{}]'.format(args[0].name, args[1].name)
-            logger.debug(msg)
+            logger.debug2(msg)
             return Response(status=404, response=json.dumps(msg))
     return decorated
 
@@ -237,7 +237,7 @@ class APKStorageFilesystem(AbstractAPKStorage):
             with self.file_lock:
                 try:
                     self.delete_file(package, architecture)
-                    logger.debug('Successfully removed the previous version')
+                    logger.debug2('Successfully removed the previous version')
                 except (FileNotFoundError, KeyError):
                     pass
                 try:

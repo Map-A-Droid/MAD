@@ -306,8 +306,7 @@ class WorkerQuests(MITMBase):
 
         if self.get_devicesettings_value('last_action_time', None) is not None:
             timediff = time.time() - self.get_devicesettings_value('last_action_time', 0)
-            self.logger.info(
-                "Timediff between now and last action time: {}", str(int(timediff)))
+            self.logger.info("Timediff between now and last action time: {}", str(int(timediff)))
             delay_used = delay_used - timediff
         elif self.get_devicesettings_value('last_action_time', None) is None and not self._level_mode:
             self.logger.info('Starting first time - we wait because of some default pogo delays ...')
@@ -351,7 +350,7 @@ class WorkerQuests(MITMBase):
                 cleanupbox = False
                 if not self._mapping_manager.routemanager_present(self._routemanager_name) \
                         or self._stop_worker_event.is_set():
-                    self.logger.error("Worker {} get killed while sleeping", str(self._origin))
+                    self.logger.error("Worker was killed while sleeping")
                     self._current_sleep_time = 0
                     raise InternalStopWorkerException
                 time.sleep(1)
@@ -488,12 +487,10 @@ class WorkerQuests(MITMBase):
                     if success_counter == 0:
                         self._clear_box_failcount += 1
                         if self._clear_box_failcount < 3:
-                            self.logger.warning("Failed clearing box {} times in "
-                                                "a row, retry later...",
+                            self.logger.warning("Failed clearing box {} time(s) in a row, retry later...",
                                                 self._clear_box_failcount)
                         else:
-                            self.logger.error("Unable to delete any items 3 times in"
-                                              " a row - restart pogo ...")
+                            self.logger.error("Unable to delete any items 3 times in a row - restart pogo ...")
                             if not self._restart_pogo(mitm_mapper=self._mitm_mapper):
                                 # TODO: put in loop, count up for a reboot ;)
                                 raise InternalStopWorkerException
@@ -869,8 +866,7 @@ class WorkerQuests(MITMBase):
         elif 102 in latest and latest[102].get('timestamp', 0) >= timestamp:
             return LatestReceivedType.MON
         elif proto_to_wait_for not in latest:
-            self.logger.debug(
-                "No data linked to the requested proto since MAD started.")
+            self.logger.debug("No data linked to the requested proto since MAD started.")
             time.sleep(0.5)
         else:
             # when waiting for stop or spin data, it is enough to make sure
@@ -896,7 +892,7 @@ class WorkerQuests(MITMBase):
             if latest_timestamp >= timestamp:
                 # TODO: consider reseting timestamp here since we clearly received SOMETHING
                 latest_data = latest_proto.get("values", None)
-                self.logger.debug4("Latest data received: {}".format(str(latest_data)))
+                self.logger.debug4("Latest data received: {}", str(latest_data))
                 if latest_data is None:
                     time.sleep(0.5)
                     return None

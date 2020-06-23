@@ -15,6 +15,7 @@ logger = get_logger(LoggerEnums.mitm)
 class PlayerStats(object):
     def __init__(self, id, application_args, mitm_mapper_parent: MitmMapper):
         self._id = id
+        self._logger = get_logger(LoggerEnums.mitm, name=self._id)
         self.__application_args = application_args
         self._level: int = 0
         self._last_action_time = 0
@@ -29,7 +30,7 @@ class PlayerStats(object):
         self._poke_stop_visits: int = 0
 
     def set_level(self, level: int):
-        logger.debug('[{}] - set level {}', str(self._id), str(level))
+        self._logger.debug('set level {}', str(level))
         self._level = int(level)
         return True
 
@@ -37,7 +38,7 @@ class PlayerStats(object):
         return self._level
 
     def set_poke_stop_visits(self, visits: int):
-        logger.debug('[{}] - set pokestops visited {}', str(self._id), str(visits))
+        self._logger.debug4('set pokestops visited {}', str(visits))
         self._poke_stop_visits = visits
         return True
 
@@ -46,7 +47,7 @@ class PlayerStats(object):
 
     def gen_player_stats(self, data: dict):
         if 'inventory_delta' not in data:
-            logger.debug('gen_player_stats cannot generate new stats')
+            self._logger.debug2('gen_player_stats cannot generate new stats')
             return
         stats = data['inventory_delta'].get("inventory_items", None)
         if len(stats) > 0:
@@ -54,7 +55,7 @@ class PlayerStats(object):
                 player_stats = data_inventory['inventory_item_data']['player_stats']
                 player_level = player_stats['level']
                 if int(player_level) > 0:
-                    logger.debug('{{gen_player_stats}} saving new playerstats')
+                    self._logger.debug2('{{gen_player_stats}} saving new playerstats')
                     self.set_level(int(player_level))
 
                     data = {self._id: []}
@@ -78,11 +79,11 @@ class PlayerStats(object):
                 self.set_level(int(data[self._id][0]['level']))
                 self.set_poke_stop_visits(int(data[self._id][0]['poke_stop_visits']))
         except IOError:
-            logger.warning('[{}] - no Statsfile found', str(self._id))
+            self._logger.warning('no Statsfile found')
             self.set_level(0)
             return False
         except json.decoder.JSONDecodeError:
-            logger.error('[{}] - Corrupted JSON file found.  Clearing out the file', str(self._id))
+            self._logger.error('Corrupted JSON file found.  Clearing out the file')
             os.remove(statsfile)
             self.set_level(0)
             return False
@@ -94,7 +95,7 @@ class PlayerStats(object):
         return False
 
     def stats_collector(self):
-        logger.debug2("Creating stats_collector task for {}".format(self._id))
+        self._logger.debug2("Creating stats_collector task")
         with self.__mapping_mutex:
             if not self._stats_collector_start:
                 if time.time() - self._last_processed_timestamp > 300 or \
@@ -223,12 +224,12 @@ class PlayerStats(object):
                     self.__stats_collected['location_nok'] += 1
 
     @staticmethod
-    def stats_complete_parser(client_id: int, data, period):
+    def stats_complete_parser(client_id: str, data, period):
         raid_count = 0
         mon_count = 0
         mon_iv_count = 0
         quest_count = 0
-
+        origin_logger = logger.bind(origin=client_id)
         if 106 in data:
             raid_count = data[106].get('raid_count', 0)
             mon_count = data[106].get('mon_count', 0)
@@ -244,14 +245,13 @@ class PlayerStats(object):
                       str(quest_count)
                       )
 
-        logger.debug('Submit complete stats for {} - Period: {}: {}', str(client_id), str(period),
-                     str(stats_data))
+        origin_logger.debug('Submit complete stats - Period: {}: {}', str(period), str(stats_data))
 
         return stats_data
 
     @staticmethod
-    def stats_location_parser(client_id: int, data, period):
-
+    def stats_location_parser(client_id: str, data, period):
+        origin_logger = logger.bind(origin=client_id)
         location_count = data.get('location_count', 0)
         location_ok = data.get('location_ok', 0)
         location_nok = data.get('location_nok', 0)
@@ -262,28 +262,27 @@ class PlayerStats(object):
                          str(location_ok),
                          str(location_nok))
 
-        logger.debug('Submit location stats for {} - Period: {}: {}', str(client_id), str(period),
-                     str(location_data))
+        origin_logger.debug4('Submit location stats - Period: {}: {}', str(period), str(location_data))
 
         return location_data
 
     @staticmethod
-    def stats_location_raw_parser(client_id: int, data, period):
-
+    def stats_location_raw_parser(client_id: str, data, period):
+        origin_logger = logger.bind(origin=client_id)
         data_location_raw = []
 
         if 'location' in data:
             for loc_raw in data['location']:
                 data_location_raw.append(loc_raw)
 
-        logger.debug('Submit raw location stats for {} - Period: {} - Count: {}', str(client_id), str(period),
-                     str(len(data_location_raw)))
+        origin_logger.debug4('Submit raw location stats - Period: {} - Count: {}', str(period),
+                             str(len(data_location_raw)))
 
         return data_location_raw
 
     @staticmethod
-    def stats_detection_raw_parser(client_id: int, data, period):
-
+    def stats_detection_raw_parser(client_id: str, data, period):
+        origin_logger = logger.bind(origin=client_id)
         data_location_raw = []
         # elf.__stats_collected[106]['mon'][encounter_id]
 
@@ -342,8 +341,7 @@ class PlayerStats(object):
                                               str(int(period))
                                               ))
 
-        logger.debug('Submit raw detection stats for {} - Period: {} - Count: {}', str(client_id),
-                     str(period),
-                     str(len(data_location_raw)))
+        origin_logger.debug('Submit raw detection stats for Period: {} - Count: {}', str(period),
+                            str(len(data_location_raw)))
 
         return data_location_raw

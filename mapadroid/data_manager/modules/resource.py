@@ -364,7 +364,7 @@ class Resource(object):
                 elif type(set_issues) is dict:
                     issues[key].update(set_issues)
         if issues:
-            logger.debug('Unable to save the resource {} / {}: {}', self.__class__.__name__, self.identifier,
+            logger.warning('Unable to save the resource {} / {}: {}', self.__class__.__name__, self.identifier,
                          issues)
             raise UpdateIssue(**issues)
 

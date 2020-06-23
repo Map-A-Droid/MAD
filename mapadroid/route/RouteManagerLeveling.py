@@ -110,7 +110,7 @@ class RouteManagerLeveling(RouteManagerQuests):
         try:
 
             if self._shutdown_route:
-                self.logger.info('Other worker shutdown route {} - leaving it', str(self.name))
+                self.logger.info('Other worker shutdown route - leaving it')
                 return False
 
             if self._start_calc:
@@ -159,10 +159,10 @@ class RouteManagerLeveling(RouteManagerQuests):
         try:
             if not self._is_started:
                 self._is_started = True
-                self.logger.info("Starting routemanager {}", str(self.name))
+                self.logger.info("Starting routemanager")
 
                 if self._shutdown_route:
-                    self.logger.info('Other worker shutdown route {} - leaving it', str(self.name))
+                    self.logger.info('Other worker shutdown route - leaving it')
                     return False
 
                 self.generate_stop_list()
@@ -175,12 +175,11 @@ class RouteManagerLeveling(RouteManagerQuests):
 
                 if not self._first_started:
                     self.logger.info(
-                        "First starting quest route - copying original route {} for later use",
-                        str(self.name))
+                        "First starting quest route - copying original route for later use")
                     self._routecopy = self._route.copy()
                     self._first_started = True
                 else:
-                    self.logger.info("Restoring original route {} ", str(self.name))
+                    self.logger.info("Restoring original route")
                     self._route = self._routecopy.copy()
 
                 new_stops = list(set(stops) - set(self._route))
@@ -188,7 +187,7 @@ class RouteManagerLeveling(RouteManagerQuests):
                     self.logger.info("There's {} new stops not in route", len(new_stops))
 
                 if len(stops) == 0:
-                    self.logger.info('No  Stops detected in route {} - quit worker', str(self.name))
+                    self.logger.info('No Stops detected in route - quit worker')
                     self._shutdown_route = True
                     self._restore_original_route()
                     self._route: List[Location] = []
@@ -200,15 +199,14 @@ class RouteManagerLeveling(RouteManagerQuests):
                     self.logger.info('There are less stops without quest than routepositions - recalc')
                     self._recalc_stop_route(stops)
                 elif len(self._route) == 0 and len(stops) > 0:
-                    self.logger.warning("Something wrong with area {}: it have many new stops "
-                                   "- you should delete routefile!!",
-                                   str(self.name))
-                    self.logger.info("Recalc new route for area {}", str(self.name))
+                    self.logger.warning("Something wrong with area: it have many new stops - you should delete "
+                                        "routefile!!")
+                    self.logger.info("Recalc new route for area")
                     self._recalc_stop_route(stops)
                 else:
                     self._init_route_queue()
 
-                self.logger.info('Getting {} positions in route {}'.format(len(self._route), str(self.name)))
+                self.logger.info('Getting {} positions', len(self._route))
                 return True
 
         finally:
@@ -227,7 +225,7 @@ class RouteManagerLeveling(RouteManagerQuests):
         return False
 
     def _quit_route(self):
-        self.logger.info('Shutdown Route {}', str(self.name))
+        self.logger.info('Shutdown Route')
         if self._is_started:
             self._is_started = False
             self._round_started_time = None

@@ -151,8 +151,14 @@ def logLevel(arg_log_level, arg_debug_level):
 
 
 def errorFilter(record):
+    origin_filter(record)
     return record["level"] != "ERROR"
 
+def origin_filter(record):
+    try:
+        record['extra']['name'] = record['extra']['origin']
+    except KeyError:
+        pass
 
 def apply_custom(func):
     @wraps(func)
@@ -250,3 +256,12 @@ class InterceptHandler(logging.Handler):
     def emit(self, record):
         with logger.contextualize(name=self.log_identifier):
             logger.opt(depth=6, exception=record.exc_info).log("DEBUG5", record.getMessage())
+
+def get_origin_logger(existing_logger, origin=None) -> logger:
+    """ Returns an origin logger.  Could be updated later to use ContextVar to allow for easier tracking of log
+        messages
+    """
+    if not any([origin]):
+        return existing_logger
+    if origin:
+        return get_logger(LoggerEnums.system, name=origin)

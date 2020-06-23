@@ -344,7 +344,7 @@ class Device(Resource):
     }
 
     def flush_level(self) -> None:
-        logger.info('Removing visitation status for {}...', self['origin'])
+        logger.bind(origin=self['origin']).info('Removing visitation status')
         self._dbc.flush_levelinfo(self['origin'])
 
     def _load(self) -> None:

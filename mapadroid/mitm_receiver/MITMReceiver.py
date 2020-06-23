@@ -14,7 +14,7 @@ from mapadroid.mitm_receiver.MitmMapper import MitmMapper
 from mapadroid.utils import MappingManager
 from mapadroid.utils.authHelper import check_auth
 from mapadroid.utils.collections import Location
-from mapadroid.utils.logging import LogLevelChanger, logger, get_logger, LoggerEnums
+from mapadroid.utils.logging import LogLevelChanger, logger, get_logger, LoggerEnums, get_origin_logger
 from mapadroid.mad_apk import stream_package, parse_frontend, lookup_package_info, supported_pogo_version, APK_Type
 from threading import RLock
 import mapadroid.data_manager
@@ -35,6 +35,7 @@ class EndpointAction(object):
     def __call__(self, *args, **kwargs):
         logger.debug3("HTTP Request from {}".format(str(request.remote_addr)))
         origin = request.headers.get('Origin')
+        origin_logger = get_origin_logger(logger, origin=origin)
         abort = False
         if request.url_rule is not None and str(request.url_rule) == '/status/':
             auth = request.headers.get('Authorization', False)
@@ -48,25 +49,25 @@ class EndpointAction(object):
             auth = request.headers.get('Authorization', None)
             if auth is None or not check_auth(auth, self.application_args,
                                               self.mapping_manager.get_auths()):
-                logger.warning(
+                origin_logger.warning(
                     "Unauthorized attempt to POST from {}", str(request.remote_addr))
                 self.response = Response(status=403, headers={})
                 abort = True
         else:
             if not origin:
-                logger.warning("Missing Origin header in request")
+                origin_logger.warning("Missing Origin header in request")
                 self.response = Response(status=500, headers={})
                 abort = True
             elif (self.mapping_manager.get_all_devicemappings().keys() is not None
                   and (origin is None or origin not in self.mapping_manager.get_all_devicemappings().keys())):
-                logger.warning("MITMReceiver request without Origin or disallowed Origin: {}".format(origin))
+                origin_logger.warning("MITMReceiver request without Origin or disallowed Origin: {}".format(origin))
                 self.response = Response(status=403, headers={})
                 abort = True
             elif self.mapping_manager.get_auths() is not None:
                 auth = request.headers.get('Authorization', None)
-                if auth is None or not check_auth(auth, self.application_args,
+                if auth is None or not check_auth(origin_logger, auth, self.application_args,
                                                   self.mapping_manager.get_auths()):
-                    logger.warning(
+                    origin_logger.warning(
                         "Unauthorized attempt to POST from {}", str(request.remote_addr))
                     self.response = Response(status=403, headers={})
                     abort = True
@@ -97,7 +98,7 @@ class EndpointAction(object):
                     self.response = Response(status=200, headers={"Content-Type": "application/json"})
                     self.response.data = response_payload
             except Exception as e:  # TODO: catch exact exception
-                logger.warning(
+                origin_logger.warning(
                     "Could not get JSON data from request: {}", str(e))
                 self.response = Response(status=500, headers={})
                 import traceback
@@ -191,37 +192,38 @@ class MITMReceiver(Process):
                               methods=methods_passed)
 
     def proto_endpoint(self, origin: str, data: Union[dict, list]):
-        logger.debug2("Receiving proto from {}".format(origin))
-        logger.debug4("Proto data received from {}: {}".format(origin, str(data)))
+        origin_logger = get_origin_logger(logger, origin=origin)
+        origin_logger.debug2("Receiving proto")
+        origin_logger.debug4("Proto data received from{}", str(data))
         if isinstance(data, list):
             # list of protos... we hope so at least....
-            logger.debug2("Receiving list of protos")
+            origin_logger.debug2("Receiving list of protos")
             for proto in data:
                 self.__handle_proto_data_dict(origin, proto)
         elif isinstance(data, dict):
-            logger.debug2("Receiving single proto")
+            origin_logger.debug2("Receiving single proto")
             # single proto, parse it...
             self.__handle_proto_data_dict(origin, data)
 
         self.__mitm_mapper.set_injection_status(origin)
 
     def __handle_proto_data_dict(self, origin: str, data: dict) -> None:
+        origin_logger = get_origin_logger(logger, origin=origin)
         type = data.get("type", None)
         if type is None or type == 0:
-            logger.warning(
-                "Could not read method ID. Stopping processing of proto")
+            origin_logger.warning("Could not read method ID. Stopping processing of proto")
             return
 
         timestamp: float = data.get("timestamp", int(time.time()))
         location_of_data: Location = Location(data.get("lat", 0.0), data.get("lng", 0.0))
         if (location_of_data.lat > 90 or location_of_data.lat < -90
                 or location_of_data.lng > 180 or location_of_data.lng < -180):
-            logger.warning("Received invalid location from {} in data: {}".format(origin, str(location_of_data)))
+            origin_logger.warning("Received invalid location in data: {}", str(location_of_data))
             location_of_data: Location = Location(0, 0)
         self.__mitm_mapper.update_latest(
             origin, timestamp_received_raw=timestamp, timestamp_received_receiver=time.time(), key=type,
             values_dict=data, location=location_of_data)
-        logger.debug3("Placing data received by {} to data_queue".format(origin))
+        origin_logger.debug2("Placing data received to data_queue")
         self._data_queue.put(
             (timestamp, data, origin)
         )
