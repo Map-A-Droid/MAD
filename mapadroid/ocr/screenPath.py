@@ -140,13 +140,13 @@ class WordToScreenMatching(object):
         elif "ConsentActivity" in topmost_app:
             return ScreenType.CONSENT, global_dict, diff
         elif "com.nianticlabs.pokemongo" not in topmost_app:
-            logger.warning("PoGo ist not opened! Current topmost app: {}", topmost_app)
+            logger.warning("PoGo is not opened! Current topmost app: {}", topmost_app)
             return ScreenType.CLOSE, global_dict, diff
         elif self._nextscreen != ScreenType.UNDEFINED:
             # TODO: how can the nextscreen be known in the current? o.O
             return self._nextscreen, global_dict, diff
         elif not self.get_devicesettings_value('screendetection', False):
-            logger.info('No more screen detection - disabled ...')
+            logger.info('Screen detection is disabled')
             return ScreenType.DISABLED, global_dict, diff
         else:
             if not self._takeScreenshot(delayBefore=self.get_devicesettings_value("post_screenshot_delay", 1),
