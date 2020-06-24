@@ -432,8 +432,8 @@ class WordToScreenMatching(object):
 
     def __handle_returning_player_or_wrong_credentials(self) -> None:
         self._nextscreen = ScreenType.UNDEFINED
-        self._pogoWindowManager.look_for_button(self.get_screenshot_path(), 2.20, 3.01,
-                                                self._communicator, upper=True)
+        self._pogoWindowManager.look_for_button(self._id, self.get_screenshot_path(), 2.20, 3.01, self._communicator,
+                                                upper=True)
         time.sleep(2)
 
     def __handle_birthday_screen(self) -> None:
