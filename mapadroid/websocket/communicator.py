@@ -102,7 +102,7 @@ class Communicator(AbstractCommunicator):
         return self.__runAndOk("more screen on\r\n", self.__command_timeout)
 
     def click(self, x: int, y: int) -> bool:
-        self.logger.debug('Click {} / {}', str(click_x), str(click_y))
+        self.logger.debug('Click {} / {}', x, y)
         return self.__runAndOk("screen click {} {}\r\n".format(str(int(round(x))), str(int(round(y)))),
                                self.__command_timeout)
 
