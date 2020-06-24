@@ -19,7 +19,7 @@ from mapadroid.data_manager.modules.routecalc import RouteCalc
 from mapadroid.utils.geo import get_distance_of_two_points_in_meters
 from mapadroid.utils.walkerArgs import parseArgs
 from mapadroid.worker.WorkerType import WorkerType
-from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger, routelogger_add_origin
+from mapadroid.utils.logging import get_logger, LoggerEnums, get_origin_logger, routelogger_set_origin
 
 
 logger = get_logger(LoggerEnums.routemanager)
@@ -188,7 +188,7 @@ class RouteManagerBase(ABC):
             self._coords_unstructured = None
 
     def register_worker(self, worker_name) -> bool:
-        route_logger = routelogger_add_origin(self.logger, origin=worker_name)
+        route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         with self._workers_registered_mutex:
             if worker_name in self._workers_registered:
                 route_logger.info("already registered")
@@ -200,7 +200,7 @@ class RouteManagerBase(ABC):
                 return True
 
     def unregister_worker(self, worker_name):
-        route_logger = routelogger_add_origin(self.logger, origin=worker_name)
+        route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         with self._workers_registered_mutex and self._manager_mutex:
             if worker_name in self._workers_registered:
                 route_logger.info("unregistering from routemanager")
@@ -220,7 +220,7 @@ class RouteManagerBase(ABC):
                 self.stop_routemanager()
 
     def stop_worker(self):
-        route_logger = routelogger_add_origin(self.logger, origin=worker_name)
+        route_logger = routelogger_set_origin(self.logger, origin=worker_name)
         with self._workers_registered_mutex:
             for worker in self._workers_registered:
                 route_logger.info("removed from routemanager")
@@ -534,7 +534,7 @@ class RouteManagerBase(ABC):
                 self._routepool[origin].worker_sleeping = 0
 
     def get_next_location(self, origin: str) -> Optional[Location]:
-        route_logger = routelogger_add_origin(self.logger, origin=origin)
+        route_logger = routelogger_set_origin(self.logger, origin=origin)
         route_logger.debug4("get_next_location called")
         if not self._is_started:
             route_logger.info("Starting routemanager in get_next_location")
@@ -726,7 +726,7 @@ class RouteManagerBase(ABC):
             return None
 
     def _check_coord_and_maybe_del(self, next_coord, origin):
-        route_logger = routelogger_add_origin(self.logger, origin=origin)
+        route_logger = routelogger_set_origin(self.logger, origin=origin)
         route_logger.debug("Done grabbing next coord, releasing lock and returning location: {}", str(next_coord))
         if self._check_coords_before_returning(next_coord.lat, next_coord.lng, origin):
             if self._delete_coord_after_fetch() and next_coord in self._current_route_round_coords \
@@ -755,7 +755,7 @@ class RouteManagerBase(ABC):
         return unprocessed_coords
 
     def _other_worker_closer_to_prioq(self, prioqcoord, origin):
-        route_logger = routelogger_add_origin(self.logger, origin=origin)
+        route_logger = routelogger_set_origin(self.logger, origin=origin)
         route_logger.debug('Check distances from worker to PrioQ coord')
         closer_worker = None
         with self._workers_registered_mutex:
@@ -1096,7 +1096,7 @@ class RouteManagerBase(ABC):
         return self._calctype
 
     def redo_stop(self, worker, lat, lon):
-        route_logger = routelogger_add_origin(self.logger, origin=worker)
+        route_logger = routelogger_set_origin(self.logger, origin=worker)
         self.logger.info('redo a unprocessed Stop ({}, {})', lat, lon)
         if worker in self._routepool:
             self._routepool[worker].has_prio_event = True
@@ -1114,7 +1114,7 @@ class RouteManagerBase(ABC):
         return coordlist
 
     def set_worker_startposition(self, worker, lat, lon):
-        route_logger = routelogger_add_origin(self.logger, origin=worker)
+        route_logger = routelogger_set_origin(self.logger, origin=worker)
         route_logger.info("Getting startposition ({} / {})", lat, lon)
         if worker not in self._worker_start_position:
             self._worker_start_position[worker] = Location(0.0, 0.0)

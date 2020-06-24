@@ -263,7 +263,7 @@ def get_origin_logger(existing_logger, origin=None) -> logger:
 
 
 @apply_custom
-def routelogger_add_origin(existing, origin=None) -> logger:
+def routelogger_set_origin(existing, origin=None) -> logger:
     if origin is None:
         return existing
     return existing.bind(origin=origin).patch(filter_route_with_origin)
