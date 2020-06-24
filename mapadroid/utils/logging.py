@@ -160,6 +160,14 @@ def origin_filter(record):
     except KeyError:
         pass
 
+def filter_routelogger(record):
+    try:
+        routename = record['extra']['name']
+        record['extra']['name'] = record['extra']['origin']
+        record['message'] = '{}: {}'.format(routename, record['message'])
+    except KeyError:
+        pass
+
 def apply_custom(func):
     @wraps(func)
     def decorated(self, *args, **kwargs):
@@ -199,7 +207,7 @@ class LoggerEnums(IntEnum):
 
 
 @apply_custom
-def get_logger(logger_type: LoggerEnums, name: str = None) -> logger:
+def get_logger(logger_type: LoggerEnums, name: str = None, filter_func: callable = None) -> logger:
     try:
         if isinstance(logger_type, LoggerEnums):
             log_id = logger_type
@@ -210,7 +218,10 @@ def get_logger(logger_type: LoggerEnums, name: str = None) -> logger:
     except ValueError:
         log_id = LoggerEnums.unknown
     parsed_name = get_bind_name(log_id, name)
-    return logger.bind(name=parsed_name)
+    new_logger = logger.bind(name=parsed_name)
+    if filter_func:
+        new_logger.patch(filter_func)
+    return new_logger
 
 
 def get_bind_name(logger_type: LoggerEnums, name: str) -> str:
@@ -265,3 +276,9 @@ def get_origin_logger(existing_logger, origin=None) -> logger:
         return existing_logger
     if origin:
         return get_logger(LoggerEnums.system, name=origin)
+
+@apply_custom
+def routelogger_add_origin(existing, origin=None) -> logger:
+    if origin is None:
+        return existing
+    return existing.bind(origin=origin).patch(filter_routelogger)
