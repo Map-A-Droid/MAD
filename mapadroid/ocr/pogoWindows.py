@@ -35,10 +35,11 @@ class PogoWindows:
         self._ScreenType[2]: list = ['ZURUCKKEHRENDER', 'ZURÜCKKEHRENDER', 'GAME', 'FREAK', 'SPIELER']
         self._ScreenType[3]: list = ['Google', 'Facebook']
         self._ScreenType[4]: list = ['Benutzername', 'Passwort', 'Username', 'Password', 'DRESSEURS']
-        self._ScreenType[5]: list = ['TRY', 'DIFFERENT', 'ACCOUNT', 'Anmeldung', 'Konto', 'anderes',
-                                     'connexion.', 'connexion']
-        self._ScreenType[6]: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
+        self._ScreenType[5]: list = ['Authentifizierung', 'fehlgeschlagen', 'Unable', 'authenticate',
                                      'Authentification', 'Essaye']
+        self._ScreenType[6]: list = ['RETRY', 'TRY', 'DIFFERENT', 'ACCOUNT',
+                                     'ANDERES', 'KONTO', 'VERSUCHEN',
+                                     'AUTRE', 'AUTORISER']
         self._ScreenType[7]: list = ['incorrect.', 'attempts', 'falsch.', 'gesperrt']
         self._ScreenType[8]: list = ['Spieldaten', 'abgerufen', 'lecture', 'depuis', 'server', 'data']
         self._ScreenType[12]: list = ['Events,', 'Benachrichtigungen', 'Einstellungen', 'events,', 'offers,',
