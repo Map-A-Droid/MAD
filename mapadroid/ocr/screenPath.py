@@ -450,6 +450,8 @@ class WordToScreenMatching(object):
         self._communicator.click(click_x, click_y)
         self._communicator.touch_and_hold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
         time.sleep(1)
+        self._communicator.touch_and_hold(click_x, click_y, click_x, click_y - (self._height / 2), 200)
+        time.sleep(1)
         self._communicator.click(click_x, click_y)
         time.sleep(1)
         click_x = self._width / 2
