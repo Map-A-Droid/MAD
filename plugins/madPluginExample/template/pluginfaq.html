@@ -33,16 +33,17 @@
 </ul>
 To create a own MAD plugin, create a new folder below <code> plugins </code> of your MAD root directory.<br><br>
 <h3 id="folderstructure">Folder structure</h3>
+<pre>
 <code>
     mad root<br>
-    &nbsp;-plugins<br>
-    &nbsp;&nbsp;-pluginfolder<br>
-    &nbsp;&nbsp;&nbsp;-[static] (needed for static files if you want to create a new MADmin endpoint)<br>
-    &nbsp;&nbsp;&nbsp;-[template] (needed for templates if you want to create a new MADmin endpoint)<br>
-    &nbsp;&nbsp;&nbsp;-pluginname.py (plugin base file)<br>
-    &nbsp;&nbsp;&nbsp;-plugin.ini (plugin configuration)<br>
-    &nbsp;&nbsp;&nbsp;-version.mpl (plugin definition)
-</code><br>
+      -plugins<br>
+        -pluginfolder<br>
+          -[static] (needed for static files if you want to create a new MADmin endpoint)<br>
+          -[template] (needed for templates if you want to create a new MADmin endpoint)<br>
+          -pluginname.py (plugin base file)<br>
+          -plugin.ini (plugin configuration)<br>
+          -version.mpl (plugin definition)
+</code></pre><br>
 <h3 id="files">Files</h3>
 <h5>plugin.ini(.example)</h5>
 This file is required to define global settings in the plugin. (The following content is required at least)<br>
@@ -119,75 +120,75 @@ MAD Objects in this dictionary:
 
 <h4>Replace existing MAD function</h4>
 <strong>Example function</strong>
-<code>
-    DbStatsSubmit.py<br><br>
-        def submit_stats_detections_raw(self, data):<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;query_status = (<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"VALUES (%s, %s, %s, %s, %s, %s) "<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;self._db_exec.executemany(query_status, data, commit=True)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;return True<br>
-</code>
+<pre><code>
+    DbStatsSubmit.py
+    
+        def submit_stats_detections_raw(self, data):
+            query_status = (
+                "INSERT IGNORE INTO trs_stats_detect_raw (worker, type_id, type, count, is_shiny, timestamp_scan) "
+                "VALUES (%s, %s, %s, %s, %s, %s) "
+            )
+            self._db_exec.executemany(query_status, data, commit=True)
+            return True
+</code></pre>
 <strong>plugin.py</strong>
-<code>
-    def perform_operation(self): <br>
-    &nbsp;&nbsp;&nbsp;&nbsp;....<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;self._mad['db_wrapper'].DbStatsSubmit.submit_stats_detections_raw = submit_stats_detections_raw_plugin<br><br>
-    <br>
-    def submit_stats_detections_raw_plugin(self, data):<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;query_status = (<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"INSERT IGNORE INTO own_table (worker, type_id, type, count, is_shiny, timestamp_scan) "<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"VALUES (%s, %s, %s, %s, %s, %s) "<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;self._mad['db_wrapper'].executemany(query_status, data, commit=True)<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;return True<br>
-</code>
+<pre><code>
+    def perform_operation(self):
+        ....
+        self._mad['db_wrapper'].stats_submit.submit_stats_detections_raw = self.submit_stats_detections_raw_plugin
+    
+    def submit_stats_detections_raw_plugin(self, data):
+        query_status = (
+            "INSERT IGNORE INTO own_table (worker, type_id, type, count, is_shiny, timestamp_scan) "
+            "VALUES (%s, %s, %s, %s, %s, %s) "
+        )
+        self._mad['db_wrapper'].executemany(query_status, data, commit=True)
+        return True
+</code></pre>
 This example store the raw stats in a own table.<br><br>
 
 <h4>Restart all failed / cancelled jobs</h4>
 <strong>plugin.py</strong>
-<code>
-    def __init__(self, mad):<br>
-    ...<br>
+<pre><code>
+    def __init__(self, mad):
+        ...
+        self._routes = [
+            ("/restartallcanceledjobs", self.restartcanceledjobs),
+            ("/restartallfailedjobs", self.restartfailedjobs),
+        ]
 
-    &nbsp;&nbsp;&nbsp;&nbsp;self._routes = [<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("/restartallcanceledjobs", self.restartcanceledjobs),<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("/restartallfailedjobs", self.restartfailedjobs),<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;]<br><br>
+        self._hotlink = [
+            ("Restart all canceled jobs", "/restartallcanceledjobs", "Requeue all canceled jobs"),
+            ("Restart all failed jobs", "/restartallfailedjobs", "Requeue all failed jobs),
+        ]
 
-    &nbsp;&nbsp;&nbsp;&nbsp;self._hotlink = [<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("Restart all canceled jobs", "/restartallcanceledjobs", "Requeue all canceled jobs"),<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;("Restart all failed jobs", "/restartallfailedjobs", "Requeue all failed jobs),<br>
-    &nbsp;&nbsp;&nbsp;&nbsp;]<br><br>
+    ### Add at end of file:
 
-    Add at end of file:<br>
+    def restartcanceledjobs(self):
+            jobLog = self._mad['device_Updater'].get_log(withautojobs=False)
+            ids = (self.getting_job_ids(jobLog, status='cancelled'))
+            for id in ids:<br>
+                    self._mad['logger'].info("Restarting cancelled job " + str(id))
+                    self._mad['device_Updater'].restart_job(str(id))
+            flash("Requeued " + str(len(ids)) + " canceled job(s)")
+            return redirect(url_for('plugins'), code=302)
 
-    def restartcanceledjobs(self):<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;jobLog = self._mad['device_Updater'].get_log(withautojobs=False)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;ids = (self.getting_job_ids(jobLog, status='cancelled'))<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;for id in ids:<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['logger'].info("Restarting cancelled job " + str(id))<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['device_Updater'].restart_job(str(id))<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;flash("Requeued " + str(len(ids)) + " canceled job(s)")<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;return redirect(url_for('plugins'), code=302)<br>
-<br>
     def restartfailedjobs(self):<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;jobLog = self._mad['device_Updater'].get_log(withautojobs=False)<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;ids = (self.getting_job_ids(jobLog, status='failed'))<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;for id in ids:<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['logger'].info("Restarting failed job " + str(id))<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    self._mad['device_Updater'].restart_job(str(id))<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;flash("Requeued " + str(len(ids)) + " failed job(s)")<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;return redirect(url_for('plugins'), code=302)<br>
-<br>
-    def getting_job_ids(self, jobLog, status: str= None):<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;ids: list = []<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;for job in jobLog.copy():<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;    if str(job['status']) == str(status):<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;        ids.append(job['id'])<br>
-        &nbsp;&nbsp;&nbsp;&nbsp;return ids<br><br>
-</code>
+            jobLog = self._mad['device_Updater'].get_log(withautojobs=False)
+            ids = (self.getting_job_ids(jobLog, status='failed'))
+            for id in ids:<br>
+                    self._mad['logger'].info("Restarting failed job " + str(id))
+                    self._mad['device_Updater'].restart_job(str(id))
+            flash("Requeued " + str(len(ids)) + " failed job(s)")
+            return redirect(url_for('plugins'), code=302)
+
+    def getting_job_ids(self, jobLog, status: str= None):
+            ids: list = []
+            for job in jobLog.copy():
+                    if str(job['status']) == str(status):
+                            ids.append(job['id'])
+            return ids
+</code></pre>
 That´s a easy way to restart all failed or cancelled jobs - without clicking x times in normal job view.
 <br><br>
 <h4>Accessing static file from template</h4>
